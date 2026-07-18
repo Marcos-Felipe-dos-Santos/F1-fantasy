@@ -7,7 +7,8 @@
  * §9 (pistas), §10 (corrida) e §12 (bots).
  *
  * Excluído de propósito deste PR (fica pra PRs futuros):
- * - Incidentes/eventos de corrida (rolagem de risco técnico, safety car etc.) → PR 1.5.
+ * - Clima/chuva (PR 1.5b) e safety car (ainda não existe) — incidentes de
+ *   erro de piloto, quebra mecânica e risco de peça entraram no PR 1.5a.
  * - Rede/sala (PartyKit, fase 3) → src/net/, fase 3.
  * - Temporada/campeonato (agregação de pontos entre corridas).
  * - Spec detalhado de motor (curva de potência, deploy de ERS etc.) além das notas base.
@@ -288,8 +289,35 @@ export interface ResultadoQuali {
 }
 
 /**
+ * Tipos de evento de incidente registrados pra narração (GDD §8, §10). Fora
+ * de escopo aqui: clima/chuva (PR 1.5b) e safety car (ainda não existe).
+ */
+export type TipoEvento =
+  | 'erro-piloto' // deslize por CONS baixo: perde tempo na volta
+  | 'quebra-chassi' // CONF: DNF
+  | 'quebra-motor' // CONF_MOTOR: DNF
+  | 'problema-tecnico' // risco da peça: perda grande de tempo numa volta (§8)
+  | 'investigacao'; // risco da peça: penalidade em ms somada ao tempo final (§8)
+
+/**
+ * Um evento de incidente ocorrido durante a corrida (§8, §10) — insumo pra
+ * narração. §8: o risco técnico de uma peça nunca elimina o jogador do
+ * campeonato; o pior cenário é uma corrida ruim.
+ */
+export interface EventoCorrida {
+  /** 1-based; investigação usa a última volta da corrida. */
+  volta: number;
+  jogadorId: string;
+  tipo: TipoEvento;
+  /** Custo em ms somado ao tempo do jogador (0 quando o evento é DNF). */
+  custoMs: number;
+}
+
+/**
  * Resultado de uma corrida (§10): pontuação FIA por posição e volta mais
  * rápida do grid inteiro (mesmo que cravada por quem terminou fora do pódio).
+ * `eventos` registra os incidentes de todos os carros (§8), ordenados por
+ * volta crescente (empate ⇒ jogadorId crescente) — insumo pra narração.
  */
 export interface ResultadoCorrida {
   seed: number;
@@ -300,9 +328,12 @@ export interface ResultadoCorrida {
     tempoTotal: number;
     /** Número de pit stops feitos por este carro (mínimo 1, §10). */
     paradas: number;
+    status: 'terminou' | 'dnf';
+    voltasCompletadas: number;
   }[];
   voltaMaisRapida: {
     jogadorId: string;
     tempo: number;
   };
+  eventos: EventoCorrida[];
 }

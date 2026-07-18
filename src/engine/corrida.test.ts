@@ -51,6 +51,20 @@ function loadoutMinardi(jogadorId: string, overrides: Partial<Loadout> = {}): Lo
   };
 }
 
+/** Pior CONS (44) e CONF_MOTOR (54) do dataset; CONF 52 é quase o piso (o pior é Minardi 1998, 50) — Minardi 1993, Barbazza (§8, incidentes). */
+function loadoutMinardi1993Barbazza(jogadorId: string, overrides: Partial<Loadout> = {}): Loadout {
+  return {
+    jogadorId,
+    pilotoId: 'minardi-1993-piloto-barbazza',
+    chassiId: 'minardi-1993-chassi',
+    motorId: 'minardi-1993-motor',
+    estrategistaId: 'minardi-1993-estrategista',
+    pitId: 'minardi-1993-pit',
+    pecaId: 'peca-composto-macio',
+    ...overrides,
+  };
+}
+
 function loadoutMercedes(overrides: Partial<Loadout> = {}): Loadout {
   return {
     jogadorId: 'j4',
@@ -270,6 +284,164 @@ describe('simularCorrida', () => {
     expect(() => simularCorrida(dataset, loadouts, pistaMonza, gridInconsistente, 1)).toThrow();
   });
 
+  describe('incidentes (PR 1.5a)', () => {
+    it('é determinístico com incidentes: mesma seed ⇒ deep-equal (incluindo eventos)', () => {
+      const loadouts = [loadoutMinardi1993Barbazza('j1'), loadoutRedBull({ jogadorId: 'j2' })];
+      const grid = simularQuali(dataset, loadouts, pistaSuzuka, 123);
+      const resultado1 = simularCorrida(dataset, loadouts, pistaSuzuka, grid, 123);
+      const resultado2 = simularCorrida(dataset, loadouts, pistaSuzuka, grid, 123);
+      expect(resultado2).toEqual(resultado1);
+    });
+
+    it('piloto com CONS baixíssimo comete mais erros do que piloto de CONS alto', () => {
+      const totalSeeds = 50;
+      let errosFraco = 0;
+      let errosForte = 0;
+      for (let seed = 0; seed < totalSeeds; seed++) {
+        const loadouts = [loadoutMinardi1993Barbazza('fraco'), loadoutRedBull({ jogadorId: 'forte' })];
+        const grid = simularQuali(dataset, loadouts, pistaMonza, seed);
+        const resultado = simularCorrida(dataset, loadouts, pistaMonza, grid, seed);
+        errosFraco += resultado.eventos.filter(
+          (e) => e.jogadorId === 'fraco' && e.tipo === 'erro-piloto',
+        ).length;
+        errosForte += resultado.eventos.filter(
+          (e) => e.jogadorId === 'forte' && e.tipo === 'erro-piloto',
+        ).length;
+      }
+      expect(errosFraco).toBeGreaterThan(0);
+      expect(errosFraco).toBeGreaterThan(errosForte);
+    });
+
+    it('DNF por quebra: carro fraco (CONF/CONF_MOTOR baixos) pode abandonar', () => {
+      const totalSeeds = 200;
+      let achado: ReturnType<typeof simularCorrida> | null = null;
+      for (let seed = 0; seed < totalSeeds; seed++) {
+        const loadouts = [loadoutMinardi1993Barbazza('fraco'), loadoutRedBull({ jogadorId: 'forte' })];
+        const grid = simularQuali(dataset, loadouts, pistaSuzuka, seed);
+        const resultado = simularCorrida(dataset, loadouts, pistaSuzuka, grid, seed);
+        const item = resultado.classificacao.find((c) => c.jogadorId === 'fraco')!;
+        if (item.status === 'dnf') {
+          achado = resultado;
+          break;
+        }
+      }
+      expect(achado).not.toBeNull();
+      const resultado = achado!;
+      const item = resultado.classificacao.find((c) => c.jogadorId === 'fraco')!;
+      expect(item.status).toBe('dnf');
+      expect(item.voltasCompletadas).toBeLessThan(pistaSuzuka.voltas);
+      expect(item.pontos).toBe(0);
+
+      // DNF aparece depois de todos que terminaram na classificação.
+      const posTerminaram = resultado.classificacao
+        .filter((c) => c.status === 'terminou')
+        .map((c) => c.posicao);
+      expect(Math.max(...posTerminaram)).toBeLessThan(item.posicao);
+
+      const eventoQuebra = resultado.eventos.find(
+        (e) => e.jogadorId === 'fraco' && (e.tipo === 'quebra-chassi' || e.tipo === 'quebra-motor'),
+      );
+      expect(eventoQuebra).toBeDefined();
+      expect(eventoQuebra!.volta).toBe(item.voltasCompletadas);
+    });
+
+    it('risco da peça: peça proibida gera problema-tecnico/investigacao; peça comum (risco 0) nunca', () => {
+      const totalSeeds = 300;
+      let eventosProibida = 0;
+      let eventosComum = 0;
+      for (let seed = 0; seed < totalSeeds; seed++) {
+        const loadouts = [
+          loadoutRedBull({ jogadorId: 'proibida', pecaId: 'peca-suspensao-ativa-fw15' }),
+          loadoutRedBull({ jogadorId: 'comum', pecaId: 'peca-composto-macio' }),
+        ];
+        const grid = simularQuali(dataset, loadouts, pistaMonza, seed);
+        const resultado = simularCorrida(dataset, loadouts, pistaMonza, grid, seed);
+        eventosProibida += resultado.eventos.filter(
+          (e) =>
+            e.jogadorId === 'proibida' &&
+            (e.tipo === 'problema-tecnico' || e.tipo === 'investigacao'),
+        ).length;
+        eventosComum += resultado.eventos.filter(
+          (e) =>
+            e.jogadorId === 'comum' && (e.tipo === 'problema-tecnico' || e.tipo === 'investigacao'),
+        ).length;
+      }
+      expect(eventosProibida).toBeGreaterThan(0);
+      expect(eventosComum).toBe(0);
+    });
+
+    it('investigação soma penalidade em ms na última volta', () => {
+      const totalSeeds = 300;
+      let achado: { evento: import('./types').EventoCorrida } | null = null;
+      for (let seed = 0; seed < totalSeeds; seed++) {
+        const loadouts = [
+          loadoutRedBull({ jogadorId: 'proibida', pecaId: 'peca-suspensao-ativa-fw15' }),
+        ];
+        const grid = simularQuali(dataset, loadouts, pistaMonza, seed);
+        const resultado = simularCorrida(dataset, loadouts, pistaMonza, grid, seed);
+        const evento = resultado.eventos.find(
+          (e) => e.jogadorId === 'proibida' && e.tipo === 'investigacao',
+        );
+        if (evento) {
+          achado = { evento };
+          break;
+        }
+      }
+      expect(achado).not.toBeNull();
+      const { evento } = achado!;
+      expect(evento.custoMs).toBeGreaterThanOrEqual(CORRIDA_CONFIG.investigacaoPenalidadeMinMs);
+      expect(evento.custoMs).toBeLessThanOrEqual(CORRIDA_CONFIG.investigacaoPenalidadeMaxMs);
+      expect(evento.volta).toBe(pistaMonza.voltas);
+    });
+
+    it('eventos ficam ordenados por volta crescente (empate ⇒ jogadorId crescente)', () => {
+      const loadouts = [
+        loadoutMinardi1993Barbazza('a'),
+        loadoutMinardi1993Barbazza('b'),
+        loadoutMinardi1993Barbazza('c'),
+      ];
+      const grid = simularQuali(dataset, loadouts, pistaMonza, 55);
+      const resultado = simularCorrida(dataset, loadouts, pistaMonza, grid, 55);
+      for (let i = 1; i < resultado.eventos.length; i++) {
+        const anterior = resultado.eventos[i - 1];
+        const atual = resultado.eventos[i];
+        const emOrdem =
+          atual.volta > anterior.volta ||
+          (atual.volta === anterior.volta && atual.jogadorId >= anterior.jogadorId);
+        expect(emOrdem).toBe(true);
+      }
+    });
+
+    it('DNF não recebe ponto de volta mais rápida: autor da volta mais rápida sempre terminou', () => {
+      const totalSeeds = 200;
+      for (let seed = 0; seed < totalSeeds; seed++) {
+        const loadouts = [
+          loadoutMinardi1993Barbazza('fraco1'),
+          loadoutMinardi1993Barbazza('fraco2'),
+          loadoutRedBull({ jogadorId: 'forte' }),
+        ];
+        const grid = simularQuali(dataset, loadouts, pistaSuzuka, seed);
+        const resultado = simularCorrida(dataset, loadouts, pistaSuzuka, grid, seed);
+        const autor = resultado.classificacao.find(
+          (c) => c.jogadorId === resultado.voltaMaisRapida.jogadorId,
+        )!;
+        expect(autor.status).toBe('terminou');
+      }
+    });
+
+    it('sem incidente continua ok: carro top com peça risco 0 raramente gera eventos', () => {
+      const totalSeeds = 20;
+      let seedsSemEvento = 0;
+      for (let seed = 0; seed < totalSeeds; seed++) {
+        const loadouts = [loadoutRedBull({ jogadorId: 'top', pecaId: 'peca-composto-macio' })];
+        const grid = simularQuali(dataset, loadouts, pistaMonza, seed);
+        const resultado = simularCorrida(dataset, loadouts, pistaMonza, grid, seed);
+        if (resultado.eventos.length === 0) seedsSemEvento++;
+      }
+      expect(seedsSemEvento).toBeGreaterThan(totalSeeds / 2);
+    });
+  });
+
   describe('seed de ouro (regressão)', () => {
     it('congela classificação e volta mais rápida para seed 42, Monza, 4 loadouts fixos', () => {
       const loadouts: Loadout[] = [
@@ -284,12 +456,45 @@ describe('simularCorrida', () => {
       expect(resultado).toEqual({
         seed: 42,
         classificacao: [
-          { jogadorId: 'j1', posicao: 1, pontos: 26, tempoTotal: 1173294.0189695375, paradas: 1 },
-          { jogadorId: 'j4', posicao: 2, pontos: 18, tempoTotal: 1177621.7233733507, paradas: 1 },
-          { jogadorId: 'j2', posicao: 3, pontos: 15, tempoTotal: 1180331.5938403753, paradas: 1 },
-          { jogadorId: 'j3', posicao: 4, pontos: 12, tempoTotal: 1199628.238069597, paradas: 1 },
+          {
+            jogadorId: 'j1',
+            posicao: 1,
+            pontos: 26,
+            tempoTotal: 1172072.0093080632,
+            paradas: 1,
+            status: 'terminou',
+            voltasCompletadas: 14,
+          },
+          {
+            jogadorId: 'j4',
+            posicao: 2,
+            pontos: 18,
+            tempoTotal: 1176088.9386721763,
+            paradas: 1,
+            status: 'terminou',
+            voltasCompletadas: 14,
+          },
+          {
+            jogadorId: 'j2',
+            posicao: 3,
+            pontos: 15,
+            tempoTotal: 1180714.2882751971,
+            paradas: 1,
+            status: 'terminou',
+            voltasCompletadas: 14,
+          },
+          {
+            jogadorId: 'j3',
+            posicao: 4,
+            pontos: 12,
+            tempoTotal: 1200550.8974916048,
+            paradas: 1,
+            status: 'terminou',
+            voltasCompletadas: 14,
+          },
         ],
-        voltaMaisRapida: { jogadorId: 'j1', tempo: 81896.27624291278 },
+        voltaMaisRapida: { jogadorId: 'j1', tempo: 81825.26671510813 },
+        eventos: [],
       });
     });
   });
