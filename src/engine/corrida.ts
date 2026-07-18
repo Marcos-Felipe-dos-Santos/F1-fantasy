@@ -16,15 +16,45 @@
  * resultado não depende da ordem/presença dos demais jogadores no array de
  * entrada.
  *
- * Fora de escopo deste PR (fica pro PR 1.5): incidentes, DNF, quebra
- * mecânica/risco de peça, clima/chuva, safety car — nesta corrida ninguém
- * abandona.
+ * Incidentes (PR 1.5a, GDD §8): erro de piloto (CONS), quebra de chassi
+ * (CONF) e quebra de motor (CONF_MOTOR) são DNF; risco técnico da peça pode
+ * gerar um problema técnico (perda de tempo numa volta) e/ou uma
+ * investigação pós-corrida (penalidade em ms) — o risco nunca elimina o
+ * jogador do campeonato, só piora uma corrida (§8). Todo incidente vira um
+ * `EventoCorrida` pra narração.
+ *
+ * Ordem fixa de consumo do RNG por carro (contrato determinístico —
+ * qualquer mudança de ordem quebra a seed de ouro):
+ * 1. `rng.int` da janela de pit (desvio pelo CALL do estrategista).
+ * 2. Rolagem única de "problema técnico" da peça (chance por `risco`); se
+ *    disparar, mais 2 `rng` (volta do problema + magnitude do custo).
+ * 3. Rolagem única de "investigação" da peça (chance por `risco`); se
+ *    disparar, mais 1 `rng` (magnitude da penalidade).
+ * 4. Por volta, nesta ordem: variância da volta — sempre 1 `rng`; na volta 1,
+ *    +1 `rng` da penalidade de largada (LARG); (a) erro de piloto — sempre
+ *    1 `rng`, +1 se disparar; (b) quebra de chassi — sempre 1 `rng`;
+ *    (c) quebra de motor — sempre 1 `rng`. (a)/(b)/(c) consomem RNG toda
+ *    volta, mesmo que a volta termine em DNF, pra manter o stream estável.
+ *    (d) problema técnico não consome RNG no loop — só compara `v` com a
+ *    volta sorteada no passo 2.
+ * 5. Se a volta termina em pit: 1 `rng` da rolagem de erro de pit, +1 da
+ *    magnitude se o erro disparar.
+ *
+ * Fora de escopo deste PR (fica pro PR 1.5b): clima/chuva. Safety car ainda
+ * não existe no jogo.
  */
 
 import type { Dataset } from './dataset';
 import { resolverCarro } from './carro';
 import { createRng, deriveSeed } from './rng';
-import type { Loadout, Pista, ResultadoCorrida, ResultadoQuali, Ultrapassagem } from './types';
+import type {
+  EventoCorrida,
+  Loadout,
+  Pista,
+  ResultadoCorrida,
+  ResultadoQuali,
+  Ultrapassagem,
+} from './types';
 
 /** Constantes de balanceamento da corrida — expostas pro futuro balance-harness (PR 1.6). */
 export const CORRIDA_CONFIG = {
@@ -54,6 +84,22 @@ export const CORRIDA_CONFIG = {
   erroPitMaxMs: 5000,
   pontosFia: [25, 18, 15, 12, 10, 8, 6, 4, 2, 1],
   pontoVoltaMaisRapida: 1,
+  /** Chance de erro do piloto por volta com CONS 0 (CONS 99 ⇒ ~0). */
+  probErroMax: 0.04,
+  erroCustoMinMs: 1500,
+  erroCustoMaxMs: 4000,
+  /** Chance de quebra de chassi por volta com CONF 0. */
+  probQuebraChassiMax: 0.004,
+  /** Chance de quebra de motor por volta com CONF_MOTOR 0. */
+  probQuebraMotorMax: 0.005,
+  /** Prob de problema técnico por ponto de risco da peça (rolagem única por corrida, §8). Peça proibida tem risco 7 ⇒ ~5.6%. */
+  riscoProblemaPorPonto: 0.008,
+  problemaCustoMinMs: 3000,
+  problemaCustoMaxMs: 8000,
+  /** Prob de investigação por ponto de risco (rolagem única por corrida, §8). */
+  riscoInvestigacaoPorPonto: 0.005,
+  investigacaoPenalidadeMinMs: 5000,
+  investigacaoPenalidadeMaxMs: 10000,
 } as const;
 
 function clamp(valor: number, min: number, max: number): number {
@@ -66,6 +112,9 @@ interface ResultadoCarro {
   tempoTotal: number;
   paradas: number;
   melhorVolta: number;
+  status: 'terminou' | 'dnf';
+  voltasCompletadas: number;
+  eventos: EventoCorrida[];
 }
 
 /**
@@ -104,10 +153,40 @@ function simularCarro(
   // independente do CALL do estrategista.
   const voltaAlvo = clamp(voltaIdeal + rng.int(-desvioMax, desvioMax), 2, pista.voltas - 1);
 
+  // Rolagens únicas de risco da peça (§8) — sempre 1 rng.next() por rolagem,
+  // mais 1-2 extras condicionais se disparar. Peça de risco 0 nunca dispara
+  // (threshold 0), mas ainda consome os 2 next() de "sempre rola", mantendo
+  // o stream estável independente da peça sorteada.
+  const rolagemProblema = rng.next();
+  const chanceProblema = carro.peca.risco * CORRIDA_CONFIG.riscoProblemaPorPonto;
+  const temProblema = rolagemProblema < chanceProblema;
+  let voltaProblema = 0;
+  let custoProblema = 0;
+  if (temProblema) {
+    voltaProblema = rng.int(2, pista.voltas - 1);
+    custoProblema =
+      CORRIDA_CONFIG.problemaCustoMinMs +
+      rng.next() * (CORRIDA_CONFIG.problemaCustoMaxMs - CORRIDA_CONFIG.problemaCustoMinMs);
+  }
+
+  const rolagemInvestigacao = rng.next();
+  const chanceInvestigacao = carro.peca.risco * CORRIDA_CONFIG.riscoInvestigacaoPorPonto;
+  const temInvestigacao = rolagemInvestigacao < chanceInvestigacao;
+  let penalidadeInvestigacao = 0;
+  if (temInvestigacao) {
+    penalidadeInvestigacao =
+      CORRIDA_CONFIG.investigacaoPenalidadeMinMs +
+      rng.next() *
+        (CORRIDA_CONFIG.investigacaoPenalidadeMaxMs - CORRIDA_CONFIG.investigacaoPenalidadeMinMs);
+  }
+
   let desgasteAcum = 0;
   let paradas = 0;
   let tempoTotal = 0;
   let melhorVolta = Infinity;
+  let status: 'terminou' | 'dnf' = 'terminou';
+  let voltasCompletadas = pista.voltas;
+  const eventos: EventoCorrida[] = [];
 
   for (let v = 1; v <= pista.voltas; v++) {
     let tempoVolta =
@@ -119,6 +198,54 @@ function simularCarro(
       tempoVolta +=
         posGrid0 * CORRIDA_CONFIG.gridOffsetMs[pista.ultrapassagem] +
         ((99 - carro.piloto.larg) / 99) * CORRIDA_CONFIG.largadaMaxMs * rng.next();
+    }
+
+    // (a) erro de piloto: sempre 1 rng.next() (chance), +1 se disparar (custo).
+    const rolagemErro = rng.next();
+    const chanceErro = ((99 - carro.piloto.cons) / 99) * CORRIDA_CONFIG.probErroMax;
+    if (rolagemErro < chanceErro) {
+      const custoErro =
+        CORRIDA_CONFIG.erroCustoMinMs +
+        rng.next() * (CORRIDA_CONFIG.erroCustoMaxMs - CORRIDA_CONFIG.erroCustoMinMs);
+      tempoVolta += custoErro;
+      eventos.push({ volta: v, jogadorId: loadout.jogadorId, tipo: 'erro-piloto', custoMs: custoErro });
+    }
+
+    // (b) quebra de chassi e (c) quebra de motor: sempre 1 rng.next() cada,
+    // toda volta, mesmo que a volta termine em DNF — mantém o stream estável.
+    const rolagemChassi = rng.next();
+    const chanceChassi = ((99 - carro.chassi.conf) / 99) * CORRIDA_CONFIG.probQuebraChassiMax;
+    const quebrouChassi = rolagemChassi < chanceChassi;
+
+    const rolagemMotor = rng.next();
+    const chanceMotor = ((99 - carro.motor.confMotor) / 99) * CORRIDA_CONFIG.probQuebraMotorMax;
+    const quebrouMotor = rolagemMotor < chanceMotor;
+
+    if (quebrouChassi) {
+      tempoTotal += tempoVolta;
+      eventos.push({ volta: v, jogadorId: loadout.jogadorId, tipo: 'quebra-chassi', custoMs: 0 });
+      status = 'dnf';
+      voltasCompletadas = v;
+      break;
+    }
+    if (quebrouMotor) {
+      tempoTotal += tempoVolta;
+      eventos.push({ volta: v, jogadorId: loadout.jogadorId, tipo: 'quebra-motor', custoMs: 0 });
+      status = 'dnf';
+      voltasCompletadas = v;
+      break;
+    }
+
+    // (d) problema técnico: não consome rng aqui — a volta e o custo já
+    // foram sorteados antes do loop (rolagem única de risco da peça, §8).
+    if (temProblema && v === voltaProblema) {
+      tempoVolta += custoProblema;
+      eventos.push({
+        volta: v,
+        jogadorId: loadout.jogadorId,
+        tipo: 'problema-tecnico',
+        custoMs: custoProblema,
+      });
     }
 
     desgasteAcum += taxaDesgaste;
@@ -133,9 +260,9 @@ function simularCarro(
       // magnitude do erro (2o rng.next()) se o erro de fato ocorrer. Determinístico
       // porque a decisão de pit em si (v, paradas, desgasteAcum) já é toda derivada
       // do RNG consumido até aqui — não há ramo condicional fora do RNG.
-      const rolagemErro = rng.next();
-      const chanceErro = ((99 - carro.pit.pitErro) / 99) * CORRIDA_CONFIG.probErroPitMax;
-      if (rolagemErro < chanceErro) {
+      const rolagemErroPit = rng.next();
+      const chanceErroPit = ((99 - carro.pit.pitErro) / 99) * CORRIDA_CONFIG.probErroPitMax;
+      if (rolagemErroPit < chanceErroPit) {
         custoPit += rng.next() * CORRIDA_CONFIG.erroPitMaxMs;
       }
       tempoVolta += custoPit;
@@ -147,7 +274,28 @@ function simularCarro(
     if (tempoVolta < melhorVolta) melhorVolta = tempoVolta;
   }
 
-  return { jogadorId: loadout.jogadorId, tempoTotal, paradas, melhorVolta };
+  // Investigação (§8) só pune quem terminou — decisão de design: um carro já
+  // abandonado não recebe uma penalidade de tempo que nunca vai "cravar"
+  // posição nenhuma (o DNF já é o pior desfecho possível pra corrida dele).
+  if (temInvestigacao && status === 'terminou') {
+    tempoTotal += penalidadeInvestigacao;
+    eventos.push({
+      volta: pista.voltas,
+      jogadorId: loadout.jogadorId,
+      tipo: 'investigacao',
+      custoMs: penalidadeInvestigacao,
+    });
+  }
+
+  return {
+    jogadorId: loadout.jogadorId,
+    tempoTotal,
+    paradas,
+    melhorVolta,
+    status,
+    voltasCompletadas,
+    eventos,
+  };
 }
 
 /**
@@ -189,24 +337,42 @@ export function simularCorrida(
     simularCarro(dataset, loadout, pista, posicaoGrid.get(loadout.jogadorId)!, seed),
   );
 
+  // Quem terminou vem primeiro (ordenado por tempoTotal, empate ⇒ jogadorId);
+  // DNF depois, ordenado por voltasCompletadas decrescente (quem foi mais
+  // longe termina "na frente" dos outros abandonos), empate por tempoTotal
+  // crescente, empate por jogadorId (§8/§10).
   porJogador.sort((a, b) => {
+    if (a.status !== b.status) {
+      return a.status === 'terminou' ? -1 : 1;
+    }
+    if (a.status === 'dnf' && a.voltasCompletadas !== b.voltasCompletadas) {
+      return b.voltasCompletadas - a.voltasCompletadas;
+    }
     if (a.tempoTotal !== b.tempoTotal) return a.tempoTotal - b.tempoTotal;
     return a.jogadorId < b.jogadorId ? -1 : a.jogadorId > b.jogadorId ? 1 : 0;
   });
 
+  // Pontos FIA só pra quem terminou — DNF nunca pontua, mesmo caindo no top 10 (§8/§10).
   const classificacao = porJogador.map((resultado, idx) => ({
     jogadorId: resultado.jogadorId,
     posicao: idx + 1,
-    pontos: CORRIDA_CONFIG.pontosFia[idx] ?? 0,
+    pontos: resultado.status === 'terminou' ? (CORRIDA_CONFIG.pontosFia[idx] ?? 0) : 0,
     tempoTotal: resultado.tempoTotal,
     paradas: resultado.paradas,
+    status: resultado.status,
+    voltasCompletadas: resultado.voltasCompletadas,
   }));
 
   const posicaoFinal = new Map(classificacao.map((c) => [c.jogadorId, c.posicao]));
 
-  // Volta mais rápida do grid inteiro: menor tempoVolta entre todos; empate ⇒ melhor posição final.
-  let autor = porJogador[0];
-  for (const resultado of porJogador) {
+  // Volta mais rápida: elegíveis só quem terminou (decisão de design — sem
+  // ponto de consolação pra DNF, §8). Se TODOS derem DNF (improvável, mas
+  // possível), usa o menor tempoVolta entre todos e NÃO soma o ponto de
+  // bônus a ninguém.
+  const terminaram = porJogador.filter((r) => r.status === 'terminou');
+  const candidatos = terminaram.length > 0 ? terminaram : porJogador;
+  let autor = candidatos[0];
+  for (const resultado of candidatos) {
     const melhorQueAutor = resultado.melhorVolta < autor.melhorVolta;
     const empatePorPosicao =
       resultado.melhorVolta === autor.melhorVolta &&
@@ -216,12 +382,29 @@ export function simularCorrida(
     }
   }
 
-  const itemAutor = classificacao.find((c) => c.jogadorId === autor.jogadorId)!;
-  itemAutor.pontos += CORRIDA_CONFIG.pontoVoltaMaisRapida;
+  if (terminaram.length > 0) {
+    const itemAutor = classificacao.find((c) => c.jogadorId === autor.jogadorId)!;
+    itemAutor.pontos += CORRIDA_CONFIG.pontoVoltaMaisRapida;
+  }
+
+  // Eventos de todos os carros, concatenados e ordenados por volta crescente
+  // (empate ⇒ jogadorId crescente) — insumo pra narração.
+  const eventos = porJogador
+    .flatMap((resultado) => resultado.eventos)
+    .sort((a, b) => {
+      if (a.volta !== b.volta) return a.volta - b.volta;
+      if (a.jogadorId !== b.jogadorId) return a.jogadorId < b.jogadorId ? -1 : 1;
+      // Desempate terciário por tipo: um mesmo carro pode ter 2 eventos na
+      // mesma volta (ex.: erro-piloto + quebra); `tipo` é único por
+      // (jogadorId, volta), então isso fecha uma ordem total — sem depender
+      // da estabilidade do sort do runtime.
+      return a.tipo < b.tipo ? -1 : a.tipo > b.tipo ? 1 : 0;
+    });
 
   return {
     seed,
     classificacao,
     voltaMaisRapida: { jogadorId: autor.jogadorId, tempo: autor.melhorVolta },
+    eventos,
   };
 }

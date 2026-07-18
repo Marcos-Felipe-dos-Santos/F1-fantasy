@@ -134,10 +134,27 @@ export const loadoutFixture: Loadout = {
 export const resultadoCorridaFixture: ResultadoCorrida = {
   seed: 12345,
   classificacao: [
-    { jogadorId: 'jogador-1', posicao: 1, pontos: 25, tempoTotal: 5423.1, paradas: 1 },
-    { jogadorId: 'jogador-2', posicao: 2, pontos: 18, tempoTotal: 5430.7, paradas: 2 },
+    {
+      jogadorId: 'jogador-1',
+      posicao: 1,
+      pontos: 25,
+      tempoTotal: 5423.1,
+      paradas: 1,
+      status: 'terminou',
+      voltasCompletadas: 15,
+    },
+    {
+      jogadorId: 'jogador-2',
+      posicao: 2,
+      pontos: 18,
+      tempoTotal: 5430.7,
+      paradas: 2,
+      status: 'terminou',
+      voltasCompletadas: 15,
+    },
   ],
   voltaMaisRapida: { jogadorId: 'jogador-2', tempo: 71.234 },
+  eventos: [{ volta: 8, jogadorId: 'jogador-1', tipo: 'erro-piloto', custoMs: 2100 }],
 };
 
 describe('tipos base da engine (PR 0.3)', () => {
@@ -186,5 +203,11 @@ describe('tipos base da engine (PR 0.3)', () => {
   it('resultado de corrida traz classificação e volta mais rápida do grid inteiro (§10)', () => {
     expect(resultadoCorridaFixture.classificacao).toHaveLength(2);
     expect(resultadoCorridaFixture.voltaMaisRapida.jogadorId).toBe('jogador-2');
+  });
+
+  it('resultado de corrida registra eventos de incidente pra narração (§8, §10)', () => {
+    expect(resultadoCorridaFixture.classificacao[0].status).toBe('terminou');
+    expect(resultadoCorridaFixture.eventos).toHaveLength(1);
+    expect(resultadoCorridaFixture.eventos[0].tipo).toBe('erro-piloto');
   });
 });
