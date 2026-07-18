@@ -55,7 +55,7 @@ f1-fantasy-claude-setup/
 
 ### Fase 1 — Engine + modo Single (valida o balanceamento sozinho)
 - **PR 1.1** — Dataset semente em `data/` (3-4 anos icônicos, poucas equipes) como JSON. Sem lógica.
-- **PR 1.2** — Draft: sorteio individual de piloto e motor (por seed) + escolha de estrategista e pit (pool) + escolha de peça. Testes.
+- **PR 1.2** — Draft: 5 sorteios de equipe/ano (jogador pega 1 componente por rodada; rodada 5 forçada) + rodada 6 com 5 peças reveladas do pool compartilhado (2 cópias). Bots por seed. Testes.
 - **PR 1.3** — Classificação: volta única ⇒ grid. Teste com seed de ouro.
 - **PR 1.4** — Corrida: tempo de volta por notas+pista+variância, 10-15 voltas, pontuação FIA, volta mais rápida do grid inteiro. Testes de regressão por seed.
 - **PR 1.5** — Incidentes: erro (CONS), quebra (CONF), problema/investigação (risco da peça), clima. Registro de eventos.
