@@ -14,7 +14,9 @@
 
 - **PR 1.5a** — Incidentes (`corrida.ts`): erro de piloto (CONS, perda de tempo), quebra de chassi/motor (CONF/CONF_MOTOR ⇒ DNF), risco técnico da peça (rolagem única por corrida: problema técnico numa volta + investigação com penalidade em ms só pra quem termina, GDD §8), registro de `eventos` ordenado (volta, jogadorId, tipo) pra narração. DNF: 0 pontos, classificado após os que terminaram (voltasCompletadas desc); volta mais rápida só entre quem terminou. Tipos novos: `TipoEvento`, `EventoCorrida`, `status`/`voltasCompletadas` na classificação. Ordem de consumo do RNG documentada como contrato no cabeçalho de `corrida.ts`. Revisado (aprovado; sort de eventos ganhou desempate terciário por tipo e o doc do contrato de RNG foi completado).
 
-**Testes na main: 90 passando** (8 arquivos). Lint e `tsc --noEmit` limpos.
+- **PR 1.5b** — Clima (`corrida.ts`): rolagem global de chuva 1×/corrida em sub-stream próprio (`corrida:clima`), sem consumo extra nos streams por carro; chuva soma lentidão global (`chuvaLentidao`·tempoBase) + penalidade por CHU baixo por volta e multiplica a chance de erro (`chuvaMultErro`, cap 1). Chuva NÃO altera degradação/pit/quebras/risco (pneu de chuva não modelado); quali segue seca. `chuva: boolean` em `ResultadoCorrida`. Seed de ouro seca inalterada bit a bit; segunda seed de ouro molhada (Interlagos chanceChuva:1, seed 42). Contrato de RNG documenta que o stream molhado diverge do seco a partir do 1º erro-só-na-chuva (custo consome 1 next extra). Revisado (aprovado; caveats replicados nos testes de paradas).
+
+**Testes na main: 99 passando** (8 arquivos). Lint e `tsc --noEmit` limpos.
 
 ## Metas de calibração (decididas pelo dev em 2026-07-18 — executar no PR 1.6)
 
@@ -25,7 +27,7 @@
 
 ## Próximos
 
-- **PR 1.5b (próximo)** — Clima/chuva na corrida + testes confirmando pit/pneu sob chuva.
+- **PR 1.6 (próximo)** — balance-harness: `npm run balance` + calibração das 3 metas acima.
 - **PR 1.6** — `scripts/balance.ts` (balance-harness). **Nota:** as constantes `QUALI_CONFIG`/`CORRIDA_CONFIG` foram expostas justamente pra esse harness calibrar; os valores atuais são chute inicial.
 - **PR 1.7** — UI mínima do Single.
 
