@@ -61,7 +61,7 @@ Cada sorteio é **individual por jogador** — dois jogadores podem cair na mesm
 
 ### Rodada 6 — Peça icônica
 
-Depois dos 5 componentes montados, aparece a **peça icônica**: o jogador escolhe **1 peça** do catálogo (§7). Este é o único passo com **pool compartilhado e escassez** (2 cópias por peça, trava ao vivo no online — §4).
+Depois dos 5 componentes montados, um **sorteio revela 5 peças aleatórias** do catálogo (§7) — o jogador escolhe **1 das 5 apresentadas**. Ele nunca vê o catálogo inteiro. Peças esgotadas (2 cópias já pegas) não aparecem. No modo single/local, a ordem de escolha entre humano e bots é **embaralhada por seed** (o humano pode perder uma peça pra um bot que escolheu antes). No online, a escolha é simultânea com trava ao vivo (§4).
 
 ### Resultado
 O carro final pode ter até 5 eras diferentes, coroado por uma peça icônica de qualquer época.
@@ -217,27 +217,36 @@ O campeonato nunca para. O pior é uma corrida ruim.
 
 ## 9. Pistas (10)
 
-| Pista | Perfil | Ultrapassagem |
-|---|---|---|
-| Mônaco | Técnica, rua, zero reta | 🔴 Difícil |
-| Spa-Francorchamps | Alta velocidade, curvas rápidas, clima instável | 🟡 Média |
-| Monza | Templo da velocidade, retas longas | 🟢 Fácil |
-| Silverstone | Curvas rápidas, AERO pesa | 🟡 Média |
-| Suzuka | Técnica, testa consistência | 🔴 Difícil |
-| Interlagos | Clima imprevisível, corridas caóticas | 🟢 Fácil |
-| Nürburgring (Nordschleife) | Perigo puro, mista, clima | 🟡 Média |
-| Imola | Técnica, histórica | 🔴 Difícil |
-| Red Bull Ring | Curta, freadas e retas, premia ULT | 🟢 Fácil |
-| Montreal (Gilles Villeneuve) | Stop-and-go, freada pesada, Muro dos Campeões | 🟢 Fácil |
+| Pista | Perfil | Ultrapassagem | Desgaste |
+|---|---|---|---|
+| Mônaco | Técnica, rua, zero reta | 🔴 Difícil | Baixo |
+| Spa-Francorchamps | Alta velocidade, curvas rápidas, clima instável | 🟡 Média | Médio |
+| Monza | Templo da velocidade, retas longas | 🟢 Fácil | Baixo |
+| Silverstone | Curvas rápidas, AERO pesa | 🟡 Média | Alto |
+| Suzuka | Técnica, testa consistência | 🔴 Difícil | Alto |
+| Interlagos | Clima imprevisível, corridas caóticas | 🟢 Fácil | Médio |
+| Nürburgring (Nordschleife) | Perigo puro, mista, clima | 🟡 Média | Alto |
+| Imola | Técnica, histórica | 🔴 Difícil | Médio |
+| Red Bull Ring | Curta, freadas e retas, premia ULT | 🟢 Fácil | Baixo |
+| Montreal (Gilles Villeneuve) | Stop-and-go, freada pesada, Muro dos Campeões | 🟢 Fácil | Alto |
 
-Cada pista tem: pesos de AERO / MEC / MOTOR, dificuldade de ultrapassagem, chance de chuva, nº de voltas (10-15).
+Cada pista tem: pesos de AERO / MEC / MOTOR, dificuldade de ultrapassagem, chance de chuva, **desgaste de pneu** (define quantas paradas a pista naturalmente exige), nº de voltas (10-15).
 
 ---
 
 ## 10. Corrida
 
-- **Classificação:** 1 volta única, (QUALI + variância) define o grid. Sem pontos.
-- **Corrida:** 10-15 voltas. Cada volta = tempo das notas ponderadas pela pista + variância + rolagem de incidentes (CONS, CONF, CONF_MOTOR, clima, risco técnico).
+### Classificação
+1 volta única. Fórmula: **piloto (QUALI) + carro (AERO, MEC, MOTOR ponderados pela pista) + estrategista (CALL, peso menor)** + variância. Define o grid. Sem pontos.
+
+### Degradação de pneu e pit stops
+- Cada pista tem um atributo **DESGASTE** (0-99) que define o quão rápido os pneus degradam naquela pista.
+- A cada volta, o desempenho do carro cai proporcionalmente ao desgaste acumulado. A nota **PNEU** do piloto atenua essa queda (piloto com gestão boa degrada menos).
+- **1 parada obrigatória** em todas as pistas. Pistas com DESGASTE alto naturalmente forçam **paradas extras** — o jogador/bot não decide se para; a engine detecta que o pneu caiu abaixo de um limiar e força a parada. A **janela** da parada obrigatória (volta ideal) é influenciada pelo **CALL** do estrategista (bom estrategista para na hora certa; ruim para cedo/tarde demais).
+- Tempo da parada: **PIT_TEMPO** da equipe de pit. Chance de erro na parada (pneu solto, etc.): **PIT_ERRO**.
+
+### Corrida
+- 10-15 voltas. Cada volta = tempo das notas ponderadas pela pista + degradação de pneu + variância + rolagem de incidentes (CONS, CONF, CONF_MOTOR, clima, risco técnico).
 - **Visual:** traçado em SVG, carrinhos como **capacetes estilizados** correndo pelo traçado.
 - **Botão Acelerar:** assistir em tempo normal ou pular pro resultado.
 - **Pontuação:** sistema oficial FIA (25-18-15-12-10-8-6-4-2-1).
