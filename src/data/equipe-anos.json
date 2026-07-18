@@ -1,0 +1,728 @@
+[
+  {
+    "equipe": "Red Bull",
+    "ano": 2023,
+    "pilotos": [
+      {
+        "id": "redbull-2023-piloto-verstappen",
+        "nome": "Max Verstappen",
+        "notas": { "rit": 96, "quali": 95, "cons": 92, "ult": 90, "def": 88, "chu": 90, "pneu": 90, "larg": 82, "sf": 93 }
+      },
+      {
+        "id": "redbull-2023-piloto-perez",
+        "nome": "Sergio Pérez",
+        "notas": { "rit": 82, "quali": 80, "cons": 70, "ult": 78, "def": 75, "chu": 72, "pneu": 78, "larg": 75, "sf": 74 }
+      }
+    ],
+    "chassi": {
+      "id": "redbull-2023-chassi",
+      "notas": { "aero": 96, "mec": 88, "ppeso": 85, "conf": 90, "freio": 88 }
+    },
+    "motor": {
+      "id": "redbull-2023-motor",
+      "notas": { "motor": 88, "confMotor": 90 }
+    },
+    "estrategista": {
+      "id": "redbull-2023-estrategista",
+      "nome": "Estrategista Red Bull 2023",
+      "notas": { "call": 90, "sangf": 88 }
+    },
+    "pit": {
+      "id": "redbull-2023-pit",
+      "notas": { "pitTempo": 92, "pitErro": 90 }
+    }
+  },
+  {
+    "equipe": "Ferrari",
+    "ano": 2023,
+    "pilotos": [
+      {
+        "id": "ferrari-2023-piloto-leclerc",
+        "nome": "Charles Leclerc",
+        "notas": { "rit": 88, "quali": 93, "cons": 78, "ult": 85, "def": 80, "chu": 78, "pneu": 76, "larg": 74, "sf": 80 }
+      },
+      {
+        "id": "ferrari-2023-piloto-sainz",
+        "nome": "Carlos Sainz",
+        "notas": { "rit": 85, "quali": 86, "cons": 82, "ult": 80, "def": 78, "chu": 75, "pneu": 78, "larg": 78, "sf": 82 }
+      }
+    ],
+    "chassi": {
+      "id": "ferrari-2023-chassi",
+      "notas": { "aero": 85, "mec": 80, "ppeso": 76, "conf": 65, "freio": 82 }
+    },
+    "motor": {
+      "id": "ferrari-2023-motor",
+      "notas": { "motor": 87, "confMotor": 72 }
+    },
+    "estrategista": {
+      "id": "ferrari-2023-estrategista",
+      "nome": "Estrategista Ferrari 2023",
+      "notas": { "call": 60, "sangf": 65 }
+    },
+    "pit": {
+      "id": "ferrari-2023-pit",
+      "notas": { "pitTempo": 85, "pitErro": 70 }
+    }
+  },
+  {
+    "equipe": "Mercedes",
+    "ano": 2023,
+    "pilotos": [
+      {
+        "id": "mercedes-2023-piloto-hamilton",
+        "nome": "Lewis Hamilton",
+        "notas": { "rit": 89, "quali": 87, "cons": 88, "ult": 86, "def": 85, "chu": 90, "pneu": 88, "larg": 78, "sf": 90 }
+      },
+      {
+        "id": "mercedes-2023-piloto-russell",
+        "nome": "George Russell",
+        "notas": { "rit": 83, "quali": 85, "cons": 80, "ult": 78, "def": 76, "chu": 76, "pneu": 80, "larg": 80, "sf": 78 }
+      }
+    ],
+    "chassi": {
+      "id": "mercedes-2023-chassi",
+      "notas": { "aero": 80, "mec": 78, "ppeso": 74, "conf": 82, "freio": 80 }
+    },
+    "motor": {
+      "id": "mercedes-2023-motor",
+      "notas": { "motor": 85, "confMotor": 88 }
+    },
+    "estrategista": {
+      "id": "mercedes-2023-estrategista",
+      "nome": "Estrategista Mercedes 2023",
+      "notas": { "call": 85, "sangf": 84 }
+    },
+    "pit": {
+      "id": "mercedes-2023-pit",
+      "notas": { "pitTempo": 84, "pitErro": 82 }
+    }
+  },
+  {
+    "equipe": "McLaren",
+    "ano": 2023,
+    "pilotos": [
+      {
+        "id": "mclaren-2023-piloto-norris",
+        "nome": "Lando Norris",
+        "notas": { "rit": 84, "quali": 83, "cons": 82, "ult": 80, "def": 76, "chu": 74, "pneu": 78, "larg": 76, "sf": 80 }
+      },
+      {
+        "id": "mclaren-2023-piloto-piastri",
+        "nome": "Oscar Piastri",
+        "notas": { "rit": 76, "quali": 78, "cons": 74, "ult": 76, "def": 68, "chu": 68, "pneu": 72, "larg": 74, "sf": 72 }
+      }
+    ],
+    "chassi": {
+      "id": "mclaren-2023-chassi",
+      "notas": { "aero": 78, "mec": 76, "ppeso": 75, "conf": 80, "freio": 76 }
+    },
+    "motor": {
+      "id": "mclaren-2023-motor",
+      "notas": { "motor": 85, "confMotor": 88 }
+    },
+    "estrategista": {
+      "id": "mclaren-2023-estrategista",
+      "nome": "Estrategista McLaren 2023",
+      "notas": { "call": 78, "sangf": 76 }
+    },
+    "pit": {
+      "id": "mclaren-2023-pit",
+      "notas": { "pitTempo": 82, "pitErro": 80 }
+    }
+  },
+  {
+    "equipe": "Aston Martin",
+    "ano": 2023,
+    "pilotos": [
+      {
+        "id": "astonmartin-2023-piloto-alonso",
+        "nome": "Fernando Alonso",
+        "notas": { "rit": 88, "quali": 84, "cons": 90, "ult": 84, "def": 88, "chu": 82, "pneu": 84, "larg": 80, "sf": 92 }
+      },
+      {
+        "id": "astonmartin-2023-piloto-stroll",
+        "nome": "Lance Stroll",
+        "notas": { "rit": 68, "quali": 66, "cons": 65, "ult": 62, "def": 64, "chu": 60, "pneu": 64, "larg": 62, "sf": 62 }
+      }
+    ],
+    "chassi": {
+      "id": "astonmartin-2023-chassi",
+      "notas": { "aero": 76, "mec": 74, "ppeso": 72, "conf": 78, "freio": 75 }
+    },
+    "motor": {
+      "id": "astonmartin-2023-motor",
+      "notas": { "motor": 85, "confMotor": 88 }
+    },
+    "estrategista": {
+      "id": "astonmartin-2023-estrategista",
+      "nome": "Estrategista Aston Martin 2023",
+      "notas": { "call": 76, "sangf": 78 }
+    },
+    "pit": {
+      "id": "astonmartin-2023-pit",
+      "notas": { "pitTempo": 78, "pitErro": 76 }
+    }
+  },
+  {
+    "equipe": "Williams",
+    "ano": 2023,
+    "pilotos": [
+      {
+        "id": "williams-2023-piloto-albon",
+        "nome": "Alexander Albon",
+        "notas": { "rit": 72, "quali": 74, "cons": 76, "ult": 68, "def": 66, "chu": 68, "pneu": 70, "larg": 68, "sf": 72 }
+      },
+      {
+        "id": "williams-2023-piloto-sargeant",
+        "nome": "Logan Sargeant",
+        "notas": { "rit": 50, "quali": 48, "cons": 52, "ult": 46, "def": 48, "chu": 45, "pneu": 50, "larg": 50, "sf": 48 }
+      }
+    ],
+    "chassi": {
+      "id": "williams-2023-chassi",
+      "notas": { "aero": 55, "mec": 58, "ppeso": 60, "conf": 62, "freio": 58 }
+    },
+    "motor": {
+      "id": "williams-2023-motor",
+      "notas": { "motor": 85, "confMotor": 86 }
+    },
+    "estrategista": {
+      "id": "williams-2023-estrategista",
+      "nome": "Estrategista Williams 2023",
+      "notas": { "call": 55, "sangf": 58 }
+    },
+    "pit": {
+      "id": "williams-2023-pit",
+      "notas": { "pitTempo": 60, "pitErro": 62 }
+    }
+  },
+  {
+    "equipe": "Ferrari",
+    "ano": 2004,
+    "pilotos": [
+      {
+        "id": "ferrari-2004-piloto-schumacher",
+        "nome": "Michael Schumacher",
+        "notas": { "rit": 96, "quali": 94, "cons": 92, "ult": 88, "def": 86, "chu": 90, "pneu": 88, "larg": 85, "sf": 95 }
+      },
+      {
+        "id": "ferrari-2004-piloto-barrichello",
+        "nome": "Rubens Barrichello",
+        "notas": { "rit": 85, "quali": 84, "cons": 82, "ult": 80, "def": 78, "chu": 76, "pneu": 78, "larg": 78, "sf": 80 }
+      }
+    ],
+    "chassi": {
+      "id": "ferrari-2004-chassi",
+      "notas": { "aero": 95, "mec": 90, "ppeso": 88, "conf": 92, "freio": 90 }
+    },
+    "motor": {
+      "id": "ferrari-2004-motor",
+      "notas": { "motor": 95, "confMotor": 90 }
+    },
+    "estrategista": {
+      "id": "ferrari-2004-estrategista",
+      "nome": "Ross Brawn",
+      "notas": { "call": 95, "sangf": 90 }
+    },
+    "pit": {
+      "id": "ferrari-2004-pit",
+      "notas": { "pitTempo": 88, "pitErro": 88 }
+    }
+  },
+  {
+    "equipe": "Williams",
+    "ano": 2004,
+    "pilotos": [
+      {
+        "id": "williams-2004-piloto-montoya",
+        "nome": "Juan Pablo Montoya",
+        "notas": { "rit": 86, "quali": 88, "cons": 76, "ult": 84, "def": 74, "chu": 78, "pneu": 74, "larg": 76, "sf": 80 }
+      },
+      {
+        "id": "williams-2004-piloto-r-schumacher",
+        "nome": "Ralf Schumacher",
+        "notas": { "rit": 78, "quali": 78, "cons": 74, "ult": 72, "def": 72, "chu": 70, "pneu": 72, "larg": 74, "sf": 74 }
+      }
+    ],
+    "chassi": {
+      "id": "williams-2004-chassi",
+      "notas": { "aero": 80, "mec": 78, "ppeso": 76, "conf": 74, "freio": 78 }
+    },
+    "motor": {
+      "id": "williams-2004-motor",
+      "notas": { "motor": 90, "confMotor": 78 }
+    },
+    "estrategista": {
+      "id": "williams-2004-estrategista",
+      "nome": "Estrategista Williams 2004",
+      "notas": { "call": 75, "sangf": 74 }
+    },
+    "pit": {
+      "id": "williams-2004-pit",
+      "notas": { "pitTempo": 78, "pitErro": 76 }
+    }
+  },
+  {
+    "equipe": "McLaren",
+    "ano": 2004,
+    "pilotos": [
+      {
+        "id": "mclaren-2004-piloto-raikkonen",
+        "nome": "Kimi Räikkönen",
+        "notas": { "rit": 86, "quali": 85, "cons": 78, "ult": 82, "def": 76, "chu": 78, "pneu": 76, "larg": 74, "sf": 82 }
+      },
+      {
+        "id": "mclaren-2004-piloto-coulthard",
+        "nome": "David Coulthard",
+        "notas": { "rit": 76, "quali": 76, "cons": 78, "ult": 72, "def": 74, "chu": 72, "pneu": 74, "larg": 74, "sf": 76 }
+      }
+    ],
+    "chassi": {
+      "id": "mclaren-2004-chassi",
+      "notas": { "aero": 74, "mec": 72, "ppeso": 70, "conf": 68, "freio": 74 }
+    },
+    "motor": {
+      "id": "mclaren-2004-motor",
+      "notas": { "motor": 82, "confMotor": 70 }
+    },
+    "estrategista": {
+      "id": "mclaren-2004-estrategista",
+      "nome": "Ron Dennis",
+      "notas": { "call": 76, "sangf": 74 }
+    },
+    "pit": {
+      "id": "mclaren-2004-pit",
+      "notas": { "pitTempo": 76, "pitErro": 74 }
+    }
+  },
+  {
+    "equipe": "Renault",
+    "ano": 2004,
+    "pilotos": [
+      {
+        "id": "renault-2004-piloto-alonso",
+        "nome": "Fernando Alonso",
+        "notas": { "rit": 85, "quali": 83, "cons": 84, "ult": 82, "def": 80, "chu": 78, "pneu": 80, "larg": 78, "sf": 84 }
+      },
+      {
+        "id": "renault-2004-piloto-trulli",
+        "nome": "Jarno Trulli",
+        "notas": { "rit": 76, "quali": 80, "cons": 72, "ult": 70, "def": 68, "chu": 68, "pneu": 70, "larg": 72, "sf": 70 }
+      }
+    ],
+    "chassi": {
+      "id": "renault-2004-chassi",
+      "notas": { "aero": 76, "mec": 74, "ppeso": 74, "conf": 76, "freio": 74 }
+    },
+    "motor": {
+      "id": "renault-2004-motor",
+      "notas": { "motor": 78, "confMotor": 76 }
+    },
+    "estrategista": {
+      "id": "renault-2004-estrategista",
+      "nome": "Flavio Briatore",
+      "notas": { "call": 80, "sangf": 76 }
+    },
+    "pit": {
+      "id": "renault-2004-pit",
+      "notas": { "pitTempo": 76, "pitErro": 74 }
+    }
+  },
+  {
+    "equipe": "Sauber",
+    "ano": 2004,
+    "pilotos": [
+      {
+        "id": "sauber-2004-piloto-massa",
+        "nome": "Felipe Massa",
+        "notas": { "rit": 68, "quali": 70, "cons": 62, "ult": 66, "def": 60, "chu": 62, "pneu": 62, "larg": 64, "sf": 62 }
+      },
+      {
+        "id": "sauber-2004-piloto-fisichella",
+        "nome": "Giancarlo Fisichella",
+        "notas": { "rit": 70, "quali": 72, "cons": 68, "ult": 68, "def": 66, "chu": 65, "pneu": 66, "larg": 68, "sf": 68 }
+      }
+    ],
+    "chassi": {
+      "id": "sauber-2004-chassi",
+      "notas": { "aero": 66, "mec": 64, "ppeso": 65, "conf": 68, "freio": 64 }
+    },
+    "motor": {
+      "id": "sauber-2004-motor",
+      "notas": { "motor": 82, "confMotor": 78 }
+    },
+    "estrategista": {
+      "id": "sauber-2004-estrategista",
+      "nome": "Estrategista Sauber 2004",
+      "notas": { "call": 62, "sangf": 64 }
+    },
+    "pit": {
+      "id": "sauber-2004-pit",
+      "notas": { "pitTempo": 64, "pitErro": 62 }
+    }
+  },
+  {
+    "equipe": "Minardi",
+    "ano": 2004,
+    "pilotos": [
+      {
+        "id": "minardi-2004-piloto-bruni",
+        "nome": "Gianmaria Bruni",
+        "notas": { "rit": 48, "quali": 46, "cons": 50, "ult": 44, "def": 44, "chu": 42, "pneu": 46, "larg": 46, "sf": 48 }
+      },
+      {
+        "id": "minardi-2004-piloto-baumgartner",
+        "nome": "Zsolt Baumgartner",
+        "notas": { "rit": 44, "quali": 42, "cons": 46, "ult": 40, "def": 42, "chu": 40, "pneu": 42, "larg": 44, "sf": 44 }
+      }
+    ],
+    "chassi": {
+      "id": "minardi-2004-chassi",
+      "notas": { "aero": 48, "mec": 46, "ppeso": 50, "conf": 52, "freio": 46 }
+    },
+    "motor": {
+      "id": "minardi-2004-motor",
+      "notas": { "motor": 55, "confMotor": 58 }
+    },
+    "estrategista": {
+      "id": "minardi-2004-estrategista",
+      "nome": "Estrategista Minardi 2004",
+      "notas": { "call": 48, "sangf": 50 }
+    },
+    "pit": {
+      "id": "minardi-2004-pit",
+      "notas": { "pitTempo": 50, "pitErro": 52 }
+    }
+  },
+  {
+    "equipe": "McLaren",
+    "ano": 1998,
+    "pilotos": [
+      {
+        "id": "mclaren-1998-piloto-hakkinen",
+        "nome": "Mika Häkkinen",
+        "notas": { "rit": 92, "quali": 93, "cons": 86, "ult": 84, "def": 82, "chu": 84, "pneu": 82, "larg": 80, "sf": 90 }
+      },
+      {
+        "id": "mclaren-1998-piloto-coulthard",
+        "nome": "David Coulthard",
+        "notas": { "rit": 82, "quali": 82, "cons": 80, "ult": 76, "def": 76, "chu": 76, "pneu": 76, "larg": 76, "sf": 78 }
+      }
+    ],
+    "chassi": {
+      "id": "mclaren-1998-chassi",
+      "notas": { "aero": 94, "mec": 88, "ppeso": 86, "conf": 88, "freio": 90 }
+    },
+    "motor": {
+      "id": "mclaren-1998-motor",
+      "notas": { "motor": 90, "confMotor": 86 }
+    },
+    "estrategista": {
+      "id": "mclaren-1998-estrategista",
+      "nome": "Ron Dennis",
+      "notas": { "call": 90, "sangf": 86 }
+    },
+    "pit": {
+      "id": "mclaren-1998-pit",
+      "notas": { "pitTempo": 86, "pitErro": 84 }
+    }
+  },
+  {
+    "equipe": "Ferrari",
+    "ano": 1998,
+    "pilotos": [
+      {
+        "id": "ferrari-1998-piloto-schumacher",
+        "nome": "Michael Schumacher",
+        "notas": { "rit": 94, "quali": 92, "cons": 88, "ult": 86, "def": 84, "chu": 88, "pneu": 84, "larg": 84, "sf": 92 }
+      },
+      {
+        "id": "ferrari-1998-piloto-irvine",
+        "nome": "Eddie Irvine",
+        "notas": { "rit": 76, "quali": 76, "cons": 74, "ult": 72, "def": 72, "chu": 70, "pneu": 72, "larg": 72, "sf": 74 }
+      }
+    ],
+    "chassi": {
+      "id": "ferrari-1998-chassi",
+      "notas": { "aero": 88, "mec": 84, "ppeso": 80, "conf": 82, "freio": 84 }
+    },
+    "motor": {
+      "id": "ferrari-1998-motor",
+      "notas": { "motor": 88, "confMotor": 84 }
+    },
+    "estrategista": {
+      "id": "ferrari-1998-estrategista",
+      "nome": "Jean Todt",
+      "notas": { "call": 86, "sangf": 84 }
+    },
+    "pit": {
+      "id": "ferrari-1998-pit",
+      "notas": { "pitTempo": 84, "pitErro": 82 }
+    }
+  },
+  {
+    "equipe": "Williams",
+    "ano": 1998,
+    "pilotos": [
+      {
+        "id": "williams-1998-piloto-villeneuve",
+        "nome": "Jacques Villeneuve",
+        "notas": { "rit": 78, "quali": 80, "cons": 72, "ult": 74, "def": 70, "chu": 74, "pneu": 70, "larg": 72, "sf": 74 }
+      },
+      {
+        "id": "williams-1998-piloto-frentzen",
+        "nome": "Heinz-Harald Frentzen",
+        "notas": { "rit": 74, "quali": 76, "cons": 70, "ult": 68, "def": 68, "chu": 68, "pneu": 68, "larg": 70, "sf": 68 }
+      }
+    ],
+    "chassi": {
+      "id": "williams-1998-chassi",
+      "notas": { "aero": 76, "mec": 74, "ppeso": 72, "conf": 74, "freio": 74 }
+    },
+    "motor": {
+      "id": "williams-1998-motor",
+      "notas": { "motor": 74, "confMotor": 72 }
+    },
+    "estrategista": {
+      "id": "williams-1998-estrategista",
+      "nome": "Estrategista Williams 1998",
+      "notas": { "call": 72, "sangf": 70 }
+    },
+    "pit": {
+      "id": "williams-1998-pit",
+      "notas": { "pitTempo": 72, "pitErro": 70 }
+    }
+  },
+  {
+    "equipe": "Benetton",
+    "ano": 1998,
+    "pilotos": [
+      {
+        "id": "benetton-1998-piloto-fisichella",
+        "nome": "Giancarlo Fisichella",
+        "notas": { "rit": 70, "quali": 72, "cons": 66, "ult": 68, "def": 64, "chu": 64, "pneu": 64, "larg": 66, "sf": 64 }
+      },
+      {
+        "id": "benetton-1998-piloto-wurz",
+        "nome": "Alexander Wurz",
+        "notas": { "rit": 66, "quali": 66, "cons": 64, "ult": 62, "def": 62, "chu": 60, "pneu": 62, "larg": 62, "sf": 62 }
+      }
+    ],
+    "chassi": {
+      "id": "benetton-1998-chassi",
+      "notas": { "aero": 68, "mec": 66, "ppeso": 66, "conf": 68, "freio": 66 }
+    },
+    "motor": {
+      "id": "benetton-1998-motor",
+      "notas": { "motor": 70, "confMotor": 68 }
+    },
+    "estrategista": {
+      "id": "benetton-1998-estrategista",
+      "nome": "Estrategista Benetton 1998",
+      "notas": { "call": 64, "sangf": 62 }
+    },
+    "pit": {
+      "id": "benetton-1998-pit",
+      "notas": { "pitTempo": 64, "pitErro": 62 }
+    }
+  },
+  {
+    "equipe": "Minardi",
+    "ano": 1998,
+    "pilotos": [
+      {
+        "id": "minardi-1998-piloto-tuero",
+        "nome": "Esteban Tuero",
+        "notas": { "rit": 44, "quali": 42, "cons": 46, "ult": 40, "def": 40, "chu": 38, "pneu": 42, "larg": 42, "sf": 42 }
+      },
+      {
+        "id": "minardi-1998-piloto-nakano",
+        "nome": "Shinji Nakano",
+        "notas": { "rit": 46, "quali": 44, "cons": 48, "ult": 42, "def": 44, "chu": 40, "pneu": 44, "larg": 44, "sf": 44 }
+      }
+    ],
+    "chassi": {
+      "id": "minardi-1998-chassi",
+      "notas": { "aero": 48, "mec": 46, "ppeso": 48, "conf": 50, "freio": 46 }
+    },
+    "motor": {
+      "id": "minardi-1998-motor",
+      "notas": { "motor": 54, "confMotor": 56 }
+    },
+    "estrategista": {
+      "id": "minardi-1998-estrategista",
+      "nome": "Estrategista Minardi 1998",
+      "notas": { "call": 46, "sangf": 48 }
+    },
+    "pit": {
+      "id": "minardi-1998-pit",
+      "notas": { "pitTempo": 48, "pitErro": 50 }
+    }
+  },
+  {
+    "equipe": "Williams",
+    "ano": 1993,
+    "pilotos": [
+      {
+        "id": "williams-1993-piloto-prost",
+        "nome": "Alain Prost",
+        "notas": { "rit": 92, "quali": 94, "cons": 90, "ult": 82, "def": 84, "chu": 84, "pneu": 86, "larg": 78, "sf": 92 }
+      },
+      {
+        "id": "williams-1993-piloto-hill",
+        "nome": "Damon Hill",
+        "notas": { "rit": 78, "quali": 80, "cons": 76, "ult": 72, "def": 74, "chu": 72, "pneu": 74, "larg": 74, "sf": 76 }
+      }
+    ],
+    "chassi": {
+      "id": "williams-1993-chassi",
+      "notas": { "aero": 96, "mec": 90, "ppeso": 86, "conf": 86, "freio": 88 }
+    },
+    "motor": {
+      "id": "williams-1993-motor",
+      "notas": { "motor": 92, "confMotor": 84 }
+    },
+    "estrategista": {
+      "id": "williams-1993-estrategista",
+      "nome": "Patrick Head",
+      "notas": { "call": 88, "sangf": 84 }
+    },
+    "pit": {
+      "id": "williams-1993-pit",
+      "notas": { "pitTempo": 82, "pitErro": 80 }
+    }
+  },
+  {
+    "equipe": "McLaren",
+    "ano": 1993,
+    "pilotos": [
+      {
+        "id": "mclaren-1993-piloto-senna",
+        "nome": "Ayrton Senna",
+        "notas": { "rit": 95, "quali": 95, "cons": 88, "ult": 92, "def": 88, "chu": 96, "pneu": 84, "larg": 80, "sf": 94 }
+      },
+      {
+        "id": "mclaren-1993-piloto-hakkinen",
+        "nome": "Mika Häkkinen",
+        "notas": { "rit": 70, "quali": 72, "cons": 66, "ult": 68, "def": 64, "chu": 66, "pneu": 64, "larg": 66, "sf": 66 }
+      }
+    ],
+    "chassi": {
+      "id": "mclaren-1993-chassi",
+      "notas": { "aero": 78, "mec": 76, "ppeso": 74, "conf": 76, "freio": 78 }
+    },
+    "motor": {
+      "id": "mclaren-1993-motor",
+      "notas": { "motor": 76, "confMotor": 74 }
+    },
+    "estrategista": {
+      "id": "mclaren-1993-estrategista",
+      "nome": "Ron Dennis",
+      "notas": { "call": 82, "sangf": 80 }
+    },
+    "pit": {
+      "id": "mclaren-1993-pit",
+      "notas": { "pitTempo": 78, "pitErro": 76 }
+    }
+  },
+  {
+    "equipe": "Benetton",
+    "ano": 1993,
+    "pilotos": [
+      {
+        "id": "benetton-1993-piloto-schumacher",
+        "nome": "Michael Schumacher",
+        "notas": { "rit": 84, "quali": 82, "cons": 80, "ult": 78, "def": 76, "chu": 78, "pneu": 76, "larg": 74, "sf": 82 }
+      },
+      {
+        "id": "benetton-1993-piloto-patrese",
+        "nome": "Riccardo Patrese",
+        "notas": { "rit": 70, "quali": 70, "cons": 72, "ult": 66, "def": 68, "chu": 66, "pneu": 68, "larg": 68, "sf": 70 }
+      }
+    ],
+    "chassi": {
+      "id": "benetton-1993-chassi",
+      "notas": { "aero": 74, "mec": 76, "ppeso": 74, "conf": 74, "freio": 74 }
+    },
+    "motor": {
+      "id": "benetton-1993-motor",
+      "notas": { "motor": 78, "confMotor": 74 }
+    },
+    "estrategista": {
+      "id": "benetton-1993-estrategista",
+      "nome": "Flavio Briatore",
+      "notas": { "call": 76, "sangf": 72 }
+    },
+    "pit": {
+      "id": "benetton-1993-pit",
+      "notas": { "pitTempo": 74, "pitErro": 72 }
+    }
+  },
+  {
+    "equipe": "Ferrari",
+    "ano": 1993,
+    "pilotos": [
+      {
+        "id": "ferrari-1993-piloto-alesi",
+        "nome": "Jean Alesi",
+        "notas": { "rit": 74, "quali": 76, "cons": 66, "ult": 74, "def": 64, "chu": 70, "pneu": 64, "larg": 68, "sf": 70 }
+      },
+      {
+        "id": "ferrari-1993-piloto-berger",
+        "nome": "Gerhard Berger",
+        "notas": { "rit": 70, "quali": 70, "cons": 68, "ult": 66, "def": 66, "chu": 64, "pneu": 64, "larg": 66, "sf": 66 }
+      }
+    ],
+    "chassi": {
+      "id": "ferrari-1993-chassi",
+      "notas": { "aero": 66, "mec": 64, "ppeso": 64, "conf": 62, "freio": 66 }
+    },
+    "motor": {
+      "id": "ferrari-1993-motor",
+      "notas": { "motor": 72, "confMotor": 64 }
+    },
+    "estrategista": {
+      "id": "ferrari-1993-estrategista",
+      "nome": "Estrategista Ferrari 1993",
+      "notas": { "call": 58, "sangf": 60 }
+    },
+    "pit": {
+      "id": "ferrari-1993-pit",
+      "notas": { "pitTempo": 62, "pitErro": 60 }
+    }
+  },
+  {
+    "equipe": "Minardi",
+    "ano": 1993,
+    "pilotos": [
+      {
+        "id": "minardi-1993-piloto-fittipaldi",
+        "nome": "Christian Fittipaldi",
+        "notas": { "rit": 46, "quali": 44, "cons": 48, "ult": 42, "def": 44, "chu": 40, "pneu": 44, "larg": 44, "sf": 44 }
+      },
+      {
+        "id": "minardi-1993-piloto-barbazza",
+        "nome": "Fabrizio Barbazza",
+        "notas": { "rit": 42, "quali": 40, "cons": 44, "ult": 38, "def": 40, "chu": 36, "pneu": 40, "larg": 40, "sf": 40 }
+      }
+    ],
+    "chassi": {
+      "id": "minardi-1993-chassi",
+      "notas": { "aero": 46, "mec": 48, "ppeso": 50, "conf": 52, "freio": 46 }
+    },
+    "motor": {
+      "id": "minardi-1993-motor",
+      "notas": { "motor": 52, "confMotor": 54 }
+    },
+    "estrategista": {
+      "id": "minardi-1993-estrategista",
+      "nome": "Estrategista Minardi 1993",
+      "notas": { "call": 46, "sangf": 48 }
+    },
+    "pit": {
+      "id": "minardi-1993-pit",
+      "notas": { "pitTempo": 48, "pitErro": 50 }
+    }
+  }
+]

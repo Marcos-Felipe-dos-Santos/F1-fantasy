@@ -1,0 +1,102 @@
+[
+  {
+    "id": "pista-monaco",
+    "nome": "Mônaco",
+    "pesos": { "aero": 0.35, "mec": 0.55, "motor": 0.1 },
+    "ultrapassagem": "dificil",
+    "chanceChuva": 0.15,
+    "voltas": 15,
+    "tempoBaseMs": 78000,
+    "desgaste": 25
+  },
+  {
+    "id": "pista-spa",
+    "nome": "Spa-Francorchamps",
+    "pesos": { "aero": 0.35, "mec": 0.2, "motor": 0.45 },
+    "ultrapassagem": "media",
+    "chanceChuva": 0.55,
+    "voltas": 12,
+    "tempoBaseMs": 106000,
+    "desgaste": 50
+  },
+  {
+    "id": "pista-monza",
+    "nome": "Monza",
+    "pesos": { "aero": 0.15, "mec": 0.15, "motor": 0.7 },
+    "ultrapassagem": "facil",
+    "chanceChuva": 0.2,
+    "voltas": 14,
+    "tempoBaseMs": 82000,
+    "desgaste": 25
+  },
+  {
+    "id": "pista-silverstone",
+    "nome": "Silverstone",
+    "pesos": { "aero": 0.55, "mec": 0.2, "motor": 0.25 },
+    "ultrapassagem": "media",
+    "chanceChuva": 0.35,
+    "voltas": 13,
+    "tempoBaseMs": 88000,
+    "desgaste": 75
+  },
+  {
+    "id": "pista-suzuka",
+    "nome": "Suzuka",
+    "pesos": { "aero": 0.45, "mec": 0.35, "motor": 0.2 },
+    "ultrapassagem": "dificil",
+    "chanceChuva": 0.3,
+    "voltas": 14,
+    "tempoBaseMs": 92000,
+    "desgaste": 75
+  },
+  {
+    "id": "pista-interlagos",
+    "nome": "Interlagos",
+    "pesos": { "aero": 0.3, "mec": 0.35, "motor": 0.35 },
+    "ultrapassagem": "facil",
+    "chanceChuva": 0.6,
+    "voltas": 12,
+    "tempoBaseMs": 70000,
+    "desgaste": 50
+  },
+  {
+    "id": "pista-nurburgring",
+    "nome": "Nürburgring (Nordschleife)",
+    "pesos": { "aero": 0.3, "mec": 0.4, "motor": 0.3 },
+    "ultrapassagem": "media",
+    "chanceChuva": 0.55,
+    "voltas": 10,
+    "tempoBaseMs": 420000,
+    "desgaste": 75
+  },
+  {
+    "id": "pista-imola",
+    "nome": "Imola",
+    "pesos": { "aero": 0.45, "mec": 0.35, "motor": 0.2 },
+    "ultrapassagem": "dificil",
+    "chanceChuva": 0.3,
+    "voltas": 14,
+    "tempoBaseMs": 76000,
+    "desgaste": 50
+  },
+  {
+    "id": "pista-red-bull-ring",
+    "nome": "Red Bull Ring",
+    "pesos": { "aero": 0.25, "mec": 0.25, "motor": 0.5 },
+    "ultrapassagem": "facil",
+    "chanceChuva": 0.25,
+    "voltas": 15,
+    "tempoBaseMs": 66000,
+    "desgaste": 25
+  },
+  {
+    "id": "pista-montreal",
+    "nome": "Montreal (Gilles Villeneuve)",
+    "pesos": { "aero": 0.2, "mec": 0.3, "motor": 0.5 },
+    "ultrapassagem": "facil",
+    "chanceChuva": 0.3,
+    "voltas": 13,
+    "tempoBaseMs": 74000,
+    "desgaste": 75
+  }
+]
