@@ -54,6 +54,16 @@ export default tseslint.config(
           property: 'random',
           message: 'Proibido em engine/: use o RNG semeado de engine/rng.ts.',
         },
+        {
+          object: 'Date',
+          property: 'now',
+          message: 'Proibido em engine/: determinismo — nada de relógio na engine.',
+        },
+        {
+          object: 'performance',
+          property: 'now',
+          message: 'Proibido em engine/: determinismo — nada de relógio na engine.',
+        },
       ],
     },
   },
