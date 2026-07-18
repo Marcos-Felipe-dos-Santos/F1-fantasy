@@ -14,11 +14,12 @@
 
 **Testes na main: 81 passando** (8 arquivos). Lint e `tsc --noEmit` limpos.
 
-## Pendências sinalizadas pra decisão do dev
+## Metas de calibração (decididas pelo dev em 2026-07-18 — executar no PR 1.6)
 
-1. **Balance-harness adiado**: PRs 1.3/1.4 introduzem `QUALI_CONFIG`/`CORRIDA_CONFIG` sem rodada de harness (ele só nasce no PR 1.6). Os valores atuais são chute inicial declarado. O senior-reviewer pediu confirmação explícita do dev sobre esse adiamento.
-2. **Sinal de grid fraco por design**: com as constantes atuais, quem larga na frente (carros idênticos, Mônaco) vence só ~61/100 seeds — o offset único de largada é lavado pela variância de 15 voltas. O teste é direcional (frente > atrás); se o dev quiser grid pesando mais (GDD §9), calibrar `gridOffsetMs`/`variancia` no PR 1.6.
-3. Em pistas de desgaste alto, parada extra ocorre em ~10% dos casos com piloto de PNEU baixo — verificar no harness se o GDD §9 ("desgaste alto força paradas extras") pede frequência maior (`limiarPneuGasto`).
+1. **Adiamento do harness confirmado** — PRs 1.3/1.4/1.5 entram com constantes-chute; o PR 1.6 calibra tudo.
+2. **Sinal de grid**: 61/100 é fraco demais. Meta: pole com carro idêntico vence **claramente mais que 61% e bem menos que 95%** (alvo ~70-80%). Direção: subir `gridOffsetMs` e/ou baixar `variancia`. O harness DEVE medir a taxa de vitória do pole e reportar se ainda está fraca.
+3. **Parada extra em desgaste Alto (75)**: 10% é baixo pro "força paradas extras" do GDD §9. Meta: a **maioria dos carros** (~40-60%, variando pelo PNEU do piloto) faz 2+ paradas em pista de desgaste Alto. Direção: baixar `limiarPneuGasto` ou subir a curva de degradação.
+4. Harness também reporta: win-rate por raridade de peça (guarda contra peça dominante, GDD §14.3).
 
 ## Próximos
 
