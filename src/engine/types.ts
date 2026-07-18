@@ -298,6 +298,8 @@ export interface ResultadoCorrida {
     posicao: number;
     pontos: number;
     tempoTotal: number;
+    /** Número de pit stops feitos por este carro (mínimo 1, §10). */
+    paradas: number;
   }[];
   voltaMaisRapida: {
     jogadorId: string;

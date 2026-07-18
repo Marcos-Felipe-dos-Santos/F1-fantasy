@@ -134,8 +134,8 @@ export const loadoutFixture: Loadout = {
 export const resultadoCorridaFixture: ResultadoCorrida = {
   seed: 12345,
   classificacao: [
-    { jogadorId: 'jogador-1', posicao: 1, pontos: 25, tempoTotal: 5423.1 },
-    { jogadorId: 'jogador-2', posicao: 2, pontos: 18, tempoTotal: 5430.7 },
+    { jogadorId: 'jogador-1', posicao: 1, pontos: 25, tempoTotal: 5423.1, paradas: 1 },
+    { jogadorId: 'jogador-2', posicao: 2, pontos: 18, tempoTotal: 5430.7, paradas: 2 },
   ],
   voltaMaisRapida: { jogadorId: 'jogador-2', tempo: 71.234 },
 };
