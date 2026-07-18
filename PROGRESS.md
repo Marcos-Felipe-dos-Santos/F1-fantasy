@@ -10,15 +10,19 @@
 - **PR 1.2** — Draft (`src/engine/draft.ts`): reducer puro de 5 sorteios de equipe/ano + rodada 6 de peça com escassez (2 cópias) + bots por seed (`bots.ts`).
 - **PR 1.3** — Quali (`src/engine/quali.ts` + `carro.ts`): `resolverCarro` (Loadout → notas efetivas com bônus de peça, sem clamp) e `simularQuali` (score 0.5·QUALI + 0.4·carro ponderado pela pista + 0.1·CALL, variância semeada por sub-stream `quali:${jogadorId}`, desempate por jogadorId). Seed de ouro congelada (seed 42, Monza). Revisado pelo senior-reviewer (aprovado; aviso das listas de chaves paralelas corrigido com checagem `in`).
 
-**Testes na main: 68 passando** (7 arquivos). Lint e `tsc --noEmit` limpos.
+- **PR 1.4** — Corrida (`src/engine/corrida.ts`): simulação por carro independente, tempo por volta (0.5·RIT + 0.4·carro ponderado + 0.1·CALL, variância por sub-stream `corrida:${jogadorId}`), degradação por DESGASTE da pista atenuada por PNEU, pit obrigatório com janela por CALL + paradas extras por limiar de desgaste, custo de pit por PIT_TEMPO/PIT_ERRO, volta 1 com offset de grid (por dificuldade de ultrapassagem) + penalidade de LARG, pontuação FIA + volta mais rápida do grid inteiro (+1, desempate por posição final). Campo `paradas` adicionado a `ResultadoCorrida.classificacao`. Seed de ouro congelada (seed 42, Monza). Sem incidentes/DNF/clima (PR 1.5). Revisado pelo senior-reviewer (aprovado sem bloqueantes).
 
-## Em andamento
+**Testes na main: 81 passando** (8 arquivos). Lint e `tsc --noEmit` limpos.
 
-- **PR 1.4 — Corrida** (`src/engine/corrida.ts`): tempo por volta (RIT + carro ponderado + variância), degradação de pneu por DESGASTE da pista atenuada por PNEU, pit obrigatório com janela por CALL + paradas extras forçadas por desgaste, custo de pit por PIT_TEMPO/PIT_ERRO, offset de grid na largada (LARG), pontuação FIA + volta mais rápida do grid inteiro (+1 ponto, desempate por posição final). Sem incidentes (ficam no PR 1.5).
+## Pendências sinalizadas pra decisão do dev
+
+1. **Balance-harness adiado**: PRs 1.3/1.4 introduzem `QUALI_CONFIG`/`CORRIDA_CONFIG` sem rodada de harness (ele só nasce no PR 1.6). Os valores atuais são chute inicial declarado. O senior-reviewer pediu confirmação explícita do dev sobre esse adiamento.
+2. **Sinal de grid fraco por design**: com as constantes atuais, quem larga na frente (carros idênticos, Mônaco) vence só ~61/100 seeds — o offset único de largada é lavado pela variância de 15 voltas. O teste é direcional (frente > atrás); se o dev quiser grid pesando mais (GDD §9), calibrar `gridOffsetMs`/`variancia` no PR 1.6.
+3. Em pistas de desgaste alto, parada extra ocorre em ~10% dos casos com piloto de PNEU baixo — verificar no harness se o GDD §9 ("desgaste alto força paradas extras") pede frequência maior (`limiarPneuGasto`).
 
 ## Próximos
 
-- **PR 1.5** — Incidentes (CONS, CONF, CONF_MOTOR, risco de peça, clima) + registro de eventos.
+- **PR 1.5 (próximo)** — Incidentes (CONS, CONF, CONF_MOTOR, risco de peça, clima) + registro de eventos.
 - **PR 1.6** — `scripts/balance.ts` (balance-harness). **Nota:** as constantes `QUALI_CONFIG`/`CORRIDA_CONFIG` foram expostas justamente pra esse harness calibrar; os valores atuais são chute inicial.
 - **PR 1.7** — UI mínima do Single.
 
