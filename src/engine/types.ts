@@ -49,42 +49,45 @@ export interface Piloto {
   notas: NotasPiloto;
 }
 
-/** Notas de um carro/equipe por ano (§6, seção "Carro/Equipe"). */
-export interface NotasCarro {
+/** Notas de um chassi por equipe/ano (§6, seção "Chassi"). */
+export interface NotasChassi {
   /** Downforce (curva rápida e média). */
   aero: Nota;
   /** Grip mecânico (curva lenta). */
   mec: Nota;
-  /** Potência (reta). */
-  motor: Nota;
   /** Peso / agilidade. */
   ppeso: Nota;
-  /** Confiabilidade (chance de quebra). */
+  /** Confiabilidade do chassi (chance de quebra mecânica). */
   conf: Nota;
   /** Frenagem. */
   freio: Nota;
 }
 
-/** Um carro, ligado a uma equipe/ano específicos (§3, §6). */
-export interface Carro {
+/** Um chassi, ligado a uma equipe/ano específicos, com sorteio próprio (§3, §6). */
+export interface Chassi {
   id: string;
   equipe: string;
   ano: number;
-  notas: NotasCarro;
+  notas: NotasChassi;
+}
+
+/** Notas de um motor por equipe/ano (§6, seção "Motor"). */
+export interface NotasMotor {
+  /** Potência (reta). */
+  motor: Nota;
+  /** Confiabilidade do motor (chance de quebra de motor). */
+  confMotor: Nota;
 }
 
 /**
- * Um motor. Separado do Carro porque o draft sorteia piloto e motor
- * independentemente (§3). Potência/confiabilidade próprias do motor (§6).
+ * Um motor, ligado a uma equipe/ano específicos, com sorteio próprio,
+ * independente do chassi e do piloto (§3, §6).
  */
 export interface Motor {
   id: string;
   equipe: string;
   ano: number;
-  /** Potência do motor. */
-  potencia: Nota;
-  /** Confiabilidade do motor. */
-  conf: Nota;
+  notas: NotasMotor;
 }
 
 /** Um estrategista, de escolha livre no draft (§3, §6). */
@@ -117,8 +120,8 @@ export interface EquipePit {
 /** Escala de raridade de peças icônicas (§7). */
 export type Raridade = 'comum' | 'raro' | 'epico' | 'lendario' | 'proibido';
 
-/** Atributo do carro ou do piloto que uma peça pode turbinar (§6, §7). */
-export type AtributoAlvo = keyof NotasPiloto | keyof NotasCarro;
+/** Atributo do piloto, chassi ou motor que uma peça pode turbinar (§6, §7). */
+export type AtributoAlvo = keyof NotasPiloto | keyof NotasChassi | keyof NotasMotor;
 
 /**
  * Peça icônica (§7). `atributosAlvo` é array porque há peças de 2 atributos
@@ -160,15 +163,15 @@ export interface Pista {
  * Loadout de um jogador: referências por id às peças escolhidas no draft
  * (§3). Resolução id→objeto é helper de PR futuro.
  *
- * Regra de derivação (§3): o carro/chassi vem junto do sorteio do piloto —
- * mesmo ano+equipe. O motor é o único outro componente com sorteio
- * independente. `carroId` existe separado por conveniência de lookup, mas o
- * draft (Fase 1) deve derivá-lo do sorteio do piloto, nunca sortear à parte.
+ * Estrutura do draft (§3): **3 sorteios independentes** de ano+equipe
+ * (piloto, chassi, motor — cada um pode cair de uma era diferente) +
+ * **2 escolhas livres** (estrategista, equipe de pit) + **1 peça icônica**
+ * (pool compartilhado, 2 cópias por peça). Nenhum componente deriva de outro.
  */
 export interface Loadout {
   jogadorId: string;
   pilotoId: string;
-  carroId: string;
+  chassiId: string;
   motorId: string;
   estrategistaId: string;
   pitId: string;

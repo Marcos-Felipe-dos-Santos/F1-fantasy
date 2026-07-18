@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type {
-  Carro,
+  Chassi,
   Estrategista,
   EquipePit,
   Loadout,
@@ -18,12 +18,13 @@ import type {
  * material dos PRs 1.x.
  */
 
-// Titular fictício de Lotus 1978, inspirado em Mario Andretti / Ronnie Peterson.
+// Fixtures seguem o exemplo canônico do §3: piloto Red Bull 2023 +
+// chassi Lotus 1978 + motor Ferrari 2004 — três sorteios, três eras.
 export const pilotoFixture: Piloto = {
-  id: 'piloto-lotus-1978-1',
-  nome: 'Piloto Lotus 1978',
-  equipe: 'Lotus',
-  ano: 1978,
+  id: 'piloto-redbull-2023-1',
+  nome: 'Piloto Red Bull 2023',
+  equipe: 'Red Bull',
+  ano: 2023,
   notas: {
     rit: 88,
     quali: 90,
@@ -37,14 +38,13 @@ export const pilotoFixture: Piloto = {
   },
 };
 
-export const carroFixture: Carro = {
-  id: 'carro-lotus-79-1978',
+export const chassiFixture: Chassi = {
+  id: 'chassi-lotus-79-1978',
   equipe: 'Lotus',
   ano: 1978,
   notas: {
     aero: 92,
     mec: 74,
-    motor: 70,
     ppeso: 75,
     conf: 68,
     freio: 71,
@@ -52,11 +52,13 @@ export const carroFixture: Carro = {
 };
 
 export const motorFixture: Motor = {
-  id: 'motor-cosworth-dfv-1978',
-  equipe: 'Lotus',
-  ano: 1978,
-  potencia: 72,
-  conf: 70,
+  id: 'motor-ferrari-2004',
+  equipe: 'Ferrari',
+  ano: 2004,
+  notas: {
+    motor: 94,
+    confMotor: 88,
+  },
 };
 
 export const estrategistaFixture: Estrategista = {
@@ -115,7 +117,7 @@ export const pistaFixture: Pista = {
 export const loadoutFixture: Loadout = {
   jogadorId: 'jogador-1',
   pilotoId: pilotoFixture.id,
-  carroId: carroFixture.id,
+  chassiId: chassiFixture.id,
   motorId: motorFixture.id,
   estrategistaId: estrategistaFixture.id,
   pitId: equipePitFixture.id,
@@ -153,7 +155,17 @@ describe('tipos base da engine (PR 0.3)', () => {
 
   it('loadout referencia os ids das fixtures por string', () => {
     expect(loadoutFixture.pilotoId).toBe(pilotoFixture.id);
+    expect(loadoutFixture.chassiId).toBe(chassiFixture.id);
     expect(loadoutFixture.pecaId).toBe(pecaDuplaFixture.id);
+  });
+
+  it('sorteios independentes permitem 3 eras distintas no mesmo loadout (§3)', () => {
+    const componentes = [pilotoFixture, chassiFixture, motorFixture];
+    expect(loadoutFixture.pilotoId).toBe(pilotoFixture.id);
+    expect(loadoutFixture.chassiId).toBe(chassiFixture.id);
+    expect(loadoutFixture.motorId).toBe(motorFixture.id);
+    expect(new Set(componentes.map((c) => c.ano)).size).toBe(3);
+    expect(new Set(componentes.map((c) => c.equipe)).size).toBe(3);
   });
 
   it('resultado de corrida traz classificação e volta mais rápida do grid inteiro (§10)', () => {

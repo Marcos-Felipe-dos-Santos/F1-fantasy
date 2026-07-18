@@ -32,9 +32,10 @@ O carro é montado em dois tipos de etapa: **sorteios individuais** (a sorte dec
 
 ### 🎰 Sorteio individual de Ano + Equipe (um por componente, independente por jogador):
 - **Piloto** — cai um ano+equipe → escolhe **1 dos 2 titulares** daquele time naquele ano.
-- **Motor** — cai um ano+equipe → usa o motor daquela equipe/ano.
+- **Chassi** — cai um ano+equipe → usa o chassi (carro) daquela equipe/ano. Carrega AERO, MEC, PPESO, CONF, FREIO (§6).
+- **Motor** — cai um ano+equipe → usa o motor daquela equipe/ano. Carrega MOTOR (§6).
 
-Como cada sorteio é independente, há chance de repetir o mesmo ano+equipe — e chance de cair combinações completamente díspares (ex: piloto Red Bull 2023 + motor Toleman 1981). Nenhum jogador consegue "estocar" tudo de uma equipe dominante.
+Como cada sorteio é independente, os três podem cair de eras completamente diferentes (ex: piloto Red Bull 2023 + chassi Lotus 1978 + motor Ferrari 2004). Nenhum jogador consegue "estocar" tudo de uma equipe dominante.
 
 ### 🎯 Escolha livre (sem sorteio, pura decisão):
 - **Estrategista** — pool de arquétipos (O Gênio do Undercut, O Pânico, O Conservador, O Cavalo Doido, O Apostador…). Carrega os atributos **CALL** e **SANGF** (§6).
@@ -44,7 +45,7 @@ Como cada sorteio é independente, há chance de repetir o mesmo ano+equipe — 
 Escolhe **1 peça** do catálogo (§7), de qualquer época. Este é o único passo com **pool compartilhado e escassez** (2 cópias por peça, trava ao vivo no online). Os sorteios de piloto/motor são individuais e não competem entre jogadores.
 
 ### Resultado
-O carro final é um mosaico de eras — piloto de um ano, motor de outro — com estrategista e pit escolhidos a dedo e coroado por uma peça icônica.
+O carro final é um mosaico de até três eras diferentes — piloto de um ano, chassi de outro, motor de um terceiro — com estrategista e pit escolhidos a dedo e coroado por uma peça icônica.
 
 ---
 
@@ -89,15 +90,20 @@ Escala **0-99, normalizadas por época** — um Lotus 1978 nota 90 compete de ig
 | LARG | Largada / reação na luz |
 | SF | Sangue-frio sob pressão |
 
-### Carro/Equipe (por ano)
+### Chassi (sorteio independente)
 | Atributo | Descrição |
 |---|---|
 | AERO | Downforce (curva rápida e média) |
 | MEC | Grip mecânico (curva lenta) |
-| MOTOR | Potência (reta) |
 | PPESO | Peso / agilidade |
-| CONF | Confiabilidade (chance de quebra) |
+| CONF | Confiabilidade do chassi (chance de quebra mecânica) |
 | FREIO | Frenagem |
+
+### Motor (sorteio independente)
+| Atributo | Descrição |
+|---|---|
+| MOTOR | Potência (reta) |
+| CONF_MOTOR | Confiabilidade do motor (chance de quebra de motor) |
 
 ### Estrategista (escolha livre)
 | Atributo | Descrição |
@@ -261,7 +267,7 @@ A corrida é **determinística por seed**. O servidor nunca transmite os 22 carr
 1. **Volume de dados + Modo Cego.** Notas de 1950-2025 = milhares de valores. Plano: gerar com IA, ancoradas em fatos verificáveis (posição no campeonato, vitórias, poles), com spot-check manual. Script de balanceamento obrigatório antes de publicar. Se as notas forem boas, o Modo Cego funciona de graça (quem conhece a história sabe escolher no escuro).
 2. **Direito de imagem.** Nomes de pilotos/equipes reais e liveries exatas são risco jurídico. Em apuração. A engine é agnóstica a nome — dá pra plugar a decisão jurídica depois sem retrabalho.
 3. **Peça forte quebrando o jogo.** Se o bônus da peça for maior que a diferença entre carro top e mediano, a peça decide sozinha. Mitigação: balance-harness + risco técnico calibrado.
-4. **Variância de sorte entre sorteios.** Piloto e motor são sorteados independentemente — um jogador pode ter azar nos dois. Mitigação: medir no balance-harness se a "sorte total do sorteio" explica demais do resultado; se sim, aumentar peso das escolhas de habilidade.
+4. **Variância de sorte entre sorteios.** Piloto, chassi e motor são sorteados independentemente — um jogador pode ter azar nos três. Mitigação: medir no balance-harness se a "sorte total dos sorteios" explica demais do resultado; se sim, aumentar peso das escolhas de habilidade.
 5. **Trapaça no cliente.** Simulação determinística no cliente = brecha. Pra jogo casual entre amigos, ok. Pra ranking competitivo, validação no servidor (rodar a corrida da seed e conferir). Ranking fica pra depois.
 6. **Condição de corrida na última cópia.** Dois jogadores clicam na 2ª cópia ao mesmo tempo. Mitigação: trava autoritativa no servidor (quem chega primeiro leva).
 7. **Bots.** Bot "pra ganhar" burro fica fácil; bom demais frustra. Precisa de tuning iterativo.
