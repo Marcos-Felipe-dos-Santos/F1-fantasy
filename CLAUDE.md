@@ -1,0 +1,50 @@
+# F1 Fantasy — Projeto (memória do Claude Code)
+
+Jogo de navegador de draft/simulação de F1 (1950-2025), inspirado nos jogos "7x1" e "38 a 0".
+Este arquivo é a memória sempre-ativa do projeto. As regras aqui são **invioláveis**.
+
+---
+
+## Stack
+- **Engine de simulação:** TypeScript puro, sem dependência de UI. Determinística por seed.
+- **Front-end:** React + Vite + SVG (traçado da pista e carros).
+- **Testes:** Vitest.
+- **Online (fase 3):** PartyKit (Durable Objects na borda da Cloudflare). Corrida roda no cliente; servidor só coordena.
+- **Ambiente do dev:** Windows 11 + PowerShell + Node LTS. Comandos e scripts devem funcionar no PowerShell.
+
+## Arquitetura (não violar)
+- `src/engine/` — lógica pura (draft, notas, simulação). **Nunca importa React nem nada de UI.**
+- `src/ui/` — componentes React. Consome a engine, nunca reimplementa regra de jogo.
+- `src/data/` — dados (JSON): pilotos, equipes, motores, pistas, peças. Sem lógica.
+- `src/net/` — camada PartyKit (fase 3). Isola rede do resto.
+
+## Determinismo (regra crítica)
+- **Proibido `Math.random()` em qualquer lugar da engine.** Toda aleatoriedade vem de um RNG semeado (seed explícita).
+- Mesma seed + mesmos loadouts ⇒ mesma corrida, bit a bit. Isso sustenta o modo online (servidor magro) e o futuro "Desafio do Dia".
+- Funções da engine são puras: entram dados + seed, sai resultado. Sem estado global, sem I/O.
+
+## Regras de git (invioláveis)
+- **NUNCA fazer push sem aprovação explícita do dev.** Nem `git push`, nem abrir PR remoto, sem "ok" claro.
+- PRs **pequenos, testáveis e reversíveis**. Nada de reescrita ampla; uma mudança lógica por PR.
+- **Tag só depois do merge na main.** Nunca criar tag apontando pra commit pré-merge. (erro recorrente a evitar)
+- Commits no estilo convencional (`feat:`, `fix:`, `test:`, `refactor:`, `chore:`).
+
+## Regra de mudança de lógica (invioláveis)
+- Antes de mexer em **lógica de simulação ou de balanceamento**, escrever primeiro um **teste que falha** capturando o comportamento novo pretendido (baseline vermelho). Só então implementar até passar.
+- Mudança de balanceamento sempre acompanhada de rodada do `balance-harness` (ver skill) antes de considerar pronta.
+
+## Fluxo de trabalho preferido
+- **Metodologia e crítica ANTES de implementar.** O dev quer revisar o plano/abordagem antes de escrever código. Não sair codando de primeira.
+- Roteamento de modelos (economia de token é restrição de design):
+  - **Fable 5** (`fable-architect`) — arquitetura, plano, decisões de design, julgamento.
+  - **Opus 4.8** (`senior-reviewer`) — revisão de diff, segurança, correção.
+  - **Sonnet 5** (`junior-dev`) — implementação dos planos aprovados.
+  - **Haiku 4.5** (`scout`) — exploração barata, leitura de arquivos, busca.
+- Sessão principal costuma rodar em Fable pra planejar; implementação é delegada ao `junior-dev` (Sonnet) pra poupar custo.
+
+## Definição de "pronto" (por PR)
+1. Testes passando (incluindo o baseline que começou vermelho, se aplicável).
+2. `balance-harness` rodado, se tocou em nota/lógica de corrida.
+3. Revisado pelo `senior-reviewer`.
+4. Diff pequeno e reversível.
+5. Aprovação explícita do dev antes de qualquer push.
