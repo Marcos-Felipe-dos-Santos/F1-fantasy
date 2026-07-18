@@ -1,14 +1,13 @@
 /**
- * Tipos base da engine (PR 0.3).
+ * Tipos base da engine (PR 0.3; tipos de draft/bots acrescentados no PR 1.2).
  *
  * Módulo folha: zero imports. Só `interface`/`type`/uniões literais — sem
  * classes, sem enums, sem Zod, sem funções. Fonte da verdade dos atributos é
  * o F1_Fantasy_GDD.md (v1.1), seções §3 (draft), §6 (notas), §7 (peças/raridade),
- * §9 (pistas) e §10 (corrida).
+ * §9 (pistas), §10 (corrida) e §12 (bots).
  *
  * Excluído de propósito deste PR (fica pra PRs futuros):
  * - Incidentes/eventos de corrida (rolagem de risco técnico, safety car etc.) → PR 1.5.
- * - Bots (§12) → PR 1.7.
  * - Rede/sala (PartyKit, fase 3) → src/net/, fase 3.
  * - Temporada/campeonato (agregação de pontos entre corridas).
  * - Spec detalhado de motor (curva de potência, deploy de ERS etc.) além das notas base.
@@ -211,6 +210,73 @@ export interface Loadout {
   estrategistaId: string;
   pitId: string;
   pecaId: string;
+}
+
+/** Perfil de decisão de um bot no draft (§12). */
+export type PerfilBot = 'passeio' | 'praGanhar';
+
+/** Um jogador da partida — humano ou bot. Bot exige `perfilBot` definido antes de entrar no draft (§12). */
+export interface Jogador {
+  id: string;
+  tipo: 'humano' | 'bot';
+  perfilBot?: PerfilBot;
+}
+
+/** Dificuldade da partida — controla a proporção de bots "pra ganhar" (§12). */
+export type Dificuldade = 'facil' | 'dificil';
+
+/** Os 5 componentes preenchíveis em cada sorteio de equipe/ano (§3). */
+export type SlotComponente = 'piloto' | 'chassi' | 'motor' | 'estrategista' | 'pit';
+
+/**
+ * Jogada de um jogador no draft (§3). `componente` cobre chassi/motor/
+ * estrategista/pit — o id é resolvido automaticamente pela equipe/ano da
+ * rodada corrente (só há 1 por slot); `piloto` exige escolher qual dos 2
+ * titulares; `peca` só é válida na rodada 6.
+ */
+export type EscolhaDraft =
+  | { tipo: 'componente'; slot: Exclude<SlotComponente, 'piloto'> }
+  | { tipo: 'piloto'; pilotoId: string }
+  | { tipo: 'peca'; pecaId: string };
+
+/** Referência leve a um sorteio de equipe/ano (§3) — o suficiente pra localizar o registro completo no dataset. */
+export interface EquipeAnoRef {
+  equipe: string;
+  ano: number;
+}
+
+/** Fase corrente do draft (§3): 5 sorteios de equipe/ano, depois a peça icônica (rodada 6), depois concluído. */
+export type FaseDraft = 'sorteios' | 'peca' | 'concluido';
+
+/** Progresso de um jogador nas rodadas 1-5 (§3): rodada atual (1-5; 6 = sorteios completos) e slots já preenchidos. */
+export interface ProgressoJogador {
+  rodada: number;
+  slots: Partial<Pick<Loadout, 'pilotoId' | 'chassiId' | 'motorId' | 'estrategistaId' | 'pitId'>>;
+}
+
+/**
+ * Estado do draft (§3), totalmente serializável (JSON puro — sem closures,
+ * sem instância de `Rng` armazenada). Toda aleatoriedade é derivada na hora,
+ * a partir de `seed` + rótulo do sub-stream (ver `rng.ts`). Não guarda o
+ * `Dataset` — funções que precisam resolver ids consultam o dataset à parte.
+ */
+export interface DraftState {
+  seed: number;
+  fase: FaseDraft;
+  jogadores: Jogador[];
+  /** Os 5 sorteios de equipe/ano de cada jogador, pré-computados em `criarDraft` (individual por jogador, §3). */
+  sorteios: Record<string, EquipeAnoRef[]>;
+  progresso: Record<string, ProgressoJogador>;
+  /** Ordem de escolha da rodada 6, embaralhada por seed (§3). */
+  ordemPeca: string[];
+  /** Índice em `ordemPeca` de quem escolhe peça agora. */
+  indicePeca: number;
+  /** As 5 peças reveladas ao jogador da vez na rodada 6, ou `null` fora do turno dele/antes de revelar. */
+  pecasReveladas: string[] | null;
+  /** Cópias restantes por id de peça (2 por peça, §7). */
+  copiasRestantes: Record<string, number>;
+  /** Loadouts finais dos jogadores que já concluíram a rodada 6. */
+  loadouts: Record<string, Loadout>;
 }
 
 /** Resultado da classificação: grid ordenado do pole pro último (§10). */
