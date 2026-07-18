@@ -155,6 +155,7 @@ export const resultadoCorridaFixture: ResultadoCorrida = {
   ],
   voltaMaisRapida: { jogadorId: 'jogador-2', tempo: 71.234 },
   eventos: [{ volta: 8, jogadorId: 'jogador-1', tipo: 'erro-piloto', custoMs: 2100 }],
+  chuva: false,
 };
 
 describe('tipos base da engine (PR 0.3)', () => {

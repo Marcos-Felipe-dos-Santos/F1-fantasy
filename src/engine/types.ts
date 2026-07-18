@@ -7,8 +7,8 @@
  * §9 (pistas), §10 (corrida) e §12 (bots).
  *
  * Excluído de propósito deste PR (fica pra PRs futuros):
- * - Clima/chuva (PR 1.5b) e safety car (ainda não existe) — incidentes de
- *   erro de piloto, quebra mecânica e risco de peça entraram no PR 1.5a.
+ * - Safety car (ainda não existe). Clima/chuva entrou no PR 1.5b (só afeta
+ *   a corrida, não a quali — ver `ResultadoCorrida.chuva`).
  * - Rede/sala (PartyKit, fase 3) → src/net/, fase 3.
  * - Temporada/campeonato (agregação de pontos entre corridas).
  * - Spec detalhado de motor (curva de potência, deploy de ERS etc.) além das notas base.
@@ -336,4 +336,11 @@ export interface ResultadoCorrida {
     tempo: number;
   };
   eventos: EventoCorrida[];
+  /**
+   * Resultado da rolagem global de clima da corrida (§9/§10, PR 1.5b): 1
+   * `next()` num sub-stream próprio (`corrida:clima`), separado dos streams
+   * por carro. `true` com probabilidade `pista.chanceChuva`. A quali não é
+   * afetada — clima só entra na corrida.
+   */
+  chuva: boolean;
 }
