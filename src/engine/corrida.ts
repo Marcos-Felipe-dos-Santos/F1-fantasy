@@ -40,8 +40,32 @@
  * 5. Se a volta termina em pit: 1 `rng` da rolagem de erro de pit, +1 da
  *    magnitude se o erro disparar.
  *
- * Fora de escopo deste PR (fica pro PR 1.5b): clima/chuva. Safety car ainda
- * não existe no jogo.
+ * Clima/chuva (PR 1.5b, GDD §9/§10): antes de simular qualquer carro, rola
+ * 1 `next()` **global** num sub-stream próprio (`corrida:clima`, seed
+ * derivada de `deriveSeed(seed, 'corrida:clima')`), separado dos streams
+ * por carro (`corrida:${jogadorId}`) — essa rolagem NÃO desloca nem consome
+ * nada dos streams por carro. `chove = rng.next() < pista.chanceChuva`.
+ *
+ * Quando chove, a ORDEM de consumo dos streams por carro é a mesma da
+ * corrida seca: a chuva não introduz nenhuma rolagem nova, só muda
+ * THRESHOLDS/custos de cálculos existentes (regra de ouro deste PR).
+ * Consequência exata: o stream molhado fica idêntico ao seco **até o
+ * primeiro erro de piloto que dispare só na chuva** — o custo desse erro
+ * consome 1 `next()` extra (passo 4a) e desloca as rolagens seguintes
+ * daquele carro em relação ao cenário seco. Dentro de um mesmo cenário, o
+ * resultado segue 100% determinístico por seed. Efeitos da chuva:
+ * - Toda volta: `tempoVolta` ganha `chuvaLentidao * pista.tempoBaseMs +
+ *   ((99 - piloto.chu) / 99) * chuvaPenalidadeMaxMs` (CHU 99 ⇒ só a
+ *   lentidão base; CHU 0 ⇒ lentidão base + penalidade máxima).
+ * - (a) erro de piloto: a chance por volta vira
+ *   `min(1, ((99 - cons) / 99) * probErroMax * chuvaMultErro)` — a rolagem
+ *   em si (passo 4a) já existia e é sempre consumida; só o threshold muda.
+ * - Degradação de pneu, janela/limiar de pit, quebras (chassi/motor) e risco
+ *   de peça **não mudam** com chuva (decisão de design: pneu de chuva não é
+ *   modelado neste PR — o desgaste segue o perfil normal da pista).
+ *
+ * A quali (`quali.ts`) não é afetada por clima — chuva só entra na corrida
+ * por enquanto. Safety car ainda não existe no jogo.
  */
 
 import type { Dataset } from './dataset';
@@ -100,6 +124,12 @@ export const CORRIDA_CONFIG = {
   riscoInvestigacaoPorPonto: 0.005,
   investigacaoPenalidadeMinMs: 5000,
   investigacaoPenalidadeMaxMs: 10000,
+  /** Lentidão global de pista molhada — fração do tempoBaseMs somada a toda volta com chuva. */
+  chuvaLentidao: 0.06,
+  /** Penalidade extra por volta na chuva pra CHU 0 (CHU 99 ⇒ ~0), em ms. */
+  chuvaPenalidadeMaxMs: 500,
+  /** Multiplicador da probabilidade de erro do piloto (CONS) na chuva. */
+  chuvaMultErro: 2.0,
 } as const;
 
 function clamp(valor: number, min: number, max: number): number {
@@ -128,6 +158,7 @@ function simularCarro(
   pista: Pista,
   posGrid0: number,
   seed: number,
+  chove: boolean,
 ): ResultadoCarro {
   const carro = resolverCarro(dataset, loadout);
   const rng = createRng(deriveSeed(seed, `corrida:${loadout.jogadorId}`));
@@ -194,6 +225,14 @@ function simularCarro(
       desgasteAcum * CORRIDA_CONFIG.degradacaoMsPorPonto +
       (rng.next() * 2 - 1) * CORRIDA_CONFIG.variancia * pista.tempoBaseMs;
 
+    // Clima (PR 1.5b): lentidão global de pista molhada + penalidade por CHU
+    // baixo. Não consome RNG — só soma tempo, sempre que `chove` é true.
+    if (chove) {
+      tempoVolta +=
+        CORRIDA_CONFIG.chuvaLentidao * pista.tempoBaseMs +
+        ((99 - carro.piloto.chu) / 99) * CORRIDA_CONFIG.chuvaPenalidadeMaxMs;
+    }
+
     if (v === 1) {
       tempoVolta +=
         posGrid0 * CORRIDA_CONFIG.gridOffsetMs[pista.ultrapassagem] +
@@ -201,8 +240,12 @@ function simularCarro(
     }
 
     // (a) erro de piloto: sempre 1 rng.next() (chance), +1 se disparar (custo).
+    // Na chuva só o threshold muda (chuvaMultErro) — a rolagem em si é a mesma.
     const rolagemErro = rng.next();
-    const chanceErro = ((99 - carro.piloto.cons) / 99) * CORRIDA_CONFIG.probErroMax;
+    const chanceErroBase = ((99 - carro.piloto.cons) / 99) * CORRIDA_CONFIG.probErroMax;
+    const chanceErro = chove
+      ? Math.min(1, chanceErroBase * CORRIDA_CONFIG.chuvaMultErro)
+      : chanceErroBase;
     if (rolagemErro < chanceErro) {
       const custoErro =
         CORRIDA_CONFIG.erroCustoMinMs +
@@ -333,8 +376,12 @@ export function simularCorrida(
 
   const posicaoGrid = new Map(grid.grid.map((p, idx) => [p.jogadorId, idx]));
 
+  // Rolagem global de clima (PR 1.5b, §9/§10): 1 next() num sub-stream
+  // próprio, separado dos streams por carro — ver contrato de RNG no topo.
+  const chove = createRng(deriveSeed(seed, 'corrida:clima')).next() < pista.chanceChuva;
+
   const porJogador = loadouts.map((loadout) =>
-    simularCarro(dataset, loadout, pista, posicaoGrid.get(loadout.jogadorId)!, seed),
+    simularCarro(dataset, loadout, pista, posicaoGrid.get(loadout.jogadorId)!, seed, chove),
   );
 
   // Quem terminou vem primeiro (ordenado por tempoTotal, empate ⇒ jogadorId);
@@ -406,5 +453,6 @@ export function simularCorrida(
     classificacao,
     voltaMaisRapida: { jogadorId: autor.jogadorId, tempo: autor.melhorVolta },
     eventos,
+    chuva: chove,
   };
 }

@@ -11,6 +11,7 @@ const dataset = criarDataset(equipeAnosReal, pecasReal, pistasReal);
 const pistaMonaco = dataset.pistasById.get('pista-monaco')!;
 const pistaMonza = dataset.pistasById.get('pista-monza')!;
 const pistaSuzuka = dataset.pistasById.get('pista-suzuka')!;
+const pistaInterlagos = dataset.pistasById.get('pista-interlagos')!;
 
 function loadoutRedBull(overrides: Partial<Loadout> = {}): Loadout {
   return {
@@ -495,7 +496,241 @@ describe('simularCorrida', () => {
         ],
         voltaMaisRapida: { jogadorId: 'j1', tempo: 81825.26671510813 },
         eventos: [],
+        chuva: false,
       });
+    });
+
+    it('congela classificação, volta mais rápida e chuva=true para seed 42, Interlagos (chanceChuva=1), 4 loadouts fixos', () => {
+      const loadouts: Loadout[] = [
+        loadoutRedBull(),
+        loadoutFerrari(),
+        loadoutMinardi('j3'),
+        loadoutMercedes(),
+      ];
+      const pistaMolhada = { ...pistaInterlagos, chanceChuva: 1 };
+      const grid = simularQuali(dataset, loadouts, pistaInterlagos, 42);
+      const resultado = simularCorrida(dataset, loadouts, pistaMolhada, grid, 42);
+      // Valores congelados a partir da 1a execução da implementação (PR 1.5b).
+      expect(resultado).toEqual({
+        seed: 42,
+        classificacao: [
+          {
+            jogadorId: 'j4',
+            posicao: 1,
+            pontos: 25,
+            tempoTotal: 917990.9523120525,
+            paradas: 1,
+            status: 'terminou',
+            voltasCompletadas: 12,
+          },
+          {
+            jogadorId: 'j1',
+            posicao: 2,
+            pontos: 19,
+            tempoTotal: 918094.0575301021,
+            paradas: 1,
+            status: 'terminou',
+            voltasCompletadas: 12,
+          },
+          {
+            jogadorId: 'j2',
+            posicao: 3,
+            pontos: 15,
+            tempoTotal: 921136.168566504,
+            paradas: 1,
+            status: 'terminou',
+            voltasCompletadas: 12,
+          },
+          {
+            jogadorId: 'j3',
+            posicao: 4,
+            pontos: 12,
+            tempoTotal: 939500.5761466443,
+            paradas: 1,
+            status: 'terminou',
+            voltasCompletadas: 12,
+          },
+        ],
+        voltaMaisRapida: { jogadorId: 'j1', tempo: 74178.18664841962 },
+        eventos: [],
+        chuva: true,
+      });
+    });
+  });
+
+  describe('clima (PR 1.5b)', () => {
+    it('rolagem global de clima: chanceChuva=1 sempre chove; chanceChuva=0 nunca chove; determinístico por seed', () => {
+      const loadouts = [loadoutRedBull(), loadoutFerrari()];
+      const pistaMolhada = { ...pistaMonza, chanceChuva: 1 };
+      const pistaSeca = { ...pistaMonza, chanceChuva: 0 };
+      const grid = simularQuali(dataset, loadouts, pistaMonza, 42);
+
+      const molhada1 = simularCorrida(dataset, loadouts, pistaMolhada, grid, 42);
+      const molhada2 = simularCorrida(dataset, loadouts, pistaMolhada, grid, 42);
+      expect(molhada1.chuva).toBe(true);
+      expect(molhada2.chuva).toBe(true);
+      expect(molhada2).toEqual(molhada1);
+
+      const seca = simularCorrida(dataset, loadouts, pistaSeca, grid, 42);
+      expect(seca.chuva).toBe(false);
+    });
+
+    it('corrida molhada é mais lenta: mesma seed e loadouts, só chanceChuva muda ⇒ tempoTotal maior pra todo jogador', () => {
+      const loadouts = [loadoutRedBull(), loadoutFerrari(), loadoutMinardi('j3'), loadoutMercedes()];
+      const pistaMolhada = { ...pistaMonza, chanceChuva: 1 };
+      const pistaSeca = { ...pistaMonza, chanceChuva: 0 };
+      const grid = simularQuali(dataset, loadouts, pistaMonza, 42);
+
+      const molhada = simularCorrida(dataset, loadouts, pistaMolhada, grid, 42);
+      const seca = simularCorrida(dataset, loadouts, pistaSeca, grid, 42);
+
+      for (const item of seca.classificacao) {
+        const itemMolhado = molhada.classificacao.find((c) => c.jogadorId === item.jogadorId)!;
+        expect(itemMolhado.tempoTotal).toBeGreaterThan(item.tempoTotal);
+      }
+    });
+
+    it('CHU importa: delta chuva−seco de tempoTotal é menor pro piloto de CHU alto do que pro de CHU baixo (mesmo carro)', () => {
+      // Mesma equipe/ano (Red Bull 2023) pros dois — só o piloto muda, então
+      // chassi/motor/estrategista/pit ficam idênticos e isolam o efeito de CHU.
+      // Nota: o isolamento também depende de a seed 42 não gerar erro-só-na-chuva
+      // (Verstappen e Pérez diferem em CONS, que a chuva multiplica; nesta seed
+      // os erros seco==molhado, então o delta mede só a penalidade de CHU).
+      const loadoutAlto = loadoutRedBull({
+        jogadorId: 'alto',
+        pilotoId: 'redbull-2023-piloto-verstappen', // CHU 90
+      });
+      const loadoutBaixo = loadoutRedBull({
+        jogadorId: 'baixo',
+        pilotoId: 'redbull-2023-piloto-perez', // CHU 72
+      });
+      const loadouts = [loadoutAlto, loadoutBaixo];
+      const pistaMolhada = { ...pistaMonza, chanceChuva: 1 };
+      const pistaSeca = { ...pistaMonza, chanceChuva: 0 };
+      const grid = simularQuali(dataset, loadouts, pistaMonza, 42);
+
+      const molhada = simularCorrida(dataset, loadouts, pistaMolhada, grid, 42);
+      const seca = simularCorrida(dataset, loadouts, pistaSeca, grid, 42);
+
+      const tempo = (r: typeof molhada, id: string) =>
+        r.classificacao.find((c) => c.jogadorId === id)!.tempoTotal;
+
+      const deltaAlto = tempo(molhada, 'alto') - tempo(seca, 'alto');
+      const deltaBaixo = tempo(molhada, 'baixo') - tempo(seca, 'baixo');
+
+      expect(deltaAlto).toBeGreaterThan(0);
+      expect(deltaBaixo).toBeGreaterThan(0);
+      expect(deltaAlto).toBeLessThan(deltaBaixo);
+    });
+
+    it('chuva gera mais erros: piloto de CONS baixo comete >= erros com chuva do que sem, em ~100 seeds (e estritamente mais)', () => {
+      const totalSeeds = 100;
+      let errosSeco = 0;
+      let errosMolhado = 0;
+      for (let seed = 0; seed < totalSeeds; seed++) {
+        const loadouts = [loadoutMinardi1993Barbazza('fraco')];
+        const pistaSeca = { ...pistaMonza, chanceChuva: 0 };
+        const pistaMolhada = { ...pistaMonza, chanceChuva: 1 };
+        const grid = simularQuali(dataset, loadouts, pistaMonza, seed);
+
+        const seca = simularCorrida(dataset, loadouts, pistaSeca, grid, seed);
+        const molhada = simularCorrida(dataset, loadouts, pistaMolhada, grid, seed);
+
+        errosSeco += seca.eventos.filter(
+          (e) => e.jogadorId === 'fraco' && e.tipo === 'erro-piloto',
+        ).length;
+        errosMolhado += molhada.eventos.filter(
+          (e) => e.jogadorId === 'fraco' && e.tipo === 'erro-piloto',
+        ).length;
+      }
+      expect(errosMolhado).toBeGreaterThanOrEqual(errosSeco);
+      expect(errosMolhado).toBeGreaterThan(errosSeco);
+    });
+
+    // Caveat (mesmo do teste "streams estáveis"): a igualdade de paradas vale
+    // enquanto nenhum erro-só-na-chuva deslocar uma quebra/DNF nessas seeds —
+    // se recalibração (PR 1.6) quebrar, troque a seed, não a lógica.
+    it('pit/pneu sob chuva: paradas idênticas por jogador (chuva não altera desgaste nem janela) e todo carro faz >= 1 parada', () => {
+      const loadouts = [loadoutRedBull(), loadoutFerrari(), loadoutMinardi('j3'), loadoutMercedes()];
+      const pistaSeca = { ...pistaMonza, chanceChuva: 0 };
+      const pistaMolhada = { ...pistaMonza, chanceChuva: 1 };
+      const grid = simularQuali(dataset, loadouts, pistaMonza, 42);
+
+      const seca = simularCorrida(dataset, loadouts, pistaSeca, grid, 42);
+      const molhada = simularCorrida(dataset, loadouts, pistaMolhada, grid, 42);
+
+      for (const item of seca.classificacao) {
+        const itemMolhado = molhada.classificacao.find((c) => c.jogadorId === item.jogadorId)!;
+        expect(itemMolhado.paradas).toBe(item.paradas);
+        expect(itemMolhado.paradas).toBeGreaterThanOrEqual(1);
+        expect(item.paradas).toBeGreaterThanOrEqual(1);
+      }
+    });
+
+    // Mesmo caveat de deslocamento de stream do teste acima.
+    it('pit/pneu sob chuva em pista de desgaste alto: paradas idênticas seco vs molhado', () => {
+      const loadouts = [loadoutMinardi('j1'), loadoutRedBull({ jogadorId: 'j2' })];
+      const pistaSeca = { ...pistaSuzuka, chanceChuva: 0 };
+      const pistaMolhada = { ...pistaSuzuka, chanceChuva: 1 };
+      for (let seed = 0; seed < 20; seed++) {
+        const grid = simularQuali(dataset, loadouts, pistaSuzuka, seed);
+        const seca = simularCorrida(dataset, loadouts, pistaSeca, grid, seed);
+        const molhada = simularCorrida(dataset, loadouts, pistaMolhada, grid, seed);
+        for (const item of seca.classificacao) {
+          const itemMolhado = molhada.classificacao.find((c) => c.jogadorId === item.jogadorId)!;
+          expect(itemMolhado.paradas).toBe(item.paradas);
+        }
+      }
+    });
+
+    // Caveat (ver contrato de RNG em corrida.ts): a igualdade seco/molhado só
+    // vale enquanto nenhum erro de piloto disparar SÓ na chuva antes da quebra
+    // (o custo do erro consome 1 next() extra e desloca o stream). A seed
+    // encontrada pela varredura satisfaz isso hoje; se uma recalibração
+    // (PR 1.6) quebrar este teste, a causa provável é esse deslocamento
+    // esperado — troque a seed, não a lógica.
+    it('streams estáveis: quebra ocorre na mesma volta com ou sem chuva (mesmos rolls até o 1º erro-só-na-chuva)', () => {
+      const totalSeeds = 200;
+      let achado = false;
+      for (let seed = 0; seed < totalSeeds; seed++) {
+        const loadouts = [loadoutMinardi1993Barbazza('fraco'), loadoutRedBull({ jogadorId: 'forte' })];
+        const pistaSeca = { ...pistaSuzuka, chanceChuva: 0 };
+        const pistaMolhada = { ...pistaSuzuka, chanceChuva: 1 };
+        const grid = simularQuali(dataset, loadouts, pistaSuzuka, seed);
+        const seca = simularCorrida(dataset, loadouts, pistaSeca, grid, seed);
+        const eventoSeco = seca.eventos.find(
+          (e) => e.jogadorId === 'fraco' && (e.tipo === 'quebra-chassi' || e.tipo === 'quebra-motor'),
+        );
+        if (eventoSeco) {
+          const molhada = simularCorrida(dataset, loadouts, pistaMolhada, grid, seed);
+          const eventoMolhado = molhada.eventos.find(
+            (e) => e.jogadorId === 'fraco' && e.tipo === eventoSeco.tipo,
+          );
+          expect(eventoMolhado).toBeDefined();
+          expect(eventoMolhado!.volta).toBe(eventoSeco.volta);
+          achado = true;
+          break;
+        }
+      }
+      expect(achado).toBe(true);
+    });
+
+    it('independe da ordem dos loadouts no array de entrada, mesmo com chuva', () => {
+      const loadouts = [loadoutRedBull(), loadoutFerrari(), loadoutMinardi('j3')];
+      const invertido = [...loadouts].reverse();
+      const pistaMolhada = { ...pistaMonza, chanceChuva: 1 };
+      const gridNormal = simularQuali(dataset, loadouts, pistaMonza, 99);
+      const gridInvertido = simularQuali(dataset, invertido, pistaMonza, 99);
+      const resultadoNormal = simularCorrida(dataset, loadouts, pistaMolhada, gridNormal, 99);
+      const resultadoInvertido = simularCorrida(dataset, invertido, pistaMolhada, gridInvertido, 99);
+
+      const tempoPorId = (c: typeof resultadoNormal.classificacao) =>
+        Object.fromEntries(c.map((item) => [item.jogadorId, item.tempoTotal]));
+
+      expect(resultadoInvertido.chuva).toBe(resultadoNormal.chuva);
+      expect(tempoPorId(resultadoInvertido.classificacao)).toEqual(
+        tempoPorId(resultadoNormal.classificacao),
+      );
     });
   });
 });
