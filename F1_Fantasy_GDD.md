@@ -1,4 +1,4 @@
-# F1 Fantasy — Game Design Document (v1.0)
+# F1 Fantasy — Game Design Document (v1.1)
 
 > Jogo de simulação/draft de F1 para navegador, inspirado nos jogos virais "7x1" e "38 a 0". Pilotos, equipes e peças icônicas de 1950 a 2025. Grid de 22 carros, multiplayer online, local e single.
 
@@ -6,8 +6,8 @@
 
 ## 1. Pilares
 
-- **Sorte no sorteio, habilidade na montagem.** Sorteios individuais dão a base (piloto, motor de eras aleatórias); as escolhas livres (estrategista, pit, peça) são pura decisão.
-- **Frankenstein de épocas.** O carro final mistura componentes de anos e equipes diferentes.
+- **Sorte no sorteio, habilidade na montagem.** Cada rodada sorteia uma equipe/ano; o jogador decide qual componente pegar dali.
+- **Frankenstein de épocas.** O carro final pode ter até 5 eras diferentes — piloto de um ano, chassi de outro, motor de um terceiro, estratégia de um quarto, pit de um quinto.
 - **Escassez na peça icônica.** Toda peça tem 2 cópias. No máximo 2 jogadores correm com a mesma.
 - **Risco sem punição cruel.** Peças fortes trazem chance de problema técnico na corrida, nunca eliminação do campeonato.
 - **Mesma engine nos 3 modos.** Single, local e online rodam a mesma simulação determinística. A rede é só uma casca por cima.
@@ -20,7 +20,7 @@
 |---|---|---|---|
 | **Single** | 1 | 21 bots | 100% local, sem rede. |
 | **Local** | 2 a 4 | 18 a 20 bots | Hotseat (passa o dispositivo). |
-| **Online** | Até 22 | Vagas vazias = bots | Sala com código. Montagem simultânea com trava ao vivo. |
+| **Online** | Até 22 | Vagas vazias = bots | Sala com código. Montagem simultânea com trava ao vivo na peça. |
 
 Grid sempre com **22 carros**.
 
@@ -28,31 +28,51 @@ Grid sempre com **22 carros**.
 
 ## 3. Fluxo de jogo
 
-O carro é montado em dois tipos de etapa: **sorteios individuais** (a sorte decide a era) e **escolhas livres** (a habilidade decide o componente).
+O carro é montado em **6 rodadas**, sendo 5 sorteios de equipe/ano + 1 escolha de peça icônica.
 
-### 🎰 Sorteio individual de Ano + Equipe (um por componente, independente por jogador):
-- **Piloto** — cai um ano+equipe → escolhe **1 dos 2 titulares** daquele time naquele ano.
-- **Chassi** — cai um ano+equipe → usa o chassi (carro) daquela equipe/ano. Carrega AERO, MEC, PPESO, CONF, FREIO (§6).
-- **Motor** — cai um ano+equipe → usa o motor daquela equipe/ano. Carrega MOTOR (§6).
+### Rodadas 1 a 5 — Sorteio de Equipe/Ano
 
-Como cada sorteio é independente, os três podem cair de eras completamente diferentes (ex: piloto Red Bull 2023 + chassi Lotus 1978 + motor Ferrari 2004). Nenhum jogador consegue "estocar" tudo de uma equipe dominante.
+Cada rodada segue o mesmo ciclo:
 
-### 🎯 Escolha livre (sem sorteio, pura decisão):
-- **Estrategista** — pool de arquétipos (O Gênio do Undercut, O Pânico, O Conservador, O Cavalo Doido, O Apostador…). Carrega os atributos **CALL** e **SANGF** (§6).
-- **Equipe de Pit Stop** — pool (rápida-e-arriscada, lenta-e-segura, equilibrada…). Carrega os atributos **PIT_TEMPO** e **PIT_ERRO** (§6).
+**🎰 Sorteio → 📋 Tudo daquela equipe/ano aparece → 👆 Jogador pega 1 componente que ainda falta → próxima rodada**
 
-### 🏁 Peça icônica (por último):
-Escolhe **1 peça** do catálogo (§7), de qualquer época. Este é o único passo com **pool compartilhado e escassez** (2 cópias por peça, trava ao vivo no online). Os sorteios de piloto/motor são individuais e não competem entre jogadores.
+Os 5 componentes que precisam ser preenchidos:
+- **Piloto** (ao escolher, aparece os 2 titulares daquela equipe/ano — escolhe 1)
+- **Chassi** (o carro daquela equipe/ano)
+- **Motor** (o motor daquela equipe/ano)
+- **Estrategista** (a qualidade de estratégia daquela equipe/ano)
+- **Equipe de Pit Stop** (a qualidade de pit daquela equipe/ano)
+
+**Exemplo de partida:**
+
+| Rodada | Sorteio | Componentes disponíveis | Jogador pega... |
+|---|---|---|---|
+| 1 | Red Bull 2023 | piloto, chassi, motor, estrategista, pit | Chassi (RB19) |
+| 2 | Ferrari 2004 | piloto, ~~chassi~~, motor, estrategista, pit | Piloto (Schumacher) |
+| 3 | Toleman 1984 | ~~piloto~~, ~~chassi~~, motor, estrategista, pit | Motor (Hart turbo) |
+| 4 | McLaren 1998 | ~~piloto~~, ~~chassi~~, ~~motor~~, estrategista, pit | Estrategista (Ron Dennis) |
+| 5 | Williams 1993 | ~~piloto~~, ~~chassi~~, ~~motor~~, ~~estrategista~~, pit | Pit (única opção restante) |
+
+A tensão: caiu uma equipe dominante e tudo é bom — mas você só pode pegar **um componente**. O que priorizar? E se no próximo sorteio cair uma equipe fraca e o slot que sobrou for importante?
+
+Na rodada 5 não há escolha: o jogador pega o único componente que falta, seja bom ou ruim. Isso é intencional — garante que ninguém controla tudo.
+
+Cada sorteio é **individual por jogador** — dois jogadores podem cair na mesma equipe/ano, sem problema (os sorteios não competem).
+
+### Rodada 6 — Peça icônica
+
+Depois dos 5 componentes montados, aparece a **peça icônica**: o jogador escolhe **1 peça** do catálogo (§7). Este é o único passo com **pool compartilhado e escassez** (2 cópias por peça, trava ao vivo no online — §4).
 
 ### Resultado
-O carro final é um mosaico de até três eras diferentes — piloto de um ano, chassi de outro, motor de um terceiro — com estrategista e pit escolhidos a dedo e coroado por uma peça icônica.
+O carro final pode ter até 5 eras diferentes, coroado por uma peça icônica de qualquer época.
 
 ---
 
 ## 4. Seleção no online
 
-Os **sorteios de componentes são individuais** (cada jogador rola os seus). A parte simultânea e disputada é só a **escolha da peça icônica**:
+Os **sorteios (rodadas 1-5) são individuais** — cada jogador rola os seus, sem competição.
 
+A parte simultânea e disputada é só a **rodada 6 (peça icônica)**:
 - Todos escolhem ao mesmo tempo, dentro de uma janela (60-90s).
 - Cada peça tem **2 cópias**; quando as duas são pegas, ela **trava e fica cinza pra todos na hora** (broadcast em tempo real).
 - Quem não confirmar a tempo recebe uma peça automática.
@@ -66,8 +86,8 @@ A **classificação** é automática e roda pra todos de uma vez quando a montag
 
 Opção da sala, antes de começar:
 
-- **Modo Craque** 👁️ — notas visíveis. Otimização pura.
-- **Modo Cego** 🎲 — esconde tudo: notas, raridade, cor, nenhuma dica visual. Só aparece o nome do piloto, equipe, ano e peça. Quem conhece história de F1 se dá bem; quem não conhece, escolhe no escuro.
+- **Modo Craque** 👁️ — notas visíveis. Ao ver a equipe/ano sorteada, o jogador enxerga os números de cada componente e decide com informação completa.
+- **Modo Cego** 🎲 — esconde tudo: notas, raridade, cor, nenhuma dica visual. Só aparece o nome da equipe, ano, pilotos e peça. Quem conhece história de F1 sabe que a McLaren 1988 é forte; quem não conhece, escolhe no escuro.
 
 Mesma engine; muda só o quanto a UI revela.
 
@@ -90,28 +110,28 @@ Escala **0-99, normalizadas por época** — um Lotus 1978 nota 90 compete de ig
 | LARG | Largada / reação na luz |
 | SF | Sangue-frio sob pressão |
 
-### Chassi (sorteio independente)
+### Chassi
 | Atributo | Descrição |
 |---|---|
 | AERO | Downforce (curva rápida e média) |
 | MEC | Grip mecânico (curva lenta) |
 | PPESO | Peso / agilidade |
-| CONF | Confiabilidade do chassi (chance de quebra mecânica) |
+| CONF | Confiabilidade do chassi |
 | FREIO | Frenagem |
 
-### Motor (sorteio independente)
+### Motor
 | Atributo | Descrição |
 |---|---|
 | MOTOR | Potência (reta) |
-| CONF_MOTOR | Confiabilidade do motor (chance de quebra de motor) |
+| CONF_MOTOR | Confiabilidade do motor |
 
-### Estrategista (escolha livre)
+### Estrategista
 | Atributo | Descrição |
 |---|---|
 | CALL | Qualidade das decisões (undercut/overcut, chamada de chuva) |
 | SANGF | Frieza sob safety car / pressão |
 
-### Equipe de Pit Stop (escolha livre)
+### Equipe de Pit Stop
 | Atributo | Descrição |
 |---|---|
 | PIT_TEMPO | Velocidade da parada |
@@ -179,7 +199,7 @@ Cada jogador leva **1 peça** = **bônus fixo em 1 ou mais habilidades** (+X num
 - Composto macio → PNEU
 - Geometria ajustada → MEC
 
-Os "Roubos & Polêmicas" são referências às controvérsias famosas da F1, tratadas como folclore do jogo — não como afirmação de fato provado.
+Os "Roubos & Polêmicas" são referências a controvérsias famosas da F1, tratadas como folclore — não como afirmação de fato provado.
 
 O +X exato de cada peça fica no arquivo de dados e passa pelo script de balanceamento.
 
@@ -212,14 +232,12 @@ O campeonato nunca para. O pior é uma corrida ruim.
 
 Cada pista tem: pesos de AERO / MEC / MOTOR, dificuldade de ultrapassagem, chance de chuva, nº de voltas (10-15).
 
-Cobertura: potência/retas (Monza, RBR, Spa, Montreal), curva de alta (Silverstone, Suzuka, Spa, Nürburgring), técnica/curva lenta (Mônaco, Suzuka, Imola, Montreal), clima (Spa, Interlagos, Nürburgring, Montreal), rua/muros (Mônaco, Montreal, Nürburgring). Pistas difíceis de ultrapassar = 3 de 10.
-
 ---
 
 ## 10. Corrida
 
 - **Classificação:** 1 volta única, (QUALI + variância) define o grid. Sem pontos.
-- **Corrida:** 10-15 voltas. Cada volta = tempo das notas ponderadas pela pista + variância + rolagem de incidentes (CONS, CONF, clima, risco técnico).
+- **Corrida:** 10-15 voltas. Cada volta = tempo das notas ponderadas pela pista + variância + rolagem de incidentes (CONS, CONF, CONF_MOTOR, clima, risco técnico).
 - **Visual:** traçado em SVG, carrinhos como **capacetes estilizados** correndo pelo traçado.
 - **Botão Acelerar:** assistir em tempo normal ou pular pro resultado.
 - **Pontuação:** sistema oficial FIA (25-18-15-12-10-8-6-4-2-1).
@@ -234,8 +252,8 @@ Cobertura: potência/retas (Monza, RBR, Spa, Montreal), curva de alta (Silversto
 Cada jogador é representado por um **capacete estilizado** na pista.
 
 - **Editor simples:** padrão base (listras, split, chamas, estrelas…) + paleta de cores.
-- **Presets clássicos:** capacetes evocando épocas/estilos famosos ("amarelo Brasil", "vermelho clássico", "azul-e-branco retrô") — **inspiração, não cópia**.
-- Questões de direito de imagem/marca estão em apuração (§14.2). O design é agnóstico a nome: a engine não depende disso.
+- **Presets clássicos:** capacetes evocando épocas/estilos famosos ("amarelo Brasil", "vermelho clássico", "azul-e-branco retrô") — inspiração, não cópia.
+- Questões de direito de imagem/marca estão em apuração (§14.2). O design é agnóstico a nome.
 
 ---
 
@@ -243,7 +261,7 @@ Cada jogador é representado por um **capacete estilizado** na pista.
 
 Comportamento definido pela **seed** da partida (mesma seed = mesmo grid de bots, reproduzível). Cada bot é:
 - 🥱 **De passeio** — quase aleatório, dá pontos de graça.
-- 🔥 **Pra ganhar** — otimiza: mira nas melhores peças que sobraram, monta coerente com a pista.
+- 🔥 **Pra ganhar** — otimiza: prioriza o melhor componente disponível em cada sorteio.
 
 Proporção de "pra ganhar" = dificuldade (ex: 20% fácil, 60% difícil).
 
@@ -258,27 +276,27 @@ A corrida é **determinística por seed**. O servidor nunca transmite os 22 carr
 - **Engine de simulação:** TypeScript puro, sem dependência de UI. Determinística por seed.
 - **Front-end:** React + Vite + SVG.
 - **Testes:** Vitest.
-- **Online:** PartyKit (Durable Objects na borda da Cloudflare). Cada sala é um DO isolado — escala horizontal automática, sem Redis/load balancer, grátis na conta Cloudflare, hibernação (paga só conexão ativa).
+- **Online:** PartyKit (Durable Objects na borda da Cloudflare). Cada sala é um DO isolado — escala horizontal automática, sem Redis/load balancer, grátis na conta Cloudflare.
 
 ---
 
 ## 14. Riscos
 
-1. **Volume de dados + Modo Cego.** Notas de 1950-2025 = milhares de valores. Plano: gerar com IA, ancoradas em fatos verificáveis (posição no campeonato, vitórias, poles), com spot-check manual. Script de balanceamento obrigatório antes de publicar. Se as notas forem boas, o Modo Cego funciona de graça (quem conhece a história sabe escolher no escuro).
-2. **Direito de imagem.** Nomes de pilotos/equipes reais e liveries exatas são risco jurídico. Em apuração. A engine é agnóstica a nome — dá pra plugar a decisão jurídica depois sem retrabalho.
+1. **Volume de dados + Modo Cego.** Notas de 1950-2025 = milhares de valores (agora incluindo estrategista e pit por equipe/ano). Plano: gerar com IA, ancoradas em fatos verificáveis, com spot-check manual. Script de balanceamento obrigatório.
+2. **Direito de imagem.** Nomes reais e liveries são risco jurídico. Em apuração. Engine agnóstica a nome.
 3. **Peça forte quebrando o jogo.** Se o bônus da peça for maior que a diferença entre carro top e mediano, a peça decide sozinha. Mitigação: balance-harness + risco técnico calibrado.
-4. **Variância de sorte entre sorteios.** Piloto, chassi e motor são sorteados independentemente — um jogador pode ter azar nos três. Mitigação: medir no balance-harness se a "sorte total dos sorteios" explica demais do resultado; se sim, aumentar peso das escolhas de habilidade.
-5. **Trapaça no cliente.** Simulação determinística no cliente = brecha. Pra jogo casual entre amigos, ok. Pra ranking competitivo, validação no servidor (rodar a corrida da seed e conferir). Ranking fica pra depois.
-6. **Condição de corrida na última cópia.** Dois jogadores clicam na 2ª cópia ao mesmo tempo. Mitigação: trava autoritativa no servidor (quem chega primeiro leva).
-7. **Bots.** Bot "pra ganhar" burro fica fácil; bom demais frustra. Precisa de tuning iterativo.
-8. **Escopo pra uma pessoa.** 76 anos de dados + netcode + capacetes + balanceamento é muito. Mitigação: roadmap em fatias, cada uma jogável sozinha.
+4. **Variância de sorte nos 5 sorteios.** Um jogador pode cair 5 vezes em equipes fracas. Mitigação: medir no balance-harness se a "sorte total" domina o resultado; se sim, aumentar peso da peça icônica ou dos atributos de piloto.
+5. **Trapaça no cliente.** Simulação no cliente = brecha. Casual ok; ranking competitivo exige validação no servidor. Fica pra depois.
+6. **Condição de corrida na última cópia da peça.** Mitigação: trava autoritativa no servidor.
+7. **Bots.** Tuning iterativo — bot bom demais frustra, burro demais não desafia.
+8. **Escopo pra uma pessoa.** Roadmap em fatias, cada uma jogável sozinha.
 
 ---
 
 ## 15. Roadmap
 
 1. **Fase 0 — Scaffold.** Vite + React + TS + Vitest, RNG semeado, tipos base.
-2. **Fase 1 — Engine + modo Single.** Draft, classificação, corrida, incidentes, balance-harness, UI mínima com 1 pista + carros animados + 21 bots. Valida balanceamento.
+2. **Fase 1 — Engine + modo Single.** Draft (5 sorteios + peça), classificação, corrida, incidentes, balance-harness, UI mínima com 1 pista + carros animados + 21 bots.
 3. **Fase 2 — Modo Local.** Hotseat 2-4, Modo Craque/Cego.
-4. **Fase 3 — Online (PartyKit).** Sala com código, trava ao vivo, espiar amigos, corrida no cliente, bots por seed.
+4. **Fase 3 — Online (PartyKit).** Sala com código, trava ao vivo na peça, espiar amigos, corrida no cliente, bots por seed.
 5. **Fase 4 — Polimento.** Capacetes, card compartilhável, dataset completo 1950-2025, Desafio do Dia.
