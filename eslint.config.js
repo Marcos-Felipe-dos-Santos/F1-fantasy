@@ -40,7 +40,7 @@ export default tseslint.config(
                 'engine/ é lógica pura e não pode depender de React. Veja a fronteira engine/UI em CLAUDE.md.',
             },
             {
-              group: ['**/ui/**', '**/net/**'],
+              group: ['**/ui', '**/ui/**', '**/net', '**/net/**'],
               message:
                 'engine/ não pode importar de ui/ ou net/. Engine é pura e não conhece UI nem rede.',
             },
