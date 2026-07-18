@@ -117,6 +117,8 @@ export const pistaFixture: Pista = {
   ultrapassagem: 'dificil',
   chanceChuva: 0.1,
   voltas: 15,
+  tempoBaseMs: 78000,
+  desgaste: 25,
 };
 
 export const loadoutFixture: Loadout = {

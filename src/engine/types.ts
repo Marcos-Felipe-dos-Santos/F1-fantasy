@@ -161,6 +161,35 @@ export interface Pista {
   chanceChuva: number;
   /** Número de voltas da corrida (10-15, §9). */
   voltas: number;
+  /** Tempo-base de volta em milissegundos — âncora da fórmula de tempo (§10). */
+  tempoBaseMs: number;
+  /**
+   * Desgaste de pneu da pista, escala 0-99 (§9). Define o quão rápido os
+   * pneus degradam ali e, por consequência, quantas paradas a pista
+   * naturalmente exige (1 obrigatória em todas; desgaste alto força extras).
+   *
+   * Atenção: aqui `Nota` é só reuso da faixa numérica 0-99, **não** da
+   * convenção "99 = melhor" das demais notas (§6). Desgaste alto é pior
+   * pro pneu — força mais paradas, não é uma qualidade a maximizar.
+   */
+  desgaste: Nota;
+}
+
+/**
+ * Forma canônica de um sorteio de equipe/ano do draft (§3): revela os 5
+ * componentes de uma vez (piloto — 2 titulares —, chassi, motor,
+ * estrategista, pit). O jogador escolhe 1 componente que ainda falte; o
+ * dataset (PR 1.1) agrupa os registros nessa forma pra alimentar o sorteio.
+ */
+export interface EquipeAno {
+  equipe: string;
+  ano: number;
+  /** Os 2 titulares da equipe naquele ano — o jogador escolhe 1 ao pegar "piloto" (§3). */
+  pilotos: [Piloto, Piloto];
+  chassi: Chassi;
+  motor: Motor;
+  estrategista: Estrategista;
+  pit: EquipePit;
 }
 
 /**
