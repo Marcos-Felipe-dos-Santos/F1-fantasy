@@ -3,7 +3,7 @@
  *
  * Módulo folha: zero imports. Só `interface`/`type`/uniões literais — sem
  * classes, sem enums, sem Zod, sem funções. Fonte da verdade dos atributos é
- * o F1_Fantasy_GDD.md (v1.0), seções §6 (notas), §7 (peças/raridade),
+ * o F1_Fantasy_GDD.md (v1.1), seções §3 (draft), §6 (notas), §7 (peças/raridade),
  * §9 (pistas) e §10 (corrida).
  *
  * Excluído de propósito deste PR (fica pra PRs futuros):
@@ -63,7 +63,7 @@ export interface NotasChassi {
   freio: Nota;
 }
 
-/** Um chassi, ligado a uma equipe/ano específicos, com sorteio próprio (§3, §6). */
+/** Um chassi, ligado a uma equipe/ano específicos (§3, §6). */
 export interface Chassi {
   id: string;
   equipe: string;
@@ -79,10 +79,7 @@ export interface NotasMotor {
   confMotor: Nota;
 }
 
-/**
- * Um motor, ligado a uma equipe/ano específicos, com sorteio próprio,
- * independente do chassi e do piloto (§3, §6).
- */
+/** Um motor, ligado a uma equipe/ano específicos (§3, §6). */
 export interface Motor {
   id: string;
   equipe: string;
@@ -90,10 +87,15 @@ export interface Motor {
   notas: NotasMotor;
 }
 
-/** Um estrategista, de escolha livre no draft (§3, §6). */
+/**
+ * Um estrategista, ligado a uma equipe/ano específicos — sorteado como os
+ * demais componentes, não escolha livre (§3, §6).
+ */
 export interface Estrategista {
   id: string;
-  arquetipo: string;
+  nome: string;
+  equipe: string;
+  ano: number;
   notas: {
     /** Qualidade das decisões (undercut/overcut, chamada de chuva). */
     call: Nota;
@@ -103,12 +105,14 @@ export interface Estrategista {
 }
 
 /**
- * Uma equipe de pit stop, de escolha livre no draft (§3, §6). PIT_TEMPO e
- * PIT_ERRO pertencem à equipe de pit, não ao estrategista.
+ * Uma equipe de pit stop, ligada a uma equipe/ano específicos — sorteada como
+ * os demais componentes (§3, §6). PIT_TEMPO e PIT_ERRO pertencem à equipe de
+ * pit, não ao estrategista.
  */
 export interface EquipePit {
   id: string;
-  nome: string;
+  equipe: string;
+  ano: number;
   notas: {
     /** Velocidade da parada. */
     pitTempo: Nota;
@@ -163,10 +167,12 @@ export interface Pista {
  * Loadout de um jogador: referências por id às peças escolhidas no draft
  * (§3). Resolução id→objeto é helper de PR futuro.
  *
- * Estrutura do draft (§3): **3 sorteios independentes** de ano+equipe
- * (piloto, chassi, motor — cada um pode cair de uma era diferente) +
- * **2 escolhas livres** (estrategista, equipe de pit) + **1 peça icônica**
- * (pool compartilhado, 2 cópias por peça). Nenhum componente deriva de outro.
+ * Estrutura do draft (§3, v1.1): **5 sorteios de equipe/ano**, todos no mesmo
+ * ciclo — cada sorteio revela tudo daquela equipe/ano (piloto, chassi, motor,
+ * estrategista, pit) e o jogador pega **1 componente que ainda falta**; na
+ * rodada 5 pega o último que sobrou, sem escolha. Os 5 componentes podem vir
+ * de 5 eras diferentes. Rodada 6: **1 peça icônica** (pool compartilhado,
+ * 2 cópias por peça).
  */
 export interface Loadout {
   jogadorId: string;

@@ -18,13 +18,15 @@ import type {
  * material dos PRs 1.x.
  */
 
-// Fixtures seguem o exemplo canônico do §3: piloto Red Bull 2023 +
-// chassi Lotus 1978 + motor Ferrari 2004 — três sorteios, três eras.
+// Fixtures seguem a partida-exemplo do §3 (GDD v1.1): 5 sorteios de
+// equipe/ano, um componente pego em cada — chassi Red Bull 2023, piloto
+// Ferrari 2004, motor Toleman 1984, estrategista McLaren 1998, pit
+// Williams 1993. Cinco componentes, cinco eras.
 export const pilotoFixture: Piloto = {
-  id: 'piloto-redbull-2023-1',
-  nome: 'Piloto Red Bull 2023',
-  equipe: 'Red Bull',
-  ano: 2023,
+  id: 'piloto-ferrari-2004-1',
+  nome: 'Piloto Ferrari 2004',
+  equipe: 'Ferrari',
+  ano: 2004,
   notas: {
     rit: 88,
     quali: 90,
@@ -39,9 +41,9 @@ export const pilotoFixture: Piloto = {
 };
 
 export const chassiFixture: Chassi = {
-  id: 'chassi-lotus-79-1978',
-  equipe: 'Lotus',
-  ano: 1978,
+  id: 'chassi-redbull-rb19-2023',
+  equipe: 'Red Bull',
+  ano: 2023,
   notas: {
     aero: 92,
     mec: 74,
@@ -52,27 +54,30 @@ export const chassiFixture: Chassi = {
 };
 
 export const motorFixture: Motor = {
-  id: 'motor-ferrari-2004',
-  equipe: 'Ferrari',
-  ano: 2004,
+  id: 'motor-toleman-hart-1984',
+  equipe: 'Toleman',
+  ano: 1984,
   notas: {
-    motor: 94,
-    confMotor: 88,
+    motor: 78,
+    confMotor: 55,
   },
 };
 
 export const estrategistaFixture: Estrategista = {
-  id: 'estrategista-classico',
-  arquetipo: 'classico',
+  id: 'estrategista-mclaren-1998',
+  nome: 'Estrategista McLaren 1998',
+  equipe: 'McLaren',
+  ano: 1998,
   notas: {
-    call: 80,
-    sangf: 77,
+    call: 88,
+    sangf: 85,
   },
 };
 
 export const equipePitFixture: EquipePit = {
-  id: 'pit-veloz',
-  nome: 'Equipe de Pit Veloz',
+  id: 'pit-williams-1993',
+  equipe: 'Williams',
+  ano: 1993,
   notas: {
     pitTempo: 85,
     pitErro: 20,
@@ -159,13 +164,21 @@ describe('tipos base da engine (PR 0.3)', () => {
     expect(loadoutFixture.pecaId).toBe(pecaDuplaFixture.id);
   });
 
-  it('sorteios independentes permitem 3 eras distintas no mesmo loadout (§3)', () => {
-    const componentes = [pilotoFixture, chassiFixture, motorFixture];
+  it('os 5 sorteios de equipe/ano permitem 5 eras distintas no mesmo loadout (§3)', () => {
+    const componentes = [
+      pilotoFixture,
+      chassiFixture,
+      motorFixture,
+      estrategistaFixture,
+      equipePitFixture,
+    ];
     expect(loadoutFixture.pilotoId).toBe(pilotoFixture.id);
     expect(loadoutFixture.chassiId).toBe(chassiFixture.id);
     expect(loadoutFixture.motorId).toBe(motorFixture.id);
-    expect(new Set(componentes.map((c) => c.ano)).size).toBe(3);
-    expect(new Set(componentes.map((c) => c.equipe)).size).toBe(3);
+    expect(loadoutFixture.estrategistaId).toBe(estrategistaFixture.id);
+    expect(loadoutFixture.pitId).toBe(equipePitFixture.id);
+    expect(new Set(componentes.map((c) => c.ano)).size).toBe(5);
+    expect(new Set(componentes.map((c) => c.equipe)).size).toBe(5);
   });
 
   it('resultado de corrida traz classificação e volta mais rápida do grid inteiro (§10)', () => {
