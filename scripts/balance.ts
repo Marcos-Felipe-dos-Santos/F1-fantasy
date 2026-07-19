@@ -20,10 +20,12 @@
  */
 
 import type { Dataset } from '../src/engine/dataset';
-import { createRng, deriveSeed } from '../src/engine/rng';
+import { deriveSeed } from '../src/engine/rng';
 import { simularQuali } from '../src/engine/quali';
 import { simularCorrida } from '../src/engine/corrida';
-import type { Loadout, Pista, Raridade, ResultadoQuali } from '../src/engine/types';
+import { criarDraft, resolverBots } from '../src/engine/draft';
+import { atribuirPerfis } from '../src/engine/bots';
+import type { Jogador, Loadout, Pista, Raridade, ResultadoQuali } from '../src/engine/types';
 
 // ---------------------------------------------------------------------------
 // Meta 1 — sinal de grid (taxa de vitória do pole com carros idênticos).
@@ -257,41 +259,29 @@ function zeroPorRaridade(): Record<Raridade, number> {
 }
 
 /**
- * Monta 22 loadouts sorteados (draft simplificado, semeado por campeonato):
- * cada jogador sorteia piloto/chassi/motor/estrategista/pit de sorteios de
- * equipe/ano independentes (podem repetir entre jogadores — mistura de eras
- * é permitida pelo GDD §3) e 1 peça respeitando 2 cópias por peça no pool
- * compartilhado do campeonato.
+ * Monta os 22 loadouts do campeonato rodando o MOTOR DE DRAFT REAL do jogo
+ * (`criarDraft` + `resolverBots`, PR 1.2): 22 bots com perfis atribuídos por
+ * seed em dificuldade 'dificil' (60% pra-ganhar — o cenário competitivo, onde
+ * dominância de peça mais importa, GDD §12/§14.3). Cada bot faz os 5 sorteios
+ * de equipe/ano e a rodada 6 de peça (5 reveladas, 2 cópias por peça) com a
+ * própria lógica de escolha dos bots — o playerShare por raridade reflete a
+ * preferência real de pick, não um sorteio uniforme.
  */
-function sortearLoadoutsCampeonato(dataset: Dataset, seedBase: number): Loadout[] {
-  const rng = createRng(deriveSeed(seedBase, 'draft-simplificado'));
-  const copiasRestantes = new Map<string, number>(dataset.pecas.map((p) => [p.id, 2]));
-
-  const loadouts: Loadout[] = [];
-  for (let i = 0; i < N_JOGADORES; i++) {
-    const jogadorId = `j${i + 1}`;
-    const eaPiloto = rng.pick(dataset.equipeAnos);
-    const piloto = rng.pick(eaPiloto.pilotos);
-    const eaChassi = rng.pick(dataset.equipeAnos);
-    const eaMotor = rng.pick(dataset.equipeAnos);
-    const eaEstrategista = rng.pick(dataset.equipeAnos);
-    const eaPit = rng.pick(dataset.equipeAnos);
-
-    const pecasDisponiveis = dataset.pecas.filter((p) => (copiasRestantes.get(p.id) ?? 0) > 0);
-    const peca = rng.pick(pecasDisponiveis);
-    copiasRestantes.set(peca.id, (copiasRestantes.get(peca.id) ?? 0) - 1);
-
-    loadouts.push({
-      jogadorId,
-      pilotoId: piloto.id,
-      chassiId: eaChassi.chassi.id,
-      motorId: eaMotor.motor.id,
-      estrategistaId: eaEstrategista.estrategista.id,
-      pitId: eaPit.pit.id,
-      pecaId: peca.id,
-    });
-  }
-  return loadouts;
+function draftarLoadoutsCampeonato(dataset: Dataset, seedBase: number): Loadout[] {
+  const seedDraft = deriveSeed(seedBase, 'camp:draft');
+  const jogadoresBase: Jogador[] = Array.from({ length: N_JOGADORES }, (_, i) => ({
+    id: `j${String(i + 1).padStart(2, '0')}`,
+    tipo: 'bot' as const,
+  }));
+  const jogadores = atribuirPerfis(jogadoresBase, seedDraft, 'dificil');
+  const estadoFinal = resolverBots(criarDraft(dataset, jogadores, seedDraft), dataset);
+  return jogadores.map((j) => {
+    const loadout = estadoFinal.loadouts[j.id];
+    if (!loadout) {
+      throw new Error(`draftarLoadoutsCampeonato: draft não concluiu pro bot "${j.id}"`);
+    }
+    return loadout;
+  });
 }
 
 interface ResultadoCampeonato {
@@ -303,7 +293,7 @@ interface ResultadoCampeonato {
 }
 
 function simularCampeonato(dataset: Dataset, seedBase: number): ResultadoCampeonato {
-  const loadouts = sortearLoadoutsCampeonato(dataset, seedBase);
+  const loadouts = draftarLoadoutsCampeonato(dataset, seedBase);
   const pontosPorJogador = new Map<string, number>(loadouts.map((l) => [l.jogadorId, 0]));
   let dnfCount = 0;
   let totalCarros = 0;
