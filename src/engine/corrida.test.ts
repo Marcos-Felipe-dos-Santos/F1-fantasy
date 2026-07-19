@@ -178,16 +178,14 @@ describe('simularCorrida', () => {
     }
   });
 
-  // DESVIO DO PLANO (documentado, não corrigido por decisão de escopo — ver handoff):
-  // com os valores atuais de CORRIDA_CONFIG, o cenário do plano ("pista de desgaste
-  // alto + PNEU baixo ⇒ paradas >= 2") é matematicamente IMPOSSÍVEL em Silverstone
-  // (13 voltas): mesmo com o pior desvio de janela possível, o desgaste acumulado
-  // após a 1a parada nunca alcança limiarPneuGasto antes do fim da corrida. Em Suzuka
-  // (14 voltas, 1 volta a mais) é possível, mas raro (~10-20% das seeds, só quando o
-  // desvio de janela joga a 1a parada bem cedo). Este teste prova "possível", não
-  // "típico" — a frequência marginal é candidata a ajuste no balance-harness (PR 1.6),
-  // não corrigida aqui porque é decisão de balanceamento, não de lógica.
-  it('pista de desgaste alto + piloto de PNEU baixo permite 2+ paradas (raro) em algumas seeds', () => {
+  // Recalibrado no PR 1.6 (balance-harness, 2026-07-18): antes desta calibração,
+  // "pista de desgaste alto + PNEU baixo ⇒ paradas >= 2" era só POSSÍVEL, não
+  // típico (~10-20% das seeds). Com `limiarPneuGasto` recalibrado pra 3.5 (meta
+  // do dev: ~40-60% dos carros com 2+ paradas em desgaste Alto, variando pelo
+  // PNEU), o cenário virou TÍPICO pro pior extremo de PNEU: em 40 seeds, 39
+  // batem 2+ paradas — por isso a asserção virou um limiar alto (com margem de
+  // segurança), não só "aconteceu ao menos uma vez".
+  it('pista de desgaste alto + piloto de PNEU baixo faz 2+ paradas na maioria das seeds', () => {
     const loadouts = [loadoutMinardi('j1'), loadoutRedBull({ jogadorId: 'j2' })];
     let comDuasOuMais = 0;
     const totalSeeds = 40;
@@ -197,7 +195,8 @@ describe('simularCorrida', () => {
       const item = resultado.classificacao.find((c) => c.jogadorId === 'j1')!;
       if (item.paradas >= 2) comDuasOuMais++;
     }
-    expect(comDuasOuMais).toBeGreaterThan(0);
+    // Observado: 39/40. Margem de segurança generosa abaixo do observado.
+    expect(comDuasOuMais).toBeGreaterThanOrEqual(30);
   });
 
   it('pista de desgaste baixo + piloto de PNEU alto faz exatamente 1 parada', () => {
@@ -223,14 +222,13 @@ describe('simularCorrida', () => {
     );
   });
 
-  // Sinal de grid é fraco por design atual: o offset de largada é penalidade
-  // única na volta 1 (~500ms em Mônaco) contra a variância independente de 15
-  // voltas — resultado real 61/100 vitórias de quem larga na frente. Por isso a
-  // asserção é DIRECIONAL (frente vence mais que atrás), não um limiar rígido
-  // de força: a força do sinal (gridOffsetMs vs variancia) é decisão de
-  // balanceamento e será calibrada no balance-harness (PR 1.6). Se o dev quiser
-  // que o grid pese mais (intenção do GDD §9), o ajuste é lá, não aqui.
-  it('quem larga na frente com carros idênticos vence mais do que quem larga atrás', () => {
+  // Recalibrado no PR 1.6 (balance-harness, 2026-07-18): antes, o sinal de
+  // grid era fraco por design (61/100 vitórias de quem larga na frente), daí a
+  // asserção ser só DIRECIONAL. Com `gridOffsetMs`/`variancia` recalibrados
+  // pra meta do dev (pole vence ~70-80% em pista de ultrapassagem média, com
+  // carros idênticos), Mônaco (dificil) sobe pra ~90/100 — a asserção virou um
+  // limiar real, com margem de segurança abaixo do observado.
+  it('quem larga na frente com carros idênticos vence claramente mais do que quem larga atrás', () => {
     let vitoriasFrente = 0;
     const totalSeeds = 100;
     for (let seed = 0; seed < totalSeeds; seed++) {
@@ -250,9 +248,13 @@ describe('simularCorrida', () => {
       const posAtras = resultado.classificacao.find((c) => c.jogadorId === 'atras')!.posicao;
       if (posFrente < posAtras) vitoriasFrente++;
     }
-    expect(vitoriasFrente).toBeGreaterThan(totalSeeds - vitoriasFrente);
+    // Observado: 90/100. Margem de segurança generosa abaixo do observado.
+    expect(vitoriasFrente).toBeGreaterThanOrEqual(75);
   });
 
+  // Já passava antes (>= 80/100) com variância maior; recalibração (PR 1.6)
+  // deixou o sinal mais forte ainda — observado: 100/100. Mantém o limiar
+  // conservador (não aperta pra 100 fixo, pra não ficar frágil a seeds novas).
   it('carro forte vence o fraco na maioria das seeds', () => {
     let vitoriasForte = 0;
     const totalSeeds = 100;
@@ -453,7 +455,9 @@ describe('simularCorrida', () => {
       ];
       const grid = simularQuali(dataset, loadouts, pistaMonza, 42);
       const resultado = simularCorrida(dataset, loadouts, pistaMonza, grid, 42);
-      // Valores congelados a partir da 1a execução da implementação (PR 1.4).
+      // Valores congelados a partir da 1a execução da implementação (PR 1.4);
+      // recongelados após a calibração do balance-harness (PR 1.6, 2026-07-18 —
+      // variancia/gridOffsetMs/limiarPneuGasto mudaram, ordem/pontos idênticos).
       expect(resultado).toEqual({
         seed: 42,
         classificacao: [
@@ -461,7 +465,7 @@ describe('simularCorrida', () => {
             jogadorId: 'j1',
             posicao: 1,
             pontos: 26,
-            tempoTotal: 1172072.0093080632,
+            tempoTotal: 1172689.7117451343,
             paradas: 1,
             status: 'terminou',
             voltasCompletadas: 14,
@@ -470,7 +474,7 @@ describe('simularCorrida', () => {
             jogadorId: 'j4',
             posicao: 2,
             pontos: 18,
-            tempoTotal: 1176088.9386721763,
+            tempoTotal: 1176271.1234702512,
             paradas: 1,
             status: 'terminou',
             voltasCompletadas: 14,
@@ -479,7 +483,7 @@ describe('simularCorrida', () => {
             jogadorId: 'j2',
             posicao: 3,
             pontos: 15,
-            tempoTotal: 1180714.2882751971,
+            tempoTotal: 1180675.8751857206,
             paradas: 1,
             status: 'terminou',
             voltasCompletadas: 14,
@@ -488,13 +492,13 @@ describe('simularCorrida', () => {
             jogadorId: 'j3',
             posicao: 4,
             pontos: 12,
-            tempoTotal: 1200550.8974916048,
+            tempoTotal: 1201962.903723684,
             paradas: 1,
             status: 'terminou',
             voltasCompletadas: 14,
           },
         ],
-        voltaMaisRapida: { jogadorId: 'j1', tempo: 81825.26671510813 },
+        voltaMaisRapida: { jogadorId: 'j1', tempo: 81987.43890587863 },
         eventos: [],
         chuva: false,
       });
@@ -510,24 +514,26 @@ describe('simularCorrida', () => {
       const pistaMolhada = { ...pistaInterlagos, chanceChuva: 1 };
       const grid = simularQuali(dataset, loadouts, pistaInterlagos, 42);
       const resultado = simularCorrida(dataset, loadouts, pistaMolhada, grid, 42);
-      // Valores congelados a partir da 1a execução da implementação (PR 1.5b).
+      // Valores congelados a partir da 1a execução da implementação (PR 1.5b);
+      // recongelados após a calibração do balance-harness (PR 1.6, 2026-07-18 —
+      // o novo gridOffsetMs/variancia inverteu a ordem j1/j4 no topo).
       expect(resultado).toEqual({
         seed: 42,
         classificacao: [
           {
-            jogadorId: 'j4',
+            jogadorId: 'j1',
             posicao: 1,
-            pontos: 25,
-            tempoTotal: 917990.9523120525,
+            pontos: 26,
+            tempoTotal: 918358.1741811826,
             paradas: 1,
             status: 'terminou',
             voltasCompletadas: 12,
           },
           {
-            jogadorId: 'j1',
+            jogadorId: 'j4',
             posicao: 2,
-            pontos: 19,
-            tempoTotal: 918094.0575301021,
+            pontos: 18,
+            tempoTotal: 918478.9709473404,
             paradas: 1,
             status: 'terminou',
             voltasCompletadas: 12,
@@ -536,7 +542,7 @@ describe('simularCorrida', () => {
             jogadorId: 'j2',
             posicao: 3,
             pontos: 15,
-            tempoTotal: 921136.168566504,
+            tempoTotal: 921625.0617813128,
             paradas: 1,
             status: 'terminou',
             voltasCompletadas: 12,
@@ -545,13 +551,13 @@ describe('simularCorrida', () => {
             jogadorId: 'j3',
             posicao: 4,
             pontos: 12,
-            tempoTotal: 939500.5761466443,
+            tempoTotal: 940951.3261634379,
             paradas: 1,
             status: 'terminou',
             voltasCompletadas: 12,
           },
         ],
-        voltaMaisRapida: { jogadorId: 'j1', tempo: 74178.18664841962 },
+        voltaMaisRapida: { jogadorId: 'j1', tempo: 74270.0609837211 },
         eventos: [],
         chuva: true,
       });

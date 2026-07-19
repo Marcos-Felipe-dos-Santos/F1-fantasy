@@ -80,23 +80,32 @@ import type {
   Ultrapassagem,
 } from './types';
 
-/** Constantes de balanceamento da corrida — expostas pro futuro balance-harness (PR 1.6). */
+/**
+ * Constantes de balanceamento da corrida — expostas pro balance-harness (PR 1.6).
+ *
+ * `variancia`, `gridOffsetMs` e `limiarPneuGasto` foram calibrados pelo
+ * `scripts/balance.ts` em 2026-07-18 contra as 3 metas do dev
+ * (`PROGRESS.md`, seção "Metas de calibração"): sinal de grid (pole vence
+ * ~70-80% das vezes em pista de ultrapassagem média, com carros idênticos)
+ * e paradas extras em desgaste alto (~40-60% dos carros fazem 2+ paradas,
+ * variando pelo PNEU). Ver `npm run balance` pro relatório de medição.
+ */
 export const CORRIDA_CONFIG = {
   pesoPiloto: 0.5,
   pesoCarro: 0.4,
   pesoCall: 0.1,
   /** Fração do tempoBaseMs que separa score 99 de score 0, por volta. */
   spread: 0.05,
-  /** Amplitude da variância por volta, fração do tempoBaseMs (±). */
-  variancia: 0.006,
-  /** Custo por posição de grid embutido na volta 1 (ms) — pista difícil de ultrapassar prende mais. */
-  gridOffsetMs: { facil: 150, media: 300, dificil: 500 } as Record<Ultrapassagem, number>,
+  /** Amplitude da variância por volta, fração do tempoBaseMs (±). Calibrado 2026-07-18. */
+  variancia: 0.004,
+  /** Custo por posição de grid embutido na volta 1 (ms) — pista difícil de ultrapassar prende mais. Calibrado 2026-07-18. */
+  gridOffsetMs: { facil: 500, media: 800, dificil: 1200 } as Record<Ultrapassagem, number>,
   /** Penalidade máxima de largada na volta 1 por LARG baixo (ms). */
   largadaMaxMs: 600,
   /** Custo de degradação por "ponto" de desgaste acumulado do pneu (ms/volta). */
   degradacaoMsPorPonto: 120,
-  /** Desgaste acumulado que força parada extra (pontos). */
-  limiarPneuGasto: 6,
+  /** Desgaste acumulado que força parada extra (pontos). Calibrado 2026-07-18. */
+  limiarPneuGasto: 3.5,
   /** Fração máxima da corrida que um CALL ruim desloca a janela do pit obrigatório (± voltas). */
   desvioJanelaPit: 0.3,
   pitBaseMs: 20000,
