@@ -20,7 +20,9 @@
 
 - **PR 1.6.1** — `medirRaridadePeca` do harness trocou o draft uniforme simplificado pelo motor de draft real (`criarDraft`+`resolverBots`+`atribuirPerfis`, 22 bots, dificuldade 'dificil'). Só `scripts/balance.ts`; engine intocada. Ratio Proibida 1.25→1.51 (guarda ≤3.0 segue verde).
 
-**Testes na main: 99 passando** (8 arquivos) + 1 do harness via `npm run balance`. Lint e `tsc --noEmit` limpos.
+- **PR 1.7a** — UI do draft do modo Single (`src/ui/`): TelaInicio (seed + dificuldade) → TelaDraft (rodadas 1-5, cards dos 5 componentes com notas, Modo Craque) → TelaPeca (5 reveladas com raridade 🟢🔵🟣🟡☠️) → TelaResumo (carro final com notas base→efetivas via `resolverCarro` + grid dos 22). Transições puras em `fluxo-draft.ts` (testadas sem DOM); hook `useDraft` é casca fina; engine intocada; zero dependência nova (logo sem testes de componente DOM — instalar jsdom/testing-library exigiria aprovação do dev). Revisado (aprovado; testes de seedDeTexto e dificuldade adicionados por aviso da revisão). Rodar: `npm run dev`.
+
+**Testes na main: 105 passando** (9 arquivos) + 1 do harness via `npm run balance`. Lint, `tsc --noEmit` e `npm run build` limpos.
 
 ## Acompanhamentos registrados pela revisão do PR 1.6 (não são defeitos; candidatos a PR futuro)
 
@@ -37,7 +39,7 @@
 
 ## Próximos
 
-- **PR 1.7 (próximo)** — UI mínima do Single.
+- **PR 1.7b (próximo)** — UI da corrida: traçado SVG, carros animados, botão Acelerar, tela de resultado (aguardando o dev ver a tela do draft do 1.7a antes de começar).
 
 ## Convenções que os PRs seguem
 
