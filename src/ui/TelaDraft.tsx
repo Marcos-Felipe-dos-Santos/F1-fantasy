@@ -10,18 +10,19 @@ import { revelarRodada } from '../engine/draft';
 import type { DraftState, EscolhaDraft, SlotComponente } from '../engine/types';
 import { CardComponente, LoadoutParcial, comoNotas } from './componentes';
 import { dataset } from './dataset-app';
-import { ID_HUMANO } from './fluxo-draft';
 import { slotsPreenchidos } from './loadout-view';
 
 interface TelaDraftProps {
   state: DraftState;
+  /** Jogador que está fazendo a escolha nesta tela (Single: sempre `ID_HUMANO`; roteamento entre humanos é o PR 2.1b). */
+  jogadorId: string;
   erro: string | null;
   onEscolher: (escolha: EscolhaDraft) => void;
 }
 
-export function TelaDraft({ state, erro, onEscolher }: TelaDraftProps) {
-  const revelacao = revelarRodada(state, ID_HUMANO);
-  const progresso = state.progresso[ID_HUMANO];
+export function TelaDraft({ state, jogadorId, erro, onEscolher }: TelaDraftProps) {
+  const revelacao = revelarRodada(state, jogadorId);
+  const progresso = state.progresso[jogadorId];
 
   if (revelacao.fase === 'sorteios-aguardando') {
     return (

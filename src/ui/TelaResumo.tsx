@@ -1,14 +1,14 @@
 /**
- * Tela de resumo do draft concluído (§3): o carro final do humano — 5
+ * Tela de resumo do draft concluído (§3): o carro final de cada humano — 5
  * componentes (com equipe/ano de origem e notas efetivas via
  * `resolverCarro`) + a peça escolhida — e o grid dos 22 jogadores.
  */
 
 import { resolverCarro } from '../engine/carro';
-import type { DraftState } from '../engine/types';
+import type { DraftState, Jogador } from '../engine/types';
 import { CardComponente, CardPeca, comoNotas } from './componentes';
 import { dataset } from './dataset-app';
-import { ID_HUMANO } from './fluxo-draft';
+import { nomeJogador } from './loadout-view';
 
 interface TelaResumoProps {
   state: DraftState;
@@ -17,13 +17,17 @@ interface TelaResumoProps {
 }
 
 export function TelaResumo({ state, onReiniciar, onIrParaCorrida }: TelaResumoProps) {
-  const loadoutHumano = state.loadouts[ID_HUMANO];
+  const humanos = state.jogadores.filter((j) => j.tipo === 'humano');
 
   return (
     <div className="tela-resumo">
       <h2>Draft concluído</h2>
 
-      {loadoutHumano && <ResumoCarroHumano loadout={loadoutHumano} />}
+      {humanos.map((humano) => {
+        const loadout = state.loadouts[humano.id];
+        if (!loadout) return null;
+        return <ResumoCarroHumano key={humano.id} jogador={humano} loadout={loadout} />;
+      })}
 
       <h3>Grid — 22 jogadores</h3>
       <TabelaGrid state={state} />
@@ -40,7 +44,13 @@ export function TelaResumo({ state, onReiniciar, onIrParaCorrida }: TelaResumoPr
   );
 }
 
-function ResumoCarroHumano({ loadout }: { loadout: DraftState['loadouts'][string] }) {
+function ResumoCarroHumano({
+  jogador,
+  loadout,
+}: {
+  jogador: Jogador;
+  loadout: DraftState['loadouts'][string];
+}) {
   const carro = resolverCarro(dataset, loadout);
   const piloto = dataset.pilotosById.get(loadout.pilotoId);
   const chassi = dataset.chassisById.get(loadout.chassiId);
@@ -50,7 +60,7 @@ function ResumoCarroHumano({ loadout }: { loadout: DraftState['loadouts'][string
 
   return (
     <section className="resumo-carro">
-      <h3>Seu carro</h3>
+      <h3>Carro — {nomeJogador(jogador)}</h3>
       <div className="grid-cards">
         {piloto && (
           <CardComponente
@@ -116,10 +126,10 @@ function TabelaGrid({ state }: { state: DraftState }) {
           const estrategista = dataset.estrategistasById.get(loadout.estrategistaId);
           const pit = dataset.pitsById.get(loadout.pitId);
           const peca = dataset.pecasById.get(loadout.pecaId);
-          const ehHumano = jogador.id === ID_HUMANO;
+          const ehHumano = jogador.tipo === 'humano';
           return (
             <tr key={jogador.id} className={ehHumano ? 'linha-humano' : ''}>
-              <td>{ehHumano ? 'Você' : jogador.id}</td>
+              <td>{nomeJogador(jogador)}</td>
               <td>{piloto?.nome ?? '?'}</td>
               <td>{chassi ? `${chassi.equipe} ${chassi.ano}` : '?'}</td>
               <td>{motor ? `${motor.equipe} ${motor.ano}` : '?'}</td>

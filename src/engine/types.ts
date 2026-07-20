@@ -221,6 +221,13 @@ export interface Jogador {
   id: string;
   tipo: 'humano' | 'bot';
   perfilBot?: PerfilBot;
+  /**
+   * Nome de exibição (opcional; PR 2.1a, modo Local). NUNCA entra em
+   * `deriveSeed` nem em nenhuma lógica de jogo — só o `id` alimenta a seed,
+   * e o `id` é sempre fixo (nunca derivado do nome digitado), pra garantir
+   * reprodutibilidade por seed.
+   */
+  nome?: string;
 }
 
 /** Dificuldade da partida — controla a proporção de bots "pra ganhar" (§12). */

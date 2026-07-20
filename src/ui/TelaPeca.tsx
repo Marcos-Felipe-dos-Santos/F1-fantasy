@@ -9,16 +9,17 @@ import { revelarRodada } from '../engine/draft';
 import type { DraftState, EscolhaDraft } from '../engine/types';
 import { CardPeca } from './componentes';
 import { dataset } from './dataset-app';
-import { ID_HUMANO } from './fluxo-draft';
 
 interface TelaPecaProps {
   state: DraftState;
+  /** Jogador que está fazendo a escolha nesta tela (Single: sempre `ID_HUMANO`; roteamento entre humanos é o PR 2.1b). */
+  jogadorId: string;
   erro: string | null;
   onEscolher: (escolha: EscolhaDraft) => void;
 }
 
-export function TelaPeca({ state, erro, onEscolher }: TelaPecaProps) {
-  const revelacao = revelarRodada(state, ID_HUMANO);
+export function TelaPeca({ state, jogadorId, erro, onEscolher }: TelaPecaProps) {
+  const revelacao = revelarRodada(state, jogadorId);
 
   if (revelacao.fase !== 'peca') {
     // Fora do escopo desta tela — App só a renderiza durante a fase peça.
