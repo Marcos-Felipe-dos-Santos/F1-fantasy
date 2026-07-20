@@ -14,13 +14,15 @@ import { slotsPreenchidos } from './loadout-view';
 
 interface TelaDraftProps {
   state: DraftState;
-  /** Jogador que está fazendo a escolha nesta tela (Single: sempre `ID_HUMANO`; roteamento entre humanos é o PR 2.1b). */
+  /** Jogador que está fazendo a escolha nesta tela — quem tem o aparelho agora (roteamento em `App.tsx`/`fluxo-local.ts`, PR 2.1b). */
   jogadorId: string;
+  /** Nome pra "Vez de {nome}" (modo Local, 2+ humanos); `undefined` omite o subtítulo (Single). */
+  vezDe?: string;
   erro: string | null;
   onEscolher: (escolha: EscolhaDraft) => void;
 }
 
-export function TelaDraft({ state, jogadorId, erro, onEscolher }: TelaDraftProps) {
+export function TelaDraft({ state, jogadorId, vezDe, erro, onEscolher }: TelaDraftProps) {
   const revelacao = revelarRodada(state, jogadorId);
   const progresso = state.progresso[jogadorId];
 
@@ -43,6 +45,7 @@ export function TelaDraft({ state, jogadorId, erro, onEscolher }: TelaDraftProps
   return (
     <div className="tela-draft">
       <header className="tela-draft__cabecalho">
+        {vezDe && <p className="tela-draft__vez">Vez de {vezDe}</p>}
         <h2>
           Rodada {revelacao.rodada} de 5{revelacao.rodada === 5 ? ' — última vaga' : ''}
         </h2>
