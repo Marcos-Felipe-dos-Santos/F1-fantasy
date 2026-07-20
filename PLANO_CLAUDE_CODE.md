@@ -65,9 +65,23 @@ f1-fantasy-claude-setup/
 **Marco:** dá pra jogar sozinho contra bots e medir balanceamento. Aqui você conecta o dataset gerado por IA e roda o harness em cima dele.
 
 ### Fase 2 — Modo Local (hotseat 2-4)
-- **PR 2.1** — Fluxo de turnos hotseat (passa o dispositivo): cada humano faz seus sorteios/escolhas.
-- **PR 2.2** — Preenchimento com bots até 22 + tela de grid da corrida com todos.
-- **PR 2.3** — Modo Craque / Modo Cego (esconde tudo). Mesma engine, UI condicional.
+
+> Reorganizada em 2026-07-19 (plano do fable-architect aprovado pelo dev): o PR 2.2 original
+> ("bots até 22 + grid com todos") foi fundido no 2.1 — bots até 22 é `22 − nHumanos` na montagem
+> de jogadores e o grid com todos já existe desde os PRs 1.7a/1.7b; seria um PR sem conteúdo
+> próprio. Em troca, o 2.1 foi dividido em dois PRs pequenos. Numeração original mantida (2.3).
+
+- **PR 2.1a** — Generalização pra N humanos por baixo, Single intacto: `fluxo-draft.ts` aceita
+  lista de humanos `{id, nome}` (ids fixos `humano-1..4` — id alimenta `deriveSeed`, nome é só
+  exibição via `Jogador.nome?`), bots = 22 − nHumanos, telas destacam por `tipo === 'humano'`.
+  Teste de equivalência: mesma seed ⇒ `DraftState` idêntico ao Single atual.
+- **PR 2.1b** — Fluxo de turnos hotseat (passa o dispositivo): rodadas 1-5 em bloco por humano,
+  rodada 6 seguindo a `ordemPeca` da engine; `fluxo-local.ts` puro (`alvoHumano` + decisão
+  handoff/jogar/concluido), `TelaHandoff` neutra sem dados de jogo (anti-vazamento), TelaInicio
+  com modo Single/Local e 2-4 nomes.
+- **PR 2.3** — Modo Craque / Modo Cego (esconde notas, base→efetiva e toda dica de raridade —
+  emoji, cor, bônus, risco, atributos-alvo). Mesma engine, UI condicional por prop `visibilidade`,
+  opção na TelaInicio válida pra Single e Local.
 
 **Marco:** jogável presencialmente com amigos.
 
