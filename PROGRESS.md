@@ -24,7 +24,9 @@
 
 - **PR 1.7b** — UI da corrida do modo Single (fecha a Fase 1). Engine: `ResultadoCorrida.historicoVoltas: Record<string, number[]>` (tempo de cada volta completada por carro, incluindo a volta do DNF; penalidade de investigação fica fora — é pós-corrida), registro puro sem nenhuma chamada nova de RNG — as 2 seeds de ouro seguem bit a bit (testes de ouro só desestruturam o campo novo antes do `toEqual` + asserção soma≈tempoTotal). UI: `fluxo-corrida.ts` puro (`prepararCorrida` = `simularQuali`+`simularCorrida` com a seed do draft, pista fixa Monza `PISTA_CORRIDA_ID`; matemática de replay testável sem DOM: `acumularVoltas`, `progressoNoReplay`, `voltaAtual`, `fracaoVisual` — N voltas visuais, terminou congela na chegada, DNF congela em 0.5 do traçado —, `pontoNoTracado` por polilinha fechada sem `getPointAtLength`, `escalaReplay` ~2.2s de relógio por volta, `TRACADO_MONZA`); `useCorrida` (rAF com tempo em ref — agendamento fora de updater de setState, seguro sob StrictMode), `TelaCorrida` (grid da quali → Largar → SVG com 22 carros, humano em destaque, contador de volta do líder, ticker de eventos, badge 🌧️, Acelerar ⏩ pula pro resultado), `TelaResultadoCorrida` (classificação FIA, DNF com volta, paradas, volta mais rápida, posição do humano em destaque), integração via `FluxoCorrida` + botão "Ir pra corrida" na TelaResumo. Revisado pelo senior-reviewer (aprovado com correções, ambas aplicadas: rAF fora do updater — bloqueante de StrictMode em dev — e composição `fracaoVisual`→`pontoNoTracado` com testes da composição).
 
-**Testes na main: 131 passando** (10 arquivos) + 1 do harness via `npm run balance`. Lint, `tsc --noEmit` e `npm run build` limpos.
+- **PR 2.1a** — Generalização do draft pra N humanos (Fase 2; Single intacto). Engine: só `Jogador.nome?: string` (exibição; nunca entra em `deriveSeed` — ids fixos `voce`/`humano-1..4` garantem reprodutibilidade, comentário no código). UI: `fluxo-draft.ts` com `HumanoConfig`, `iniciarDraft`/`aplicarEscolhaDoJogador` genéricos (bots = 22 − nHumanos) + guardas de input (ids únicos/não-vazios, 1..22 humanos); `iniciarDraftSingle`/`aplicarEscolhaHumano` viram wrappers; `useDraft.escolher(jogadorId, escolha)`; telas destacam por `tipo === 'humano'` + `nomeJogador` (fallback 'Você', trim de nome vazio); TelaResumo com seção de carro por humano. Não-regressão do Single garantida por **golden snapshot capturado da main pré-PR** (worktree + junction de node_modules; `ordemPeca` completa, perfis de 3 bots e 5 sorteios do humano pra seed 'demo'/dificil — passou sem divergência) + testes de equivalência wrapper×genérico (4 casos, facil e dificil). Revisado pelo senior-reviewer (aprovado com correções — golden anti-tautologia, guardas de input e trim aplicados).
+
+**Testes na main: 154 passando** (12 arquivos) + 1 do harness via `npm run balance`. Lint, `tsc --noEmit` e `npm run build` limpos.
 
 **🏁 Marco da Fase 1 atingido:** dá pra jogar o modo Single completo (`npm run dev`): draft de 6 rodadas contra 21 bots → quali → corrida animada → resultado FIA. Balance-harness operante. Visual segue propositalmente cru — polimento é Fase 4.
 
@@ -43,7 +45,8 @@
 
 ## Próximos
 
-- **Fase 2 — Modo Local (hotseat 2-4)**: PR 2.1 (fluxo de turnos), PR 2.2 (bots até 22 + grid), PR 2.3 (Modo Craque/Cego). Aguardando o dev jogar o Single do 1.7b e aprovar o início.
+- **PR 2.1b (próximo)** — fluxo hotseat: `fluxo-local.ts` puro (`alvoHumano` + decisão handoff/jogar/concluido), `TelaHandoff` neutra anti-vazamento, TelaInicio com Single/Local e 2-4 nomes. Plano da Fase 2 aprovado pelo dev em 2026-07-19 (ver PLANO §5 Fase 2 reorganizada: 2.1a/2.1b/2.3).
+- **PR 2.3 (depois)** — Modo Craque/Cego por prop `visibilidade`.
 
 ## Acompanhamentos registrados pela revisão do PR 1.7b (cosméticos, candidatos à Fase 4)
 
