@@ -1,0 +1,252 @@
+/**
+ * Transições e matemática puras da corrida do modo Single (PR 1.7b), no
+ * mesmo espírito de `fluxo-draft.ts`: funções testáveis sem DOM, que só
+ * compõem a engine (`simularQuali`, `simularCorrida`) e cálculo geométrico
+ * de apresentação (posição do carro no traçado, escala de tempo do replay).
+ * Nenhuma regra de jogo é reimplementada aqui — corrida/pontuação/eventos
+ * vêm 100% de `src/engine`.
+ *
+ * Fase 1 (GDD): 1 pista fixa (Monza) — seletor de pista fica pra fase futura.
+ */
+
+import { simularCorrida } from '../engine/corrida';
+import type { Dataset } from '../engine/dataset';
+import { simularQuali } from '../engine/quali';
+import type { DraftState, Loadout, Pista, ResultadoCorrida, ResultadoQuali } from '../engine/types';
+
+/** Pista fixa da corrida na Fase 1 (GDD §9/§10) — seletor de pista é PR futuro. */
+export const PISTA_CORRIDA_ID = 'pista-monza';
+
+/** Ponto 2D usado pelo traçado (mesmo sistema de coordenadas do viewBox SVG). */
+export interface Ponto {
+  x: number;
+  y: number;
+}
+
+/**
+ * Monta o grid da quali e simula a corrida a partir de um draft concluído:
+ * os `Loadout[]` vêm de `draftState.loadouts`, ordenados por `jogadorId`
+ * (estabilidade — a ordem de entrada não muda o resultado, ver contrato de
+ * RNG por jogador em `quali.ts`/`corrida.ts`, mas mantém a construção
+ * determinística mesmo assim). Usa a seed do próprio draft, então a corrida
+ * de um draft concluído é sempre a mesma.
+ */
+export function prepararCorrida(
+  dataset: Dataset,
+  draftState: DraftState,
+): { pista: Pista; grid: ResultadoQuali; resultado: ResultadoCorrida } {
+  if (draftState.fase !== 'concluido') {
+    throw new Error('prepararCorrida: o draft precisa estar concluído (fase "concluido")');
+  }
+
+  const pista = dataset.pistasById.get(PISTA_CORRIDA_ID);
+  if (!pista) {
+    throw new Error(`prepararCorrida: pista "${PISTA_CORRIDA_ID}" não encontrada no dataset`);
+  }
+
+  const loadouts: Loadout[] = Object.entries(draftState.loadouts)
+    .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+    .map(([, loadout]) => loadout);
+
+  const grid = simularQuali(dataset, loadouts, pista, draftState.seed);
+  const resultado = simularCorrida(dataset, loadouts, pista, grid, draftState.seed);
+
+  return { pista, grid, resultado };
+}
+
+/** Tempos acumulados por volta (ms), a partir do histórico de voltas de um carro (`ResultadoCorrida.historicoVoltas[id]`). */
+export function acumularVoltas(historico: number[]): number[] {
+  const acumulado: number[] = [];
+  let soma = 0;
+  for (const tempoVolta of historico) {
+    soma += tempoVolta;
+    acumulado.push(soma);
+  }
+  return acumulado;
+}
+
+/**
+ * Fração 0..1 da corrida percorrida por um carro no instante simulado
+ * `tempoSimMs`, a partir do seu histórico de voltas. Carro que completou
+ * todas as `voltasTotais` fica em 1 assim que `tempoSimMs` alcança a soma do
+ * histórico; carro que deu DNF (histórico mais curto que `voltasTotais`)
+ * congela em `voltasCompletadas / voltasTotais` pra sempre (o histórico
+ * nunca cresce além disso).
+ *
+ * Fração da CORRIDA INTEIRA (0..1 uma vez, do início ao fim) — não é posição
+ * no traçado. Pra desenhar o carro (`pontoNoTracado`), use `fracaoVisual`,
+ * que deriva desta função mas dá N voltas visuais no mesmo traçado.
+ */
+export function progressoNoReplay(
+  historico: number[],
+  tempoSimMs: number,
+  voltasTotais: number,
+): number {
+  if (historico.length === 0 || voltasTotais <= 0) return 0;
+
+  const acumulado = acumularVoltas(historico);
+  const total = historico.length;
+
+  let k = 0;
+  while (k < total && acumulado[k] <= tempoSimMs) k++;
+
+  if (k >= total) {
+    return total / voltasTotais;
+  }
+
+  const inicioVoltaAtual = k === 0 ? 0 : acumulado[k - 1];
+  const duracaoVoltaAtual = historico[k];
+  const fracaoBruta =
+    duracaoVoltaAtual > 0 ? (tempoSimMs - inicioVoltaAtual) / duracaoVoltaAtual : 0;
+  const fracaoDentroDaVolta = Math.min(1, Math.max(0, fracaoBruta));
+
+  return (k + fracaoDentroDaVolta) / voltasTotais;
+}
+
+/**
+ * Fração 0..1 AO LONGO DO TRAÇADO (não da corrida inteira) no instante
+ * `tempoSimMs` — o valor a passar pra `pontoNoTracado` (decisão de design:
+ * "N voltas visuais", pra bater com o contador "Volta X/N" em vez de o carro
+ * percorrer o traçado uma única vez na corrida inteira).
+ *
+ * Composição sobre `progressoNoReplay`: enquanto o carro ainda está rodando,
+ * é só `(progresso × voltasTotais) % 1` — a volta cíclica no mesmo traçado.
+ * Quando o carro já passou do seu próprio tempo total (parou de avançar em
+ * `progressoNoReplay`):
+ * - terminou a corrida ⇒ 0 (congela na linha de chegada/largada);
+ * - deu DNF ⇒ 0.5 fixo (congela no meio do traçado, estilização "parou na
+ *   pista"). Não reaproveita o `% 1` genérico aqui de propósito: o progresso
+ *   de um DNF congelado é sempre `voltasCompletadas / voltasTotais`, uma
+ *   fração cujo numerador ao multiplicar por `voltasTotais` vira inteiro
+ *   (`voltasCompletadas`) — `% 1` daria 0 e o carro "saltaria" de volta pra
+ *   a linha de largada, visualmente errado pra um abandono.
+ */
+export function fracaoVisual(
+  historico: number[],
+  tempoSimMs: number,
+  status: 'terminou' | 'dnf',
+  voltasTotais: number,
+): number {
+  if (historico.length === 0 || voltasTotais <= 0) return 0;
+
+  const somaHistorico = acumularVoltas(historico).at(-1) ?? 0;
+  const parou = tempoSimMs >= somaHistorico;
+
+  if (parou) {
+    return status === 'dnf' ? 0.5 : 0;
+  }
+
+  const progresso = progressoNoReplay(historico, tempoSimMs, voltasTotais);
+  const voltasPercorridas = progresso * voltasTotais;
+  return voltasPercorridas % 1;
+}
+
+/**
+ * Número da volta (1-based) que um carro está cumprindo no instante
+ * `tempoSimMs`, a partir do seu histórico de voltas — usado pro contador
+ * "Volta X/N" do líder na tela de replay. Clampado em `[1, voltasTotais]`.
+ */
+export function voltaAtual(historico: number[], tempoSimMs: number, voltasTotais: number): number {
+  if (historico.length === 0) return Math.max(1, Math.min(voltasTotais, 1));
+
+  const acumulado = acumularVoltas(historico);
+  const total = historico.length;
+
+  let k = 0;
+  while (k < total && acumulado[k] <= tempoSimMs) k++;
+
+  const volta = k >= total ? total : k + 1;
+  return Math.min(voltasTotais, Math.max(1, volta));
+}
+
+/**
+ * Ponto ao longo de uma polilinha FECHADA (o último ponto liga de volta ao
+ * primeiro), por comprimento de arco. `fracao` é tomada módulo 1 — o carro dá
+ * N voltas no mesmo traçado. Pura: nenhuma chamada de DOM (sem
+ * `getPointAtLength`).
+ *
+ * Pra desenhar a posição de um carro na tela de replay, passe o resultado de
+ * `fracaoVisual` (fração cíclica por volta) — não `progressoNoReplay` direto
+ * (fração da corrida inteira, o carro daria só 1 volta visual do início ao
+ * fim, inconsistente com o contador "Volta X/N").
+ */
+export function pontoNoTracado(tracado: Ponto[], fracao: number): Ponto {
+  if (tracado.length === 0) {
+    throw new Error('pontoNoTracado: traçado vazio');
+  }
+  if (tracado.length === 1) {
+    return tracado[0];
+  }
+
+  const f = ((fracao % 1) + 1) % 1;
+
+  const segmentos: { a: Ponto; b: Ponto; comprimento: number }[] = [];
+  let comprimentoTotal = 0;
+  for (let i = 0; i < tracado.length; i++) {
+    const a = tracado[i];
+    const b = tracado[(i + 1) % tracado.length];
+    const comprimento = Math.hypot(b.x - a.x, b.y - a.y);
+    segmentos.push({ a, b, comprimento });
+    comprimentoTotal += comprimento;
+  }
+
+  if (comprimentoTotal === 0) {
+    return tracado[0];
+  }
+
+  let alvo = f * comprimentoTotal;
+  for (const segmento of segmentos) {
+    if (alvo <= segmento.comprimento) {
+      const t = segmento.comprimento === 0 ? 0 : alvo / segmento.comprimento;
+      return {
+        x: segmento.a.x + (segmento.b.x - segmento.a.x) * t,
+        y: segmento.a.y + (segmento.b.y - segmento.a.y) * t,
+      };
+    }
+    alvo -= segmento.comprimento;
+  }
+
+  // Ponto de fechamento (erro de arredondamento de ponto flutuante no último segmento).
+  return tracado[0];
+}
+
+/** Duração-alvo do replay por volta, em ms de relógio real (~2.2s/volta ⇒ ~30s numa corrida de 14 voltas). */
+const MS_REPLAY_POR_VOLTA = 2200;
+
+/**
+ * Fator de conversão de tempo real decorrido (ms de relógio, ex.: delta do
+ * `requestAnimationFrame`) pra tempo simulado (ms) avançado no replay: cada
+ * ms real avança `escala` ms simulados, de forma que a corrida inteira do
+ * líder (`tempoLiderMs`) dure ~`voltas * MS_REPLAY_POR_VOLTA` ms de relógio.
+ */
+export function escalaReplay(tempoLiderMs: number, voltas: number): number {
+  const duracaoAlvoMs = voltas * MS_REPLAY_POR_VOLTA;
+  if (duracaoAlvoMs <= 0) return 1;
+  return tempoLiderMs / duracaoAlvoMs;
+}
+
+/**
+ * Traçado estilizado de Monza (não é o traçado real, precisão não importa,
+ * §9/§10): retas longas, as 3 chicanes (Rettifilo, Roggia, Ascari), os Lesmos
+ * e a Parabolica final. Polilinha fechada em viewBox 0 0 1000 600 — o
+ * segmento de fechamento (último ponto → primeiro) é implícito, calculado
+ * por `pontoNoTracado`.
+ */
+export const TRACADO_MONZA: Ponto[] = [
+  { x: 150, y: 500 }, // reta de largada/chegada
+  { x: 650, y: 500 },
+  { x: 700, y: 480 }, // Variante del Rettifilo (1a chicane) — entrada
+  { x: 670, y: 445 }, // Rettifilo — apex 1
+  { x: 720, y: 415 }, // Rettifilo — apex 2
+  { x: 800, y: 400 }, // Curva Biassono
+  { x: 855, y: 320 }, // Variante della Roggia (2a chicane) — entrada
+  { x: 815, y: 270 }, // Roggia — apex
+  { x: 870, y: 210 }, // Lesmo 1
+  { x: 820, y: 150 }, // Lesmo 2
+  { x: 650, y: 110 }, // início do Rettilineo (reta dos boxes de trás)
+  { x: 320, y: 100 }, // Variante Ascari (3a chicane) — entrada
+  { x: 260, y: 130 }, // Ascari — apex
+  { x: 160, y: 210 }, // aproximação da Parabolica
+  { x: 70, y: 360 }, // Parabolica — ápice externo
+  { x: 100, y: 470 }, // saída da Parabolica, de volta à reta principal
+];
