@@ -343,4 +343,14 @@ export interface ResultadoCorrida {
    * afetada — clima só entra na corrida.
    */
   chuva: boolean;
+  /**
+   * Histórico de tempos de volta por jogadorId (PR 1.7b, insumo pro replay
+   * da UI): cada entrada é o `tempoVolta` já somado a `tempoTotal` no loop de
+   * simulação (inclui offset da volta 1, custo de pit, erro/problema técnico
+   * e lentidão de chuva quando aplicável). Tamanho igual a
+   * `voltasCompletadas` — a volta que termina em DNF também entra. A
+   * penalidade de investigação NÃO aparece aqui (é somada pós-corrida, não
+   * pertence a nenhuma volta).
+   */
+  historicoVoltas: Record<string, number[]>;
 }

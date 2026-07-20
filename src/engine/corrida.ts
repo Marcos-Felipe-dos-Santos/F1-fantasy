@@ -154,6 +154,8 @@ interface ResultadoCarro {
   status: 'terminou' | 'dnf';
   voltasCompletadas: number;
   eventos: EventoCorrida[];
+  /** Tempo de cada volta completada, na ordem — ver doc de `ResultadoCorrida.historicoVoltas`. */
+  voltas: number[];
 }
 
 /**
@@ -227,6 +229,7 @@ function simularCarro(
   let status: 'terminou' | 'dnf' = 'terminou';
   let voltasCompletadas = pista.voltas;
   const eventos: EventoCorrida[] = [];
+  const voltas: number[] = [];
 
   for (let v = 1; v <= pista.voltas; v++) {
     let tempoVolta =
@@ -275,6 +278,7 @@ function simularCarro(
 
     if (quebrouChassi) {
       tempoTotal += tempoVolta;
+      voltas.push(tempoVolta);
       eventos.push({ volta: v, jogadorId: loadout.jogadorId, tipo: 'quebra-chassi', custoMs: 0 });
       status = 'dnf';
       voltasCompletadas = v;
@@ -282,6 +286,7 @@ function simularCarro(
     }
     if (quebrouMotor) {
       tempoTotal += tempoVolta;
+      voltas.push(tempoVolta);
       eventos.push({ volta: v, jogadorId: loadout.jogadorId, tipo: 'quebra-motor', custoMs: 0 });
       status = 'dnf';
       voltasCompletadas = v;
@@ -323,6 +328,7 @@ function simularCarro(
     }
 
     tempoTotal += tempoVolta;
+    voltas.push(tempoVolta);
     if (tempoVolta < melhorVolta) melhorVolta = tempoVolta;
   }
 
@@ -347,6 +353,7 @@ function simularCarro(
     status,
     voltasCompletadas,
     eventos,
+    voltas,
   };
 }
 
@@ -457,11 +464,17 @@ export function simularCorrida(
       return a.tipo < b.tipo ? -1 : a.tipo > b.tipo ? 1 : 0;
     });
 
+  const historicoVoltas: Record<string, number[]> = {};
+  for (const resultado of porJogador) {
+    historicoVoltas[resultado.jogadorId] = resultado.voltas;
+  }
+
   return {
     seed,
     classificacao,
     voltaMaisRapida: { jogadorId: autor.jogadorId, tempo: autor.melhorVolta },
     eventos,
     chuva: chove,
+    historicoVoltas,
   };
 }

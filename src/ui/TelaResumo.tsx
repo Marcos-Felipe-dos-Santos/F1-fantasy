@@ -13,9 +13,10 @@ import { ID_HUMANO } from './fluxo-draft';
 interface TelaResumoProps {
   state: DraftState;
   onReiniciar: () => void;
+  onIrParaCorrida: () => void;
 }
 
-export function TelaResumo({ state, onReiniciar }: TelaResumoProps) {
+export function TelaResumo({ state, onReiniciar, onIrParaCorrida }: TelaResumoProps) {
   const loadoutHumano = state.loadouts[ID_HUMANO];
 
   return (
@@ -27,9 +28,14 @@ export function TelaResumo({ state, onReiniciar }: TelaResumoProps) {
       <h3>Grid — 22 jogadores</h3>
       <TabelaGrid state={state} />
 
-      <button type="button" className="botao-primario" onClick={onReiniciar}>
-        Novo draft
-      </button>
+      <div className="tela-resumo__acoes">
+        <button type="button" className="botao-primario" onClick={onIrParaCorrida}>
+          Ir pra corrida →
+        </button>
+        <button type="button" className="botao-primario" onClick={onReiniciar}>
+          Novo draft
+        </button>
+      </div>
     </div>
   );
 }

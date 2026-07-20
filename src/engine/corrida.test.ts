@@ -458,7 +458,10 @@ describe('simularCorrida', () => {
       // Valores congelados a partir da 1a execução da implementação (PR 1.4);
       // recongelados após a calibração do balance-harness (PR 1.6, 2026-07-18 —
       // variancia/gridOffsetMs/limiarPneuGasto mudaram, ordem/pontos idênticos).
-      expect(resultado).toEqual({
+      // `historicoVoltas` (PR 1.7b) é derivado, não hardcoded aqui — os números
+      // congelados dos demais campos não mudam (ver asserção de soma abaixo).
+      const { historicoVoltas, ...resto } = resultado;
+      expect(resto).toEqual({
         seed: 42,
         classificacao: [
           {
@@ -502,6 +505,11 @@ describe('simularCorrida', () => {
         eventos: [],
         chuva: false,
       });
+      for (const item of resultado.classificacao) {
+        expect(historicoVoltas[item.jogadorId]).toHaveLength(item.voltasCompletadas);
+        const soma = historicoVoltas[item.jogadorId].reduce((a, b) => a + b, 0);
+        expect(soma).toBeCloseTo(item.tempoTotal, 6);
+      }
     });
 
     it('congela classificação, volta mais rápida e chuva=true para seed 42, Interlagos (chanceChuva=1), 4 loadouts fixos', () => {
@@ -517,7 +525,10 @@ describe('simularCorrida', () => {
       // Valores congelados a partir da 1a execução da implementação (PR 1.5b);
       // recongelados após a calibração do balance-harness (PR 1.6, 2026-07-18 —
       // o novo gridOffsetMs/variancia inverteu a ordem j1/j4 no topo).
-      expect(resultado).toEqual({
+      // `historicoVoltas` (PR 1.7b) é derivado, não hardcoded aqui — os números
+      // congelados dos demais campos não mudam (ver asserção de soma abaixo).
+      const { historicoVoltas, ...resto } = resultado;
+      expect(resto).toEqual({
         seed: 42,
         classificacao: [
           {
@@ -561,6 +572,88 @@ describe('simularCorrida', () => {
         eventos: [],
         chuva: true,
       });
+      for (const item of resultado.classificacao) {
+        expect(historicoVoltas[item.jogadorId]).toHaveLength(item.voltasCompletadas);
+        const soma = historicoVoltas[item.jogadorId].reduce((a, b) => a + b, 0);
+        expect(soma).toBeCloseTo(item.tempoTotal, 6);
+      }
+    });
+  });
+
+  describe('historicoVoltas (PR 1.7b)', () => {
+    it('tem 1 entrada por jogadorId, com tamanho igual a voltasCompletadas', () => {
+      const loadouts = [loadoutRedBull(), loadoutFerrari(), loadoutMinardi('j3'), loadoutMercedes()];
+      const grid = simularQuali(dataset, loadouts, pistaMonza, 42);
+      const resultado = simularCorrida(dataset, loadouts, pistaMonza, grid, 42);
+
+      expect(Object.keys(resultado.historicoVoltas).sort()).toEqual(
+        loadouts.map((l) => l.jogadorId).sort(),
+      );
+      for (const item of resultado.classificacao) {
+        expect(resultado.historicoVoltas[item.jogadorId]).toHaveLength(item.voltasCompletadas);
+      }
+    });
+
+    it('sem investigação: soma das voltas do histórico ≈ tempoTotal', () => {
+      const loadouts = [loadoutRedBull(), loadoutFerrari(), loadoutMinardi('j3'), loadoutMercedes()];
+      const grid = simularQuali(dataset, loadouts, pistaMonza, 42);
+      const resultado = simularCorrida(dataset, loadouts, pistaMonza, grid, 42);
+
+      for (const item of resultado.classificacao) {
+        const temInvestigacao = resultado.eventos.some(
+          (e) => e.jogadorId === item.jogadorId && e.tipo === 'investigacao',
+        );
+        expect(temInvestigacao).toBe(false); // seed/loadouts conhecidos sem incidentes (ver seed de ouro)
+        const soma = resultado.historicoVoltas[item.jogadorId].reduce((a, b) => a + b, 0);
+        expect(soma).toBeCloseTo(item.tempoTotal, 6);
+      }
+    });
+
+    it('DNF por quebra: soma das voltas do histórico ≈ tempoTotal (a volta do DNF entra)', () => {
+      const totalSeeds = 200;
+      let achado: ReturnType<typeof simularCorrida> | null = null;
+      for (let seed = 0; seed < totalSeeds; seed++) {
+        const loadouts = [loadoutMinardi1993Barbazza('fraco'), loadoutRedBull({ jogadorId: 'forte' })];
+        const grid = simularQuali(dataset, loadouts, pistaSuzuka, seed);
+        const resultado = simularCorrida(dataset, loadouts, pistaSuzuka, grid, seed);
+        const item = resultado.classificacao.find((c) => c.jogadorId === 'fraco')!;
+        if (item.status === 'dnf') {
+          achado = resultado;
+          break;
+        }
+      }
+      expect(achado).not.toBeNull();
+      const resultado = achado!;
+      const item = resultado.classificacao.find((c) => c.jogadorId === 'fraco')!;
+      const soma = resultado.historicoVoltas['fraco'].reduce((a, b) => a + b, 0);
+      expect(soma).toBeCloseTo(item.tempoTotal, 6);
+    });
+
+    it('com investigação: soma das voltas + custoMs da investigação ≈ tempoTotal', () => {
+      const totalSeeds = 300;
+      let achado: ReturnType<typeof simularCorrida> | null = null;
+      for (let seed = 0; seed < totalSeeds; seed++) {
+        const loadouts = [
+          loadoutRedBull({ jogadorId: 'proibida', pecaId: 'peca-suspensao-ativa-fw15' }),
+        ];
+        const grid = simularQuali(dataset, loadouts, pistaMonza, seed);
+        const resultado = simularCorrida(dataset, loadouts, pistaMonza, grid, seed);
+        const evento = resultado.eventos.find(
+          (e) => e.jogadorId === 'proibida' && e.tipo === 'investigacao',
+        );
+        if (evento) {
+          achado = resultado;
+          break;
+        }
+      }
+      expect(achado).not.toBeNull();
+      const resultado = achado!;
+      const item = resultado.classificacao.find((c) => c.jogadorId === 'proibida')!;
+      const evento = resultado.eventos.find(
+        (e) => e.jogadorId === 'proibida' && e.tipo === 'investigacao',
+      )!;
+      const soma = resultado.historicoVoltas['proibida'].reduce((a, b) => a + b, 0);
+      expect(soma + evento.custoMs).toBeCloseTo(item.tempoTotal, 6);
     });
   });
 
