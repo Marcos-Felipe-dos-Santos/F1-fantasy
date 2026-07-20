@@ -6,7 +6,7 @@
 
 import type { DraftState, ResultadoCorrida } from '../engine/types';
 import { dataset } from './dataset-app';
-import { ID_HUMANO } from './fluxo-draft';
+import { nomeJogador } from './loadout-view';
 
 interface TelaResultadoCorridaProps {
   state: DraftState;
@@ -14,8 +14,15 @@ interface TelaResultadoCorridaProps {
   onReiniciar: () => void;
 }
 
-function nomeJogador(jogadorId: string): string {
-  return jogadorId === ID_HUMANO ? 'Você' : jogadorId;
+/** Nome de exibição via `nomeJogador` (PR 2.1a); cai no próprio id se o jogador não for encontrado. */
+function nomeDoJogadorId(state: DraftState, jogadorId: string): string {
+  const jogador = state.jogadores.find((j) => j.id === jogadorId);
+  return jogador ? nomeJogador(jogador) : jogadorId;
+}
+
+/** `true` se `jogadorId` é humano — destaque no resultado vale pra todos os humanos (PR 2.1a). */
+function ehHumanoId(state: DraftState, jogadorId: string): boolean {
+  return state.jogadores.find((j) => j.id === jogadorId)?.tipo === 'humano';
 }
 
 function nomePiloto(state: DraftState, jogadorId: string): string {
@@ -34,18 +41,18 @@ function formatarTempo(ms: number): string {
 }
 
 export function TelaResultadoCorrida({ state, resultado, onReiniciar }: TelaResultadoCorridaProps) {
-  const humano = resultado.classificacao.find((c) => c.jogadorId === ID_HUMANO);
+  const resultadosHumanos = resultado.classificacao.filter((c) => ehHumanoId(state, c.jogadorId));
 
   return (
     <div className="tela-resultado-corrida">
       <h2>Resultado da corrida</h2>
       {resultado.chuva && <span className="badge-chuva">🌧️ Chuva</span>}
 
-      {humano && (
-        <p className="resultado-corrida__destaque">
-          Você terminou em {humano.posicao}º — {humano.pontos} pontos
+      {resultadosHumanos.map((humano) => (
+        <p key={humano.jogadorId} className="resultado-corrida__destaque">
+          {nomeDoJogadorId(state, humano.jogadorId)} terminou em {humano.posicao}º — {humano.pontos} pontos
         </p>
-      )}
+      ))}
 
       <table className="tabela-grid">
         <thead>
@@ -60,7 +67,7 @@ export function TelaResultadoCorrida({ state, resultado, onReiniciar }: TelaResu
         </thead>
         <tbody>
           {resultado.classificacao.map((item) => {
-            const ehHumano = item.jogadorId === ID_HUMANO;
+            const ehHumano = ehHumanoId(state, item.jogadorId);
             const ehVoltaRapida = item.jogadorId === resultado.voltaMaisRapida.jogadorId;
             const status =
               item.status === 'terminou'
@@ -72,7 +79,7 @@ export function TelaResultadoCorrida({ state, resultado, onReiniciar }: TelaResu
             return (
               <tr key={item.jogadorId} className={classes}>
                 <td>{item.posicao}</td>
-                <td>{nomeJogador(item.jogadorId)}</td>
+                <td>{nomeDoJogadorId(state, item.jogadorId)}</td>
                 <td>{nomePiloto(state, item.jogadorId)}</td>
                 <td>
                   {status}
@@ -87,7 +94,7 @@ export function TelaResultadoCorrida({ state, resultado, onReiniciar }: TelaResu
       </table>
 
       <p className="resultado-corrida__volta-rapida">
-        Volta mais rápida: {nomeJogador(resultado.voltaMaisRapida.jogadorId)} — pontinho extra pra{' '}
+        Volta mais rápida: {nomeDoJogadorId(state, resultado.voltaMaisRapida.jogadorId)} — pontinho extra pra{' '}
         {nomePiloto(state, resultado.voltaMaisRapida.jogadorId)} (
         {(resultado.voltaMaisRapida.tempo / 1000).toFixed(3)}s)
       </p>

@@ -375,3 +375,23 @@ describe('humano no meio da fila da rodada 6 (§3, §12)', () => {
     expect(final.pecasReveladas).not.toContain(idEsgotavel);
   });
 });
+
+describe('campo Jogador.nome (PR 2.1a — exibição, nunca entra na lógica de draft)', () => {
+  it('nome atravessa criarDraft intacto em state.jogadores', () => {
+    const jogadores: Jogador[] = [
+      { id: 'humano-1', tipo: 'humano', nome: 'Ana' },
+      { id: 'humano-2', tipo: 'humano', nome: 'Beto' },
+      ...Array.from({ length: 20 }, (_, i) => ({
+        id: `bot-${i + 1}`,
+        tipo: 'bot' as const,
+        perfilBot: 'passeio' as const,
+      })),
+    ];
+    const state = criarDraft(dataset, jogadores, 321);
+
+    expect(state.jogadores.find((j) => j.id === 'humano-1')?.nome).toBe('Ana');
+    expect(state.jogadores.find((j) => j.id === 'humano-2')?.nome).toBe('Beto');
+    // bots sem nome seguem sem nome — o campo é opcional e não é inventado pela engine.
+    expect(state.jogadores.find((j) => j.id === 'bot-1')?.nome).toBeUndefined();
+  });
+});

@@ -7,7 +7,17 @@
  */
 
 import type { Dataset } from '../engine/dataset';
-import type { ProgressoJogador } from '../engine/types';
+import type { Jogador, ProgressoJogador } from '../engine/types';
+
+/**
+ * Nome de exibição de um jogador (PR 2.1a): usa `jogador.nome` (aparado)
+ * quando não vazio; senão cai em "Você" pro humano sem nome (Single) ou no
+ * `id` pro bot. `.trim()` evita renderizar nome em branco quando o campo
+ * vier `''` ou só espaços.
+ */
+export function nomeJogador(jogador: Jogador): string {
+  return jogador.nome?.trim() || (jogador.tipo === 'humano' ? 'Você' : jogador.id);
+}
 
 /** Um slot do carro já preenchido, pronto pra exibição. */
 export interface SlotVisivel {

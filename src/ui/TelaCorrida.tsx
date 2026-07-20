@@ -7,8 +7,8 @@
 
 import type { DraftState, EventoCorrida, Pista, ResultadoCorrida, ResultadoQuali } from '../engine/types';
 import { dataset } from './dataset-app';
-import { ID_HUMANO } from './fluxo-draft';
 import { acumularVoltas, fracaoVisual, pontoNoTracado, TRACADO_MONZA, voltaAtual } from './fluxo-corrida';
+import { nomeJogador } from './loadout-view';
 
 interface TelaCorridaProps {
   state: DraftState;
@@ -29,9 +29,15 @@ const ROTULOS_EVENTO: Record<EventoCorrida['tipo'], string> = {
   investigacao: 'Investigação pós-corrida',
 };
 
-/** "Você" pro humano, o id do bot caso contrário (mesmo padrão de TelaResumo). */
-function nomeJogador(jogadorId: string): string {
-  return jogadorId === ID_HUMANO ? 'Você' : jogadorId;
+/** Nome de exibição via `nomeJogador` (PR 2.1a); cai no próprio id se o jogador não for encontrado. */
+function nomeDoJogadorId(state: DraftState, jogadorId: string): string {
+  const jogador = state.jogadores.find((j) => j.id === jogadorId);
+  return jogador ? nomeJogador(jogador) : jogadorId;
+}
+
+/** `true` se `jogadorId` é humano — destaque na tela de corrida vale pra todos os humanos (PR 2.1a). */
+function ehHumanoId(state: DraftState, jogadorId: string): boolean {
+  return state.jogadores.find((j) => j.id === jogadorId)?.tipo === 'humano';
 }
 
 function nomePiloto(state: DraftState, jogadorId: string): string {
@@ -71,11 +77,11 @@ export function TelaCorrida({
           </thead>
           <tbody>
             {grid.grid.map((item, idx) => {
-              const ehHumano = item.jogadorId === ID_HUMANO;
+              const ehHumano = ehHumanoId(state, item.jogadorId);
               return (
                 <tr key={item.jogadorId} className={ehHumano ? 'linha-humano' : ''}>
                   <td>{idx + 1}</td>
-                  <td>{nomeJogador(item.jogadorId)}</td>
+                  <td>{nomeDoJogadorId(state, item.jogadorId)}</td>
                   <td>{nomePiloto(state, item.jogadorId)}</td>
                   <td>{(item.tempo / 1000).toFixed(3)}s</td>
                 </tr>
@@ -113,7 +119,7 @@ export function TelaCorrida({
           const ponto = pontoNoTracado(TRACADO_MONZA, fracao);
           const somaHistorico = acumularVoltas(historico).at(-1) ?? 0;
           const congelado = item.status === 'dnf' && tempoSimMs >= somaHistorico;
-          const ehHumano = item.jogadorId === ID_HUMANO;
+          const ehHumano = ehHumanoId(state, item.jogadorId);
           const classes = [
             'tracado-svg__carro',
             ehHumano ? 'tracado-svg__carro--humano' : '',
@@ -129,7 +135,7 @@ export function TelaCorrida({
               r={ehHumano ? 10 : 6}
               className={classes}
             >
-              <title>{`${nomeJogador(item.jogadorId)} — ${nomePiloto(state, item.jogadorId)}`}</title>
+              <title>{`${nomeDoJogadorId(state, item.jogadorId)} — ${nomePiloto(state, item.jogadorId)}`}</title>
             </circle>
           );
         })}
@@ -144,7 +150,7 @@ export function TelaCorrida({
             <li key={`${evento.jogadorId}-${evento.tipo}-${evento.volta}-${idx}`}>
               <span className="ticker-eventos__volta">V{evento.volta}</span>
               <span>
-                {nomeJogador(evento.jogadorId)} ({nomePiloto(state, evento.jogadorId)}) —{' '}
+                {nomeDoJogadorId(state, evento.jogadorId)} ({nomePiloto(state, evento.jogadorId)}) —{' '}
                 {ROTULOS_EVENTO[evento.tipo]}
               </span>
             </li>

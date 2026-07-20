@@ -7,7 +7,9 @@
 
 import { useCallback, useState } from 'react';
 import './estilos.css';
+import type { EscolhaDraft } from '../engine/types';
 import { FluxoCorrida } from './FluxoCorrida';
+import { ID_HUMANO } from './fluxo-draft';
 import { TelaDraft } from './TelaDraft';
 import { TelaInicio } from './TelaInicio';
 import { TelaPeca } from './TelaPeca';
@@ -23,11 +25,22 @@ function App() {
     reiniciar();
   }, [reiniciar]);
 
+  // Modo Single por enquanto: o único humano é sempre ID_HUMANO. Roteamento
+  // de turnos entre N humanos é o PR 2.1b.
+  const escolherHumano = useCallback(
+    (escolha: EscolhaDraft) => escolher(ID_HUMANO, escolha),
+    [escolher],
+  );
+
   return (
     <div className="app-shell">
       {!state && <TelaInicio onComecar={comecar} />}
-      {state?.fase === 'sorteios' && <TelaDraft state={state} erro={erro} onEscolher={escolher} />}
-      {state?.fase === 'peca' && <TelaPeca state={state} erro={erro} onEscolher={escolher} />}
+      {state?.fase === 'sorteios' && (
+        <TelaDraft state={state} jogadorId={ID_HUMANO} erro={erro} onEscolher={escolherHumano} />
+      )}
+      {state?.fase === 'peca' && (
+        <TelaPeca state={state} jogadorId={ID_HUMANO} erro={erro} onEscolher={escolherHumano} />
+      )}
       {state?.fase === 'concluido' && !naCorrida && (
         <TelaResumo
           state={state}
