@@ -6,7 +6,7 @@
 
 import { useState, type FormEvent } from 'react';
 import type { Dificuldade } from '../engine/types';
-import { ID_HUMANO, type HumanoConfig } from './fluxo-draft';
+import { ID_HUMANO, seedEfetivaTexto, type HumanoConfig } from './fluxo-draft';
 import type { Visibilidade } from './visibilidade';
 
 /** Modo de jogo escolhido na tela de início (não é conceito da engine — só organiza esta tela). */
@@ -26,6 +26,10 @@ interface TelaInicioProps {
 
 export function TelaInicio({ onComecar }: TelaInicioProps) {
   const [seedTexto, setSeedTexto] = useState('');
+  // Seção "Usar seed específica" recolhida por default (PR 2.4): sem seed
+  // digitada (recolhida ou campo vazio), cada partida sorteia uma seed nova
+  // em vez de repetir sempre a mesma (seedFromString('')).
+  const [seedEspecificaAberta, setSeedEspecificaAberta] = useState(false);
   const [dificuldade, setDificuldade] = useState<Dificuldade>('facil');
   const [modo, setModo] = useState<ModoJogo>('single');
   const [visibilidade, setVisibilidade] = useState<Visibilidade>('craque');
@@ -34,15 +38,23 @@ export function TelaInicio({ onComecar }: TelaInicioProps) {
 
   function handleSubmit(evento: FormEvent) {
     evento.preventDefault();
+    // Decisão da seed extraída pra `seedEfetivaTexto` (pura, testada sem
+    // DOM); aqui só se injeta a fonte de aleatoriedade permitida na UI
+    // (`crypto.getRandomValues`, nunca `Math.random`).
+    const seed = seedEfetivaTexto(
+      seedEspecificaAberta,
+      seedTexto,
+      () => crypto.getRandomValues(new Uint32Array(1))[0],
+    );
     if (modo === 'single') {
-      onComecar(seedTexto, dificuldade, [{ id: ID_HUMANO, nome: 'Você' }], visibilidade);
+      onComecar(seed, dificuldade, [{ id: ID_HUMANO, nome: 'Você' }], visibilidade);
       return;
     }
     const humanos: HumanoConfig[] = Array.from({ length: qtdHumanos }, (_, i) => ({
       id: `humano-${i + 1}`,
       nome: nomes[i].trim() || `Jogador ${i + 1}`,
     }));
-    onComecar(seedTexto, dificuldade, humanos, visibilidade);
+    onComecar(seed, dificuldade, humanos, visibilidade);
   }
 
   function handleNomeChange(indice: number, valor: string) {
@@ -54,15 +66,26 @@ export function TelaInicio({ onComecar }: TelaInicioProps) {
       <h1>F1 Fantasy</h1>
       <p className="tela-inicio__subtitulo">Draft de equipe/ano + peça icônica</p>
       <form className="form-inicio" onSubmit={handleSubmit}>
-        <label className="form-inicio__campo">
-          Seed
-          <input
-            type="text"
-            value={seedTexto}
-            onChange={(evento) => setSeedTexto(evento.target.value)}
-            placeholder="ex.: senna1988 ou 42"
-          />
-        </label>
+        <details
+          className="form-inicio__seed-especifica"
+          open={seedEspecificaAberta}
+          onToggle={(evento) => setSeedEspecificaAberta(evento.currentTarget.open)}
+        >
+          <summary>🎲 Usar seed específica</summary>
+          <label className="form-inicio__campo">
+            Seed
+            <input
+              type="text"
+              value={seedTexto}
+              onChange={(evento) => setSeedTexto(evento.target.value)}
+              placeholder="ex.: senna1988 ou 42"
+            />
+          </label>
+          <p className="form-inicio__seed-dica">
+            Deixe em branco ou fechado pra sortear uma seed nova a cada partida. Preencha pra
+            reproduzir uma partida específica.
+          </p>
+        </details>
         <label className="form-inicio__campo">
           Dificuldade
           <select

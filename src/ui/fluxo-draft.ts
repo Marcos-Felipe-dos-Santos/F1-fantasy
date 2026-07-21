@@ -39,6 +39,38 @@ export function seedDeTexto(texto: string): number {
   return /^\d+$/.test(texto) ? Number(texto) : seedFromString(texto);
 }
 
+/**
+ * Converte um inteiro (sorteado pela UI via `crypto.getRandomValues`, fora
+ * daqui — esta função não sorteia nada) na string decimal de sua normalização
+ * uint32 (`>>> 0`). Contrato de round-trip com `seedDeTexto`:
+ * `seedDeTexto(seedAleatoriaTexto(x)) === (x >>> 0)`, porque `Number` de uma
+ * string decimal de um uint32 é sempre exato (uint32 cabe sem perda em
+ * `number`) e o texto produzido só tem dígitos, então cai no ramo `Number`
+ * de `seedDeTexto`, nunca no `seedFromString`.
+ */
+export function seedAleatoriaTexto(uint32: number): string {
+  return String(uint32 >>> 0);
+}
+
+/**
+ * Decisão da seed efetiva da partida (PR 2.4): usa o texto digitado só se o
+ * jogador ABRIU a seção "seed específica" E digitou algo além de espaços;
+ * qualquer outro caso sorteia uma seed nova via `sortearUint32` (injetado —
+ * a TelaInicio passa `crypto.getRandomValues`; testes passam um stub). O
+ * sorteio só é consumido no ramo aleatório, então uma seed específica válida
+ * nunca depende da fonte de aleatoriedade.
+ */
+export function seedEfetivaTexto(
+  usarEspecifica: boolean,
+  seedTexto: string,
+  sortearUint32: () => number,
+): string {
+  if (usarEspecifica && seedTexto.trim().length > 0) {
+    return seedTexto;
+  }
+  return seedAleatoriaTexto(sortearUint32());
+}
+
 function assert(cond: boolean, msg: string): asserts cond {
   if (!cond) throw new Error(msg);
 }
