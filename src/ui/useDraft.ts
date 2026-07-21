@@ -1,11 +1,12 @@
 /**
- * Hook do draft (PR 1.7a; generalizado pra N humanos no PR 2.1a): casca fina
- * de `useState` sobre as transições puras de `fluxo-draft.ts`. Nenhuma regra
- * de jogo mora aqui — só orquestra estado de React em torno das chamadas à
- * engine. `comecar` sem `humanos` continua o comportamento do modo Single (1
- * humano, id `ID_HUMANO`); `escolher` agora recebe o id do jogador — no
- * Single a UI continua passando `ID_HUMANO` (o roteamento de turnos entre
- * humanos é o PR 2.1b).
+ * Hook do draft (PR 1.7a; generalizado pra N humanos no PR 2.1a; guarda a
+ * lista de humanos da partida no PR 2.1b pro roteamento de turnos hotseat do
+ * modo Local): casca fina de `useState` sobre as transições puras de
+ * `fluxo-draft.ts`. Nenhuma regra de jogo mora aqui — só orquestra estado de
+ * React em torno das chamadas à engine. `comecar` sem `humanos` continua o
+ * comportamento do modo Single (1 humano, id `ID_HUMANO`); `escolher` recebe
+ * o id do jogador — quem decide QUANDO chamar `escolher` com qual
+ * `jogadorId` é o roteamento de turnos em `App.tsx` (`fluxo-local.ts`).
  */
 
 import { useCallback, useState } from 'react';
@@ -15,6 +16,8 @@ import { aplicarEscolhaDoJogador, ID_HUMANO, iniciarDraft, type HumanoConfig } f
 
 export interface UseDraftResultado {
   state: DraftState | null;
+  /** Humanos da partida corrente (Single: 1 item; Local: 2-4), na ordem de cadastro. `[]` antes de `comecar`. */
+  humanos: HumanoConfig[];
   erro: string | null;
   comecar: (seedTexto: string, dificuldade: Dificuldade, humanos?: HumanoConfig[]) => void;
   escolher: (jogadorId: string, escolha: EscolhaDraft) => void;
@@ -26,12 +29,14 @@ const HUMANOS_SINGLE: HumanoConfig[] = [{ id: ID_HUMANO }];
 
 export function useDraft(): UseDraftResultado {
   const [state, setState] = useState<DraftState | null>(null);
+  const [humanos, setHumanos] = useState<HumanoConfig[]>([]);
   const [erro, setErro] = useState<string | null>(null);
 
   const comecar = useCallback(
-    (seedTexto: string, dificuldade: Dificuldade, humanos: HumanoConfig[] = HUMANOS_SINGLE) => {
+    (seedTexto: string, dificuldade: Dificuldade, humanosConfig: HumanoConfig[] = HUMANOS_SINGLE) => {
       setErro(null);
-      setState(iniciarDraft(dataset, seedTexto, dificuldade, humanos));
+      setHumanos(humanosConfig);
+      setState(iniciarDraft(dataset, seedTexto, dificuldade, humanosConfig));
     },
     [],
   );
@@ -51,8 +56,9 @@ export function useDraft(): UseDraftResultado {
 
   const reiniciar = useCallback(() => {
     setState(null);
+    setHumanos([]);
     setErro(null);
   }, []);
 
-  return { state, erro, comecar, escolher, reiniciar };
+  return { state, humanos, erro, comecar, escolher, reiniciar };
 }

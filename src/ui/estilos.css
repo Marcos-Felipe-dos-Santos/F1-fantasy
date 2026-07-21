@@ -118,6 +118,42 @@ h3 {
   background: var(--cor-destaque-clara);
 }
 
+/* Modo Local (PR 2.1b) — seletor de nº de jogadores + nomes na tela de início */
+
+.form-inicio__local {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  border: 1px solid var(--cor-borda);
+  border-radius: 8px;
+  padding: 12px;
+  margin: 0;
+}
+
+/* Tela de handoff (PR 2.1b) — neutra por design, sem dado de jogo */
+
+.tela-handoff {
+  text-align: center;
+  padding-top: 64px;
+}
+
+.tela-handoff__fase {
+  color: var(--cor-texto-fraco);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 0.8rem;
+  margin-bottom: 8px;
+}
+
+/* Subtítulo "Vez de {nome}" (modo Local, PR 2.1b) */
+
+.tela-draft__vez,
+.tela-peca__vez {
+  color: var(--cor-texto-fraco);
+  font-size: 0.85rem;
+  margin: 0 0 4px;
+}
+
 /* Cabeçalho de rodada */
 
 .tela-draft__cabecalho {
