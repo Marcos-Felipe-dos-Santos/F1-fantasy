@@ -22,11 +22,17 @@ import { TelaInicio } from './TelaInicio';
 import { TelaPeca } from './TelaPeca';
 import { TelaResumo } from './TelaResumo';
 import { useDraft } from './useDraft';
+import type { Visibilidade } from './visibilidade';
 
 function App() {
   const { state, humanos, erro, comecar, escolher, reiniciar } = useDraft();
   const [naCorrida, setNaCorrida] = useState(false);
   const [confirmadoId, setConfirmadoId] = useState<string | null>(null);
+  // Visibilidade é opção da partida (§5), não conceito da engine — guardada
+  // aqui, ao lado de `naCorrida`/`confirmadoId`. Default 'craque' só serve
+  // pra tipar o estado inicial: antes de `comecarPartida` não há TelaInicio
+  // nenhuma renderizada que dependa desse valor.
+  const [visibilidade, setVisibilidade] = useState<Visibilidade>('craque');
 
   const reiniciarTudo = useCallback(() => {
     setNaCorrida(false);
@@ -35,8 +41,14 @@ function App() {
   }, [reiniciar]);
 
   const comecarPartida = useCallback(
-    (seedTexto: string, dificuldade: Dificuldade, humanosConfig: HumanoConfig[]) => {
+    (
+      seedTexto: string,
+      dificuldade: Dificuldade,
+      humanosConfig: HumanoConfig[],
+      visibilidadeEscolhida: Visibilidade,
+    ) => {
       comecar(seedTexto, dificuldade, humanosConfig);
+      setVisibilidade(visibilidadeEscolhida);
       // Single (1 humano): pula a TelaHandoff — comportamento do modo Single
       // preservado (nunca troca de mão). Local (2-4 humanos): começa sem
       // ninguém confirmado, então o primeiro render já pede handoff pro
@@ -83,6 +95,7 @@ function App() {
           state={state}
           jogadorId={decisao.jogadorId}
           vezDe={vezDe}
+          visibilidade={visibilidade}
           erro={erro}
           onEscolher={(escolha: EscolhaDraft) => escolher(decisao.jogadorId, escolha)}
         />
@@ -92,6 +105,7 @@ function App() {
           state={state}
           jogadorId={decisao.jogadorId}
           vezDe={vezDe}
+          visibilidade={visibilidade}
           erro={erro}
           onEscolher={(escolha: EscolhaDraft) => escolher(decisao.jogadorId, escolha)}
         />
@@ -99,6 +113,7 @@ function App() {
       {state?.fase === 'concluido' && !naCorrida && (
         <TelaResumo
           state={state}
+          visibilidade={visibilidade}
           onReiniciar={reiniciarTudo}
           onIrParaCorrida={() => setNaCorrida(true)}
         />

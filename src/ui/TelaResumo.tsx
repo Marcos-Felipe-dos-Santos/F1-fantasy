@@ -9,14 +9,17 @@ import type { DraftState, Jogador } from '../engine/types';
 import { CardComponente, CardPeca, comoNotas } from './componentes';
 import { dataset } from './dataset-app';
 import { nomeJogador } from './loadout-view';
+import { pecaVisivel, type Visibilidade } from './visibilidade';
 
 interface TelaResumoProps {
   state: DraftState;
+  /** Visibilidade da partida (§5): propagada pros cards do carro final de cada humano. */
+  visibilidade: Visibilidade;
   onReiniciar: () => void;
   onIrParaCorrida: () => void;
 }
 
-export function TelaResumo({ state, onReiniciar, onIrParaCorrida }: TelaResumoProps) {
+export function TelaResumo({ state, visibilidade, onReiniciar, onIrParaCorrida }: TelaResumoProps) {
   const humanos = state.jogadores.filter((j) => j.tipo === 'humano');
 
   return (
@@ -26,7 +29,14 @@ export function TelaResumo({ state, onReiniciar, onIrParaCorrida }: TelaResumoPr
       {humanos.map((humano) => {
         const loadout = state.loadouts[humano.id];
         if (!loadout) return null;
-        return <ResumoCarroHumano key={humano.id} jogador={humano} loadout={loadout} />;
+        return (
+          <ResumoCarroHumano
+            key={humano.id}
+            jogador={humano}
+            loadout={loadout}
+            visibilidade={visibilidade}
+          />
+        );
       })}
 
       <h3>Grid — 22 jogadores</h3>
@@ -47,9 +57,11 @@ export function TelaResumo({ state, onReiniciar, onIrParaCorrida }: TelaResumoPr
 function ResumoCarroHumano({
   jogador,
   loadout,
+  visibilidade,
 }: {
   jogador: Jogador;
   loadout: DraftState['loadouts'][string];
+  visibilidade: Visibilidade;
 }) {
   const carro = resolverCarro(dataset, loadout);
   const piloto = dataset.pilotosById.get(loadout.pilotoId);
@@ -68,6 +80,7 @@ function ResumoCarroHumano({
             nome={`${piloto.nome} (${piloto.equipe} ${piloto.ano})`}
             notas={comoNotas(carro.piloto)}
             notasBase={comoNotas(piloto.notas)}
+            visibilidade={visibilidade}
           />
         )}
         {chassi && (
@@ -76,6 +89,7 @@ function ResumoCarroHumano({
             nome={`${chassi.equipe} ${chassi.ano}`}
             notas={comoNotas(carro.chassi)}
             notasBase={comoNotas(chassi.notas)}
+            visibilidade={visibilidade}
           />
         )}
         {motor && (
@@ -84,6 +98,7 @@ function ResumoCarroHumano({
             nome={`${motor.equipe} ${motor.ano}`}
             notas={comoNotas(carro.motor)}
             notasBase={comoNotas(motor.notas)}
+            visibilidade={visibilidade}
           />
         )}
         {estrategista && (
@@ -91,12 +106,18 @@ function ResumoCarroHumano({
             rotulo="Estrategista"
             nome={`${estrategista.nome} (${estrategista.equipe} ${estrategista.ano})`}
             notas={comoNotas(carro.estrategista)}
+            visibilidade={visibilidade}
           />
         )}
         {pit && (
-          <CardComponente rotulo="Pit" nome={`${pit.equipe} ${pit.ano}`} notas={comoNotas(carro.pit)} />
+          <CardComponente
+            rotulo="Pit"
+            nome={`${pit.equipe} ${pit.ano}`}
+            notas={comoNotas(carro.pit)}
+            visibilidade={visibilidade}
+          />
         )}
-        <CardPeca peca={carro.peca} />
+        <CardPeca peca={pecaVisivel(carro.peca, visibilidade)} />
       </div>
     </section>
   );

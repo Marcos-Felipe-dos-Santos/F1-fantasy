@@ -9,6 +9,7 @@ import { revelarRodada } from '../engine/draft';
 import type { DraftState, EscolhaDraft } from '../engine/types';
 import { CardPeca } from './componentes';
 import { dataset } from './dataset-app';
+import { pecaVisivel, type Visibilidade } from './visibilidade';
 
 interface TelaPecaProps {
   state: DraftState;
@@ -16,11 +17,13 @@ interface TelaPecaProps {
   jogadorId: string;
   /** Nome pra "Vez de {nome}" (modo Local, 2+ humanos); `undefined` omite o subtítulo (Single). */
   vezDe?: string;
+  /** Visibilidade da partida (§5): filtra os campos de cada `CardPeca` via `pecaVisivel`. */
+  visibilidade: Visibilidade;
   erro: string | null;
   onEscolher: (escolha: EscolhaDraft) => void;
 }
 
-export function TelaPeca({ state, jogadorId, vezDe, erro, onEscolher }: TelaPecaProps) {
+export function TelaPeca({ state, jogadorId, vezDe, visibilidade, erro, onEscolher }: TelaPecaProps) {
   const revelacao = revelarRodada(state, jogadorId);
 
   if (revelacao.fase !== 'peca') {
@@ -47,7 +50,11 @@ export function TelaPeca({ state, jogadorId, vezDe, erro, onEscolher }: TelaPeca
           const peca = dataset.pecasById.get(pecaId);
           if (!peca) return null;
           return (
-            <CardPeca key={pecaId} peca={peca} onClick={() => onEscolher({ tipo: 'peca', pecaId })} />
+            <CardPeca
+              key={pecaId}
+              peca={pecaVisivel(peca, visibilidade)}
+              onClick={() => onEscolher({ tipo: 'peca', pecaId })}
+            />
           );
         })}
       </div>
