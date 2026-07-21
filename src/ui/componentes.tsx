@@ -6,6 +6,7 @@
 
 import type { Raridade } from '../engine/types';
 import type { SlotVisivel } from './loadout-view';
+import { mostrarNotas, type PecaVisivel, type Visibilidade } from './visibilidade';
 
 /** Rótulos curtos das notas, como no GDD §6 — toda nota é qualidade (99 = melhor). */
 const ROTULOS_NOTA: Record<string, string> = {
@@ -87,6 +88,8 @@ interface CardComponenteProps {
   nome?: string;
   notas: Record<string, number>;
   notasBase?: Record<string, number>;
+  /** Visibilidade da partida (§5): no `'cego'`, as notas não são renderizadas. */
+  visibilidade: Visibilidade;
   /** `false` = slot já preenchido em rodada anterior: card esmaecido, não clicável. Default `true`. */
   disponivel?: boolean;
   onClick?: () => void;
@@ -98,6 +101,7 @@ export function CardComponente({
   nome,
   notas,
   notasBase,
+  visibilidade,
   disponivel = true,
   onClick,
 }: CardComponenteProps) {
@@ -118,7 +122,7 @@ export function CardComponente({
         {!disponivel && <span className="card__tag">já preenchido</span>}
       </div>
       {nome && <div className="card__nome">{nome}</div>}
-      <TabelaNotas notas={notas} notasBase={notasBase} />
+      {mostrarNotas(visibilidade) && <TabelaNotas notas={notas} notasBase={notasBase} />}
     </>
   );
 
@@ -133,37 +137,44 @@ export function CardComponente({
 }
 
 interface CardPecaProps {
-  peca: {
-    nome: string;
-    categoria: string;
-    raridade: Raridade;
-    atributosAlvo: string[];
-    bonus: number;
-    risco: number;
-  };
+  /** View já filtrada pela visibilidade da partida (`pecaVisivel`, §5) — no cego, só `nome`. */
+  peca: PecaVisivel;
   onClick?: () => void;
 }
 
-/** Card de uma peça icônica (§7): raridade com cor/emoji, atributos-alvo, bônus e risco. */
+/**
+ * Card de uma peça icônica (§7). O JSX só renderiza o que existir em `peca`
+ * — quem decide o que existe é `pecaVisivel` (`visibilidade.ts`), nunca este
+ * componente. No modo cego, `peca` só tem `nome`: o card fica neutro (sem
+ * cor de borda, sem emoji/rótulo de raridade, sem bônus/risco/alvo/categoria).
+ */
 export function CardPeca({ peca, onClick }: CardPecaProps) {
-  const info = INFO_RARIDADE[peca.raridade];
+  const info = peca.raridade ? INFO_RARIDADE[peca.raridade] : null;
   const clicavel = onClick !== undefined;
-  const classes = ['card', 'card-peca', info.classe, clicavel ? 'card--clicavel' : ''].join(' ');
+  const classes = ['card', 'card-peca', info?.classe ?? '', clicavel ? 'card--clicavel' : '']
+    .filter(Boolean)
+    .join(' ');
 
   const conteudo = (
     <>
-      <div className="card__cabecalho">
-        <span className="card-peca__raridade">
-          {info.emoji} {info.rotulo}
-        </span>
-      </div>
+      {info && (
+        <div className="card__cabecalho">
+          <span className="card-peca__raridade">
+            {info.emoji} {info.rotulo}
+          </span>
+        </div>
+      )}
       <div className="card__nome">{peca.nome}</div>
-      <div className="card-peca__categoria">{peca.categoria}</div>
-      <div className="card-peca__alvo">Alvo: {peca.atributosAlvo.map(rotuloAtributo).join(', ')}</div>
-      <div className="card-peca__bonus-risco">
-        <span>Bônus +{peca.bonus}</span>
-        <span>Risco {peca.risco}</span>
-      </div>
+      {peca.categoria && <div className="card-peca__categoria">{peca.categoria}</div>}
+      {peca.atributosAlvo && (
+        <div className="card-peca__alvo">Alvo: {peca.atributosAlvo.map(rotuloAtributo).join(', ')}</div>
+      )}
+      {(peca.bonus !== undefined || peca.risco !== undefined) && (
+        <div className="card-peca__bonus-risco">
+          {peca.bonus !== undefined && <span>Bônus +{peca.bonus}</span>}
+          {peca.risco !== undefined && <span>Risco {peca.risco}</span>}
+        </div>
+      )}
     </>
   );
 

@@ -7,6 +7,7 @@
 import { useState, type FormEvent } from 'react';
 import type { Dificuldade } from '../engine/types';
 import { ID_HUMANO, type HumanoConfig } from './fluxo-draft';
+import type { Visibilidade } from './visibilidade';
 
 /** Modo de jogo escolhido na tela de início (não é conceito da engine — só organiza esta tela). */
 type ModoJogo = 'single' | 'local';
@@ -15,27 +16,33 @@ const MIN_HUMANOS_LOCAL = 2;
 const MAX_HUMANOS_LOCAL = 4;
 
 interface TelaInicioProps {
-  onComecar: (seedTexto: string, dificuldade: Dificuldade, humanos: HumanoConfig[]) => void;
+  onComecar: (
+    seedTexto: string,
+    dificuldade: Dificuldade,
+    humanos: HumanoConfig[],
+    visibilidade: Visibilidade,
+  ) => void;
 }
 
 export function TelaInicio({ onComecar }: TelaInicioProps) {
   const [seedTexto, setSeedTexto] = useState('');
   const [dificuldade, setDificuldade] = useState<Dificuldade>('facil');
   const [modo, setModo] = useState<ModoJogo>('single');
+  const [visibilidade, setVisibilidade] = useState<Visibilidade>('craque');
   const [qtdHumanos, setQtdHumanos] = useState(2);
   const [nomes, setNomes] = useState<string[]>(['', '', '', '']);
 
   function handleSubmit(evento: FormEvent) {
     evento.preventDefault();
     if (modo === 'single') {
-      onComecar(seedTexto, dificuldade, [{ id: ID_HUMANO, nome: 'Você' }]);
+      onComecar(seedTexto, dificuldade, [{ id: ID_HUMANO, nome: 'Você' }], visibilidade);
       return;
     }
     const humanos: HumanoConfig[] = Array.from({ length: qtdHumanos }, (_, i) => ({
       id: `humano-${i + 1}`,
       nome: nomes[i].trim() || `Jogador ${i + 1}`,
     }));
-    onComecar(seedTexto, dificuldade, humanos);
+    onComecar(seedTexto, dificuldade, humanos, visibilidade);
   }
 
   function handleNomeChange(indice: number, valor: string) {
@@ -45,9 +52,7 @@ export function TelaInicio({ onComecar }: TelaInicioProps) {
   return (
     <div className="tela-inicio">
       <h1>F1 Fantasy</h1>
-      <p className="tela-inicio__subtitulo">
-        Draft de equipe/ano + peça icônica — Modo Craque (notas visíveis)
-      </p>
+      <p className="tela-inicio__subtitulo">Draft de equipe/ano + peça icônica</p>
       <form className="form-inicio" onSubmit={handleSubmit}>
         <label className="form-inicio__campo">
           Seed
@@ -73,6 +78,16 @@ export function TelaInicio({ onComecar }: TelaInicioProps) {
           <select value={modo} onChange={(evento) => setModo(evento.target.value as ModoJogo)}>
             <option value="single">Single (você + 21 bots)</option>
             <option value="local">Local (2-4 jogadores + bots)</option>
+          </select>
+        </label>
+        <label className="form-inicio__campo">
+          Visibilidade
+          <select
+            value={visibilidade}
+            onChange={(evento) => setVisibilidade(evento.target.value as Visibilidade)}
+          >
+            <option value="craque">Modo Craque 👁️ (notas visíveis)</option>
+            <option value="cego">Modo Cego 🎲 (sem notas, sem dicas)</option>
           </select>
         </label>
 

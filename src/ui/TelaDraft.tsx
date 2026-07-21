@@ -11,6 +11,7 @@ import type { DraftState, EscolhaDraft, SlotComponente } from '../engine/types';
 import { CardComponente, LoadoutParcial, comoNotas } from './componentes';
 import { dataset } from './dataset-app';
 import { slotsPreenchidos } from './loadout-view';
+import type { Visibilidade } from './visibilidade';
 
 interface TelaDraftProps {
   state: DraftState;
@@ -18,11 +19,13 @@ interface TelaDraftProps {
   jogadorId: string;
   /** Nome pra "Vez de {nome}" (modo Local, 2+ humanos); `undefined` omite o subtítulo (Single). */
   vezDe?: string;
+  /** Visibilidade da partida (§5): passada pra `CardComponente`, que decide se mostra notas. */
+  visibilidade: Visibilidade;
   erro: string | null;
   onEscolher: (escolha: EscolhaDraft) => void;
 }
 
-export function TelaDraft({ state, jogadorId, vezDe, erro, onEscolher }: TelaDraftProps) {
+export function TelaDraft({ state, jogadorId, vezDe, visibilidade, erro, onEscolher }: TelaDraftProps) {
   const revelacao = revelarRodada(state, jogadorId);
   const progresso = state.progresso[jogadorId];
 
@@ -61,6 +64,7 @@ export function TelaDraft({ state, jogadorId, vezDe, erro, onEscolher }: TelaDra
           rotulo="Piloto"
           nome={equipeAno.pilotos[0].nome}
           notas={comoNotas(equipeAno.pilotos[0].notas)}
+          visibilidade={visibilidade}
           disponivel={disponiveis.has('piloto')}
           onClick={() => onEscolher({ tipo: 'piloto', pilotoId: equipeAno.pilotos[0].id })}
         />
@@ -68,18 +72,21 @@ export function TelaDraft({ state, jogadorId, vezDe, erro, onEscolher }: TelaDra
           rotulo="Piloto"
           nome={equipeAno.pilotos[1].nome}
           notas={comoNotas(equipeAno.pilotos[1].notas)}
+          visibilidade={visibilidade}
           disponivel={disponiveis.has('piloto')}
           onClick={() => onEscolher({ tipo: 'piloto', pilotoId: equipeAno.pilotos[1].id })}
         />
         <CardComponente
           rotulo="Chassi"
           notas={comoNotas(equipeAno.chassi.notas)}
+          visibilidade={visibilidade}
           disponivel={disponiveis.has('chassi')}
           onClick={() => onEscolher({ tipo: 'componente', slot: 'chassi' })}
         />
         <CardComponente
           rotulo="Motor"
           notas={comoNotas(equipeAno.motor.notas)}
+          visibilidade={visibilidade}
           disponivel={disponiveis.has('motor')}
           onClick={() => onEscolher({ tipo: 'componente', slot: 'motor' })}
         />
@@ -87,12 +94,14 @@ export function TelaDraft({ state, jogadorId, vezDe, erro, onEscolher }: TelaDra
           rotulo="Estrategista"
           nome={equipeAno.estrategista.nome}
           notas={comoNotas(equipeAno.estrategista.notas)}
+          visibilidade={visibilidade}
           disponivel={disponiveis.has('estrategista')}
           onClick={() => onEscolher({ tipo: 'componente', slot: 'estrategista' })}
         />
         <CardComponente
           rotulo="Pit"
           notas={comoNotas(equipeAno.pit.notas)}
+          visibilidade={visibilidade}
           disponivel={disponiveis.has('pit')}
           onClick={() => onEscolher({ tipo: 'componente', slot: 'pit' })}
         />
