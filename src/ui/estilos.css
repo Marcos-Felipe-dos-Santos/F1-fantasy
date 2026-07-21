@@ -510,9 +510,19 @@ button.card {
   margin-bottom: 16px;
 }
 
-.tela-corrida__area-replay .tracado-svg {
+.tela-corrida__area-replay .coluna-tracado {
   flex: 1 1 500px;
+}
+
+.tela-corrida__area-replay .tracado-svg {
   margin-bottom: 0;
+}
+
+.tracado-svg__legenda {
+  text-align: center;
+  color: var(--cor-texto-fraco);
+  font-size: 0.9rem;
+  margin: 6px 0 0;
 }
 
 .classificacao-ao-vivo {

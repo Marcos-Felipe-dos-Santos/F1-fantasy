@@ -402,11 +402,11 @@ export function classificacaoAoVivo(
  * segmento de fechamento (último ponto → primeiro) é implícito, calculado
  * por `pontoNoTracado`.
  *
- * PR 2.5: o traçado visual é único e ilustrativo nesta fase — a pista
- * ESCOLHIDA na TelaInicio muda a simulação (voltas, pesos, desgaste, chuva),
- * não o desenho. Renomeado pra `TRACADO_GENERICO` porque o mesmo desenho de
- * Monza é usado pra qualquer pista escolhida; traçado por pista é polimento
- * da Fase 4.
+ * PR 2.8: as outras 9 pistas ganharam silhueta própria em `tracados.ts`
+ * (`TRACADOS_POR_PISTA`/`tracadoDaPista`) — este traçado permanece como a
+ * silhueta de Monza (reaproveitada diretamente por `TRACADOS_POR_PISTA`) e
+ * como o FALLBACK genérico de `tracadoDaPista` pra um id de pista sem
+ * silhueta própria.
  */
 export const TRACADO_GENERICO: Ponto[] = [
   { x: 150, y: 500 }, // reta de largada/chegada

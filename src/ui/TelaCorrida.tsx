@@ -12,11 +12,11 @@ import {
   classificacaoAoVivo,
   fracaoVisual,
   pontoNoTracado,
-  TRACADO_GENERICO,
   voltaAtual,
   type VelocidadeReplay,
 } from './fluxo-corrida';
 import { nomeJogador } from './loadout-view';
+import { tracadoDaPista } from './tracados';
 
 interface TelaCorridaProps {
   state: DraftState;
@@ -64,8 +64,9 @@ function nomePiloto(state: DraftState, jogadorId: string): string {
   return dataset.pilotosById.get(loadout.pilotoId)?.nome ?? '?';
 }
 
-function tracadoPath(): string {
-  const [primeiro, ...resto] = TRACADO_GENERICO;
+/** Path SVG (`d`) do traçado da pista `pistaId` — polilinha fechada (PR 2.8: traçado próprio por pista, ver `tracados.ts`). */
+function tracadoPath(pistaId: string): string {
+  const [primeiro, ...resto] = tracadoDaPista(pistaId);
   const partes = resto.map((p) => `L ${p.x} ${p.y}`).join(' ');
   return `M ${primeiro.x} ${primeiro.y} ${partes} Z`;
 }
@@ -148,35 +149,38 @@ export function TelaCorrida({
       </div>
 
       <div className="tela-corrida__area-replay">
-        <svg className="tracado-svg" viewBox="0 0 1000 600" role="img" aria-label={`Traçado de ${pista.nome}`}>
-          <path d={tracadoPath()} className="tracado-svg__pista" />
-          {resultado.classificacao.map((item) => {
-            const historico = resultado.historicoVoltas[item.jogadorId] ?? [];
-            const fracao = fracaoVisual(historico, tempoSimMs, item.status, pista.voltas);
-            const ponto = pontoNoTracado(TRACADO_GENERICO, fracao);
-            const somaHistorico = acumularVoltas(historico).at(-1) ?? 0;
-            const congelado = item.status === 'dnf' && tempoSimMs >= somaHistorico;
-            const ehHumano = ehHumanoId(state, item.jogadorId);
-            const classes = [
-              'tracado-svg__carro',
-              ehHumano ? 'tracado-svg__carro--humano' : '',
-              congelado ? 'tracado-svg__carro--congelado' : '',
-            ]
-              .filter(Boolean)
-              .join(' ');
-            return (
-              <circle
-                key={item.jogadorId}
-                cx={ponto.x}
-                cy={ponto.y}
-                r={ehHumano ? 10 : 6}
-                className={classes}
-              >
-                <title>{`${nomeDoJogadorId(state, item.jogadorId)} — ${nomePiloto(state, item.jogadorId)}`}</title>
-              </circle>
-            );
-          })}
-        </svg>
+        <div className="coluna-tracado">
+          <svg className="tracado-svg" viewBox="0 0 1000 600" role="img" aria-label={`Traçado de ${pista.nome}`}>
+            <path d={tracadoPath(pista.id)} className="tracado-svg__pista" />
+            {resultado.classificacao.map((item) => {
+              const historico = resultado.historicoVoltas[item.jogadorId] ?? [];
+              const fracao = fracaoVisual(historico, tempoSimMs, item.status, pista.voltas);
+              const ponto = pontoNoTracado(tracadoDaPista(pista.id), fracao);
+              const somaHistorico = acumularVoltas(historico).at(-1) ?? 0;
+              const congelado = item.status === 'dnf' && tempoSimMs >= somaHistorico;
+              const ehHumano = ehHumanoId(state, item.jogadorId);
+              const classes = [
+                'tracado-svg__carro',
+                ehHumano ? 'tracado-svg__carro--humano' : '',
+                congelado ? 'tracado-svg__carro--congelado' : '',
+              ]
+                .filter(Boolean)
+                .join(' ');
+              return (
+                <circle
+                  key={item.jogadorId}
+                  cx={ponto.x}
+                  cy={ponto.y}
+                  r={ehHumano ? 10 : 6}
+                  className={classes}
+                >
+                  <title>{`${nomeDoJogadorId(state, item.jogadorId)} — ${nomePiloto(state, item.jogadorId)}`}</title>
+                </circle>
+              );
+            })}
+          </svg>
+          <p className="tracado-svg__legenda">{pista.nome}</p>
+        </div>
 
         <ol className="classificacao-ao-vivo" aria-label="Classificação ao vivo">
           {classificacaoAtual.map((item, idx) => {
