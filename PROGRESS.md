@@ -28,9 +28,13 @@
 
 - **PR 2.1b** — Modo Local hotseat (turnos por bloco, GDD §2/§3). `src/ui/fluxo-local.ts` puro: `alvoHumano` (rodadas 1-5 em bloco por humano na ordem de cadastro — inócuo pro resultado, sorteios são sub-streams independentes por jogador; rodada 6 turno a turno seguindo `ordemPeca` da engine) e `decisaoLocal` (handoff/jogar/concluido dado quem confirmou estar com o aparelho — `confirmadoId` vive só no `App`, engine não sabe de handoff). Anti-vazamento: `TelaHandoff` neutra (só nome + fase, zero dado de jogo); `TelaDraft`/`TelaPeca` escopadas ao jogador ativo; `useDraft` limpa erro obsoleto no handoff. `TelaInicio` com modo Single/Local e 2-4 nomes; Single pula handoff (confirmado fixo). 12 testes novos em `fluxo-local.test.ts` (handoff inicial, blocos com 2/3/4 humanos, salto pra peça, sem handoff redundante, turno a turno na peça, concluído, teste estrutural anti-vazamento). Engine intocada. Revisado pelo senior-reviewer (aprovado sem bloqueantes nem avisos).
 
-**Testes na main: 166 passando** (13 arquivos) + 1 do harness via `npm run balance`. Lint, `tsc --noEmit` e `npm run build` limpos.
+- **PR 2.3** — Modo Craque/Cego (GDD §5; fecha a Fase 2). Módulo puro `src/ui/visibilidade.ts`: tipo `Visibilidade = 'craque' | 'cego'`, `pecaVisivel(peca, visibilidade)` (view onde as chaves de dica — raridade, categoria, atributos-alvo, bônus, risco — literalmente NÃO EXISTEM no cego, não `undefined`, pra não vazar em spread/`Object.keys` futuro) e `mostrarNotas`. `CardPeca` virou burro (renderiza só chaves presentes — no cego perde até a borda colorida de raridade); `CardComponente` esconde `TabelaNotas` (cobre notas e base→efetiva da TelaResumo); categoria escondida no cego porque "Gambiarras"/"Roubos & Polêmicas" denunciam raridade. Opção da partida (não por jogador) na TelaInicio, válida pra Single e Local; `App` guarda e propaga. Telas de corrida/resultado verificadas: não exibem nota/raridade (não tocadas). 6 testes anti-tautológicos (`'chave' in view`, peças reais comum e proibida, pureza). Engine intocada. Revisado pelo senior-reviewer (aprovado; cosmético registrado: defesa do `CardComponente` é por não-render, mais fraca que a ausência-de-chave do `CardPeca` — nota de manutenção).
+
+**Testes na main: 172 passando** (14 arquivos) + 1 do harness via `npm run balance`. Lint, `tsc --noEmit` e `npm run build` limpos.
 
 **🏁 Marco da Fase 1 atingido:** dá pra jogar o modo Single completo (`npm run dev`): draft de 6 rodadas contra 21 bots → quali → corrida animada → resultado FIA. Balance-harness operante. Visual segue propositalmente cru — polimento é Fase 4.
+
+**🏁 Marco da Fase 2 atingido (2026-07-21):** jogável presencialmente com amigos — modo Local hotseat de 2-4 jogadores com handoff anti-vazamento, e Modo Craque/Cego pra Single e Local. Fase 3 (Online/PartyKit) é a próxima do roadmap; nada foi pushado.
 
 ## Acompanhamentos registrados pela revisão do PR 1.6 (não são defeitos; candidatos a PR futuro)
 
@@ -47,7 +51,7 @@
 
 ## Próximos
 
-- **PR 2.3 (próximo)** — Modo Craque/Cego por prop `visibilidade` (esconde notas, base→efetiva e toda dica de raridade — emoji, cor, bônus, risco, atributos-alvo), opção na TelaInicio válida pra Single e Local. Fecha a Fase 2. Plano aprovado pelo dev em 2026-07-19 (PLANO §5).
+- **Fase 3 — Online (PartyKit)**, começando pelo PR 3.1 (setup PartyKit, sala com código, entrar/sair, preencher com bots até 22). Exige plano do fable-architect + aprovação do dev antes de implementar (PLANO §5 Fase 3).
 
 ## Acompanhamentos registrados pela revisão do PR 1.7b (cosméticos, candidatos à Fase 4)
 
