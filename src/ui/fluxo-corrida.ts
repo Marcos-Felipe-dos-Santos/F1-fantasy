@@ -6,15 +6,25 @@
  * Nenhuma regra de jogo é reimplementada aqui — corrida/pontuação/eventos
  * vêm 100% de `src/engine`.
  *
- * Fase 1 (GDD): 1 pista fixa (Monza) — seletor de pista fica pra fase futura.
+ * PR 2.5: a pista da corrida é escolhida na TelaInicio (10 pistas do
+ * dataset). `PISTA_CORRIDA_ID` permanece como default de `prepararCorrida`
+ * (Monza) pra manter o comportamento de antes quando nenhuma pista é
+ * informada explicitamente.
  */
 
 import { simularCorrida } from '../engine/corrida';
 import type { Dataset } from '../engine/dataset';
 import { simularQuali } from '../engine/quali';
-import type { DraftState, Loadout, Pista, ResultadoCorrida, ResultadoQuali } from '../engine/types';
+import type {
+  DraftState,
+  Loadout,
+  Pista,
+  ResultadoCorrida,
+  ResultadoQuali,
+  Ultrapassagem,
+} from '../engine/types';
 
-/** Pista fixa da corrida na Fase 1 (GDD §9/§10) — seletor de pista é PR futuro. */
+/** Pista default da corrida (Monza) quando `prepararCorrida` é chamada sem `pistaId` explícito. */
 export const PISTA_CORRIDA_ID = 'pista-monza';
 
 /** Ponto 2D usado pelo traçado (mesmo sistema de coordenadas do viewBox SVG). */
@@ -34,14 +44,15 @@ export interface Ponto {
 export function prepararCorrida(
   dataset: Dataset,
   draftState: DraftState,
+  pistaId: string = PISTA_CORRIDA_ID,
 ): { pista: Pista; grid: ResultadoQuali; resultado: ResultadoCorrida } {
   if (draftState.fase !== 'concluido') {
     throw new Error('prepararCorrida: o draft precisa estar concluído (fase "concluido")');
   }
 
-  const pista = dataset.pistasById.get(PISTA_CORRIDA_ID);
+  const pista = dataset.pistasById.get(pistaId);
   if (!pista) {
-    throw new Error(`prepararCorrida: pista "${PISTA_CORRIDA_ID}" não encontrada no dataset`);
+    throw new Error(`prepararCorrida: pista "${pistaId}" não encontrada no dataset`);
   }
 
   const loadouts: Loadout[] = Object.entries(draftState.loadouts)
@@ -52,6 +63,51 @@ export function prepararCorrida(
   const resultado = simularCorrida(dataset, loadouts, pista, grid, draftState.seed);
 
   return { pista, grid, resultado };
+}
+
+/** Rótulo + emoji de uma dificuldade de ultrapassagem, pra exibição na TelaInicio (GDD §9). */
+const ROTULOS_ULTRAPASSAGEM: Record<Ultrapassagem, { rotulo: string; emoji: string }> = {
+  facil: { rotulo: 'Fácil', emoji: '🟢' },
+  media: { rotulo: 'Média', emoji: '🟡' },
+  dificil: { rotulo: 'Difícil', emoji: '🔴' },
+};
+
+/**
+ * Cortes do bucket de desgaste (§9): baixo <40, médio 40-69, alto ≥70.
+ * Calibrados pros valores reais do dataset (`src/data/pistas.json`, só usa
+ * 25/50/75) — Monza/Mônaco/Red Bull Ring (25) caem em baixo; Spa/Interlagos/
+ * Imola (50) em médio; Silverstone/Suzuka/Nürburgring/Montreal (75) em alto,
+ * batendo com a tabela do GDD §9.
+ */
+function bucketDesgaste(desgaste: number): 'Baixo' | 'Médio' | 'Alto' {
+  if (desgaste < 40) return 'Baixo';
+  if (desgaste < 70) return 'Médio';
+  return 'Alto';
+}
+
+/** Perfil de apresentação de uma pista (GDD §9), pronto pra UI: sem DOM, testável isoladamente. */
+export interface PerfilPista {
+  ultrapassagem: { rotulo: string; emoji: string };
+  desgaste: 'Baixo' | 'Médio' | 'Alto';
+  /** Chance de chuva em porcentagem inteira (0-100), já arredondada. */
+  chuvaPercentual: number;
+  voltas: number;
+}
+
+/**
+ * Deriva os rótulos de apresentação de uma `Pista` (dificuldade de
+ * ultrapassagem, bucket de desgaste, chuva em % e voltas) — usado pela
+ * TelaInicio pra informar a escolha da pista antes do draft. Pura, sem
+ * dependência de `visibilidade`: perfil de pista é informação pública (não é
+ * nota de componente), o Modo Cego não esconde isso.
+ */
+export function perfilPista(pista: Pista): PerfilPista {
+  return {
+    ultrapassagem: ROTULOS_ULTRAPASSAGEM[pista.ultrapassagem],
+    desgaste: bucketDesgaste(pista.desgaste),
+    chuvaPercentual: Math.round(pista.chanceChuva * 100),
+    voltas: pista.voltas,
+  };
 }
 
 /** Tempos acumulados por volta (ms), a partir do histórico de voltas de um carro (`ResultadoCorrida.historicoVoltas[id]`). */
@@ -231,8 +287,14 @@ export function escalaReplay(tempoLiderMs: number, voltas: number): number {
  * e a Parabolica final. Polilinha fechada em viewBox 0 0 1000 600 — o
  * segmento de fechamento (último ponto → primeiro) é implícito, calculado
  * por `pontoNoTracado`.
+ *
+ * PR 2.5: o traçado visual é único e ilustrativo nesta fase — a pista
+ * ESCOLHIDA na TelaInicio muda a simulação (voltas, pesos, desgaste, chuva),
+ * não o desenho. Renomeado pra `TRACADO_GENERICO` porque o mesmo desenho de
+ * Monza é usado pra qualquer pista escolhida; traçado por pista é polimento
+ * da Fase 4.
  */
-export const TRACADO_MONZA: Ponto[] = [
+export const TRACADO_GENERICO: Ponto[] = [
   { x: 150, y: 500 }, // reta de largada/chegada
   { x: 650, y: 500 },
   { x: 700, y: 480 }, // Variante del Rettifilo (1a chicane) — entrada

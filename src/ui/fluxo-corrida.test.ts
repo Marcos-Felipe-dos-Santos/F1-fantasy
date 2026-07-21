@@ -10,6 +10,7 @@ import {
   acumularVoltas,
   escalaReplay,
   fracaoVisual,
+  perfilPista,
   pontoNoTracado,
   prepararCorrida,
   progressoNoReplay,
@@ -71,6 +72,80 @@ describe('prepararCorrida', () => {
   it('lança erro se o draft não estiver concluído', () => {
     const inicial = iniciarDraftSingle(dataset, 'corrida-incompleto', 'facil');
     expect(() => prepararCorrida(dataset, inicial)).toThrow(/concluído/);
+  });
+
+  it('sem pistaId explícito, usa Monza (default preservado — não-regressão)', () => {
+    const draft = jogarDraftAteConcluir('corrida-default-monza');
+    const { pista } = prepararCorrida(dataset, draft);
+    expect(pista.id).toBe('pista-monza');
+  });
+
+  it('com pistaId explícito, usa a pista pedida (Interlagos) — voltas/pesos diferentes de Monza', () => {
+    const draft = jogarDraftAteConcluir('corrida-interlagos');
+    const { pista } = prepararCorrida(dataset, draft, 'pista-interlagos');
+    expect(pista.id).toBe('pista-interlagos');
+    expect(pista.voltas).toBe(12);
+  });
+
+  it('a mesma seed produz resultados diferentes em pistas diferentes (a pista influencia a simulação)', () => {
+    const draft1 = jogarDraftAteConcluir('corrida-comparar-pistas');
+    const draft2 = jogarDraftAteConcluir('corrida-comparar-pistas');
+    const emMonza = prepararCorrida(dataset, draft1, 'pista-monza');
+    const emInterlagos = prepararCorrida(dataset, draft2, 'pista-interlagos');
+
+    expect(emMonza.resultado.classificacao).not.toEqual(emInterlagos.resultado.classificacao);
+  });
+
+  it('lança erro claro pra pistaId inexistente', () => {
+    const draft = jogarDraftAteConcluir('corrida-pista-invalida');
+    expect(() => prepararCorrida(dataset, draft, 'pista-inexistente')).toThrow(
+      /pista-inexistente.*não encontrada/,
+    );
+  });
+});
+
+describe('perfilPista', () => {
+  it('ultrapassagem fácil ⇒ rótulo e emoji verdes (ex.: Monza)', () => {
+    const monza = dataset.pistasById.get('pista-monza')!;
+    expect(perfilPista(monza).ultrapassagem).toEqual({ rotulo: 'Fácil', emoji: '🟢' });
+  });
+
+  it('ultrapassagem média ⇒ rótulo e emoji amarelos (ex.: Spa)', () => {
+    const spa = dataset.pistasById.get('pista-spa')!;
+    expect(perfilPista(spa).ultrapassagem).toEqual({ rotulo: 'Média', emoji: '🟡' });
+  });
+
+  it('ultrapassagem difícil ⇒ rótulo e emoji vermelhos (ex.: Mônaco)', () => {
+    const monaco = dataset.pistasById.get('pista-monaco')!;
+    expect(perfilPista(monaco).ultrapassagem).toEqual({ rotulo: 'Difícil', emoji: '🔴' });
+  });
+
+  it('desgaste baixo (<40): Monza, Mônaco, Red Bull Ring', () => {
+    for (const id of ['pista-monza', 'pista-monaco', 'pista-red-bull-ring']) {
+      const pista = dataset.pistasById.get(id)!;
+      expect(perfilPista(pista).desgaste).toBe('Baixo');
+    }
+  });
+
+  it('desgaste médio (40-69): Spa, Interlagos, Imola', () => {
+    for (const id of ['pista-spa', 'pista-interlagos', 'pista-imola']) {
+      const pista = dataset.pistasById.get(id)!;
+      expect(perfilPista(pista).desgaste).toBe('Médio');
+    }
+  });
+
+  it('desgaste alto (>=70): Silverstone, Suzuka, Nürburgring, Montreal', () => {
+    for (const id of ['pista-silverstone', 'pista-suzuka', 'pista-nurburgring', 'pista-montreal']) {
+      const pista = dataset.pistasById.get(id)!;
+      expect(perfilPista(pista).desgaste).toBe('Alto');
+    }
+  });
+
+  it('chuva em porcentagem inteira arredondada, e voltas repassadas direto', () => {
+    const interlagos = dataset.pistasById.get('pista-interlagos')!;
+    const perfil = perfilPista(interlagos);
+    expect(perfil.chuvaPercentual).toBe(60);
+    expect(perfil.voltas).toBe(12);
   });
 });
 

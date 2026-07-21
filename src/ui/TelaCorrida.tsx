@@ -7,7 +7,7 @@
 
 import type { DraftState, EventoCorrida, Pista, ResultadoCorrida, ResultadoQuali } from '../engine/types';
 import { dataset } from './dataset-app';
-import { acumularVoltas, fracaoVisual, pontoNoTracado, TRACADO_MONZA, voltaAtual } from './fluxo-corrida';
+import { acumularVoltas, fracaoVisual, pontoNoTracado, TRACADO_GENERICO, voltaAtual } from './fluxo-corrida';
 import { nomeJogador } from './loadout-view';
 
 interface TelaCorridaProps {
@@ -47,7 +47,7 @@ function nomePiloto(state: DraftState, jogadorId: string): string {
 }
 
 function tracadoPath(): string {
-  const [primeiro, ...resto] = TRACADO_MONZA;
+  const [primeiro, ...resto] = TRACADO_GENERICO;
   const partes = resto.map((p) => `L ${p.x} ${p.y}`).join(' ');
   return `M ${primeiro.x} ${primeiro.y} ${partes} Z`;
 }
@@ -116,7 +116,7 @@ export function TelaCorrida({
         {resultado.classificacao.map((item) => {
           const historico = resultado.historicoVoltas[item.jogadorId] ?? [];
           const fracao = fracaoVisual(historico, tempoSimMs, item.status, pista.voltas);
-          const ponto = pontoNoTracado(TRACADO_MONZA, fracao);
+          const ponto = pontoNoTracado(TRACADO_GENERICO, fracao);
           const somaHistorico = acumularVoltas(historico).at(-1) ?? 0;
           const congelado = item.status === 'dnf' && tempoSimMs >= somaHistorico;
           const ehHumano = ehHumanoId(state, item.jogadorId);

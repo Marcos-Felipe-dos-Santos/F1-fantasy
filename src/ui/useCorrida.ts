@@ -29,8 +29,8 @@ export interface UseCorridaResultado {
   acelerar: () => void;
 }
 
-export function useCorrida(state: DraftState): UseCorridaResultado {
-  const [{ pista, grid, resultado }] = useState(() => prepararCorrida(dataset, state));
+export function useCorrida(state: DraftState, pistaId: string): UseCorridaResultado {
+  const [{ pista, grid, resultado }] = useState(() => prepararCorrida(dataset, state, pistaId));
   const [fase, setFase] = useState<FaseCorrida>('grid');
   const [tempoSimMs, setTempoSimMs] = useState(0);
 
