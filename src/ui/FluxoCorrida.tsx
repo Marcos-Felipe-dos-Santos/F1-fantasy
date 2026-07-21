@@ -11,11 +11,13 @@ import { useCorrida } from './useCorrida';
 
 interface FluxoCorridaProps {
   state: DraftState;
+  /** Pista escolhida na TelaInicio (PR 2.5) — repassada direto pra `useCorrida`/`prepararCorrida`. */
+  pistaId: string;
   onReiniciar: () => void;
 }
 
-export function FluxoCorrida({ state, onReiniciar }: FluxoCorridaProps) {
-  const { fase, pista, grid, resultado, tempoSimMs, largar, acelerar } = useCorrida(state);
+export function FluxoCorrida({ state, pistaId, onReiniciar }: FluxoCorridaProps) {
+  const { fase, pista, grid, resultado, tempoSimMs, largar, acelerar } = useCorrida(state, pistaId);
 
   if (fase === 'resultado') {
     return <TelaResultadoCorrida state={state} resultado={resultado} onReiniciar={onReiniciar} />;

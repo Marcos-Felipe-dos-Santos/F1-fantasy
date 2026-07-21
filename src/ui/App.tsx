@@ -13,6 +13,7 @@ import { useCallback, useMemo, useState } from 'react';
 import './estilos.css';
 import type { Dificuldade, EscolhaDraft } from '../engine/types';
 import { FluxoCorrida } from './FluxoCorrida';
+import { PISTA_CORRIDA_ID } from './fluxo-corrida';
 import type { HumanoConfig } from './fluxo-draft';
 import { decisaoLocal } from './fluxo-local';
 import { nomeJogador } from './loadout-view';
@@ -33,6 +34,10 @@ function App() {
   // pra tipar o estado inicial: antes de `comecarPartida` não há TelaInicio
   // nenhuma renderizada que dependa desse valor.
   const [visibilidade, setVisibilidade] = useState<Visibilidade>('craque');
+  // Pista da corrida (PR 2.5) é opção da partida, no mesmo espírito de
+  // `visibilidade` — default só serve pra tipar o estado inicial (nunca
+  // renderizado antes de `comecarPartida`).
+  const [pistaId, setPistaId] = useState(PISTA_CORRIDA_ID);
 
   const reiniciarTudo = useCallback(() => {
     setNaCorrida(false);
@@ -46,9 +51,11 @@ function App() {
       dificuldade: Dificuldade,
       humanosConfig: HumanoConfig[],
       visibilidadeEscolhida: Visibilidade,
+      pistaEscolhidaId: string,
     ) => {
       comecar(seedTexto, dificuldade, humanosConfig);
       setVisibilidade(visibilidadeEscolhida);
+      setPistaId(pistaEscolhidaId);
       // Single (1 humano): pula a TelaHandoff — comportamento do modo Single
       // preservado (nunca troca de mão). Local (2-4 humanos): começa sem
       // ninguém confirmado, então o primeiro render já pede handoff pro
@@ -119,7 +126,7 @@ function App() {
         />
       )}
       {state?.fase === 'concluido' && naCorrida && (
-        <FluxoCorrida state={state} onReiniciar={reiniciarTudo} />
+        <FluxoCorrida state={state} pistaId={pistaId} onReiniciar={reiniciarTudo} />
       )}
     </div>
   );

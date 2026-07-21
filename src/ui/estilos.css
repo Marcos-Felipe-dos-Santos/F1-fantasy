@@ -164,6 +164,13 @@ h3 {
   margin: 8px 0 0;
 }
 
+/* Perfil da pista escolhida (PR 2.5) — informação pública, abaixo do select "Pista". */
+.form-inicio__perfil-pista {
+  font-size: 0.85rem;
+  opacity: 0.85;
+  margin: -8px 0 0;
+}
+
 /* Seed da partida copiável (PR 2.4) — resultado da corrida */
 
 .resultado-corrida__seed {

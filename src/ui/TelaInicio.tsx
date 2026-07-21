@@ -4,9 +4,11 @@
  * começar o draft. Só monta a jogada — quem cria o estado é `useDraft`.
  */
 
-import { useState, type FormEvent } from 'react';
+import { useMemo, useState, type FormEvent } from 'react';
 import type { Dificuldade } from '../engine/types';
+import { dataset } from './dataset-app';
 import { ID_HUMANO, seedEfetivaTexto, type HumanoConfig } from './fluxo-draft';
+import { PISTA_CORRIDA_ID, perfilPista } from './fluxo-corrida';
 import type { Visibilidade } from './visibilidade';
 
 /** Modo de jogo escolhido na tela de início (não é conceito da engine — só organiza esta tela). */
@@ -21,8 +23,12 @@ interface TelaInicioProps {
     dificuldade: Dificuldade,
     humanos: HumanoConfig[],
     visibilidade: Visibilidade,
+    pistaId: string,
   ) => void;
 }
+
+/** Pistas do dataset, ordenadas por nome (ordem de exibição do select — não é a ordem do JSON). */
+const PISTAS_ORDENADAS = [...dataset.pistas].sort((a, b) => a.nome.localeCompare(b.nome));
 
 export function TelaInicio({ onComecar }: TelaInicioProps) {
   const [seedTexto, setSeedTexto] = useState('');
@@ -35,6 +41,15 @@ export function TelaInicio({ onComecar }: TelaInicioProps) {
   const [visibilidade, setVisibilidade] = useState<Visibilidade>('craque');
   const [qtdHumanos, setQtdHumanos] = useState(2);
   const [nomes, setNomes] = useState<string[]>(['', '', '', '']);
+  const [pistaId, setPistaId] = useState(PISTA_CORRIDA_ID);
+
+  // Perfil da pista escolhida (§9), informação pública — não depende de
+  // `visibilidade` (Modo Cego só esconde nota de componente, não pista).
+  const pistaSelecionada = useMemo(
+    () => dataset.pistasById.get(pistaId) ?? dataset.pistasById.get(PISTA_CORRIDA_ID)!,
+    [pistaId],
+  );
+  const perfil = useMemo(() => perfilPista(pistaSelecionada), [pistaSelecionada]);
 
   function handleSubmit(evento: FormEvent) {
     evento.preventDefault();
@@ -47,14 +62,14 @@ export function TelaInicio({ onComecar }: TelaInicioProps) {
       () => crypto.getRandomValues(new Uint32Array(1))[0],
     );
     if (modo === 'single') {
-      onComecar(seed, dificuldade, [{ id: ID_HUMANO, nome: 'Você' }], visibilidade);
+      onComecar(seed, dificuldade, [{ id: ID_HUMANO, nome: 'Você' }], visibilidade, pistaId);
       return;
     }
     const humanos: HumanoConfig[] = Array.from({ length: qtdHumanos }, (_, i) => ({
       id: `humano-${i + 1}`,
       nome: nomes[i].trim() || `Jogador ${i + 1}`,
     }));
-    onComecar(seed, dificuldade, humanos, visibilidade);
+    onComecar(seed, dificuldade, humanos, visibilidade, pistaId);
   }
 
   function handleNomeChange(indice: number, valor: string) {
@@ -113,6 +128,20 @@ export function TelaInicio({ onComecar }: TelaInicioProps) {
             <option value="cego">Modo Cego 🎲 (sem notas, sem dicas)</option>
           </select>
         </label>
+        <label className="form-inicio__campo">
+          Pista
+          <select value={pistaId} onChange={(evento) => setPistaId(evento.target.value)}>
+            {PISTAS_ORDENADAS.map((pista) => (
+              <option key={pista.id} value={pista.id}>
+                {pista.nome}
+              </option>
+            ))}
+          </select>
+        </label>
+        <p className="form-inicio__perfil-pista">
+          Ultrapassagem: {perfil.ultrapassagem.emoji} {perfil.ultrapassagem.rotulo} · Desgaste:{' '}
+          {perfil.desgaste} · Chuva: {perfil.chuvaPercentual}% · {perfil.voltas} voltas
+        </p>
 
         {modo === 'local' && (
           <fieldset className="form-inicio__local">
