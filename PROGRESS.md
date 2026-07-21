@@ -26,7 +26,9 @@
 
 - **PR 2.1a** — Generalização do draft pra N humanos (Fase 2; Single intacto). Engine: só `Jogador.nome?: string` (exibição; nunca entra em `deriveSeed` — ids fixos `voce`/`humano-1..4` garantem reprodutibilidade, comentário no código). UI: `fluxo-draft.ts` com `HumanoConfig`, `iniciarDraft`/`aplicarEscolhaDoJogador` genéricos (bots = 22 − nHumanos) + guardas de input (ids únicos/não-vazios, 1..22 humanos); `iniciarDraftSingle`/`aplicarEscolhaHumano` viram wrappers; `useDraft.escolher(jogadorId, escolha)`; telas destacam por `tipo === 'humano'` + `nomeJogador` (fallback 'Você', trim de nome vazio); TelaResumo com seção de carro por humano. Não-regressão do Single garantida por **golden snapshot capturado da main pré-PR** (worktree + junction de node_modules; `ordemPeca` completa, perfis de 3 bots e 5 sorteios do humano pra seed 'demo'/dificil — passou sem divergência) + testes de equivalência wrapper×genérico (4 casos, facil e dificil). Revisado pelo senior-reviewer (aprovado com correções — golden anti-tautologia, guardas de input e trim aplicados).
 
-**Testes na main: 154 passando** (12 arquivos) + 1 do harness via `npm run balance`. Lint, `tsc --noEmit` e `npm run build` limpos.
+- **PR 2.1b** — Modo Local hotseat (turnos por bloco, GDD §2/§3). `src/ui/fluxo-local.ts` puro: `alvoHumano` (rodadas 1-5 em bloco por humano na ordem de cadastro — inócuo pro resultado, sorteios são sub-streams independentes por jogador; rodada 6 turno a turno seguindo `ordemPeca` da engine) e `decisaoLocal` (handoff/jogar/concluido dado quem confirmou estar com o aparelho — `confirmadoId` vive só no `App`, engine não sabe de handoff). Anti-vazamento: `TelaHandoff` neutra (só nome + fase, zero dado de jogo); `TelaDraft`/`TelaPeca` escopadas ao jogador ativo; `useDraft` limpa erro obsoleto no handoff. `TelaInicio` com modo Single/Local e 2-4 nomes; Single pula handoff (confirmado fixo). 12 testes novos em `fluxo-local.test.ts` (handoff inicial, blocos com 2/3/4 humanos, salto pra peça, sem handoff redundante, turno a turno na peça, concluído, teste estrutural anti-vazamento). Engine intocada. Revisado pelo senior-reviewer (aprovado sem bloqueantes nem avisos).
+
+**Testes na main: 166 passando** (13 arquivos) + 1 do harness via `npm run balance`. Lint, `tsc --noEmit` e `npm run build` limpos.
 
 **🏁 Marco da Fase 1 atingido:** dá pra jogar o modo Single completo (`npm run dev`): draft de 6 rodadas contra 21 bots → quali → corrida animada → resultado FIA. Balance-harness operante. Visual segue propositalmente cru — polimento é Fase 4.
 
@@ -45,8 +47,7 @@
 
 ## Próximos
 
-- **PR 2.1b (próximo)** — fluxo hotseat: `fluxo-local.ts` puro (`alvoHumano` + decisão handoff/jogar/concluido), `TelaHandoff` neutra anti-vazamento, TelaInicio com Single/Local e 2-4 nomes. Plano da Fase 2 aprovado pelo dev em 2026-07-19 (ver PLANO §5 Fase 2 reorganizada: 2.1a/2.1b/2.3).
-- **PR 2.3 (depois)** — Modo Craque/Cego por prop `visibilidade`.
+- **PR 2.3 (próximo)** — Modo Craque/Cego por prop `visibilidade` (esconde notas, base→efetiva e toda dica de raridade — emoji, cor, bônus, risco, atributos-alvo), opção na TelaInicio válida pra Single e Local. Fecha a Fase 2. Plano aprovado pelo dev em 2026-07-19 (PLANO §5).
 
 ## Acompanhamentos registrados pela revisão do PR 1.7b (cosméticos, candidatos à Fase 4)
 
