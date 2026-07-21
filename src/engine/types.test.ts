@@ -160,6 +160,10 @@ export const resultadoCorridaFixture: ResultadoCorrida = {
     'jogador-1': [72.1, 71.9, 72.4],
     'jogador-2': [71.234, 72.5, 72.1],
   },
+  voltasDePit: {
+    'jogador-1': [8],
+    'jogador-2': [5, 11],
+  },
 };
 
 describe('tipos base da engine (PR 0.3)', () => {

@@ -360,4 +360,13 @@ export interface ResultadoCorrida {
    * pertence a nenhuma volta).
    */
   historicoVoltas: Record<string, number[]>;
+  /**
+   * Voltas em que cada carro fez pit stop, por jogadorId (PR 2.7, insumo pro
+   * status "no pit" do painel ao vivo da UI). Convenção 1-based, igual a
+   * `EventoCorrida.volta` e `voltaAtual` (UI) — a volta 1 é a primeira, nunca
+   * 0. Array estritamente crescente, tamanho igual a
+   * `classificacao[].paradas` (0 se o carro deu DNF antes de qualquer parada;
+   * quem termina a corrida sempre tem pelo menos 1, pit obrigatório, §10).
+   */
+  voltasDePit: Record<string, number[]>;
 }

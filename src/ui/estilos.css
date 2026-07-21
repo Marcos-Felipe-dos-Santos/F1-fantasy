@@ -573,6 +573,20 @@ button.card {
   letter-spacing: 0.03em;
 }
 
+/* Badge de pit stop no painel ao vivo (PR 2.7) — mesmo estilo do badge de DNF;
+   cor própria (amarelo de aviso, já usado pra raridade "lendário") pra não se
+   confundir com o vermelho de destaque (carro humano/DNF). */
+.badge-pit {
+  background: var(--raridade-lendario);
+  color: #12141c;
+  border-radius: 999px;
+  padding: 1px 8px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
 .ticker-eventos {
   list-style: none;
   margin: 0 0 16px;

@@ -156,6 +156,8 @@ interface ResultadoCarro {
   eventos: EventoCorrida[];
   /** Tempo de cada volta completada, na ordem — ver doc de `ResultadoCorrida.historicoVoltas`. */
   voltas: number[];
+  /** Voltas (1-based) em que este carro fez pit — ver doc de `ResultadoCorrida.voltasDePit`. */
+  voltasDePit: number[];
 }
 
 /**
@@ -230,6 +232,7 @@ function simularCarro(
   let voltasCompletadas = pista.voltas;
   const eventos: EventoCorrida[] = [];
   const voltas: number[] = [];
+  const voltasDePit: number[] = [];
 
   for (let v = 1; v <= pista.voltas; v++) {
     let tempoVolta =
@@ -324,6 +327,10 @@ function simularCarro(
       }
       tempoVolta += custoPit;
       paradas++;
+      // `v` já é 1-based (loop começa em 1) — mesma convenção de
+      // `EventoCorrida.volta` e `voltaAtual` (UI). Registro puro, não
+      // consome RNG.
+      voltasDePit.push(v);
       desgasteAcum = 0;
     }
 
@@ -354,6 +361,7 @@ function simularCarro(
     voltasCompletadas,
     eventos,
     voltas,
+    voltasDePit,
   };
 }
 
@@ -465,8 +473,10 @@ export function simularCorrida(
     });
 
   const historicoVoltas: Record<string, number[]> = {};
+  const voltasDePit: Record<string, number[]> = {};
   for (const resultado of porJogador) {
     historicoVoltas[resultado.jogadorId] = resultado.voltas;
+    voltasDePit[resultado.jogadorId] = resultado.voltasDePit;
   }
 
   return {
@@ -476,5 +486,6 @@ export function simularCorrida(
     eventos,
     chuva: chove,
     historicoVoltas,
+    voltasDePit,
   };
 }

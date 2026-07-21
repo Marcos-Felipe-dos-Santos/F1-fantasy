@@ -458,9 +458,10 @@ describe('simularCorrida', () => {
       // Valores congelados a partir da 1a execução da implementação (PR 1.4);
       // recongelados após a calibração do balance-harness (PR 1.6, 2026-07-18 —
       // variancia/gridOffsetMs/limiarPneuGasto mudaram, ordem/pontos idênticos).
-      // `historicoVoltas` (PR 1.7b) é derivado, não hardcoded aqui — os números
-      // congelados dos demais campos não mudam (ver asserção de soma abaixo).
-      const { historicoVoltas, ...resto } = resultado;
+      // `historicoVoltas` (PR 1.7b) e `voltasDePit` (PR 2.7) são derivados, não
+      // hardcoded aqui — os números congelados dos demais campos não mudam (ver
+      // asserções de soma/consistência abaixo).
+      const { historicoVoltas, voltasDePit, ...resto } = resultado;
       expect(resto).toEqual({
         seed: 42,
         classificacao: [
@@ -509,6 +510,18 @@ describe('simularCorrida', () => {
         expect(historicoVoltas[item.jogadorId]).toHaveLength(item.voltasCompletadas);
         const soma = historicoVoltas[item.jogadorId].reduce((a, b) => a + b, 0);
         expect(soma).toBeCloseTo(item.tempoTotal, 6);
+
+        // voltasDePit (PR 2.7): 1 entrada por paradas, voltas 1-based dentro
+        // do range da pista, estritamente crescentes.
+        const voltas = voltasDePit[item.jogadorId];
+        expect(voltas).toHaveLength(item.paradas);
+        for (const v of voltas) {
+          expect(v).toBeGreaterThanOrEqual(1);
+          expect(v).toBeLessThanOrEqual(pistaMonza.voltas);
+        }
+        for (let i = 1; i < voltas.length; i++) {
+          expect(voltas[i]).toBeGreaterThan(voltas[i - 1]);
+        }
       }
     });
 
@@ -525,9 +538,10 @@ describe('simularCorrida', () => {
       // Valores congelados a partir da 1a execução da implementação (PR 1.5b);
       // recongelados após a calibração do balance-harness (PR 1.6, 2026-07-18 —
       // o novo gridOffsetMs/variancia inverteu a ordem j1/j4 no topo).
-      // `historicoVoltas` (PR 1.7b) é derivado, não hardcoded aqui — os números
-      // congelados dos demais campos não mudam (ver asserção de soma abaixo).
-      const { historicoVoltas, ...resto } = resultado;
+      // `historicoVoltas` (PR 1.7b) e `voltasDePit` (PR 2.7) são derivados, não
+      // hardcoded aqui — os números congelados dos demais campos não mudam (ver
+      // asserções de soma/consistência abaixo).
+      const { historicoVoltas, voltasDePit, ...resto } = resultado;
       expect(resto).toEqual({
         seed: 42,
         classificacao: [
@@ -576,6 +590,18 @@ describe('simularCorrida', () => {
         expect(historicoVoltas[item.jogadorId]).toHaveLength(item.voltasCompletadas);
         const soma = historicoVoltas[item.jogadorId].reduce((a, b) => a + b, 0);
         expect(soma).toBeCloseTo(item.tempoTotal, 6);
+
+        // voltasDePit (PR 2.7): 1 entrada por paradas, voltas 1-based dentro
+        // do range da pista, estritamente crescentes.
+        const voltas = voltasDePit[item.jogadorId];
+        expect(voltas).toHaveLength(item.paradas);
+        for (const v of voltas) {
+          expect(v).toBeGreaterThanOrEqual(1);
+          expect(v).toBeLessThanOrEqual(pistaInterlagos.voltas);
+        }
+        for (let i = 1; i < voltas.length; i++) {
+          expect(voltas[i]).toBeGreaterThan(voltas[i - 1]);
+        }
       }
     });
   });
@@ -654,6 +680,59 @@ describe('simularCorrida', () => {
       )!;
       const soma = resultado.historicoVoltas['proibida'].reduce((a, b) => a + b, 0);
       expect(soma + evento.custoMs).toBeCloseTo(item.tempoTotal, 6);
+    });
+  });
+
+  describe('voltasDePit (PR 2.7)', () => {
+    /** 1 loadout por equipe/ano do dataset inteiro (22 carros) — cobertura ampla das invariantes. */
+    function loadoutsTodos(): Loadout[] {
+      return dataset.equipeAnos.map((ea, idx) => ({
+        jogadorId: `carro${idx + 1}`,
+        pilotoId: ea.pilotos[0].id,
+        chassiId: ea.chassi.id,
+        motorId: ea.motor.id,
+        estrategistaId: ea.estrategista.id,
+        pitId: ea.pit.id,
+        pecaId: 'peca-composto-macio',
+      }));
+    }
+
+    it('length de voltasDePit[id] === paradas, voltas 1-based em [1, voltas] e estritamente crescentes, pros 22 carros do dataset', () => {
+      const loadouts = loadoutsTodos();
+      expect(loadouts).toHaveLength(22);
+      const grid = simularQuali(dataset, loadouts, pistaMonza, 1);
+      const resultado = simularCorrida(dataset, loadouts, pistaMonza, grid, 1);
+
+      expect(Object.keys(resultado.voltasDePit).sort()).toEqual(loadouts.map((l) => l.jogadorId).sort());
+      for (const item of resultado.classificacao) {
+        const voltas = resultado.voltasDePit[item.jogadorId];
+        expect(voltas).toHaveLength(item.paradas);
+        for (const v of voltas) {
+          expect(v).toBeGreaterThanOrEqual(1);
+          expect(v).toBeLessThanOrEqual(pistaMonza.voltas);
+        }
+        for (let i = 1; i < voltas.length; i++) {
+          expect(voltas[i]).toBeGreaterThan(voltas[i - 1]);
+        }
+      }
+    });
+
+    it('carro que terminou tem ao menos 1 parada registrada em voltasDePit (pit obrigatório)', () => {
+      const loadouts = [loadoutRedBull(), loadoutFerrari(), loadoutMinardi('j3'), loadoutMercedes()];
+      const grid = simularQuali(dataset, loadouts, pistaMonza, 42);
+      const resultado = simularCorrida(dataset, loadouts, pistaMonza, grid, 42);
+      for (const item of resultado.classificacao) {
+        expect(item.status).toBe('terminou'); // seed de ouro conhecida — sem DNF
+        expect(resultado.voltasDePit[item.jogadorId].length).toBeGreaterThanOrEqual(1);
+      }
+    });
+
+    it('é determinístico: mesma seed + loadouts ⇒ mesmo voltasDePit', () => {
+      const loadouts = [loadoutRedBull(), loadoutFerrari()];
+      const grid = simularQuali(dataset, loadouts, pistaMonza, 42);
+      const resultado1 = simularCorrida(dataset, loadouts, pistaMonza, grid, 42);
+      const resultado2 = simularCorrida(dataset, loadouts, pistaMonza, grid, 42);
+      expect(resultado2.voltasDePit).toEqual(resultado1.voltasDePit);
     });
   });
 
