@@ -2,3 +2,7 @@ node_modules/
 dist/
 coverage/
 .env*
+
+# Cache cru da Jolpica-F1 (PR 4.1) — gigante e reproduzível via
+# `npm run dataset:fetch`; scripts/derived/ (agregados, PR 4.2+) É commitado.
+scripts/cache/
