@@ -472,6 +472,107 @@ button.card {
   opacity: 0.35;
 }
 
+/* Velocidade do replay + classificação ao vivo (PR 2.6) */
+
+.grupo-velocidade {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.botao-velocidade {
+  background: transparent;
+  color: var(--cor-texto);
+  border: 1px solid var(--cor-borda);
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.botao-velocidade:hover {
+  background: var(--cor-superficie);
+}
+
+.botao-velocidade--ativo {
+  background: var(--cor-destaque);
+  border-color: var(--cor-destaque);
+  color: #fff;
+  font-weight: 600;
+}
+
+.tela-corrida__area-replay {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.tela-corrida__area-replay .tracado-svg {
+  flex: 1 1 500px;
+  margin-bottom: 0;
+}
+
+.classificacao-ao-vivo {
+  flex: 1 1 220px;
+  max-width: 320px;
+  max-height: 460px;
+  overflow-y: auto;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  background: var(--cor-superficie);
+  border: 1px solid var(--cor-borda);
+  border-radius: 12px;
+}
+
+.classificacao-ao-vivo__linha {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  font-size: 0.85rem;
+  border-bottom: 1px solid var(--cor-borda);
+}
+
+.classificacao-ao-vivo__linha:last-child {
+  border-bottom: none;
+}
+
+.classificacao-ao-vivo__linha--dnf {
+  color: var(--cor-texto-fraco);
+}
+
+.classificacao-ao-vivo__posicao {
+  font-variant-numeric: tabular-nums;
+  color: var(--cor-texto-fraco);
+  min-width: 20px;
+}
+
+.classificacao-ao-vivo__nome {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.classificacao-ao-vivo__chegou {
+  font-size: 0.9rem;
+}
+
+.badge-dnf {
+  background: var(--cor-erro);
+  color: #12141c;
+  border-radius: 999px;
+  padding: 1px 8px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
 .ticker-eventos {
   list-style: none;
   margin: 0 0 16px;
