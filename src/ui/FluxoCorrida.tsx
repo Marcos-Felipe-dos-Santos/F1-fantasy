@@ -17,7 +17,10 @@ interface FluxoCorridaProps {
 }
 
 export function FluxoCorrida({ state, pistaId, onReiniciar }: FluxoCorridaProps) {
-  const { fase, pista, grid, resultado, tempoSimMs, largar, acelerar } = useCorrida(state, pistaId);
+  const { fase, pista, grid, resultado, tempoSimMs, largar, acelerar, velocidade, setVelocidade } = useCorrida(
+    state,
+    pistaId,
+  );
 
   if (fase === 'resultado') {
     return <TelaResultadoCorrida state={state} resultado={resultado} onReiniciar={onReiniciar} />;
@@ -33,6 +36,8 @@ export function FluxoCorrida({ state, pistaId, onReiniciar }: FluxoCorridaProps)
       tempoSimMs={tempoSimMs}
       onLargar={largar}
       onAcelerar={acelerar}
+      velocidade={velocidade}
+      onVelocidade={setVelocidade}
     />
   );
 }

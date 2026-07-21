@@ -7,7 +7,15 @@
 
 import type { DraftState, EventoCorrida, Pista, ResultadoCorrida, ResultadoQuali } from '../engine/types';
 import { dataset } from './dataset-app';
-import { acumularVoltas, fracaoVisual, pontoNoTracado, TRACADO_GENERICO, voltaAtual } from './fluxo-corrida';
+import {
+  acumularVoltas,
+  classificacaoAoVivo,
+  fracaoVisual,
+  pontoNoTracado,
+  TRACADO_GENERICO,
+  voltaAtual,
+  type VelocidadeReplay,
+} from './fluxo-corrida';
 import { nomeJogador } from './loadout-view';
 
 interface TelaCorridaProps {
@@ -19,7 +27,17 @@ interface TelaCorridaProps {
   tempoSimMs: number;
   onLargar: () => void;
   onAcelerar: () => void;
+  /** Velocidade atual do replay (PR 2.6) — irrelevante na fase 'grid'. */
+  velocidade: VelocidadeReplay;
+  onVelocidade: (velocidade: VelocidadeReplay) => void;
 }
+
+/** Botões de velocidade do replay (PR 2.6) — trocável durante a corrida, não só antes. */
+const OPCOES_VELOCIDADE: { valor: VelocidadeReplay; rotulo: string; emoji: string }[] = [
+  { valor: 'lenta', rotulo: 'Lenta', emoji: '🐢' },
+  { valor: 'media', rotulo: 'Média', emoji: '▶️' },
+  { valor: 'rapida', rotulo: 'Rápida', emoji: '🐇' },
+];
 
 const ROTULOS_EVENTO: Record<EventoCorrida['tipo'], string> = {
   'erro-piloto': 'Erro de pilotagem',
@@ -61,6 +79,8 @@ export function TelaCorrida({
   tempoSimMs,
   onLargar,
   onAcelerar,
+  velocidade,
+  onVelocidade,
 }: TelaCorridaProps) {
   if (fase === 'grid') {
     return (
@@ -101,6 +121,8 @@ export function TelaCorrida({
   const volta = voltaAtual(historicoLider, tempoSimMs, pista.voltas);
 
   const eventosOcorridos = resultado.eventos.filter((evento) => evento.volta <= volta);
+  const gridLargada = grid.grid.map((item) => item.jogadorId);
+  const classificacaoAtual = classificacaoAoVivo(resultado, gridLargada, tempoSimMs, pista.voltas);
 
   return (
     <div className="tela-corrida">
@@ -111,35 +133,72 @@ export function TelaCorrida({
         {resultado.chuva && <span className="badge-chuva">🌧️ Chuva</span>}
       </div>
 
-      <svg className="tracado-svg" viewBox="0 0 1000 600" role="img" aria-label={`Traçado de ${pista.nome}`}>
-        <path d={tracadoPath()} className="tracado-svg__pista" />
-        {resultado.classificacao.map((item) => {
-          const historico = resultado.historicoVoltas[item.jogadorId] ?? [];
-          const fracao = fracaoVisual(historico, tempoSimMs, item.status, pista.voltas);
-          const ponto = pontoNoTracado(TRACADO_GENERICO, fracao);
-          const somaHistorico = acumularVoltas(historico).at(-1) ?? 0;
-          const congelado = item.status === 'dnf' && tempoSimMs >= somaHistorico;
-          const ehHumano = ehHumanoId(state, item.jogadorId);
-          const classes = [
-            'tracado-svg__carro',
-            ehHumano ? 'tracado-svg__carro--humano' : '',
-            congelado ? 'tracado-svg__carro--congelado' : '',
-          ]
-            .filter(Boolean)
-            .join(' ');
-          return (
-            <circle
-              key={item.jogadorId}
-              cx={ponto.x}
-              cy={ponto.y}
-              r={ehHumano ? 10 : 6}
-              className={classes}
-            >
-              <title>{`${nomeDoJogadorId(state, item.jogadorId)} — ${nomePiloto(state, item.jogadorId)}`}</title>
-            </circle>
-          );
-        })}
-      </svg>
+      <div className="grupo-velocidade" role="group" aria-label="Velocidade do replay">
+        {OPCOES_VELOCIDADE.map((opcao) => (
+          <button
+            key={opcao.valor}
+            type="button"
+            className={`botao-velocidade${velocidade === opcao.valor ? ' botao-velocidade--ativo' : ''}`}
+            aria-pressed={velocidade === opcao.valor}
+            onClick={() => onVelocidade(opcao.valor)}
+          >
+            {opcao.emoji} {opcao.rotulo}
+          </button>
+        ))}
+      </div>
+
+      <div className="tela-corrida__area-replay">
+        <svg className="tracado-svg" viewBox="0 0 1000 600" role="img" aria-label={`Traçado de ${pista.nome}`}>
+          <path d={tracadoPath()} className="tracado-svg__pista" />
+          {resultado.classificacao.map((item) => {
+            const historico = resultado.historicoVoltas[item.jogadorId] ?? [];
+            const fracao = fracaoVisual(historico, tempoSimMs, item.status, pista.voltas);
+            const ponto = pontoNoTracado(TRACADO_GENERICO, fracao);
+            const somaHistorico = acumularVoltas(historico).at(-1) ?? 0;
+            const congelado = item.status === 'dnf' && tempoSimMs >= somaHistorico;
+            const ehHumano = ehHumanoId(state, item.jogadorId);
+            const classes = [
+              'tracado-svg__carro',
+              ehHumano ? 'tracado-svg__carro--humano' : '',
+              congelado ? 'tracado-svg__carro--congelado' : '',
+            ]
+              .filter(Boolean)
+              .join(' ');
+            return (
+              <circle
+                key={item.jogadorId}
+                cx={ponto.x}
+                cy={ponto.y}
+                r={ehHumano ? 10 : 6}
+                className={classes}
+              >
+                <title>{`${nomeDoJogadorId(state, item.jogadorId)} — ${nomePiloto(state, item.jogadorId)}`}</title>
+              </circle>
+            );
+          })}
+        </svg>
+
+        <ol className="classificacao-ao-vivo" aria-label="Classificação ao vivo">
+          {classificacaoAtual.map((item, idx) => {
+            const ehHumano = ehHumanoId(state, item.jogadorId);
+            const classes = [
+              'classificacao-ao-vivo__linha',
+              ehHumano ? 'linha-humano' : '',
+              item.status === 'dnf' ? 'classificacao-ao-vivo__linha--dnf' : '',
+            ]
+              .filter(Boolean)
+              .join(' ');
+            return (
+              <li key={item.jogadorId} className={classes}>
+                <span className="classificacao-ao-vivo__posicao">{idx + 1}</span>
+                <span className="classificacao-ao-vivo__nome">{nomeDoJogadorId(state, item.jogadorId)}</span>
+                {item.status === 'dnf' && <span className="badge-dnf">DNF</span>}
+                {item.status === 'terminou' && <span className="classificacao-ao-vivo__chegou">🏁</span>}
+              </li>
+            );
+          })}
+        </ol>
+      </div>
 
       <ul className="ticker-eventos">
         {eventosOcorridos.length === 0 && <li className="ticker-eventos__vazio">Sem incidentes até agora.</li>}

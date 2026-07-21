@@ -6,10 +6,10 @@
  * proibição de `performance.now`/`Date.now` é só na engine, ver CLAUDE.md).
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { DraftState, Pista, ResultadoCorrida, ResultadoQuali } from '../engine/types';
 import { dataset } from './dataset-app';
-import { escalaReplay, prepararCorrida } from './fluxo-corrida';
+import { escalaReplay, MS_REPLAY_POR_VOLTA, prepararCorrida, type VelocidadeReplay } from './fluxo-corrida';
 
 export type FaseCorrida = 'grid' | 'replay' | 'resultado';
 
@@ -27,12 +27,17 @@ export interface UseCorridaResultado {
   largar: () => void;
   /** Pula direto pro resultado final, de qualquer fase (GDD: assistir ou pular). */
   acelerar: () => void;
+  /** Velocidade atual do replay (PR 2.6) — default 'media'. */
+  velocidade: VelocidadeReplay;
+  /** Troca a velocidade do replay em andamento, sem reiniciar nem pular tempo (PR 2.6). */
+  setVelocidade: (velocidade: VelocidadeReplay) => void;
 }
 
 export function useCorrida(state: DraftState, pistaId: string): UseCorridaResultado {
   const [{ pista, grid, resultado }] = useState(() => prepararCorrida(dataset, state, pistaId));
   const [fase, setFase] = useState<FaseCorrida>('grid');
   const [tempoSimMs, setTempoSimMs] = useState(0);
+  const [velocidade, setVelocidadeState] = useState<VelocidadeReplay>('media');
 
   const rafRef = useRef<number | null>(null);
   const timeoutRef = useRef<number | null>(null);
@@ -44,9 +49,20 @@ export function useCorrida(state: DraftState, pistaId: string): UseCorridaResult
   // os callbacks agendados a cada frame e trava a aba em segundos).
   const tempoSimRef = useRef(0);
 
-  const tempoVencedorMs = useMemo(() => resultado.classificacao[0].tempoTotal, [resultado]);
-  const fatorEscala = useMemo(
-    () => escalaReplay(tempoVencedorMs, pista.voltas),
+  const tempoVencedorMs = resultado.classificacao[0].tempoTotal;
+  // Fator de escala espelhado numa ref (mesmo motivo do `tempoSimRef`): o
+  // passo do rAF (`largar`) lê daqui a cada frame, então trocar a
+  // velocidade DURANTE o replay (PR 2.6) só precisa atualizar esta ref —
+  // não reinicia o replay nem re-cria o loop do rAF. A atualização acontece
+  // dentro do handler `setVelocidade` (evento de clique), não num updater de
+  // `setState`, então não corre o risco de duplicar em StrictMode.
+  const fatorEscalaRef = useRef(escalaReplay(tempoVencedorMs, pista.voltas, MS_REPLAY_POR_VOLTA[velocidade]));
+
+  const setVelocidade = useCallback(
+    (proxima: VelocidadeReplay) => {
+      fatorEscalaRef.current = escalaReplay(tempoVencedorMs, pista.voltas, MS_REPLAY_POR_VOLTA[proxima]);
+      setVelocidadeState(proxima);
+    },
     [tempoVencedorMs, pista.voltas],
   );
 
@@ -77,7 +93,7 @@ export function useCorrida(state: DraftState, pistaId: string): UseCorridaResult
       const deltaRealMs = timestamp - ultimoTimestamp;
       ultimoTimestamp = timestamp;
 
-      const proximo = tempoSimRef.current + deltaRealMs * fatorEscala;
+      const proximo = tempoSimRef.current + deltaRealMs * fatorEscalaRef.current;
 
       if (proximo >= tempoVencedorMs) {
         tempoSimRef.current = tempoVencedorMs;
@@ -93,7 +109,7 @@ export function useCorrida(state: DraftState, pistaId: string): UseCorridaResult
     };
 
     rafRef.current = requestAnimationFrame(passo);
-  }, [fatorEscala, tempoVencedorMs, pararAnimacao]);
+  }, [tempoVencedorMs, pararAnimacao]);
 
   const acelerar = useCallback(() => {
     pararAnimacao();
@@ -102,5 +118,5 @@ export function useCorrida(state: DraftState, pistaId: string): UseCorridaResult
     setFase('resultado');
   }, [pararAnimacao, tempoVencedorMs]);
 
-  return { fase, pista, grid, resultado, tempoSimMs, largar, acelerar };
+  return { fase, pista, grid, resultado, tempoSimMs, largar, acelerar, velocidade, setVelocidade };
 }

@@ -8,8 +8,10 @@ import type { DraftState, EscolhaDraft } from '../engine/types';
 import { aplicarEscolhaHumano, ID_HUMANO, iniciarDraftSingle } from './fluxo-draft';
 import {
   acumularVoltas,
+  classificacaoAoVivo,
   escalaReplay,
   fracaoVisual,
+  MS_REPLAY_POR_VOLTA,
   perfilPista,
   pontoNoTracado,
   prepararCorrida,
@@ -255,12 +257,151 @@ describe('acumularVoltas', () => {
 });
 
 describe('escalaReplay', () => {
-  it('a duração real do replay do líder, escalada, bate com ~voltas * 2200ms', () => {
+  // PR 2.6: `msPorVolta` passou a ser o 3º parâmetro explícito (mudança de
+  // assinatura, comportamento idêntico) — cada velocidade testada com o
+  // valor explícito, e o default (sem 3º argumento) documentado separado.
+  it.each([
+    ['lenta', MS_REPLAY_POR_VOLTA.lenta],
+    ['media', MS_REPLAY_POR_VOLTA.media],
+    ['rapida', MS_REPLAY_POR_VOLTA.rapida],
+  ] as const)('a duração real do replay do líder, escalada, bate com ~voltas * msPorVolta (%s)', (_nome, msPorVolta) => {
     const tempoLiderMs = 900_000; // 15min de corrida simulada
     const voltas = 14;
-    const fator = escalaReplay(tempoLiderMs, voltas);
+    const fator = escalaReplay(tempoLiderMs, voltas, msPorVolta);
     const duracaoRealMs = tempoLiderMs / fator;
-    expect(duracaoRealMs).toBeCloseTo(voltas * 2200, 6);
+    expect(duracaoRealMs).toBeCloseTo(voltas * msPorVolta, 6);
+  });
+
+  it('sem 3º argumento, usa o default (média) — não-regressão de assinatura', () => {
+    const tempoLiderMs = 900_000;
+    const voltas = 14;
+    expect(escalaReplay(tempoLiderMs, voltas)).toBe(
+      escalaReplay(tempoLiderMs, voltas, MS_REPLAY_POR_VOLTA.media),
+    );
+  });
+
+  it('recalibração: rápida preserva o valor único anterior (2200ms); média é ~2x mais lenta; lenta é ~4x mais lenta que rápida', () => {
+    expect(MS_REPLAY_POR_VOLTA.rapida).toBe(2200);
+    expect(MS_REPLAY_POR_VOLTA.media / MS_REPLAY_POR_VOLTA.rapida).toBeCloseTo(2, 0);
+    expect(MS_REPLAY_POR_VOLTA.lenta / MS_REPLAY_POR_VOLTA.rapida).toBeCloseTo(4, 0);
+    expect(MS_REPLAY_POR_VOLTA.lenta).toBeGreaterThan(MS_REPLAY_POR_VOLTA.media);
+    expect(MS_REPLAY_POR_VOLTA.media).toBeGreaterThan(MS_REPLAY_POR_VOLTA.rapida);
+  });
+});
+
+describe('classificacaoAoVivo', () => {
+  // Seed encontrada por busca (script descartável, ver histórico do PR 2.6)
+  // que produz ao menos 1 DNF em Suzuka com o padrão de escolhas de
+  // `jogarDraftAteConcluir` — necessário pra cobrir o ramo 'dnf' do contrato
+  // de ordenação com uma corrida real (não sintética).
+  const draftComDnf = jogarDraftAteConcluir('busca-dnf-6');
+  const { grid: gridComDnf, resultado: resultadoComDnf, pista: pistaComDnf } = prepararCorrida(
+    dataset,
+    draftComDnf,
+    'pista-suzuka',
+  );
+  const gridLargadaComDnf = gridComDnf.grid.map((item) => item.jogadorId);
+
+  it('tem ao menos 1 DNF na seed escolhida (pré-condição do teste)', () => {
+    expect(resultadoComDnf.classificacao.some((c) => c.status === 'dnf')).toBe(true);
+  });
+
+  it('em tempoSimMs=0, a ordem é exatamente o grid de largada', () => {
+    const classificacao = classificacaoAoVivo(resultadoComDnf, gridLargadaComDnf, 0, pistaComDnf.voltas);
+    expect(classificacao.map((item) => item.jogadorId)).toEqual(gridLargadaComDnf);
+    expect(classificacao.every((item) => item.status === 'correndo')).toBe(true);
+  });
+
+  it('em t = tempoTotal do vencedor: quem terminou está na ordem exata de resultado.classificacao, e todo DNF vem depois de todos que terminaram', () => {
+    const tempoVencedor = resultadoComDnf.classificacao[0].tempoTotal;
+    const classificacao = classificacaoAoVivo(
+      resultadoComDnf,
+      gridLargadaComDnf,
+      tempoVencedor,
+      pistaComDnf.voltas,
+    );
+
+    const idsQueTerminaram = resultadoComDnf.classificacao
+      .filter((c) => c.status === 'terminou')
+      .map((c) => c.jogadorId);
+    const ordemTerminaramNaAoVivo = classificacao
+      .filter((item) => item.status === 'terminou')
+      .map((item) => item.jogadorId);
+    // Subsequência: a ordem relativa de quem já terminou bate com a
+    // classificação real da engine (mesmo que nem todos tenham cruzado a
+    // linha ainda neste instante — o vencedor cruza exatamente agora).
+    expect(ordemTerminaramNaAoVivo).toEqual(
+      idsQueTerminaram.filter((id) => ordemTerminaramNaAoVivo.includes(id)),
+    );
+    expect(ordemTerminaramNaAoVivo).toContain(resultadoComDnf.classificacao[0].jogadorId);
+
+    const ultimoIndiceTerminou = Math.max(
+      ...classificacao.map((item, idx) => (item.status === 'terminou' ? idx : -1)),
+    );
+    const primeiroIndiceDnf = classificacao.findIndex((item) => item.status === 'dnf');
+    if (primeiroIndiceDnf !== -1) {
+      expect(primeiroIndiceDnf).toBeGreaterThan(ultimoIndiceTerminou);
+    }
+  });
+
+  it('em t intermediário: 22 entradas, sem ids duplicados, e o 1º colocado tem progresso >= o de todos os demais', () => {
+    const tempoVencedor = resultadoComDnf.classificacao[0].tempoTotal;
+    const tempoIntermediario = Math.round(tempoVencedor / 2);
+    const classificacao = classificacaoAoVivo(
+      resultadoComDnf,
+      gridLargadaComDnf,
+      tempoIntermediario,
+      pistaComDnf.voltas,
+    );
+
+    expect(classificacao).toHaveLength(22);
+    expect(new Set(classificacao.map((item) => item.jogadorId)).size).toBe(22);
+
+    const progressoDe = (jogadorId: string) =>
+      progressoNoReplay(
+        resultadoComDnf.historicoVoltas[jogadorId] ?? [],
+        tempoIntermediario,
+        pistaComDnf.voltas,
+      );
+    const progressoLider = progressoDe(classificacao[0].jogadorId);
+    for (const item of classificacao) {
+      expect(progressoLider).toBeGreaterThanOrEqual(progressoDe(item.jogadorId));
+    }
+  });
+
+  it('em t após TODOS cruzarem a linha: os que terminaram reproduzem exatamente resultado.classificacao (cobre o desempate ambos-terminaram → tempoTotal)', () => {
+    // Aviso da revisão do PR 2.6: em t = tempoTotal do vencedor só 1 carro
+    // tem status 'terminou', então o ramo de desempate por tempoTotal entre
+    // dois carros já congelados em progresso 1 não era exercitado. Aqui todos
+    // os finalistas já cruzaram (t = 10x o tempo do vencedor cobre qualquer
+    // tempoTotal), forçando o sort a resolver TODOS os pares de terminados
+    // por tempoTotal — a ordem resultante tem que ser a chegada real.
+    const tempoAposTodos = resultadoComDnf.classificacao[0].tempoTotal * 10;
+    const classificacao = classificacaoAoVivo(
+      resultadoComDnf,
+      gridLargadaComDnf,
+      tempoAposTodos,
+      pistaComDnf.voltas,
+    );
+
+    const idsQueTerminaram = resultadoComDnf.classificacao
+      .filter((c) => c.status === 'terminou')
+      .map((c) => c.jogadorId);
+    // Pré-condição anti-tautologia: há 2+ finalistas, senão não há desempate.
+    expect(idsQueTerminaram.length).toBeGreaterThan(1);
+
+    const terminadosNaAoVivo = classificacao.filter((item) => item.status === 'terminou');
+    expect(terminadosNaAoVivo.map((item) => item.jogadorId)).toEqual(idsQueTerminaram);
+
+    // Todo DNF fica atrás do último que terminou, com status 'dnf'.
+    const caudaDnf = classificacao.slice(terminadosNaAoVivo.length);
+    expect(caudaDnf.every((item) => item.status === 'dnf')).toBe(true);
+    expect(caudaDnf.map((item) => item.jogadorId).sort()).toEqual(
+      resultadoComDnf.classificacao
+        .filter((c) => c.status === 'dnf')
+        .map((c) => c.jogadorId)
+        .sort(),
+    );
   });
 });
 

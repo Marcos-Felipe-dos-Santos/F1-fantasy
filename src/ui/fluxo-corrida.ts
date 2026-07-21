@@ -266,19 +266,114 @@ export function pontoNoTracado(tracado: Ponto[], fracao: number): Ponto {
   return tracado[0];
 }
 
-/** Duração-alvo do replay por volta, em ms de relógio real (~2.2s/volta ⇒ ~30s numa corrida de 14 voltas). */
-const MS_REPLAY_POR_VOLTA = 2200;
+/** As 3 velocidades de replay escolhíveis na tela de corrida (PR 2.6). */
+export type VelocidadeReplay = 'lenta' | 'media' | 'rapida';
+
+/**
+ * Duração-alvo do replay por volta, em ms de relógio real, por velocidade
+ * (PR 2.6). Recalibração a partir do valor único anterior (2200ms/volta ⇒
+ * ~30s numa corrida de 14 voltas):
+ * - `rapida` preserva o valor único de antes (2200ms) — não-regressão pra
+ *   quem já jogava com a velocidade "padrão" antiga;
+ * - `media` (novo default) é ~2x mais lenta que `rapida` (4500ms) — dá tempo
+ *   de ler a classificação ao vivo sem a corrida passar rápido demais;
+ * - `lenta` é ~4x mais lenta que `rapida` (9000ms), pra acompanhar incidente
+ *   por incidente.
+ */
+export const MS_REPLAY_POR_VOLTA: Record<VelocidadeReplay, number> = {
+  lenta: 9000,
+  media: 4500,
+  rapida: 2200,
+};
 
 /**
  * Fator de conversão de tempo real decorrido (ms de relógio, ex.: delta do
  * `requestAnimationFrame`) pra tempo simulado (ms) avançado no replay: cada
  * ms real avança `escala` ms simulados, de forma que a corrida inteira do
- * líder (`tempoLiderMs`) dure ~`voltas * MS_REPLAY_POR_VOLTA` ms de relógio.
+ * líder (`tempoLiderMs`) dure ~`voltas * msPorVolta` ms de relógio.
+ *
+ * `msPorVolta` tem default `MS_REPLAY_POR_VOLTA.media` só pra manter
+ * chamadas antigas (sem o 3º argumento) compilando — comportamento da função
+ * não mudou, só passou a receber a duração-por-volta explicitamente em vez
+ * de uma constante fixa (PR 2.6, velocidade trocável).
  */
-export function escalaReplay(tempoLiderMs: number, voltas: number): number {
-  const duracaoAlvoMs = voltas * MS_REPLAY_POR_VOLTA;
+export function escalaReplay(
+  tempoLiderMs: number,
+  voltas: number,
+  msPorVolta: number = MS_REPLAY_POR_VOLTA.media,
+): number {
+  const duracaoAlvoMs = voltas * msPorVolta;
   if (duracaoAlvoMs <= 0) return 1;
   return tempoLiderMs / duracaoAlvoMs;
+}
+
+/** Um item da classificação ao vivo (PR 2.6) — ver `classificacaoAoVivo`. */
+export interface ItemClassificacaoAoVivo {
+  jogadorId: string;
+  status: 'correndo' | 'terminou' | 'dnf';
+}
+
+/**
+ * Classificação ao vivo (PR 2.6): as 22 posições no instante `tempoSimMs` do
+ * replay, pro painel ao lado do traçado. `gridLargada` é a ordem de largada
+ * (jogadorIds), usada como critério de ordenação enquanto os carros ainda
+ * não se diferenciaram por progresso.
+ *
+ * CONTRATO de ordenação (não é a posição final da engine, é uma projeção
+ * visual dela ao longo do tempo):
+ * 1. progresso decrescente (`progressoNoReplay` — fração da corrida inteira
+ *    já percorrida, 0..1; carro que terminou fica parado em 1, carro em DNF
+ *    congela em `voltasCompletadas / voltasTotais` < 1);
+ * 2. empate em progresso: se AMBOS terminaram a corrida (status 'terminou'
+ *    — logo ambos com progresso exatamente 1), desempata por `tempoTotal`
+ *    crescente — a ordem real de chegada; senão (ainda correndo, ou um dos
+ *    dois em DNF), desempata pela posição de largada (`gridLargada`).
+ *
+ * Consequências do contrato: em `tempoSimMs = 0` todo mundo empata em
+ * progresso 0 e nenhum terminou ainda, então o desempate por grid reproduz
+ * exatamente a ordem de largada; ao final da corrida, quem terminou converge
+ * pra ordem exata de `resultado.classificacao` (chegada real) e todo DNF
+ * (progresso < 1 pra sempre) afunda naturalmente atrás de quem terminou.
+ */
+export function classificacaoAoVivo(
+  resultado: ResultadoCorrida,
+  gridLargada: string[],
+  tempoSimMs: number,
+  voltasTotais: number,
+): ItemClassificacaoAoVivo[] {
+  const posicaoLargada = new Map(gridLargada.map((jogadorId, indice) => [jogadorId, indice]));
+  const tempoTotalPorJogador = new Map(
+    resultado.classificacao.map((item) => [item.jogadorId, item.tempoTotal]),
+  );
+
+  const itens = resultado.classificacao.map((item) => {
+    const historico = resultado.historicoVoltas[item.jogadorId] ?? [];
+    const somaHistorico = acumularVoltas(historico).at(-1) ?? 0;
+    const congelado = tempoSimMs >= somaHistorico;
+    const status: ItemClassificacaoAoVivo['status'] = !congelado
+      ? 'correndo'
+      : item.status === 'dnf'
+        ? 'dnf'
+        : 'terminou';
+    return {
+      jogadorId: item.jogadorId,
+      status,
+      progresso: progressoNoReplay(historico, tempoSimMs, voltasTotais),
+    };
+  });
+
+  itens.sort((a, b) => {
+    if (b.progresso !== a.progresso) return b.progresso - a.progresso;
+
+    const ambosTerminaram = a.status === 'terminou' && b.status === 'terminou';
+    if (ambosTerminaram) {
+      return (tempoTotalPorJogador.get(a.jogadorId) ?? 0) - (tempoTotalPorJogador.get(b.jogadorId) ?? 0);
+    }
+
+    return (posicaoLargada.get(a.jogadorId) ?? 0) - (posicaoLargada.get(b.jogadorId) ?? 0);
+  });
+
+  return itens.map(({ jogadorId, status }) => ({ jogadorId, status }));
 }
 
 /**
