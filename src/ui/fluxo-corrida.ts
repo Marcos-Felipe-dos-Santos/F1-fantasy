@@ -307,10 +307,18 @@ export function escalaReplay(
   return tempoLiderMs / duracaoAlvoMs;
 }
 
-/** Um item da classificação ao vivo (PR 2.6) — ver `classificacaoAoVivo`. */
+/**
+ * Um item da classificação ao vivo (PR 2.6; status 'pit' no PR 2.7).
+ * 'pit' é um rótulo visual sobre 'correndo' — carro ainda rodando cuja volta
+ * atual coincide com uma parada registrada em `ResultadoCorrida.voltasDePit`.
+ * Não muda a ordenação (ver `classificacaoAoVivo`); 'terminou'/'dnf' têm
+ * precedência — um carro já congelado nunca vira 'pit'. O badge dura a volta
+ * inteira do pit (aproximação visual — o custo real do pit já está embutido
+ * no tempo daquela volta, não é um evento pontual no meio dela).
+ */
 export interface ItemClassificacaoAoVivo {
   jogadorId: string;
-  status: 'correndo' | 'terminou' | 'dnf';
+  status: 'correndo' | 'pit' | 'terminou' | 'dnf';
 }
 
 /**
@@ -334,6 +342,10 @@ export interface ItemClassificacaoAoVivo {
  * exatamente a ordem de largada; ao final da corrida, quem terminou converge
  * pra ordem exata de `resultado.classificacao` (chegada real) e todo DNF
  * (progresso < 1 pra sempre) afunda naturalmente atrás de quem terminou.
+ *
+ * O status 'pit' (PR 2.7) é calculado DEPOIS da ordenação — o critério de
+ * ordenação usa só 'terminou' vs. o resto, então rotular um carro 'correndo'
+ * como 'pit' nunca desloca a posição dele na lista.
  */
 export function classificacaoAoVivo(
   resultado: ResultadoCorrida,
@@ -350,11 +362,18 @@ export function classificacaoAoVivo(
     const historico = resultado.historicoVoltas[item.jogadorId] ?? [];
     const somaHistorico = acumularVoltas(historico).at(-1) ?? 0;
     const congelado = tempoSimMs >= somaHistorico;
-    const status: ItemClassificacaoAoVivo['status'] = !congelado
+    let status: ItemClassificacaoAoVivo['status'] = !congelado
       ? 'correndo'
       : item.status === 'dnf'
         ? 'dnf'
         : 'terminou';
+    if (status === 'correndo') {
+      const voltasPit = resultado.voltasDePit[item.jogadorId] ?? [];
+      const volta = voltaAtual(historico, tempoSimMs, voltasTotais);
+      if (voltasPit.includes(volta)) {
+        status = 'pit';
+      }
+    }
     return {
       jogadorId: item.jogadorId,
       status,

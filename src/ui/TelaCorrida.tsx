@@ -193,6 +193,7 @@ export function TelaCorrida({
                 <span className="classificacao-ao-vivo__posicao">{idx + 1}</span>
                 <span className="classificacao-ao-vivo__nome">{nomeDoJogadorId(state, item.jogadorId)}</span>
                 {item.status === 'dnf' && <span className="badge-dnf">DNF</span>}
+                {item.status === 'pit' && <span className="badge-pit">🔧 PIT</span>}
                 {item.status === 'terminou' && <span className="classificacao-ao-vivo__chegou">🏁</span>}
               </li>
             );
