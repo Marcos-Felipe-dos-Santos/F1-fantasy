@@ -36,7 +36,9 @@
 
 - **PR 2.6** — Velocidades do replay + classificação ao vivo (fecha a Fase 2.5; engine intocada). `VelocidadeReplay` lenta/media/rapida = 9000/4500/2200 ms de relógio por volta (rápida = valor único anterior; default média ⇒ replay 2× mais lento que antes por padrão, recalibração pedida pelo dev); `escalaReplay` ganhou 3º parâmetro `msPorVolta` (default média). Troca DURANTE o replay: `useCorrida` lê o fator de `fatorEscalaRef` a cada frame do rAF (sem closure obsoleto; agendamentos fora de updaters — cuidado StrictMode preservado); trocar não reinicia nem pula tempo; Acelerar ⏩ intacto. `classificacaoAoVivo(resultado, gridLargada, tempoSimMs, voltasTotais)` pura — contrato: progresso desc; empate ambos-terminaram → tempoTotal asc (chegada real); demais empates → posição de largada (em t=0 reproduz o grid exato; DNFs afundam). Painel ao lado do SVG: 22 posições, nome, badge DNF, 🏁, humanos destacados; 3 botões 🐢▶️🐇 com `aria-pressed`. 9 testes novos com corrida real (seed com DNF em Suzuka), incluindo o teste do desempate entre terminados em t-após-todos-cruzarem (aviso da revisão, aplicado) e campo `volta` morto removido da view (sugestão da revisão). Revisado pelo senior-reviewer (aprovado sem bloqueantes).
 
-**Testes na main: 201 passando** (15 arquivos) + 1 do harness via `npm run balance`. Lint, `tsc --noEmit` e `npm run build` limpos.
+- **PR 2.7** — `voltasDePit` na engine + status "no pit" no painel ao vivo (PR de engine autorizado pelo dev em 2026-07-21; fecha a pendência do PR 2.6). Engine: `ResultadoCorrida.voltasDePit: Record<string, number[]>` (voltas 1-based, estritamente crescentes, `length === paradas`), registro puro no mesmo ponto do `paradas++` de `simularCarro` — ZERO chamadas novas de RNG, mesmo padrão do `historicoVoltas` do PR 1.7b; seeds de ouro bit a bit (testes de ouro só desestruturam o campo novo; asserções antigas intactas) e relatório do `npm run balance` **idêntico byte a byte** pré/pós (verificado empiricamente pelo revisor via git stash). UI: `ItemClassificacaoAoVivo` ganhou status `'pit'` — só quando o carro estaria 'correndo' e a `voltaAtual` coincide com uma volta de parada ('terminou'/'dnf' têm precedência; NÃO reordena o sort; badge 🔧 PIT dura a volta inteira — aproximação documentada, o custo do pit é embutido no tempo da volta). TDD vermelho→verde na engine e na UI; teste extra com 22 carros do dataset inteiro. Revisado pelo senior-reviewer (aprovado sem bloqueantes nem avisos).
+
+**Testes na main: 208 passando** (15 arquivos) + 1 do harness via `npm run balance`. Lint, `tsc --noEmit` e `npm run build` limpos.
 
 **🏁 Marco da Fase 1 atingido:** dá pra jogar o modo Single completo (`npm run dev`): draft de 6 rodadas contra 21 bots → quali → corrida animada → resultado FIA. Balance-harness operante. Visual segue propositalmente cru — polimento é Fase 4.
 
@@ -58,7 +60,7 @@
 ## Próximos
 
 - **Fase 3 — Online (PartyKit)**, começando pelo PR 3.1 (setup PartyKit, sala com código, entrar/sair, preencher com bots até 22). Exige plano do fable-architect + aprovação do dev antes de implementar (PLANO §5 Fase 3).
-- **Pendência do PR 2.6 (decisão do dev):** status "parado no pit" no painel de classificação ao vivo exige a engine expor em qual volta cada parada ocorreu (`ResultadoCorrida` hoje só tem o total `paradas`; o custo do pit é embutido no tempo da volta). Seria campo novo tipo `voltasDePit: Record<string, number[]>` — mudança de engine, fora do escopo UI-only da Fase 2.5.
+- ~~Pendência do PR 2.6: status "parado no pit" exige engine expor a volta de cada parada~~ **Resolvido no PR 2.7** (autorizado pelo dev em 2026-07-21).
 
 ## Acompanhamentos registrados pela revisão do PR 1.7b (cosméticos, candidatos à Fase 4)
 
