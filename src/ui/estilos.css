@@ -118,6 +118,21 @@ h3 {
   background: var(--cor-destaque-clara);
 }
 
+.botao-secundario {
+  background: transparent;
+  color: var(--cor-texto);
+  border: 1px solid var(--cor-borda);
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.botao-secundario:hover {
+  background: var(--cor-superficie);
+}
+
 /* Modo Local (PR 2.1b) — seletor de nº de jogadores + nomes na tela de início */
 
 .form-inicio__local {
@@ -128,6 +143,33 @@ h3 {
   border-radius: 8px;
   padding: 12px;
   margin: 0;
+}
+
+/* Seed específica (PR 2.4) — seção recolhida por default na tela de início */
+
+.form-inicio__seed-especifica {
+  border: 1px solid var(--cor-borda);
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.form-inicio__seed-especifica summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.form-inicio__seed-dica {
+  font-size: 0.85rem;
+  opacity: 0.8;
+  margin: 8px 0 0;
+}
+
+/* Seed da partida copiável (PR 2.4) — resultado da corrida */
+
+.resultado-corrida__seed {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 /* Tela de handoff (PR 2.1b) — neutra por design, sem dado de jogo */

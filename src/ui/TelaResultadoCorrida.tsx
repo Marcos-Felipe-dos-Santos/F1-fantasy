@@ -4,9 +4,13 @@
  * pra volta mais rápida.
  */
 
+import { useState } from 'react';
 import type { DraftState, ResultadoCorrida } from '../engine/types';
 import { dataset } from './dataset-app';
 import { nomeJogador } from './loadout-view';
+
+/** Quanto tempo o feedback "Copiado!" fica visível no botão de copiar seed (PR 2.4). */
+const DURACAO_FEEDBACK_COPIA_MS = 2000;
 
 interface TelaResultadoCorridaProps {
   state: DraftState;
@@ -42,11 +46,35 @@ function formatarTempo(ms: number): string {
 
 export function TelaResultadoCorrida({ state, resultado, onReiniciar }: TelaResultadoCorridaProps) {
   const resultadosHumanos = resultado.classificacao.filter((c) => ehHumanoId(state, c.jogadorId));
+  const [seedCopiada, setSeedCopiada] = useState(false);
+
+  /**
+   * Copia a seed da partida pra área de transferência (PR 2.4), pra
+   * reproduzir a mesma corrida depois via o campo "Usar seed específica" da
+   * TelaInicio. `try/catch` silencioso-visível: se o clipboard falhar (ex.:
+   * permissão negada), a seed continua exibida e selecionável no texto.
+   */
+  async function handleCopiarSeed() {
+    try {
+      await navigator.clipboard.writeText(String(state.seed));
+      setSeedCopiada(true);
+      setTimeout(() => setSeedCopiada(false), DURACAO_FEEDBACK_COPIA_MS);
+    } catch {
+      // Falha silenciosa: a seed já está visível e selecionável no texto.
+    }
+  }
 
   return (
     <div className="tela-resultado-corrida">
       <h2>Resultado da corrida</h2>
       {resultado.chuva && <span className="badge-chuva">🌧️ Chuva</span>}
+
+      <p className="resultado-corrida__seed">
+        Seed da partida: <code>{state.seed}</code>{' '}
+        <button type="button" className="botao-secundario" onClick={handleCopiarSeed}>
+          {seedCopiada ? 'Copiado!' : 'Copiar seed'}
+        </button>
+      </p>
 
       {resultadosHumanos.map((humano) => (
         <p key={humano.jogadorId} className="resultado-corrida__destaque">
