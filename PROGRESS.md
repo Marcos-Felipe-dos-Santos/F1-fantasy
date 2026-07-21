@@ -38,7 +38,9 @@
 
 - **PR 2.7** — `voltasDePit` na engine + status "no pit" no painel ao vivo (PR de engine autorizado pelo dev em 2026-07-21; fecha a pendência do PR 2.6). Engine: `ResultadoCorrida.voltasDePit: Record<string, number[]>` (voltas 1-based, estritamente crescentes, `length === paradas`), registro puro no mesmo ponto do `paradas++` de `simularCarro` — ZERO chamadas novas de RNG, mesmo padrão do `historicoVoltas` do PR 1.7b; seeds de ouro bit a bit (testes de ouro só desestruturam o campo novo; asserções antigas intactas) e relatório do `npm run balance` **idêntico byte a byte** pré/pós (verificado empiricamente pelo revisor via git stash). UI: `ItemClassificacaoAoVivo` ganhou status `'pit'` — só quando o carro estaria 'correndo' e a `voltaAtual` coincide com uma volta de parada ('terminou'/'dnf' têm precedência; NÃO reordena o sort; badge 🔧 PIT dura a volta inteira — aproximação documentada, o custo do pit é embutido no tempo da volta). TDD vermelho→verde na engine e na UI; teste extra com 22 carros do dataset inteiro. Revisado pelo senior-reviewer (aprovado sem bloqueantes nem avisos).
 
-**Testes na main: 208 passando** (15 arquivos) + 1 do harness via `npm run balance`. Lint, `tsc --noEmit` e `npm run build` limpos.
+- **PR 2.8** — Traçados por pista (UI pura; antecipa item de polimento da Fase 4). `src/ui/tracados.ts`: `TRACADOS_POR_PISTA` com silhueta própria pra cada uma das 10 pistas + `tracadoDaPista(pistaId)` com fallback `TRACADO_GENERICO` (que virou "Monza estilizada + fallback"; Monza reaproveita por referência). Silhuetas ORIGINAIS estilizadas de 12-22 pontos desenhadas em coordenadas próprias (nota jurídica GDD §14.2: geometria de circuito é fato, mapa oficial F1/FIA é obra protegida — nada foi decalcado), mesmas coordenadas viewBox 0 0 1000 600 e mesma estrutura `Ponto[]` fechada — `pontoNoTracado` intocado. Suzuka é um "8" real (lemniscate de Gerono discretizada, cruzamento exatamente no vértice duplicado do centro — auto-interseção só visual, documentada; o percurso por comprimento de arco segue a sequência). TelaCorrida usa `tracadoDaPista(pista.id)` no path E nos carros (mesma fonte, sem desalinhamento) + legenda visível com o nome da pista sob o SVG. Revisão apontou 2 auto-interseções ACIDENTAIS (Spa e Interlagos, retorno cruzando a saída perto da largada) — corrigidas por nudge de coordenadas e verificadas por script de interseção; a guarda virou teste permanente (`cruzamentosMidSegmento === []` pra cada pista — cruzamento em vértice compartilhado não conta, preservando o 8 de Suzuka). 64 testes novos iterando o dataset real. Revisado pelo senior-reviewer (aprovado; 2 avisos aplicados).
+
+**Testes na main: 272 passando** (16 arquivos) + 1 do harness via `npm run balance`. Lint, `tsc --noEmit` e `npm run build` limpos.
 
 **🏁 Marco da Fase 1 atingido:** dá pra jogar o modo Single completo (`npm run dev`): draft de 6 rodadas contra 21 bots → quali → corrida animada → resultado FIA. Balance-harness operante. Visual segue propositalmente cru — polimento é Fase 4.
 
@@ -67,7 +69,7 @@
 - `useCorrida`: o initializer do `useState` roda `prepararCorrida` 2× na montagem em dev (StrictMode) — determinístico e inofensivo, só CPU.
 - Ticker de eventos da `TelaCorrida` usa a volta do líder como relógio comum — evento de retardatário pode aparecer "adiantado" em relação à posição dele no traçado.
 - Replay com todos-DNF (improvável): o relógio do replay é o tempoTotal do 1º classificado, que num grid 100% DNF encurta o replay.
-- Pista da corrida é fixa (Monza) por decisão do plano da Fase 1 ("1 pista"); seletor de pista fica pra fase futura.
+- ~~Pista da corrida é fixa (Monza); seletor de pista fica pra fase futura~~ **Resolvido nos PRs 2.5 (seletor) e 2.8 (traçado próprio por pista — item de Fase 4 antecipado a pedido do dev em 2026-07-21).**
 
 ## Convenções que os PRs seguem
 
