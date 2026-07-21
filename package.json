@@ -9,6 +9,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "balance": "vitest run --config vitest.balance.config.ts",
+    "dataset:fetch": "node scripts/fetch-f1-data.ts",
     "lint": "eslint .",
     "format": "prettier --write .",
     "typecheck": "tsc --noEmit"

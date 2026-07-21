@@ -1,5 +1,5 @@
-/// <reference types="vitest/config" />
 import { defineConfig } from 'vite';
+import { configDefaults } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 
 export default defineConfig({
@@ -10,6 +10,9 @@ export default defineConfig({
     // O balance-harness (scripts/*.balance.test.ts) roda por config separada
     // (vitest.balance.config.ts, comando `npm run balance`) — não entra no
     // `npm test`/`npx vitest run` normal (é lento e mede, não verifica lógica).
-    include: ['src/**/*.test.ts'],
+    // Testes de scripts/ rápidos e mockados (PR 4.1: fetch-f1-data) entram
+    // no `npm test` normal, igual aos de src/.
+    include: ['src/**/*.test.ts', 'scripts/**/*.test.ts'],
+    exclude: [...configDefaults.exclude, 'scripts/**/*.balance.test.ts'],
   },
 });
