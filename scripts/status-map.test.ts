@@ -48,6 +48,26 @@ describe('mapearStatus', () => {
   it('"Damage" ⇒ outro (neutralizado de propósito: não dá pra saber se é acidente ou mecânica)', () => {
     expect(mapearStatus('Damage')).toBe('outro');
   });
+
+  it('"Lapped" ⇒ terminou (rodado mas em pista ao fim, mesma situação de "+N Laps" sem o N)', () => {
+    expect(mapearStatus('Lapped')).toBe('terminou');
+  });
+
+  it('PR 4.3 — 1 exemplo por categoria nova (completude do dataset real, 37 statuses)', () => {
+    // mecanica-motor: fogo é convenção motor/combustível (ver cabeçalho).
+    expect(mapearStatus('Injection')).toBe('mecanica-motor');
+    expect(mapearStatus('Fire')).toBe('mecanica-motor');
+    // mecanica-chassi: genéricos por convenção + eletrônica de controle
+    // (distinta de "Electrical", que é motor).
+    expect(mapearStatus('Mechanical')).toBe('mecanica-chassi');
+    expect(mapearStatus('Technical')).toBe('mecanica-chassi');
+    expect(mapearStatus('Electronics')).toBe('mecanica-chassi');
+    expect(mapearStatus('Broken wing')).toBe('mecanica-chassi');
+    // outro: "Out of fuel" é decisão explícita do dev — operacional, não
+    // penaliza CONF nem CONS.
+    expect(mapearStatus('Out of fuel')).toBe('outro');
+    expect(mapearStatus('Driver unwell')).toBe('outro');
+  });
 });
 
 describe('NAO_LARGOU / statusEhLargada', () => {
