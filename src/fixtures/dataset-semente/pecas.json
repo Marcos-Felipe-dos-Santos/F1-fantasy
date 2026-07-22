@@ -1,0 +1,218 @@
+[
+  {
+    "id": "peca-efeito-solo-lotus-79",
+    "nome": "Efeito solo Lotus 79",
+    "categoria": "Aerodinâmica",
+    "raridade": "epico",
+    "atributosAlvo": ["aero"],
+    "bonus": 11,
+    "risco": 2
+  },
+  {
+    "id": "peca-duplo-difusor-brawn",
+    "nome": "Duplo difusor Brawn",
+    "categoria": "Aerodinâmica",
+    "raridade": "raro",
+    "atributosAlvo": ["aero"],
+    "bonus": 7,
+    "risco": 0
+  },
+  {
+    "id": "peca-difusor-soprado-redbull",
+    "nome": "Difusor soprado Red Bull",
+    "categoria": "Aerodinâmica",
+    "raridade": "raro",
+    "atributosAlvo": ["mec"],
+    "bonus": 7,
+    "risco": 0
+  },
+  {
+    "id": "peca-f-duct-mclaren",
+    "nome": "F-duct McLaren",
+    "categoria": "Aerodinâmica",
+    "raridade": "raro",
+    "atributosAlvo": ["motor"],
+    "bonus": 7,
+    "risco": 0
+  },
+  {
+    "id": "peca-asa-flexivel",
+    "nome": "Asa flexível",
+    "categoria": "Aerodinâmica",
+    "raridade": "comum",
+    "atributosAlvo": ["aero"],
+    "bonus": 4,
+    "risco": 0
+  },
+  {
+    "id": "peca-amortecedor-massa-renault",
+    "nome": "Amortecedor de massa Renault",
+    "categoria": "Chassi / Suspensão",
+    "raridade": "comum",
+    "atributosAlvo": ["mec"],
+    "bonus": 4,
+    "risco": 0
+  },
+  {
+    "id": "peca-suspensao-ativa-fw15",
+    "nome": "Suspensão ativa Williams FW15",
+    "categoria": "Chassi / Suspensão",
+    "raridade": "proibido",
+    "atributosAlvo": ["aero", "mec"],
+    "bonus": 20,
+    "risco": 7
+  },
+  {
+    "id": "peca-seis-rodas-tyrrell-p34",
+    "nome": "Seis rodas Tyrrell P34",
+    "categoria": "Chassi / Suspensão",
+    "raridade": "epico",
+    "atributosAlvo": ["freio"],
+    "bonus": 11,
+    "risco": 2
+  },
+  {
+    "id": "peca-turbo-modo-quali-bmw",
+    "nome": "Turbo modo-quali BMW anos 80",
+    "categoria": "Motor",
+    "raridade": "proibido",
+    "atributosAlvo": ["motor"],
+    "bonus": 20,
+    "risco": 7
+  },
+  {
+    "id": "peca-ers-turbinado",
+    "nome": "ERS turbinado",
+    "categoria": "Motor",
+    "raridade": "lendario",
+    "atributosAlvo": ["motor"],
+    "bonus": 15,
+    "risco": 4
+  },
+  {
+    "id": "peca-escapamento-coanda",
+    "nome": "Escapamento Coanda",
+    "categoria": "Motor",
+    "raridade": "raro",
+    "atributosAlvo": ["mec"],
+    "bonus": 7,
+    "risco": 0
+  },
+  {
+    "id": "peca-das-mercedes",
+    "nome": "DAS Mercedes",
+    "categoria": "Pneu / Freio / Direção",
+    "raridade": "epico",
+    "atributosAlvo": ["quali", "pneu"],
+    "bonus": 11,
+    "risco": 2
+  },
+  {
+    "id": "peca-blown-axle",
+    "nome": "Blown axle",
+    "categoria": "Pneu / Freio / Direção",
+    "raridade": "raro",
+    "atributosAlvo": ["freio"],
+    "bonus": 7,
+    "risco": 0
+  },
+  {
+    "id": "peca-freio-direcao-mclaren",
+    "nome": "Freio-direção McLaren",
+    "categoria": "Pneu / Freio / Direção",
+    "raridade": "proibido",
+    "atributosAlvo": ["mec"],
+    "bonus": 20,
+    "risco": 7
+  },
+  {
+    "id": "peca-carro-ventoinha-brabham-bt46b",
+    "nome": "Carro-ventoinha Brabham BT46B",
+    "categoria": "Gambiarras",
+    "raridade": "proibido",
+    "atributosAlvo": ["mec"],
+    "bonus": 20,
+    "risco": 7
+  },
+  {
+    "id": "peca-drs-destravado",
+    "nome": "DRS destravado",
+    "categoria": "Gambiarras",
+    "raridade": "proibido",
+    "atributosAlvo": ["motor"],
+    "bonus": 20,
+    "risco": 7
+  },
+  {
+    "id": "peca-fluxo-combustivel",
+    "nome": "Truque do fluxo de combustível",
+    "categoria": "Roubos & Polêmicas",
+    "raridade": "proibido",
+    "atributosAlvo": ["motor"],
+    "bonus": 20,
+    "risco": 7
+  },
+  {
+    "id": "peca-controle-tracao-escondido",
+    "nome": "Controle de tração escondido",
+    "categoria": "Roubos & Polêmicas",
+    "raridade": "proibido",
+    "atributosAlvo": ["larg", "mec"],
+    "bonus": 20,
+    "risco": 7
+  },
+  {
+    "id": "peca-tanque-combustivel-secreto",
+    "nome": "Tanque de combustível secreto",
+    "categoria": "Roubos & Polêmicas",
+    "raridade": "proibido",
+    "atributosAlvo": ["ppeso"],
+    "bonus": 20,
+    "risco": 7
+  },
+  {
+    "id": "peca-lastro-chumbo-removivel",
+    "nome": "Lastro de chumbo removível",
+    "categoria": "Roubos & Polêmicas",
+    "raridade": "lendario",
+    "atributosAlvo": ["ppeso"],
+    "bonus": 15,
+    "risco": 4
+  },
+  {
+    "id": "peca-bargeboards",
+    "nome": "Bargeboards",
+    "categoria": "Genéricas de época",
+    "raridade": "comum",
+    "atributosAlvo": ["aero"],
+    "bonus": 4,
+    "risco": 0
+  },
+  {
+    "id": "peca-mapa-motor",
+    "nome": "Mapa de motor",
+    "categoria": "Genéricas de época",
+    "raridade": "comum",
+    "atributosAlvo": ["motor"],
+    "bonus": 4,
+    "risco": 0
+  },
+  {
+    "id": "peca-composto-macio",
+    "nome": "Composto macio",
+    "categoria": "Genéricas de época",
+    "raridade": "comum",
+    "atributosAlvo": ["pneu"],
+    "bonus": 4,
+    "risco": 0
+  },
+  {
+    "id": "peca-geometria-ajustada",
+    "nome": "Geometria ajustada",
+    "categoria": "Genéricas de época",
+    "raridade": "comum",
+    "atributosAlvo": ["mec"],
+    "bonus": 4,
+    "risco": 0
+  }
+]
