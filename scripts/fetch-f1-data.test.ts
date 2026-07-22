@@ -22,7 +22,7 @@ import {
   resultsUrl,
   type Dependencias,
   type RaceTablePagina,
-} from './fetch-f1-data';
+} from './fetch-f1-data.ts';
 
 const CACHE_TESTE_DIR = join(dirname(fileURLToPath(import.meta.url)), 'cache', '__test-tmp__');
 

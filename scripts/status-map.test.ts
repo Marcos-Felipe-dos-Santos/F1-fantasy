@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { NAO_LARGOU, mapearStatus, statusEhConhecido, statusEhLargada } from './status-map';
+import { NAO_LARGOU, mapearStatus, statusEhConhecido, statusEhLargada } from './status-map.ts';
 
 describe('mapearStatus', () => {
   it('"Finished" ⇒ terminou', () => {

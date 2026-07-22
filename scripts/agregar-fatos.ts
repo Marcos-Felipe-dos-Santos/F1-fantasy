@@ -51,8 +51,8 @@
 import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { mapearStatus, statusEhConhecido, statusEhLargada, type CategoriaStatus } from './status-map';
-import { CACHE_DIR_PADRAO, PRIMEIRA_TEMPORADA, PRIMEIRA_TEMPORADA_PITSTOPS, ULTIMA_TEMPORADA } from './fetch-f1-data';
+import { mapearStatus, statusEhConhecido, statusEhLargada, type CategoriaStatus } from './status-map.ts';
+import { CACHE_DIR_PADRAO, PRIMEIRA_TEMPORADA, PRIMEIRA_TEMPORADA_PITSTOPS, ULTIMA_TEMPORADA } from './fetch-f1-data.ts';
 
 // ---------------------------------------------------------------------------
 // Constantes de exclusão (decisão D1 do dev, PROGRESS.md).

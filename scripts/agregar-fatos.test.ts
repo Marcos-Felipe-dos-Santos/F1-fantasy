@@ -16,7 +16,7 @@ import {
   recontarPosicoesRace,
   serializarFatos,
   type ResultLinha,
-} from './agregar-fatos';
+} from './agregar-fatos.ts';
 
 const FIXTURES_DIR = join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'jolpica-mini');
 
