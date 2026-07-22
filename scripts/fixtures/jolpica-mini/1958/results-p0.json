@@ -1,0 +1,115 @@
+{
+  "MRData": {
+    "total": "8",
+    "limit": "100",
+    "offset": "0",
+    "RaceTable": {
+      "Races": [
+        {
+          "season": "1958",
+          "round": "1",
+          "raceName": "MuGP1",
+          "Circuit": { "circuitId": "circM1" },
+          "Results": [
+            {
+              "position": "1",
+              "positionText": "1",
+              "points": "25",
+              "grid": "1",
+              "status": "Finished",
+              "Driver": { "driverId": "driver_switch", "givenName": "Sandro", "familyName": "Switcher" },
+              "Constructor": { "constructorId": "mu", "name": "Mu Racing" }
+            },
+            {
+              "position": "2",
+              "positionText": "2",
+              "points": "18",
+              "grid": "2",
+              "status": "Finished",
+              "Driver": { "driverId": "driver_muMate", "givenName": "Mario", "familyName": "Musante" },
+              "Constructor": { "constructorId": "mu", "name": "Mu Racing" }
+            }
+          ]
+        },
+        {
+          "season": "1958",
+          "round": "2",
+          "raceName": "MuGP2",
+          "Circuit": { "circuitId": "circM2" },
+          "Results": [
+            {
+              "position": "1",
+              "positionText": "1",
+              "points": "25",
+              "grid": "1",
+              "status": "Finished",
+              "Driver": { "driverId": "driver_switch", "givenName": "Sandro", "familyName": "Switcher" },
+              "Constructor": { "constructorId": "mu", "name": "Mu Racing" }
+            },
+            {
+              "position": "2",
+              "positionText": "2",
+              "points": "18",
+              "grid": "2",
+              "status": "Finished",
+              "Driver": { "driverId": "driver_muMate", "givenName": "Mario", "familyName": "Musante" },
+              "Constructor": { "constructorId": "mu", "name": "Mu Racing" }
+            }
+          ]
+        },
+        {
+          "season": "1958",
+          "round": "3",
+          "raceName": "NuGP1",
+          "Circuit": { "circuitId": "circN1" },
+          "Results": [
+            {
+              "position": "1",
+              "positionText": "1",
+              "points": "25",
+              "grid": "3",
+              "status": "Finished",
+              "Driver": { "driverId": "driver_switch", "givenName": "Sandro", "familyName": "Switcher" },
+              "Constructor": { "constructorId": "nu", "name": "Nu Squad" }
+            },
+            {
+              "position": "2",
+              "positionText": "2",
+              "points": "18",
+              "grid": "1",
+              "status": "Finished",
+              "Driver": { "driverId": "driver_nuMate", "givenName": "Norma", "familyName": "Nunes" },
+              "Constructor": { "constructorId": "nu", "name": "Nu Squad" }
+            }
+          ]
+        },
+        {
+          "season": "1958",
+          "round": "4",
+          "raceName": "NuGP2",
+          "Circuit": { "circuitId": "circN2" },
+          "Results": [
+            {
+              "position": "1",
+              "positionText": "1",
+              "points": "25",
+              "grid": "3",
+              "status": "Finished",
+              "Driver": { "driverId": "driver_switch", "givenName": "Sandro", "familyName": "Switcher" },
+              "Constructor": { "constructorId": "nu", "name": "Nu Squad" }
+            },
+            {
+              "position": "2",
+              "positionText": "2",
+              "points": "18",
+              "grid": "1",
+              "status": "Finished",
+              "Driver": { "driverId": "driver_nuMate", "givenName": "Norma", "familyName": "Nunes" },
+              "Constructor": { "constructorId": "nu", "name": "Nu Squad" }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

@@ -20,6 +20,8 @@ declare module 'node:fs' {
   export function unlinkSync(path: string): void;
   export function mkdirSync(path: string, options?: { recursive?: boolean }): void;
   export function rmSync(path: string, options?: { recursive?: boolean; force?: boolean }): void;
+  /** Adicionado no PR 4.2 (agregar-fatos.ts) pra listar arquivos de cache por temporada. */
+  export function readdirSync(path: string): string[];
 }
 
 declare module 'node:path' {
