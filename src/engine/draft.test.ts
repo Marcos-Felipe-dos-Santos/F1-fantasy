@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { criarDataset, type Dataset } from './dataset';
-import equipeAnosReal from '../data/equipe-anos.json';
-import pecasReal from '../data/pecas.json';
-import pistasReal from '../data/pistas.json';
+import equipeAnosReal from '../fixtures/dataset-semente/equipe-anos.json';
+import pecasReal from '../fixtures/dataset-semente/pecas.json';
+import pistasReal from '../fixtures/dataset-semente/pistas.json';
 import type { DraftState, Jogador } from './types';
 import { atribuirPerfis, escolherBot } from './bots';
 import { aplicarEscolha, criarDraft, resolverBots } from './draft';
