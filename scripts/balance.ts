@@ -25,7 +25,7 @@ import { simularQuali } from '../src/engine/quali';
 import { simularCorrida } from '../src/engine/corrida';
 import { criarDraft, resolverBots } from '../src/engine/draft';
 import { atribuirPerfis } from '../src/engine/bots';
-import type { Jogador, Loadout, Pista, Raridade, ResultadoQuali } from '../src/engine/types';
+import type { EquipeAno, Jogador, Loadout, Pista, Raridade, ResultadoQuali } from '../src/engine/types';
 
 // ---------------------------------------------------------------------------
 // Meta 1 — sinal de grid (taxa de vitória do pole com carros idênticos).
@@ -37,15 +37,25 @@ export interface TaxaVitoriaPole {
   dificil: number;
 }
 
-/** Carro forte de referência (Red Bull 2023) — idêntico pros dois lados do grid. */
-function loadoutForte(jogadorId: string): Loadout {
+/**
+ * Carro forte de referência (Red Bull 2023) — idêntico pros dois lados do
+ * grid. Resolvido do dataset vivo (nunca ids literais): titular nº1 é
+ * `pilotos[0]` da entrada `equipe/ano` (no dataset derivado os titulares vêm
+ * ordenados por largadas→points→driverId, então `pilotos[0]` é sempre o
+ * piloto principal — Verstappen em Red Bull 2023).
+ */
+function loadoutForte(dataset: Dataset, jogadorId: string): Loadout {
+  const ea = dataset.equipeAnos.find((e) => e.equipe === 'Red Bull' && e.ano === 2023);
+  if (!ea) {
+    throw new Error('loadoutForte: equipe/ano "Red Bull" 2023 não encontrado no dataset');
+  }
   return {
     jogadorId,
-    pilotoId: 'redbull-2023-piloto-verstappen',
-    chassiId: 'redbull-2023-chassi',
-    motorId: 'redbull-2023-motor',
-    estrategistaId: 'redbull-2023-estrategista',
-    pitId: 'redbull-2023-pit',
+    pilotoId: ea.pilotos[0].id,
+    chassiId: ea.chassi.id,
+    motorId: ea.motor.id,
+    estrategistaId: ea.estrategista.id,
+    pitId: ea.pit.id,
     pecaId: 'peca-composto-macio',
   };
 }
@@ -53,7 +63,7 @@ function loadoutForte(jogadorId: string): Loadout {
 const SEED_BASE_GRID = 1000;
 
 function taxaVitoriaPoleNaPista(dataset: Dataset, pista: Pista, nSeeds: number): number {
-  const loadouts = [loadoutForte('frente'), loadoutForte('atras')];
+  const loadouts = [loadoutForte(dataset, 'frente'), loadoutForte(dataset, 'atras')];
   // Grid forçado: "frente" sempre na pole, "atras" sempre em 2o — isola o
   // efeito do offset de grid (gridOffsetMs) da variância de corrida.
   const gridForcado: ResultadoQuali = {
@@ -114,30 +124,96 @@ interface PilotoParadaSpec {
   pilotoId: string;
   equipe: string;
   ano: number;
-  /** PNEU documentado aqui só pra bucketing do harness — não é lido do dataset de novo. */
+}
+
+type BucketPneu = 'pneuBaixo' | 'pneuMedio' | 'pneuAlto';
+
+function bucketPneu(pneu: number): BucketPneu {
+  if (pneu < 60) return 'pneuBaixo';
+  if (pneu <= 80) return 'pneuMedio';
+  return 'pneuAlto';
+}
+
+interface CandidatoPneu {
+  pilotoId: string;
   pneu: number;
+  ea: EquipeAno;
 }
 
 /**
- * 6 pilotos reais cobrindo a faixa de PNEU do dataset (40 a 90). Peça usada
- * é sempre `peca-blown-axle` (raro, risco 0, alvo = freio) — risco 0 pra não
- * poluir com DNF de peça, e freio não é lido em nenhuma fórmula de
- * quali/corrida, então o PNEU efetivo do piloto fica igual ao PNEU base
- * (bucketing limpo).
+ * Comparador de string determinístico entre máquinas (code unit, `<`/`>`),
+ * NUNCA `localeCompare` (consulta a collation ICU do host e quebraria o
+ * determinismo entre SOs/versões do Node) — mesmo padrão de `scripts/agregar-fatos.ts`.
  */
-const PILOTOS_PARADAS: PilotoParadaSpec[] = [
-  { jogadorId: 'pneu90', pilotoId: 'redbull-2023-piloto-verstappen', equipe: 'Red Bull', ano: 2023, pneu: 90 },
-  { jogadorId: 'pneu84', pilotoId: 'ferrari-1998-piloto-schumacher', equipe: 'Ferrari', ano: 1998, pneu: 84 },
-  { jogadorId: 'pneu76', pilotoId: 'ferrari-2023-piloto-leclerc', equipe: 'Ferrari', ano: 2023, pneu: 76 },
-  { jogadorId: 'pneu70', pilotoId: 'williams-2023-piloto-albon', equipe: 'Williams', ano: 2023, pneu: 70 },
-  { jogadorId: 'pneu62', pilotoId: 'sauber-2004-piloto-massa', equipe: 'Sauber', ano: 2004, pneu: 62 },
-  { jogadorId: 'pneu40', pilotoId: 'minardi-1993-piloto-barbazza', equipe: 'Minardi', ano: 1993, pneu: 40 },
-];
+function cmpPilotoId(a: string, b: string): number {
+  if (a < b) return -1;
+  if (a > b) return 1;
+  return 0;
+}
+
+/** Escolhe, dentro de uma lista não-vazia, o candidato de menor/maior PNEU; empate por pilotoId ascendente. */
+function escolherExtremoPneu(candidatos: CandidatoPneu[], modo: 'min' | 'max'): CandidatoPneu {
+  let melhor = candidatos[0];
+  for (const c of candidatos.slice(1)) {
+    const estritamenteMelhor = modo === 'min' ? c.pneu < melhor.pneu : c.pneu > melhor.pneu;
+    const empate = c.pneu === melhor.pneu;
+    if (estritamenteMelhor || (empate && cmpPilotoId(c.pilotoId, melhor.pilotoId) < 0)) {
+      melhor = c;
+    }
+  }
+  return melhor;
+}
+
+/**
+ * Seleção dinâmica (determinística) de 6 pilotos reais cobrindo a faixa de
+ * PNEU do dataset vivo: varre todos os titulares de `dataset.equipeAnos`,
+ * bucketiza pelo PNEU real do piloto (mesmos limiares de `bucketPneu`) e
+ * escolhe, por bucket, o de MENOR e o de MAIOR PNEU (desempate por pilotoId
+ * ascendente, code unit). Bucket vazio é erro alto (dataset não cobre a
+ * faixa esperada) — nunca falha silenciosamente.
+ */
+function selecionarPilotosParadas(dataset: Dataset): PilotoParadaSpec[] {
+  const candidatosPorBucket: Record<BucketPneu, CandidatoPneu[]> = {
+    pneuBaixo: [],
+    pneuMedio: [],
+    pneuAlto: [],
+  };
+
+  for (const ea of dataset.equipeAnos) {
+    for (const piloto of ea.pilotos) {
+      candidatosPorBucket[bucketPneu(piloto.notas.pneu)].push({
+        pilotoId: piloto.id,
+        pneu: piloto.notas.pneu,
+        ea,
+      });
+    }
+  }
+
+  const specs: PilotoParadaSpec[] = [];
+  for (const bucket of ['pneuBaixo', 'pneuMedio', 'pneuAlto'] as const) {
+    const candidatos = candidatosPorBucket[bucket];
+    if (candidatos.length === 0) {
+      throw new Error(`selecionarPilotosParadas: bucket "${bucket}" vazio no dataset`);
+    }
+    const min = escolherExtremoPneu(candidatos, 'min');
+    const max = escolherExtremoPneu(candidatos, 'max');
+    specs.push({ jogadorId: `${bucket}-min`, pilotoId: min.pilotoId, equipe: min.ea.equipe, ano: min.ea.ano });
+    specs.push({ jogadorId: `${bucket}-max`, pilotoId: max.pilotoId, equipe: max.ea.equipe, ano: max.ea.ano });
+  }
+  return specs;
+}
 
 const PECA_NEUTRA_ID = 'peca-blown-axle';
 
-function loadoutsParadas(dataset: Dataset): Loadout[] {
-  return PILOTOS_PARADAS.map((spec) => {
+/**
+ * Monta os loadouts dos 6 pilotos selecionados dinamicamente (`specs`), cada
+ * um usando o carro completo da PRÓPRIA equipe/ano + `peca-blown-axle` (raro,
+ * risco 0, alvo = freio) — risco 0 pra não poluir com DNF de peça, e freio
+ * não é lido em nenhuma fórmula de quali/corrida, então o PNEU efetivo do
+ * piloto fica igual ao PNEU base (bucketing limpo).
+ */
+function loadoutsParadas(dataset: Dataset, specs: PilotoParadaSpec[]): Loadout[] {
+  return specs.map((spec) => {
     const ea = dataset.equipeAnos.find((e) => e.equipe === spec.equipe && e.ano === spec.ano);
     if (!ea) {
       throw new Error(`medirParadasExtras: equipe/ano não encontrado (${spec.equipe} ${spec.ano})`);
@@ -154,12 +230,6 @@ function loadoutsParadas(dataset: Dataset): Loadout[] {
   });
 }
 
-function bucketPneu(pneu: number): 'pneuBaixo' | 'pneuMedio' | 'pneuAlto' {
-  if (pneu < 60) return 'pneuBaixo';
-  if (pneu <= 80) return 'pneuMedio';
-  return 'pneuAlto';
-}
-
 const SEED_BASE_PARADAS = 2000;
 
 interface ContadorParadas {
@@ -171,10 +241,11 @@ function taxaParadasNaPista(
   dataset: Dataset,
   pista: Pista,
   nSeeds: number,
-): { taxaGeral: number; porBucket: Record<'pneuBaixo' | 'pneuMedio' | 'pneuAlto', ContadorParadas> } {
-  const loadouts = loadoutsParadas(dataset);
+  specs: PilotoParadaSpec[],
+): { taxaGeral: number; porBucket: Record<BucketPneu, ContadorParadas> } {
+  const loadouts = loadoutsParadas(dataset, specs);
   const geral: ContadorParadas = { duasOuMais: 0, total: 0 };
-  const porBucket: Record<'pneuBaixo' | 'pneuMedio' | 'pneuAlto', ContadorParadas> = {
+  const porBucket: Record<BucketPneu, ContadorParadas> = {
     pneuBaixo: { duasOuMais: 0, total: 0 },
     pneuMedio: { duasOuMais: 0, total: 0 },
     pneuAlto: { duasOuMais: 0, total: 0 },
@@ -184,12 +255,14 @@ function taxaParadasNaPista(
     const seed = deriveSeed(SEED_BASE_PARADAS, `paradas:${pista.id}:${i}`);
     const grid = simularQuali(dataset, loadouts, pista, seed);
     const resultado = simularCorrida(dataset, loadouts, pista, grid, seed);
-    for (const spec of PILOTOS_PARADAS) {
+    for (const spec of specs) {
       const item = resultado.classificacao.find((c) => c.jogadorId === spec.jogadorId)!;
       // DNF distorce paradas (voltasCompletadas < voltas) — ignorado no denominador.
       if (item.status !== 'terminou') continue;
       geral.total++;
-      const bucket = porBucket[bucketPneu(spec.pneu)];
+      // PNEU lido do dataset na hora (nunca duplicado numa constante à parte).
+      const pneu = dataset.pilotosById.get(spec.pilotoId)!.notas.pneu;
+      const bucket = porBucket[bucketPneu(pneu)];
       bucket.total++;
       if (item.paradas >= 2) {
         geral.duasOuMais++;
@@ -218,9 +291,10 @@ export function medirParadasExtras(dataset: Dataset, nSeeds: number): TaxaParada
     throw new Error('medirParadasExtras: pista-monza/pista-spa/pista-suzuka ausente do dataset');
   }
 
-  const baixo = taxaParadasNaPista(dataset, monza, nSeeds);
-  const medio = taxaParadasNaPista(dataset, spa, nSeeds);
-  const alto = taxaParadasNaPista(dataset, suzuka, nSeeds);
+  const specs = selecionarPilotosParadas(dataset);
+  const baixo = taxaParadasNaPista(dataset, monza, nSeeds, specs);
+  const medio = taxaParadasNaPista(dataset, spa, nSeeds, specs);
+  const alto = taxaParadasNaPista(dataset, suzuka, nSeeds, specs);
 
   return {
     baixo: baixo.taxaGeral,
