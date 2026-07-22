@@ -1,0 +1,20 @@
+{
+  "MRData": {
+    "total": "3",
+    "limit": "100",
+    "offset": "0",
+    "RaceTable": {
+      "Races": [
+        {
+          "season": "2015",
+          "round": "1",
+          "PitStops": [
+            { "driverId": "driver_z", "lap": "5", "duration": "22.000" },
+            { "driverId": "driver_e", "lap": "10", "duration": "21.867" },
+            { "driverId": "driver_f", "lap": "12", "duration": "1:02.345" }
+          ]
+        }
+      ]
+    }
+  }
+}
