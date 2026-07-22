@@ -100,7 +100,33 @@ f1-fantasy-claude-setup/
 - **PR 4.x** — Dataset completo 1950-2025 (gerado por IA + passado pelo balance-harness).
 - **PR 4.x** — "Desafio do Dia" (mesma seed pra todos) — arquitetura já pronta desde a Fase 1.
 
+### Fase 5 — Identidade visual e polimento (registrada em 2026-07-22; EXECUTAR depois do dataset, não agora)
+
+> **Direção de arte: ARCADE/LÚDICO** — cores vibrantes, estilo chapado (flat), divertido.
+> Coerente com o espírito "7x1/38 a 0" (jogo pra rir com amigos, não simulador sério).
+> O visual vibrante e chapado também contorna a ausência de arte fotorrealista e de mapas oficiais.
+
+- **PR 5.1** — Design system: paleta vibrante, tipografia (display forte + corpo legível), tokens de
+  cor/espaçamento/raio, componentes base (botões, cards, selects) num estilo flat consistente.
+  Substitui o visual cru atual.
+- **PR 5.2** — Traçados de pista bonitos: redesenhar as 10 silhuetas em estilo arcade (linhas grossas,
+  cores vibrantes, talvez marcadores de largada/curvas icônicas). **NOTA JURÍDICA (GDD §14.2):**
+  silhuetas PRÓPRIAS reconhecíveis, nunca decalcar o mapa oficial estilizado da F1/FIA — geometria
+  do circuito é fato, o desenho oficial é obra protegida. Mesma consulta jurídica dos nomes/capacetes.
+- **PR 5.3** — Editor de capacete: o jogador desenha/customiza seu capacete (padrões base + paletas),
+  usado como marcador na pista. **NOTA JURÍDICA:** designs originais que evocam épocas, nunca copiar
+  a pintura exata de um piloto real e nomear.
+- **PR 5.4** — Animações e transições: draft (revelar carta), corrida (já tem replay — melhorar),
+  resultado (celebração), transições entre telas.
+- **PR 5.5** — Tela de abertura + identidade de marca (nome/logo do jogo).
+- **PR 5.6** — Som: efeitos (seleção, largada, ultrapassagem, vitória) e talvez música. Avaliar
+  biblioteca leve, sem dependência pesada.
+
 ---
 
 ## 6. Ordem de ataque sugerida
 Comece pela **Fase 0 e 1 inteiras** antes de pensar em rede. O modo Single com o balance-harness é o que prova que o jogo é divertido e justo — se o balanceamento não fechar aí, não adianta ter multiplayer. Rede é a casca final.
+
+> **Atualização 2026-07-22:** Fases 0-2 concluídas; trilha do dataset (PR 4.x) em andamento.
+> A **Fase 3 (Online/PartyKit) continua pendente**. Ordem sugerida pós-dataset: decidir entre
+> **Fase 3 (online)** e **Fase 5 (identidade visual)** — ambas grandes, escolha do dev.
