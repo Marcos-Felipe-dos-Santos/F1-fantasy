@@ -39,13 +39,27 @@ describe('balance-harness (PR 1.6)', () => {
 
     // Meta 2 (PROGRESS.md): parada extra em desgaste Alto — maioria dos
     // carros (~40-60%) faz 2+ paradas; desgaste medio/baixo continua raro.
+    //
+    // Banda do agregado re-baseada [0.4, 0.6] -> [0.4, 0.7] no PR 4.5: o
+    // ALVO do GDD não mudou ("desgaste alto força paradas extras variando
+    // pelo PNEU"), mas a BASE DA MEDIÇÃO mudou — a amostra de 6 pilotos
+    // passou de composição hardcoded 1 baixo/3 médio/2 alto de PNEU pra
+    // seleção dinâmica 2/2/2 (min/max por bucket) do dataset real. Dobrar a
+    // proporção de pilotos de PNEU baixo (que sempre param mais) puxa o
+    // agregado geral pra cima sem que a dinâmica de paradas em si tenha
+    // piorado — por isso o teto sobe pra 0.7, mas o guarda que realmente
+    // protege a intenção do GDD é o `altoPorBucket` abaixo.
     expect(paradas.alto).toBeGreaterThanOrEqual(0.4);
-    expect(paradas.alto).toBeLessThanOrEqual(0.6);
+    expect(paradas.alto).toBeLessThanOrEqual(0.7);
     expect(paradas.medio).toBeLessThanOrEqual(0.2);
     expect(paradas.baixo).toBeLessThanOrEqual(0.05);
     // "variando pelo PNEU": bucket de PNEU alto (>80) tem taxa MENOR que o
-    // bucket de PNEU baixo (<60) dentro do nível de desgaste alto.
+    // bucket de PNEU baixo (<60) dentro do nível de desgaste alto — guarda
+    // principal da intenção do GDD (o agregado acima é só informativo).
     expect(paradas.altoPorBucket.pneuAlto).toBeLessThan(paradas.altoPorBucket.pneuBaixo);
+    // Reforço por bucket (medido hoje: baixo=100%, alto=15.5% — margem folgada).
+    expect(paradas.altoPorBucket.pneuBaixo).toBeGreaterThanOrEqual(0.75);
+    expect(paradas.altoPorBucket.pneuAlto).toBeLessThanOrEqual(0.4);
 
     // Meta 3 (PROGRESS.md item 4): guarda folgada contra peça dominante —
     // a peça proibida não pode campeonar desproporcionalmente mais do que

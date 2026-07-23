@@ -89,6 +89,16 @@ import type {
  * ~70-80% das vezes em pista de ultrapassagem média, com carros idênticos)
  * e paradas extras em desgaste alto (~40-60% dos carros fazem 2+ paradas,
  * variando pelo PNEU). Ver `npm run balance` pro relatório de medição.
+ *
+ * `gridOffsetMs` recalibrado em 2026-07-22 (PR 4.5) — o swap do dataset
+ * derivado (771 equipe/anos reais) deslocou o sinal de grid pra baixo das
+ * metas (Monza 60.0%, Spa 64.0%, Mônaco 73.8% contra piso/banda/teto
+ * exigidos). Varredura empírica (`scripts/balance.ts:medirVitoriaPole`,
+ * mesmos 400 nSeeds do harness) mostrou que os 3 offsets são quase
+ * independentes entre si (cada um só entra no tempo da volta 1 daquela
+ * pista) — subir os três resolve as 4 restrições simultâneas com folga sem
+ * tocar `variancia` nem qualquer fórmula. `variancia` permanece 0.004
+ * (inalterada).
  */
 export const CORRIDA_CONFIG = {
   pesoPiloto: 0.5,
@@ -98,8 +108,8 @@ export const CORRIDA_CONFIG = {
   spread: 0.05,
   /** Amplitude da variância por volta, fração do tempoBaseMs (±). Calibrado 2026-07-18. */
   variancia: 0.004,
-  /** Custo por posição de grid embutido na volta 1 (ms) — pista difícil de ultrapassar prende mais. Calibrado 2026-07-18. */
-  gridOffsetMs: { facil: 500, media: 800, dificil: 1200 } as Record<Ultrapassagem, number>,
+  /** Custo por posição de grid embutido na volta 1 (ms) — pista difícil de ultrapassar prende mais. Recalibrado 2026-07-22 (PR 4.5, dataset derivado). */
+  gridOffsetMs: { facil: 800, media: 1600, dificil: 2100 } as Record<Ultrapassagem, number>,
   /** Penalidade máxima de largada na volta 1 por LARG baixo (ms). */
   largadaMaxMs: 600,
   /** Custo de degradação por "ponto" de desgaste acumulado do pneu (ms/volta). */
