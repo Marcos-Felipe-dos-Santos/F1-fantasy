@@ -457,7 +457,10 @@ describe('simularCorrida', () => {
       const resultado = simularCorrida(dataset, loadouts, pistaMonza, grid, 42);
       // Valores congelados a partir da 1a execução da implementação (PR 1.4);
       // recongelados após a calibração do balance-harness (PR 1.6, 2026-07-18 —
-      // variancia/gridOffsetMs/limiarPneuGasto mudaram, ordem/pontos idênticos).
+      // variancia/gridOffsetMs/limiarPneuGasto mudaram, ordem/pontos idênticos)
+      // e novamente após a recalibração do PR 4.5 (2026-07-22 — swap do
+      // dataset derivado deslocou o sinal de grid; só `gridOffsetMs` mudou,
+      // ordem/pontos/paradas idênticos, só `tempoTotal` desloca).
       // `historicoVoltas` (PR 1.7b) e `voltasDePit` (PR 2.7) são derivados, não
       // hardcoded aqui — os números congelados dos demais campos não mudam (ver
       // asserções de soma/consistência abaixo).
@@ -469,7 +472,7 @@ describe('simularCorrida', () => {
             jogadorId: 'j1',
             posicao: 1,
             pontos: 26,
-            tempoTotal: 1172689.7117451343,
+            tempoTotal: 1172989.7117451343,
             paradas: 1,
             status: 'terminou',
             voltasCompletadas: 14,
@@ -487,7 +490,7 @@ describe('simularCorrida', () => {
             jogadorId: 'j2',
             posicao: 3,
             pontos: 15,
-            tempoTotal: 1180675.8751857206,
+            tempoTotal: 1181275.8751857206,
             paradas: 1,
             status: 'terminou',
             voltasCompletadas: 14,
@@ -496,7 +499,7 @@ describe('simularCorrida', () => {
             jogadorId: 'j3',
             posicao: 4,
             pontos: 12,
-            tempoTotal: 1201962.903723684,
+            tempoTotal: 1202862.903723684,
             paradas: 1,
             status: 'terminou',
             voltasCompletadas: 14,
@@ -537,7 +540,10 @@ describe('simularCorrida', () => {
       const resultado = simularCorrida(dataset, loadouts, pistaMolhada, grid, 42);
       // Valores congelados a partir da 1a execução da implementação (PR 1.5b);
       // recongelados após a calibração do balance-harness (PR 1.6, 2026-07-18 —
-      // o novo gridOffsetMs/variancia inverteu a ordem j1/j4 no topo).
+      // o novo gridOffsetMs/variancia inverteu a ordem j1/j4 no topo) e
+      // novamente após a recalibração do PR 4.5 (2026-07-22 — swap do dataset
+      // derivado deslocou o sinal de grid; só `gridOffsetMs` mudou, ordem
+      // permanece j1/j4/j2/j3, só `tempoTotal` desloca).
       // `historicoVoltas` (PR 1.7b) e `voltasDePit` (PR 2.7) são derivados, não
       // hardcoded aqui — os números congelados dos demais campos não mudam (ver
       // asserções de soma/consistência abaixo).
@@ -558,7 +564,7 @@ describe('simularCorrida', () => {
             jogadorId: 'j4',
             posicao: 2,
             pontos: 18,
-            tempoTotal: 918478.9709473404,
+            tempoTotal: 918778.9709473404,
             paradas: 1,
             status: 'terminou',
             voltasCompletadas: 12,
@@ -567,7 +573,7 @@ describe('simularCorrida', () => {
             jogadorId: 'j2',
             posicao: 3,
             pontos: 15,
-            tempoTotal: 921625.0617813128,
+            tempoTotal: 922225.0617813128,
             paradas: 1,
             status: 'terminou',
             voltasCompletadas: 12,
@@ -576,7 +582,7 @@ describe('simularCorrida', () => {
             jogadorId: 'j3',
             posicao: 4,
             pontos: 12,
-            tempoTotal: 940951.3261634379,
+            tempoTotal: 941851.3261634379,
             paradas: 1,
             status: 'terminou',
             voltasCompletadas: 12,
