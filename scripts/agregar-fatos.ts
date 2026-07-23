@@ -53,6 +53,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { mapearStatus, statusEhConhecido, statusEhLargada, type CategoriaStatus } from './status-map.ts';
 import { CACHE_DIR_PADRAO, PRIMEIRA_TEMPORADA, PRIMEIRA_TEMPORADA_PITSTOPS, ULTIMA_TEMPORADA } from './fetch-f1-data.ts';
+import { lookupBucket, type BucketCircuito } from './circuit-buckets.ts';
 
 // ---------------------------------------------------------------------------
 // Constantes de exclusão (decisão D1 do dev, PROGRESS.md).
@@ -141,6 +142,12 @@ export interface CategoriaContagens {
   outro: number;
 }
 
+/** Fatos de grid percentil de UM bucket (potencia/travado/aero) — PR 4.6. */
+export interface BucketFatos {
+  largadas: number;
+  gridPercentil: number | null;
+}
+
 export interface EquipeAnoFatos extends CategoriaContagens {
   constructorId: string;
   nome: string;
@@ -154,6 +161,28 @@ export interface EquipeAnoFatos extends CategoriaContagens {
   nParadas: number | null;
   medianaDeltaPit: number | null;
   fracaoParadasEstouradas: number | null;
+  /**
+   * PR 4.6 — média, sobre TODAS as largadas da equipe no escopo da temporada
+   * (incluindo corridas em circuitos 'neutro'), do percentil de grid por
+   * corrida `(N-pos+0.5)/N` (N = nº de largadores da prova, pos = grid,
+   * 1=pole ⇒ percentil mais alto). Grid "0" (pit-lane) é EXCLUÍDO da métrica
+   * — mesmo precedente de `mediaGrid`. `null` só se a equipe não tiver
+   * NENHUMA largada com grid>0 na temporada (não deveria ocorrer no dataset
+   * real — só teórico/fixture sintética).
+   */
+  gridPercentilGeral: number | null;
+  /**
+   * PR 4.6 — mesma métrica de `gridPercentilGeral`, restrita às provas de
+   * cada bucket (ver `circuit-buckets.ts`). 'neutro' NÃO gera entrada (não
+   * produz ajuste de nota — ver `derivar-notas.ts`). `gridPercentil: null`
+   * se a equipe não tiver largadas com grid>0 naquele bucket (inclui o caso
+   * de 0 largadas no bucket).
+   */
+  porBucket: {
+    potencia: BucketFatos;
+    travado: BucketFatos;
+    aero: BucketFatos;
+  };
 }
 
 export interface TitularAnoFatos extends CategoriaContagens {
@@ -173,6 +202,15 @@ export interface FatosAgregados {
   meta: {
     geradoDe: string;
     temporadas: TemporadaMeta[];
+    /**
+     * PR 4.6 — circuitIds encontrados no cache que NÃO constam na tabela
+     * curada de `circuit-buckets.ts` (auditoria explícita, mesmo padrão de
+     * `statusesNaoMapeados`; caem no fallback 'neutro' via `lookupBucket`).
+     * Ordenado por `cmpStr`. Esperado `[]` com o cache real atual (77/77
+     * circuitos mapeados) — não vazio é sinal de circuito novo no cache que
+     * precisa de curadoria manual em `circuit-buckets.ts`.
+     */
+    circuitosNaoMapeados: string[];
   };
   equipes: EquipeAnoFatos[];
   titulares: TitularAnoFatos[];
@@ -401,6 +439,7 @@ function agregarTemporada(
   season: number,
   racesBrutas: RaceResults[],
   pitstopsPorRound: Map<string, PitStopLinha[]>,
+  circuitosNaoMapeados: Set<string>,
 ): { meta: TemporadaMeta; equipes: EquipeAnoFatos[]; titulares: TitularAnoFatos[] } {
   const races = racesBrutas.filter((r) => !ehIndy500Excluida(r));
   const roundsDistintos = new Set(races.map((r) => r.round));
@@ -431,6 +470,27 @@ function agregarTemporada(
   const medianaPitPorRound = new Map<string, number | null>();
   for (const [round, stops] of pitstopsPorRound) {
     medianaPitPorRound.set(round, mediana(stops.map((s) => parseDuracaoPit(s.duration))));
+  }
+
+  // PR 4.6 — nº de largadores da PROVA inteira (todas as equipes, campo
+  // completo — não só quem largou pela equipe em questão) e bucket do
+  // circuito, por round. Reutilizados por toda equipe do round abaixo.
+  const nLargadoresPorRound = new Map<string, number>();
+  const bucketPorRound = new Map<string, BucketCircuito>();
+  for (const race of races) {
+    nLargadoresPorRound.set(race.round, race.Results.filter((r) => statusEhLargada(r.status)).length);
+    bucketPorRound.set(race.round, lookupBucket(race.Circuit.circuitId, circuitosNaoMapeados));
+  }
+
+  /**
+   * Percentil de grid de UMA largada: `(N-grid+0.5)/N`, N = nº de largadores
+   * da prova. Grid "0" (pit-lane/sem tempo classificatório) é EXCLUÍDO ⇒
+   * `null` — mesmo precedente de `mediaGrid` (PR 4.2).
+   */
+  function percentilGridDaLinha(round: string, grid: number): number | null {
+    if (grid <= 0) return null;
+    const n = nLargadoresPorRound.get(round)!;
+    return (n - grid + 0.5) / n;
   }
 
   // Agrupamento por constructorId. Linhas de NAO_LARGOU (não largou — ver
@@ -474,6 +534,37 @@ function agregarTemporada(
     const poles = rows.filter((r) => Number(r.grid) === 1).length;
     const chegadasTerminou = rows.filter((r) => mapearStatus(r.status) === 'terminou').map((r) => Number(r.position));
     const mediaChegadaTerminou = media(chegadasTerminou);
+
+    // PR 4.6 — gridPercentilGeral (todas as largadas da equipe, TODOS os
+    // buckets incluindo 'neutro') e porBucket (só potencia/travado/aero —
+    // 'neutro' não gera ajuste de nota, ver derivar-notas.ts). Grid "0" é
+    // excluído da métrica em ambos (percentilGridDaLinha retorna null), mas
+    // a linha CONTINUA contando em `largadas` do bucket (mesma convenção do
+    // `largadas` geral da equipe — grid "0" é largada, só não tem percentil).
+    const acumuladoresBucket: Record<'potencia' | 'travado' | 'aero', { largadas: number; percentis: number[] }> = {
+      potencia: { largadas: 0, percentis: [] },
+      travado: { largadas: 0, percentis: [] },
+      aero: { largadas: 0, percentis: [] },
+    };
+    const percentisGeral: number[] = [];
+    for (const l of linhas) {
+      const pct = percentilGridDaLinha(l.round, Number(l.row.grid));
+      if (pct !== null) percentisGeral.push(pct);
+      const bucket = bucketPorRound.get(l.round)!;
+      if (bucket === 'neutro') continue;
+      acumuladoresBucket[bucket].largadas++;
+      if (pct !== null) acumuladoresBucket[bucket].percentis.push(pct);
+    }
+    const gridPercentilGeral = percentisGeral.length > 0 ? round4(media(percentisGeral)!) : null;
+    const bucketParaFatos = (acc: { largadas: number; percentis: number[] }): BucketFatos => ({
+      largadas: acc.largadas,
+      gridPercentil: acc.percentis.length > 0 ? round4(media(acc.percentis)!) : null,
+    });
+    const porBucket = {
+      potencia: bucketParaFatos(acumuladoresBucket.potencia),
+      travado: bucketParaFatos(acumuladoresBucket.travado),
+      aero: bucketParaFatos(acumuladoresBucket.aero),
+    };
 
     // Overachievement por equipe: por round, média dos deltas recontados
     // dos carros da equipe que terminaram naquele round; mediana entre rounds.
@@ -539,6 +630,8 @@ function agregarTemporada(
       nParadas,
       medianaDeltaPit: medianaDeltaPit === null ? null : round4(medianaDeltaPit),
       fracaoParadasEstouradas: fracaoParadasEstouradas === null ? null : round4(fracaoParadasEstouradas),
+      gridPercentilGeral,
+      porBucket,
     });
 
     // Titulares — 2 pilotos com mais largadas pela equipe/ano.
@@ -628,6 +721,9 @@ export function agregarFatos(cacheDir: string): ResultadoAgregacao {
   const equipes: EquipeAnoFatos[] = [];
   const titulares: TitularAnoFatos[] = [];
   const temporadasAusentes: number[] = [];
+  // PR 4.6 — auditoria de circuitId fora da tabela curada, GLOBAL ao arquivo
+  // inteiro (não por temporada — ver `FatosAgregados.meta.circuitosNaoMapeados`).
+  const circuitosNaoMapeados = new Set<string>();
 
   for (let season = PRIMEIRA_TEMPORADA; season <= ULTIMA_TEMPORADA; season++) {
     const dirTemporada = join(cacheDir, String(season));
@@ -640,7 +736,7 @@ export function agregarFatos(cacheDir: string): ResultadoAgregacao {
     const pitstopsPorRound: Map<string, PitStopLinha[]> =
       season >= PRIMEIRA_TEMPORADA_PITSTOPS ? lerPitstopsDaTemporada(cacheDir, season) : new Map();
 
-    const resultado = agregarTemporada(season, racesBrutas, pitstopsPorRound);
+    const resultado = agregarTemporada(season, racesBrutas, pitstopsPorRound, circuitosNaoMapeados);
     temporadas.push(resultado.meta);
     equipes.push(...resultado.equipes);
     titulares.push(...resultado.titulares);
@@ -653,7 +749,11 @@ export function agregarFatos(cacheDir: string): ResultadoAgregacao {
 
   return {
     fatos: {
-      meta: { geradoDe: 'jolpica cache', temporadas },
+      meta: {
+        geradoDe: 'jolpica cache',
+        temporadas,
+        circuitosNaoMapeados: [...circuitosNaoMapeados].sort(cmpStr),
+      },
       equipes,
       titulares,
     },
@@ -683,6 +783,12 @@ export function main(): ResultadoAgregacao {
   if (resultado.temporadasAusentes.length > 0) {
     console.log(
       `Temporadas ausentes no cache (rode "npm run dataset:fetch" antes da rodada real): ${resultado.temporadasAusentes.join(', ')}`,
+    );
+  }
+
+  if (resultado.fatos.meta.circuitosNaoMapeados.length > 0) {
+    console.log(
+      `Circuitos não mapeados em circuit-buckets.ts (fallback 'neutro' aplicado, curadoria manual pendente): ${resultado.fatos.meta.circuitosNaoMapeados.join(', ')}`,
     );
   }
 

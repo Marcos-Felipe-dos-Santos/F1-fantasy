@@ -266,6 +266,12 @@ describe('agregarFatos — temporada histórica sintética (1955)', () => {
 
   it('equipe elegível (alfa) entra com as estatísticas corretas', () => {
     const alfa = fatos.equipes.find((e) => e.constructorId === 'alfa' && e.season === 1955);
+    // gridPercentilGeral (PR 4.6): média de (N-grid+0.5)/N sobre as 8 largadas
+    // de alfa (grid>0 em todas), N = nº de largadores da PROVA inteira
+    // (ringA N=6, ringB N=4, ringC N=3, ringD N=3) — valores calculados à mão:
+    // [11/12, 3/4, 5/8, 3/8, 5/6, 1/2, 5/6, 1/2], soma 16/3, média 2/3 ⇒ 0.6667.
+    // ringA-D são circuitIds fictícios (fora da tabela real de circuit-buckets)
+    // ⇒ `lookupBucket` cai no fallback 'neutro', então `porBucket` fica zerado.
     expect(alfa).toEqual({
       constructorId: 'alfa',
       nome: 'Alfa Racing',
@@ -284,6 +290,12 @@ describe('agregarFatos — temporada histórica sintética (1955)', () => {
       nParadas: null,
       medianaDeltaPit: null,
       fracaoParadasEstouradas: null,
+      gridPercentilGeral: 0.6667,
+      porBucket: {
+        potencia: { largadas: 0, gridPercentil: null },
+        travado: { largadas: 0, gridPercentil: null },
+        aero: { largadas: 0, gridPercentil: null },
+      },
     });
   });
 
@@ -337,6 +349,10 @@ describe('agregarFatos — temporada moderna sintética (2015, com pitstops)', (
 
   it('equipe elegível (epsilon) com pit stats corretas (parse "SS.mmm" e "MM:SS.mmm", parada estourada)', () => {
     const epsilon = fatos.equipes.find((e) => e.constructorId === 'epsilon' && e.season === 2015);
+    // gridPercentilGeral (PR 4.6): R1 (circA, N=3): driver_e grid2 ⇒
+    // (3-2+0.5)/3=0.5, driver_f grid3 ⇒ (3-3+0.5)/3=0.1667. R2 (circB, N=2):
+    // driver_e grid1 ⇒ (2-1+0.5)/2=0.75, driver_f grid2 ⇒ (2-2+0.5)/2=0.25.
+    // Média dos 4 = 5/12 = 0.4167. circA/circB são fictícios ⇒ neutro/porBucket zerado.
     expect(epsilon).toEqual({
       constructorId: 'epsilon',
       nome: 'Epsilon Racing',
@@ -355,6 +371,12 @@ describe('agregarFatos — temporada moderna sintética (2015, com pitstops)', (
       nParadas: 4,
       medianaDeltaPit: 0.1835,
       fracaoParadasEstouradas: 0.25,
+      gridPercentilGeral: 0.4167,
+      porBucket: {
+        potencia: { largadas: 0, gridPercentil: null },
+        travado: { largadas: 0, gridPercentil: null },
+        aero: { largadas: 0, gridPercentil: null },
+      },
     });
   });
 
@@ -388,6 +410,12 @@ describe('agregarFatos — temporada sintética com largada de pit lane, grid "0
 
   it('equipe omega: mediaGrid e poles seguem IGNORANDO grid "0" (comportamento pré-existente, inalterado)', () => {
     const omega = fatos.equipes.find((e) => e.constructorId === 'omega' && e.season === 1956);
+    // gridPercentilGeral (PR 4.6): as 3 largadas de driver_p0 (grid "0") são
+    // EXCLUÍDAS da métrica (mesmo precedente do mediaGrid). Só driver_q entra:
+    // R1 (N=2,grid1)=(2-1+0.5)/2=0.75; R2 (N=2,grid2)=(2-2+0.5)/2=0.25;
+    // R3 (N=2,grid3)=(2-3+0.5)/2=-0.25 (fixture sintética minimalista: só 2
+    // linhas de Results por corrida, então N=2 mesmo com grid=3 — percentil
+    // pode sair fora de [0,1], a fórmula não clampa). Média = 0.75/3 = 0.25.
     expect(omega).toEqual({
       constructorId: 'omega',
       nome: 'Omega Racing',
@@ -410,6 +438,12 @@ describe('agregarFatos — temporada sintética com largada de pit lane, grid "0
       nParadas: null,
       medianaDeltaPit: null,
       fracaoParadasEstouradas: null,
+      gridPercentilGeral: 0.25,
+      porBucket: {
+        potencia: { largadas: 0, gridPercentil: null },
+        travado: { largadas: 0, gridPercentil: null },
+        aero: { largadas: 0, gridPercentil: null },
+      },
     });
   });
 
@@ -508,6 +542,65 @@ describe('agregarFatos — mesmo driverId em 2 equipes na mesma temporada (troca
     expect(nu.largadas).toBe(4);
     expect(nu.mediaGrid).toBe(2);
     expect(nu.poles).toBe(2);
+  });
+});
+
+describe('agregarFatos — buckets de circuito (PR 4.6, circuitos reais monza/monaco/interlagos, 1959)', () => {
+  const { fatos } = agregarFatos(FIXTURES_DIR);
+
+  it('equipe psi: gridPercentilGeral e porBucket calculados à mão', () => {
+    const psi = fatos.equipes.find((e) => e.constructorId === 'psi' && e.season === 1959);
+    // R1 monza (potencia, N=4): psi1 grid1 ⇒ (4-1+0.5)/4=0.875;
+    //                            psi2 grid3 ⇒ (4-3+0.5)/4=0.375.
+    // R2 monaco (travado, N=4): psi1 grid2 ⇒ (4-2+0.5)/4=0.625;
+    //                            psi2 grid0 (pit lane) ⇒ EXCLUÍDO da métrica.
+    // R3 interlagos (neutro, N=3): psi1 grid1 ⇒ (3-1+0.5)/3=0.8333;
+    //                               psi2 grid2 ⇒ (3-2+0.5)/3=0.5.
+    // gridPercentilGeral: média dos 5 valores válidos (psi2/R2 excluído):
+    // [0.875, 0.375, 0.625, 0.8333333, 0.5] soma 3.2083333, média 0.6416667 ⇒ 0.6417.
+    // potencia: largadas=2 (psi1+psi2), gridPercentil = média([0.875,0.375]) = 0.625.
+    // travado: largadas=2 (psi1+psi2, psi2 conta como largada mesmo com grid "0"),
+    //          gridPercentil = média só do válido [0.625] = 0.625.
+    // aero: psi nunca correu em circuito aero ⇒ largadas=0, gridPercentil=null.
+    expect(psi).toBeDefined();
+    expect(psi!.largadas).toBe(6);
+    expect(psi!.gridPercentilGeral).toBe(0.6417);
+    expect(psi!.porBucket).toEqual({
+      potencia: { largadas: 2, gridPercentil: 0.625 },
+      travado: { largadas: 2, gridPercentil: 0.625 },
+      aero: { largadas: 0, gridPercentil: null },
+    });
+  });
+});
+
+describe('agregarFatos — circuitosNaoMapeados (auditoria, PR 4.6)', () => {
+  const { fatos } = agregarFatos(FIXTURES_DIR);
+
+  it('coleta os circuitIds fictícios das fixtures (fora da tabela real) em meta.circuitosNaoMapeados', () => {
+    // Todos os circuitIds sintéticos das fixtures 1955/1956/1957/1958/2015
+    // (ringA-D, circO1-3, circK1-4, circM1-2, circN1-2, circA/circB) —
+    // 'indianapolis' (1955 round 5) é EXCLUÍDO antes de qualquer processamento
+    // (D1) e nunca chega no lookupBucket; monza/monaco/interlagos (1959) são
+    // reais e mapeados, não aparecem aqui. Ordenado por cmpStr (code unit).
+    expect(fatos.meta.circuitosNaoMapeados).toEqual([
+      'circA',
+      'circB',
+      'circK1',
+      'circK2',
+      'circK3',
+      'circK4',
+      'circM1',
+      'circM2',
+      'circN1',
+      'circN2',
+      'circO1',
+      'circO2',
+      'circO3',
+      'ringA',
+      'ringB',
+      'ringC',
+      'ringD',
+    ]);
   });
 });
 

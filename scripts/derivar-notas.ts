@@ -159,7 +159,7 @@ export function slug(s: string): string {
 import { mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import type { EquipeAnoFatos, FatosAgregados, TitularAnoFatos } from './agregar-fatos.ts';
+import type { BucketFatos, EquipeAnoFatos, FatosAgregados, TitularAnoFatos } from './agregar-fatos.ts';
 import { cmpStr, OUTPUT_PATH_PADRAO as FATOS_PATH_PADRAO } from './agregar-fatos.ts';
 import { PRIMEIRA_TEMPORADA_PITSTOPS } from './fetch-f1-data.ts';
 import type { NotasChassi, NotasMotor, NotasPiloto } from '../src/engine/types.ts';
@@ -174,6 +174,61 @@ export const FAIXA_PIT_PROXY: readonly [number, number] = [42, 58];
 /** CHU/LARG são constantes neutras na v1 (override curado é PR posterior). */
 export const NOTA_CHU_V1 = 50;
 export const NOTA_LARG_V1 = 50;
+
+// ---------------------------------------------------------------------------
+// PR 4.6 — buckets de circuito (AERO/MEC/MOTOR deixam de ser redundantes).
+// ---------------------------------------------------------------------------
+//
+// `SHRINK_BUCKET_K = 8`: mesmo pseudo-N do shrink geral do PR 4.3 (§ acima) —
+// nenhuma razão estatística pra usar um K diferente aqui; bucket com poucas
+// largadas (equipe correu 1-2 vezes num circuito daquele bucket na temporada)
+// encolhe forte em direção a 0 (sem "sinal" de diferenciação), bucket com
+// largadas amplas (equipe correu o ano inteiro num bucket dominante — raro,
+// mas o corte de escopo do PR 4.2 permite) converge pro delta bruto.
+//
+// `CAP_AJUSTE_BUCKET = 8` (notas, ±): teto absoluto do ajuste por bucket,
+// simétrico. Existe pra impedir que um outlier estatístico (equipe pequena,
+// poucas largadas num bucket, delta bruto grande) sozinho jogue AERO/MEC/MOTOR
+// pra fora da faixa plausível da faixa-alvo [28,96] — o clamp final da nota
+// já protege os limites [28,96], mas o CAP no ajuste em si evita que um
+// outlier "coma" a maior parte da faixa disponível de uma vez.
+//
+// `ESCALA_BUCKET = 100`: calibrada empiricamente sobre a distribuição real de
+// `|deltaShrunk|` das 771 equipe/anos × 3 buckets (2313 combinações,
+// `fatos-agregados.json` regenerado com os campos do PR 4.6) — p50=0.0184,
+// p90=0.0510, p95=0.0630, p99=0.0947, máx=0.1667 (38 combinações são
+// exatamente 0 — bucket sem largada). ESCALA=100 (nº redondo) põe o p95 do
+// |ajuste| PRÉ-clamp em 6.30 — dentro de [5,8], perto do teto sem estourá-lo
+// na maioria dos casos (só ~2.1% das 2313 combinações — 49 — clampam em
+// ±CAP_AJUSTE_BUCKET com essa escala). Escalas candidatas menores (80: p95=
+// 5.04, 16 clamps) ou maiores (120: p95=7.56, 99 clamps) também caberiam na
+// banda; 100 foi escolhido por ser o nº redondo mais central da banda válida.
+export const SHRINK_BUCKET_K = 8;
+export const CAP_AJUSTE_BUCKET = 8;
+export const ESCALA_BUCKET = 100;
+
+/**
+ * Ajuste de nota (±, pré-soma com a base) de UM bucket (potencia/travado/aero)
+ * pra uma equipe/ano: `deltaShrunk = (gridPercentil_b − gridPercentilGeral) ·
+ * largadas_b / (largadas_b + SHRINK_BUCKET_K)`, depois `clamp(deltaShrunk ·
+ * ESCALA_BUCKET, ±CAP_AJUSTE_BUCKET)`. Bucket com 0 largadas (ou
+ * `gridPercentil` nulo) OU `gridPercentilGeral` nulo (equipe sem nenhuma
+ * largada com grid>0 na temporada inteira — caso teórico) ⇒ ajuste 0 (não há
+ * base de comparação). O arredondamento pra inteiro acontece só depois, na
+ * soma com a nota base (`base + ajuste`, ver `derivarNotasEquipe`).
+ */
+export function ajusteBucket(gridPercentilGeral: number | null, bucketFatos: BucketFatos): number {
+  if (gridPercentilGeral === null || bucketFatos.largadas === 0 || bucketFatos.gridPercentil === null) return 0;
+  const deltaShrunk =
+    ((bucketFatos.gridPercentil - gridPercentilGeral) * bucketFatos.largadas) / (bucketFatos.largadas + SHRINK_BUCKET_K);
+  const ajustePreClamp = deltaShrunk * ESCALA_BUCKET;
+  return Math.max(-CAP_AJUSTE_BUCKET, Math.min(CAP_AJUSTE_BUCKET, ajustePreClamp));
+}
+
+/** Soma o ajuste de bucket à nota base, arredonda e clampa em [28,96] (faixa-alvo padrão). */
+function notaComAjusteBucket(base: number, ajuste: number): number {
+  return Math.max(28, Math.min(96, Math.round(base + ajuste)));
+}
 
 // ---------------------------------------------------------------------------
 // Tipos de saída — mesmo formato de `src/data/equipe-anos.json`.
@@ -448,10 +503,10 @@ function derivarNotasPiloto(pools: PoolsPiloto, titular: TitularAnoFatos): Notas
 
 /**
  * `carro` = 0.5·pct(−mediaGrid da equipe) + 0.5·pct(−mediaChegadaTerminou da
- * equipe), NÃO encolhido (decisão do dev). Honestidade: FRACA pra separar
- * AERO/MEC/MOTOR entre si — os 3 recebem o MESMO valor na v1 (PR 4.6,
- * "buckets de circuito", é quem diferencia; sem ele os pesos de pista do
- * GDD §9 não têm efeito real de balanceamento).
+ * equipe), NÃO encolhido (decisão do dev). Honestidade: FRACA. É a nota BASE
+ * de PPESO/FREIO (sempre iguais a ela) e de AERO/MEC/MOTOR — que, a partir do
+ * PR 4.6 ("buckets de circuito"), recebem um AJUSTE por cima dessa base (ver
+ * `ajusteBucket`/`notaComAjusteBucket`), deixando de ser redundantes entre si.
  */
 function calcularCarro(pools: PoolsEquipe, constructorId: string): number {
   const pctGrid = pctDoPool(pools.mediaGrid, constructorId, 'menor');
@@ -520,9 +575,20 @@ function derivarNotasEquipe(
   const confMotor = calcularConfMotor(pools, equipe.constructorId);
   const call = calcularCall(pools, equipe.constructorId);
   const pit = calcularPit(pools, equipe.constructorId, equipe.season, carroPct);
+
+  // PR 4.6 — AERO/MEC/MOTOR ajustados por bucket de circuito (potencia/
+  // travado/aero — ver `circuit-buckets.ts`); PPESO/FREIO permanecem SEMPRE
+  // na nota base `notaCarro` (não têm bucket associado no GDD §9).
+  const ajusteAero = ajusteBucket(equipe.gridPercentilGeral, equipe.porBucket.aero);
+  const ajusteMec = ajusteBucket(equipe.gridPercentilGeral, equipe.porBucket.travado);
+  const ajusteMotor = ajusteBucket(equipe.gridPercentilGeral, equipe.porBucket.potencia);
+  const aero = notaComAjusteBucket(notaCarro, ajusteAero);
+  const mec = notaComAjusteBucket(notaCarro, ajusteMec);
+  const motor = notaComAjusteBucket(notaCarro, ajusteMotor);
+
   return {
-    chassi: { aero: notaCarro, mec: notaCarro, ppeso: notaCarro, conf, freio: notaCarro },
-    motor: { motor: notaCarro, confMotor },
+    chassi: { aero, mec, ppeso: notaCarro, conf, freio: notaCarro },
+    motor: { motor, confMotor },
     call,
     sangf: call, // SANGF = CALL, por definição do plano aprovado.
     pit,
