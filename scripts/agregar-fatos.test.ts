@@ -266,10 +266,24 @@ describe('agregarFatos — temporada histórica sintética (1955)', () => {
 
   it('equipe elegível (alfa) entra com as estatísticas corretas', () => {
     const alfa = fatos.equipes.find((e) => e.constructorId === 'alfa' && e.season === 1955);
-    // gridPercentilGeral (PR 4.6): média de (N-grid+0.5)/N sobre as 8 largadas
-    // de alfa (grid>0 em todas), N = nº de largadores da PROVA inteira
-    // (ringA N=6, ringB N=4, ringC N=3, ringD N=3) — valores calculados à mão:
-    // [11/12, 3/4, 5/8, 3/8, 5/6, 1/2, 5/6, 1/2], soma 16/3, média 2/3 ⇒ 0.6667.
+    // gridPercentilGeral (PR 4.6.1 — dense-rank entre largadores REAIS com
+    // grid>0, N = nº dessas linhas): sobre as 8 largadas de alfa (grid>0 em
+    // todas).
+    // ringA (N=6, grids 1..6 contíguos): dense-rank(grid)===grid, IDÊNTICO à
+    // fórmula anterior ⇒ driver_a grid1 ⇒ (6-1+0.5)/6=11/12; driver_b grid2 ⇒
+    // (6-2+0.5)/6=3/4.
+    // ringB (N=4, grids largadores {2,3,4,9} — "Space Weather" é status
+    // desconhecido mas NÃO é NAO_LARGOU, então grid=9 do driver_d CONTA como
+    // largador): valores distintos ordenados {2,3,4,9} ⇒ dense-rank(2)=1,
+    // dense-rank(3)=2 — GAP no grid (não é 1..N contíguo), então o rank
+    // diverge do grid cru e o valor MUDA em relação ao PR 4.6: driver_a
+    // grid2→rank1 ⇒ (4-1+0.5)/4=7/8 (antes: 5/8); driver_b grid3→rank2 ⇒
+    // (4-2+0.5)/4=5/8 (antes: 3/8).
+    // ringC/ringD (N=3, grids 1..3 contíguos): dense-rank(grid)===grid,
+    // IDÊNTICO à fórmula anterior ⇒ driver_a grid1 ⇒ 5/6; driver_b grid2 ⇒ 1/2
+    // (em ambas as corridas).
+    // Soma dos 8 valores (24avos): 22+18+21+15+20+12+20+12=140 ⇒ 140/24=35/6.
+    // Média: (35/6)/8=35/48=0.729166... ⇒ round4 0.7292.
     // ringA-D são circuitIds fictícios (fora da tabela real de circuit-buckets)
     // ⇒ `lookupBucket` cai no fallback 'neutro', então `porBucket` fica zerado.
     expect(alfa).toEqual({
@@ -290,7 +304,7 @@ describe('agregarFatos — temporada histórica sintética (1955)', () => {
       nParadas: null,
       medianaDeltaPit: null,
       fracaoParadasEstouradas: null,
-      gridPercentilGeral: 0.6667,
+      gridPercentilGeral: 0.7292,
       porBucket: {
         potencia: { largadas: 0, gridPercentil: null },
         travado: { largadas: 0, gridPercentil: null },
@@ -410,12 +424,15 @@ describe('agregarFatos — temporada sintética com largada de pit lane, grid "0
 
   it('equipe omega: mediaGrid e poles seguem IGNORANDO grid "0" (comportamento pré-existente, inalterado)', () => {
     const omega = fatos.equipes.find((e) => e.constructorId === 'omega' && e.season === 1956);
-    // gridPercentilGeral (PR 4.6): as 3 largadas de driver_p0 (grid "0") são
-    // EXCLUÍDAS da métrica (mesmo precedente do mediaGrid). Só driver_q entra:
-    // R1 (N=2,grid1)=(2-1+0.5)/2=0.75; R2 (N=2,grid2)=(2-2+0.5)/2=0.25;
-    // R3 (N=2,grid3)=(2-3+0.5)/2=-0.25 (fixture sintética minimalista: só 2
-    // linhas de Results por corrida, então N=2 mesmo com grid=3 — percentil
-    // pode sair fora de [0,1], a fórmula não clampa). Média = 0.75/3 = 0.25.
+    // gridPercentilGeral (PR 4.6.1 — dense-rank entre largadores REAIS com
+    // grid>0): as 3 largadas de driver_p0 (grid "0") são EXCLUÍDAS da métrica
+    // (mesmo precedente do mediaGrid) e NÃO contam no N. Em cada round, o
+    // único largador com grid>0 é driver_q (driver_p0 tem grid "0") ⇒ N=1,
+    // rank=1 sempre, independente do valor cru do grid: R1 (grid1) ⇒
+    // (1-1+0.5)/1=0.5; R2 (grid2) ⇒ 0.5; R3 (grid3) ⇒ 0.5 — antes do fix (PR
+    // 4.6), N incluía a linha de grid "0" (N=2) e usava o grid CRU como rank,
+    // dando (2-3+0.5)/2=-0.25 em R3 (fora de [0,1], o bug corrigido aqui).
+    // Média nova = 0.5.
     expect(omega).toEqual({
       constructorId: 'omega',
       nome: 'Omega Racing',
@@ -438,7 +455,7 @@ describe('agregarFatos — temporada sintética com largada de pit lane, grid "0
       nParadas: null,
       medianaDeltaPit: null,
       fracaoParadasEstouradas: null,
-      gridPercentilGeral: 0.25,
+      gridPercentilGeral: 0.5,
       porBucket: {
         potencia: { largadas: 0, gridPercentil: null },
         travado: { largadas: 0, gridPercentil: null },
@@ -550,24 +567,30 @@ describe('agregarFatos — buckets de circuito (PR 4.6, circuitos reais monza/mo
 
   it('equipe psi: gridPercentilGeral e porBucket calculados à mão', () => {
     const psi = fatos.equipes.find((e) => e.constructorId === 'psi' && e.season === 1959);
-    // R1 monza (potencia, N=4): psi1 grid1 ⇒ (4-1+0.5)/4=0.875;
-    //                            psi2 grid3 ⇒ (4-3+0.5)/4=0.375.
-    // R2 monaco (travado, N=4): psi1 grid2 ⇒ (4-2+0.5)/4=0.625;
-    //                            psi2 grid0 (pit lane) ⇒ EXCLUÍDO da métrica.
-    // R3 interlagos (neutro, N=3): psi1 grid1 ⇒ (3-1+0.5)/3=0.8333;
-    //                               psi2 grid2 ⇒ (3-2+0.5)/3=0.5.
+    // PR 4.6.1 — dense-rank entre largadores REAIS com grid>0, N = nº dessas
+    // linhas (exclui grid "0" do N, não só do numerador).
+    // R1 monza (potencia, grids largadores {1,2,3,4} contíguos, N=4):
+    // dense-rank(grid)===grid, IDÊNTICO à fórmula anterior ⇒ psi1 grid1 ⇒
+    // (4-1+0.5)/4=0.875; psi2 grid3 ⇒ (4-3+0.5)/4=0.375.
+    // R2 monaco (travado): psi2 tem grid "0" (pit lane) ⇒ EXCLUÍDO da
+    // métrica E do N (diferente do PR 4.6, que incluía a linha de grid "0" no
+    // N). Largadores com grid>0: {filler_c=1, psi1=2, filler_d=3} ⇒ N=3 (não
+    // 4). dense-rank(2)=2 ⇒ psi1 ⇒ (3-2+0.5)/3=0.5 (antes do fix: 0.625).
+    // R3 interlagos (neutro, grids {1,2,3} contíguos, N=3): dense-rank(grid)
+    // ===grid, IDÊNTICO à fórmula anterior ⇒ psi1 grid1 ⇒ (3-1+0.5)/3=0.8333;
+    //                                          psi2 grid2 ⇒ (3-2+0.5)/3=0.5.
     // gridPercentilGeral: média dos 5 valores válidos (psi2/R2 excluído):
-    // [0.875, 0.375, 0.625, 0.8333333, 0.5] soma 3.2083333, média 0.6416667 ⇒ 0.6417.
-    // potencia: largadas=2 (psi1+psi2), gridPercentil = média([0.875,0.375]) = 0.625.
+    // [0.875, 0.375, 0.5, 0.8333333, 0.5] soma 3.0833333, média 0.6166667 ⇒ 0.6167.
+    // potencia: largadas=2 (psi1+psi2), gridPercentil = média([0.875,0.375]) = 0.625 (inalterado).
     // travado: largadas=2 (psi1+psi2, psi2 conta como largada mesmo com grid "0"),
-    //          gridPercentil = média só do válido [0.625] = 0.625.
+    //          gridPercentil = média só do válido [0.5] = 0.5 (antes: 0.625).
     // aero: psi nunca correu em circuito aero ⇒ largadas=0, gridPercentil=null.
     expect(psi).toBeDefined();
     expect(psi!.largadas).toBe(6);
-    expect(psi!.gridPercentilGeral).toBe(0.6417);
+    expect(psi!.gridPercentilGeral).toBe(0.6167);
     expect(psi!.porBucket).toEqual({
       potencia: { largadas: 2, gridPercentil: 0.625 },
-      travado: { largadas: 2, gridPercentil: 0.625 },
+      travado: { largadas: 2, gridPercentil: 0.5 },
       aero: { largadas: 0, gridPercentil: null },
     });
   });
@@ -601,6 +624,100 @@ describe('agregarFatos — circuitosNaoMapeados (auditoria, PR 4.6)', () => {
       'ringC',
       'ringD',
     ]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// PR 4.6.1 — percentil de grid corrigido: dense-rank entre largadores REAIS
+// (grid>0), N = nº dessas linhas. Corrige o bug do PR 4.6 em que qualificados
+// que não largaram (DNS/DNQ, comuns nos anos 50) faziam grid>N e o percentil
+// sair de [0,1] (ver `percentilGridDaLinha` em agregar-fatos.ts).
+// ---------------------------------------------------------------------------
+
+describe('agregarFatos — dense-rank entre largadores reais (PR 4.6.1, DNS de qualificados, 1951)', () => {
+  const { fatos } = agregarFatos(FIXTURES_DIR);
+
+  it('equipe iota: largador real com grid > nº de largadores não gera percentil fora de [0,1]', () => {
+    const iota = fatos.equipes.find((e) => e.constructorId === 'iota' && e.season === 1951);
+    // R1 interlagos (neutro): 8 posições de grid, só 3 largam de fato (as
+    // outras 5 são "Did not qualify" com grid 1,2,4,6,7 — qualificaram mas
+    // não largaram). Largadores reais: driver_i1 grid3, driver_f5 (filler,
+    // fora de iota) grid5, driver_i2 grid8. N = 3 (só linhas com grid>0 que
+    // largaram), valores distintos ordenados {3,5,8} ⇒ dense-rank(3)=1,
+    // dense-rank(5)=2, dense-rank(8)=3 ⇒ percentis (3-1+0.5)/3=0.8333,
+    // (3-2+0.5)/3=0.5, (3-3+0.5)/3=0.1667 — exatamente os valores do plano
+    // aprovado. iota só tem driver_i1 (grid3 ⇒ 0.8333) e driver_i2 (grid8 ⇒
+    // 0.1667) nesta corrida; driver_f5 (grid5 ⇒ 0.5) é de outra equipe.
+    // ANTES do fix (PR 4.6): N incluía só as 3 linhas que largaram (idêntico
+    // aqui), mas a fórmula usava o grid CRU como rank — driver_i2 (grid8, N=3)
+    // dava (3-8+0.5)/3=-1.5 (fora de [0,1], o bug relatado na revisão do 4.6).
+    // R2 nurburgring (neutro, grids 1,2 contíguos, N=2, sem DNS): dense-rank
+    // ===grid, IDÊNTICO à fórmula anterior ⇒ driver_i1 grid1 ⇒
+    // (2-1+0.5)/2=0.75; driver_i2 grid2 ⇒ (2-2+0.5)/2=0.25.
+    // gridPercentilGeral = média dos 4 valores [0.8333333, 0.1666667, 0.75,
+    // 0.25] = 2/4 = 0.5 exatamente.
+    expect(iota).toBeDefined();
+    expect(iota!.largadas).toBe(4);
+    expect(iota!.gridPercentilGeral).toBe(0.5);
+  });
+});
+
+describe('agregarFatos — invariante (0,1) e grid "0" excluído do N (PR 4.6.1, 1951/1952)', () => {
+  const { fatos } = agregarFatos(FIXTURES_DIR);
+
+  it('todo gridPercentilGeral calculado cai estritamente em (0,1), mesmo com DNS de qualificados', () => {
+    const iota = fatos.equipes.find((e) => e.constructorId === 'iota' && e.season === 1951)!;
+    expect(iota.gridPercentilGeral).not.toBeNull();
+    expect(iota.gridPercentilGeral!).toBeGreaterThan(0);
+    expect(iota.gridPercentilGeral!).toBeLessThan(1);
+  });
+
+  it('grid "0" no meio do campo: excluído do percentil E do N (não só do numerador) — resultado em (0,1)', () => {
+    const tau = fatos.equipes.find((e) => e.constructorId === 'tau' && e.season === 1952);
+    // R1 sepang (neutro): 5 posições de grid, driver_g1/driver_g4 são "Did not
+    // qualify" (grid 1 e 4, fora do N). Largadores reais: driver_t1 grid2,
+    // driver_t2 grid0 (pit lane — EXCLUÍDO do percentil E do N, mesma
+    // convenção de mediaGrid), driver_g3 (filler2) grid3. N = 2 (só as linhas
+    // de grid>0 que largaram: driver_t1 e driver_g3 — driver_t2/grid0 NÃO
+    // conta no N). Valores distintos ordenados {2,3} ⇒ dense-rank(2)=1 ⇒
+    // driver_t1: (2-1+0.5)/2=0.75. driver_t2 (grid0) ⇒ null, mas CONTA em
+    // `largadas`.
+    // R2 albert_park (neutro, grids 1,2 contíguos, N=2, sem grid "0"):
+    // driver_t1 grid1 ⇒ (2-1+0.5)/2=0.75; driver_t2 grid2 ⇒
+    // (2-2+0.5)/2=0.25.
+    // gridPercentilGeral = média dos 3 valores válidos (driver_t2/R1
+    // excluído): [0.75, 0.75, 0.25] soma 1.75, média 1.75/3=0.5833333 ⇒
+    // round4 0.5833.
+    expect(tau).toBeDefined();
+    expect(tau!.largadas).toBe(4);
+    expect(tau!.gridPercentilGeral).toBe(0.5833);
+    expect(tau!.gridPercentilGeral!).toBeGreaterThan(0);
+    expect(tau!.gridPercentilGeral!).toBeLessThan(1);
+  });
+});
+
+describe('agregarFatos — dense-rank com grids duplicados (PR 4.6.1, anomalia de dado, 1954)', () => {
+  const { fatos } = agregarFatos(FIXTURES_DIR);
+
+  it('dois largadores com o MESMO grid cru recebem o MESMO rank (e o mesmo percentil)', () => {
+    const upsilon = fatos.equipes.find((e) => e.constructorId === 'upsilon' && e.season === 1954);
+    // R1 shanghai (neutro): driver_u1 e driver_u2 largam AMBOS com grid=5
+    // (anomalia de dado — duplicado), driver_u3f (fillerC) grid=9. N=3,
+    // valores distintos ordenados {5,9} ⇒ dense-rank(5)=1 PRA AMBOS (não 1 e
+    // 2) ⇒ driver_u1 e driver_u2 ⇒ (3-1+0.5)/3=2.5/3=0.8333333 CADA UM — se o
+    // rank fosse ordinal (desempatando por ordem/driverId em vez de dense),
+    // um dos dois receberia rank 2 ⇒ (3-2+0.5)/3=0.5, um valor DIFERENTE do
+    // outro, o que este teste detectaria via gridPercentilGeral divergente do
+    // valor calculado à mão abaixo.
+    // R2 yas_marina (neutro): driver_u1 e driver_u2 largam AMBOS com grid=7
+    // (duplicado de novo), sem outro largador ⇒ N=2, valores distintos {7} ⇒
+    // dense-rank(7)=1 PRA AMBOS ⇒ (2-1+0.5)/2=1.5/2=0.75 CADA UM.
+    // gridPercentilGeral = média dos 4 valores [0.8333333, 0.8333333, 0.75,
+    // 0.75] = (2×2.5/3 + 2×1.5/2)/4 = (5/3+1.5)/4 = 3.1666667/4=0.7916667 ⇒
+    // round4 0.7917.
+    expect(upsilon).toBeDefined();
+    expect(upsilon!.largadas).toBe(4);
+    expect(upsilon!.gridPercentilGeral).toBe(0.7917);
   });
 });
 
