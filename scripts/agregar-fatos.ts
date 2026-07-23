@@ -472,25 +472,52 @@ function agregarTemporada(
     medianaPitPorRound.set(round, mediana(stops.map((s) => parseDuracaoPit(s.duration))));
   }
 
-  // PR 4.6 — nº de largadores da PROVA inteira (todas as equipes, campo
+  // PR 4.6.1 — dense-rank de grid da PROVA inteira (todas as equipes, campo
   // completo — não só quem largou pela equipe em questão) e bucket do
   // circuito, por round. Reutilizados por toda equipe do round abaixo.
-  const nLargadoresPorRound = new Map<string, number>();
+  //
+  // Corrige o bug do PR 4.6: o percentil usava `(N-grid+0.5)/N` com o grid
+  // CRU e N = nº de largadores da prova (incluindo grid "0"). Quando
+  // qualificados não largavam (DNS/DNQ, comum nos anos 50), a linha que
+  // largou podia ter `grid` maior que N (o grid cru reflete a posição de
+  // qualificação, não a posição relativa entre quem de fato largou), jogando
+  // o percentil pra fora de [0,1].
+  //
+  // Fix: por round, ranqueia (dense-rank) os valores DISTINTOS de grid>0
+  // entre os largadores REAIS (`statusEhLargada`) do campo completo — grids
+  // duplicados (anomalia de dado) recebem o MESMO rank. N = nº de LINHAS
+  // largadoras com grid>0 (não o nº de valores distintos, nem a contagem
+  // antiga que incluía grid "0"). Como rank ≤ nº de distintos ≤ N, o
+  // percentil `(N-rank+0.5)/N` cai sempre em (0,1).
+  //
+  // Consequência: em corridas onde todos os qualificados largam com grids
+  // contíguos 1..N e sem grid "0", dense-rank(grid) === grid e o valor é
+  // IDÊNTICO ao da fórmula anterior — a correção só desloca corridas com DNS
+  // de qualificados, lacunas de grid ou largadores de pit-lane.
+  const rankGridPorRound = new Map<string, { rankPorGrid: Map<number, number>; n: number }>();
   const bucketPorRound = new Map<string, BucketCircuito>();
   for (const race of races) {
-    nLargadoresPorRound.set(race.round, race.Results.filter((r) => statusEhLargada(r.status)).length);
+    const gridsLargadores = race.Results.filter((r) => statusEhLargada(r.status))
+      .map((r) => Number(r.grid))
+      .filter((g) => g > 0);
+    const distintosAsc = [...new Set(gridsLargadores)].sort((a, b) => a - b);
+    const rankPorGrid = new Map<number, number>();
+    distintosAsc.forEach((g, i) => rankPorGrid.set(g, i + 1));
+    rankGridPorRound.set(race.round, { rankPorGrid, n: gridsLargadores.length });
     bucketPorRound.set(race.round, lookupBucket(race.Circuit.circuitId, circuitosNaoMapeados));
   }
 
   /**
-   * Percentil de grid de UMA largada: `(N-grid+0.5)/N`, N = nº de largadores
-   * da prova. Grid "0" (pit-lane/sem tempo classificatório) é EXCLUÍDO ⇒
+   * Percentil de grid de UMA largada: `(N-rank+0.5)/N`, rank = dense-rank do
+   * grid entre os largadores reais com grid>0 da prova, N = nº dessas
+   * linhas. Grid "0" (pit-lane/sem tempo classificatório) é EXCLUÍDO ⇒
    * `null` — mesmo precedente de `mediaGrid` (PR 4.2).
    */
   function percentilGridDaLinha(round: string, grid: number): number | null {
     if (grid <= 0) return null;
-    const n = nLargadoresPorRound.get(round)!;
-    return (n - grid + 0.5) / n;
+    const { rankPorGrid, n } = rankGridPorRound.get(round)!;
+    const rank = rankPorGrid.get(grid)!;
+    return (n - rank + 0.5) / n;
   }
 
   // Agrupamento por constructorId. Linhas de NAO_LARGOU (não largou — ver
