@@ -115,7 +115,7 @@
     "motor": {
       "id": "era-1950-motor",
       "notas": {
-        "motor": 43,
+        "motor": 44,
         "confMotor": 79
       }
     },
@@ -310,7 +310,7 @@
       "id": "maserati-1950-chassi",
       "notas": {
         "aero": 32,
-        "mec": 37,
+        "mec": 36,
         "ppeso": 34,
         "conf": 79,
         "freio": 34
@@ -319,7 +319,7 @@
     "motor": {
       "id": "maserati-1950-motor",
       "notas": {
-        "motor": 34,
+        "motor": 35,
         "confMotor": 34
       }
     },
@@ -581,7 +581,7 @@
     "chassi": {
       "id": "lago-1951-chassi",
       "notas": {
-        "aero": 52,
+        "aero": 51,
         "mec": 48,
         "ppeso": 48,
         "conf": 48,
@@ -591,7 +591,7 @@
     "motor": {
       "id": "lago-1951-motor",
       "notas": {
-        "motor": 48,
+        "motor": 49,
         "confMotor": 62
       }
     },
@@ -795,7 +795,7 @@
     "motor": {
       "id": "connaught-1952-motor",
       "notas": {
-        "motor": 78,
+        "motor": 79,
         "confMotor": 72
       }
     },
@@ -999,7 +999,7 @@
     "motor": {
       "id": "gordini-1952-motor",
       "notas": {
-        "motor": 83,
+        "motor": 84,
         "confMotor": 43
       }
     },
@@ -1125,7 +1125,7 @@
     "chassi": {
       "id": "maserati-1952-chassi",
       "notas": {
-        "aero": 36,
+        "aero": 35,
         "mec": 38,
         "ppeso": 38,
         "conf": 33,
@@ -1135,7 +1135,7 @@
     "motor": {
       "id": "maserati-1952-motor",
       "notas": {
-        "motor": 39,
+        "motor": 41,
         "confMotor": 81
       }
     },
@@ -1193,7 +1193,7 @@
     "chassi": {
       "id": "simca-1952-chassi",
       "notas": {
-        "aero": 40,
+        "aero": 41,
         "mec": 38,
         "ppeso": 38,
         "conf": 72,
@@ -1203,7 +1203,7 @@
     "motor": {
       "id": "simca-1952-motor",
       "notas": {
-        "motor": 35,
+        "motor": 34,
         "confMotor": 33
       }
     },
@@ -1261,7 +1261,7 @@
     "chassi": {
       "id": "connaught-1953-chassi",
       "notas": {
-        "aero": 44,
+        "aero": 45,
         "mec": 45,
         "ppeso": 45,
         "conf": 56,
@@ -1329,7 +1329,7 @@
     "chassi": {
       "id": "cooper-1953-chassi",
       "notas": {
-        "aero": 54,
+        "aero": 55,
         "mec": 51,
         "ppeso": 56,
         "conf": 79,
@@ -1339,7 +1339,7 @@
     "motor": {
       "id": "cooper-1953-motor",
       "notas": {
-        "motor": 59,
+        "motor": 58,
         "confMotor": 79
       }
     },
@@ -1397,7 +1397,7 @@
     "chassi": {
       "id": "ferrari-1953-chassi",
       "notas": {
-        "aero": 82,
+        "aero": 81,
         "mec": 88,
         "ppeso": 85,
         "conf": 90,
@@ -1465,8 +1465,8 @@
     "chassi": {
       "id": "gordini-1953-chassi",
       "notas": {
-        "aero": 69,
-        "mec": 70,
+        "aero": 68,
+        "mec": 69,
         "ppeso": 68,
         "conf": 34,
         "freio": 68
@@ -1601,7 +1601,7 @@
     "chassi": {
       "id": "maserati-1953-chassi",
       "notas": {
-        "aero": 83,
+        "aero": 82,
         "mec": 82,
         "ppeso": 85,
         "conf": 68,
@@ -1611,7 +1611,7 @@
     "motor": {
       "id": "maserati-1953-motor",
       "notas": {
-        "motor": 86,
+        "motor": 87,
         "confMotor": 68
       }
     },
@@ -1669,8 +1669,8 @@
     "chassi": {
       "id": "ferrari-1954-chassi",
       "notas": {
-        "aero": 71,
-        "mec": 72,
+        "aero": 70,
+        "mec": 73,
         "ppeso": 71,
         "conf": 71,
         "freio": 71
@@ -1679,7 +1679,7 @@
     "motor": {
       "id": "ferrari-1954-motor",
       "notas": {
-        "motor": 69,
+        "motor": 68,
         "confMotor": 37
       }
     },
@@ -1737,8 +1737,8 @@
     "chassi": {
       "id": "gordini-1954-chassi",
       "notas": {
-        "aero": 44,
-        "mec": 29,
+        "aero": 42,
+        "mec": 32,
         "ppeso": 37,
         "conf": 37,
         "freio": 37
@@ -1747,7 +1747,7 @@
     "motor": {
       "id": "gordini-1954-motor",
       "notas": {
-        "motor": 34,
+        "motor": 32,
         "confMotor": 54
       }
     },
@@ -1805,8 +1805,8 @@
     "chassi": {
       "id": "maserati-1954-chassi",
       "notas": {
-        "aero": 54,
-        "mec": 52,
+        "aero": 53,
+        "mec": 55,
         "ppeso": 54,
         "conf": 54,
         "freio": 54
@@ -1815,7 +1815,7 @@
     "motor": {
       "id": "maserati-1954-motor",
       "notas": {
-        "motor": 55,
+        "motor": 53,
         "confMotor": 71
       }
     },
@@ -1873,7 +1873,7 @@
     "chassi": {
       "id": "mercedes-1954-chassi",
       "notas": {
-        "aero": 91,
+        "aero": 90,
         "mec": 88,
         "ppeso": 88,
         "conf": 88,
@@ -1883,7 +1883,7 @@
     "motor": {
       "id": "mercedes-1954-motor",
       "notas": {
-        "motor": 90,
+        "motor": 89,
         "confMotor": 88
       }
     },
@@ -1942,7 +1942,7 @@
       "id": "ferrari-1955-chassi",
       "notas": {
         "aero": 63,
-        "mec": 74,
+        "mec": 73,
         "ppeso": 68,
         "conf": 79,
         "freio": 68
@@ -1951,7 +1951,7 @@
     "motor": {
       "id": "ferrari-1955-motor",
       "notas": {
-        "motor": 63,
+        "motor": 65,
         "confMotor": 90
       }
     },
@@ -2010,7 +2010,7 @@
       "id": "gordini-1955-chassi",
       "notas": {
         "aero": 37,
-        "mec": 45,
+        "mec": 44,
         "ppeso": 39,
         "conf": 45,
         "freio": 39
@@ -2019,7 +2019,7 @@
     "motor": {
       "id": "gordini-1955-motor",
       "notas": {
-        "motor": 31,
+        "motor": 33,
         "confMotor": 34
       }
     },
@@ -2146,7 +2146,7 @@
       "id": "maserati-1955-chassi",
       "notas": {
         "aero": 49,
-        "mec": 57,
+        "mec": 56,
         "ppeso": 51,
         "conf": 56,
         "freio": 51
@@ -2155,7 +2155,7 @@
     "motor": {
       "id": "maserati-1955-motor",
       "notas": {
-        "motor": 43,
+        "motor": 44,
         "confMotor": 45
       }
     },
@@ -2282,7 +2282,7 @@
       "id": "vanwall-1955-chassi",
       "notas": {
         "aero": 45,
-        "mec": 46,
+        "mec": 45,
         "ppeso": 45,
         "conf": 34,
         "freio": 45
@@ -2291,7 +2291,7 @@
     "motor": {
       "id": "vanwall-1955-motor",
       "notas": {
-        "motor": 41,
+        "motor": 42,
         "confMotor": 68
       }
     },
@@ -2350,7 +2350,7 @@
       "id": "ferrari-1956-chassi",
       "notas": {
         "aero": 88,
-        "mec": 88,
+        "mec": 87,
         "ppeso": 88,
         "conf": 37,
         "freio": 88
@@ -2359,7 +2359,7 @@
     "motor": {
       "id": "ferrari-1956-motor",
       "notas": {
-        "motor": 89,
+        "motor": 90,
         "confMotor": 88
       }
     },
@@ -2418,7 +2418,7 @@
       "id": "gordini-1956-chassi",
       "notas": {
         "aero": 45,
-        "mec": 50,
+        "mec": 49,
         "ppeso": 45,
         "conf": 62,
         "freio": 45
@@ -2485,8 +2485,8 @@
     "chassi": {
       "id": "maserati-1956-chassi",
       "notas": {
-        "aero": 60,
-        "mec": 65,
+        "aero": 59,
+        "mec": 63,
         "ppeso": 62,
         "conf": 88,
         "freio": 62
@@ -2961,7 +2961,7 @@
     "chassi": {
       "id": "cooper-1958-chassi",
       "notas": {
-        "aero": 61,
+        "aero": 62,
         "mec": 62,
         "ppeso": 56,
         "conf": 56,
@@ -2971,7 +2971,7 @@
     "motor": {
       "id": "cooper-1958-motor",
       "notas": {
-        "motor": 49,
+        "motor": 50,
         "confMotor": 90
       }
     },
@@ -3165,7 +3165,7 @@
     "chassi": {
       "id": "team-lotus-1958-chassi",
       "notas": {
-        "aero": 36,
+        "aero": 37,
         "mec": 31,
         "ppeso": 34,
         "conf": 90,
@@ -3583,7 +3583,7 @@
     "motor": {
       "id": "ferrari-1959-motor",
       "notas": {
-        "motor": 96,
+        "motor": 95,
         "confMotor": 68
       }
     },
@@ -3651,7 +3651,7 @@
     "motor": {
       "id": "team-lotus-1959-motor",
       "notas": {
-        "motor": 52,
+        "motor": 51,
         "confMotor": 56
       }
     },
@@ -3787,7 +3787,7 @@
     "motor": {
       "id": "cooper-climax-1960-motor",
       "notas": {
-        "motor": 68,
+        "motor": 67,
         "confMotor": 62
       }
     },
@@ -3855,7 +3855,7 @@
     "motor": {
       "id": "cooper-maserati-1960-motor",
       "notas": {
-        "motor": 39,
+        "motor": 40,
         "confMotor": 48
       }
     },
@@ -3981,7 +3981,7 @@
     "chassi": {
       "id": "team-lotus-1960-chassi",
       "notas": {
-        "aero": 56,
+        "aero": 57,
         "mec": 55,
         "ppeso": 55,
         "conf": 89,
@@ -3991,7 +3991,7 @@
     "motor": {
       "id": "team-lotus-1960-motor",
       "notas": {
-        "motor": 48,
+        "motor": 49,
         "confMotor": 76
       }
     },
@@ -4118,7 +4118,7 @@
       "id": "cooper-climax-1961-chassi",
       "notas": {
         "aero": 62,
-        "mec": 55,
+        "mec": 58,
         "ppeso": 62,
         "conf": 56,
         "freio": 62
@@ -4127,7 +4127,7 @@
     "motor": {
       "id": "cooper-climax-1961-motor",
       "notas": {
-        "motor": 63,
+        "motor": 62,
         "confMotor": 45
       }
     },
@@ -4186,7 +4186,7 @@
       "id": "cooper-maserati-1961-chassi",
       "notas": {
         "aero": 34,
-        "mec": 32,
+        "mec": 33,
         "ppeso": 34,
         "conf": 34,
         "freio": 34
@@ -4322,7 +4322,7 @@
       "id": "lotus-climax-1961-chassi",
       "notas": {
         "aero": 46,
-        "mec": 49,
+        "mec": 50,
         "ppeso": 45,
         "conf": 45,
         "freio": 45
@@ -4331,7 +4331,7 @@
     "motor": {
       "id": "lotus-climax-1961-motor",
       "notas": {
-        "motor": 43,
+        "motor": 42,
         "confMotor": 56
       }
     },
@@ -4389,8 +4389,8 @@
     "chassi": {
       "id": "porsche-1961-chassi",
       "notas": {
-        "aero": 55,
-        "mec": 57,
+        "aero": 56,
+        "mec": 58,
         "ppeso": 62,
         "conf": 68,
         "freio": 62
@@ -4399,7 +4399,7 @@
     "motor": {
       "id": "porsche-1961-motor",
       "notas": {
-        "motor": 65,
+        "motor": 64,
         "confMotor": 90
       }
     },
@@ -4457,8 +4457,8 @@
     "chassi": {
       "id": "brm-1962-chassi",
       "notas": {
-        "aero": 88,
-        "mec": 81,
+        "aero": 87,
+        "mec": 82,
         "ppeso": 85,
         "conf": 79,
         "freio": 85
@@ -4467,7 +4467,7 @@
     "motor": {
       "id": "brm-1962-motor",
       "notas": {
-        "motor": 88,
+        "motor": 89,
         "confMotor": 56
       }
     },
@@ -4526,7 +4526,7 @@
       "id": "cooper-climax-1962-chassi",
       "notas": {
         "aero": 52,
-        "mec": 48,
+        "mec": 50,
         "ppeso": 51,
         "conf": 45,
         "freio": 51
@@ -4661,8 +4661,8 @@
     "chassi": {
       "id": "lola-1962-chassi",
       "notas": {
-        "aero": 82,
-        "mec": 81,
+        "aero": 83,
+        "mec": 80,
         "ppeso": 85,
         "conf": 56,
         "freio": 85
@@ -4730,7 +4730,7 @@
       "id": "lotus-climax-1962-chassi",
       "notas": {
         "aero": 57,
-        "mec": 58,
+        "mec": 59,
         "ppeso": 56,
         "conf": 34,
         "freio": 56
@@ -4739,7 +4739,7 @@
     "motor": {
       "id": "lotus-climax-1962-motor",
       "notas": {
-        "motor": 49,
+        "motor": 51,
         "confMotor": 68
       }
     },
@@ -4797,8 +4797,8 @@
     "chassi": {
       "id": "porsche-1962-chassi",
       "notas": {
-        "aero": 44,
-        "mec": 42,
+        "aero": 43,
+        "mec": 43,
         "ppeso": 45,
         "conf": 68,
         "freio": 45
@@ -4865,7 +4865,7 @@
     "chassi": {
       "id": "ats-1963-chassi",
       "notas": {
-        "aero": 41,
+        "aero": 40,
         "mec": 38,
         "ppeso": 38,
         "conf": 31,
@@ -4875,7 +4875,7 @@
     "motor": {
       "id": "ats-1963-motor",
       "notas": {
-        "motor": 35,
+        "motor": 36,
         "confMotor": 38
       }
     },
@@ -5205,7 +5205,7 @@
     "chassi": {
       "id": "lola-1963-chassi",
       "notas": {
-        "aero": 50,
+        "aero": 49,
         "mec": 44,
         "ppeso": 46,
         "conf": 65,
@@ -5215,7 +5215,7 @@
     "motor": {
       "id": "lola-1963-motor",
       "notas": {
-        "motor": 43,
+        "motor": 44,
         "confMotor": 65
       }
     },
@@ -5274,7 +5274,7 @@
       "id": "lotus-brm-1963-chassi",
       "notas": {
         "aero": 53,
-        "mec": 59,
+        "mec": 58,
         "ppeso": 57,
         "conf": 38,
         "freio": 57
@@ -5283,7 +5283,7 @@
     "motor": {
       "id": "lotus-brm-1963-motor",
       "notas": {
-        "motor": 56,
+        "motor": 57,
         "confMotor": 86
       }
     },
@@ -5342,7 +5342,7 @@
       "id": "lotus-climax-1963-chassi",
       "notas": {
         "aero": 75,
-        "mec": 67,
+        "mec": 68,
         "ppeso": 71,
         "conf": 79,
         "freio": 71
@@ -5409,7 +5409,7 @@
     "chassi": {
       "id": "porsche-1963-chassi",
       "notas": {
-        "aero": 41,
+        "aero": 42,
         "mec": 43,
         "ppeso": 43,
         "conf": 52,
@@ -5477,7 +5477,7 @@
     "chassi": {
       "id": "scirocco-1963-chassi",
       "notas": {
-        "aero": 49,
+        "aero": 48,
         "mec": 47,
         "ppeso": 47,
         "conf": 45,
@@ -5487,7 +5487,7 @@
     "motor": {
       "id": "scirocco-1963-motor",
       "notas": {
-        "motor": 45,
+        "motor": 46,
         "confMotor": 45
       }
     },
@@ -5691,7 +5691,7 @@
     "motor": {
       "id": "brm-1964-motor",
       "notas": {
-        "motor": 71,
+        "motor": 72,
         "confMotor": 92
       }
     },
@@ -5759,7 +5759,7 @@
     "motor": {
       "id": "brp-1964-motor",
       "notas": {
-        "motor": 46,
+        "motor": 45,
         "confMotor": 75
       }
     },
@@ -5818,7 +5818,7 @@
       "id": "cooper-climax-1964-chassi",
       "notas": {
         "aero": 64,
-        "mec": 61,
+        "mec": 60,
         "ppeso": 62,
         "conf": 58,
         "freio": 62
@@ -6021,7 +6021,7 @@
     "chassi": {
       "id": "lotus-climax-1964-chassi",
       "notas": {
-        "aero": 88,
+        "aero": 89,
         "mec": 85,
         "ppeso": 83,
         "conf": 92,
@@ -6099,7 +6099,7 @@
     "motor": {
       "id": "brabham-brm-1965-motor",
       "notas": {
-        "motor": 43,
+        "motor": 44,
         "confMotor": 66
       }
     },
@@ -6167,7 +6167,7 @@
     "motor": {
       "id": "brabham-climax-1965-motor",
       "notas": {
-        "motor": 66,
+        "motor": 67,
         "confMotor": 49
       }
     },
@@ -6303,7 +6303,7 @@
     "motor": {
       "id": "cooper-climax-1965-motor",
       "notas": {
-        "motor": 49,
+        "motor": 50,
         "confMotor": 58
       }
     },
@@ -6429,7 +6429,7 @@
     "chassi": {
       "id": "honda-1965-chassi",
       "notas": {
-        "aero": 64,
+        "aero": 63,
         "mec": 52,
         "ppeso": 60,
         "conf": 49,
@@ -6498,7 +6498,7 @@
       "id": "lotus-brm-1965-chassi",
       "notas": {
         "aero": 30,
-        "mec": 37,
+        "mec": 36,
         "ppeso": 32,
         "conf": 41,
         "freio": 32
@@ -6565,7 +6565,7 @@
     "chassi": {
       "id": "lotus-climax-1965-chassi",
       "notas": {
-        "aero": 94,
+        "aero": 93,
         "mec": 87,
         "ppeso": 92,
         "conf": 92,
@@ -6838,7 +6838,7 @@
       "id": "cooper-maserati-1966-chassi",
       "notas": {
         "aero": 59,
-        "mec": 55,
+        "mec": 56,
         "ppeso": 62,
         "conf": 52,
         "freio": 62
@@ -7042,7 +7042,7 @@
       "id": "lotus-brm-1966-chassi",
       "notas": {
         "aero": 47,
-        "mec": 45,
+        "mec": 46,
         "ppeso": 47,
         "conf": 33,
         "freio": 47
@@ -7109,7 +7109,7 @@
     "chassi": {
       "id": "brabham-repco-1967-chassi",
       "notas": {
-        "aero": 70,
+        "aero": 71,
         "mec": 78,
         "ppeso": 72,
         "conf": 91,
@@ -7245,7 +7245,7 @@
     "chassi": {
       "id": "cooper-maserati-1967-chassi",
       "notas": {
-        "aero": 40,
+        "aero": 41,
         "mec": 31,
         "ppeso": 38,
         "conf": 81,
@@ -7722,7 +7722,7 @@
       "id": "cooper-brm-1968-chassi",
       "notas": {
         "aero": 44,
-        "mec": 42,
+        "mec": 41,
         "ppeso": 45,
         "conf": 92,
         "freio": 45
@@ -8275,7 +8275,7 @@
     "motor": {
       "id": "ferrari-1969-motor",
       "notas": {
-        "motor": 50,
+        "motor": 51,
         "confMotor": 45
       }
     },
@@ -8333,8 +8333,8 @@
     "chassi": {
       "id": "lotus-ford-1969-chassi",
       "notas": {
-        "aero": 63,
-        "mec": 62,
+        "aero": 61,
+        "mec": 61,
         "ppeso": 59,
         "conf": 45,
         "freio": 59
@@ -8343,7 +8343,7 @@
     "motor": {
       "id": "lotus-ford-1969-motor",
       "notas": {
-        "motor": 59,
+        "motor": 58,
         "confMotor": 56
       }
     },
@@ -8411,7 +8411,7 @@
     "motor": {
       "id": "matra-ford-1969-motor",
       "notas": {
-        "motor": 88,
+        "motor": 89,
         "confMotor": 90
       }
     },
@@ -8538,7 +8538,7 @@
       "id": "brabham-1970-chassi",
       "notas": {
         "aero": 50,
-        "mec": 57,
+        "mec": 58,
         "ppeso": 54,
         "conf": 66,
         "freio": 54
@@ -8547,7 +8547,7 @@
     "motor": {
       "id": "brabham-1970-motor",
       "notas": {
-        "motor": 56,
+        "motor": 55,
         "confMotor": 66
       }
     },
@@ -8683,7 +8683,7 @@
     "motor": {
       "id": "ferrari-1970-motor",
       "notas": {
-        "motor": 92,
+        "motor": 91,
         "confMotor": 83
       }
     },
@@ -8742,7 +8742,7 @@
       "id": "march-1970-chassi",
       "notas": {
         "aero": 69,
-        "mec": 72,
+        "mec": 73,
         "ppeso": 73,
         "conf": 41,
         "freio": 73
@@ -8751,7 +8751,7 @@
     "motor": {
       "id": "march-1970-motor",
       "notas": {
-        "motor": 77,
+        "motor": 76,
         "confMotor": 58
       }
     },
@@ -8810,7 +8810,7 @@
       "id": "matra-1970-chassi",
       "notas": {
         "aero": 65,
-        "mec": 67,
+        "mec": 68,
         "ppeso": 64,
         "conf": 32,
         "freio": 64
@@ -8945,8 +8945,8 @@
     "chassi": {
       "id": "team-lotus-1970-chassi",
       "notas": {
-        "aero": 66,
-        "mec": 60,
+        "aero": 65,
+        "mec": 61,
         "ppeso": 65,
         "conf": 83,
         "freio": 65
@@ -8955,7 +8955,7 @@
     "motor": {
       "id": "team-lotus-1970-motor",
       "notas": {
-        "motor": 67,
+        "motor": 66,
         "confMotor": 75
       }
     },
@@ -9082,7 +9082,7 @@
       "id": "brabham-1971-chassi",
       "notas": {
         "aero": 48,
-        "mec": 49,
+        "mec": 50,
         "ppeso": 52,
         "conf": 31,
         "freio": 52
@@ -9091,7 +9091,7 @@
     "motor": {
       "id": "brabham-1971-motor",
       "notas": {
-        "motor": 55,
+        "motor": 54,
         "confMotor": 59
       }
     },
@@ -9285,8 +9285,8 @@
     "chassi": {
       "id": "lotus-ford-1971-chassi",
       "notas": {
-        "aero": 75,
-        "mec": 66,
+        "aero": 74,
+        "mec": 67,
         "ppeso": 72,
         "conf": 45,
         "freio": 72
@@ -9421,7 +9421,7 @@
     "chassi": {
       "id": "march-ford-1971-chassi",
       "notas": {
-        "aero": 55,
+        "aero": 56,
         "mec": 59,
         "ppeso": 55,
         "conf": 38,
@@ -9431,7 +9431,7 @@
     "motor": {
       "id": "march-ford-1971-motor",
       "notas": {
-        "motor": 55,
+        "motor": 54,
         "confMotor": 45
       }
     },
@@ -9490,7 +9490,7 @@
       "id": "matra-1971-chassi",
       "notas": {
         "aero": 71,
-        "mec": 73,
+        "mec": 72,
         "ppeso": 72,
         "conf": 52,
         "freio": 72
@@ -9567,7 +9567,7 @@
     "motor": {
       "id": "mclaren-1971-motor",
       "notas": {
-        "motor": 55,
+        "motor": 54,
         "confMotor": 52
       }
     },
@@ -9635,7 +9635,7 @@
     "motor": {
       "id": "surtees-1971-motor",
       "notas": {
-        "motor": 42,
+        "motor": 41,
         "confMotor": 72
       }
     },
@@ -9829,7 +9829,7 @@
     "chassi": {
       "id": "brm-1972-chassi",
       "notas": {
-        "aero": 43,
+        "aero": 42,
         "mec": 44,
         "ppeso": 44,
         "conf": 62,
@@ -9965,8 +9965,8 @@
     "chassi": {
       "id": "march-1972-chassi",
       "notas": {
-        "aero": 38,
-        "mec": 34,
+        "aero": 37,
+        "mec": 35,
         "ppeso": 36,
         "conf": 70,
         "freio": 36
@@ -9975,7 +9975,7 @@
     "motor": {
       "id": "march-1972-motor",
       "notas": {
-        "motor": 31,
+        "motor": 32,
         "confMotor": 85
       }
     },
@@ -10043,7 +10043,7 @@
     "motor": {
       "id": "mclaren-1972-motor",
       "notas": {
-        "motor": 83,
+        "motor": 84,
         "confMotor": 77
       }
     },
@@ -10111,7 +10111,7 @@
     "motor": {
       "id": "surtees-1972-motor",
       "notas": {
-        "motor": 55,
+        "motor": 56,
         "confMotor": 70
       }
     },
@@ -10247,7 +10247,7 @@
     "motor": {
       "id": "tecno-1972-motor",
       "notas": {
-        "motor": 46,
+        "motor": 47,
         "confMotor": 32
       }
     },
@@ -10305,7 +10305,7 @@
     "chassi": {
       "id": "tyrrell-1972-chassi",
       "notas": {
-        "aero": 86,
+        "aero": 85,
         "mec": 80,
         "ppeso": 84,
         "conf": 54,
@@ -10383,7 +10383,7 @@
     "motor": {
       "id": "brabham-1973-motor",
       "notas": {
-        "motor": 64,
+        "motor": 63,
         "confMotor": 45
       }
     },
@@ -10442,7 +10442,7 @@
       "id": "brm-1973-chassi",
       "notas": {
         "aero": 59,
-        "mec": 67,
+        "mec": 68,
         "ppeso": 62,
         "conf": 65,
         "freio": 62
@@ -10519,7 +10519,7 @@
     "motor": {
       "id": "ferrari-1973-motor",
       "notas": {
-        "motor": 70,
+        "motor": 69,
         "confMotor": 79
       }
     },
@@ -10587,7 +10587,7 @@
     "motor": {
       "id": "iso-marlboro-1973-motor",
       "notas": {
-        "motor": 32,
+        "motor": 31,
         "confMotor": 52
       }
     },
@@ -10655,7 +10655,7 @@
     "motor": {
       "id": "march-1973-motor",
       "notas": {
-        "motor": 53,
+        "motor": 52,
         "confMotor": 31
       }
     },
@@ -10713,7 +10713,7 @@
     "chassi": {
       "id": "mclaren-1973-chassi",
       "notas": {
-        "aero": 84,
+        "aero": 85,
         "mec": 76,
         "ppeso": 82,
         "conf": 86,
@@ -10781,7 +10781,7 @@
     "chassi": {
       "id": "shadow-1973-chassi",
       "notas": {
-        "aero": 39,
+        "aero": 40,
         "mec": 32,
         "ppeso": 35,
         "conf": 45,
@@ -10791,7 +10791,7 @@
     "motor": {
       "id": "shadow-1973-motor",
       "notas": {
-        "motor": 34,
+        "motor": 33,
         "confMotor": 59
       }
     },
@@ -10849,7 +10849,7 @@
     "chassi": {
       "id": "surtees-1973-chassi",
       "notas": {
-        "aero": 53,
+        "aero": 54,
         "mec": 50,
         "ppeso": 52,
         "conf": 31,
@@ -10859,7 +10859,7 @@
     "motor": {
       "id": "surtees-1973-motor",
       "notas": {
-        "motor": 57,
+        "motor": 56,
         "confMotor": 72
       }
     },
@@ -11054,7 +11054,7 @@
       "id": "brabham-1974-chassi",
       "notas": {
         "aero": 61,
-        "mec": 52,
+        "mec": 53,
         "ppeso": 59,
         "conf": 62,
         "freio": 59
@@ -11122,7 +11122,7 @@
       "id": "brm-1974-chassi",
       "notas": {
         "aero": 30,
-        "mec": 33,
+        "mec": 34,
         "ppeso": 34,
         "conf": 68,
         "freio": 34
@@ -11326,7 +11326,7 @@
       "id": "lola-1974-chassi",
       "notas": {
         "aero": 38,
-        "mec": 35,
+        "mec": 36,
         "ppeso": 40,
         "conf": 74,
         "freio": 40
@@ -12073,7 +12073,7 @@
     "chassi": {
       "id": "hesketh-1975-chassi",
       "notas": {
-        "aero": 70,
+        "aero": 71,
         "mec": 66,
         "ppeso": 68,
         "conf": 59,
@@ -12141,7 +12141,7 @@
     "chassi": {
       "id": "hill-1975-chassi",
       "notas": {
-        "aero": 45,
+        "aero": 46,
         "mec": 45,
         "ppeso": 45,
         "conf": 65,
@@ -12549,7 +12549,7 @@
     "chassi": {
       "id": "williams-1975-chassi",
       "notas": {
-        "aero": 42,
+        "aero": 43,
         "mec": 44,
         "ppeso": 45,
         "conf": 31,
@@ -12559,7 +12559,7 @@
     "motor": {
       "id": "williams-1975-motor",
       "notas": {
-        "motor": 46,
+        "motor": 45,
         "confMotor": 42
       }
     },
@@ -12617,7 +12617,7 @@
     "chassi": {
       "id": "brabham-alfa-romeo-1976-chassi",
       "notas": {
-        "aero": 62,
+        "aero": 61,
         "mec": 56,
         "ppeso": 62,
         "conf": 62,
@@ -12685,7 +12685,7 @@
     "chassi": {
       "id": "ensign-1976-chassi",
       "notas": {
-        "aero": 45,
+        "aero": 44,
         "mec": 41,
         "ppeso": 43,
         "conf": 74,
@@ -12753,7 +12753,7 @@
     "chassi": {
       "id": "ferrari-1976-chassi",
       "notas": {
-        "aero": 90,
+        "aero": 89,
         "mec": 96,
         "ppeso": 93,
         "conf": 93,
@@ -12763,7 +12763,7 @@
     "motor": {
       "id": "ferrari-1976-motor",
       "notas": {
-        "motor": 90,
+        "motor": 91,
         "confMotor": 56
       }
     },
@@ -12821,7 +12821,7 @@
     "chassi": {
       "id": "hesketh-1976-chassi",
       "notas": {
-        "aero": 32,
+        "aero": 30,
         "mec": 31,
         "ppeso": 31,
         "conf": 50,
@@ -12831,7 +12831,7 @@
     "motor": {
       "id": "hesketh-1976-motor",
       "notas": {
-        "motor": 32,
+        "motor": 33,
         "confMotor": 87
       }
     },
@@ -12889,7 +12889,7 @@
     "chassi": {
       "id": "march-1976-chassi",
       "notas": {
-        "aero": 79,
+        "aero": 78,
         "mec": 66,
         "ppeso": 71,
         "conf": 31,
@@ -12899,7 +12899,7 @@
     "motor": {
       "id": "march-1976-motor",
       "notas": {
-        "motor": 73,
+        "motor": 75,
         "confMotor": 37
       }
     },
@@ -12967,7 +12967,7 @@
     "motor": {
       "id": "mclaren-1976-motor",
       "notas": {
-        "motor": 83,
+        "motor": 84,
         "confMotor": 74
       }
     },
@@ -13025,7 +13025,7 @@
     "chassi": {
       "id": "shadow-1976-chassi",
       "notas": {
-        "aero": 54,
+        "aero": 53,
         "mec": 55,
         "ppeso": 56,
         "conf": 84,
@@ -13035,7 +13035,7 @@
     "motor": {
       "id": "shadow-1976-motor",
       "notas": {
-        "motor": 58,
+        "motor": 59,
         "confMotor": 68
       }
     },
@@ -13093,8 +13093,8 @@
     "chassi": {
       "id": "surtees-1976-chassi",
       "notas": {
-        "aero": 48,
-        "mec": 45,
+        "aero": 46,
+        "mec": 44,
         "ppeso": 47,
         "conf": 68,
         "freio": 47
@@ -13103,7 +13103,7 @@
     "motor": {
       "id": "surtees-1976-motor",
       "notas": {
-        "motor": 46,
+        "motor": 48,
         "confMotor": 81
       }
     },
@@ -13161,7 +13161,7 @@
     "chassi": {
       "id": "team-lotus-1976-chassi",
       "notas": {
-        "aero": 74,
+        "aero": 73,
         "mec": 71,
         "ppeso": 71,
         "conf": 37,
@@ -13171,7 +13171,7 @@
     "motor": {
       "id": "team-lotus-1976-motor",
       "notas": {
-        "motor": 68,
+        "motor": 69,
         "confMotor": 43
       }
     },
@@ -13229,8 +13229,8 @@
     "chassi": {
       "id": "tyrrell-1976-chassi",
       "notas": {
-        "aero": 86,
-        "mec": 84,
+        "aero": 85,
+        "mec": 83,
         "ppeso": 81,
         "conf": 56,
         "freio": 81
@@ -13239,7 +13239,7 @@
     "motor": {
       "id": "tyrrell-1976-motor",
       "notas": {
-        "motor": 73,
+        "motor": 74,
         "confMotor": 62
       }
     },
@@ -13297,8 +13297,8 @@
     "chassi": {
       "id": "wolf-1976-chassi",
       "notas": {
-        "aero": 39,
-        "mec": 40,
+        "aero": 38,
+        "mec": 39,
         "ppeso": 40,
         "conf": 43,
         "freio": 40
@@ -13307,7 +13307,7 @@
     "motor": {
       "id": "wolf-1976-motor",
       "notas": {
-        "motor": 39,
+        "motor": 42,
         "confMotor": 93
       }
     },
@@ -13434,7 +13434,7 @@
       "id": "ensign-1977-chassi",
       "notas": {
         "aero": 64,
-        "mec": 63,
+        "mec": 64,
         "ppeso": 65,
         "conf": 54,
         "freio": 65
@@ -13570,7 +13570,7 @@
       "id": "fittipaldi-1977-chassi",
       "notas": {
         "aero": 49,
-        "mec": 51,
+        "mec": 52,
         "ppeso": 51,
         "conf": 71,
         "freio": 51
@@ -13637,7 +13637,7 @@
     "chassi": {
       "id": "hesketh-1977-chassi",
       "notas": {
-        "aero": 39,
+        "aero": 38,
         "mec": 41,
         "ppeso": 37,
         "conf": 93,
@@ -13647,7 +13647,7 @@
     "motor": {
       "id": "hesketh-1977-motor",
       "notas": {
-        "motor": 33,
+        "motor": 34,
         "confMotor": 82
       }
     },
@@ -13705,8 +13705,8 @@
     "chassi": {
       "id": "march-1977-chassi",
       "notas": {
-        "aero": 31,
-        "mec": 29,
+        "aero": 30,
+        "mec": 30,
         "ppeso": 31,
         "conf": 31,
         "freio": 31
@@ -13910,7 +13910,7 @@
       "id": "shadow-1977-chassi",
       "notas": {
         "aero": 69,
-        "mec": 59,
+        "mec": 60,
         "ppeso": 65,
         "conf": 37,
         "freio": 65
@@ -13977,7 +13977,7 @@
     "chassi": {
       "id": "surtees-1977-chassi",
       "notas": {
-        "aero": 48,
+        "aero": 47,
         "mec": 46,
         "ppeso": 48,
         "conf": 88,
@@ -14250,7 +14250,7 @@
       "id": "ats-1978-chassi",
       "notas": {
         "aero": 35,
-        "mec": 43,
+        "mec": 42,
         "ppeso": 37,
         "conf": 50,
         "freio": 37
@@ -14395,7 +14395,7 @@
     "motor": {
       "id": "ensign-1978-motor",
       "notas": {
-        "motor": 43,
+        "motor": 44,
         "confMotor": 37
       }
     },
@@ -14522,7 +14522,7 @@
       "id": "mclaren-1978-chassi",
       "notas": {
         "aero": 60,
-        "mec": 72,
+        "mec": 71,
         "ppeso": 65,
         "conf": 87,
         "freio": 65
@@ -14599,7 +14599,7 @@
     "motor": {
       "id": "shadow-1978-motor",
       "notas": {
-        "motor": 48,
+        "motor": 49,
         "confMotor": 50
       }
     },
@@ -14667,7 +14667,7 @@
     "motor": {
       "id": "surtees-1978-motor",
       "notas": {
-        "motor": 31,
+        "motor": 32,
         "confMotor": 31
       }
     },
@@ -14794,7 +14794,7 @@
       "id": "tyrrell-1978-chassi",
       "notas": {
         "aero": 70,
-        "mec": 68,
+        "mec": 67,
         "ppeso": 68,
         "conf": 37,
         "freio": 68
@@ -14803,7 +14803,7 @@
     "motor": {
       "id": "tyrrell-1978-motor",
       "notas": {
-        "motor": 68,
+        "motor": 69,
         "confMotor": 90
       }
     },
@@ -15541,8 +15541,8 @@
     "chassi": {
       "id": "team-lotus-1979-chassi",
       "notas": {
-        "aero": 60,
-        "mec": 71,
+        "aero": 61,
+        "mec": 70,
         "ppeso": 67,
         "conf": 31,
         "freio": 67
@@ -15882,7 +15882,7 @@
       "id": "arrows-1980-chassi",
       "notas": {
         "aero": 47,
-        "mec": 56,
+        "mec": 57,
         "ppeso": 52,
         "conf": 93,
         "freio": 52
@@ -15891,7 +15891,7 @@
     "motor": {
       "id": "arrows-1980-motor",
       "notas": {
-        "motor": 53,
+        "motor": 52,
         "confMotor": 70
       }
     },
@@ -15959,7 +15959,7 @@
     "motor": {
       "id": "ats-1980-motor",
       "notas": {
-        "motor": 43,
+        "motor": 42,
         "confMotor": 36
       }
     },
@@ -16095,7 +16095,7 @@
     "motor": {
       "id": "ensign-1980-motor",
       "notas": {
-        "motor": 31,
+        "motor": 30,
         "confMotor": 41
       }
     },
@@ -16231,7 +16231,7 @@
     "motor": {
       "id": "fittipaldi-1980-motor",
       "notas": {
-        "motor": 46,
+        "motor": 45,
         "confMotor": 70
       }
     },
@@ -16493,7 +16493,7 @@
     "chassi": {
       "id": "team-lotus-1980-chassi",
       "notas": {
-        "aero": 73,
+        "aero": 74,
         "mec": 68,
         "ppeso": 70,
         "conf": 41,
@@ -16561,7 +16561,7 @@
     "chassi": {
       "id": "tyrrell-1980-chassi",
       "notas": {
-        "aero": 42,
+        "aero": 43,
         "mec": 46,
         "ppeso": 44,
         "conf": 83,
@@ -16639,7 +16639,7 @@
     "motor": {
       "id": "williams-1980-motor",
       "notas": {
-        "motor": 92,
+        "motor": 91,
         "confMotor": 93
       }
     },
@@ -16766,7 +16766,7 @@
       "id": "arrows-1981-chassi",
       "notas": {
         "aero": 59,
-        "mec": 64,
+        "mec": 63,
         "ppeso": 60,
         "conf": 44,
         "freio": 60
@@ -17115,7 +17115,7 @@
     "motor": {
       "id": "fittipaldi-1981-motor",
       "notas": {
-        "motor": 43,
+        "motor": 44,
         "confMotor": 39
       }
     },
@@ -17242,7 +17242,7 @@
       "id": "mclaren-1981-chassi",
       "notas": {
         "aero": 77,
-        "mec": 64,
+        "mec": 65,
         "ppeso": 69,
         "conf": 64,
         "freio": 69
@@ -17446,7 +17446,7 @@
       "id": "team-lotus-1981-chassi",
       "notas": {
         "aero": 72,
-        "mec": 79,
+        "mec": 78,
         "ppeso": 76,
         "conf": 85,
         "freio": 76
@@ -17514,7 +17514,7 @@
       "id": "theodore-1981-chassi",
       "notas": {
         "aero": 43,
-        "mec": 47,
+        "mec": 46,
         "ppeso": 44,
         "conf": 57,
         "freio": 44
@@ -17523,7 +17523,7 @@
     "motor": {
       "id": "theodore-1981-motor",
       "notas": {
-        "motor": 42,
+        "motor": 43,
         "confMotor": 62
       }
     },
@@ -18058,7 +18058,7 @@
       "id": "ligier-1982-chassi",
       "notas": {
         "aero": 56,
-        "mec": 65,
+        "mec": 66,
         "ppeso": 60,
         "conf": 35,
         "freio": 60
@@ -18135,7 +18135,7 @@
     "motor": {
       "id": "march-1982-motor",
       "notas": {
-        "motor": 38,
+        "motor": 39,
         "confMotor": 48
       }
     },
@@ -18194,7 +18194,7 @@
       "id": "mclaren-1982-chassi",
       "notas": {
         "aero": 81,
-        "mec": 75,
+        "mec": 76,
         "ppeso": 78,
         "conf": 57,
         "freio": 78
@@ -18398,7 +18398,7 @@
       "id": "team-lotus-1982-chassi",
       "notas": {
         "aero": 66,
-        "mec": 68,
+        "mec": 69,
         "ppeso": 69,
         "conf": 53,
         "freio": 69
@@ -18602,7 +18602,7 @@
       "id": "tyrrell-1982-chassi",
       "notas": {
         "aero": 63,
-        "mec": 61,
+        "mec": 62,
         "ppeso": 62,
         "conf": 67,
         "freio": 62
@@ -19009,7 +19009,7 @@
     "chassi": {
       "id": "ligier-1983-chassi",
       "notas": {
-        "aero": 34,
+        "aero": 35,
         "mec": 41,
         "ppeso": 38,
         "conf": 31,
@@ -19077,7 +19077,7 @@
     "chassi": {
       "id": "mclaren-1983-chassi",
       "notas": {
-        "aero": 66,
+        "aero": 67,
         "mec": 62,
         "ppeso": 67,
         "conf": 52,
@@ -19145,7 +19145,7 @@
     "chassi": {
       "id": "osella-1983-chassi",
       "notas": {
-        "aero": 32,
+        "aero": 33,
         "mec": 33,
         "ppeso": 33,
         "conf": 41,
@@ -19495,7 +19495,7 @@
     "motor": {
       "id": "tyrrell-1983-motor",
       "notas": {
-        "motor": 47,
+        "motor": 46,
         "confMotor": 54
       }
     },
@@ -20447,7 +20447,7 @@
     "motor": {
       "id": "toleman-1984-motor",
       "notas": {
-        "motor": 63,
+        "motor": 62,
         "confMotor": 67
       }
     },
@@ -20505,7 +20505,7 @@
     "chassi": {
       "id": "tyrrell-1984-chassi",
       "notas": {
-        "aero": 50,
+        "aero": 51,
         "mec": 58,
         "ppeso": 53,
         "conf": 94,
@@ -20515,7 +20515,7 @@
     "motor": {
       "id": "tyrrell-1984-motor",
       "notas": {
-        "motor": 52,
+        "motor": 51,
         "confMotor": 94
       }
     },
@@ -20651,7 +20651,7 @@
     "motor": {
       "id": "alfa-1985-motor",
       "notas": {
-        "motor": 48,
+        "motor": 49,
         "confMotor": 30
       }
     },
@@ -20709,7 +20709,7 @@
     "chassi": {
       "id": "arrows-1985-chassi",
       "notas": {
-        "aero": 61,
+        "aero": 62,
         "mec": 60,
         "ppeso": 62,
         "conf": 81,
@@ -20923,7 +20923,7 @@
     "motor": {
       "id": "ligier-1985-motor",
       "notas": {
-        "motor": 52,
+        "motor": 53,
         "confMotor": 79
       }
     },
@@ -21059,7 +21059,7 @@
     "motor": {
       "id": "osella-1985-motor",
       "notas": {
-        "motor": 40,
+        "motor": 41,
         "confMotor": 64
       }
     },
@@ -21467,7 +21467,7 @@
     "motor": {
       "id": "williams-1985-motor",
       "notas": {
-        "motor": 87,
+        "motor": 88,
         "confMotor": 57
       }
     },
@@ -21594,7 +21594,7 @@
       "id": "arrows-1986-chassi",
       "notas": {
         "aero": 48,
-        "mec": 43,
+        "mec": 42,
         "ppeso": 46,
         "conf": 93,
         "freio": 46
@@ -22079,7 +22079,7 @@
     "motor": {
       "id": "minardi-1986-motor",
       "notas": {
-        "motor": 35,
+        "motor": 36,
         "confMotor": 52
       }
     },
@@ -22477,7 +22477,7 @@
     "chassi": {
       "id": "ags-1987-chassi",
       "notas": {
-        "aero": 34,
+        "aero": 33,
         "mec": 33,
         "ppeso": 33,
         "conf": 79,
@@ -22487,7 +22487,7 @@
     "motor": {
       "id": "ags-1987-motor",
       "notas": {
-        "motor": 32,
+        "motor": 33,
         "confMotor": 79
       }
     },
@@ -22545,7 +22545,7 @@
     "chassi": {
       "id": "arrows-1987-chassi",
       "notas": {
-        "aero": 66,
+        "aero": 65,
         "mec": 69,
         "ppeso": 66,
         "conf": 55,
@@ -22613,8 +22613,8 @@
     "chassi": {
       "id": "benetton-1987-chassi",
       "notas": {
-        "aero": 79,
-        "mec": 76,
+        "aero": 78,
+        "mec": 75,
         "ppeso": 78,
         "conf": 55,
         "freio": 78
@@ -22623,7 +22623,7 @@
     "motor": {
       "id": "benetton-1987-motor",
       "notas": {
-        "motor": 79,
+        "motor": 80,
         "confMotor": 64
       }
     },
@@ -22681,8 +22681,8 @@
     "chassi": {
       "id": "brabham-1987-chassi",
       "notas": {
-        "aero": 69,
-        "mec": 63,
+        "aero": 68,
+        "mec": 62,
         "ppeso": 66,
         "conf": 30,
         "freio": 66
@@ -22691,7 +22691,7 @@
     "motor": {
       "id": "brabham-1987-motor",
       "notas": {
-        "motor": 67,
+        "motor": 68,
         "confMotor": 47
       }
     },
@@ -22817,7 +22817,7 @@
     "chassi": {
       "id": "larrousse-1987-chassi",
       "notas": {
-        "aero": 49,
+        "aero": 48,
         "mec": 52,
         "ppeso": 48,
         "conf": 64,
@@ -22827,7 +22827,7 @@
     "motor": {
       "id": "larrousse-1987-motor",
       "notas": {
-        "motor": 44,
+        "motor": 45,
         "confMotor": 84
       }
     },
@@ -22953,7 +22953,7 @@
     "chassi": {
       "id": "mclaren-1987-chassi",
       "notas": {
-        "aero": 84,
+        "aero": 83,
         "mec": 82,
         "ppeso": 81,
         "conf": 74,
@@ -22963,7 +22963,7 @@
     "motor": {
       "id": "mclaren-1987-motor",
       "notas": {
-        "motor": 77,
+        "motor": 78,
         "confMotor": 72
       }
     },
@@ -23031,7 +23031,7 @@
     "motor": {
       "id": "minardi-1987-motor",
       "notas": {
-        "motor": 44,
+        "motor": 45,
         "confMotor": 35
       }
     },
@@ -23089,7 +23089,7 @@
     "chassi": {
       "id": "osella-1987-chassi",
       "notas": {
-        "aero": 49,
+        "aero": 48,
         "mec": 53,
         "ppeso": 49,
         "conf": 35,
@@ -23167,7 +23167,7 @@
     "motor": {
       "id": "team-lotus-1987-motor",
       "notas": {
-        "motor": 76,
+        "motor": 77,
         "confMotor": 89
       }
     },
@@ -23225,7 +23225,7 @@
     "chassi": {
       "id": "tyrrell-1987-chassi",
       "notas": {
-        "aero": 41,
+        "aero": 40,
         "mec": 51,
         "ppeso": 43,
         "conf": 89,
@@ -23235,7 +23235,7 @@
     "motor": {
       "id": "tyrrell-1987-motor",
       "notas": {
-        "motor": 37,
+        "motor": 38,
         "confMotor": 94
       }
     },
@@ -23361,7 +23361,7 @@
     "chassi": {
       "id": "zakspeed-1987-chassi",
       "notas": {
-        "aero": 62,
+        "aero": 61,
         "mec": 56,
         "ppeso": 58,
         "conf": 40,
@@ -23371,7 +23371,7 @@
     "motor": {
       "id": "zakspeed-1987-motor",
       "notas": {
-        "motor": 57,
+        "motor": 58,
         "confMotor": 60
       }
     },
@@ -23575,7 +23575,7 @@
     "motor": {
       "id": "eurobrun-1988-motor",
       "notas": {
-        "motor": 34,
+        "motor": 35,
         "confMotor": 72
       }
     },
@@ -24391,7 +24391,7 @@
     "motor": {
       "id": "benetton-1989-motor",
       "notas": {
-        "motor": 81,
+        "motor": 80,
         "confMotor": 94
       }
     },
@@ -24450,7 +24450,7 @@
       "id": "brabham-1989-chassi",
       "notas": {
         "aero": 59,
-        "mec": 70,
+        "mec": 71,
         "ppeso": 63,
         "conf": 48,
         "freio": 63
@@ -24663,7 +24663,7 @@
     "motor": {
       "id": "larrousse-1989-motor",
       "notas": {
-        "motor": 44,
+        "motor": 43,
         "confMotor": 30
       }
     },
@@ -24731,7 +24731,7 @@
     "motor": {
       "id": "ligier-1989-motor",
       "notas": {
-        "motor": 34,
+        "motor": 33,
         "confMotor": 76
       }
     },
@@ -24790,7 +24790,7 @@
       "id": "march-1989-chassi",
       "notas": {
         "aero": 62,
-        "mec": 56,
+        "mec": 57,
         "ppeso": 61,
         "conf": 30,
         "freio": 61
@@ -24799,7 +24799,7 @@
     "motor": {
       "id": "march-1989-motor",
       "notas": {
-        "motor": 63,
+        "motor": 62,
         "confMotor": 39
       }
     },
@@ -24935,7 +24935,7 @@
     "motor": {
       "id": "minardi-1989-motor",
       "notas": {
-        "motor": 50,
+        "motor": 49,
         "confMotor": 71
       }
     },
@@ -25062,7 +25062,7 @@
       "id": "osella-1989-chassi",
       "notas": {
         "aero": 57,
-        "mec": 51,
+        "mec": 52,
         "ppeso": 53,
         "conf": 35,
         "freio": 53
@@ -25333,7 +25333,7 @@
     "chassi": {
       "id": "ags-1990-chassi",
       "notas": {
-        "aero": 29,
+        "aero": 30,
         "mec": 31,
         "ppeso": 30,
         "conf": 45,
@@ -25537,7 +25537,7 @@
     "chassi": {
       "id": "brabham-1990-chassi",
       "notas": {
-        "aero": 43,
+        "aero": 44,
         "mec": 46,
         "ppeso": 47,
         "conf": 40,
@@ -25674,7 +25674,7 @@
       "id": "ferrari-1990-chassi",
       "notas": {
         "aero": 94,
-        "mec": 89,
+        "mec": 88,
         "ppeso": 91,
         "conf": 50,
         "freio": 91
@@ -25809,7 +25809,7 @@
     "chassi": {
       "id": "leyton-1990-chassi",
       "notas": {
-        "aero": 66,
+        "aero": 67,
         "mec": 57,
         "ppeso": 64,
         "conf": 60,
@@ -25877,7 +25877,7 @@
     "chassi": {
       "id": "ligier-1990-chassi",
       "notas": {
-        "aero": 37,
+        "aero": 38,
         "mec": 44,
         "ppeso": 40,
         "conf": 89,
@@ -26285,7 +26285,7 @@
     "chassi": {
       "id": "benetton-1991-chassi",
       "notas": {
-        "aero": 77,
+        "aero": 78,
         "mec": 81,
         "ppeso": 80,
         "conf": 62,
@@ -26431,7 +26431,7 @@
     "motor": {
       "id": "dallara-1991-motor",
       "notas": {
-        "motor": 56,
+        "motor": 55,
         "confMotor": 46
       }
     },
@@ -26693,7 +26693,7 @@
     "chassi": {
       "id": "jordan-1991-chassi",
       "notas": {
-        "aero": 70,
+        "aero": 71,
         "mec": 70,
         "ppeso": 73,
         "conf": 57,
@@ -26839,7 +26839,7 @@
     "motor": {
       "id": "ligier-1991-motor",
       "notas": {
-        "motor": 49,
+        "motor": 48,
         "confMotor": 46
       }
     },
@@ -27315,7 +27315,7 @@
     "motor": {
       "id": "benetton-1992-motor",
       "notas": {
-        "motor": 84,
+        "motor": 83,
         "confMotor": 94
       }
     },
@@ -27655,7 +27655,7 @@
     "motor": {
       "id": "jordan-1992-motor",
       "notas": {
-        "motor": 39,
+        "motor": 38,
         "confMotor": 69
       }
     },
@@ -27723,7 +27723,7 @@
     "motor": {
       "id": "larrousse-1992-motor",
       "notas": {
-        "motor": 43,
+        "motor": 42,
         "confMotor": 45
       }
     },
@@ -27985,7 +27985,7 @@
     "chassi": {
       "id": "minardi-1992-chassi",
       "notas": {
-        "aero": 40,
+        "aero": 41,
         "mec": 48,
         "ppeso": 43,
         "conf": 60,
@@ -28121,7 +28121,7 @@
     "chassi": {
       "id": "tyrrell-1992-chassi",
       "notas": {
-        "aero": 65,
+        "aero": 66,
         "mec": 65,
         "ppeso": 64,
         "conf": 81,
@@ -28131,7 +28131,7 @@
     "motor": {
       "id": "tyrrell-1992-motor",
       "notas": {
-        "motor": 64,
+        "motor": 63,
         "confMotor": 30
       }
     },
@@ -28461,7 +28461,7 @@
     "chassi": {
       "id": "jordan-1993-chassi",
       "notas": {
-        "aero": 48,
+        "aero": 47,
         "mec": 44,
         "ppeso": 46,
         "conf": 31,
@@ -28675,7 +28675,7 @@
     "motor": {
       "id": "lola-1993-motor",
       "notas": {
-        "motor": 33,
+        "motor": 34,
         "confMotor": 52
       }
     },
@@ -28802,7 +28802,7 @@
       "id": "minardi-1993-chassi",
       "notas": {
         "aero": 47,
-        "mec": 55,
+        "mec": 54,
         "ppeso": 49,
         "conf": 52,
         "freio": 49
@@ -28869,7 +28869,7 @@
     "chassi": {
       "id": "sauber-1993-chassi",
       "notas": {
-        "aero": 70,
+        "aero": 71,
         "mec": 69,
         "ppeso": 70,
         "conf": 72,
@@ -29006,7 +29006,7 @@
       "id": "tyrrell-1993-chassi",
       "notas": {
         "aero": 32,
-        "mec": 35,
+        "mec": 34,
         "ppeso": 33,
         "conf": 44,
         "freio": 33
@@ -29414,7 +29414,7 @@
       "id": "larrousse-1994-chassi",
       "notas": {
         "aero": 44,
-        "mec": 45,
+        "mec": 44,
         "ppeso": 44,
         "conf": 52,
         "freio": 44
@@ -29423,7 +29423,7 @@
     "motor": {
       "id": "larrousse-1994-motor",
       "notas": {
-        "motor": 42,
+        "motor": 43,
         "confMotor": 31
       }
     },
@@ -29481,8 +29481,8 @@
     "chassi": {
       "id": "ligier-1994-chassi",
       "notas": {
-        "aero": 45,
-        "mec": 51,
+        "aero": 44,
+        "mec": 50,
         "ppeso": 49,
         "conf": 91,
         "freio": 49
@@ -29821,7 +29821,7 @@
     "chassi": {
       "id": "team-lotus-1994-chassi",
       "notas": {
-        "aero": 36,
+        "aero": 35,
         "mec": 37,
         "ppeso": 38,
         "conf": 83,
@@ -29831,7 +29831,7 @@
     "motor": {
       "id": "team-lotus-1994-motor",
       "notas": {
-        "motor": 43,
+        "motor": 44,
         "confMotor": 67
       }
     },
@@ -29957,7 +29957,7 @@
     "chassi": {
       "id": "williams-1994-chassi",
       "notas": {
-        "aero": 93,
+        "aero": 92,
         "mec": 95,
         "ppeso": 93,
         "conf": 78,
@@ -30162,7 +30162,7 @@
       "id": "footwork-1995-chassi",
       "notas": {
         "aero": 47,
-        "mec": 43,
+        "mec": 44,
         "ppeso": 45,
         "conf": 51,
         "freio": 45
@@ -30230,7 +30230,7 @@
       "id": "forti-1995-chassi",
       "notas": {
         "aero": 31,
-        "mec": 32,
+        "mec": 33,
         "ppeso": 31,
         "conf": 37,
         "freio": 31
@@ -30298,7 +30298,7 @@
       "id": "jordan-1995-chassi",
       "notas": {
         "aero": 72,
-        "mec": 70,
+        "mec": 71,
         "ppeso": 71,
         "conf": 51,
         "freio": 71
@@ -30433,7 +30433,7 @@
     "chassi": {
       "id": "mclaren-1995-chassi",
       "notas": {
-        "aero": 72,
+        "aero": 71,
         "mec": 70,
         "ppeso": 73,
         "conf": 88,
@@ -30579,7 +30579,7 @@
     "motor": {
       "id": "pacific-1995-motor",
       "notas": {
-        "motor": 37,
+        "motor": 36,
         "confMotor": 76
       }
     },
@@ -31045,7 +31045,7 @@
     "chassi": {
       "id": "forti-1996-chassi",
       "notas": {
-        "aero": 34,
+        "aero": 33,
         "mec": 33,
         "ppeso": 34,
         "conf": 68,
@@ -31318,7 +31318,7 @@
       "id": "minardi-1996-chassi",
       "notas": {
         "aero": 32,
-        "mec": 35,
+        "mec": 36,
         "ppeso": 34,
         "conf": 50,
         "freio": 34
@@ -31463,7 +31463,7 @@
     "motor": {
       "id": "tyrrell-1996-motor",
       "notas": {
-        "motor": 49,
+        "motor": 48,
         "confMotor": 37
       }
     },
@@ -32202,7 +32202,7 @@
       "id": "tyrrell-1997-chassi",
       "notas": {
         "aero": 37,
-        "mec": 37,
+        "mec": 38,
         "ppeso": 37,
         "conf": 37,
         "freio": 37
@@ -32211,7 +32211,7 @@
     "motor": {
       "id": "tyrrell-1997-motor",
       "notas": {
-        "motor": 38,
+        "motor": 37,
         "confMotor": 50
       }
     },
@@ -33085,7 +33085,7 @@
     "chassi": {
       "id": "arrows-1999-chassi",
       "notas": {
-        "aero": 35,
+        "aero": 36,
         "mec": 34,
         "ppeso": 34,
         "conf": 37,
@@ -33494,7 +33494,7 @@
       "id": "minardi-1999-chassi",
       "notas": {
         "aero": 32,
-        "mec": 34,
+        "mec": 33,
         "ppeso": 34,
         "conf": 59,
         "freio": 34
@@ -33843,7 +33843,7 @@
     "motor": {
       "id": "arrows-2000-motor",
       "notas": {
-        "motor": 51,
+        "motor": 52,
         "confMotor": 62
       }
     },
@@ -33970,7 +33970,7 @@
       "id": "benetton-2000-chassi",
       "notas": {
         "aero": 56,
-        "mec": 65,
+        "mec": 66,
         "ppeso": 62,
         "conf": 84,
         "freio": 62
@@ -34106,7 +34106,7 @@
       "id": "jaguar-2000-chassi",
       "notas": {
         "aero": 56,
-        "mec": 53,
+        "mec": 54,
         "ppeso": 53,
         "conf": 40,
         "freio": 53
@@ -34183,7 +34183,7 @@
     "motor": {
       "id": "jordan-2000-motor",
       "notas": {
-        "motor": 77,
+        "motor": 78,
         "confMotor": 62
       }
     },
@@ -34310,7 +34310,7 @@
       "id": "minardi-2000-chassi",
       "notas": {
         "aero": 31,
-        "mec": 30,
+        "mec": 31,
         "ppeso": 31,
         "conf": 56,
         "freio": 31
@@ -34319,7 +34319,7 @@
     "motor": {
       "id": "minardi-2000-motor",
       "notas": {
-        "motor": 30,
+        "motor": 31,
         "confMotor": 43
       }
     },
@@ -35398,7 +35398,7 @@
       "id": "bar-2002-chassi",
       "notas": {
         "aero": 63,
-        "mec": 59,
+        "mec": 60,
         "ppeso": 62,
         "conf": 43,
         "freio": 62
@@ -35737,7 +35737,7 @@
     "chassi": {
       "id": "minardi-2002-chassi",
       "notas": {
-        "aero": 31,
+        "aero": 32,
         "mec": 31,
         "ppeso": 31,
         "conf": 56,
@@ -35874,7 +35874,7 @@
       "id": "sauber-2002-chassi",
       "notas": {
         "aero": 69,
-        "mec": 68,
+        "mec": 69,
         "ppeso": 68,
         "conf": 77,
         "freio": 68
@@ -36077,7 +36077,7 @@
     "chassi": {
       "id": "bar-2003-chassi",
       "notas": {
-        "aero": 66,
+        "aero": 65,
         "mec": 56,
         "ppeso": 62,
         "conf": 45,
@@ -36087,7 +36087,7 @@
     "motor": {
       "id": "bar-2003-motor",
       "notas": {
-        "motor": 61,
+        "motor": 62,
         "confMotor": 38
       }
     },
@@ -36554,7 +36554,7 @@
       "id": "sauber-2003-chassi",
       "notas": {
         "aero": 45,
-        "mec": 43,
+        "mec": 42,
         "ppeso": 45,
         "conf": 62,
         "freio": 45
@@ -37505,8 +37505,8 @@
     "chassi": {
       "id": "ferrari-2005-chassi",
       "notas": {
-        "aero": 65,
-        "mec": 74,
+        "aero": 63,
+        "mec": 73,
         "ppeso": 69,
         "conf": 69,
         "freio": 69
@@ -37515,7 +37515,7 @@
     "motor": {
       "id": "ferrari-2005-motor",
       "notas": {
-        "motor": 66,
+        "motor": 71,
         "confMotor": 82
       }
     },
@@ -37573,8 +37573,8 @@
     "chassi": {
       "id": "jordan-2005-chassi",
       "notas": {
-        "aero": 45,
-        "mec": 39,
+        "aero": 38,
+        "mec": 35,
         "ppeso": 38,
         "conf": 69,
         "freio": 38
@@ -37583,7 +37583,7 @@
     "motor": {
       "id": "jordan-2005-motor",
       "notas": {
-        "motor": 30,
+        "motor": 37,
         "confMotor": 65
       }
     },
@@ -37709,8 +37709,8 @@
     "chassi": {
       "id": "minardi-2005-chassi",
       "notas": {
-        "aero": 39,
-        "mec": 37,
+        "aero": 33,
+        "mec": 33,
         "ppeso": 31,
         "conf": 31,
         "freio": 31
@@ -37719,7 +37719,7 @@
     "motor": {
       "id": "minardi-2005-motor",
       "notas": {
-        "motor": 28,
+        "motor": 31,
         "confMotor": 82
       }
     },
@@ -41858,7 +41858,7 @@
       "id": "force-india-2011-chassi",
       "notas": {
         "aero": 67,
-        "mec": 70,
+        "mec": 69,
         "ppeso": 68,
         "conf": 82,
         "freio": 68
@@ -41926,7 +41926,7 @@
       "id": "hrt-2011-chassi",
       "notas": {
         "aero": 32,
-        "mec": 31,
+        "mec": 30,
         "ppeso": 31,
         "conf": 65,
         "freio": 31
@@ -42130,7 +42130,7 @@
       "id": "mercedes-2011-chassi",
       "notas": {
         "aero": 74,
-        "mec": 80,
+        "mec": 79,
         "ppeso": 76,
         "conf": 82,
         "freio": 76
@@ -42265,7 +42265,7 @@
     "chassi": {
       "id": "renault-2011-chassi",
       "notas": {
-        "aero": 67,
+        "aero": 68,
         "mec": 65,
         "ppeso": 68,
         "conf": 93,
@@ -42334,7 +42334,7 @@
       "id": "sauber-2011-chassi",
       "notas": {
         "aero": 60,
-        "mec": 61,
+        "mec": 60,
         "ppeso": 59,
         "conf": 56,
         "freio": 59
@@ -42470,7 +42470,7 @@
       "id": "virgin-2011-chassi",
       "notas": {
         "aero": 37,
-        "mec": 37,
+        "mec": 36,
         "ppeso": 37,
         "conf": 42,
         "freio": 37
@@ -43421,7 +43421,7 @@
     "chassi": {
       "id": "caterham-2013-chassi",
       "notas": {
-        "aero": 37,
+        "aero": 36,
         "mec": 39,
         "ppeso": 37,
         "conf": 40,
@@ -43557,7 +43557,7 @@
     "chassi": {
       "id": "force-india-2013-chassi",
       "notas": {
-        "aero": 57,
+        "aero": 56,
         "mec": 56,
         "ppeso": 59,
         "conf": 40,
@@ -44043,7 +44043,7 @@
     "motor": {
       "id": "toro-rosso-2013-motor",
       "notas": {
-        "motor": 55,
+        "motor": 54,
         "confMotor": 84
       }
     },
@@ -44179,7 +44179,7 @@
     "motor": {
       "id": "caterham-2014-motor",
       "notas": {
-        "motor": 30,
+        "motor": 29,
         "confMotor": 50
       }
     },
@@ -44374,7 +44374,7 @@
       "id": "lotus-f1-2014-chassi",
       "notas": {
         "aero": 49,
-        "mec": 48,
+        "mec": 47,
         "ppeso": 47,
         "conf": 50,
         "freio": 47
@@ -44442,7 +44442,7 @@
       "id": "marussia-2014-chassi",
       "notas": {
         "aero": 40,
-        "mec": 36,
+        "mec": 37,
         "ppeso": 37,
         "conf": 43,
         "freio": 37
@@ -44451,7 +44451,7 @@
     "motor": {
       "id": "marussia-2014-motor",
       "notas": {
-        "motor": 37,
+        "motor": 36,
         "confMotor": 87
       }
     },
@@ -44850,7 +44850,7 @@
       "id": "williams-2014-chassi",
       "notas": {
         "aero": 84,
-        "mec": 80,
+        "mec": 81,
         "ppeso": 84,
         "conf": 93,
         "freio": 84
@@ -44986,7 +44986,7 @@
       "id": "force-india-2015-chassi",
       "notas": {
         "aero": 63,
-        "mec": 64,
+        "mec": 63,
         "ppeso": 65,
         "conf": 48,
         "freio": 65
@@ -45199,7 +45199,7 @@
     "motor": {
       "id": "mclaren-2015-motor",
       "notas": {
-        "motor": 32,
+        "motor": 33,
         "confMotor": 38
       }
     },
@@ -45335,7 +45335,7 @@
     "motor": {
       "id": "red-bull-2015-motor",
       "notas": {
-        "motor": 64,
+        "motor": 65,
         "confMotor": 45
       }
     },
@@ -45394,7 +45394,7 @@
       "id": "sauber-2015-chassi",
       "notas": {
         "aero": 42,
-        "mec": 40,
+        "mec": 39,
         "ppeso": 45,
         "conf": 65,
         "freio": 45
@@ -45471,7 +45471,7 @@
     "motor": {
       "id": "toro-rosso-2015-motor",
       "notas": {
-        "motor": 48,
+        "motor": 49,
         "confMotor": 31
       }
     },
@@ -45529,7 +45529,7 @@
     "chassi": {
       "id": "williams-2015-chassi",
       "notas": {
-        "aero": 80,
+        "aero": 81,
         "mec": 73,
         "ppeso": 79,
         "conf": 82,
@@ -45734,7 +45734,7 @@
       "id": "haas-2016-chassi",
       "notas": {
         "aero": 52,
-        "mec": 51,
+        "mec": 50,
         "ppeso": 50,
         "conf": 43,
         "freio": 50
@@ -45802,7 +45802,7 @@
       "id": "manor-2016-chassi",
       "notas": {
         "aero": 28,
-        "mec": 29,
+        "mec": 28,
         "ppeso": 31,
         "conf": 71,
         "freio": 31
@@ -46015,7 +46015,7 @@
     "motor": {
       "id": "red-bull-2016-motor",
       "notas": {
-        "motor": 83,
+        "motor": 82,
         "confMotor": 93
       }
     },
@@ -46074,7 +46074,7 @@
       "id": "renault-2016-chassi",
       "notas": {
         "aero": 45,
-        "mec": 43,
+        "mec": 42,
         "ppeso": 43,
         "conf": 34,
         "freio": 43
@@ -46142,7 +46142,7 @@
       "id": "sauber-2016-chassi",
       "notas": {
         "aero": 35,
-        "mec": 40,
+        "mec": 39,
         "ppeso": 37,
         "conf": 71,
         "freio": 37
@@ -46151,7 +46151,7 @@
     "motor": {
       "id": "sauber-2016-motor",
       "notas": {
-        "motor": 37,
+        "motor": 36,
         "confMotor": 37
       }
     },
@@ -46278,7 +46278,7 @@
       "id": "williams-2016-chassi",
       "notas": {
         "aero": 66,
-        "mec": 62,
+        "mec": 61,
         "ppeso": 68,
         "conf": 53,
         "freio": 68
@@ -47229,7 +47229,7 @@
     "chassi": {
       "id": "mclaren-2018-chassi",
       "notas": {
-        "aero": 42,
+        "aero": 41,
         "mec": 46,
         "ppeso": 42,
         "conf": 38,
@@ -47433,7 +47433,7 @@
     "chassi": {
       "id": "renault-2018-chassi",
       "notas": {
-        "aero": 65,
+        "aero": 64,
         "mec": 71,
         "ppeso": 69,
         "conf": 89,
@@ -47570,7 +47570,7 @@
       "id": "toro-rosso-2018-chassi",
       "notas": {
         "aero": 43,
-        "mec": 47,
+        "mec": 48,
         "ppeso": 42,
         "conf": 38,
         "freio": 42
@@ -47637,7 +47637,7 @@
     "chassi": {
       "id": "williams-2018-chassi",
       "notas": {
-        "aero": 30,
+        "aero": 29,
         "mec": 29,
         "ppeso": 31,
         "conf": 65,
@@ -47705,7 +47705,7 @@
     "chassi": {
       "id": "alfa-2019-chassi",
       "notas": {
-        "aero": 42,
+        "aero": 41,
         "mec": 44,
         "ppeso": 45,
         "conf": 86,
@@ -47842,7 +47842,7 @@
       "id": "haas-2019-chassi",
       "notas": {
         "aero": 45,
-        "mec": 47,
+        "mec": 48,
         "ppeso": 48,
         "conf": 31,
         "freio": 48
@@ -47919,7 +47919,7 @@
     "motor": {
       "id": "mclaren-2019-motor",
       "notas": {
-        "motor": 70,
+        "motor": 69,
         "confMotor": 31
       }
     },
@@ -47987,7 +47987,7 @@
     "motor": {
       "id": "mercedes-2019-motor",
       "notas": {
-        "motor": 93,
+        "motor": 92,
         "confMotor": 65
       }
     },
@@ -48046,7 +48046,7 @@
       "id": "racing-point-2019-chassi",
       "notas": {
         "aero": 42,
-        "mec": 40,
+        "mec": 41,
         "ppeso": 45,
         "conf": 52,
         "freio": 45
@@ -48123,7 +48123,7 @@
     "motor": {
       "id": "red-bull-2019-motor",
       "notas": {
-        "motor": 75,
+        "motor": 74,
         "confMotor": 93
       }
     },
@@ -48182,7 +48182,7 @@
       "id": "renault-2019-chassi",
       "notas": {
         "aero": 63,
-        "mec": 61,
+        "mec": 62,
         "ppeso": 65,
         "conf": 86,
         "freio": 65
@@ -48250,7 +48250,7 @@
       "id": "toro-rosso-2019-chassi",
       "notas": {
         "aero": 58,
-        "mec": 58,
+        "mec": 59,
         "ppeso": 55,
         "conf": 69,
         "freio": 55
@@ -48317,7 +48317,7 @@
     "chassi": {
       "id": "williams-2019-chassi",
       "notas": {
-        "aero": 30,
+        "aero": 29,
         "mec": 31,
         "ppeso": 31,
         "conf": 52,
@@ -48453,8 +48453,8 @@
     "chassi": {
       "id": "alphatauri-2020-chassi",
       "notas": {
-        "aero": 48,
-        "mec": 50,
+        "aero": 49,
+        "mec": 49,
         "ppeso": 52,
         "conf": 72,
         "freio": 52
@@ -48522,7 +48522,7 @@
       "id": "ferrari-2020-chassi",
       "notas": {
         "aero": 61,
-        "mec": 64,
+        "mec": 63,
         "ppeso": 59,
         "conf": 59,
         "freio": 59
@@ -48658,7 +48658,7 @@
       "id": "mclaren-2020-chassi",
       "notas": {
         "aero": 69,
-        "mec": 72,
+        "mec": 71,
         "ppeso": 72,
         "conf": 86,
         "freio": 72
@@ -48862,7 +48862,7 @@
       "id": "red-bull-2020-chassi",
       "notas": {
         "aero": 87,
-        "mec": 81,
+        "mec": 80,
         "ppeso": 86,
         "conf": 35,
         "freio": 86
@@ -48930,7 +48930,7 @@
       "id": "renault-2020-chassi",
       "notas": {
         "aero": 63,
-        "mec": 61,
+        "mec": 60,
         "ppeso": 65,
         "conf": 35,
         "freio": 65
@@ -48939,7 +48939,7 @@
     "motor": {
       "id": "renault-2020-motor",
       "notas": {
-        "motor": 67,
+        "motor": 68,
         "confMotor": 52
       }
     },
@@ -48997,8 +48997,8 @@
     "chassi": {
       "id": "williams-2020-chassi",
       "notas": {
-        "aero": 29,
-        "mec": 35,
+        "aero": 30,
+        "mec": 33,
         "ppeso": 31,
         "conf": 86,
         "freio": 31
@@ -49075,7 +49075,7 @@
     "motor": {
       "id": "alfa-2021-motor",
       "notas": {
-        "motor": 45,
+        "motor": 46,
         "confMotor": 82
       }
     },
@@ -49609,7 +49609,7 @@
     "chassi": {
       "id": "red-bull-2021-chassi",
       "notas": {
-        "aero": 89,
+        "aero": 90,
         "mec": 88,
         "ppeso": 89,
         "conf": 89,
@@ -49677,7 +49677,7 @@
     "chassi": {
       "id": "williams-2021-chassi",
       "notas": {
-        "aero": 36,
+        "aero": 37,
         "mec": 34,
         "ppeso": 38,
         "conf": 31,
@@ -49746,7 +49746,7 @@
       "id": "alfa-2022-chassi",
       "notas": {
         "aero": 58,
-        "mec": 53,
+        "mec": 52,
         "ppeso": 55,
         "conf": 48,
         "freio": 55
@@ -49949,8 +49949,8 @@
     "chassi": {
       "id": "aston-martin-2022-chassi",
       "notas": {
-        "aero": 47,
-        "mec": 49,
+        "aero": 48,
+        "mec": 48,
         "ppeso": 48,
         "conf": 76,
         "freio": 48
@@ -50153,8 +50153,8 @@
     "chassi": {
       "id": "mclaren-2022-chassi",
       "notas": {
-        "aero": 67,
-        "mec": 71,
+        "aero": 68,
+        "mec": 70,
         "ppeso": 69,
         "conf": 48,
         "freio": 69
@@ -50561,8 +50561,8 @@
     "chassi": {
       "id": "alpine-2023-chassi",
       "notas": {
-        "aero": 64,
-        "mec": 63,
+        "aero": 63,
+        "mec": 62,
         "ppeso": 59,
         "conf": 72,
         "freio": 59
@@ -50630,7 +50630,7 @@
       "id": "aston-martin-2023-chassi",
       "notas": {
         "aero": 66,
-        "mec": 70,
+        "mec": 69,
         "ppeso": 69,
         "conf": 38,
         "freio": 69
@@ -50639,7 +50639,7 @@
     "motor": {
       "id": "aston-martin-2023-motor",
       "notas": {
-        "motor": 68,
+        "motor": 67,
         "confMotor": 62
       }
     },
@@ -50707,7 +50707,7 @@
     "motor": {
       "id": "ferrari-2023-motor",
       "notas": {
-        "motor": 94,
+        "motor": 93,
         "confMotor": 62
       }
     },
@@ -50902,7 +50902,7 @@
       "id": "mercedes-2023-chassi",
       "notas": {
         "aero": 80,
-        "mec": 79,
+        "mec": 78,
         "ppeso": 79,
         "conf": 72,
         "freio": 79
@@ -50911,7 +50911,7 @@
     "motor": {
       "id": "mercedes-2023-motor",
       "notas": {
-        "motor": 79,
+        "motor": 78,
         "confMotor": 62
       }
     },
@@ -50969,7 +50969,7 @@
     "chassi": {
       "id": "red-bull-2023-chassi",
       "notas": {
-        "aero": 87,
+        "aero": 88,
         "mec": 82,
         "ppeso": 89,
         "conf": 72,
@@ -50979,7 +50979,7 @@
     "motor": {
       "id": "red-bull-2023-motor",
       "notas": {
-        "motor": 95,
+        "motor": 94,
         "confMotor": 62
       }
     },
@@ -51242,7 +51242,7 @@
       "id": "ferrari-2024-chassi",
       "notas": {
         "aero": 88,
-        "mec": 90,
+        "mec": 89,
         "ppeso": 89,
         "conf": 62,
         "freio": 89
@@ -51591,7 +51591,7 @@
     "motor": {
       "id": "red-bull-2024-motor",
       "notas": {
-        "motor": 78,
+        "motor": 77,
         "confMotor": 62
       }
     },
@@ -52203,7 +52203,7 @@
     "motor": {
       "id": "rb-2025-motor",
       "notas": {
-        "motor": 59,
+        "motor": 60,
         "confMotor": 62
       }
     },
