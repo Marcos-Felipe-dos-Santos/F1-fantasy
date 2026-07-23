@@ -1,12 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import {
+  ajusteBucket,
+  CAP_AJUSTE_BUCKET,
   derivarNotas,
+  ESCALA_BUCKET,
   paraNota,
   pctDoPool,
   percentilHazen,
   prepararPool,
   priorPonderado,
   serializarDerivado,
+  SHRINK_BUCKET_K,
   shrink,
   slug,
   verificarColisaoDeIds,
@@ -186,6 +190,39 @@ describe('pctDoPool', () => {
   });
 });
 
+// ---------------------------------------------------------------------------
+// ajusteBucket (PR 4.6) — shrink por bucket + escala + clamp em ±CAP_AJUSTE_BUCKET.
+// ---------------------------------------------------------------------------
+
+describe('ajusteBucket', () => {
+  it('bucket vazio (0 largadas) ⇒ ajuste 0, mesmo com gridPercentilGeral definido', () => {
+    expect(ajusteBucket(0.5, { largadas: 0, gridPercentil: null })).toBe(0);
+  });
+
+  it('gridPercentilGeral null (equipe sem NENHUMA largada com grid>0) ⇒ ajuste 0', () => {
+    expect(ajusteBucket(null, { largadas: 5, gridPercentil: 0.6 })).toBe(0);
+  });
+
+  it('cálculo sem clamp: geral=0.5, bucket{largadas:10,gridPercentil:0.55} ⇒ deltaShrunk=0.5/18, ajuste≈2.77778', () => {
+    // deltaShrunk = (0.55-0.5)*10/(10+SHRINK_BUCKET_K) = 0.5/18 = 0.0277778.
+    expect(SHRINK_BUCKET_K).toBe(8);
+    const ajuste = ajusteBucket(0.5, { largadas: 10, gridPercentil: 0.55 });
+    expect(ajuste).toBeCloseTo((0.5 / 18) * ESCALA_BUCKET, 5);
+  });
+
+  it('clamp positivo: deltaShrunk grande ⇒ ajuste crava em +CAP_AJUSTE_BUCKET', () => {
+    // deltaShrunk = (0.7-0.5)*20/28 = 4/28 = 0.142857; *ESCALA_BUCKET(100) = 14.2857 > CAP.
+    const ajuste = ajusteBucket(0.5, { largadas: 20, gridPercentil: 0.7 });
+    expect(ajuste).toBe(CAP_AJUSTE_BUCKET);
+  });
+
+  it('clamp negativo: deltaShrunk muito negativo ⇒ ajuste crava em -CAP_AJUSTE_BUCKET', () => {
+    // deltaShrunk = (0.1-0.9)*20/28 = -16/28 = -0.5714286; *100 = -57.14 < -CAP.
+    const ajuste = ajusteBucket(0.9, { largadas: 20, gridPercentil: 0.1 });
+    expect(ajuste).toBe(-CAP_AJUSTE_BUCKET);
+  });
+});
+
 // -----------------------------------------------------------------------------
 // derivarNotas — fatos SINTÉTICOS com valores calculados à mão (não apenas
 // estrutura/ordenação — os números abaixo foram derivados manualmente da
@@ -243,6 +280,10 @@ function titularFatos(parcial: Partial<TitularAnoFatos> & Pick<TitularAnoFatos, 
 // nitidamente distinta (equipe X forte, equipe Y fraca) — permite calcular à
 // mão o percentil de Hazen (n=2 ⇒ sempre 0.75/0.25 quando distintos e sem
 // empate) e o shrink (n=largadas fixo em 5/equipe, 10/titular).
+// PR 4.6 — dados de bucket de equipeX/equipeY calculados à mão pra exercitar
+// as 3 combinações exigidas: bucket vazio (0 largadas ⇒ ajuste 0), clamp
+// positivo em ±CAP_AJUSTE_BUCKET, e ajuste normal sem clamp. gridPercentilGeral
+// arbitrário (0.5 / 0.3) — só serve de referência pro delta de cada bucket.
 const equipeX = equipeFatos({
   constructorId: 'x',
   nome: 'Equipe X',
@@ -253,6 +294,17 @@ const equipeX = equipeFatos({
   poles: 3,
   mediaChegadaTerminou: 1.5,
   overachievementMediano: -0.5,
+  gridPercentilGeral: 0.5,
+  porBucket: {
+    // deltaShrunk = (0.55-0.5)*10/(10+8) = 0.5/18 = 0.0277778; *ESCALA(100) =
+    // 2.77778 (sem clamp) ⇒ aero = round(79+2.77778) = 82.
+    aero: { largadas: 10, gridPercentil: 0.55 },
+    // deltaShrunk = (0.7-0.5)*20/(20+8) = 4/28 = 0.142857; *100 = 14.2857 ⇒
+    // clamp em +8 (CAP_AJUSTE_BUCKET) ⇒ mec = round(79+8) = 87.
+    travado: { largadas: 20, gridPercentil: 0.7 },
+    // 0 largadas ⇒ ajuste 0 ⇒ motor = base (79), igual ao carro pré-4.6.
+    potencia: { largadas: 0, gridPercentil: null },
+  },
 });
 const equipeY = equipeFatos({
   constructorId: 'y',
@@ -266,6 +318,17 @@ const equipeY = equipeFatos({
   poles: 0,
   mediaChegadaTerminou: 7.0,
   overachievementMediano: 0.5,
+  gridPercentilGeral: 0.3,
+  porBucket: {
+    // 0 largadas ⇒ ajuste 0 ⇒ aero = base (45).
+    aero: { largadas: 0, gridPercentil: null },
+    // deltaShrunk = (0.1-0.3)*5/(5+8) = -0.2*5/13 = -1/13 = -0.0769231;
+    // *100 = -7.69231 (sem clamp, > -8) ⇒ mec = round(45-7.69231) = 37.
+    travado: { largadas: 5, gridPercentil: 0.1 },
+    // deltaShrunk = (0.9-0.3)*20/(20+8) = 0.6*20/28 = 12/28 = 0.428571;
+    // *100 = 42.857 ⇒ clamp em +8 ⇒ motor = round(45+8) = 53.
+    potencia: { largadas: 20, gridPercentil: 0.9 },
+  },
 });
 const x1 = titularFatos({
   driverId: 'x1',
@@ -385,15 +448,42 @@ describe('derivarNotas (fatos sintéticos, valores calculados à mão)', () => {
     expect(p1.notas.larg).toBe(50);
   });
 
-  it('carro (⇒ AERO=MEC=MOTOR=PPESO=FREIO): equipe X 79, equipe Y 45 (n=2 ⇒ Hazen 0.75/0.25 fixo)', () => {
+  it('carro base (n=2 ⇒ Hazen 0.75/0.25 fixo): equipe X 79, equipe Y 45 — PPESO/FREIO ficam SEMPRE no valor base (não têm bucket, PR 4.6)', () => {
     const eqX = porEquipe('x');
     const eqY = porEquipe('y');
-    for (const atributo of ['aero', 'mec', 'ppeso', 'freio'] as const) {
+    for (const atributo of ['ppeso', 'freio'] as const) {
       expect(eqX.chassi.notas[atributo]).toBe(79);
       expect(eqY.chassi.notas[atributo]).toBe(45);
     }
-    expect(eqX.motor.notas.motor).toBe(79);
-    expect(eqY.motor.notas.motor).toBe(45);
+  });
+
+  // ---------------------------------------------------------------------------
+  // PR 4.6 — AERO/MEC (chassi) e MOTOR (motor) agora DIVERGEM do valor base de
+  // `carro`, ajustados pelo bucket de circuito (potencia/travado/aero — ver
+  // `circuit-buckets.ts`). Valores calculados à mão nos comentários de
+  // equipeX/equipeY acima (bucket vazio ⇒ ajuste 0; clamp em ±CAP_AJUSTE_BUCKET;
+  // ajuste normal sem clamp).
+  // ---------------------------------------------------------------------------
+
+  it('AERO: equipe X 82 (ajuste sem clamp, +2.7778); equipe Y 45 (bucket vazio ⇒ ajuste 0, igual à base)', () => {
+    expect(porEquipe('x').chassi.notas.aero).toBe(82);
+    expect(porEquipe('y').chassi.notas.aero).toBe(45);
+  });
+
+  it('MEC: equipe X 87 (clamp em +CAP_AJUSTE_BUCKET); equipe Y 37 (ajuste sem clamp, -7.6923)', () => {
+    expect(porEquipe('x').chassi.notas.mec).toBe(87);
+    expect(porEquipe('y').chassi.notas.mec).toBe(37);
+  });
+
+  it('MOTOR: equipe X 79 (bucket vazio ⇒ ajuste 0, igual à base); equipe Y 53 (clamp em +CAP_AJUSTE_BUCKET)', () => {
+    expect(porEquipe('x').motor.notas.motor).toBe(79);
+    expect(porEquipe('y').motor.notas.motor).toBe(53);
+  });
+
+  it('AERO/MEC/MOTOR não são mais idênticos entre si (a redundância pré-4.6 acabou)', () => {
+    const eqX = porEquipe('x');
+    expect(eqX.chassi.notas.aero).not.toBe(eqX.chassi.notas.mec);
+    expect(eqX.chassi.notas.mec).not.toBe(eqX.motor.notas.motor);
   });
 
   it('CONF: shrink por largadas da equipe (n=10) — equipe X 79, equipe Y 45', () => {
@@ -477,6 +567,39 @@ describe('derivarNotas (fatos reais)', () => {
 
   it('ids são todos únicos (não lança verificarColisaoDeIds)', () => {
     expect(() => verificarColisaoDeIds(derivado)).not.toThrow();
+  });
+
+  // ---------------------------------------------------------------------------
+  // PR 4.6 — invariantes do split AERO/MEC/MOTOR sobre o dataset real inteiro.
+  // ---------------------------------------------------------------------------
+
+  it('existe ao menos 1 equipe/ano com aero≠motor (buckets diferenciam as notas, não são mais redundantes)', () => {
+    expect(derivado.some((e) => e.chassi.notas.aero !== e.motor.notas.motor)).toBe(true);
+  });
+
+  it('média dos ajustes de bucket (nota - base, base=ppeso, que fica inalterado) é ≈0 (|média| < 1)', () => {
+    const ajustes: number[] = [];
+    for (const e of derivado) {
+      const base = e.chassi.notas.ppeso; // ppeso NUNCA recebe ajuste de bucket (ver derivar-notas.ts).
+      ajustes.push(e.chassi.notas.aero - base, e.chassi.notas.mec - base, e.motor.notas.motor - base);
+    }
+    const media = ajustes.reduce((a, b) => a + b, 0) / ajustes.length;
+    expect(Math.abs(media)).toBeLessThan(1);
+  });
+
+  it('AERO/MEC/MOTOR sempre em [28,96] (faixa-alvo do PR, mesmo após ajuste de bucket)', () => {
+    for (const e of derivado) {
+      for (const v of [e.chassi.notas.aero, e.chassi.notas.mec, e.motor.notas.motor]) {
+        expect(v).toBeGreaterThanOrEqual(28);
+        expect(v).toBeLessThanOrEqual(96);
+      }
+    }
+  });
+
+  it('ppeso/freio/conf/confMotor permanecem = base de `carro` (NÃO recebem ajuste de bucket)', () => {
+    for (const e of derivado) {
+      expect(e.chassi.notas.freio).toBe(e.chassi.notas.ppeso);
+    }
   });
 
   it('toda temporada 1950-2025 tem ao menos 1 entrada', () => {
