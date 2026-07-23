@@ -44,7 +44,7 @@ export interface TaxaVitoriaPole {
  * ordenados por largadas→points→driverId, então `pilotos[0]` é sempre o
  * piloto principal — Verstappen em Red Bull 2023).
  */
-function loadoutForte(dataset: Dataset, jogadorId: string): Loadout {
+export function loadoutForte(dataset: Dataset, jogadorId: string): Loadout {
   const ea = dataset.equipeAnos.find((e) => e.equipe === 'Red Bull' && e.ano === 2023);
   if (!ea) {
     throw new Error('loadoutForte: equipe/ano "Red Bull" 2023 não encontrado no dataset');
@@ -119,7 +119,7 @@ export interface TaxaParadas {
   };
 }
 
-interface PilotoParadaSpec {
+export interface PilotoParadaSpec {
   jogadorId: string;
   pilotoId: string;
   equipe: string;
@@ -172,7 +172,7 @@ function escolherExtremoPneu(candidatos: CandidatoPneu[], modo: 'min' | 'max'): 
  * ascendente, code unit). Bucket vazio é erro alto (dataset não cobre a
  * faixa esperada) — nunca falha silenciosamente.
  */
-function selecionarPilotosParadas(dataset: Dataset): PilotoParadaSpec[] {
+export function selecionarPilotosParadas(dataset: Dataset): PilotoParadaSpec[] {
   const candidatosPorBucket: Record<BucketPneu, CandidatoPneu[]> = {
     pneuBaixo: [],
     pneuMedio: [],
