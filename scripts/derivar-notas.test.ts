@@ -209,6 +209,14 @@ function equipeFatos(parcial: Partial<EquipeAnoFatos> & Pick<EquipeAnoFatos, 'co
     nParadas: null,
     medianaDeltaPit: null,
     fracaoParadasEstouradas: null,
+    // Default: sem dado de bucket (ajuste 0 em todo bucket — ver `derivar-notas.ts`
+    // PR 4.6, deltaShrunk com largadas=0 ⇒ delta 0). Testes de bucket sobrescrevem.
+    gridPercentilGeral: null,
+    porBucket: {
+      potencia: { largadas: 0, gridPercentil: null },
+      travado: { largadas: 0, gridPercentil: null },
+      aero: { largadas: 0, gridPercentil: null },
+    },
     ...parcial,
   };
 }
@@ -310,7 +318,11 @@ const y2 = titularFatos({
 });
 
 const fatosSinteticos: FatosAgregados = {
-  meta: { geradoDe: 'teste', temporadas: [{ season: 1960, etapas: 5, statusesNaoMapeados: [] }] },
+  meta: {
+    geradoDe: 'teste',
+    temporadas: [{ season: 1960, etapas: 5, statusesNaoMapeados: [] }],
+    circuitosNaoMapeados: [],
+  },
   equipes: [equipeX, equipeY],
   titulares: [x1, x2, y1, y2],
 };
