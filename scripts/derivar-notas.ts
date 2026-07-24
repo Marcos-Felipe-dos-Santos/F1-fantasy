@@ -162,6 +162,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import type { BucketFatos, EquipeAnoFatos, FatosAgregados, TitularAnoFatos } from './agregar-fatos.ts';
 import { cmpStr, OUTPUT_PATH_PADRAO as FATOS_PATH_PADRAO } from './agregar-fatos.ts';
 import { PRIMEIRA_TEMPORADA_PITSTOPS } from './fetch-f1-data.ts';
+import { CHU_OVERRIDES, ULT_OVERRIDES } from './overrides-curados.ts';
 import type { NotasChassi, NotasMotor, NotasPiloto } from '../src/engine/types.ts';
 
 export const DERIVED_DIR_PADRAO = join(dirname(fileURLToPath(import.meta.url)), 'derived');
@@ -466,7 +467,13 @@ function calcularCons(pools: PoolsPiloto, driverId: string): number {
  * ULT = nota(pct(−posGanhasAjustadasMediana)) — honestidade: MÉDIA (a
  * recontagem só-entre-quem-terminou anula o "presente" de DNF alheio, mas
  * ainda mistura ganho de posição por ultrapassagem real com ganho por sorte
- * de estratégia/clima que a corrida específica trouxe).
+ * de estratégia/clima que a corrida específica trouxe). PR 4.7: esta
+ * derivação mede "remontada", não "ataque" — um piloto dominante que já
+ * larga na frente tem pouca posição pra ganhar e sai mal aqui (Verstappen
+ * 2023 = 67, Pérez mesmo carro = 94). Por isso `ULT_OVERRIDES`
+ * (`overrides-curados.ts`, CURADORIA EXPLÍCITA do dev, não derivação de
+ * fatos) substitui este valor pro piloto inteiro, em toda equipe/ano, quando
+ * listado — ver `derivarNotasPiloto`.
  */
 function calcularUlt(pools: PoolsPiloto, driverId: string): number {
   return paraNota(pctDoPool(pools.posGanhas, driverId, 'menor'));
@@ -476,22 +483,31 @@ function derivarNotasPiloto(pools: PoolsPiloto, titular: TitularAnoFatos): Notas
   const rit = calcularRit(pools, titular.driverId);
   const quali = calcularQuali(pools, titular.driverId);
   const cons = calcularCons(pools, titular.driverId);
-  const ult = calcularUlt(pools, titular.driverId);
+  // PR 4.7: ULT_OVERRIDES (`overrides-curados.ts`) substitui a derivação
+  // estatística quando o driverId está listado — CURADORIA EXPLÍCITA do dev,
+  // não fórmula, vale pra TODO equipe/ano do piloto (carreira inteira). Ver
+  // comentário de honestidade em `calcularUlt` acima.
+  const ult = ULT_OVERRIDES[titular.driverId] ?? calcularUlt(pools, titular.driverId);
   // DEF/SF/PNEU: combinações declaradas do plano, sobre as NOTAS já mapeadas
   // (não sobre os percentis) — honestidade FRACA (nenhum dos 2 tem estatística
   // própria no dataset Ergast; são compostas por design de jogo, não medidas).
   const def = Math.round(0.5 * rit + 0.5 * cons);
   const sf = Math.round(0.5 * cons + 0.5 * rit);
   const pneu = Math.round(0.6 * rit + 0.4 * cons);
+  // PR 4.7: CHU_OVERRIDES (`overrides-curados.ts`) substitui a constante v1
+  // quando o driverId está listado — CURADORIA EXPLÍCITA do dev, não fórmula
+  // (nenhum fato do dataset diferencia desempenho sob chuva), vale pra TODO
+  // equipe/ano do piloto (carreira inteira).
+  const chu = CHU_OVERRIDES[titular.driverId] ?? NOTA_CHU_V1;
   return {
     rit,
     quali,
     cons,
     ult,
     def,
-    chu: NOTA_CHU_V1, // honestidade: NENHUMA — constante v1, override curado é PR posterior.
+    chu, // honestidade: NENHUMA por padrão (constante v1); CURADORIA EXPLÍCITA se listado em CHU_OVERRIDES (PR 4.7).
     pneu,
-    larg: NOTA_LARG_V1, // honestidade: NENHUMA — constante v1.
+    larg: NOTA_LARG_V1, // honestidade: NENHUMA — constante v1 (LARG não tocado neste PR).
     sf,
   };
 }
