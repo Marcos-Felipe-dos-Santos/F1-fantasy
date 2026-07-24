@@ -1,22 +1,42 @@
 /* Tema escuro simples do modo Single (PR 1.7a). Sem framework. */
 
+@import './tokens.css';
+
+/*
+ * PR 5.1a: as variáveis `--cor-*`/`--raridade-*` abaixo continuam existindo
+ * (nenhum seletor foi redesenhado nesta fatia — isso é 5.1b/c), mas agora só
+ * repassam os tokens novos (`tokens.css`, importado acima) — fonte única da
+ * verdade é `tokens.ts`/`tokens.css`. Este :root não duplica hex; no resto do
+ * arquivo resta 1 hex de componente (fundo vinho do `.erro`), a tokenizar
+ * no 5.1b.
+ *
+ * Mapeamento (mecânico, por uso dominante da variável antiga):
+ * - --cor-destaque / --cor-destaque-clara: usadas hoje em botão primário,
+ *   "ativo" de velocidade e títulos de destaque — um único par servindo
+ *   vários papéis que os tokens novos separam (`primaria`, `acento`,
+ *   `magenta`). Replumbing seletor a seletor é redesenho de componente
+ *   (5.1b/c); aqui mapeamos pelo uso dominante: `--cor-destaque` ->
+ *   `primaria` (ação primária, é o que `.botao-primario`/
+ *   `.botao-velocidade--ativo` usam), `--cor-destaque-clara` -> `acento`
+ *   (destaque de texto/título). Exceção já replugada: o carro do humano no
+ *   traçado usa `--magenta` direto (papel dedicado na paleta, aviso da
+ *   revisão do 5.1a).
+ * - --cor-superficie-alta: não há um terceiro tom de "superfície elevada"
+ *   nos tokens novos (só `fundo`/`fundoElevado`/`fundoAfundado`); colapsada
+ *   em `fundo-elevado` por ora — perde a distinção de hover até 5.1b (não
+ *   é permitido inventar cor fora da paleta aprovada).
+ */
 :root {
   color-scheme: dark;
-  --cor-fundo: #12141c;
-  --cor-superficie: #1b1f2b;
-  --cor-superficie-alta: #232838;
-  --cor-borda: #333a4d;
-  --cor-texto: #e8eaf2;
-  --cor-texto-fraco: #9aa1b8;
-  --cor-destaque: #e10600;
-  --cor-destaque-clara: #ff4b42;
-  --cor-erro: #ff6b6b;
-
-  --raridade-comum: #3ddc84;
-  --raridade-raro: #4fa8ff;
-  --raridade-epico: #b56bff;
-  --raridade-lendario: #ffcb3d;
-  --raridade-proibido: #7a7a7a;
+  --cor-fundo: var(--fundo);
+  --cor-superficie: var(--fundo-elevado);
+  --cor-superficie-alta: var(--fundo-elevado);
+  --cor-borda: var(--borda);
+  --cor-texto: var(--texto);
+  --cor-texto-fraco: var(--texto-suave);
+  --cor-destaque: var(--primaria);
+  --cor-destaque-clara: var(--acento);
+  --cor-erro: var(--erro);
 }
 
 * {
@@ -33,19 +53,19 @@ body {
   margin: 0;
   background: var(--cor-fundo);
   color: var(--cor-texto);
-  font-family:
-    system-ui,
-    -apple-system,
-    'Segoe UI',
-    Roboto,
-    Arial,
-    sans-serif;
+  font-family: var(--fonte-corpo);
 }
 
 .app-shell {
   max-width: 1000px;
   margin: 0 auto;
   padding: 24px 16px 64px;
+}
+
+/* Fonte display (Bungee) só em h1/h2 — h3 e corpo seguem a fonte de sistema. */
+h1,
+h2 {
+  font-family: var(--fonte-display);
 }
 
 h1,
@@ -104,7 +124,7 @@ h3 {
 
 .botao-primario {
   background: var(--cor-destaque);
-  color: #fff;
+  color: var(--texto-escuro);
   border: none;
   padding: 12px 20px;
   border-radius: 8px;
@@ -465,7 +485,9 @@ button.card {
 }
 
 .tracado-svg__carro--humano {
-  fill: var(--cor-destaque);
+  /* Papel dedicado na paleta 5.1a: magenta = destaque do jogador humano
+     (não compartilha cor com botão primário/badges amarelos). */
+  fill: var(--magenta);
 }
 
 .tracado-svg__carro--congelado {
@@ -498,7 +520,7 @@ button.card {
 .botao-velocidade--ativo {
   background: var(--cor-destaque);
   border-color: var(--cor-destaque);
-  color: #fff;
+  color: var(--texto-escuro);
   font-weight: 600;
 }
 
@@ -574,7 +596,7 @@ button.card {
 
 .badge-dnf {
   background: var(--cor-erro);
-  color: #12141c;
+  color: var(--texto-escuro);
   border-radius: 999px;
   padding: 1px 8px;
   font-size: 0.7rem;
@@ -585,10 +607,10 @@ button.card {
 
 /* Badge de pit stop no painel ao vivo (PR 2.7) — mesmo estilo do badge de DNF;
    cor própria (amarelo de aviso, já usado pra raridade "lendário") pra não se
-   confundir com o vermelho de destaque (carro humano/DNF). */
+   confundir com o badge de DNF (vermelho) nem com o magenta do carro humano. */
 .badge-pit {
   background: var(--raridade-lendario);
-  color: #12141c;
+  color: var(--texto-escuro);
   border-radius: 999px;
   padding: 1px 8px;
   font-size: 0.7rem;
