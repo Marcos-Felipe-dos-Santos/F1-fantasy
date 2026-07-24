@@ -622,4 +622,37 @@ describe('derivarNotas (fatos reais)', () => {
     const dataset = criarDataset(derivado, pecasReal, pistasReal);
     expect(dataset.equipeAnos.length).toBe(derivado.length);
   });
+
+  // ---------------------------------------------------------------------------
+  // PR 4.7 — overrides curados de ULT/CHU (ver `overrides-curados.ts`).
+  // ---------------------------------------------------------------------------
+
+  it('Verstappen na Red Bull 2023 tem ULT=96 e CHU=96 (override curado, não a derivação estatística)', () => {
+    const e = derivado.find((x) => x.equipe === 'Red Bull' && x.ano === 2023)!;
+    expect(e).toBeDefined();
+    const verstappen = e.pilotos.find((p) => p.id.endsWith('-piloto-max_verstappen'))!;
+    expect(verstappen).toBeDefined();
+    expect(verstappen.notas.ult).toBe(96);
+    expect(verstappen.notas.chu).toBe(96);
+  });
+
+  it('Senna tem CHU=96 em TODOS os equipe/anos em que foi titular (override de carreira inteira)', () => {
+    const sennaEntradas = derivado.filter((e) => e.pilotos.some((p) => p.id.endsWith('-piloto-senna')));
+    expect(sennaEntradas.length).toBeGreaterThan(0);
+    for (const e of sennaEntradas) {
+      const senna = e.pilotos.find((p) => p.id.endsWith('-piloto-senna'))!;
+      expect(senna.notas.chu).toBe(96);
+    }
+  });
+
+  it('piloto NÃO listado nos overrides mantém o comportamento antigo: ULT derivado intocado, CHU=50, LARG=50', () => {
+    // Andrea de Cesaris, Minardi 1986 — titular real fora de ULT_OVERRIDES/CHU_OVERRIDES.
+    const e = derivado.find((x) => x.equipe === 'Minardi' && x.ano === 1986)!;
+    expect(e).toBeDefined();
+    const cesaris = e.pilotos.find((p) => p.id.endsWith('-piloto-cesaris'))!;
+    expect(cesaris).toBeDefined();
+    expect(cesaris.notas.ult).toBe(92); // valor derivado estatisticamente, pré-PR 4.7 — não deve mudar.
+    expect(cesaris.notas.chu).toBe(50);
+    expect(cesaris.notas.larg).toBe(50);
+  });
 });
