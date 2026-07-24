@@ -1,0 +1,52 @@
+/* Design tokens do F1 Fantasy (PR 5.1a). Fonte da verdade dos valores:
+   `tokens.ts` (mesmos hex/px). `tokens.test.ts` garante a sincronia. */
+
+@font-face {
+  font-family: 'Bungee';
+  src: url('/fonts/bungee-latin.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --fundo: #16132E;
+  --fundo-elevado: #241F45;
+  --fundo-afundado: #0E0C20;
+  --texto: #F4F2FF;
+  --texto-suave: #B9B3DC;
+  --texto-escuro: #16132E;
+  --primaria: #FFCC00;
+  --acento: #29D9F5;
+  --magenta: #FF4FA3;
+  --sucesso: #3DDC64;
+  --erro: #FF7B85;
+  --borda: #3A3468;
+  --borda-interativa: #756CC7;
+  --raridade-comum: #3DDC64;
+  --raridade-raro: #3FA9FF;
+  --raridade-epico: #B45BFF;
+  --raridade-lendario: #FFC93C;
+  --raridade-proibido: #FF4757;
+
+  --espaco-xs: 4px;
+  --espaco-sm: 8px;
+  --espaco-md: 12px;
+  --espaco-lg: 16px;
+  --espaco-xl: 24px;
+  --espaco-xxl: 32px;
+
+  --raio-sm: 8px;
+  --raio-md: 12px;
+  --raio-lg: 16px;
+  --raio-pill: 999px;
+
+  --alvo-toque: 44px;
+
+  --fonte-display: 'Bungee', 'Arial Black', sans-serif;
+  --fonte-corpo: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Breakpoints (documentados, não expostos como custom property — media
+   queries não resolvem var() no CSS): mobile 480 / tablet 768 / desktop 1024
+   (ver `src/ui/tokens.ts` -> `breakpoints`, mesmos valores). */
