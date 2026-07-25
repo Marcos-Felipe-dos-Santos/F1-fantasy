@@ -251,7 +251,8 @@ h3 {
 .resultado-corrida__seed {
   display: flex;
   align-items: center;
-  gap: 8px;
+  flex-wrap: wrap;
+  gap: var(--espaco-sm);
 }
 
 /* Tela de handoff (PR 2.1b) — neutra por design, sem dado de jogo */
@@ -547,31 +548,37 @@ button.card {
   gap: var(--espaco-md);
 }
 
-/* Corrida (PR 1.7b) */
+/* Corrida (PR 1.7b; restilizada arcade na 5.1c) */
 
 .tela-corrida__cabecalho {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 12px;
+  gap: var(--espaco-md);
+  margin-bottom: var(--espaco-md);
+  flex-wrap: wrap;
 }
 
+/* Badge "sticker" simples (pill com borda, sem sombra dura — é uma etiqueta
+   informativa, não um botão/card): mesmo raio/borda do resto do vocabulário. */
 .badge-chuva {
-  background: var(--cor-superficie-alta);
-  border: 1px solid var(--cor-borda);
-  border-radius: 999px;
-  padding: 2px 10px;
+  background: var(--fundo-elevado);
+  border: 2px solid var(--borda);
+  border-radius: var(--raio-pill);
+  padding: 2px var(--espaco-md);
   font-size: 0.85rem;
 }
 
+/* Painel do traçado: mesma superfície+borda+sombra dura dos cards, pra ler
+   como um "card" do replay em vez de um painel neutro. */
 .tracado-svg {
   width: 100%;
   max-width: 700px;
   height: auto;
   background: var(--cor-superficie);
-  border: 1px solid var(--cor-borda);
-  border-radius: 12px;
-  margin-bottom: 16px;
+  border: 3px solid var(--borda);
+  border-radius: var(--raio-lg);
+  box-shadow: 4px 4px 0 var(--borda);
+  margin-bottom: var(--espaco-lg);
   display: block;
 }
 
@@ -598,46 +605,72 @@ button.card {
   opacity: 0.35;
 }
 
-/* Velocidade do replay + classificação ao vivo (PR 2.6) */
+/* Velocidade do replay + classificação ao vivo (PR 2.6; restilizada arcade na 5.1c) */
 
 .grupo-velocidade {
   display: flex;
-  gap: 8px;
-  margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: var(--espaco-sm);
+  margin-bottom: var(--espaco-md);
 }
 
+/* Botão "sticker" menor que `.botao-primario`/`.botao-secundario` (mesmo
+   vocabulário: borda grossa + sombra dura + afunda no active), mas com
+   `min-height: var(--alvo-toque)` garantido — a versão anterior (~30px)
+   ficava abaixo do alvo mínimo de toque. */
 .botao-velocidade {
-  background: transparent;
+  --botao-sombra: var(--borda);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--fundo-elevado);
   color: var(--cor-texto);
-  border: 1px solid var(--cor-borda);
-  padding: 6px 12px;
-  border-radius: 8px;
+  border: 3px solid var(--botao-sombra);
+  padding: var(--espaco-xs) var(--espaco-md);
+  border-radius: var(--raio-md);
   font-size: 0.85rem;
+  font-family: var(--fonte-corpo);
   cursor: pointer;
-  transition: background-color 0.15s ease, border-color 0.15s ease;
+  min-height: var(--alvo-toque);
+  box-shadow: 3px 3px 0 var(--botao-sombra);
+  transition: filter 0.1s ease, transform 0.1s ease, box-shadow 0.1s ease;
 }
 
 .botao-velocidade:hover {
-  background: var(--cor-superficie);
+  filter: brightness(1.12);
+}
+
+.botao-velocidade:active {
+  transform: translate(3px, 3px);
+  box-shadow: 0 0 0 var(--botao-sombra);
+}
+
+.botao-velocidade:focus-visible {
+  outline: 3px solid var(--borda-interativa);
+  outline-offset: 2px;
 }
 
 .botao-velocidade--ativo {
-  background: var(--cor-destaque);
-  border-color: var(--cor-destaque);
+  --botao-sombra: var(--borda-interativa);
+  background: var(--primaria);
   color: var(--texto-escuro);
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .tela-corrida__area-replay {
   display: flex;
   flex-wrap: wrap;
-  gap: 16px;
+  gap: var(--espaco-lg);
   align-items: flex-start;
-  margin-bottom: 16px;
+  margin-bottom: var(--espaco-lg);
 }
 
+/* `min-width: 0` desfaz o `min-width: auto` padrão de item flex — sem isso, o
+   SVG (elemento substituído) pode recusar encolher abaixo do seu tamanho
+   intrínseco e forçar scroll horizontal da página em telas de 360px. */
 .tela-corrida__area-replay .coluna-tracado {
   flex: 1 1 500px;
+  min-width: 0;
 }
 
 .tela-corrida__area-replay .tracado-svg {
@@ -648,27 +681,33 @@ button.card {
   text-align: center;
   color: var(--cor-texto-fraco);
   font-size: 0.9rem;
-  margin: 6px 0 0;
+  margin: var(--espaco-sm) 0 0;
 }
 
+/* Painel da classificação ao vivo: mesmo tratamento de card (borda+sombra
+   dura). `max-width: min(320px, 100%)` (mesmo truque de `.grid-cards`) evita
+   que o cap de 320px force overflow numa viewport mais estreita que isso;
+   `min-width: 0` pelo mesmo motivo do `.coluna-tracado` acima. */
 .classificacao-ao-vivo {
   flex: 1 1 220px;
-  max-width: 320px;
+  min-width: 0;
+  max-width: min(320px, 100%);
   max-height: 460px;
   overflow-y: auto;
   list-style: none;
   margin: 0;
   padding: 0;
   background: var(--cor-superficie);
-  border: 1px solid var(--cor-borda);
-  border-radius: 12px;
+  border: 3px solid var(--borda);
+  border-radius: var(--raio-lg);
+  box-shadow: 4px 4px 0 var(--borda);
 }
 
 .classificacao-ao-vivo__linha {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 10px;
+  gap: var(--espaco-sm);
+  padding: var(--espaco-sm) var(--espaco-md);
   font-size: 0.85rem;
   border-bottom: 1px solid var(--cor-borda);
 }
@@ -679,6 +718,15 @@ button.card {
 
 .classificacao-ao-vivo__linha--dnf {
   color: var(--cor-texto-fraco);
+}
+
+/* Destaque do humano na classificação ao vivo: o `.linha-humano` genérico
+   (ver acima) só desenha o friso em `td:first-child` — aqui é uma `<li>`,
+   não uma linha de tabela, então o friso precisa de seletor próprio. Mesmo
+   papel dedicado do magenta, mesma ideia visual (friso à esquerda). */
+.classificacao-ao-vivo__linha.linha-humano {
+  border-left: 4px solid var(--magenta);
+  padding-left: calc(var(--espaco-md) - 4px);
 }
 
 .classificacao-ao-vivo__posicao {
@@ -701,8 +749,8 @@ button.card {
 .badge-dnf {
   background: var(--cor-erro);
   color: var(--texto-escuro);
-  border-radius: 999px;
-  padding: 1px 8px;
+  border-radius: var(--raio-pill);
+  padding: 1px var(--espaco-sm);
   font-size: 0.7rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -715,8 +763,8 @@ button.card {
 .badge-pit {
   background: var(--raridade-lendario);
   color: var(--texto-escuro);
-  border-radius: 999px;
-  padding: 1px 8px;
+  border-radius: var(--raio-pill);
+  padding: 1px var(--espaco-sm);
   font-size: 0.7rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -725,21 +773,21 @@ button.card {
 
 .ticker-eventos {
   list-style: none;
-  margin: 0 0 16px;
+  margin: 0 0 var(--espaco-lg);
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--espaco-sm);
   max-height: 200px;
   overflow-y: auto;
 }
 
 .ticker-eventos li {
   display: flex;
-  gap: 8px;
+  gap: var(--espaco-sm);
   font-size: 0.85rem;
   border-bottom: 1px solid var(--cor-borda);
-  padding-bottom: 4px;
+  padding-bottom: var(--espaco-xs);
 }
 
 .ticker-eventos__volta {
@@ -752,17 +800,20 @@ button.card {
   color: var(--cor-texto-fraco);
 }
 
+/* Destaque do humano no resultado final (PR 2.4/5.1c): mesmo papel dedicado
+   do magenta usado no traçado e na classificação ao vivo — não mais o
+   ciano genérico de título (`--cor-destaque-clara`). */
 .resultado-corrida__destaque {
   font-size: 1.1rem;
-  font-weight: 600;
-  color: var(--cor-destaque-clara);
-  margin: 8px 0 16px;
+  font-weight: 700;
+  color: var(--magenta);
+  margin: var(--espaco-sm) 0 var(--espaco-lg);
 }
 
 .resultado-corrida__volta-rapida {
   color: var(--cor-texto-fraco);
   font-size: 0.9rem;
-  margin: 12px 0 20px;
+  margin: var(--espaco-md) 0 var(--espaco-lg);
 }
 
 .linha-volta-rapida {

@@ -57,6 +57,8 @@ export const PARES_CONTRASTE: ParContraste[] = [
   { nome: 'textoSuave/fundo', fg: 'textoSuave', bg: 'fundo', minimo: 4.5 },
   { nome: 'textoSuave/fundoElevado', fg: 'textoSuave', bg: 'fundoElevado', minimo: 4.5 },
   { nome: 'textoEscuro/primaria', fg: 'textoEscuro', bg: 'primaria', minimo: 4.5 },
+  { nome: 'textoEscuro/erro', fg: 'textoEscuro', bg: 'erro', minimo: 4.5 }, // texto do badge DNF
+  { nome: 'textoEscuro/raridadeLendario', fg: 'textoEscuro', bg: 'raridadeLendario', minimo: 4.5 }, // texto do badge PIT
   { nome: 'acento/fundo', fg: 'acento', bg: 'fundo', minimo: 4.5 },
   { nome: 'magenta/fundo', fg: 'magenta', bg: 'fundo', minimo: 4.5 },
   { nome: 'sucesso/fundo', fg: 'sucesso', bg: 'fundo', minimo: 4.5 },

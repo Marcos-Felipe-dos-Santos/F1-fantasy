@@ -82,44 +82,46 @@ export function TelaResultadoCorrida({ state, resultado, onReiniciar }: TelaResu
         </p>
       ))}
 
-      <table className="tabela-grid">
-        <thead>
-          <tr>
-            <th>Pos</th>
-            <th>Jogador</th>
-            <th>Piloto</th>
-            <th>Status</th>
-            <th>Paradas</th>
-            <th>Pontos</th>
-          </tr>
-        </thead>
-        <tbody>
-          {resultado.classificacao.map((item) => {
-            const ehHumano = ehHumanoId(state, item.jogadorId);
-            const ehVoltaRapida = item.jogadorId === resultado.voltaMaisRapida.jogadorId;
-            const status =
-              item.status === 'terminou'
-                ? formatarTempo(item.tempoTotal)
-                : `DNF (volta ${item.voltasCompletadas})`;
-            const classes = [ehHumano ? 'linha-humano' : '', ehVoltaRapida ? 'linha-volta-rapida' : '']
-              .filter(Boolean)
-              .join(' ');
-            return (
-              <tr key={item.jogadorId} className={classes}>
-                <td>{item.posicao}</td>
-                <td>{nomeDoJogadorId(state, item.jogadorId)}</td>
-                <td>{nomePiloto(state, item.jogadorId)}</td>
-                <td>
-                  {status}
-                  {ehVoltaRapida && ' 🏆 VR'}
-                </td>
-                <td>{item.paradas}</td>
-                <td>{item.pontos}</td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+      <div className="tabela-grid-wrap">
+        <table className="tabela-grid">
+          <thead>
+            <tr>
+              <th>Pos</th>
+              <th>Jogador</th>
+              <th>Piloto</th>
+              <th>Status</th>
+              <th>Paradas</th>
+              <th>Pontos</th>
+            </tr>
+          </thead>
+          <tbody>
+            {resultado.classificacao.map((item) => {
+              const ehHumano = ehHumanoId(state, item.jogadorId);
+              const ehVoltaRapida = item.jogadorId === resultado.voltaMaisRapida.jogadorId;
+              const status =
+                item.status === 'terminou'
+                  ? formatarTempo(item.tempoTotal)
+                  : `DNF (volta ${item.voltasCompletadas})`;
+              const classes = [ehHumano ? 'linha-humano' : '', ehVoltaRapida ? 'linha-volta-rapida' : '']
+                .filter(Boolean)
+                .join(' ');
+              return (
+                <tr key={item.jogadorId} className={classes}>
+                  <td>{item.posicao}</td>
+                  <td>{nomeDoJogadorId(state, item.jogadorId)}</td>
+                  <td>{nomePiloto(state, item.jogadorId)}</td>
+                  <td>
+                    {status}
+                    {ehVoltaRapida && ' 🏆 VR'}
+                  </td>
+                  <td>{item.paradas}</td>
+                  <td>{item.pontos}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
 
       <p className="resultado-corrida__volta-rapida">
         Volta mais rápida: {nomeDoJogadorId(state, resultado.voltaMaisRapida.jogadorId)} — pontinho extra pra{' '}
