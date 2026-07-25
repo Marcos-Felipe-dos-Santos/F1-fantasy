@@ -125,42 +125,44 @@ function ResumoCarroHumano({
 
 function TabelaGrid({ state }: { state: DraftState }) {
   return (
-    <table className="tabela-grid">
-      <thead>
-        <tr>
-          <th>Jogador</th>
-          <th>Piloto</th>
-          <th>Chassi</th>
-          <th>Motor</th>
-          <th>Estrategista</th>
-          <th>Pit</th>
-          <th>Peça</th>
-        </tr>
-      </thead>
-      <tbody>
-        {state.jogadores.map((jogador) => {
-          const loadout = state.loadouts[jogador.id];
-          if (!loadout) return null;
-          const piloto = dataset.pilotosById.get(loadout.pilotoId);
-          const chassi = dataset.chassisById.get(loadout.chassiId);
-          const motor = dataset.motoresById.get(loadout.motorId);
-          const estrategista = dataset.estrategistasById.get(loadout.estrategistaId);
-          const pit = dataset.pitsById.get(loadout.pitId);
-          const peca = dataset.pecasById.get(loadout.pecaId);
-          const ehHumano = jogador.tipo === 'humano';
-          return (
-            <tr key={jogador.id} className={ehHumano ? 'linha-humano' : ''}>
-              <td>{nomeJogador(jogador)}</td>
-              <td>{piloto?.nome ?? '?'}</td>
-              <td>{chassi ? `${chassi.equipe} ${chassi.ano}` : '?'}</td>
-              <td>{motor ? `${motor.equipe} ${motor.ano}` : '?'}</td>
-              <td>{estrategista?.nome ?? '?'}</td>
-              <td>{pit ? `${pit.equipe} ${pit.ano}` : '?'}</td>
-              <td>{peca?.nome ?? '?'}</td>
-            </tr>
-          );
-        })}
-      </tbody>
-    </table>
+    <div className="tabela-grid-wrap">
+      <table className="tabela-grid">
+        <thead>
+          <tr>
+            <th>Jogador</th>
+            <th>Piloto</th>
+            <th>Chassi</th>
+            <th>Motor</th>
+            <th>Estrategista</th>
+            <th>Pit</th>
+            <th>Peça</th>
+          </tr>
+        </thead>
+        <tbody>
+          {state.jogadores.map((jogador) => {
+            const loadout = state.loadouts[jogador.id];
+            if (!loadout) return null;
+            const piloto = dataset.pilotosById.get(loadout.pilotoId);
+            const chassi = dataset.chassisById.get(loadout.chassiId);
+            const motor = dataset.motoresById.get(loadout.motorId);
+            const estrategista = dataset.estrategistasById.get(loadout.estrategistaId);
+            const pit = dataset.pitsById.get(loadout.pitId);
+            const peca = dataset.pecasById.get(loadout.pecaId);
+            const ehHumano = jogador.tipo === 'humano';
+            return (
+              <tr key={jogador.id} className={ehHumano ? 'linha-humano' : ''}>
+                <td>{nomeJogador(jogador)}</td>
+                <td>{piloto?.nome ?? '?'}</td>
+                <td>{chassi ? `${chassi.equipe} ${chassi.ano}` : '?'}</td>
+                <td>{motor ? `${motor.equipe} ${motor.ano}` : '?'}</td>
+                <td>{estrategista?.nome ?? '?'}</td>
+                <td>{pit ? `${pit.equipe} ${pit.ano}` : '?'}</td>
+                <td>{peca?.nome ?? '?'}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
   );
 }
