@@ -36,11 +36,11 @@ Este arquivo é a memória sempre-ativa do projeto. As regras aqui são **inviol
 ## Fluxo de trabalho preferido
 - **Metodologia e crítica ANTES de implementar.** O dev quer revisar o plano/abordagem antes de escrever código. Não sair codando de primeira.
 - Roteamento de modelos (economia de token é restrição de design):
-  - **Fable 5** (`fable-architect`) — arquitetura, plano, decisões de design, julgamento.
-  - **Opus 4.8** (`senior-reviewer`) — revisão de diff, segurança, correção.
-  - **Sonnet 5** (`junior-dev`) — implementação dos planos aprovados.
-  - **Haiku 4.5** (`scout`) — exploração barata, leitura de arquivos, busca.
-- Sessão principal costuma rodar em Fable pra planejar; implementação é delegada ao `junior-dev` (Sonnet) pra poupar custo.
+  - **Opus 5** (`fable-architect`) — arquitetura, plano, decisões de design, julgamento. Nome do agente mantido por compatibilidade com as referências no PLANO e no PROGRESS; o Fable 5 não está mais disponível.
+  - **Opus 5** (`senior-reviewer`) — revisão de diff, segurança, correção.
+  - **Sonnet** (`junior-dev`) — implementação dos planos aprovados.
+  - **Haiku** (`scout`) — exploração barata, leitura de arquivos, busca.
+- Sessão principal costuma rodar em Opus pra planejar; implementação é delegada ao `junior-dev` (Sonnet) pra poupar custo.
 
 ## Definição de "pronto" (por PR)
 1. Testes passando (incluindo o baseline que começou vermelho, se aplicável).

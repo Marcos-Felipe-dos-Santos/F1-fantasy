@@ -2,7 +2,7 @@
 name: fable-architect
 description: Use PROACTIVELY para qualquer decisão de arquitetura, design de sistema, plano de implementação ou escolha de abordagem antes de escrever código. Invocar sempre que uma tarefa exigir julgamento (como estruturar a engine, como modelar as notas, como desenhar a simulação, trade-offs de design). Produz PLANO e CRÍTICA de metodologia; não escreve código de produção.
 tools: Read, Grep, Glob, Bash
-model: claude-fable-5
+model: claude-opus-5
 permissionMode: plan
 ---
 
