@@ -87,29 +87,31 @@ export function TelaCorrida({
     return (
       <div className="tela-corrida">
         <h2>Grid de largada — {pista.nome}</h2>
-        <table className="tabela-grid">
-          <thead>
-            <tr>
-              <th>Pos</th>
-              <th>Jogador</th>
-              <th>Piloto</th>
-              <th>Tempo</th>
-            </tr>
-          </thead>
-          <tbody>
-            {grid.grid.map((item, idx) => {
-              const ehHumano = ehHumanoId(state, item.jogadorId);
-              return (
-                <tr key={item.jogadorId} className={ehHumano ? 'linha-humano' : ''}>
-                  <td>{idx + 1}</td>
-                  <td>{nomeDoJogadorId(state, item.jogadorId)}</td>
-                  <td>{nomePiloto(state, item.jogadorId)}</td>
-                  <td>{(item.tempo / 1000).toFixed(3)}s</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+        <div className="tabela-grid-wrap">
+          <table className="tabela-grid">
+            <thead>
+              <tr>
+                <th>Pos</th>
+                <th>Jogador</th>
+                <th>Piloto</th>
+                <th>Tempo</th>
+              </tr>
+            </thead>
+            <tbody>
+              {grid.grid.map((item, idx) => {
+                const ehHumano = ehHumanoId(state, item.jogadorId);
+                return (
+                  <tr key={item.jogadorId} className={ehHumano ? 'linha-humano' : ''}>
+                    <td>{idx + 1}</td>
+                    <td>{nomeDoJogadorId(state, item.jogadorId)}</td>
+                    <td>{nomePiloto(state, item.jogadorId)}</td>
+                    <td>{(item.tempo / 1000).toFixed(3)}s</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
         <button type="button" className="botao-primario" onClick={onLargar}>
           Largar
         </button>
