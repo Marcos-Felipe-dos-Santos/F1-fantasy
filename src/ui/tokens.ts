@@ -52,6 +52,8 @@ export interface ParContraste {
 export const PARES_CONTRASTE: ParContraste[] = [
   { nome: 'texto/fundo', fg: 'texto', bg: 'fundo', minimo: 4.5 },
   { nome: 'texto/fundoElevado', fg: 'texto', bg: 'fundoElevado', minimo: 4.5 },
+  { nome: 'texto/fundoAfundado', fg: 'texto', bg: 'fundoAfundado', minimo: 4.5 }, // texto de input/select
+  { nome: 'erro/fundoAfundado', fg: 'erro', bg: 'fundoAfundado', minimo: 4.5 }, // texto do painel .erro
   { nome: 'textoSuave/fundo', fg: 'textoSuave', bg: 'fundo', minimo: 4.5 },
   { nome: 'textoSuave/fundoElevado', fg: 'textoSuave', bg: 'fundoElevado', minimo: 4.5 },
   { nome: 'textoEscuro/primaria', fg: 'textoEscuro', bg: 'primaria', minimo: 4.5 },
@@ -62,6 +64,7 @@ export const PARES_CONTRASTE: ParContraste[] = [
   { nome: 'primaria/fundo', fg: 'primaria', bg: 'fundo', minimo: 3 },
   { nome: 'bordaInterativa/fundo', fg: 'bordaInterativa', bg: 'fundo', minimo: 3 },
   { nome: 'bordaInterativa/fundoElevado', fg: 'bordaInterativa', bg: 'fundoElevado', minimo: 3 },
+  { nome: 'bordaInterativa/fundoAfundado', fg: 'bordaInterativa', bg: 'fundoAfundado', minimo: 3 }, // borda de input/select
   { nome: 'raridadeComum/fundoElevado', fg: 'raridadeComum', bg: 'fundoElevado', minimo: 3 },
   { nome: 'raridadeRaro/fundoElevado', fg: 'raridadeRaro', bg: 'fundoElevado', minimo: 3 },
   { nome: 'raridadeEpico/fundoElevado', fg: 'raridadeEpico', bg: 'fundoElevado', minimo: 3 },
