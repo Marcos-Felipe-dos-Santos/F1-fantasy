@@ -23,6 +23,7 @@ import type { Dataset } from '../src/engine/dataset';
 import { deriveSeed } from '../src/engine/rng';
 import { simularQuali } from '../src/engine/quali';
 import { simularCorrida } from '../src/engine/corrida';
+import { simularCampeonato as simularCampeonatoEngine } from '../src/engine/campeonato';
 import { criarDraft, resolverBots } from '../src/engine/draft';
 import { atribuirPerfis } from '../src/engine/bots';
 import type { EquipeAno, Jogador, Loadout, Pista, Raridade, ResultadoQuali } from '../src/engine/types';
@@ -358,7 +359,13 @@ function draftarLoadoutsCampeonato(dataset: Dataset, seedBase: number): Loadout[
   });
 }
 
-interface ResultadoCampeonato {
+/**
+ * Métricas de MEDIÇÃO do balance-harness (não confundir com o
+ * `ResultadoCampeonato` da engine, `src/engine/campeonato.ts` — este tipo é
+ * local ao harness, PR 6.1: renomeado de `ResultadoCampeonato` pra
+ * `MetricasCampeonato` pra não colidir com o import da engine).
+ */
+interface MetricasCampeonato {
   campeaoRaridade: Raridade;
   raridadePorJogador: Raridade[];
   dnfCount: number;
@@ -366,39 +373,44 @@ interface ResultadoCampeonato {
   stdDevPontos: number;
 }
 
-function simularCampeonato(dataset: Dataset, seedBase: number): ResultadoCampeonato {
+/**
+ * Simula 1 campeonato (22 jogadores draftados, todas as pistas do dataset) e
+ * deriva as métricas de medição do harness em cima do `ResultadoCampeonato`
+ * da engine (PR 6.1: a agregação de pontos/classificação e a derivação de
+ * seed por etapa agora vivem em `src/engine/campeonato.ts`; este helper só
+ * monta o setup de medição — draft dos 22 bots — e extrai raridade/DNF/
+ * desvio-padrão a partir do resultado).
+ */
+function simularCampeonato(dataset: Dataset, seedBase: number): MetricasCampeonato {
   const loadouts = draftarLoadoutsCampeonato(dataset, seedBase);
-  const pontosPorJogador = new Map<string, number>(loadouts.map((l) => [l.jogadorId, 0]));
+  const { classificacao, etapas } = simularCampeonatoEngine(
+    dataset,
+    loadouts,
+    dataset.pistas,
+    seedBase,
+  );
+
+  // Denominador derivado das etapas EFETIVAMENTE simuladas, não de
+  // `dataset.pistas` (S1 da revisão do PR 6.1): hoje dá o mesmo número porque
+  // a chamada acima passa o calendário inteiro, mas se o harness um dia medir
+  // um subconjunto de pistas o `dnfRateMedia` ficaria silenciosamente errado.
   let dnfCount = 0;
   let totalCarros = 0;
-
-  for (const pista of dataset.pistas) {
-    const seed = deriveSeed(seedBase, `camp:${pista.id}`);
-    const grid = simularQuali(dataset, loadouts, pista, seed);
-    const resultado = simularCorrida(dataset, loadouts, pista, grid, seed);
-    for (const item of resultado.classificacao) {
-      pontosPorJogador.set(item.jogadorId, (pontosPorJogador.get(item.jogadorId) ?? 0) + item.pontos);
-      totalCarros++;
-      if (item.status === 'dnf') dnfCount++;
-    }
+  for (const linha of classificacao) {
+    totalCarros += etapas.length;
+    dnfCount += linha.dnfs;
   }
 
-  let campeaoJogadorId = loadouts[0].jogadorId;
-  let maxPontos = pontosPorJogador.get(campeaoJogadorId)!;
-  for (const [jogadorId, pontos] of pontosPorJogador) {
-    if (pontos > maxPontos || (pontos === maxPontos && jogadorId < campeaoJogadorId)) {
-      maxPontos = pontos;
-      campeaoJogadorId = jogadorId;
-    }
-  }
-
+  // classificacao[0] já é "maior pontuação, empate pelo menor jogadorId"
+  // (mesmo critério do laço antigo que este PR promoveu pra engine).
+  const campeaoJogadorId = classificacao[0].jogadorId;
   const pecaPorJogador = new Map(loadouts.map((l) => [l.jogadorId, l.pecaId]));
   const raridadePorJogador = loadouts.map(
     (l) => dataset.pecasById.get(l.pecaId)!.raridade,
   );
   const campeaoRaridade = dataset.pecasById.get(pecaPorJogador.get(campeaoJogadorId)!)!.raridade;
 
-  const valoresPontos = [...pontosPorJogador.values()];
+  const valoresPontos = classificacao.map((l) => l.pontos);
   const media = valoresPontos.reduce((a, b) => a + b, 0) / valoresPontos.length;
   const varianciaPontos =
     valoresPontos.reduce((acc, v) => acc + (v - media) ** 2, 0) / valoresPontos.length;
