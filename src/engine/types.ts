@@ -370,3 +370,41 @@ export interface ResultadoCorrida {
    */
   voltasDePit: Record<string, number[]>;
 }
+
+/**
+ * Uma etapa (corrida) dentro de um campeonato (PR 6.1): a pista, o grid de
+ * largada e o resultado da corrida daquela etapa. `pistaId` referencia
+ * `Pista.id`.
+ */
+export interface EtapaCampeonato {
+  pistaId: string;
+  grid: ResultadoQuali;
+  resultado: ResultadoCorrida;
+}
+
+/**
+ * Uma linha da classificação acumulada de um campeonato (PR 6.1): pontos
+ * somados de todas as etapas simuladas e contadores informativos (vitórias,
+ * pódios, voltas mais rápidas, DNFs). A ordenação do array que contém estas
+ * linhas é responsabilidade de quem monta (`acumularClassificacao`,
+ * `src/engine/campeonato.ts`).
+ */
+export interface LinhaClassificacao {
+  jogadorId: string;
+  pontos: number;
+  vitorias: number;
+  podios: number;
+  voltasRapidas: number;
+  dnfs: number;
+}
+
+/**
+ * Resultado completo da simulação de um campeonato (PR 6.1): as etapas na
+ * ordem em que foram simuladas e a classificação final já ordenada (pontos
+ * desc; desempate provisório por jogadorId — ver `acumularClassificacao`
+ * em `src/engine/campeonato.ts`; critério FIA oficial entra no PR 6.2).
+ */
+export interface ResultadoCampeonato {
+  etapas: EtapaCampeonato[];
+  classificacao: LinhaClassificacao[];
+}
