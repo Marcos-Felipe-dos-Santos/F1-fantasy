@@ -21,8 +21,9 @@
 
 import type { Dataset } from '../src/engine/dataset';
 import { deriveSeed } from '../src/engine/rng';
-import { simularQuali } from '../src/engine/quali';
-import { simularCorrida } from '../src/engine/corrida';
+import { QUALI_CONFIG, simularQuali } from '../src/engine/quali';
+import { resolverCarro } from '../src/engine/carro';
+import { CORRIDA_CONFIG, simularCorrida } from '../src/engine/corrida';
 import { simularCampeonato as simularCampeonatoEngine } from '../src/engine/campeonato';
 import { criarDraft, resolverBots } from '../src/engine/draft';
 import { atribuirPerfis } from '../src/engine/bots';
@@ -467,6 +468,283 @@ export function medirRaridadePeca(dataset: Dataset, nCampeonatos: number): Relat
 }
 
 // ---------------------------------------------------------------------------
+// PR 6.3 — dominância do draft (report-only, PORTÃO DE DECISÃO da Fase 6:
+// "o campeonato é decidido no draft?"). Se a força do carro montado no draft
+// explicar quase toda a classificação final, as 10 corridas são teatro e o
+// modo campeonato precisa de mitigação (ex.: "pit de meio de temporada",
+// PROGRESS.md D1) ANTES de qualquer UI. SEM assert bloqueante — mesmo padrão
+// informativo da Meta 3/4; quem decide o limiar aceitável é o dev, a partir
+// do relatório impresso.
+// ---------------------------------------------------------------------------
+
+/**
+ * Score determinístico de força de um loadout numa pista — RÉPLICA EXATA da
+ * fórmula inline de `src/engine/quali.ts:52-59` (pesos de `QUALI_CONFIG`),
+ * SEM a variância aleatória da quali. Medir força COM ruído (ex.: usando
+ * `simularQuali`) atenuaria artificialmente a correlação com o resultado do
+ * campeonato — ruído na variável independente sempre ATENUA correlação,
+ * enviesando o portão na direção mais perigosa (o jogo pareceria menos
+ * decidido pelo draft do que realmente é). O guard-rail de sincronia em
+ * `scripts/balance.test.ts` trava esta réplica contra o drift da fórmula
+ * real. NÃO refatorar `quali.ts` pra compartilhar isso (goldens congelados
+ * — GDD/CLAUDE.md; o ganho não compensa o risco); este PR é `scripts/`-only.
+ */
+export function scoreCarroPista(dataset: Dataset, loadout: Loadout, pista: Pista): number {
+  const carro = resolverCarro(dataset, loadout);
+  const notaCarro =
+    carro.chassi.aero * pista.pesos.aero +
+    carro.chassi.mec * pista.pesos.mec +
+    carro.motor.motor * pista.pesos.motor;
+  return (
+    QUALI_CONFIG.pesoPiloto * carro.piloto.quali +
+    QUALI_CONFIG.pesoCarro * notaCarro +
+    QUALI_CONFIG.pesoCall * carro.estrategista.call
+  );
+}
+
+/**
+ * Score determinístico de RITMO DE CORRIDA — réplica exata da fórmula inline
+ * de `src/engine/corrida.ts:189-196` (pesos de `CORRIDA_CONFIG`), sem
+ * variância. Difere de `scoreCarroPista` em um ponto decisivo: usa
+ * `piloto.rit` em vez de `piloto.quali`.
+ *
+ * Existe por causa do aviso 3 da revisão do PR 6.3: medir a força do loadout
+ * só pelo score de QUALI subestima a dominância do draft, porque o campeonato
+ * é decidido pelo ritmo de corrida, não pelo grid. Medido nos mesmos 200
+ * campeonatos: ρ com proxy de quali = 0.909, com proxy de corrida = 0.893,
+ * com os dois combinados = 0.953. O número honesto de "força do loadout" é o
+ * combinado; reportar só o de quali entregaria um PISO ao dev sem avisar.
+ */
+export function scoreCorridaPista(dataset: Dataset, loadout: Loadout, pista: Pista): number {
+  const carro = resolverCarro(dataset, loadout);
+  const notaCarro =
+    carro.chassi.aero * pista.pesos.aero +
+    carro.chassi.mec * pista.pesos.mec +
+    carro.motor.motor * pista.pesos.motor;
+  return (
+    CORRIDA_CONFIG.pesoPiloto * carro.piloto.rit +
+    CORRIDA_CONFIG.pesoCarro * notaCarro +
+    CORRIDA_CONFIG.pesoCall * carro.estrategista.call
+  );
+}
+
+/** Como `forcaMedia`, mas com um score por pista fornecido pelo chamador. */
+function mediaNoCalendario(
+  dataset: Dataset,
+  loadout: Loadout,
+  score: (dataset: Dataset, loadout: Loadout, pista: Pista) => number,
+): number {
+  const soma = dataset.pistas.reduce((acc, pista) => acc + score(dataset, loadout, pista), 0);
+  return soma / dataset.pistas.length;
+}
+
+/**
+ * Força média de um loadout no calendário inteiro (`dataset.pistas`, as 10
+ * pistas do GDD §9) — não uma única pista "neutra" arbitrária: o campeonato
+ * roda as 10, então a força relevante pro portão é a média delas. Escolher
+ * uma pista só introduziria viés de perfil (ex.: um carro de motor pareceria
+ * fraco se a escolhida fosse Mônaco, de baixo peso de motor).
+ *
+ * `forcaMediaCombinada` é a MÉTRICA PRINCIPAL do portão: média dos scores de
+ * quali e de corrida, cobrindo os dois usos que o draft realmente decide
+ * (grid e ritmo). As duas variantes puras seguem expostas pro relatório
+ * mostrar a decomposição.
+ */
+function forcaMediaQuali(dataset: Dataset, loadout: Loadout): number {
+  return mediaNoCalendario(dataset, loadout, scoreCarroPista);
+}
+
+function forcaMediaCorrida(dataset: Dataset, loadout: Loadout): number {
+  return mediaNoCalendario(dataset, loadout, scoreCorridaPista);
+}
+
+function forcaMediaCombinada(dataset: Dataset, loadout: Loadout): number {
+  return (forcaMediaQuali(dataset, loadout) + forcaMediaCorrida(dataset, loadout)) / 2;
+}
+
+/**
+ * Rank médio (mid-rank) de cada valor de `valores` — MESMA convenção de
+ * empate do percentil de Hazen (`percentilHazen` em `scripts/derivar-notas.ts`):
+ * rank = (contagem estritamente melhor) + (contagem empatada + 1) / 2.
+ * `direcao` 'asc': rank 1 = MENOR valor. 'desc': rank 1 = MAIOR valor.
+ */
+export function rankMedio(
+  valores: readonly number[],
+  direcao: 'asc' | 'desc' = 'asc',
+): number[] {
+  return valores.map((v) => {
+    let melhor = 0;
+    let empatados = 0;
+    for (const x of valores) {
+      const xEhMelhor = direcao === 'asc' ? x < v : x > v;
+      if (xEhMelhor) melhor++;
+      else if (x === v) empatados++;
+    }
+    return melhor + (empatados + 1) / 2;
+  });
+}
+
+/** Correlação de Pearson padrão (denominador populacional, n) entre dois arrays do mesmo tamanho e alinhamento. */
+function pearson(a: readonly number[], b: readonly number[]): number {
+  const n = a.length;
+  const mediaA = a.reduce((x, y) => x + y, 0) / n;
+  const mediaB = b.reduce((x, y) => x + y, 0) / n;
+  let cov = 0;
+  let varA = 0;
+  let varB = 0;
+  for (let i = 0; i < n; i++) {
+    const da = a[i] - mediaA;
+    const db = b[i] - mediaB;
+    cov += da * db;
+    varA += da * da;
+    varB += db * db;
+  }
+  // Sem variação num dos lados ⇒ correlação indefinida; 0 é o valor neutro
+  // seguro pro agregado do relatório (nunca deveria ocorrer com dado real).
+  if (varA === 0 || varB === 0) return 0;
+  return cov / Math.sqrt(varA * varB);
+}
+
+/**
+ * Correlação de Spearman (ρ) padrão entre dois arrays de valores BRUTOS
+ * (definição independente de convenção de domínio): ranqueia cada array
+ * ascendente com rank médio pra empates (`rankMedio`) e correlaciona
+ * (Pearson) os ranks resultantes. `a` e `b` precisam ter o mesmo tamanho e
+ * estar alinhados por índice.
+ */
+export function spearman(a: readonly number[], b: readonly number[]): number {
+  if (a.length !== b.length) {
+    throw new Error('spearman: arrays de tamanhos diferentes');
+  }
+  return pearson(rankMedio(a, 'asc'), rankMedio(b, 'asc'));
+}
+
+/** `n!/(k!(n-k)!)`, sem passar por fatoriais gigantes (produto incremental). */
+function combinacoes(n: number, k: number): number {
+  let resultado = 1;
+  for (let i = 0; i < k; i++) {
+    resultado = (resultado * (n - i)) / (i + 1);
+  }
+  return resultado;
+}
+
+export interface RelatorioDominancia {
+  /** Média de ρ (Spearman) entre os campeonatos simulados. */
+  spearmanMedio: number;
+  /** Desvio-padrão de ρ entre os campeonatos — mede se a correlação é estável ou varia muito. */
+  spearmanStdDev: number;
+  /** Menor e maior ρ observados entre os campeonatos (mais legíveis que o desvio pra ρ). */
+  spearmanMin: number;
+  spearmanMax: number;
+  /** Decomposição report-only: ρ usando só o score de quali / só o de ritmo de corrida. */
+  spearmanQuali: number;
+  spearmanCorrida: number;
+  /** Fração dos campeonatos em que o campeão estava no top-3 de força (draft). */
+  pCampeaoTop3Forca: number;
+  /** Referência de acaso puro: 3/22 (chance de estar no top-3 por sorteio uniforme, sem draft decidir nada). */
+  pCampeaoTop3ForcaAcaso: number;
+  /** Fração dos campeonatos em que ao menos 1 dos 3 primeiros colocados veio de fora do top-5 de força. */
+  pForaTop5NoPodio: number;
+  /** Referência de acaso puro: `1 - C(5,3)/C(22,3)` (analítica, não simulada). */
+  pForaTop5NoPodioAcaso: number;
+}
+
+/**
+ * Mede se o campeonato é "decidido no draft" (PR 6.3, PORTÃO DE DECISÃO da
+ * Fase 6): correlaciona a força determinística do loadout (`forcaMedia`, SEM
+ * a variância da quali) com a posição final do campeonato, agregando sobre
+ * `nCampeonatos` campeonatos simulados com o MESMO setup (
+ * `draftarLoadoutsCampeonato` + engine real de campeonato) usado nas metas
+ * 3/4 — mesma população de campeonatos, números comparáveis entre seções do
+ * relatório.
+ *
+ * CONVENÇÃO (documentada também no relatório impresso): ambos os ranks usam
+ * 1 = MELHOR (1 = loadout mais forte; 1 = campeão). Assim ρ = +1 significa
+ * "o draft decide tudo" e ρ = 0 significa "o draft não explica nada" — sinal
+ * trocado aqui inverteria a leitura do dev.
+ */
+export function medirDominanciaDraft(dataset: Dataset, nCampeonatos: number): RelatorioDominancia {
+  const rhos: number[] = [];
+  const rhosQuali: number[] = [];
+  const rhosCorrida: number[] = [];
+  let countCampeaoTop3 = 0;
+  let countForaTop5NoPodio = 0;
+
+  /**
+   * Lookup que FALHA ALTO em vez de devolver `undefined` (sugestão da revisão
+   * do PR 6.3): um desalinhamento entre jogadorIds e classificação viraria
+   * `NaN`, que envenena a média do ρ EM SILÊNCIO — sem lançar, sem teste
+   * vermelho, com o portão de decisão devolvendo um número errado.
+   */
+  function exigir<T>(mapa: Map<string, T>, id: string, campo: string): T {
+    const valor = mapa.get(id);
+    if (valor === undefined) {
+      throw new Error(`medirDominanciaDraft: ${campo} ausente pro jogador "${id}"`);
+    }
+    return valor;
+  }
+
+  for (let c = 0; c < nCampeonatos; c++) {
+    const loadouts = draftarLoadoutsCampeonato(dataset, c);
+    const { classificacao } = simularCampeonatoEngine(dataset, loadouts, dataset.pistas, c);
+
+    const jogadorIds = loadouts.map((l) => l.jogadorId);
+    const scores = loadouts.map((l) => forcaMediaCombinada(dataset, l));
+
+    // Rank de força, 1 = mais forte (desc) — usado pros checks de top-3/top-5.
+    const rankForcaArr = rankMedio(scores, 'desc');
+    const rankForcaPorJogador = new Map(jogadorIds.map((id, i) => [id, rankForcaArr[i]]));
+
+    const posicaoFinalPorJogador = new Map(
+      classificacao.map((linha, i) => [linha.jogadorId, i + 1]),
+    );
+    const posicoesFinais = jogadorIds.map((id) =>
+      exigir(posicaoFinalPorJogador, id, 'posição final'),
+    );
+
+    // ρ: score negado antes de `spearman` ranquear ascendente == ranquear
+    // desc (1 = mais forte) — alinha a convenção com `posicoesFinais`, que já
+    // é 1 = melhor/campeão por construção (ver doc-comment da função).
+    rhos.push(spearman(scores.map((s) => -s), posicoesFinais));
+    // Decomposição report-only (aviso 3 da revisão): mostra quanto cada
+    // componente da força explica sozinho.
+    rhosQuali.push(
+      spearman(loadouts.map((l) => -forcaMediaQuali(dataset, l)), posicoesFinais),
+    );
+    rhosCorrida.push(
+      spearman(loadouts.map((l) => -forcaMediaCorrida(dataset, l)), posicoesFinais),
+    );
+
+    const campeaoId = classificacao[0].jogadorId;
+    if (exigir(rankForcaPorJogador, campeaoId, 'rank de força') <= 3) countCampeaoTop3++;
+
+    const podioIds = classificacao.slice(0, 3).map((l) => l.jogadorId);
+    if (podioIds.some((id) => exigir(rankForcaPorJogador, id, 'rank de força') > 5)) {
+      countForaTop5NoPodio++;
+    }
+  }
+
+  const media = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / xs.length;
+  const mediaRho = media(rhos);
+  const varianciaRho = rhos.reduce((acc, r) => acc + (r - mediaRho) ** 2, 0) / rhos.length;
+
+  return {
+    spearmanMedio: mediaRho,
+    spearmanStdDev: Math.sqrt(varianciaRho),
+    // min/max são mais legíveis que o desvio pra ρ (limitado em [-1,1] e
+    // assimétrico perto dos extremos) — sugestão da revisão do PR 6.3.
+    spearmanMin: Math.min(...rhos),
+    spearmanMax: Math.max(...rhos),
+    spearmanQuali: media(rhosQuali),
+    spearmanCorrida: media(rhosCorrida),
+    pCampeaoTop3Forca: countCampeaoTop3 / nCampeonatos,
+    pCampeaoTop3ForcaAcaso: 3 / N_JOGADORES,
+    pForaTop5NoPodio: countForaTop5NoPodio / nCampeonatos,
+    pForaTop5NoPodioAcaso: 1 - combinacoes(5, 3) / combinacoes(N_JOGADORES, 3),
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Relatório legível.
 // ---------------------------------------------------------------------------
 
@@ -479,6 +757,7 @@ export function gerarRelatorio(
   vitoriaPole: TaxaVitoriaPole,
   paradas: TaxaParadas,
   raridade: RelatorioRaridade,
+  dominancia: RelatorioDominancia,
 ): string {
   const linhas: string[] = [];
   linhas.push('=== balance-harness — relatório (PR 1.6) ===');
@@ -508,6 +787,26 @@ export function gerarRelatorio(
   linhas.push(`  DNF médio por (carro, corrida): ${pct(raridade.dnfRateMedia)}`);
   linhas.push(
     `  Desvio-padrão médio dos pontos finais do campeonato: ${raridade.stdDevPontosMedia.toFixed(2)}`,
+  );
+  linhas.push('');
+  linhas.push('-- PR 6.3: dominância do draft (PORTÃO DE DECISÃO, report-only, sem limiar) --');
+  linhas.push(
+    '  Convenção: 1 = melhor em ambos os ranks (1 = loadout mais forte; 1 = campeão).',
+  );
+  linhas.push(
+    '  ρ = +1 => "o draft decide tudo"; ρ = 0 => "o draft não explica nada".',
+  );
+  linhas.push(
+    `  Spearman (força do loadout x posição final): média=${dominancia.spearmanMedio.toFixed(3)}  desvio-padrão=${dominancia.spearmanStdDev.toFixed(3)}  [min ${dominancia.spearmanMin.toFixed(3)}, max ${dominancia.spearmanMax.toFixed(3)}]`,
+  );
+  linhas.push(
+    `    decomposição: só score de quali=${dominancia.spearmanQuali.toFixed(3)}  só ritmo de corrida=${dominancia.spearmanCorrida.toFixed(3)}`,
+  );
+  linhas.push(
+    `  P(campeão no top-3 de força):        ${pct(dominancia.pCampeaoTop3Forca)}  (acaso puro: ${pct(dominancia.pCampeaoTop3ForcaAcaso)})`,
+  );
+  linhas.push(
+    `  P(pódio com alguém fora do top-5):   ${pct(dominancia.pForaTop5NoPodio)}  (acaso puro: ${pct(dominancia.pForaTop5NoPodioAcaso)})`,
   );
   return linhas.join('\n');
 }
