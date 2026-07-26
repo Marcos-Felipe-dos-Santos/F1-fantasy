@@ -77,15 +77,44 @@ function cmpJogadorId(a: string, b: string): number {
 }
 
 /**
- * Agrega os resultados de várias etapas numa classificação por jogador:
- * pontos somados, vitórias (posição 1), pódios (posição <= 3), voltas mais
- * rápidas (jogador cravou `resultado.voltaMaisRapida` naquela etapa) e DNFs
- * (status 'dnf').
+ * Compara duas linhas por countback FIA: maior número de 1ºs lugares vence;
+ * empatando, maior número de 2ºs; empatando, 3ºs; e assim por diante até a
+ * última posição do histograma. `posicoes` das duas linhas têm sempre o
+ * mesmo tamanho (fixado em `acumularClassificacao`).
+ * Devolve 0 se os dois histogramas forem idênticos (empate absoluto, cabe ao
+ * chamador desempatar por `jogadorId`).
  *
- * ELEGIBILIDADE (A1 da revisão do PR 6.1): vitória, pódio e volta mais rápida
- * só contam pra quem TERMINOU a corrida, espelhando a regra da própria engine
- * ("pontos FIA só pra quem terminou", `corrida.ts:436`). Dois casos reais
- * exigem isso:
+ * O `?? 0` e o `Math.max` dos tamanhos são cinto-e-suspensório de propósito:
+ * o tamanho igual é invariante garantido pelo construtor das linhas, mas é
+ * invariante de doc-comment, não de tipo. Se algum dia uma linha vier de
+ * outro caminho (desserialização de save, PR 6.5), ler índice inexistente
+ * daria `undefined - n = NaN` — e `NaN` num comparador de `sort` não falha:
+ * corrompe a ordem em SILÊNCIO, exatamente o modo de falha que o
+ * determinismo do projeto não tolera.
+ */
+function cmpCountback(a: LinhaClassificacao, b: LinhaClassificacao): number {
+  const tamanho = Math.max(a.posicoes.length, b.posicoes.length);
+  for (let i = 0; i < tamanho; i++) {
+    const pa = a.posicoes[i] ?? 0;
+    const pb = b.posicoes[i] ?? 0;
+    if (pa !== pb) return pb - pa;
+  }
+  return 0;
+}
+
+/**
+ * Agrega os resultados de várias etapas numa classificação por jogador:
+ * pontos somados, histograma de posições de chegada (`posicoes`), vitórias
+ * (posição 1) e pódios (posição <= 3) — ambos DERIVADOS do histograma, nunca
+ * contados em paralelo (garante `vitorias === posicoes[0]` e
+ * `podios === posicoes[0] + posicoes[1] + posicoes[2]` por construção, sem
+ * risco de os dois caminhos divergirem) —, voltas mais rápidas (jogador
+ * cravou `resultado.voltaMaisRapida` naquela etapa) e DNFs (status 'dnf').
+ *
+ * ELEGIBILIDADE (A1 da revisão do PR 6.1): posição no histograma, pódio e
+ * volta mais rápida só contam pra quem TERMINOU a corrida, espelhando a regra
+ * da própria engine ("pontos FIA só pra quem terminou", `corrida.ts:436`).
+ * Dois casos reais exigem isso:
  * - `simularCorrida` ordena finalizadores primeiro, mas quando MENOS DE 3
  *   CARROS TERMINAM um abandono cai em `posicao <= 3` — improvável num grid
  *   de 22, plausível em campeonato de poucos jogadores.
@@ -93,22 +122,53 @@ function cmpJogadorId(a: string, b: string): number {
  *   `voltaMaisRapida` pra um abandonador e NÃO credita o ponto de bônus
  *   (`corrida.ts:453-469`); o contador espelha exatamente essa elegibilidade.
  * Sem isso os contadores creditariam feitos a quem marcou 0 ponto — e o
- * desempate FIA do PR 6.2 consome justamente estes campos.
+ * desempate FIA (countback) consome justamente o histograma.
  *
  * `jogadorIds` fixa o universo de jogadores a agregar (garante linha com 0
  * em tudo mesmo se `etapas` estiver vazio ou não cobrir algum jogador).
  *
- * Ordenação: pontos desc; empate → jogadorId ascendente (code unit).
- * // desempate provisório — critério FIA no PR 6.2
+ * TAMANHO DO HISTOGRAMA (aviso 1 da revisão do PR 6.2): é
+ * `max(jogadorIds.length, maior posição de finalizador observada)`, não
+ * simplesmente `jogadorIds.length`. Em campeonato real os dois coincidem (o
+ * grid é o mesmo em toda etapa), mas `acumularClassificacao` é exportada: se
+ * um chamador agregar um SUBGRUPO (`jogadorIds` menor que o grid da corrida),
+ * dimensionar por `jogadorIds.length` faria a chegada em posição alta ser
+ * descartada em silêncio — e como `vitorias`/`podios` são derivados do
+ * histograma, os dois sairiam errados sem nenhum erro. Todas as linhas
+ * compartilham o MESMO tamanho, invariante de que `cmpCountback` depende.
+ *
+ * Ordenação (PR 6.2, critério FIA oficial): pontos desc; empatando,
+ * countback (`cmpCountback`, acima); empatando ainda (histograma idêntico),
+ * `jogadorId` ascendente (code unit) — garante ordem TOTAL e ESTÁVEL, sem o
+ * que a classificação seria não-determinística num empate absoluto.
  */
 export function acumularClassificacao(
   etapas: EtapaCampeonato[],
   jogadorIds: string[],
 ): LinhaClassificacao[] {
+  // Pré-passo: dimensiona o histograma pra caber a maior posição de
+  // finalizador observada (ver "TAMANHO DO HISTOGRAMA" no doc-comment).
+  let tamanhoHistograma = jogadorIds.length;
+  for (const etapa of etapas) {
+    for (const item of etapa.resultado.classificacao) {
+      if (item.status === 'terminou' && item.posicao > tamanhoHistograma) {
+        tamanhoHistograma = item.posicao;
+      }
+    }
+  }
+
   const porJogador = new Map<string, LinhaClassificacao>(
     jogadorIds.map((jogadorId) => [
       jogadorId,
-      { jogadorId, pontos: 0, vitorias: 0, podios: 0, voltasRapidas: 0, dnfs: 0 },
+      {
+        jogadorId,
+        pontos: 0,
+        vitorias: 0,
+        podios: 0,
+        voltasRapidas: 0,
+        dnfs: 0,
+        posicoes: new Array(tamanhoHistograma).fill(0),
+      },
     ]),
   );
 
@@ -121,8 +181,10 @@ export function acumularClassificacao(
         linha.dnfs++;
         continue;
       }
-      if (item.posicao === 1) linha.vitorias++;
-      if (item.posicao <= 3) linha.podios++;
+      // O pré-passo acima garante que `idx` sempre cabe (nunca há descarte
+      // silencioso); o guard de `>= 0` protege só contra posição inválida.
+      const idx = item.posicao - 1;
+      if (idx >= 0) linha.posicoes[idx]++;
     }
     const autorVoltaRapida = etapa.resultado.voltaMaisRapida.jogadorId;
     const terminou = etapa.resultado.classificacao.some(
@@ -132,8 +194,17 @@ export function acumularClassificacao(
     if (terminou && linhaVoltaRapida) linhaVoltaRapida.voltasRapidas++;
   }
 
+  // vitorias/podios DERIVADOS do histograma (não contados em paralelo) — ver
+  // doc-comment acima.
+  for (const linha of porJogador.values()) {
+    linha.vitorias = linha.posicoes[0] ?? 0;
+    linha.podios = (linha.posicoes[0] ?? 0) + (linha.posicoes[1] ?? 0) + (linha.posicoes[2] ?? 0);
+  }
+
   return [...porJogador.values()].sort((a, b) => {
     if (a.pontos !== b.pontos) return b.pontos - a.pontos;
+    const countback = cmpCountback(a, b);
+    if (countback !== 0) return countback;
     return cmpJogadorId(a.jogadorId, b.jogadorId);
   });
 }

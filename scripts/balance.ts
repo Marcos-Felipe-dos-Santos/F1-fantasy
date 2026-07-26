@@ -401,8 +401,9 @@ function simularCampeonato(dataset: Dataset, seedBase: number): MetricasCampeona
     dnfCount += linha.dnfs;
   }
 
-  // classificacao[0] já é "maior pontuação, empate pelo menor jogadorId"
-  // (mesmo critério do laço antigo que este PR promoveu pra engine).
+  // classificacao[0] já é "maior pontuação; empate por countback FIA (mais
+  // 1ºs, depois 2ºs, ...); empate absoluto pelo menor jogadorId" (PR 6.2,
+  // `acumularClassificacao` em `src/engine/campeonato.ts`).
   const campeaoJogadorId = classificacao[0].jogadorId;
   const pecaPorJogador = new Map(loadouts.map((l) => [l.jogadorId, l.pecaId]));
   const raridadePorJogador = loadouts.map(

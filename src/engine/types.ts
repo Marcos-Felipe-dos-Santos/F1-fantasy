@@ -388,6 +388,15 @@ export interface EtapaCampeonato {
  * pódios, voltas mais rápidas, DNFs). A ordenação do array que contém estas
  * linhas é responsabilidade de quem monta (`acumularClassificacao`,
  * `src/engine/campeonato.ts`).
+ *
+ * `posicoes` (PR 6.2) é o histograma de posições de chegada usado pelo
+ * desempate FIA (countback): `posicoes[0]` conta 1ºs lugares, `posicoes[1]`
+ * 2ºs, e assim por diante. Só conta posição de quem TERMINOU a corrida (mesma
+ * elegibilidade de `vitorias`/`podios`, ver doc de `acumularClassificacao`).
+ * Tamanho sempre igual ao número de jogadores do campeonato (`jogadorIds`
+ * passado a `acumularClassificacao`). `vitorias === posicoes[0]` e
+ * `podios === posicoes[0] + posicoes[1] + posicoes[2]` por construção —
+ * ambos são derivados do histograma, não contados em paralelo.
  */
 export interface LinhaClassificacao {
   jogadorId: string;
@@ -396,13 +405,15 @@ export interface LinhaClassificacao {
   podios: number;
   voltasRapidas: number;
   dnfs: number;
+  posicoes: number[];
 }
 
 /**
  * Resultado completo da simulação de um campeonato (PR 6.1): as etapas na
- * ordem em que foram simuladas e a classificação final já ordenada (pontos
- * desc; desempate provisório por jogadorId — ver `acumularClassificacao`
- * em `src/engine/campeonato.ts`; critério FIA oficial entra no PR 6.2).
+ * ordem em que foram simuladas e a classificação final já ordenada — pontos
+ * desc; empate por countback FIA (mais 1ºs lugares, depois mais 2ºs, e assim
+ * por diante); empate absoluto por `jogadorId` ascendente (PR 6.2, ver
+ * `acumularClassificacao` em `src/engine/campeonato.ts`).
  */
 export interface ResultadoCampeonato {
   etapas: EtapaCampeonato[];
