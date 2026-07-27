@@ -28,7 +28,17 @@ const D_PIT = 'M118,492 Q126,566 182,566 L606,566 Q664,566 676,500';
 
 const ASFALTO = '#3E3A5C'; // token proposto pro 7.2 (`pistaAsfalto`)
 const ESCAPE = '#0E0C20'; // = fundoAfundado
-const MURO = '#3A3468'; // = borda
+/**
+ * Muro ESCURECIDO na revisão 2 (era `borda #3A3468`). Não veio de referência:
+ * medindo, `#3A3468` tem luminância 0.0435 contra 0.0482 do asfalto — 10% de
+ * diferença. O aro do muro competia com a própria pista pela atenção. Em
+ * `#2F2A55` (0.0292) o asfalto volta a ser, com folga, a superfície mais clara.
+ */
+const MURO = '#2F2A55';
+/** Terreno do autódromo (revisão 2): a faixa larga que faz a pista deixar de flutuar no vazio. */
+const TERRENO = '#1B1738';
+/** Áreas de escape nas curvas e plataforma do paddock (revisão 2). */
+const SERVICO = '#221E42';
 const MARCACAO = '#B9B3DC'; // = textoSuave
 const ZEBRA_A = '#FFCC00'; // = primaria
 const ZEBRA_B = '#FF7B85'; // = erro
@@ -125,6 +135,29 @@ export function MockPista() {
 
         <rect x={-40} y={-40} width={1080} height={700} fill="#16132E" />
         <rect x={-40} y={-40} width={1080} height={700} fill="url(#mockVinheta)" />
+
+        {/*
+          ===== ENTORNO (revisão 2, depois da 2ª referência) =====
+          Regra do dev: a pista e os 22 carros são o CONTEÚDO; entorno é MOLDURA.
+          Se qualquer adição prejudicar a leitura dos carros, ela está errada.
+          Por isso o entorno é só TONALIDADE — nenhum objeto decorativo, nenhuma
+          forma que precise ser reconhecida — e toda superfície nova fica bem
+          abaixo do asfalto em luminância (0.011 e 0.017 contra 0.048).
+        */}
+        {/* terreno do autódromo: um stroke largo faz a pista deixar de flutuar */}
+        <path d={D_MONZA} fill="none" stroke={TERRENO} strokeWidth={196} strokeLinejoin="round" strokeLinecap="round" />
+        {/* áreas de escape em curvas específicas */}
+        <g fill={SERVICO}>
+          <ellipse cx={700} cy={443} rx={52} ry={40} transform="rotate(-25 700 443)" />
+          <ellipse cx={884} cy={264} rx={44} ry={56} transform="rotate(12 884 264)" />
+          <ellipse cx={268} cy={86} rx={62} ry={34} transform="rotate(-8 268 86)" />
+          <ellipse cx={40} cy={352} rx={40} ry={74} transform="rotate(6 40 352)" />
+        </g>
+        {/* complexo de boxes ancorado na reta principal + acessos de serviço */}
+        <rect x={150} y={500} width={492} height={96} rx={10} fill={SERVICO} />
+        <path d="M300,596 L300,628 M470,596 L470,628" stroke={TERRENO} strokeWidth={16} strokeLinecap="round" />
+        <rect x={248} y={612} width={104} height={26} rx={5} fill={TERRENO} />
+        <rect x={418} y={612} width={104} height={26} rx={5} fill={TERRENO} />
 
         {/* camadas da pista */}
         <g fill="none" strokeLinejoin="round" strokeLinecap="round">
