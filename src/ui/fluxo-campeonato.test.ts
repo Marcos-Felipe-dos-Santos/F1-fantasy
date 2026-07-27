@@ -23,6 +23,7 @@ import {
   campeonatoConcluido,
   classificacaoApos,
   FORMATO_PADRAO,
+  type FormatoTemporada,
   iniciarCampeonato,
   N_ETAPAS,
   simularOResto,
@@ -64,12 +65,30 @@ describe('calendarioPadrao', () => {
     expect(calendario).toEqual(dataset.pistas.map((p) => p.id));
   });
 
+  // ATENÇÃO (cosmético 1 da revisão do 6.4): este teste NÃO trava a ordem do
+  // calendário. As 10 pistas em ordem alfabética dão, nas 5 primeiras, exatamente
+  // os mesmos 68 (imola 14 + interlagos 12 + monaco 15 + montreal 13 + monza 14),
+  // então uma reordenação passaria batido aqui. Quem detecta ordem é o teste
+  // "devolve os ids na ordem do dataset.pistas" acima — os dois são
+  // complementares; não apague aquele achando que este cobre.
   it('soma de voltas: temporada curta = 68, completa = 132', () => {
     const somaVoltas = (ids: string[]) =>
       ids.reduce((soma, id) => soma + dataset.pistasById.get(id)!.voltas, 0);
 
     expect(somaVoltas(calendarioPadrao(dataset, 'curta'))).toBe(68);
     expect(somaVoltas(calendarioPadrao(dataset, 'completa'))).toBe(132);
+  });
+
+  it('lança para formato fora do union (save/URL adulterado), em vez de devolver o calendário inteiro', () => {
+    // `slice(0, undefined)` devolveria as 10 pistas em silêncio.
+    expect(() => calendarioPadrao(dataset, 'media' as FormatoTemporada)).toThrow(
+      /formato inválido/,
+    );
+  });
+
+  it('lança quando o dataset tem menos pistas que o formato, em vez de saturar', () => {
+    const datasetCurto = { ...dataset, pistas: dataset.pistas.slice(0, 3) };
+    expect(() => calendarioPadrao(datasetCurto, 'curta')).toThrow(/precisa de 5/);
   });
 
   it('N_ETAPAS reflete os tamanhos de cada formato', () => {
@@ -228,5 +247,72 @@ describe('classificacaoApos', () => {
     const apos2 = classificacaoApos(estado, 2);
 
     expect(apos1).not.toEqual(apos2);
+  });
+
+  // Aviso 1 da revisão do 6.4: `slice` aceita tudo e devolve tabela errada em
+  // SILÊNCIO. Cada caso abaixo tinha um resultado plausível-porém-errado antes
+  // do guard; o `NaN` era o pior (temporada inteira zerada como se fosse
+  // estado legítimo).
+  it.each([
+    ['negativo (era "todas menos a última")', -1],
+    ['NaN (era temporada zerada em silêncio)', NaN],
+    ['fracionário (era truncado)', 2.7],
+    ['maior que o calendário (era saturado)', 999],
+  ])('classificacaoApos lança para nEtapas %s', (_rotulo, nEtapas) => {
+    const estado = iniciarCampeonato(dataset, loadoutsDeTeste(4), 42, calendarioPadrao(dataset));
+    expect(() => classificacaoApos(estado, nEtapas)).toThrow(/nEtapas inválido/);
+  });
+
+  it('usa jogadorIds explícito do estado, não o grid de etapas[0]', () => {
+    const loadouts = loadoutsDeTeste(4);
+    const estado = iniciarCampeonato(dataset, loadouts, 42, calendarioPadrao(dataset));
+
+    expect(estado.jogadorIds).toEqual(loadouts.map((l) => l.jogadorId));
+    // Com o universo vindo do estado, zerar `etapas` não produz mais um
+    // `TypeError` obscuro em `etapas[0].resultado` — o guard de nEtapas pega
+    // primeiro, com mensagem que aponta pro save inválido (aviso 2).
+    const corrompido = { ...estado, etapas: [] };
+    expect(() => classificacaoApos(corrompido, 3)).toThrow(/nEtapas inválido/);
+    expect(classificacaoApos(corrompido, 0)).toHaveLength(loadouts.length);
+  });
+
+  // Cosmético 4 da revisão: a cobertura de DNF no universo era incidental (a
+  // seed 42 por acaso produz um abandono). Se o balanceamento mudar e ninguém
+  // abandonar, a cobertura sumiria sem ninguém notar — então a premissa vira
+  // asserção explícita.
+  it('quem abandona continua no universo da classificação acumulada', () => {
+    const loadouts = loadoutsDeTeste(4);
+    const estado = iniciarCampeonato(dataset, loadouts, 42, calendarioPadrao(dataset));
+
+    const dnfs = estado.etapas[0].resultado.classificacao.filter((c) => c.status === 'dnf');
+    expect(dnfs.length).toBeGreaterThan(0);
+
+    const classificacao = classificacaoApos(estado, 1);
+    expect(classificacao).toHaveLength(loadouts.length);
+    for (const dnf of dnfs) {
+      expect(classificacao.some((linha) => linha.jogadorId === dnf.jogadorId)).toBe(true);
+    }
+  });
+});
+
+describe('sincronia entre calendario e etapas (aviso 3 da revisão do 6.4)', () => {
+  it('mutar o array do chamador depois de iniciar não dessincroniza o cursor', () => {
+    const calendario = calendarioPadrao(dataset);
+    const estado = iniciarCampeonato(dataset, loadoutsDeTeste(4), 42, calendario);
+
+    // O chamador ainda tem a referência do array que passou.
+    calendario.push('pista-montreal', 'pista-imola');
+
+    expect(estado.calendario).toHaveLength(5);
+    expect(estado.etapas).toHaveLength(5);
+
+    let cursor = estado;
+    for (let i = 0; i < 5; i++) cursor = avancarEtapa(cursor);
+
+    // Sem a cópia + o uso de etapas.length, isto daria etapaAtual 7 e
+    // campeonatoConcluido só na 7ª — com a tela lendo etapas[5] undefined.
+    expect(cursor.etapaAtual).toBe(5);
+    expect(campeonatoConcluido(cursor)).toBe(true);
+    expect(simularOResto(estado).etapaAtual).toBe(5);
   });
 });

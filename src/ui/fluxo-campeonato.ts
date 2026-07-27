@@ -42,7 +42,23 @@ export function calendarioPadrao(
   dataset: Dataset,
   formato: FormatoTemporada = FORMATO_PADRAO,
 ): string[] {
-  return dataset.pistas.slice(0, N_ETAPAS[formato]).map((pista) => pista.id);
+  // Os dois guards existem porque `slice` NUNCA reclama: com um `formato` fora
+  // do union (string vinda de save/URL em 6.5/6.6, onde o tipo não vale nada)
+  // `N_ETAPAS[formato]` é `undefined` e `slice(0, undefined)` devolveria o
+  // calendário INTEIRO; com um dataset menor que o formato, `slice` satura e o
+  // jogador disputaria 8 etapas achando que são 10. Os dois casos entregam uma
+  // temporada errada sem erro nenhum — falha silenciosa, que este projeto
+  // trata como inaceitável (mesmo padrão de `resolverPista` abaixo).
+  if (!Object.prototype.hasOwnProperty.call(N_ETAPAS, formato)) {
+    throw new Error(`calendarioPadrao: formato inválido "${formato}"`);
+  }
+  const nEtapas = N_ETAPAS[formato];
+  if (dataset.pistas.length < nEtapas) {
+    throw new Error(
+      `calendarioPadrao: dataset tem ${dataset.pistas.length} pistas, formato "${formato}" precisa de ${nEtapas}`,
+    );
+  }
+  return dataset.pistas.slice(0, nEtapas).map((pista) => pista.id);
 }
 
 /**
@@ -57,6 +73,15 @@ export interface EstadoCampeonato {
   calendario: string[];
   etapaAtual: number;
   etapas: EtapaCampeonato[];
+  /**
+   * Universo de jogadores do campeonato, na ordem dos loadouts. Guardado
+   * EXPLICITAMENTE em vez de reconstruído de `etapas[0]` (aviso 2 da revisão
+   * do 6.4): `EstadoCampeonato` é tipo público e o PR 6.5 vai desserializar
+   * isto de `localStorage`, onde o tipo TypeScript não garante nada — um save
+   * corrompido com `etapas: []` daria um `TypeError` obscuro em vez de erro
+   * de save inválido. É também o campo que o 6.5 precisa pra validar o save.
+   */
+  jogadorIds: string[];
 }
 
 /** Resolve um id de pista no dataset; lança alto (nunca `undefined` silencioso) se não existir. */
@@ -90,9 +115,14 @@ export function iniciarCampeonato(
 
   return {
     seed,
-    calendario,
+    // CÓPIA, nunca a referência do chamador (aviso 3 da revisão do 6.4): se o
+    // chamador mutar o array depois (`calendario.push(...)`), `calendario` e
+    // `etapas` dessincronizam — o cursor passaria do fim das etapas simuladas
+    // e a tela do 6.6 leria `etapas[i]` inexistente.
+    calendario: [...calendario],
     etapaAtual: 0,
     etapas: resultado.etapas,
+    jogadorIds: loadouts.map((loadout) => loadout.jogadorId),
   };
 }
 
@@ -105,30 +135,47 @@ export function iniciarCampeonato(
 export function avancarEtapa(estado: EstadoCampeonato): EstadoCampeonato {
   return {
     ...estado,
-    etapaAtual: Math.min(estado.etapaAtual + 1, estado.calendario.length),
+    etapaAtual: Math.min(estado.etapaAtual + 1, estado.etapas.length),
   };
 }
 
 /** Salta o cursor de apresentação direto pro fim do campeonato (todas as etapas "reveladas" de uma vez). */
 export function simularOResto(estado: EstadoCampeonato): EstadoCampeonato {
-  return { ...estado, etapaAtual: estado.calendario.length };
+  return { ...estado, etapaAtual: estado.etapas.length };
 }
 
 /**
- * Classificação acumulada das `n` primeiras etapas (0-based sobre
- * `estado.etapas`, `n` etapas contadas a partir do início) — o que permite
- * mostrar a tabela evoluindo etapa a etapa. `n = 0` devolve todos os
- * jogadores com 0 ponto, ordenados pela convenção da engine (countback FIA,
- * depois `jogadorId`). O universo de jogadores é recuperado do grid da
- * primeira etapa pré-simulada (mesmo grid em toda etapa do campeonato) — não
- * reimplementa desempate, delega inteiramente a `acumularClassificacao`.
+ * Classificação acumulada das `nEtapas` primeiras etapas — o que permite
+ * mostrar a tabela evoluindo etapa a etapa. `nEtapas` é uma CONTAGEM, não um
+ * índice: `classificacaoApos(estado, estado.etapaAtual)` mostra a tabela
+ * depois das etapas já reveladas ao jogador. (O doc anterior dizia "0-based",
+ * o que convidava a um `etapaAtual - 1` que devolveria a tabela de uma etapa
+ * atrás sem erro nenhum — cosmético 2 da revisão do 6.4.)
+ *
+ * `nEtapas = 0` devolve todos os jogadores com 0 ponto, ordenados pela
+ * convenção da engine (countback FIA, depois `jogadorId`). Não reimplementa
+ * desempate: delega inteiramente a `acumularClassificacao`.
  */
 export function classificacaoApos(estado: EstadoCampeonato, nEtapas: number): LinhaClassificacao[] {
-  const jogadorIds = estado.etapas[0].resultado.classificacao.map((item) => item.jogadorId);
-  return acumularClassificacao(estado.etapas.slice(0, nEtapas), jogadorIds);
+  // `slice` aceita qualquer coisa e devolve tabela ERRADA em silêncio: -1 vira
+  // "todas menos a última", 2.7 vira 2, 999 satura no fim e — o pior — `NaN`
+  // vira `[]`, ou seja, uma temporada inteira zerada apresentada como estado
+  // legítimo. `NaN` é plausível no 6.6 (parseInt de query param, slider). É o
+  // mesmo modo de falha que `cmpCountback` (`engine/campeonato.ts`) documenta
+  // como inaceitável; aqui falha alto (aviso 1 da revisão do 6.4).
+  if (!Number.isInteger(nEtapas) || nEtapas < 0 || nEtapas > estado.etapas.length) {
+    throw new Error(
+      `classificacaoApos: nEtapas inválido (${nEtapas}), esperado inteiro em [0, ${estado.etapas.length}]`,
+    );
+  }
+  return acumularClassificacao(estado.etapas.slice(0, nEtapas), estado.jogadorIds);
 }
 
-/** Verdadeiro quando o cursor de apresentação chegou ao fim do calendário. */
+/**
+ * Verdadeiro quando o cursor de apresentação chegou ao fim. Mede contra
+ * `etapas.length` (o que foi de fato simulado), não contra `calendario.length`
+ * (entrada do chamador) — ver aviso 3 da revisão do 6.4.
+ */
 export function campeonatoConcluido(estado: EstadoCampeonato): boolean {
-  return estado.etapaAtual >= estado.calendario.length;
+  return estado.etapaAtual >= estado.etapas.length;
 }
