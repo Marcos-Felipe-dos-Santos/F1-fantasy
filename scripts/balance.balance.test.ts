@@ -14,7 +14,13 @@ import { criarDataset } from '../src/engine/dataset';
 import equipeAnosReal from '../src/data/equipe-anos.json';
 import pecasReal from '../src/data/pecas.json';
 import pistasReal from '../src/data/pistas.json';
-import { gerarRelatorio, medirParadasExtras, medirRaridadePeca, medirVitoriaPole } from './balance';
+import {
+  gerarRelatorio,
+  medirDominanciaDraft,
+  medirParadasExtras,
+  medirRaridadePeca,
+  medirVitoriaPole,
+} from './balance';
 
 const dataset = criarDataset(equipeAnosReal, pecasReal, pistasReal);
 
@@ -23,9 +29,13 @@ describe('balance-harness (PR 1.6)', () => {
     const vitoriaPole = medirVitoriaPole(dataset, 400);
     const paradas = medirParadasExtras(dataset, 300);
     const raridade = medirRaridadePeca(dataset, 200);
+    // PR 6.3: mesma população de 200 campeonatos da Meta 3/4 (números
+    // comparáveis) — report-only, sem assert de limiar (ver doc-comment de
+    // `medirDominanciaDraft`).
+    const dominancia = medirDominanciaDraft(dataset, 200);
 
     // Sempre reporta, mesmo que algum assert abaixo falhe.
-    console.log(gerarRelatorio(vitoriaPole, paradas, raridade));
+    console.log(gerarRelatorio(vitoriaPole, paradas, raridade, dominancia));
 
     // Meta 1 (PROGRESS.md): sinal de grid — pole com carro idêntico vence
     // claramente mais que 61% e bem menos que 95%, alvo ~70-80% na pista
