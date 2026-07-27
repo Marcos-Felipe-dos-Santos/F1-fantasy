@@ -102,25 +102,92 @@ f1-fantasy-claude-setup/
 
 ### Fase 5 — Identidade visual e polimento (registrada em 2026-07-22; EXECUTAR depois do dataset, não agora)
 
-> **Direção de arte: ARCADE/LÚDICO** — cores vibrantes, estilo chapado (flat), divertido.
-> Coerente com o espírito "7x1/38 a 0" (jogo pra rir com amigos, não simulador sério).
-> O visual vibrante e chapado também contorna a ausência de arte fotorrealista e de mapas oficiais.
+> **Direção de arte: ARCADE ADULTO — "painel de telemetria", neon sobre escuro.**
+> Corrigida pelo dev em 2026-07-27 (PR 7.0). **A formulação anterior — "ARCADE/LÚDICO, cores
+> vibrantes, estilo chapado, divertido, jogo pra rir com amigos, não simulador sério" — foi
+> REJEITADA e não vale mais.** Ela levava a verde-limão chapado, arvorezinha de desenho, laguinho
+> azul-piscina: cara de brinquedo, que não combina com o resto do projeto. Se você chegou aqui
+> vindo de uma referência de jogo mobile infantil, o que se aproveita dela é a ESTRUTURA, nunca o
+> estilo.
+>
+> A direção correta é **estrutura de simulador + sofisticação do design system que já existe**:
+> - **Estrutura:** pista com LARGURA real (não linha fina), pit lane com box e garagens, ambiente
+>   que dá profundidade, carros que se leem como carros.
+> - **Sofisticação:** os tokens do PR 5.1 são a fonte da paleta — fundo azul-noite `#16132E`,
+>   amarelo `#FFCC00` e ciano `#29D9F5` de acento, magenta `#FF4FA3` reservado ao jogador humano,
+>   Bungee nos títulos. **Não introduzir cor fora do sistema** (em especial: nada de verde-limão).
+> - **Ambiente por TONALIDADE E CONTRASTE** — áreas de escape, zebras, muros, iluminação —,
+>   **nunca por objeto decorativo infantil**. Nada de arvorezinha e laguinho.
+> - **Pista:** asfalto escuro com marcações claras e zebras nas curvas. A hierarquia tonal é o que
+>   dá leitura: a pista é o elemento mais claro da tela, tudo fora dela é mais escuro.
+> - **Explicitamente NÃO: desenho animado.**
+>
+> Continua valendo o motivo original de não perseguir realismo: contorna a ausência de arte
+> fotorrealista e de mapas oficiais (GDD §14.2). O que mudou é o destino — de "lúdico/infantil"
+> para "retrô-moderno adulto".
 
-- **PR 5.1** — Design system: paleta vibrante, tipografia (display forte + corpo legível), tokens de
+- **PR 5.1** — Design system: paleta, tipografia (display forte + corpo legível), tokens de
   cor/espaçamento/raio, componentes base (botões, cards, selects) num estilo flat consistente.
-  Substitui o visual cru atual.
-- **PR 5.2** — Traçados de pista bonitos: redesenhar as 10 silhuetas em estilo arcade (linhas grossas,
-  cores vibrantes, talvez marcadores de largada/curvas icônicas). **NOTA JURÍDICA (GDD §14.2):**
-  silhuetas PRÓPRIAS reconhecíveis, nunca decalcar o mapa oficial estilizado da F1/FIA — geometria
-  do circuito é fato, o desenho oficial é obra protegida. Mesma consulta jurídica dos nomes/capacetes.
+  Substitui o visual cru atual. **CONCLUÍDO** (5.1a/5.1b/5.1c) — é a fonte da paleta citada acima.
+- ~~**PR 5.2** — Traçados de pista bonitos~~ **SUBSTITUÍDO E AMPLIADO pela rodada visual (PRs 7.x,
+  plano aprovado pelo dev em 2026-07-27)**: o 5.2 previa "linhas grossas e cores vibrantes", que é
+  a direção rejeitada. A rodada 7.x entrega pista com largura em camadas, pit lane visual, ambiente
+  tonal e marcador de carro. **NOTA JURÍDICA (GDD §14.2) segue valendo integralmente:** silhuetas
+  PRÓPRIAS reconhecíveis, nunca decalcar o mapa oficial estilizado da F1/FIA — geometria do circuito
+  é fato, o desenho oficial é obra protegida. Mesma consulta jurídica dos nomes/capacetes. O plano
+  7.x adiciona um critério operacional checável pra isso (teto de waypoints, normalização que
+  distorce proporção, origem declarada em comentário).
 - **PR 5.3** — Editor de capacete: o jogador desenha/customiza seu capacete (padrões base + paletas),
   usado como marcador na pista. **NOTA JURÍDICA:** designs originais que evocam épocas, nunca copiar
-  a pintura exata de um piloto real e nomear.
+  a pintura exata de um piloto real e nomear. **Reconciliação com a rodada 7.x (decisão D5, aprovada
+  pelo dev em 2026-07-27):** o marcador na pista passa a ser um CARRO visto de cima **cujo cockpit é
+  o disco do capacete**. Assim o GDD §11 ("carrinhos como capacetes estilizados") continua verdadeiro,
+  o jogador ganha silhueta de carro, e este editor continua tendo superfície onde pintar.
 - **PR 5.4** — Animações e transições: draft (revelar carta), corrida (já tem replay — melhorar),
   resultado (celebração), transições entre telas.
 - **PR 5.5** — Tela de abertura + identidade de marca (nome/logo do jogo).
 - **PR 5.6** — Som: efeitos (seleção, largada, ultrapassagem, vitória) e talvez música. Avaliar
   biblioteca leve, sem dependência pesada.
+
+### Fase 7 — Rodada visual da tela de corrida (plano do fable-architect aprovado pelo dev em 2026-07-27)
+
+> Nasceu de o dev jogar e achar o jogo "divertido, mas cru demais visualmente". Segue a direção de
+> arte corrigida acima. **Engine intocada em TODOS os PRs** — toda geometria e animação mora em
+> `src/ui/*.ts` puro, testável sem DOM (o projeto não tem jsdom e não vai instalar).
+
+**Núcleo aprovado (prioridade):**
+- ~~**PR 7.0**~~ — Corrigir a direção de arte neste arquivo (é o que você está lendo). Obrigatório e
+  primeiro: enquanto a norma escrita dissesse "vibrante/lúdico", o `junior-dev` e o `senior-reviewer`
+  reintroduziriam o visual rejeitado — com razão, porque era o que estava escrito.
+- **PR 7.1** — **PORTÃO.** Mock estático de Monza (`?mock=pista`, fora da navegação), sem animação,
+  descartável. Materializa "arcade adulto" pro dev aprovar ou reprovar ANTES de investir nos demais.
+  Critério de aceite é o olho do dev, não teste automatizado — e isso está declarado, não fingido.
+- **PR 7.2** — Tokens de pista + pares de contraste. **Corrige BUG PRESENTE:** hoje os 21 bots são
+  `#3DDC64` sobre pista `#B9B3DC` = **1,10:1**, e o humano magenta = **1,53:1** (mínimo WCAG pra
+  elemento de UI é 3:1). Os carros estão praticamente fundidos com o asfalto e nenhum teste pega,
+  porque `PARES_CONTRASTE` não tem par de carro-sobre-pista. Entram na lista pra travar por teste.
+- **PR 7.3** — Camadas da pista (largura, linha central, zebras, muro, escape) por stroke em
+  camadas, ainda em polilinha reta; viewBox ganha margem. **Maior valor percebido por esforço.**
+- **PR 7.7** — Geometria do pit como DADO (entrada/saída/caminho/box), 2 pistas primeiro.
+- **PR 7.8** — Animação do pit: o carro sai da pista, desce o pit lane, PARA no box e volta.
+  Reparametrização temporal pura. Custo de pit derivado na UI de `historicoVoltas` — **não** expor
+  campo novo em `ResultadoCorrida`, que quebraria as 2 seeds de ouro (`corrida.test.ts:467,550`
+  usam rest-spread). **Expectativa aceita pelo dev: a animação dura ~0,5-1,1s.** Não esticar
+  artificialmente — a relação tempo↔espaço é o que dá credibilidade ao replay.
+
+**Cortáveis (o dev decide depois de ver o núcleo):** 7.4 Bézier (Catmull-Rom centrípeta; **maior
+risco do plano**, overshoot em Mônaco/Nürburgring), 7.5 memoização da LUT de comprimento de arco
+(**dependência DURA do 7.4** — densificar sem memoizar degrada ~10x), 7.6 zebras por curvatura,
+7.9 marcador de carro (chassi + cockpit-capacete, D5), 7.10 performance do replay, 7.11 pit das
+outras 8 pistas.
+
+**Decisões do dev registradas:** identidade dos 22 carros = **número de largada no chassi**, não cor
+(paleta categórica de 22 matizes está proibida; se o número for ilegível a ~21×10px, plano B é
+identidade só no painel lateral). Suzuka vai quebrar `cruzamentosMidSegmento` quando a suavização
+tirar o cruzamento do vértice compartilhado (índices 4 e 12, ambos `(500,300)`): **exceção nomeada
+pra Suzuka, NUNCA afrouxar a guarda geral** — ela já pegou bugs reais em Spa e Interlagos no PR 2.8.
+
+**Item 4 (narração de ultrapassagem) — decidido em 2026-07-27: opção (a).** Ver PROGRESS.md.
 
 ---
 
