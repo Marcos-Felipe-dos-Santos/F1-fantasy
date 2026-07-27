@@ -67,5 +67,36 @@ export default tseslint.config(
       ],
     },
   },
+  {
+    // As regras de determinismo acima só valiam em `src/engine/**`, mas nem
+    // todo código crítico de determinismo mora lá (cosmético C4 da revisão do
+    // PR 6.5). `persistencia.ts` calcula a impressão digital que valida saves:
+    // um `Math.random` ou um `localeCompare` ali quebraria todo save em sessão
+    // nova ou entre máquinas, e nenhuma rede de lint pegava.
+    files: ['src/ui/persistencia.ts', 'src/ui/fluxo-campeonato.ts'],
+    rules: {
+      'no-restricted-properties': [
+        'error',
+        {
+          object: 'Math',
+          property: 'random',
+          message: 'Determinismo: use o RNG semeado de engine/rng.ts.',
+        },
+        {
+          object: 'Date',
+          property: 'now',
+          message: 'Determinismo: nada de relógio em código que decide validade de save.',
+        },
+      ],
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "CallExpression > MemberExpression[property.name='localeCompare']",
+          message:
+            'Proibido: `localeCompare` consulta a collation ICU do host e quebra determinismo entre SOs/versões do Node. Use comparador de code unit (`<`/`>`).',
+        },
+      ],
+    },
+  },
   eslintConfigPrettier,
 );
