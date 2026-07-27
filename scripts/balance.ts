@@ -342,8 +342,18 @@ function zeroPorRaridade(): Record<Raridade, number> {
  * de equipe/ano e a rodada 6 de peça (5 reveladas, 2 cópias por peça) com a
  * própria lógica de escolha dos bots — o playerShare por raridade reflete a
  * preferência real de pick, não um sorteio uniforme.
+ *
+ * Exportada (PR 6.3.1): devolve também `copiasRestantes` do estado final do
+ * draft (pool de peças pós-draft) — insumo pra alavanca de "pit de meio de
+ * temporada" (`scripts/alavancas.ts`), que precisa saber quantas cópias de
+ * cada peça ainda estão livres pra sortear na troca. `draftarLoadoutsCampeonato`
+ * abaixo continua existindo (mesmo comportamento de antes, só `.loadouts`)
+ * pra não tocar em nenhum outro chamador deste arquivo.
  */
-function draftarLoadoutsCampeonato(dataset: Dataset, seedBase: number): Loadout[] {
+export function draftarCampeonato(
+  dataset: Dataset,
+  seedBase: number,
+): { loadouts: Loadout[]; copiasRestantes: Record<string, number> } {
   const seedDraft = deriveSeed(seedBase, 'camp:draft');
   const jogadoresBase: Jogador[] = Array.from({ length: N_JOGADORES }, (_, i) => ({
     id: `j${String(i + 1).padStart(2, '0')}`,
@@ -351,13 +361,18 @@ function draftarLoadoutsCampeonato(dataset: Dataset, seedBase: number): Loadout[
   }));
   const jogadores = atribuirPerfis(jogadoresBase, seedDraft, 'dificil');
   const estadoFinal = resolverBots(criarDraft(dataset, jogadores, seedDraft), dataset);
-  return jogadores.map((j) => {
+  const loadouts = jogadores.map((j) => {
     const loadout = estadoFinal.loadouts[j.id];
     if (!loadout) {
-      throw new Error(`draftarLoadoutsCampeonato: draft não concluiu pro bot "${j.id}"`);
+      throw new Error(`draftarCampeonato: draft não concluiu pro bot "${j.id}"`);
     }
     return loadout;
   });
+  return { loadouts, copiasRestantes: estadoFinal.copiasRestantes };
+}
+
+function draftarLoadoutsCampeonato(dataset: Dataset, seedBase: number): Loadout[] {
+  return draftarCampeonato(dataset, seedBase).loadouts;
 }
 
 /**
