@@ -6,3 +6,10 @@ coverage/
 # Cache cru da Jolpica-F1 (PR 4.1) — gigante e reproduzível via
 # `npm run dataset:fetch`; scripts/derived/ (agregados, PR 4.2+) É commitado.
 scripts/cache/
+
+# Referências visuais de terceiros (prints de outros jogos, imagens de apoio à
+# direção de arte). Ficam SÓ na máquina do dev: são obra de terceiros e este
+# projeto tem nota jurídica explícita sobre não incorporar arte alheia
+# (GDD §14.2). Servem pra olhar e discutir, nunca pra virar asset nem entrar
+# no histórico do repositório.
+referencias/
