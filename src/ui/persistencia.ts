@@ -12,13 +12,17 @@
  *
  * GUARDA DE COMPATIBILIDADE: `versaoFormato` (muda só quando o SHAPE do save
  * muda) + uma IMPRESSÃO DIGITAL auto-verificante (hash determinístico dos
- * pontos/posições da etapa 1, recomputado em `retomarCampeonato` e comparado
- * com o salvo). Um `versaoEngine` manual foi rejeitado explicitamente na
- * decisão D4: é uma constante que se esquece de bumpar, e a falha resultante
- * é silenciosa (save "compatível" que na verdade descreve um campeonato
- * diferente). A impressão digital não depende de ninguém lembrar de nada —
- * ela mesma detecta divergência de dataset OU de engine, porque as duas
- * mudam o resultado da etapa 1.
+ * pontos/posições de TODAS as etapas, recomputado em `retomarCampeonato` e
+ * comparado com o salvo). Um `versaoEngine` manual foi rejeitado
+ * explicitamente na decisão D4: é uma constante que se esquece de bumpar, e a
+ * falha resultante é silenciosa (save "compatível" que na verdade descreve um
+ * campeonato diferente). A impressão digital não depende de ninguém lembrar de
+ * nada — ela mesma detecta divergência de dataset OU de engine.
+ *
+ * A D4 dizia "etapa 1"; cobrimos todas porque a revisão do 6.5 provou que só a
+ * etapa 1 cumpre a letra e falha o propósito declarado na mesma frase da D4
+ * ("invalida o save sozinho se dataset ou engine mudarem"). Ver
+ * `calcularImpressaoDigital` e o PROGRESS.md.
  *
  * Módulo de `src/ui/`: consome `src/engine/` (permitido), nunca o contrário.
  * Nenhuma regra de jogo é reimplementada aqui.
@@ -94,26 +98,45 @@ function cmpString(a: string, b: string): number {
   return 0;
 }
 
-/**
- * Hash determinístico e puro da etapa 1 de um campeonato: ordena a
- * classificação por `jogadorId` (ordem estável, independente da ordem em que
- * a engine devolveu o array) e resume `jogadorId:posicao:pontos:status` de
- * cada linha numa string, depois hasheia com `seedFromString` (mesmo hash
- * xmur3 que a engine usa pra derivar seeds — reuso em vez de inventar um
- * novo). Determinístico: mesma etapa ⇒ mesmo hash, sempre; sem
- * `Math.random`, sem relógio.
- *
- * Cobre pontos E posições (não só pontos) de propósito: duas etapas com a
- * mesma soma de pontos por jogador mas em ORDEM diferente (ex.: empate de
- * pontos resolvido diferente por causa de countback) já indicam uma corrida
- * diferente, e isso precisa invalidar o save também.
- */
-export function calcularImpressaoDigital(etapa1: EtapaCampeonato): string {
-  const linhas = [...etapa1.resultado.classificacao]
+/** Resumo canônico de UMA etapa: ordem estável por `jogadorId`, posição, pontos e status. */
+function resumoDaEtapa(etapa: EtapaCampeonato): string {
+  const linhas = [...etapa.resultado.classificacao]
     .sort((a, b) => cmpString(a.jogadorId, b.jogadorId))
     .map((item) => `${item.jogadorId}:${item.posicao}:${item.pontos}:${item.status}`)
     .join('|');
-  return seedFromString(`${etapa1.pistaId}#${linhas}`).toString(36);
+  return `${etapa.pistaId}#${linhas}`;
+}
+
+/**
+ * Hash determinístico e puro de TODAS as etapas do campeonato: resume cada
+ * etapa (ordem estável por `jogadorId`, com posição, pontos e status) e
+ * hasheia o conjunto com `seedFromString` (mesmo xmur3 que a engine usa pra
+ * derivar seeds — reuso em vez de inventar hash novo). Determinístico: mesmo
+ * campeonato ⇒ mesmo hash, sempre; sem `Math.random`, sem relógio.
+ *
+ * POR QUE TODAS AS ETAPAS, e não só a etapa 1 como dizia a letra da D4:
+ * a D4 promete, na mesma frase, que a impressão digital "invalida o save
+ * sozinho se dataset ou engine mudarem" — e hashear só a etapa 1 cumpre a
+ * letra mas falha o propósito. A revisão do 6.5 reproduziu o buraco com o
+ * dataset vivo: mexendo SÓ em Suzuka (5ª etapa) o hash da etapa 1 continua
+ * batendo, `retomarCampeonato` aceita o save, e o jogador retoma um
+ * campeonato cuja classificação final mudou do 3º ao 6º lugar — sem erro
+ * nenhum. Como as etapas são independentes (`seedDaEtapa` por id de pista),
+ * uma mudança de engine num caminho de chuva só aparece nas etapas em que
+ * choveu naquela seed; se a etapa 1 foi seca, a guarda inteira passava batido.
+ * Custo medido de cobrir tudo: ~19 µs por campeonato (as etapas já estão
+ * pré-simuladas). Ver PROGRESS.md.
+ *
+ * Cobre posições E pontos de propósito: mesma soma de pontos em ORDEM
+ * diferente (ex.: empate resolvido diferente pelo countback do PR 6.2) já é
+ * uma corrida diferente e precisa invalidar o save.
+ *
+ * É CHECKSUM, NÃO MAC: qualquer um recomputa. Não vale como prova de nada na
+ * fase online nem no "Desafio do Dia" — lá o servidor recomputa de
+ * `seed + loadouts`.
+ */
+export function calcularImpressaoDigital(etapas: readonly EtapaCampeonato[]): string {
+  return seedFromString(etapas.map(resumoDaEtapa).join('||')).toString(36);
 }
 
 const FASES_DRAFT = new Set(['sorteios', 'peca', 'concluido']);
@@ -214,7 +237,7 @@ export function salvarCampeonato(
   seed: number,
   draft: DraftState,
   estado: EstadoCampeonato,
-): void {
+): boolean {
   if (estado.etapas.length === 0) {
     // Só acontece se `estado` não veio de `iniciarCampeonato` (que já rejeita
     // calendário vazio) — bug de quem chamou, não falha de I/O. Sem etapa 1
@@ -229,13 +252,21 @@ export function salvarCampeonato(
     draft,
     calendario: estado.calendario,
     etapaAtual: estado.etapaAtual,
-    impressaoDigital: calcularImpressaoDigital(estado.etapas[0]),
+    impressaoDigital: calcularImpressaoDigital(estado.etapas),
   };
 
   try {
     storage.setItem(CHAVE_SAVE, JSON.stringify(save));
+    return true;
   } catch (erro) {
+    // NÃO lança: derrubar a sessão em memória por falha de disco seria pior
+    // que não salvar. Mas também não fica MUDO pro chamador (aviso A4 da
+    // revisão): em Safari privado / quota cheia o `setItem` falha em TODO
+    // save, o `console.warn` vai pro devtools que o jogador nunca abre, e ele
+    // fecha a aba confiando no auto-save. O `false` existe pro PR 6.6 mostrar
+    // um aviso discreto de "não foi possível salvar neste navegador".
     console.warn('salvarCampeonato: falha ao persistir (quota cheia ou modo privado)', erro);
+    return false;
   }
 }
 
@@ -244,7 +275,17 @@ export function salvarCampeonato(
  * volta como `{ ok: false, motivo }` (ver doc de `ResultadoCarga`).
  */
 export function carregarCampeonato(storage: StorageLike): ResultadoCarga {
-  const raw = storage.getItem(CHAVE_SAVE);
+  // O doc acima promete "NUNCA lança", e `getItem` PODE lançar (Safari com
+  // cookies bloqueados devolve SecurityError, não `null`) — aviso A5 da
+  // revisão: sem este try/catch a promessa era falsa e a tela de início
+  // quebraria. Storage inacessível é indistinguível de "não há save".
+  let raw: string | null;
+  try {
+    raw = storage.getItem(CHAVE_SAVE);
+  } catch (erro) {
+    console.warn('carregarCampeonato: storage inacessível', erro);
+    return { ok: false, motivo: 'ausente' };
+  }
   if (raw === null) return { ok: false, motivo: 'ausente' };
 
   let parsed: unknown;
@@ -289,6 +330,18 @@ export function carregarCampeonato(storage: StorageLike): ResultadoCarga {
  * silenciosamente errado.
  */
 export function retomarCampeonato(dataset: Dataset, save: SaveCampeonato): EstadoCampeonato {
+  // Defesa em profundidade (aviso A1 da revisão): `SaveCampeonato` é tipo
+  // PÚBLICO e nada obriga o chamador a ter passado por `carregarCampeonato`.
+  // Sem isto, um save com jogador sem loadout produzia `undefined` no array e
+  // estourava lá dentro da engine (`campeonato.ts`, `loadouts.map(l =>
+  // l.jogadorId)`) com "Cannot read properties of undefined" — o erro obscuro
+  // que esta camada existe pra evitar. O `tsconfig` não tem
+  // `noUncheckedIndexedAccess`, então o TypeScript tipa `loadouts[id]` como
+  // `Loadout` mesmo ausente e não pega nada disso.
+  if (!ehSaveShapeValido(save)) {
+    throw new Error('retomarCampeonato: save inválido (shape não confere)');
+  }
+
   const loadouts = save.draft.jogadores.map((jogador) => save.draft.loadouts[jogador.id]);
   const estado = iniciarCampeonato(dataset, loadouts, save.seed, save.calendario);
 
@@ -299,7 +352,7 @@ export function retomarCampeonato(dataset: Dataset, save: SaveCampeonato): Estad
   // dois cenários produzem uma etapa 1 diferente da que o jogador salvou.
   // Devolver esse estado em silêncio seria devolver um campeonato ERRADO
   // fingindo ser uma retomada legítima; por isso lança.
-  const impressaoAtual = calcularImpressaoDigital(estado.etapas[0]);
+  const impressaoAtual = calcularImpressaoDigital(estado.etapas);
   if (impressaoAtual !== save.impressaoDigital) {
     throw new Error(
       'retomarCampeonato: impressão digital divergente do save — campeonato incompatível ' +
@@ -325,7 +378,16 @@ export function retomarCampeonato(dataset: Dataset, save: SaveCampeonato): Estad
   return { ...estado, etapaAtual: save.etapaAtual };
 }
 
-/** Remove o save do modo Campeonato do `storage` (ex.: jogador inicia um campeonato novo). */
+/**
+ * Remove o save do modo Campeonato do `storage` (ex.: jogador inicia um
+ * campeonato novo). Como `carregarCampeonato`, tolera storage hostil: se
+ * `removeItem` lançar, vira no-op com aviso em vez de derrubar o fluxo de
+ * "iniciar campeonato novo" (aviso A5 da revisão).
+ */
 export function limparSave(storage: StorageLike): void {
-  storage.removeItem(CHAVE_SAVE);
+  try {
+    storage.removeItem(CHAVE_SAVE);
+  } catch (erro) {
+    console.warn('limparSave: storage inacessível', erro);
+  }
 }
