@@ -29,6 +29,14 @@
   --raridade-lendario: #FFC93C;
   --raridade-proibido: #FF4757;
 
+  /* Pista (PR 7.2) — ver comentários em tokens.ts sobre ordem de luminância
+     e sobre carroBot ser token próprio (não raridade-comum). */
+  --pista-asfalto: #3E3A5C;
+  --pista-muro: #2F2A55;
+  --pista-terreno: #1B1738;
+  --pista-servico: #221E42;
+  --carro-bot: #B9B3DC;
+
   --espaco-xs: 4px;
   --espaco-sm: 8px;
   --espaco-md: 12px;
