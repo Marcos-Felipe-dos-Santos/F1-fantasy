@@ -582,15 +582,34 @@ button.card {
   display: block;
 }
 
-.tracado-svg__pista {
+/* `<rect>` de chão do SVG (PR 7.3): superfície REAL sob o traçado. Mesmo tom
+   do `background` de `.tracado-svg` acima (`--cor-superficie`, que é bridge
+   var pra `--fundo-elevado`) — pintado explicitamente aqui pra que a guarda
+   de contraste do limite de pista (`pista-camadas.test.ts`) meça contra o
+   que está de fato na tela, e não dependa de o `<rect>` cobrir 100% do
+   viewBox só "por acidente" de layout. */
+.tracado-svg__chao {
+  fill: var(--fundo-elevado);
+}
+
+/* Uma camada da pilha de `CAMADAS_PISTA` (PR 7.3): terreno/escape/muro/zebra/limite/asfalto. */
+.tracado-svg__camada {
   fill: none;
-  stroke: var(--cor-texto-fraco);
-  stroke-width: 10;
   stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+/* Camadas de zebra (`alvo: 'curvas'`) usam ponta reta — `round` arredondaria as pontas do trecho, visualmente errado pra uma faixa que termina em linha reta na pista. */
+.tracado-svg__camada--curva {
+  stroke-linecap: butt;
 }
 
 .tracado-svg__carro {
-  fill: var(--raridade-comum);
+  /* PR 7.3: cor de token de CARRO, não de token de raridade de peça/draft
+     (ver doc de `carroBot` em `tokens.ts`, bomba-relógio do Modo Cego).
+     `pista-camadas.test.ts` (guarda de CSS anti-raridade) trava que nenhuma
+     regra `.tracado-svg*` volte a referenciar um token de raridade. */
+  fill: var(--carro-bot);
   stroke: var(--cor-fundo);
   stroke-width: 1.5;
 }

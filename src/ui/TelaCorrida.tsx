@@ -16,7 +16,61 @@ import {
   type VelocidadeReplay,
 } from './fluxo-corrida';
 import { nomeJogador } from './loadout-view';
+import {
+  CAMADAS_PISTA,
+  MARGEM_VIEWBOX,
+  RAIO_CARRO_BOT,
+  RAIO_CARRO_HUMANO,
+  VIEWBOX_ALTURA,
+  VIEWBOX_LARGURA,
+  VIEWBOX_PISTA,
+  pathDaVolta,
+  pathsDeZebraDaPista,
+  varDeCor,
+} from './pista-camadas';
 import { tracadoDaPista } from './tracados';
+
+/**
+ * Camadas do traçado de `pistaId` (PR 7.3): a pilha `CAMADAS_PISTA`
+ * renderizada em ordem de pintura — `alvo: 'volta'` vira um único `<path>` da
+ * volta inteira, `alvo: 'curvas'` vira um `<path>` por trecho de
+ * `zebrasDaPista`. Extraído como componente PRÓPRIO e exportado pra que
+ * `pista-camadas-render.test.ts` trave, contra a tela real, que nenhuma
+ * camada some do JSX nem troca de ordem (a pendência que o PR 7.2 deixou
+ * aberta era exatamente essa: dado puro sem elo testado com o que a tela
+ * desenha).
+ */
+export function CamadasDaPista({ pistaId }: { pistaId: string }) {
+  return (
+    <>
+      {CAMADAS_PISTA.map((camada) =>
+        camada.alvo === 'volta' ? (
+          <path
+            key={camada.id}
+            d={pathDaVolta(pistaId)}
+            stroke={varDeCor(camada.cor)}
+            strokeWidth={camada.largura}
+            strokeDasharray={camada.tracejado}
+            strokeDashoffset={camada.deslocamentoTracejado}
+            className="tracado-svg__camada"
+          />
+        ) : (
+          pathsDeZebraDaPista(pistaId).map((trecho) => (
+            <path
+              key={`${camada.id}-${trecho.indice}`}
+              d={trecho.d}
+              stroke={varDeCor(camada.cor)}
+              strokeWidth={camada.largura}
+              strokeDasharray={camada.tracejado}
+              strokeDashoffset={camada.deslocamentoTracejado}
+              className="tracado-svg__camada tracado-svg__camada--curva"
+            />
+          ))
+        ),
+      )}
+    </>
+  );
+}
 
 interface TelaCorridaProps {
   state: DraftState;
@@ -62,13 +116,6 @@ function nomePiloto(state: DraftState, jogadorId: string): string {
   const loadout = state.loadouts[jogadorId];
   if (!loadout) return '?';
   return dataset.pilotosById.get(loadout.pilotoId)?.nome ?? '?';
-}
-
-/** Path SVG (`d`) do traçado da pista `pistaId` — polilinha fechada (PR 2.8: traçado próprio por pista, ver `tracados.ts`). */
-function tracadoPath(pistaId: string): string {
-  const [primeiro, ...resto] = tracadoDaPista(pistaId);
-  const partes = resto.map((p) => `L ${p.x} ${p.y}`).join(' ');
-  return `M ${primeiro.x} ${primeiro.y} ${partes} Z`;
 }
 
 export function TelaCorrida({
@@ -152,8 +199,15 @@ export function TelaCorrida({
 
       <div className="tela-corrida__area-replay">
         <div className="coluna-tracado">
-          <svg className="tracado-svg" viewBox="0 0 1000 600" role="img" aria-label={`Traçado de ${pista.nome}`}>
-            <path d={tracadoPath(pista.id)} className="tracado-svg__pista" />
+          <svg className="tracado-svg" viewBox={VIEWBOX_PISTA} role="img" aria-label={`Traçado de ${pista.nome}`}>
+            <rect
+              x={-MARGEM_VIEWBOX}
+              y={-MARGEM_VIEWBOX}
+              width={VIEWBOX_LARGURA}
+              height={VIEWBOX_ALTURA}
+              className="tracado-svg__chao"
+            />
+            <CamadasDaPista pistaId={pista.id} />
             {resultado.classificacao.map((item) => {
               const historico = resultado.historicoVoltas[item.jogadorId] ?? [];
               const fracao = fracaoVisual(historico, tempoSimMs, item.status, pista.voltas);
@@ -173,7 +227,7 @@ export function TelaCorrida({
                   key={item.jogadorId}
                   cx={ponto.x}
                   cy={ponto.y}
-                  r={ehHumano ? 10 : 6}
+                  r={ehHumano ? RAIO_CARRO_HUMANO : RAIO_CARRO_BOT}
                   className={classes}
                 >
                   <title>{`${nomeDoJogadorId(state, item.jogadorId)} — ${nomePiloto(state, item.jogadorId)}`}</title>
