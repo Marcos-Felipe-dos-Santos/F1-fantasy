@@ -18,17 +18,18 @@ import {
 import { nomeJogador } from './loadout-view';
 import {
   CAMADAS_PISTA,
-  MARGEM_VIEWBOX,
   RAIO_CARRO_BOT,
   RAIO_CARRO_HUMANO,
   VIEWBOX_ALTURA,
   VIEWBOX_LARGURA,
   VIEWBOX_PISTA,
+  VIEWBOX_X,
+  VIEWBOX_Y,
   pathDaVolta,
   pathsDeZebraDaPista,
   varDeCor,
 } from './pista-camadas';
-import { tracadoDaPista } from './tracados';
+import { tracadoSuavizado } from './suavizacao';
 
 /**
  * Camadas do traçado de `pistaId` (PR 7.3): a pilha `CAMADAS_PISTA`
@@ -201,8 +202,8 @@ export function TelaCorrida({
         <div className="coluna-tracado">
           <svg className="tracado-svg" viewBox={VIEWBOX_PISTA} role="img" aria-label={`Traçado de ${pista.nome}`}>
             <rect
-              x={-MARGEM_VIEWBOX}
-              y={-MARGEM_VIEWBOX}
+              x={VIEWBOX_X}
+              y={VIEWBOX_Y}
               width={VIEWBOX_LARGURA}
               height={VIEWBOX_ALTURA}
               className="tracado-svg__chao"
@@ -211,7 +212,10 @@ export function TelaCorrida({
             {resultado.classificacao.map((item) => {
               const historico = resultado.historicoVoltas[item.jogadorId] ?? [];
               const fracao = fracaoVisual(historico, tempoSimMs, item.status, pista.voltas);
-              const ponto = pontoNoTracado(tracadoDaPista(pista.id), fracao);
+              // Curva SUAVIZADA, a mesma geometria que `pathDaVolta` desenha
+              // (PR 7.4): usar a polilinha de controle aqui deixaria os carros
+              // cortando as curvas por fora do asfalto desenhado.
+              const ponto = pontoNoTracado(tracadoSuavizado(pista.id), fracao);
               const somaHistorico = acumularVoltas(historico).at(-1) ?? 0;
               const congelado = item.status === 'dnf' && tempoSimMs >= somaHistorico;
               const ehHumano = ehHumanoId(state, item.jogadorId);

@@ -226,7 +226,7 @@ export function voltaAtual(historico: number[], tempoSimMs: number, voltasTotais
  * (fração da corrida inteira, o carro daria só 1 volta visual do início ao
  * fim, inconsistente com o contador "Volta X/N").
  */
-export function pontoNoTracado(tracado: Ponto[], fracao: number): Ponto {
+export function pontoNoTracado(tracado: readonly Ponto[], fracao: number): Ponto {
   if (tracado.length === 0) {
     throw new Error('pontoNoTracado: traçado vazio');
   }

@@ -11,6 +11,7 @@
  */
 
 import type { Ponto } from './fluxo-corrida';
+import { indiceDoVertice, trechoPorArco, tracadoSuavizado } from './suavizacao';
 import { tracadoDaPista } from './tracados';
 
 /**
@@ -164,10 +165,39 @@ export const SUPERFICIES_DO_REPLAY = [
   'pistaAsfalto',
 ] as const;
 
-export const MARGEM_VIEWBOX = 70;
-export const VIEWBOX_LARGURA = 1140;
-export const VIEWBOX_ALTURA = 740;
-export const VIEWBOX_PISTA = '-70 -70 1140 740';
+/**
+ * viewBox do replay. Fecha a pendência 1 herdada do 7.3, onde
+ * `MARGEM_VIEWBOX = 70` era "a única constante do módulo sem número que a
+ * sustente" — agora cada lado é MEDIDO.
+ *
+ * O que precisa caber é a CURVA SUAVIZADA (é ela que se desenha), mais meia
+ * camada mais larga (`terreno`, 120 ⇒ 60) pra cada lado, porque o `stroke` se
+ * espalha simetricamente em torno do eixo. Medido nas 10 pistas com a curva
+ * amostrada em alta resolução (N=64, mais fina que a de produção, então o
+ * envelope é conservador):
+ *
+ *   envelope da curva das 10 pistas      x[69,0 · 920,0]  y[49,8 · 555,1]
+ *   + meia camada de terreno (60)        x[ 9,0 · 980,0]  y[-10,2 · 615,1]
+ *   viewBox escolhido                    x[-10 · 990]     y[-30 · 630]
+ *   folga resultante (pior lado)         19,0 / 10,0      19,8 / 14,9
+ *
+ * A suavização custa quase nada de envelope: o overshoot da Catmull-Rom sai só
+ * 1,0 à esquerda e 5,1 embaixo do bounding box da polilinha de controle (pior
+ * caso das 10: Mônaco, 15,1 — mas num lado onde já havia folga).
+ *
+ * O 7.3 usava `-70 -70 1140 740` pra o mesmo conteúdo: 17% de moldura vazia
+ * que encolhia tudo na tela e obrigou a inflar os raios dos carros. Voltando a
+ * `VIEWBOX_LARGURA = 1000` — exatamente o valor de antes do 7.3 — a escala na
+ * tela volta a ser a da `main` e os raios voltam aos originais (ver
+ * `RAIO_CARRO_BOT`/`RAIO_CARRO_HUMANO`).
+ */
+export const VIEWBOX_X = -10;
+export const VIEWBOX_Y = -30;
+export const VIEWBOX_LARGURA = 1000;
+export const VIEWBOX_ALTURA = 660;
+export const VIEWBOX_PISTA = `${VIEWBOX_X} ${VIEWBOX_Y} ${VIEWBOX_LARGURA} ${VIEWBOX_ALTURA}`;
+/** Meia largura da camada mais larga: o quanto o `stroke` transborda do eixo do traçado pra cada lado. */
+export const MEIA_CAMADA_MAIS_LARGA = 60;
 /**
  * Largura útil do `<svg>` quando a viewport está na mínima do projeto
  * (360px). Conta: 360 − 32 (padding lateral de `.app-shell`, `--espaco-lg` =
@@ -182,23 +212,22 @@ export const ALCANCE_ZEBRA = 44;
 export const COBERTURA_MAXIMA_ZEBRA = 0.4;
 
 /**
- * Raio (unidades do viewBox) do marcador de carro-bot na tela. O viewBox
- * cresceu de 1000 (PR 7.2) pra `VIEWBOX_LARGURA` = 1140 no 7.3 (fator
- * `VIEWBOX_LARGURA / 1000` = 1,14), o que encolheria o marcador 12,3% NA TELA
- * se o raio não fosse compensado. `6 * 1,14 = 6,84`, arredondado pra 7 —
- * mantém o diâmetro visível a 360px `>=` o que era na `main` (regra
- * permanente: a pista é moldura, o carro é conteúdo, o conteúdo não pode
- * degradar pela moldura). Ver `pista-camadas.test.ts`.
+ * Raio (unidades do viewBox) do marcador de carro-bot na tela.
+ *
+ * DEVOLVIDO ao valor original no 7.4 (era 7 no 7.3). O 7.3 inflou 6 ⇒ 7 pra
+ * compensar o viewBox de 1140 de largura, que encolhia o marcador 12,3% na
+ * tela. Com o viewBox reapertado pra `VIEWBOX_LARGURA` = 1000 — o mesmo valor
+ * de antes do 7.3 — a escala volta a ser idêntica à da `main` e a compensação
+ * deixa de ter motivo: o inflado agora DEIXARIA o marcador maior que o
+ * original, engordando o conteúdo sem decisão de arte que sustente.
+ *
+ * A regra permanente que isto serve continua a mesma (a pista é moldura, o
+ * carro é conteúdo, o conteúdo não pode degradar pela moldura) — o teste em
+ * `pista-camadas.test.ts` segue comparando o diâmetro a 360px contra a `main`.
  */
-export const RAIO_CARRO_BOT = 7;
-/**
- * Mesmo raciocínio de `RAIO_CARRO_BOT`: `10 * 1,14 = 11,4`, arredondado pra
- * CIMA (12), não pra baixo. Arredondar pra baixo daria 6,18px a 360px contra
- * os 6,40px da `main` — ou seja, o marcador do jogador humano AINDA
- * encolheria, justamente o que esta compensação existe pra impedir. O teste
- * cobre os dois marcadores por isso.
- */
-export const RAIO_CARRO_HUMANO = 12;
+export const RAIO_CARRO_BOT = 6;
+/** Mesmo raciocínio de `RAIO_CARRO_BOT`: devolvido de 12 (7.3) pro original 10. */
+export const RAIO_CARRO_HUMANO = 10;
 
 /** Distância euclidiana entre dois pontos. */
 function distancia(a: Ponto, b: Ponto): number {
@@ -279,6 +308,15 @@ export interface TrechoZebra {
   readonly antes: Ponto;
   readonly vertice: Ponto;
   readonly depois: Ponto;
+  /**
+   * Quanto o trecho se estende pra trás/pra frente do vértice, em unidades de
+   * COMPRIMENTO (não de número de pontos). `antes`/`depois` são esses mesmos
+   * alcances já aplicados sobre a polilinha de CONTROLE (retas); os números
+   * crus existem porque o desenho real acontece sobre a CURVA SUAVIZADA, onde
+   * o mesmo alcance percorre um caminho curvo — ver `pathsDeZebraDaPista`.
+   */
+  readonly alcanceTras: number;
+  readonly alcanceFrente: number;
 }
 
 /**
@@ -363,7 +401,14 @@ export function trechosDeZebra(pontos: readonly Ponto[]): TrechoZebra[] {
     candidatos.push({
       indice: i,
       angulo,
-      trecho: { indice: i, antes, vertice: pontos[i], depois },
+      trecho: {
+        indice: i,
+        antes,
+        vertice: pontos[i],
+        depois,
+        alcanceTras,
+        alcanceFrente,
+      },
       intervalo,
     });
   }
@@ -410,22 +455,44 @@ export function zebrasDaPista(pistaId: string): TrechoZebra[] {
 /** Mesma ressalva de invalidação de `CACHE_ZEBRAS`: chaveado por `pistaId`, não pelo traçado. */
 const CACHE_PATH_VOLTA = new Map<string, string>();
 
-/** `M x y L ... Z` da volta inteira de `pistaId`, MEMOIZADO (mesmo motivo de `zebrasDaPista`). Substitui o `tracadoPath` local de `TelaCorrida.tsx`. */
+/**
+ * `M x y L ... Z` da volta inteira de `pistaId`, MEMOIZADO (mesmo motivo de
+ * `zebrasDaPista`).
+ *
+ * PR 7.4: passa a percorrer a CURVA SUAVIZADA, não a polilinha de controle —
+ * é esta função que fazia as pistas lerem como polígonos. Continua sendo uma
+ * sequência de `L` (segmentos retos), não comandos `C` de Bézier: a curva já
+ * vem densificada de `tracadoSuavizado`, e uma polilinha fina é o que
+ * `pontoNoTracado` também consome, o que mantém DESENHO e MOVIMENTO na mesma
+ * geometria. Emitir `C` aqui faria o carro andar numa curva e o asfalto ser
+ * desenhado em outra.
+ *
+ * As coordenadas saem com `NUMERO_CASAS_PATH` casas decimais: a curva gera
+ * irracionais, e `${p.x}` cru despejaria ~17 dígitos por eixo — um `d` de
+ * dezenas de milhares de caracteres por camada, 7 camadas, sem ganho visual
+ * nenhum (0,001u = 0,0007px no maior tamanho de painel).
+ */
 export function pathDaVolta(pistaId: string): string {
   const cache = CACHE_PATH_VOLTA.get(pistaId);
   if (cache !== undefined) return cache;
-  const [primeiro, ...resto] = tracadoDaPista(pistaId);
-  const partes = resto.map((p) => `L ${p.x} ${p.y}`).join(' ');
-  const path = `M ${primeiro.x} ${primeiro.y} ${partes} Z`;
+  const path = `${pathDoTrecho(tracadoSuavizado(pistaId))} Z`;
   CACHE_PATH_VOLTA.set(pistaId, path);
   return path;
+}
+
+/** Casas decimais das coordenadas nos `d` de path. Ver `pathDaVolta`. */
+const NUMERO_CASAS_PATH = 3;
+
+/** `-0` e `1.500` viram `0` e `1.5`: `toFixed` sozinho infla o `d` com zeros à direita sem significado. */
+function coordenada(valor: number): string {
+  return String(Number(valor.toFixed(NUMERO_CASAS_PATH)));
 }
 
 /** Polilinha ABERTA (sem `Z`) de um trecho de zebra. */
 export function pathDoTrecho(trecho: readonly Ponto[]): string {
   const [primeiro, ...resto] = trecho;
-  const partes = resto.map((p) => `L ${p.x} ${p.y}`).join(' ');
-  return `M ${primeiro.x} ${primeiro.y} ${partes}`;
+  const partes = resto.map((p) => `L ${coordenada(p.x)} ${coordenada(p.y)}`).join(' ');
+  return `M ${coordenada(primeiro.x)} ${coordenada(primeiro.y)} ${partes}`;
 }
 
 const CACHE_PATHS_ZEBRA = new Map<string, readonly { indice: number; d: string }[]>();
@@ -437,13 +504,26 @@ const CACHE_PATHS_ZEBRA = new Map<string, readonly { indice: number; d: string }
  * o que criava um array temporário por trecho por frame (22 em Monza) num
  * módulo que declara a memoização como obrigatória. `indice` vem junto porque
  * é a `key` estável do React.
+ *
+ * PR 7.4: o trecho deixa de ser os 3 pontos sobre as RETAS de controle e passa
+ * a ser recortado da CURVA SUAVIZADA por comprimento de arco. Sem isso a zebra
+ * (58 de largura) ficaria assentada na corda enquanto o asfalto (34) segue a
+ * curva — nas curvas fechadas a zebra escaparia por baixo do asfalto, que é
+ * justamente onde ela precisa aparecer.
+ *
+ * O vértice é localizado por `indiceDoVertice`, mapeamento ARITMÉTICO exato do
+ * índice de controle pro índice na curva — não por busca de coordenada, que
+ * pegaria o vértice errado em Suzuka (controle 4 e 12 são ambos `(500,300)`).
  */
 export function pathsDeZebraDaPista(pistaId: string): readonly { indice: number; d: string }[] {
   const cache = CACHE_PATHS_ZEBRA.get(pistaId);
   if (cache !== undefined) return cache;
+  const curva = tracadoSuavizado(pistaId);
   const paths = zebrasDaPista(pistaId).map((trecho) => ({
     indice: trecho.indice,
-    d: pathDoTrecho([trecho.antes, trecho.vertice, trecho.depois]),
+    d: pathDoTrecho(
+      trechoPorArco(curva, indiceDoVertice(trecho.indice), trecho.alcanceTras, trecho.alcanceFrente),
+    ),
   }));
   CACHE_PATHS_ZEBRA.set(pistaId, paths);
   return paths;

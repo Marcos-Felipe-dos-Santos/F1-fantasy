@@ -14,6 +14,7 @@ import pecasReal from '../data/pecas.json';
 import pistasReal from '../data/pistas.json';
 import { cores, type NomeCor } from './tokens';
 import type { Ponto } from './fluxo-corrida';
+import { suavizarPolilinhaFechada } from './suavizacao';
 import { tracadoDaPista } from './tracados';
 import {
   ALCANCE_ZEBRA,
@@ -24,7 +25,7 @@ import {
   HIERARQUIA_SUPERFICIES,
   LARGURA_ASFALTO,
   LARGURA_SVG_MINIMA_PX,
-  MARGEM_VIEWBOX,
+  MEIA_CAMADA_MAIS_LARGA,
   RAIO_CARRO_BOT,
   RAIO_CARRO_HUMANO,
   SEPARACAO_MINIMA_LUMINANCIA,
@@ -33,6 +34,8 @@ import {
   VIEWBOX_ALTURA,
   VIEWBOX_LARGURA,
   VIEWBOX_PISTA,
+  VIEWBOX_X,
+  VIEWBOX_Y,
   anguloDeVirada,
   pathDaVolta,
   pathDoTrecho,
@@ -346,11 +349,17 @@ describe('regra dos 360px (3.5 — critério permanente)', () => {
     expect(faixaPx, `camada "${id}": ${faixaPx.toFixed(2)}px`).toBeGreaterThanOrEqual(1);
   });
 
-  it('mínimo real é a camada "limite", ~1,12px', () => {
+  /**
+   * PR 7.4: era ~1,12px enquanto o viewBox tinha 1140 de largura. Ao reapertar
+   * pra 1000, a mesma camada passa a ocupar 1,28px — a regra dos 360px ficou
+   * MAIS folgada, não mais apertada, porque a moldura vazia que o 7.3 reservava
+   * saiu e tudo cresceu 14% na tela.
+   */
+  it('mínimo real é a camada "limite", ~1,28px', () => {
     const indiceLimite = CAMADAS_PISTA.findIndex((c) => c.id === 'limite');
     const proxima = proximaLarguraMenor(indiceLimite);
     const faixaPx = ((CAMADAS_PISTA[indiceLimite].largura - proxima) / 2) * escala;
-    expect(faixaPx).toBeCloseTo(1.12, 1);
+    expect(faixaPx).toBeCloseTo(1.28, 2);
   });
 });
 
@@ -427,46 +436,83 @@ describe('cor de cada camada casada com a hierarquia (Aviso 4 da revisão do PR 
   });
 });
 
-describe('viewBox contém todas as 10 pistas (3.7)', () => {
+describe('viewBox contém todas as 10 pistas (3.7 — reapertado no 7.4)', () => {
   const metadeCamadaMaisLarga = Math.max(...CAMADAS_PISTA.map((c) => c.largura)) / 2;
-  const minXViewbox = -MARGEM_VIEWBOX;
-  const minYViewbox = -MARGEM_VIEWBOX;
-  const maxXViewbox = -MARGEM_VIEWBOX + VIEWBOX_LARGURA;
-  const maxYViewbox = -MARGEM_VIEWBOX + VIEWBOX_ALTURA;
+  const minXViewbox = VIEWBOX_X;
+  const minYViewbox = VIEWBOX_Y;
+  const maxXViewbox = VIEWBOX_X + VIEWBOX_LARGURA;
+  const maxYViewbox = VIEWBOX_Y + VIEWBOX_ALTURA;
+
+  /**
+   * O que precisa caber é a CURVA SUAVIZADA — é ela que se desenha desde o
+   * 7.4, e ela faz overshoot pra fora do bounding box da polilinha de
+   * controle. Amostrada aqui em N=64, mais fino que a produção (N=12):
+   * amostrar mais só pode achar extremo MAIOR, então a guarda é conservadora.
+   */
+  const AMOSTRAS_DA_GUARDA = 64;
+
+  function envelope(pistaId: string) {
+    const curva = suavizarPolilinhaFechada(tracadoDaPista(pistaId), AMOSTRAS_DA_GUARDA);
+    const xs = curva.map((p) => p.x);
+    const ys = curva.map((p) => p.y);
+    return {
+      minX: Math.min(...xs) - metadeCamadaMaisLarga,
+      maxX: Math.max(...xs) + metadeCamadaMaisLarga,
+      minY: Math.min(...ys) - metadeCamadaMaisLarga,
+      maxY: Math.max(...ys) + metadeCamadaMaisLarga,
+    };
+  }
 
   it('VIEWBOX_PISTA está no formato esperado', () => {
-    expect(VIEWBOX_PISTA).toBe('-70 -70 1140 740');
+    expect(VIEWBOX_PISTA).toBe('-10 -30 1000 660');
   });
 
-  it.each(dataset.pistas.map((p) => [p.id] as const))('pista %s cabe no viewBox com folga (camada+traçado)', (pistaId) => {
-    const tracado = tracadoDaPista(pistaId);
-    const xs = tracado.map((p) => p.x);
-    const ys = tracado.map((p) => p.y);
-    const minX = Math.min(...xs) - metadeCamadaMaisLarga;
-    const maxX = Math.max(...xs) + metadeCamadaMaisLarga;
-    const minY = Math.min(...ys) - metadeCamadaMaisLarga;
-    const maxY = Math.max(...ys) + metadeCamadaMaisLarga;
-
-    expect(minX).toBeGreaterThanOrEqual(minXViewbox);
-    expect(maxX).toBeLessThanOrEqual(maxXViewbox);
-    expect(minY).toBeGreaterThanOrEqual(minYViewbox);
-    expect(maxY).toBeLessThanOrEqual(maxYViewbox);
+  it('MEIA_CAMADA_MAIS_LARGA acompanha de fato a camada mais larga de CAMADAS_PISTA', () => {
+    expect(MEIA_CAMADA_MAIS_LARGA).toBe(metadeCamadaMaisLarga);
   });
 
-  it('pior folga real é 60 (Suzuka)', () => {
+  it.each(dataset.pistas.map((p) => [p.id] as const))(
+    'pista %s cabe no viewBox com folga (camada + curva suavizada)',
+    (pistaId) => {
+      const e = envelope(pistaId);
+      expect(e.minX).toBeGreaterThanOrEqual(minXViewbox);
+      expect(e.maxX).toBeLessThanOrEqual(maxXViewbox);
+      expect(e.minY).toBeGreaterThanOrEqual(minYViewbox);
+      expect(e.maxY).toBeLessThanOrEqual(maxYViewbox);
+    },
+  );
+
+  /**
+   * A folga que sobra depois de apertar. Fica DOCUMENTADA em número (era a
+   * queixa da pendência 1 do 7.3: `MARGEM_VIEWBOX = 70` sem medição por trás).
+   * Pior lado é a direita, 10,0 — Nürburgring, cujo x máximo é 920.
+   */
+  it('pior folga real é 10 (borda direita, Nürburgring)', () => {
     let piorFolga = Infinity;
     for (const pista of dataset.pistas) {
-      const tracado = tracadoDaPista(pista.id);
-      const xs = tracado.map((p) => p.x);
-      const ys = tracado.map((p) => p.y);
-      const minX = Math.min(...xs) - metadeCamadaMaisLarga;
-      const maxX = Math.max(...xs) + metadeCamadaMaisLarga;
-      const minY = Math.min(...ys) - metadeCamadaMaisLarga;
-      const maxY = Math.max(...ys) + metadeCamadaMaisLarga;
-      const folga = Math.min(minX - minXViewbox, maxXViewbox - maxX, minY - minYViewbox, maxYViewbox - maxY);
-      piorFolga = Math.min(piorFolga, folga);
+      const e = envelope(pista.id);
+      piorFolga = Math.min(
+        piorFolga,
+        e.minX - minXViewbox,
+        maxXViewbox - e.maxX,
+        e.minY - minYViewbox,
+        maxYViewbox - e.maxY,
+      );
     }
-    expect(piorFolga).toBeCloseTo(60, 5);
+    expect(piorFolga).toBeCloseTo(10, 1);
+  });
+
+  /**
+   * O aperto é o ponto do exercício: o 7.3 gastava 1140×740 pro mesmo
+   * conteúdo. Se alguém voltar a inflar o viewBox "por segurança", os carros
+   * encolhem na tela de novo e a pendência 1 renasce.
+   */
+  it('o viewBox não desperdiça mais que 15% de área além do envelope real das 10 pistas', () => {
+    const todos = dataset.pistas.map((p) => envelope(p.id));
+    const largura = Math.max(...todos.map((e) => e.maxX)) - Math.min(...todos.map((e) => e.minX));
+    const altura = Math.max(...todos.map((e) => e.maxY)) - Math.min(...todos.map((e) => e.minY));
+    const desperdicio = (VIEWBOX_LARGURA * VIEWBOX_ALTURA) / (largura * altura) - 1;
+    expect(desperdicio).toBeLessThan(0.15);
   });
 });
 

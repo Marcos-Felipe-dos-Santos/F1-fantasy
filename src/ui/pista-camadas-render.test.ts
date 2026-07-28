@@ -14,6 +14,7 @@ import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { CAMADAS_PISTA, pathDaVolta, pathDoTrecho, varDeCor, zebrasDaPista } from './pista-camadas';
+import { indiceDoVertice, tracadoSuavizado, trechoPorArco } from './suavizacao';
 import { CamadasDaPista } from './TelaCorrida';
 
 const PISTA_ID = 'pista-monza';
@@ -85,10 +86,22 @@ describe('CamadasDaPista renderiza CAMADAS_PISTA fielmente (Aviso 3 da revisão 
       if (camada.alvo === 'volta') {
         esperado.push({ ...comum, d: pathDaVolta(PISTA_ID), className: 'tracado-svg__camada' });
       } else {
+        // PR 7.4: a zebra é recortada da CURVA por comprimento de arco, não
+        // mais os 3 pontos sobre as retas de controle. Derivado aqui de novo
+        // (e não lido de `pathsDeZebraDaPista`) pra o teste continuar sendo
+        // uma verificação independente do que a tela desenha, não um espelho
+        // da implementação.
         for (const trecho of trechos) {
           esperado.push({
             ...comum,
-            d: pathDoTrecho([trecho.antes, trecho.vertice, trecho.depois]),
+            d: pathDoTrecho(
+              trechoPorArco(
+                tracadoSuavizado(PISTA_ID),
+                indiceDoVertice(trecho.indice),
+                trecho.alcanceTras,
+                trecho.alcanceFrente,
+              ),
+            ),
             className: 'tracado-svg__camada tracado-svg__camada--curva',
           });
         }
