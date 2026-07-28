@@ -148,28 +148,53 @@ describe('separação mínima na CORRENTE TONAL DA PILHA REAL (achado B da re-re
     ]);
   });
 
+  /** Razão de separação de cada par consecutivo de uma corrente de tokens. */
+  function separacoesDaCorrente(corrente: readonly string[]): number[] {
+    const razoes: number[] = [];
+    for (let i = 1; i < corrente.length; i++) {
+      razoes.push(razaoSeparacao(cores[corrente[i] as NomeCor], cores[corrente[i - 1] as NomeCor]));
+    }
+    return razoes;
+  }
+
   it('cada par ADJACENTE da pilha real bate a separação mínima (chão→terreno→escape→muro→asfalto)', () => {
-    for (let i = 1; i < CORRENTE_TONAL_DA_PILHA.length; i++) {
-      const anterior = CORRENTE_TONAL_DA_PILHA[i - 1];
-      const atual = CORRENTE_TONAL_DA_PILHA[i];
-      const razao = razaoSeparacao(cores[atual as NomeCor], cores[anterior as NomeCor]);
+    const razoes = separacoesDaCorrente(CORRENTE_TONAL_DA_PILHA);
+    razoes.forEach((razao, i) => {
       expect(
         razao,
-        `${anterior}->${atual}: razão ${razao.toFixed(3)} abaixo do mínimo ${SEPARACAO_MINIMA_LUMINANCIA}`,
+        `${CORRENTE_TONAL_DA_PILHA[i]}->${CORRENTE_TONAL_DA_PILHA[i + 1]}: razão ${razao.toFixed(3)} abaixo do mínimo ${SEPARACAO_MINIMA_LUMINANCIA}`,
       ).toBeGreaterThanOrEqual(SEPARACAO_MINIMA_LUMINANCIA);
-    }
+    });
   });
 
-  it('mutação do achado B: terreno escurecido até quase empatar com o chão reprova', () => {
-    // `#191632` (L 0,0101) é um `pistaTerreno` levemente escurecido — quase
-    // indistinguível a olho do real `#1B1738` (L 0,0113) — e dá razão 1,213
-    // contra o chão `fundo`, abaixo do mínimo 1,25. É a mutação que apaga o
-    // RELEVO que o dev escolheu no 7.3.1 sem mudar mais nada. A guarda de
-    // PALETA não pega: a ordem da hierarquia continua intacta.
-    const TERRENO_MUTANTE = '#191632';
-    const razao = razaoSeparacao(TERRENO_MUTANTE, cores[SUPERFICIE_BASE_REPLAY as NomeCor]);
-    expect(razao).toBeLessThan(SEPARACAO_MINIMA_LUMINANCIA);
-    expect(razao).toBeCloseTo(1.213, 2);
+  /**
+   * Mutação que SÓ a corrente da pilha pega — é ela que justifica este bloco
+   * existir além da guarda de paleta.
+   *
+   * Com o chão em `fundo` (PR 7.3.1), das 4 adjacências da pilha duas
+   * (`fundo→terreno` e `muro→asfalto`) também são adjacentes em
+   * `HIERARQUIA_SUPERFICIES`, logo já estão cobertas lá. As DUAS que só a
+   * pilha cobre são `terreno→escape` e `escape→muro`, porque na hierarquia o
+   * `fundoAfundado` do escape fica na outra ponta da lista.
+   *
+   * O mutante aqui é o realista pra essas: alguém dá à camada de escape a
+   * mesma cor do terreno — o anel escuro simplesmente SOME do desenho. Isso
+   * não toca token nenhum, então a ordem E as separações da hierarquia
+   * continuam perfeitas e a guarda de paleta passa limpa.
+   */
+  it('mutação que só a pilha pega: escape com a mesma cor do terreno (o anel some) reprova', () => {
+    const correnteMutante = CORRENTE_TONAL_DA_PILHA.map((cor, i) =>
+      // índice 2 = a camada de escape (chão, terreno, escape, muro, asfalto)
+      i === 2 ? 'pistaTerreno' : cor,
+    );
+    const razoes = separacoesDaCorrente(correnteMutante);
+    expect(Math.min(...razoes)).toBeLessThan(SEPARACAO_MINIMA_LUMINANCIA);
+    expect(razoes[1]).toBeCloseTo(1, 5); // terreno->terreno: nenhuma separação
+
+    // e a guarda de PALETA continuaria verde com essa mutação, porque nenhum
+    // token mudou de valor — é exatamente esse o buraco que este bloco fecha.
+    const razoesDaPaleta = separacoesDaCorrente(HIERARQUIA_SUPERFICIES);
+    expect(Math.min(...razoesDaPaleta)).toBeGreaterThanOrEqual(SEPARACAO_MINIMA_LUMINANCIA);
   });
 });
 
@@ -229,11 +254,20 @@ describe('casamento com a realidade (3.3 — o dado não pode divergir do CSS)',
    */
   it('o chão do replay é `fundo` — decisão de olho do dev no 7.3.1 (relevo do terreno), que nenhuma guarda de contraste protege', () => {
     expect(SUPERFICIE_BASE_REPLAY).toBe('fundo');
-    const razaoRelevo = razaoSeparacao(cores.pistaTerreno, cores[SUPERFICIE_BASE_REPLAY as NomeCor]);
-    expect(razaoRelevo).toBeGreaterThan(1); // terreno MAIS CLARO que o chão = degrau que sobe
+
+    // O SINAL do degrau é o que carrega a decisão: terreno MAIS CLARO que o
+    // chão = degrau que sobe = relevo. (`razaoSeparacao` não serve pra isso —
+    // ela é `max/min`, logo >= 1 por construção, pra qualquer par.)
     expect(luminanciaRelativa(cores.pistaTerreno)).toBeGreaterThan(
       luminanciaRelativa(cores[SUPERFICIE_BASE_REPLAY as NomeCor]),
     );
+
+    // E a MAGNITUDE do degrau: 1,357: é a adjacência mais apertada de toda a
+    // pilha (com `fundoElevado` era 1,578), então qualquer ajuste futuro em
+    // `fundo` ou `pistaTerreno` estoura aqui antes de qualquer outro lugar.
+    const razaoRelevo = razaoSeparacao(cores.pistaTerreno, cores[SUPERFICIE_BASE_REPLAY as NomeCor]);
+    expect(razaoRelevo).toBeGreaterThanOrEqual(SEPARACAO_MINIMA_LUMINANCIA);
+    expect(razaoRelevo).toBeCloseTo(1.357, 2);
   });
 });
 
