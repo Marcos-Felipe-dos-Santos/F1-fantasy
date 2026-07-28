@@ -92,15 +92,60 @@ describe('ordem de luminância da hierarquia de pista (PR 7.2)', () => {
 /**
  * Guarda contra reintroduzir a bomba-relógio semântica do Modo Cego (PR 2.3):
  * `carroBot` é conceito de CORRIDA (cor de chassi), `raridadeComum` é conceito
- * de DRAFT (raridade de peça). Hoje os dois valem o mesmo hex não vazaria nada
- * (antes desta correção o CSS usava `raridadeComum` direto como cor de carro),
- * mas se algum dia o Modo Cego precisar ocultar a raridade da peça do
- * adversário, reusar o mesmo token pra pintar o carro vazaria a raridade sem
- * ninguém perceber o acoplamento. Trava aqui, na origem.
+ * de DRAFT (raridade de peça). Reusar raridade pra pintar carro não vaza nada
+ * hoje (todo bot é pintado igual), mas se um dia a cor do carro passar a
+ * depender do loadout, o Modo Cego vazaria raridade sem ninguém perceber o
+ * acoplamento.
+ *
+ * A guarda vive em DOIS níveis de propósito (aviso 4 da revisão do 7.2): travar
+ * só o valor do token não impede alguém de escrever `fill: var(--raridade-comum)`
+ * de novo no CSS — e é exatamente isso que o CSS de produção faz hoje, até o
+ * PR 7.3 aplicar os tokens. É a REFERÊNCIA no CSS que é o risco, não o hex.
  */
 describe('carroBot é token próprio (PR 7.2)', () => {
-  it('carroBot não reusa raridadeComum (bomba-relógio semântica do Modo Cego, ver comentário em tokens.ts)', () => {
+  it('carroBot não reusa o hex de raridadeComum', () => {
     expect(cores.carroBot).not.toBe(cores.raridadeComum);
+  });
+
+  /**
+   * PENDÊNCIA DELIBERADA, a fechar no PR 7.3: a guarda no nível do CSS — "nenhuma
+   * regra `.tracado-svg__*` pode referenciar `var(--raridade-*)`" — ainda NÃO
+   * existe porque `.tracado-svg__carro` de produção segue pintando com
+   * `--raridade-comum`. Este PR é puramente aditivo (tokens + guardas de
+   * paleta); a troca no CSS foi adiada pro 7.3, que aplica os tokens junto com
+   * as camadas da pista — aplicá-la aqui, sem a camada de muro, derrubaria o
+   * contraste do traçado contra o painel do replay de 7,77:1 pra 1,45:1.
+   * Escrever o teste agora significaria commitar teste vermelho. Ele entra no
+   * 7.3, no mesmo diff que remove a última referência.
+   */
+});
+
+/**
+ * PROVA EXECUTÁVEL da impossibilidade documentada em `tokens.ts` (sugestão 7 da
+ * revisão do 7.2): comentário não roda em CI. Os dois alvos que o plano original
+ * previa são mutuamente exclusivos, então este teste existe pra que qualquer
+ * tentativa de "consertar" adicionando o par de volta falhe com a explicação.
+ */
+describe('impossibilidade do par pistaAsfalto/fundo (PR 7.2)', () => {
+  it('exigir magenta/pistaAsfalto >= 3 impede pistaAsfalto/qualquer-fundo >= 3', () => {
+    const lMagenta = luminanciaRelativa(cores.magenta);
+    // Pra `magenta/asfalto >= 3`, o asfalto tem teto de luminância:
+    const tetoAsfalto = (lMagenta + 0.05) / 3 - 0.05;
+    // Pra `asfalto/fundo >= 3` com esse teto, o fundo precisaria de:
+    const tetoFundo = (tetoAsfalto + 0.05) / 3 - 0.05;
+    expect(tetoFundo).toBeLessThan(0); // luminância mínima real é 0 ⇒ impossível
+    expect(luminanciaRelativa(cores.pistaAsfalto)).toBeLessThanOrEqual(tetoAsfalto);
+  });
+
+  /**
+   * Corolário que o PR 7.3 precisa respeitar: como o asfalto NÃO consegue 3:1
+   * contra o fundo, desenhar a pista como um stroke ÚNICO deixa o traçado
+   * ilegível — foi exatamente a regressão que a revisão do 7.2 barrou (pista
+   * contra o painel do replay caía de 7,77:1 pra 1,45:1). A legibilidade do
+   * traçado vem da CAMADA DE MURO, não do preenchimento.
+   */
+  it('pistaAsfalto sozinho sobre o painel do replay fica abaixo de 3 — exige a camada de muro', () => {
+    expect(razaoContraste(cores.pistaAsfalto, cores.fundoElevado)).toBeLessThan(3);
   });
 });
 

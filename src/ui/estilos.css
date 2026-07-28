@@ -584,18 +584,13 @@ button.card {
 
 .tracado-svg__pista {
   fill: none;
-  /* PR 7.2: pista pintada com o token de asfalto (não `texto-suave`) — é o
-     que dá contraste >= 3:1 pro carro do bot/humano ser achável sobre a
-     pista (ver PARES_CONTRASTE em tokens.ts). */
-  stroke: var(--pista-asfalto);
+  stroke: var(--cor-texto-fraco);
   stroke-width: 10;
   stroke-linejoin: round;
 }
 
 .tracado-svg__carro {
-  /* PR 7.2: token próprio de cor de carro, não `raridade-comum` (ver
-     comentário em tokens.ts sobre a bomba-relógio semântica do Modo Cego). */
-  fill: var(--carro-bot);
+  fill: var(--raridade-comum);
   stroke: var(--cor-fundo);
   stroke-width: 1.5;
 }

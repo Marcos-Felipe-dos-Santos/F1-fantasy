@@ -51,8 +51,8 @@ export const cores = {
   pistaServico: '#221E42',
   /**
    * Corpo do chassi dos 21 bots. Token PRÓPRIO — NÃO reusar `raridadeComum`
-   * (mesmo hex hoje, #3DDC64, antes desta correção o CSS de produção pintava
-   * o carro direto com `raridadeComum`): raridade é conceito de peça/draft,
+   * (`#3DDC64`, que é o que o CSS de produção pinta hoje em
+   * `.tracado-svg__carro`): raridade é conceito de peça/draft,
    * cor de carro é conceito de corrida. Reusar raridade como cor de carro não
    * vaza nada hoje (todo bot é pintado igual), mas é bomba-relógio semântica
    * pro Modo Cego (PR 2.3), que pretende ocultar a raridade das peças do
@@ -118,7 +118,13 @@ export const PARES_CONTRASTE: ParContraste[] = [
   // e fundo. Não adicionar esse par de volta.
   // Número no chassi: o código (MockPista.tsx) pinta o dígito com `textoEscuro`
   // (#16132E), não com `texto` (#F4F2FF) — por isso os pares abaixo usam
-  // `textoEscuro`, que é o que de fato é desenhado sobre o carro.
+  // `textoEscuro`.
+  // RESSALVA (revisão do 7.2): o dígito é desenhado por cima do disco do
+  // COCKPIT (r=5 em (-1,0)), então o fundo predominante do número é o
+  // capacete, não o corpo do chassi. Os dois casos passam com folga
+  // (textoEscuro/acento = 10.57, textoEscuro/primaria = 11.90), por isso não
+  // travamos ainda — mas quando o PR 7.9 trouxer o marcador pra produção, os
+  // pares de capacete entram aqui.
   { nome: 'textoEscuro/carroBot', fg: 'textoEscuro', bg: 'carroBot', minimo: 4.5 }, // número no chassi do bot
   { nome: 'textoEscuro/magenta', fg: 'textoEscuro', bg: 'magenta', minimo: 4.5 }, // número no chassi do humano
 ];
