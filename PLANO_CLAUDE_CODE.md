@@ -216,7 +216,7 @@ identidade só no painel lateral). Suzuka vai quebrar `cruzamentosMidSegmento` q
 tirar o cruzamento do vértice compartilhado (índices 4 e 12, ambos `(500,300)`): **exceção nomeada
 pra Suzuka, NUNCA afrouxar a guarda geral** — ela já pegou bugs reais em Spa e Interlagos no PR 2.8.
 
-**Item 4 (narração de ultrapassagem) — decidido em 2026-07-27: opção (a).** Ver PROGRESS.md.
+**Item 4 (narração de ultrapassagem) — decidido em 2026-07-27: opção (a).** Ver HISTORICO.md.
 
 ---
 

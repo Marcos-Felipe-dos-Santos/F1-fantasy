@@ -1,6 +1,6 @@
 /**
  * Fetch + cache da Jolpica-F1 (PR 4.1, trilha "Dataset histórico 1950-2025",
- * `PROGRESS.md` seção "Próximos"). Projeto voluntário com custo próprio — a
+ * `HISTORICO.md` seção "Próximos"). Projeto voluntário com custo próprio — a
  * disciplina de rede abaixo é INVIOLÁVEL:
  *
  *   - throttle de 1 requisição real a cada 10s (constante documentada
@@ -317,7 +317,7 @@ export async function buscarPaginaComCache(
 
 // ---------------------------------------------------------------------------
 // Orquestração (seasons asc, páginas asc; pitstops depois dos results da
-// mesma temporada — ordem determinística, PROGRESS.md item 8).
+// mesma temporada — ordem determinística, HISTORICO.md item 8).
 // ---------------------------------------------------------------------------
 
 export interface ResumoExecucao {

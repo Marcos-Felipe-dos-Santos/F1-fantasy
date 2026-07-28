@@ -5,6 +5,25 @@ Este arquivo é a memória sempre-ativa do projeto. As regras aqui são **inviol
 
 ---
 
+## O que ler em sessão nova (ordem obrigatória)
+
+1. **`CLAUDE.md`** (este arquivo) — regras invioláveis.
+2. **`ESTADO.md`** — estado atual, onde parei, próximo PR, pendências ativas, regras da Fase 7.
+   Curto de propósito (~60 linhas). **É o único documento de estado que se lê por completo.**
+
+**Sob demanda, nunca por completo na abertura:**
+- **`HISTORICO.md`** — registro detalhado por PR (~27 mil tokens). Consultar **o PR que interessa**
+  quando precisar do porquê de uma decisão. Ler inteiro estoura o contexto inicial — foi exatamente
+  por isso que o `ESTADO.md` passou a existir.
+- **`PLANO_CLAUDE_CODE.md`** — plano de build por fase e direção de arte.
+- **`F1_Fantasy_GDD.md`** — regras de jogo, notas, pistas, catálogo de peças.
+
+**Ao concluir um PR, atualizar OS DOIS:** entrada detalhada no `HISTORICO.md` (acumula) e o
+`ESTADO.md` **reescrito** (substitui, não acumula). Se só um dos dois for atualizado, a próxima
+sessão começa com informação errada.
+
+---
+
 ## Stack
 - **Engine de simulação:** TypeScript puro, sem dependência de UI. Determinística por seed.
 - **Front-end:** React + Vite + SVG (traçado da pista e carros).

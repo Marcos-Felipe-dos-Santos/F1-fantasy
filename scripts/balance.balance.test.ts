@@ -4,7 +4,7 @@
  * milhares de corridas e mede metas de calibração, não lógica.
  *
  * As asserções abaixo são as metas de calibração decididas pelo dev em
- * 2026-07-18 (`PROGRESS.md`, seção "Metas de calibração"). O relatório
+ * 2026-07-18 (`HISTORICO.md`, seção "Metas de calibração"). O relatório
  * completo é sempre impresso via console.log, mesmo se algum assert falhar
  * (o dev quer os números finais em qualquer cenário).
  */
@@ -37,7 +37,7 @@ describe('balance-harness (PR 1.6)', () => {
     // Sempre reporta, mesmo que algum assert abaixo falhe.
     console.log(gerarRelatorio(vitoriaPole, paradas, raridade, dominancia));
 
-    // Meta 1 (PROGRESS.md): sinal de grid — pole com carro idêntico vence
+    // Meta 1 (HISTORICO.md): sinal de grid — pole com carro idêntico vence
     // claramente mais que 61% e bem menos que 95%, alvo ~70-80% na pista
     // de ultrapassagem média.
     expect(vitoriaPole.media).toBeGreaterThanOrEqual(0.7);
@@ -47,7 +47,7 @@ describe('balance-harness (PR 1.6)', () => {
     expect(vitoriaPole.dificil).toBeGreaterThanOrEqual(vitoriaPole.media);
     expect(vitoriaPole.media).toBeGreaterThanOrEqual(vitoriaPole.facil - 0.02);
 
-    // Meta 2 (PROGRESS.md): parada extra em desgaste Alto — maioria dos
+    // Meta 2 (HISTORICO.md): parada extra em desgaste Alto — maioria dos
     // carros (~40-60%) faz 2+ paradas; desgaste medio/baixo continua raro.
     //
     // Banda do agregado re-baseada [0.4, 0.6] -> [0.4, 0.7] no PR 4.5: o
@@ -71,7 +71,7 @@ describe('balance-harness (PR 1.6)', () => {
     expect(paradas.altoPorBucket.pneuBaixo).toBeGreaterThanOrEqual(0.75);
     expect(paradas.altoPorBucket.pneuAlto).toBeLessThanOrEqual(0.4);
 
-    // Meta 3 (PROGRESS.md item 4): guarda folgada contra peça dominante —
+    // Meta 3 (HISTORICO.md item 4): guarda folgada contra peça dominante —
     // a peça proibida não pode campeonar desproporcionalmente mais do que
     // é usada.
     expect(raridade.ratio.proibido).toBeLessThanOrEqual(3.0);

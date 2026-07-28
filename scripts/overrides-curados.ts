@@ -1,6 +1,6 @@
 /**
  * Overrides curados de ULT e CHU (PR 4.7, trilha "Dataset histórico 1950-2025",
- * `PROGRESS.md` seção "Próximos").
+ * `HISTORICO.md` seção "Próximos").
  *
  * CURADORIA EXPLÍCITA (PR 4.7) — decidida pelo dev, NÃO derivada de fatos;
  * ULT e CHU têm origem diferente do resto do dataset.
