@@ -1,6 +1,6 @@
 /**
  * Derivação de notas (PR 4.3, trilha "Dataset histórico 1950-2025",
- * `PROGRESS.md` seção "Próximos"). Lê `scripts/derived/fatos-agregados.json`
+ * `HISTORICO.md` seção "Próximos"). Lê `scripts/derived/fatos-agregados.json`
  * (PR 4.2, FATOS auditáveis, zero fórmula) e emite
  * `scripts/derived/equipe-anos.derivado.json` — MESMO formato de
  * `src/data/equipe-anos.json` — via percentil de Hazen por temporada +

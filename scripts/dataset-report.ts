@@ -1,6 +1,6 @@
 /**
  * Relatório do dataset derivado (PR 4.3, trilha "Dataset histórico 1950-2025",
- * `PROGRESS.md` seção "Próximos"). Lê `scripts/derived/equipe-anos.derivado.json`
+ * `HISTORICO.md` seção "Próximos"). Lê `scripts/derived/equipe-anos.derivado.json`
  * (PR 4.3, `derivar-notas.ts`) + `scripts/derived/fatos-agregados.json` (PR
  * 4.2) e imprime números pro dev revisar antes do swap pra `src/data/` (PR
  * 4.5). Só leitura + `console.log` — nenhuma fórmula nova, nenhuma escrita.

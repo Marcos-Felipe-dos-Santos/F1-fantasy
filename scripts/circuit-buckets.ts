@@ -1,6 +1,6 @@
 /**
  * Buckets de circuito (PR 4.6, trilha "Dataset histórico 1950-2025",
- * `PROGRESS.md` seção "Próximos"). Tabela EXPLÍCITA `circuitId → bucket` —
+ * `HISTORICO.md` seção "Próximos"). Tabela EXPLÍCITA `circuitId → bucket` —
  * decisão de CURADORIA do arquiteto (não fórmula, não inferida de dado bruto)
  * — que existe pra diferenciar AERO/MEC/MOTOR por equipe/ano em
  * `derivar-notas.ts`: sem isso, os pesos de pista por bucket do GDD §9 não

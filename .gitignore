@@ -13,3 +13,8 @@ scripts/cache/
 # (GDD §14.2). Servem pra olhar e discutir, nunca pra virar asset nem entrar
 # no histórico do repositório.
 referencias/
+
+# Previews visuais gerados pelos PRs da Fase 7 (HTML/SVG pra o dev olhar antes de
+# aprovar). Mesmo tratamento de `referencias/`: são artefatos de trabalho,
+# regeneráveis, e não têm por que entrar no histórico do repositório.
+preview/

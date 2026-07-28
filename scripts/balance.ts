@@ -3,7 +3,7 @@
  * não sentido — GDD §9/§14.3).
  *
  * Mede, em cima do dataset real (`src/data/`), as 3 metas de calibração
- * decididas pelo dev em 2026-07-18 (`PROGRESS.md`, seção "Metas de
+ * decididas pelo dev em 2026-07-18 (`HISTORICO.md`, seção "Metas de
  * calibração"):
  *
  * 1. Sinal de grid: pole com carro idêntico deve vencer claramente mais que
@@ -487,7 +487,7 @@ export function medirRaridadePeca(dataset: Dataset, nCampeonatos: number): Relat
 // "o campeonato é decidido no draft?"). Se a força do carro montado no draft
 // explicar quase toda a classificação final, as 10 corridas são teatro e o
 // modo campeonato precisa de mitigação (ex.: "pit de meio de temporada",
-// PROGRESS.md D1) ANTES de qualquer UI. SEM assert bloqueante — mesmo padrão
+// HISTORICO.md D1) ANTES de qualquer UI. SEM assert bloqueante — mesmo padrão
 // informativo da Meta 3/4; quem decide o limiar aceitável é o dev, a partir
 // do relatório impresso.
 // ---------------------------------------------------------------------------

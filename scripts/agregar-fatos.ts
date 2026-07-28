@@ -1,6 +1,6 @@
 /**
  * Agregador de fatos (PR 4.2, trilha "Dataset histórico 1950-2025",
- * `PROGRESS.md` seção "Próximos"). Lê o cache cru da Jolpica-F1 (PR 4.1,
+ * `HISTORICO.md` seção "Próximos"). Lê o cache cru da Jolpica-F1 (PR 4.1,
  * `scripts/cache/jolpica/`), aplica exclusões e corte de escopo (decisões D1
  * do dev) e emite `scripts/derived/fatos-agregados.json`: contagens e médias
  * AUDITÁVEIS, direto dos fatos crus. ZERO fórmula de nota — isso é o PR 4.3.
@@ -23,7 +23,7 @@
  *   5. Titulares = os 2 pilotos com mais largadas pela equipe/ano (desempate:
  *      soma de `points` desc, depois `driverId` asc — determinismo).
  *   6. Pra cada equipe/titular elegível, calcula as estatísticas do §3 do
- *      plano aprovado (ver spec do PR na PR description / PROGRESS.md).
+ *      plano aprovado (ver spec do PR na PR description / HISTORICO.md).
  *
  * Categorização de status: `status-map.ts` (tabela commitada, auditável).
  * Todo status desconhecido cai em `outro` e é reportado em
@@ -56,7 +56,7 @@ import { CACHE_DIR_PADRAO, PRIMEIRA_TEMPORADA, PRIMEIRA_TEMPORADA_PITSTOPS, ULTI
 import { lookupBucket, type BucketCircuito } from './circuit-buckets.ts';
 
 // ---------------------------------------------------------------------------
-// Constantes de exclusão (decisão D1 do dev, PROGRESS.md).
+// Constantes de exclusão (decisão D1 do dev, HISTORICO.md).
 // ---------------------------------------------------------------------------
 
 const INDY_CIRCUIT_ID = 'indianapolis';
