@@ -568,13 +568,20 @@ button.card {
   font-size: 0.85rem;
 }
 
-/* Painel do traçado: mesma superfície+borda+sombra dura dos cards, pra ler
-   como um "card" do replay em vez de um painel neutro. */
+/* Painel do traçado. Mantém borda+sombra dura dos cards, mas o FUNDO é
+   `--fundo` (cor do corpo da página), não `--cor-superficie`: é o que faz o
+   terreno da pista (`--pista-terreno`, mais claro que `--fundo`) ler como um
+   degrau que sobe, dando relevo à moldura — a composição da maquete aprovada
+   no portão 7.1. Decisão de OLHO do dev no PR 7.3.1, com o custo aceito
+   explicitamente: este painel deixa de ler como "card" e passa a ser
+   delimitado só pela borda. Ver `SUPERFICIE_BASE_REPLAY` em
+   `pista-camadas.ts` pro porquê de as duas coisas serem mutuamente
+   exclusivas com a paleta atual. */
 .tracado-svg {
   width: 100%;
   max-width: 700px;
   height: auto;
-  background: var(--cor-superficie);
+  background: var(--fundo);
   border: 3px solid var(--borda);
   border-radius: var(--raio-lg);
   box-shadow: 4px 4px 0 var(--borda);
@@ -583,13 +590,12 @@ button.card {
 }
 
 /* `<rect>` de chão do SVG (PR 7.3): superfície REAL sob o traçado. Mesmo tom
-   do `background` de `.tracado-svg` acima (`--cor-superficie`, que é bridge
-   var pra `--fundo-elevado`) — pintado explicitamente aqui pra que a guarda
-   de contraste do limite de pista (`pista-camadas.test.ts`) meça contra o
-   que está de fato na tela, e não dependa de o `<rect>` cobrir 100% do
-   viewBox só "por acidente" de layout. */
+   do `background` de `.tracado-svg` acima — pintado explicitamente aqui pra
+   que a guarda de contraste do limite de pista (`pista-camadas.test.ts`) meça
+   contra o que está de fato na tela, e não dependa de o `<rect>` cobrir 100%
+   do viewBox só "por acidente" de layout. */
 .tracado-svg__chao {
-  fill: var(--fundo-elevado);
+  fill: var(--fundo);
 }
 
 /* Uma camada da pilha de `CAMADAS_PISTA` (PR 7.3): terreno/escape/muro/zebra/limite/asfalto. */
