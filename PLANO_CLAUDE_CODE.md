@@ -164,8 +164,15 @@ f1-fantasy-claude-setup/
   Critério de aceite é o olho do dev, não teste automatizado — e isso está declarado, não fingido.
 - **PR 7.2** — Tokens de pista + pares de contraste. **Corrige BUG PRESENTE:** hoje os 21 bots são
   `#3DDC64` sobre pista `#B9B3DC` = **1,10:1**, e o humano magenta = **1,53:1** (mínimo WCAG pra
-  elemento de UI é 3:1). Os carros estão praticamente fundidos com o asfalto e nenhum teste pega,
-  porque `PARES_CONTRASTE` não tem par de carro-sobre-pista. Entram na lista pra travar por teste.
+  elemento de UI é 3:1); nenhum teste pega, porque `PARES_CONTRASTE` não tem par de
+  carro-sobre-pista. Entram na lista pra travar por teste.
+  **⚠️ RESSALVA IMPORTANTE sobre esses dois números** (achado da revisão do 7.2, corrigindo o
+  registro original): eles são contraste de PREENCHIMENTO contra PREENCHIMENTO e **ignoram o anel
+  escuro que cada carro já tem** — `.tracado-svg__carro` traz `stroke: var(--cor-fundo)` de 1,5px
+  (`estilos.css`), que dá **9,04:1** contra a pista atual. Na prática os carros **são acháveis**
+  hoje, bem mais do que 1,10/1,53 sugerem. O bug é real e vale corrigir, mas **não** é "carros
+  invisíveis" — não usar esses números como justificativa para decisões maiores do que eles
+  sustentam.
 - **PR 7.3** — Camadas da pista (largura, linha central, zebras, muro, escape) por stroke em
   camadas, ainda em polilinha reta; viewBox ganha margem. **Maior valor percebido por esforço.**
 - **PR 7.7** — Geometria do pit como DADO (entrada/saída/caminho/box), 2 pistas primeiro.
