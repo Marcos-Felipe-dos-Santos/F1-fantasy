@@ -102,12 +102,26 @@ export const CAMADAS_PISTA: readonly CamadaPista[] = [
 
 /**
  * Superfície REAL sob o traçado no replay: o `<rect>` de chão do SVG
- * (`.tracado-svg__chao`) e o `background` do painel (`.tracado-svg`, que lê
- * o mesmo tom via a bridge var `--cor-superficie: var(--fundo-elevado)`). É
- * contra ela que a guarda de contraste do limite de pista mede
+ * (`.tracado-svg__chao`) e o `background` do painel (`.tracado-svg`). É contra
+ * ela que a guarda de contraste do limite de pista mede
  * (`pista-camadas.test.ts`).
+ *
+ * ⚠️ DECISÃO DE OLHO DO DEV (PR 7.3.1), não de teste. Este valor já foi
+ * `fundoElevado` (a cor de card do painel, PR 7.3) e voltou pra `fundo`. Com
+ * `fundoElevado` (0,0178) o terreno (0,0113) fica MAIS ESCURO que o chão e a
+ * moldura lê como um "poço"; com `fundo` (0,0083) o terreno volta a ser um
+ * degrau CLARO sobre o chão e faz relevo — a composição da maquete aprovada no
+ * portão 7.1. O dev escolheu o relevo e **aceitou o custo**: o painel do
+ * traçado deixa de ler como card (fica na cor do corpo da página, delimitado
+ * só pela borda).
+ *
+ * **Nenhum teste reprova nenhuma das duas opções** — as duas passam em todas
+ * as guardas de contraste e de separação. A restrição que torna as duas
+ * mutuamente exclusivas é de PALETA: não existe token entre `fundoElevado`
+ * (0,0178) e `pistaMuro` (0,0292) pra servir de terreno claro mantendo o
+ * painel elevado. Se um dia surgir, dá pra ter as duas coisas.
  */
-export const SUPERFICIE_BASE_REPLAY: CorDePista = 'fundoElevado';
+export const SUPERFICIE_BASE_REPLAY: CorDePista = 'fundo';
 
 /**
  * A corrente tonal da PILHA REAL, de fora pra dentro: a superfície de base do

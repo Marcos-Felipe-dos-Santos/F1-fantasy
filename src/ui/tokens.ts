@@ -145,10 +145,13 @@ export const PARES_CONTRASTE: ParContraste[] = [
 
   // ---- Pista (PR 7.3) — o LIMITE de pista precisa ser achável contra o asfalto E contra o fundo do replay ----
   { nome: 'pistaLimite/pistaAsfalto', fg: 'pistaLimite', bg: 'pistaAsfalto', minimo: 3 },
-  // `fundoElevado` é a superfície REAL sob o traçado no replay (o <rect> de
-  // chão do SVG, `.tracado-svg__chao`, e o `background` de `.tracado-svg` via
-  // a bridge var `--cor-superficie`); `pista-camadas.test.ts` trava esse
-  // casamento contra o CSS.
+  // `fundo` é a superfície REAL sob o traçado no replay (o <rect> de chão do
+  // SVG, `.tracado-svg__chao`, e o `background` de `.tracado-svg`);
+  // `pista-camadas.test.ts` trava esse casamento contra o CSS.
+  { nome: 'pistaLimite/fundo', fg: 'pistaLimite', bg: 'fundo', minimo: 3 },
+  // `fundoElevado` fica na lista mesmo não sendo mais o chão do replay (PR
+  // 7.3.1): é o tom de card do resto da UI, e manter o par trava a
+  // legibilidade do limite se um dia o painel voltar a ser elevado.
   { nome: 'pistaLimite/fundoElevado', fg: 'pistaLimite', bg: 'fundoElevado', minimo: 3 },
 ];
 
