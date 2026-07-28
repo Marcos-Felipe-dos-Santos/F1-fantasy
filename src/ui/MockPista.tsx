@@ -13,7 +13,7 @@
  * Acesso: `npm run dev` e abrir `?mock=pista`. Fora da navegação de propósito —
  * nenhuma tela do jogo linka pra cá.
  *
- * Direção de arte (PLANO_CLAUDE_CODE.md §5, corrigido no PR 7.0): estrutura de
+ * Direção de arte (PLANO_CLAUDE_CODE.md §1, corrigido no PR 7.0): estrutura de
  * simulador + tokens do design system do 5.1. Nenhuma cor fora do sistema,
  * exceto `ASFALTO`, que é o token novo proposto pro PR 7.2.
  */
