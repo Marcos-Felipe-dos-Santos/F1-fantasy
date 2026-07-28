@@ -35,6 +35,9 @@
   --pista-muro: #2F2A55;
   --pista-terreno: #1B1738;
   --pista-servico: #221E42;
+  --pista-limite: #A5A2BB;
+  --pista-zebra-a: #FFCC00;
+  --pista-zebra-b: #FF7B85;
   --carro-bot: #B9B3DC;
 
   --espaco-xs: 4px;

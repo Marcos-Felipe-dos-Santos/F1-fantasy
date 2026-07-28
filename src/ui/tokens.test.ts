@@ -107,17 +107,10 @@ describe('carroBot é token próprio (PR 7.2)', () => {
     expect(cores.carroBot).not.toBe(cores.raridadeComum);
   });
 
-  /**
-   * PENDÊNCIA DELIBERADA, a fechar no PR 7.3: a guarda no nível do CSS — "nenhuma
-   * regra `.tracado-svg__*` pode referenciar `var(--raridade-*)`" — ainda NÃO
-   * existe porque `.tracado-svg__carro` de produção segue pintando com
-   * `--raridade-comum`. Este PR é puramente aditivo (tokens + guardas de
-   * paleta); a troca no CSS foi adiada pro 7.3, que aplica os tokens junto com
-   * as camadas da pista — aplicá-la aqui, sem a camada de muro, derrubaria o
-   * contraste do traçado contra o painel do replay de 7,77:1 pra 1,45:1.
-   * Escrever o teste agora significaria commitar teste vermelho. Ele entra no
-   * 7.3, no mesmo diff que remove a última referência.
-   */
+  // A guarda no nível do CSS — "nenhuma regra `.tracado-svg__*` pode
+  // referenciar `var(--raridade-*)`" — foi fechada no PR 7.3, no mesmo diff
+  // que troca `.tracado-svg__carro` pra `var(--carro-bot)`. Ver
+  // `pista-camadas.test.ts` ("guarda de CSS anti-raridade").
 });
 
 /**

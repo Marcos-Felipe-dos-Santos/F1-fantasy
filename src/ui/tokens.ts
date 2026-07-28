@@ -49,6 +49,21 @@ export const cores = {
   pistaTerreno: '#1B1738',
   /** Áreas de escape em curva e plataforma de paddock/pit. */
   pistaServico: '#221E42',
+  /** Limite de pista: a linha clara e contínua que delimita o asfalto em toda a
+   *  volta. É ELA que carrega a leitura do traçado — o asfalto não consegue
+   *  3:1 contra fundo nenhum (prova de impossibilidade em `tokens.test.ts`).
+   *  Valor = branco `texto` a 60% sobre `pistaMuro`, promovido a hex OPACO
+   *  pra que a guarda de contraste seja exata em vez de depender de
+   *  compositing. DESVIO DELIBERADO da maquete do PR 7.1, que usa 50%
+   *  (`#928EAA`): a 50%, o contraste contra o asfalto fica em 3,396 — só 13%
+   *  acima do mínimo 3, sem folga nenhuma — enquanto a 60% fica em 4,319. */
+  pistaLimite: '#A5A2BB',
+  /** Zebra (faixa A). Mesmo hex de `primaria` DE PROPÓSITO — a zebra amarela é
+   *  a cor de acento do sistema. O token separado existe pra que mudar o
+   *  botão primário não repinte a pista. */
+  pistaZebraA: '#FFCC00',
+  /** Zebra (faixa B). Mesmo hex de `erro`, mesma justificativa de `pistaZebraA`. */
+  pistaZebraB: '#FF7B85',
   /**
    * Corpo do chassi dos 21 bots. Token PRÓPRIO — NÃO reusar `raridadeComum`
    * (`#3DDC64`, que é o que o CSS de produção pinta hoje em
@@ -127,6 +142,14 @@ export const PARES_CONTRASTE: ParContraste[] = [
   // pares de capacete entram aqui.
   { nome: 'textoEscuro/carroBot', fg: 'textoEscuro', bg: 'carroBot', minimo: 4.5 }, // número no chassi do bot
   { nome: 'textoEscuro/magenta', fg: 'textoEscuro', bg: 'magenta', minimo: 4.5 }, // número no chassi do humano
+
+  // ---- Pista (PR 7.3) — o LIMITE de pista precisa ser achável contra o asfalto E contra o fundo do replay ----
+  { nome: 'pistaLimite/pistaAsfalto', fg: 'pistaLimite', bg: 'pistaAsfalto', minimo: 3 },
+  // `fundoElevado` é a superfície REAL sob o traçado no replay (o <rect> de
+  // chão do SVG, `.tracado-svg__chao`, e o `background` de `.tracado-svg` via
+  // a bridge var `--cor-superficie`); `pista-camadas.test.ts` trava esse
+  // casamento contra o CSS.
+  { nome: 'pistaLimite/fundoElevado', fg: 'pistaLimite', bg: 'fundoElevado', minimo: 3 },
 ];
 
 /** Escala de espaçamento (px), consistente em toda a UI. */
