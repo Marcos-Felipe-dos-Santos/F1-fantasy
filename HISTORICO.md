@@ -8,7 +8,7 @@
 > consome ~27 mil tokens e foi por isso que o `ESTADO.md` passou a existir (chore de 2026-07-28).
 >
 > **Onde olhar primeiro:** `ESTADO.md` (estado atual, próximo PR, pendências ativas, regras da fase).
-> Plano de build e direção de arte: `PLANO_CLAUDE_CODE.md` §5. Regras invioláveis: `CLAUDE.md`.
+> Plano de build e direção de arte: `PLANO_CLAUDE_CODE.md`. Regras invioláveis: `CLAUDE.md`.
 > Regras de jogo: `F1_Fantasy_GDD.md`. Nada foi pushado — tudo local.
 >
 > **Ao concluir um PR, atualizar OS DOIS:** entrada nova aqui (acumula) e o `ESTADO.md` reescrito
@@ -183,7 +183,7 @@
 - ~~Percentil de grid pode sair de [0,1] com dado real dos anos 50~~ **Resolvido no PR 4.6.1** (dense-rank entre largadores reais; (0,1) garantido por construção).
 - Cosmético: o report imprime média dos ajustes −0.05 (base pré-clamp); medida sobre as notas finais inteiras é −0.038. Alinhar a base de medição no print numa próxima passada.
 - **Fase 3 — Online (PartyKit)** — PENDENTE, começando pelo PR 3.1 (setup PartyKit, sala com código, entrar/sair, preencher com bots até 22). Exige plano do fable-architect + aprovação do dev antes de implementar (PLANO §5 Fase 3).
-- **Fase 5 — Identidade visual e polimento (registrada em 2026-07-22; EXECUTAR depois do dataset).** Direção de arte ARCADE/LÚDICO: cores vibrantes, estilo chapado (flat), divertido — coerente com o espírito "7x1/38 a 0" e contorna a ausência de arte fotorrealista/mapas oficiais. Escopo em PRs (detalhado no PLANO §5 Fase 5): 5.1 design system (paleta, tipografia, tokens, componentes base flat — substitui o visual cru), 5.2 traçados arcade das 10 pistas (silhuetas PRÓPRIAS, nunca decalcar o mapa oficial F1/FIA — GDD §14.2), 5.3 editor de capacete (designs originais que evocam épocas, nunca cópia nomeada de pintura real), 5.4 animações/transições (draft, corrida, celebração), 5.5 tela de abertura + marca (nome/logo), 5.6 som (efeitos e talvez música; biblioteca leve, sem dependência pesada).
+- **Fase 5 — Identidade visual e polimento (registrada em 2026-07-22).** ⚠️ **A DIREÇÃO DE ARTE CITADA NESTE PARÁGRAFO FOI REJEITADA PELO DEV NO PR 7.0 — não usar. A válida está no `PLANO_CLAUDE_CODE.md` §1.** Registro de como estava em 2026-07-22: direção ARCADE/LÚDICO: cores vibrantes, estilo chapado (flat), divertido — coerente com o espírito "7x1/38 a 0" e contorna a ausência de arte fotorrealista/mapas oficiais. Escopo em PRs (detalhado no PLANO §5 Fase 5): 5.1 design system (paleta, tipografia, tokens, componentes base flat — substitui o visual cru), 5.2 traçados arcade das 10 pistas (silhuetas PRÓPRIAS, nunca decalcar o mapa oficial F1/FIA — GDD §14.2), 5.3 editor de capacete (designs originais que evocam épocas, nunca cópia nomeada de pintura real), 5.4 animações/transições (draft, corrida, celebração), 5.5 tela de abertura + marca (nome/logo), 5.6 som (efeitos e talvez música; biblioteca leve, sem dependência pesada).
 - **Ordem pós-dataset:** decidir entre Fase 3 (online) e Fase 5 (visual) — ambas grandes, escolha do dev.
 - ~~Pendência do PR 2.6: status "parado no pit" exige engine expor a volta de cada parada~~ **Resolvido no PR 2.7** (autorizado pelo dev em 2026-07-21).
 
@@ -200,3 +200,77 @@
 - TDD: teste vermelho antes da implementação; seed de ouro por módulo de simulação.
 - RNG: sub-stream por jogador (`deriveSeed(seed, 'fase:${jogadorId}')`) pra independência de ordem.
 - Fluxo: junior-dev implementa → testes/lint/tsc → senior-reviewer revisa → correções → commit local. **Push só com ok explícito do dev.**
+
+---
+
+## Arquivo do plano (movido do `PLANO_CLAUDE_CODE.md` no chore de 2026-07-28)
+
+> O PLANO passou a conter **só norma ativa**: direção de arte (permanente) e fases não concluídas.
+> O que estava obsoleto, duplicado ou já cumprido veio pra cá. **Nada aqui é norma** — é registro.
+
+### Por que estas seções saíram (o critério foi "enganoso", não "grande")
+
+O `PLANO §3` mandava rodar a sessão principal no **Fable 5** e citava **Opus 4.8** para o
+`senior-reviewer`; o `§2` mandava `claude --model claude-fable-5`. O Fable não está mais disponível
+e o `CLAUDE.md` já registrava isso — ou seja, o PLANO contradizia o `CLAUDE.md` em norma de processo.
+É a mesma classe de armadilha que o **PR 7.0** corrigiu na direção de arte: enquanto a norma escrita
+estiver errada, os agentes seguem o que está escrito, com razão. Roteamento de modelos e ciclo de PR
+passam a viver **só no `CLAUDE.md`**, fonte única.
+
+### §1 — O que vinha no pacote de setup
+
+Estrutura original do pacote instalado na raiz do repositório em 2026-07: `CLAUDE.md`,
+`PLANO_CLAUDE_CODE.md` e `.claude/` com `agents/` (`fable-architect.md`, `senior-reviewer.md`,
+`junior-dev.md`, `scout.md`) e `skills/` (`sim-engine/`, `balance-harness/`, `pr-workflow/`).
+
+### §2 — Como instalar (histórico)
+
+Copiar `CLAUDE.md` e `.claude/` pra raiz; Claude Code v2.1.170+; reiniciar a sessão uma vez pra o
+watcher pegar o diretório `.claude/agents/` recém-criado; rodar a sessão principal no Fable.
+**Obsoleto:** o Fable não está mais disponível.
+
+### §3 — Roteamento de modelos (histórico; a versão válida está no `CLAUDE.md`)
+
+Sessão principal e `fable-architect` no Fable 5; `junior-dev` no Sonnet 5; `senior-reviewer` no
+Opus 4.8; `scout` no Haiku 4.5. Havia ainda uma nota sobre classificadores de segurança do Fable
+poderem cair pra um modelo de fallback em domínios sensíveis.
+
+### §4 — Ciclo de trabalho por PR (histórico; a versão válida está no `CLAUDE.md`)
+
+Planejar com o `fable-architect` → dev aprova → `junior-dev` implementa (teste vermelho primeiro se
+tocar simulação/balanceamento) → `senior-reviewer` roda `git diff` → `balance-harness` se mexeu em
+nota/fórmula → push só com "ok" explícito; tag só depois do merge.
+
+### §6 — Ordem de ataque sugerida (cumprida)
+
+"Comece pela Fase 0 e 1 inteiras antes de pensar em rede. O modo Single com o balance-harness é o que
+prova que o jogo é divertido e justo — se o balanceamento não fechar aí, não adianta ter multiplayer.
+Rede é a casca final." Atualização de 2026-07-22: Fases 0-2 concluídas, dataset em andamento, Fase 3
+pendente, ordem pós-dataset a escolher entre Fase 3 e Fase 5. **Cumprida:** o dev escolheu o visual.
+
+### Detalhe das fases concluídas (escopo original por PR)
+
+- **Fase 0 — Scaffold.** PR 0.1 Vite+React+TS+Vitest e estrutura `engine/ ui/ data/ net/` + lint;
+  PR 0.2 `engine/rng.ts` (mulberry32 semeado + testes de reprodutibilidade); PR 0.3 tipos base em
+  `engine/types.ts`.
+- **Fase 1 — Engine + modo Single.** PR 1.1 dataset semente; 1.2 draft (5 sorteios + rodada 6 de peça
+  com 2 cópias, bots por seed); 1.3 classificação (volta única ⇒ grid, seed de ouro); 1.4 corrida
+  (tempo por notas+pista+variância, pontuação FIA, volta mais rápida do grid inteiro); 1.5 incidentes
+  (CONS, CONF, CONF_MOTOR, risco de peça, clima); 1.6 `scripts/balance.ts`; 1.7 UI mínima do Single.
+  **Marco atingido:** dá pra jogar sozinho contra bots e medir balanceamento.
+- **Fase 2 — Modo Local (hotseat 2-4).** Reorganizada em 2026-07-19: o PR 2.2 original ("bots até 22
+  + grid com todos") foi FUNDIDO no 2.1 — bots até 22 é `22 − nHumanos` na montagem e o grid com
+  todos já existia desde os PRs 1.7a/1.7b; seria um PR sem conteúdo próprio. Em troca o 2.1 virou
+  2.1a (generalização pra N humanos, Single intacto, com teste de equivalência) + 2.1b (turnos
+  hotseat, `fluxo-local.ts` puro, `TelaHandoff` neutra anti-vazamento). Numeração original do 2.3
+  (Modo Craque/Cego) mantida. **Marco atingido:** jogável presencialmente com amigos.
+- **Fase 4 — Polimento.** Previa capacetes estilizados (migrou pro PR 5.3), card de resultado
+  compartilhável (ainda pendente), dataset completo 1950-2025 (**cumprido na trilha 4.x, com fatos da
+  Jolpica em vez de geração por IA**) e "Desafio do Dia" (ainda pendente).
+- **Fase 5 — PR 5.1 (design system).** Paleta, tipografia, tokens de cor/espaçamento/raio e
+  componentes base flat. **Concluído** em 5.1a/5.1b/5.1c — é a fonte da paleta citada na direção de
+  arte.
+- **Fase 5 — PR 5.2 (traçados de pista).** **SUBSTITUÍDO E AMPLIADO pela rodada 7.x**: o 5.2 previa
+  "linhas grossas e cores vibrantes", que é justamente a direção rejeitada no PR 7.0. A rodada 7.x
+  entrega pista com largura em camadas, pit lane visual, ambiente tonal e marcador de carro. A nota
+  jurídica do GDD §14.2 seguiu valendo e virou seção permanente do PLANO.
