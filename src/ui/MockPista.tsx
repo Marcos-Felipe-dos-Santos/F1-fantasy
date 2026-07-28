@@ -26,6 +26,33 @@ const D_MONZA =
 /** Via de pit: entra antes da linha de largada, corre paralela à reta, sai depois. */
 const D_PIT = 'M118,492 Q126,566 182,566 L606,566 Q664,566 676,500';
 
+/**
+ * Trechos de ZEBRA — só em CURVA, nunca ao longo da reta (na F1 real zebra não
+ * existe em reta; uma faixa contínua contornando a volta inteira era o que
+ * puxava o mock pro cartunesco).
+ *
+ * Não escolhidos a olho: o ângulo de virada foi calculado em cada um dos 16
+ * vértices do traçado e a zebra entra só onde passa de 28° — deu 11 trechos,
+ * cada um cobrindo 44 unidades de comprimento de arco antes e depois do
+ * vértice. As duas retas longas (largada e Rettilineo) ficam limpas.
+ *
+ * É o mesmo critério que o PR 7.6 (`trechosDeCurva`) automatiza; aqui está
+ * congelado como constante porque é maquete, mas a REGRA já é a definitiva.
+ */
+const ZEBRAS: string[] = [
+  'M112.3,477.4 L150.0,500.0 L194.0,500.0',
+  'M659.1,496.3 L700.0,480.0 L671.4,446.6',
+  'M698.6,478.4 L670.0,445.0 L707.7,422.4',
+  'M756.8,408.1 L800.0,400.0 L824.9,363.7',
+  'M830.1,356.3 L855.0,320.0 L827.5,285.6',
+  'M842.5,304.4 L815.0,270.0 L844.7,237.6',
+  'M840.3,242.4 L870.0,210.0 L841.8,176.2',
+  'M848.2,183.8 L820.0,150.0 L777.2,139.9',
+  'M364.0,101.3 L320.0,100.0 L280.6,119.7',
+  'M92.6,322.3 L70.0,360.0 L81.6,402.4',
+  'M88.4,427.6 L100.0,470.0 L137.7,492.6',
+];
+
 const ASFALTO = '#3E3A5C'; // token proposto pro 7.2 (`pistaAsfalto`)
 const ESCAPE = '#0E0C20'; // = fundoAfundado
 /**
@@ -54,45 +81,57 @@ const CAPACETE_HUMANO = '#FFCC00';
  * de `pontoNoTracado` + `anguloNoTracado`; aqui é constante porque é maquete).
  * `n` é o número de largada — a identidade individual aprovada pelo dev, em
  * vez de 22 cores.
+ *
+ * PELOTÃO, não distribuição uniforme (revisão 3): espaçamento igual lia como
+ * decoração, não como corrida. Aqui há líder isolado, trio brigando, dupla,
+ * pack de 5 e retardatários espalhados. **No jogo real este espaçamento sai do
+ * `historicoVoltas`** — a corrida já produz os gaps sozinha; isto aqui só
+ * mostra a ideia.
  */
 const CARROS: { n: number; x: number; y: number; ang: number }[] = [
-  { n: 1, x: 192.1, y: 500, ang: 0 },
-  { n: 2, x: 270.1, y: 500, ang: 0 },
-  { n: 3, x: 348.1, y: 500, ang: 0 },
-  { n: 4, x: 426.1, y: 500, ang: 0 },
-  { n: 5, x: 504.1, y: 500, ang: 0 }, // humano
-  { n: 6, x: 582, y: 500, ang: 0 },
-  { n: 7, x: 659.3, y: 496.3, ang: -21.8 },
-  { n: 8, x: 677.8, y: 454.1, ang: -130.6 },
-  { n: 9, x: 727.6, y: 413.6, ang: -10.6 },
-  { n: 10, x: 802.4, y: 396.5, ang: -55.5 },
-  { n: 11, x: 846.6, y: 332.2, ang: -55.5 },
-  { n: 12, x: 815.6, y: 270.7, ang: -128.7 },
-  { n: 13, x: 867.1, y: 213.2, ang: -47.5 },
-  { n: 14, x: 822.8, y: 153.4, ang: -129.8 },
-  { n: 15, x: 748.4, y: 133.2, ang: -166.8 },
-  { n: 16, x: 672.5, y: 115.3, ang: -166.8 },
-  { n: 17, x: 595.2, y: 108.3, ang: -178.3 },
-  { n: 18, x: 517.2, y: 106, ang: -178.3 },
-  { n: 19, x: 439.3, y: 103.6, ang: -178.3 },
-  { n: 20, x: 361.3, y: 101.3, ang: -178.3 },
-  { n: 21, x: 287.3, y: 116.4, ang: 153.4 },
+  { n: 1, x: 318.6, y: 500, ang: 0 }, // líder isolado
+  { n: 2, x: 455.6, y: 500, ang: 0 }, // trio brigando na reta
+  { n: 3, x: 493.5, y: 500, ang: 0 },
+  { n: 4, x: 531.4, y: 500, ang: 0 },
+  { n: 5, x: 694.5, y: 482.2, ang: -21.8 }, // humano, em dupla na chicane
+  { n: 6, x: 679.2, y: 455.7, ang: -130.6 },
+  { n: 7, x: 810.8, y: 384.3, ang: -55.5 }, // pack de 5 subindo pras Lesmo
+  { n: 8, x: 832.3, y: 353.1, ang: -55.5 },
+  { n: 9, x: 853.8, y: 321.8, ang: -55.5 },
+  { n: 10, x: 832.7, y: 292.1, ang: -128.7 },
+  { n: 11, x: 821.5, y: 262.9, ang: -47.5 },
+  { n: 12, x: 785.3, y: 141.8, ang: -166.8 }, // sozinho depois de um gap grande
+  { n: 13, x: 620.4, y: 109.1, ang: -178.3 }, // dupla
+  { n: 14, x: 582.5, y: 108, ang: -178.3 },
+  { n: 15, x: 409.8, y: 102.7, ang: -178.3 }, // trio de retardatários
+  { n: 16, x: 371.9, y: 101.6, ang: -178.3 },
+  { n: 17, x: 334, y: 100.4, ang: -178.3 },
+  { n: 18, x: 185.1, y: 190, ang: 141.3 },
+  { n: 19, x: 100.6, y: 309, ang: 121 }, // dupla na Parabolica
+  { n: 20, x: 81.1, y: 341.5, ang: 121 },
+  { n: 21, x: 98.7, y: 465.3, ang: 74.7 },
   { n: 22, x: 373, y: 566, ang: 0 }, // PARADO no box — o pedido central do dev
 ];
 
 const ID_HUMANO = 5;
 
-/** Uma camada da pista: mesmo `d`, largura decrescente. Ordem do array = ordem de pintura. */
-const CAMADAS: { cor: string; largura: number; tracejado?: string; offset?: number; opacidade?: number }[] = [
+/** Camadas SOB as zebras: mesmo `d`, larguras decrescentes. Ordem = ordem de pintura. */
+const CAMADAS_BASE: { cor: string; largura: number }[] = [
   { cor: ESCAPE, largura: 92 },
   // O MURO é quem carrega a fronteira pista/fora — não o contraste de
   // preenchimento, que é matematicamente impossível de ter 3:1 ao mesmo tempo
   // que o magenta do carro tem 3:1 sobre o asfalto (ver PROGRESS, PR 7.1).
   { cor: MURO, largura: 78 },
-  { cor: ZEBRA_A, largura: 62, tracejado: '16 16' },
-  { cor: ZEBRA_B, largura: 62, tracejado: '16 16', offset: 16 },
+];
+
+/** Camadas SOBRE as zebras. A linha branca fina é o limite de pista contínuo. */
+const CAMADAS_TOPO: { cor: string; largura: number; tracejado?: string; opacidade?: number }[] = [
+  // Limite de pista: linha branca FINA e discreta em toda a volta (2 unidades
+  // de cada lado ⇒ ~1,4px na tela). É ela que delimita a pista na reta, onde
+  // zebra não existe.
+  { cor: '#F4F2FF', largura: 56, opacidade: 0.5 },
   { cor: ASFALTO, largura: 52 },
-  { cor: MARCACAO, largura: 1.6, tracejado: '14 18', opacidade: 0.55 },
+  { cor: MARCACAO, largura: 1.6, tracejado: '14 18', opacidade: 0.5 },
 ];
 
 function Carro({ n, x, y, ang }: { n: number; x: number; y: number; ang: number }) {
@@ -153,22 +192,40 @@ export function MockPista() {
           <ellipse cx={268} cy={86} rx={62} ry={34} transform="rotate(-8 268 86)" />
           <ellipse cx={40} cy={352} rx={40} ry={74} transform="rotate(6 40 352)" />
         </g>
-        {/* complexo de boxes ancorado na reta principal + acessos de serviço */}
+        {/*
+          Complexo de boxes ancorado na reta. Os acessos de serviço finos foram
+          REMOVIDOS na revisão 3: a 360px (largura mínima do projeto) ficavam
+          com ~5px e viravam sujeira sem comunicar nada. Regra do dev — se não é
+          legível a 360px, não entra.
+        */}
         <rect x={150} y={500} width={492} height={96} rx={10} fill={SERVICO} />
-        <path d="M300,596 L300,628 M470,596 L470,628" stroke={TERRENO} strokeWidth={16} strokeLinecap="round" />
-        <rect x={248} y={612} width={104} height={26} rx={5} fill={TERRENO} />
-        <rect x={418} y={612} width={104} height={26} rx={5} fill={TERRENO} />
 
-        {/* camadas da pista */}
+        {/* camadas sob a zebra */}
         <g fill="none" strokeLinejoin="round" strokeLinecap="round">
-          {CAMADAS.map((c, i) => (
+          {CAMADAS_BASE.map((c, i) => (
+            <path key={i} d={D_MONZA} stroke={c.cor} strokeWidth={c.largura} />
+          ))}
+        </g>
+
+        {/* zebras: só nos trechos de curva (ver ZEBRAS) */}
+        <g fill="none" strokeLinejoin="round" strokeLinecap="butt">
+          {ZEBRAS.map((d, i) => (
+            <path key={`za${i}`} d={d} stroke={ZEBRA_A} strokeWidth={66} strokeDasharray="12 12" />
+          ))}
+          {ZEBRAS.map((d, i) => (
+            <path key={`zb${i}`} d={d} stroke={ZEBRA_B} strokeWidth={66} strokeDasharray="12 12" strokeDashoffset={12} />
+          ))}
+        </g>
+
+        {/* camadas sobre a zebra */}
+        <g fill="none" strokeLinejoin="round" strokeLinecap="round">
+          {CAMADAS_TOPO.map((c, i) => (
             <path
               key={i}
               d={D_MONZA}
               stroke={c.cor}
               strokeWidth={c.largura}
               strokeDasharray={c.tracejado}
-              strokeDashoffset={c.offset}
               opacity={c.opacidade}
             />
           ))}

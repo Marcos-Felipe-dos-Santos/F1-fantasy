@@ -175,11 +175,33 @@ f1-fantasy-claude-setup/
   usam rest-spread). **Expectativa aceita pelo dev: a animação dura ~0,5-1,1s.** Não esticar
   artificialmente — a relação tempo↔espaço é o que dá credibilidade ao replay.
 
-**Cortáveis (o dev decide depois de ver o núcleo):** 7.4 Bézier (Catmull-Rom centrípeta; **maior
-risco do plano**, overshoot em Mônaco/Nürburgring), 7.5 memoização da LUT de comprimento de arco
-(**dependência DURA do 7.4** — densificar sem memoizar degrada ~10x), 7.6 zebras por curvatura,
-7.9 marcador de carro (chassi + cockpit-capacete, D5), 7.10 performance do replay, 7.11 pit das
-outras 8 pistas.
+- **PR 7.4 — Suavização Bézier. PROMOVIDO DE CORTÁVEL PARA NÚCLEO pelo dev em 2026-07-27**, vendo a
+  revisão 3 do mock: *"com o resto ficando bom, o polígono genérico passa a ser o elemento que mais
+  destoa"*. Ou seja, a prioridade mudou por evidência visual, não por opinião a priori — foi o mock
+  do 7.1 fazendo o trabalho pelo qual ele existe. Catmull-Rom **centrípeta** (alpha 0,5; a variante
+  uniforme produz loops e cusps exatamente em ângulo agudo — hairpin de Mônaco, chicanes de Monza).
+  **Continua sendo o PR de maior risco do plano** (overshoot em Mônaco/Nürburgring, tensão precisa
+  de iteração pista a pista) e **arrasta o 7.5 como dependência DURA** — densificar a polilinha sem
+  memoizar a LUT de comprimento de arco degrada ~10x, porque `pontoNoTracado` realoca os segmentos
+  a cada chamada. Promover o 7.4 sem o 7.5 quebra o replay.
+
+**Cortáveis (o dev decide depois de ver o núcleo):** 7.6 zebras por curvatura (o critério já está
+validado no mock: ângulo de virada ≥ 28° por vértice, 11 trechos em Monza — o 7.6 só automatiza o
+que hoje é constante), 7.9 marcador de carro (chassi + cockpit-capacete, D5), 7.10 performance do
+replay, 7.11 pit das outras 8 pistas.
+
+**Critério permanente de entorno (decidido em 2026-07-27, vale pra todo PR da Fase 7):** a pista e
+os 22 carros são o **conteúdo**; entorno é **moldura**. Se qualquer adição prejudicar a leitura dos
+carros, ela está errada. Toda superfície nova passa antes pela **tabela de luminância** — ordem
+travada hoje: escape 0,005 < fundo 0,008 < terreno 0,011 < escape-de-curva/paddock 0,017 < muro
+0,029 < **asfalto 0,048** < carro 0,477. O asfalto tem que continuar sendo a superfície mais clara.
+Regra de escala junto: **se um elemento não é legível a 360px de largura, não entra** (foi o que
+eliminou os acessos de serviço finos do paddock no mock).
+
+**Zebra só em CURVA, nunca em reta** (decidido em 2026-07-27): faixa contínua contornando a volta
+inteira dominava a tela e puxava pro cartunesco, além de não existir na F1 real. Critério
+operacional já validado no mock: ângulo de virada ≥ 28° por vértice. O limite de pista contínuo é
+uma **linha branca fina e discreta** (2 unidades de cada lado, ~1,4px na tela), não a zebra.
 
 **Decisões do dev registradas:** identidade dos 22 carros = **número de largada no chassi**, não cor
 (paleta categórica de 22 matizes está proibida; se o número for ilegível a ~21×10px, plano B é
