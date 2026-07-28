@@ -31,6 +31,36 @@ export const cores = {
   raridadeEpico: '#B45BFF',
   raridadeLendario: '#FFC93C',
   raridadeProibido: '#FF4757',
+
+  // ---- Pista (PR 7.2, valores validados na maquete `MockPista.tsx`, PR 7.1) ----
+  /**
+   * Superfície da pista. Precisa continuar sendo a cor MAIS CLARA de toda a
+   * hierarquia de pista (ver teste de ordem de luminância em `tokens.test.ts`)
+   * — é isso que faz o traçado ler como pista em vez de se misturar com o
+   * entorno. Foi medindo essa ordem que se descobriu, no PR 7.1, que o muro
+   * antigo (`borda` #3A3468, luminância 0.0435) competia com o próprio
+   * asfalto (0.0482): por isso o muro da pista tem token dedicado
+   * (`pistaMuro`), mais escuro que `borda`, em vez de reusar `borda`.
+   */
+  pistaAsfalto: '#3E3A5C',
+  /** Aro que delimita a pista contra o entorno (mais escuro que `borda` — ver `pistaAsfalto`). */
+  pistaMuro: '#2F2A55',
+  /** Faixa larga de terreno do autódromo, ao redor do traçado. */
+  pistaTerreno: '#1B1738',
+  /** Áreas de escape em curva e plataforma de paddock/pit. */
+  pistaServico: '#221E42',
+  /**
+   * Corpo do chassi dos 21 bots. Token PRÓPRIO — NÃO reusar `raridadeComum`
+   * (mesmo hex hoje, #3DDC64, antes desta correção o CSS de produção pintava
+   * o carro direto com `raridadeComum`): raridade é conceito de peça/draft,
+   * cor de carro é conceito de corrida. Reusar raridade como cor de carro não
+   * vaza nada hoje (todo bot é pintado igual), mas é bomba-relógio semântica
+   * pro Modo Cego (PR 2.3), que pretende ocultar a raridade das peças do
+   * adversário — se o carro "denunciar" a raridade por reuso de token, o Modo
+   * Cego vaza informação sem ninguém perceber o acoplamento. `tokens.test.ts`
+   * trava `carroBot !== raridadeComum`.
+   */
+  carroBot: '#B9B3DC',
 } as const;
 
 export type NomeCor = keyof typeof cores;
@@ -72,6 +102,25 @@ export const PARES_CONTRASTE: ParContraste[] = [
   { nome: 'raridadeEpico/fundoElevado', fg: 'raridadeEpico', bg: 'fundoElevado', minimo: 3 },
   { nome: 'raridadeLendario/fundoElevado', fg: 'raridadeLendario', bg: 'fundoElevado', minimo: 3 },
   { nome: 'raridadeProibido/fundoElevado', fg: 'raridadeProibido', bg: 'fundoElevado', minimo: 3 },
+
+  // ---- Pista (PR 7.2) — carro sobre asfalto precisa ser achável ----
+  { nome: 'carroBot/pistaAsfalto', fg: 'carroBot', bg: 'pistaAsfalto', minimo: 3 }, // achar qualquer carro sobre a pista
+  { nome: 'magenta/pistaAsfalto', fg: 'magenta', bg: 'pistaAsfalto', minimo: 3 }, // achar o SEU carro sobre a pista
+  // O plano original também previa `pistaAsfalto`/`fundoAfundado` >= 3, mas
+  // isso é MATEMATICAMENTE IMPOSSÍVEL de coexistir com `magenta`/`pistaAsfalto`
+  // >= 3. Prova: luminância do magenta é fixa em ~0.295; pra magenta/asfalto
+  // >= 3, o asfalto precisa de luminância <= 0.065; pra o asfalto nessas
+  // condições ainda ficar 3:1 ACIMA do fundo/escape, o fundo precisaria de
+  // luminância (0.065+0.05)/3 - 0.05 = -0.012, que não existe (luminância
+  // mínima é 0). Decisão: mantém-se `magenta`/`pistaAsfalto` >= 3, e a
+  // fronteira pista/entorno passa a ser carregada pelo MURO DESENHADO (camada
+  // própria, `pistaMuro`), não pelo contraste de preenchimento entre asfalto
+  // e fundo. Não adicionar esse par de volta.
+  // Número no chassi: o código (MockPista.tsx) pinta o dígito com `textoEscuro`
+  // (#16132E), não com `texto` (#F4F2FF) — por isso os pares abaixo usam
+  // `textoEscuro`, que é o que de fato é desenhado sobre o carro.
+  { nome: 'textoEscuro/carroBot', fg: 'textoEscuro', bg: 'carroBot', minimo: 4.5 }, // número no chassi do bot
+  { nome: 'textoEscuro/magenta', fg: 'textoEscuro', bg: 'magenta', minimo: 4.5 }, // número no chassi do humano
 ];
 
 /** Escala de espaçamento (px), consistente em toda a UI. */

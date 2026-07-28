@@ -59,6 +59,51 @@ describe('PARES_CONTRASTE — todos os pares batem o mínimo exigido', () => {
   }
 });
 
+/**
+ * Ordem de luminância da hierarquia de pista (PR 7.2) — NÃO é WCAG, é
+ * hierarquia de leitura: o asfalto tem que ser a superfície mais clara pra a
+ * pista "ler" contra o entorno. Foi medindo essa ordem, no PR 7.1, que se
+ * descobriu que o muro antigo (`borda` #3A3468, luminância 0.0435) competia
+ * com o próprio asfalto (0.0482) — daí `pistaMuro` ser um token dedicado,
+ * mais escuro, em vez de reusar `borda`. Critério permanente da Fase 7
+ * (PLANO_CLAUDE_CODE.md): "o asfalto tem que continuar sendo a superfície
+ * mais clara".
+ */
+describe('ordem de luminância da hierarquia de pista (PR 7.2)', () => {
+  it('fundoAfundado < fundo < pistaTerreno < pistaServico < pistaMuro < pistaAsfalto', () => {
+    const ordem = [
+      'fundoAfundado',
+      'fundo',
+      'pistaTerreno',
+      'pistaServico',
+      'pistaMuro',
+      'pistaAsfalto',
+    ] as const;
+    const luminancias = ordem.map((nome) => luminanciaRelativa(cores[nome]));
+    for (let i = 1; i < luminancias.length; i++) {
+      expect(
+        luminancias[i],
+        `${ordem[i]} (${luminancias[i].toFixed(4)}) deveria ser mais claro que ${ordem[i - 1]} (${luminancias[i - 1].toFixed(4)})`,
+      ).toBeGreaterThan(luminancias[i - 1]);
+    }
+  });
+});
+
+/**
+ * Guarda contra reintroduzir a bomba-relógio semântica do Modo Cego (PR 2.3):
+ * `carroBot` é conceito de CORRIDA (cor de chassi), `raridadeComum` é conceito
+ * de DRAFT (raridade de peça). Hoje os dois valem o mesmo hex não vazaria nada
+ * (antes desta correção o CSS usava `raridadeComum` direto como cor de carro),
+ * mas se algum dia o Modo Cego precisar ocultar a raridade da peça do
+ * adversário, reusar o mesmo token pra pintar o carro vazaria a raridade sem
+ * ninguém perceber o acoplamento. Trava aqui, na origem.
+ */
+describe('carroBot é token próprio (PR 7.2)', () => {
+  it('carroBot não reusa raridadeComum (bomba-relógio semântica do Modo Cego, ver comentário em tokens.ts)', () => {
+    expect(cores.carroBot).not.toBe(cores.raridadeComum);
+  });
+});
+
 /** camelCase -> kebab-case (fundoElevado -> fundo-elevado). */
 function paraKebabCase(nome: string): string {
   return nome.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
