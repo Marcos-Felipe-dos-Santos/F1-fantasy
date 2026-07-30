@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(./src/data/equipe-anos.json)",
+      "Bash(cat src/data/equipe-anos.json)",
+      "Bash(cat ./src/data/equipe-anos.json)",
+      "Bash(type src/data/equipe-anos.json)",
+      "Bash(Get-Content src/data/equipe-anos.json)",
+      "Bash(head src/data/equipe-anos.json)",
+      "Bash(tail src/data/equipe-anos.json)"
+    ]
+  }
+}

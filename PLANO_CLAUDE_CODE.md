@@ -94,9 +94,15 @@ achado de que o critério de 28° sozinho não generaliza (dava 85% do perímetr
   exatamente em ângulo agudo — hairpin de Mônaco, chicanes de Monza).
   **PARADA OBRIGATÓRIA:** se o overshoot em Mônaco/Nürburgring não fechar com centrípeta, **PARAR e
   mostrar ao dev antes de contornar por conta própria**.
-  **Arrasta o 7.5 como dependência DURA** — densificar a polilinha sem memoizar a LUT de comprimento
-  de arco degrada ~10x, porque `pontoNoTracado` realoca os segmentos a cada chamada. Promover o 7.4
-  sem o 7.5 quebra o replay.
+  **Arrasta o 7.5** — `pontoNoTracado` realoca a tabela de segmentos a cada chamada.
+  ⚠️ **Correção medida em 2026-07-30 (o texto anterior aqui estava errado):** o "degrada ~10x" é
+  verdade como razão e **falso como implicação** — não quebra o replay. Medido com 22 carros e 600
+  frames: 113 µs/frame hoje, 261 a 480 pontos, 556 a 960, 1.100 a 1.920, contra **16.600 µs de
+  orçamento de frame** (6,6% no pior caso). **O custo real é ALOCAÇÃO/GC, não throughput** — até
+  2,5 milhões de objetos `{a,b,comprimento}` por segundo, que dá engasgo, e num aparelho fraco os
+  556 µs viram 4-5 ms. O 7.5 vem antes do redesenho das silhuetas mesmo assim, por um motivo melhor:
+  é pequeno e **tira a contagem de pontos da mesa**, pra que o orçamento de pontos seja decisão
+  visual/jurídica e não seja argumentado contra um alvo móvel de performance.
   **Herda do 7.3:** apertar o viewBox e devolver os raios dos carros, ou documentar a margem com
   medição (ver `ESTADO.md`, pendência 1). Gerar preview em `preview/` com as 10 silhuetas antes do
   merge.
