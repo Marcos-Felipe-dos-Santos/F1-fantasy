@@ -7,41 +7,74 @@
 
 ## Estado atual
 
-- **Branch `main`** · último merge **PR 7.3.1** · **729 testes** verdes · working tree limpa.
+- **Branch `main`** · último commit de feature **PR 7.4** (`b39782d`) · **851 testes** (33 arquivos)
+  verdes · working tree limpa.
 - `tsc --noEmit`, `eslint`, `npm run build` limpos. `npm run balance` idêntico ao baseline.
-- **Nada foi pushado. Push só com "ok" explícito do dev.**
+- **`origin/main` está em `b39782d` — o PR 7.4 FOI PUSHADO.** (A linha "nada foi pushado" que ficou
+  aqui até 2026-07-30 era falsa.) Os chores locais posteriores **não** foram pushados.
+  **Push continua só com "ok" explícito do dev.**
 
 ## Onde parei
 
 Concluído: Fases 0-2 (engine, Single, Local hotseat, Modo Cego), dataset 1950-2025 (PR 4.x),
-design system arcade (5.1a/b/c), Modo Campeonato (6.1-6.5), Fase 7 até o **7.3.1**.
+design system arcade (5.1a/b/c), Modo Campeonato (6.1-6.5), Fase 7 até o **7.4**.
 
-**Próximo: PR 7.4 — suavização Bézier (Catmull-Rom centrípeta, alpha 0,5).** É o PR de MAIOR RISCO
-do plano e o que mais importa pro dev hoje: sem ele as pistas "parecem quadradas".
-**Instrução explícita do dev: se o overshoot em Mônaco/Nürburgring não fechar com Catmull-Rom
-centrípeta, PARAR e mostrar antes de contornar por conta própria.**
+**PORTÃO DO 7.4 (2026-07-30): suavização APROVADA, objetivo NÃO atingido.** O dev viu o preview:
+*"o aspecto poligonal sumiu e o design está bom"*, **mas nenhuma das 10 pistas é reconhecível**.
+Não é falha do 7.4 — a causa são as **silhuetas de origem** do PR 2.8 (formas ilustrativas de 12-22
+pontos). Suavizar forma genérica dá forma genérica arredondada. Daí a trilha de redesenho abaixo.
 
-Depois: **7.5** (memoização da LUT — dependência DURA do 7.4; densificar sem memoizar degrada ~10x)
-→ **7.7** (geometria do pit como dado) → **7.8** (animação do pit).
-**Parar ao final do 7.8** pro dev ver rodando de verdade, não em mock.
-O **7.6 não existe mais** — zebra por curvatura virou dado no 7.3.
+**Critério de aceite do dev (subjetivo e não automatizável, ele assume):** o jogador vê a pista e
+pensa *"poxa, Interlagos"* **sem ler o nome**. Portão visual dele, possivelmente em várias rodadas.
+
+## SEQUÊNCIA APROVADA (2026-07-30) — seguir nesta ordem
+
+1. ✅ **Chore docs + `permissions.deny`** — feito.
+2. **PR 7.5 — memoização da LUT.** Saída de `pontoNoTracado` tem que ficar **bit a bit idêntica**.
+3. **PR de ZEBRA INVARIANTE À DENSIDADE.** Virada acumulada em janela de arco no lugar de "ângulo
+   ≥ 28° por vértice"; alcance grampeado por arco, não por `segmento/2`.
+   🛑 **PARADA OBRIGATÓRIA: se a métrica nova não reproduzir ~11 trechos / 38,4% em Monza na
+   densidade ATUAL, PARAR e mostrar ao dev.** Esse número é portão aprovado a olho no 7.1.
+4. **PR de INFRA** — restrições declaradas como testes vermelhos + allowlist `LEGADO` que só
+   encolhe + gerador do **preview cego**, rodado sobre as silhuetas ATUAIS como **linha de base
+   documentada**. Mostrar ao dev.
+5. **FATIA 1 — Monza + Interlagos.** Critério de fatiamento: **"estressa as restrições"**, não
+   "as mais icônicas". Mostrar ao dev.
+6. 🛑 **PARAR e ir pro pit (7.7, 7.8).** As fatias 2-5 (Mônaco+Spa+Silverstone · Imola+Montreal+RBR ·
+   Suzuka sozinha · Nordschleife sozinha · fechamento) só **depois** do pit.
+   **Gatilho de abandono aceito pelo dev: se a fatia 1 não mover o ponteiro contra a linha de base
+   cega, PARAR e reabrir a pergunta** em vez de fazer as outras 8 por inércia.
+
+## Decisões travadas do redesenho (não reabrir sem o dev)
+
+- **Era dos traçados: layout MODERNO/ATUAL**, Nordschleife como exceção. Monza sem oval banqueado,
+  Spa de 7 km, Imola pós-95. Vale pra qualquer redesenho futuro.
+- **Nordschleife perde ~40 das ~73 curvas.** Karussell ilegível a 360px é consequência aceita.
+- **`LARGURA_ASFALTO = 34` mantida.** Largura por pista foi rejeitada (colide com a guarda de raio
+  de carro). Separação ≥ 34 u e raio ≥ 20 u viram restrições de desenho testadas.
+- **`AMOSTRAS_POR_SEGMENTO` cai de 12 pra 4-6** (sagita escala com a corda). N adaptativo rejeitado.
+- **Nada de métrica automatizável de reconhecimento.** Hausdorff contra a pista real recusado —
+  aproximaria do mapa oficial (GDD §14.2).
+- **A zebra por 28°/vértice quebra por construção no redesenho** (medido: Monza 38,4% → 9,6% com
+  80 pontos, *mesma forma*). Por isso o passo 3 vem antes do 5.
 
 ## Pendências ATIVAS
 
-1. **Dívida do viewBox, herdada pelo 7.4.** Envelope mínimo das 10 pistas é `10 -10 970 620`; o 7.3
-   usa `-70 -70 1140 740`. Isso forçou inflar os raios dos carros (bot 6→7, humano 10→12) pra o
-   marcador não encolher na tela. **O 7.4 deve apertar o viewBox e devolver os raios, ou documentar
-   a margem com medição** — `MARGEM_VIEWBOX = 70` é a única constante do módulo sem número que a
-   sustente. Headroom é defensável (Catmull-Rom faz overshoot fora do bounding box), só não está escrito.
-2. **Exceção nomeada pra Suzuka no teste de cruzamento.** Quando a suavização tirar o cruzamento do
-   vértice compartilhado (índices 4 e 12, ambos `(500,300)`), `cruzamentosMidSegmento` quebra.
-   **Exceção NOMEADA pra Suzuka; NUNCA afrouxar a guarda geral** — ela pegou bugs reais em Spa e
-   Interlagos no PR 2.8.
-3. **Fusão de camadas, a recomparar no 7.4.** Com asfalto 34: Spa 15,4 · Mônaco 14,0 · Interlagos 7,3
-   (travado em ≤ 17 = meia-largura do asfalto). A camada de limite funde mais (23,4 / 22,0 / 15,3),
-   report-only. A suavização muda essas distâncias.
+1. **Fusão de camadas.** Spa já está em **8,8** na curva suavizada (regressão herdada do 7.4,
+   limiar ≥ 17); o redesenho de Spa fecha. Monza/Nordschleife vão aproximar mais trechos.
+2. **`tracados.test.ts:102` está desatualizado desde o 7.4** — ainda trava "pontos dentro de
+   `0 0 1000 600`", proibindo a faixa y 600-630 que o próprio 7.4 abriu. Corrigir no PR de infra.
+3. **Guardas O(n²)** (`minNaoAdj`, `separacaoMinima`, `cruzamentos`) sobre curvas 3-4x maiores vão
+   desacelerar a suíte. Bucketizar no PR de infra.
 4. **O elo testado do 7.3 trava o componente, não o uso dele:** apagar `<CamadasDaPista/>` de dentro
    do `<svg>` de `TelaCorrida` ainda passa. Limite conhecido.
+5. **Dívida de processo do 7.4.** A branch foi renomeada por cima da `main` (`git branch -M`), sem
+   merge commit. O chore `50f5fd9` também foi direto na `main` e está à frente do `origin/main`.
+   Decidir se vira branch antes de qualquer push.
+
+> ✅ Fechadas pelo 7.4: **dívida do viewBox** (`-10 -30 1000 660`, raios devolvidos bot 7→6 e humano
+> 12→10) e **exceção nomeada do Suzuka**. O **espinho de ~180°** no vértice #0 de Spa e Interlagos
+> **não se corrige separado** — o redesenho resolve.
 
 ## Regras invioláveis da Fase 7
 
@@ -61,5 +94,10 @@ fase é um portão aprovado a olho (7.1), e mudar composição sozinho já custo
 
 - **Ao concluir um PR, atualizar OS DOIS:** entrada detalhada no `HISTORICO.md` (acumula) e este
   `ESTADO.md` **reescrito** (substitui, não acumula).
-- Previews visuais em `preview/` (gitignored, mesmo tratamento de `referencias/`).
-- Harness precisa de `--reporter=verbose --silent=false`, senão o vitest engole a tabela.
+- Previews visuais em `preview/` (gitignored, mesmo tratamento de `referencias/`). **Gitignored
+  significa que ninguém vê por acidente: preview gerado só conta como entregue depois de MOSTRADO
+  ao dev** — foi exatamente o que falhou no 7.4.
+- Harness: `npm run balance` já embute `--reporter=verbose --silent=false` desde 2026-07-30. Ao
+  chamar o vitest na mão, passar as flags, senão a tabela é engolida.
+- **Nunca ler `src/data/*.json` por completo** (`equipe-anos.json` ≈ 324 mil tokens). Formato:
+  `src/fixtures/dataset-semente/`. Consulta: `jq`/`grep` com filtro. Regra completa no `CLAUDE.md`.

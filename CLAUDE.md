@@ -84,4 +84,9 @@ documentação do projeto somada. **Uma única leitura dele estoura a sessão in
 2. `balance-harness` rodado, se tocou em nota/lógica de corrida.
 3. Revisado pelo `senior-reviewer`.
 4. Diff pequeno e reversível.
-5. Aprovação explícita do dev antes de qualquer push.
+5. **Se o PR muda o que se VÊ na tela: preview MOSTRADO ao dev, não apenas gerado.** São coisas
+   diferentes e confundi-las já custou um PR — no 7.4 o preview foi gerado dois minutos antes do
+   commit e o dev nunca o viu, porque `preview/` é gitignored e não aparece em diff nenhum.
+   Concretamente: a mensagem final **tem que conter o comando e o CAMINHO ABSOLUTO** do arquivo, e
+   o PR não fecha sem o veredito do dev. Preview gerado não é preview aprovado.
+6. Aprovação explícita do dev antes de qualquer push.
