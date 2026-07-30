@@ -12,9 +12,11 @@ Este arquivo é a memória sempre-ativa do projeto. As regras aqui são **inviol
    Curto de propósito (~60 linhas). **É o único documento de estado que se lê por completo.**
 
 **Sob demanda, nunca por completo na abertura:**
-- **`HISTORICO.md`** — registro detalhado por PR (~27 mil tokens). Consultar **o PR que interessa**
-  quando precisar do porquê de uma decisão. Ler inteiro estoura o contexto inicial — foi exatamente
-  por isso que o `ESTADO.md` passou a existir.
+- **`HISTORICO.md`** — registro detalhado dos PRs das fases **6 e 7** (~19 mil tokens). Consultar
+  **o PR que interessa** quando precisar do porquê de uma decisão. Ler inteiro estoura o contexto
+  inicial — foi exatamente por isso que o `ESTADO.md` passou a existir.
+- **`HISTORICO_ARQUIVO.md`** — fases **0 a 5**, encerradas (~12 mil tokens). Mesma regra: consulta
+  por PR, nunca leitura completa.
 - **`PLANO_CLAUDE_CODE.md`** — plano de build por fase e direção de arte.
 - **`F1_Fantasy_GDD.md`** — regras de jogo, notas, pistas, catálogo de peças.
 
@@ -36,6 +38,22 @@ sessão começa com informação errada.
 - `src/ui/` — componentes React. Consome a engine, nunca reimplementa regra de jogo.
 - `src/data/` — dados (JSON): pilotos, equipes, motores, pistas, peças. Sem lógica.
 - `src/net/` — camada PartyKit (fase 3). Isola rede do resto.
+
+## Leitura de `src/data/` (regra inviolável — vale pra sessão principal, subagentes e `senior-reviewer`)
+
+**`src/data/equipe-anos.json` tem 1 MB / 52 mil linhas ≈ 324 mil tokens** — cerca de 100× toda a
+documentação do projeto somada. **Uma única leitura dele estoura a sessão inteira.**
+
+- **NUNCA `Read`, `cat`, `Get-Content` ou qualquer leitura integral em `src/data/*.json`.** Sem
+  exceção, e `Read` com `limit` grande também não: 2.000 linhas do arquivo já são ~11 mil tokens
+  de JSON que não mostram nada de útil.
+- **Para inspecionar formato/shape:** use `src/fixtures/dataset-semente/` — mesmo shape, 23 KB,
+  seguro de ler inteiro. É pra isso que a fixture existe.
+- **Para consultar um dado específico:** `jq` ou `grep` **com filtro**, retornando só o registro
+  procurado (ex.: `jq '.[] | select(.equipe=="Ferrari" and .ano==2004)' src/data/equipe-anos.json`).
+  Nunca o arquivo inteiro, nunca `jq '.'`.
+- **No `git diff`:** se `src/data/*.json` aparecer no diff, reportar **só a contagem de linhas
+  alteradas** (`--stat`), jamais o conteúdo.
 
 ## Determinismo (regra crítica)
 - **Proibido `Math.random()` em qualquer lugar da engine.** Toda aleatoriedade vem de um RNG semeado (seed explícita).

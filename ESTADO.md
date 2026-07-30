@@ -1,7 +1,8 @@
 # ESTADO — F1 Fantasy
 
 > **Leia este arquivo PRIMEIRO em toda sessão nova.** É curto de propósito.
-> Histórico detalhado por PR: `HISTORICO.md` (não leia inteiro — consulte o PR que interessa).
+> Histórico detalhado por PR: `HISTORICO.md` (fases 6-7) e `HISTORICO_ARQUIVO.md` (fases 0-5,
+> encerradas). Não leia nenhum dos dois inteiro — consulte o PR que interessa.
 > Plano de build e direção de arte: `PLANO_CLAUDE_CODE.md`. Regras de jogo: `F1_Fantasy_GDD.md`.
 
 ## Estado atual

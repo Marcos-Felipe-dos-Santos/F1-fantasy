@@ -8,7 +8,7 @@
     "build": "tsc --noEmit && vite build",
     "test": "vitest run",
     "test:watch": "vitest",
-    "balance": "vitest run --config vitest.balance.config.ts",
+    "balance": "vitest run --config vitest.balance.config.ts --reporter=verbose --silent=false",
     "preview": "vitest run --config vitest.preview.config.ts --reporter=verbose --silent=false",
     "dataset:fetch": "node scripts/fetch-f1-data.ts",
     "dataset:fatos": "node scripts/agregar-fatos.ts",
