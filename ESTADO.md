@@ -9,7 +9,8 @@
 
 - **Branch `main`** · último commit de feature **PR 7.4** (`b39782d`) · **851 testes** (33 arquivos)
   verdes · working tree limpa.
-- `tsc --noEmit`, `eslint`, `npm run build` limpos. `npm run balance` idêntico ao baseline.
+- `eslint` limpo. **`tsc --noEmit` e `npm run build` FALHAM** — ver pendência 0 (dívida do 7.4,
+  não é regressão nova). `npm run balance` idêntico ao baseline.
 - **`origin/main` está em `b39782d` — o PR 7.4 FOI PUSHADO.** (A linha "nada foi pushado" que ficou
   aqui até 2026-07-30 era falsa.) Os chores locais posteriores **não** foram pushados.
   **Push continua só com "ok" explícito do dev.**
@@ -29,8 +30,10 @@ pensa *"poxa, Interlagos"* **sem ler o nome**. Portão visual dele, possivelment
 
 ## SEQUÊNCIA APROVADA (2026-07-30) — seguir nesta ordem
 
-1. ✅ **Chore docs + `permissions.deny`** — feito.
-2. **PR 7.5 — memoização da LUT.** Saída de `pontoNoTracado` tem que ficar **bit a bit idêntica**.
+1. ✅ **Chore docs + `permissions.deny`** — feito (merge `e941712`).
+2. ✅ **PR 7.5 — memoização da LUT** — implementado e revisado na branch
+   `feat/pr-7.5-memoizacao-lut`, **aguardando merge**. 867 testes. Saída de `pontoNoTracado`
+   confirmada **bit a bit idêntica** (golden de 10 pistas × 6 frações, `toBe`).
 3. **PR de ZEBRA INVARIANTE À DENSIDADE.** Virada acumulada em janela de arco no lugar de "ângulo
    ≥ 28° por vértice"; alcance grampeado por arco, não por `segmento/2`.
    🛑 **PARADA OBRIGATÓRIA: se a métrica nova não reproduzir ~11 trechos / 38,4% em Monza na
@@ -60,6 +63,13 @@ pensa *"poxa, Interlagos"* **sem ler o nome**. Portão visual dele, possivelment
 
 ## Pendências ATIVAS
 
+0. 🔴 **`npm run build` QUEBRADO na `main` desde o PR 7.4** — e está no `origin/main`.
+   `scripts/node-shims.d.ts:18` declara `writeFileSync(path, data)` com 2 parâmetros; o gerador de
+   preview do 7.4 (`scripts/preview-tracados.preview.test.ts:164`) passa 3 (`'utf8'`). Em runtime
+   funciona, então `npm run preview` roda e ninguém viu. **`tsc --noEmit` está inútil como portão
+   enquanto isso durar.** Correção é uma linha (encoding opcional no shim). ⚠️ Este arquivo afirmava
+   "`tsc --noEmit`, `eslint`, `npm run build` limpos" — **era falso desde o 7.4**; a afirmação foi
+   herdada e nunca medida. Ao reescrever este bloco, MEÇA.
 1. **Fusão de camadas.** Spa já está em **8,8** na curva suavizada (regressão herdada do 7.4,
    limiar ≥ 17); o redesenho de Spa fecha. Monza/Nordschleife vão aproximar mais trechos.
 2. **`tracados.test.ts:102` está desatualizado desde o 7.4** — ainda trava "pontos dentro de

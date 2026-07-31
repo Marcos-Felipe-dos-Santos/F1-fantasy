@@ -248,11 +248,16 @@ const CACHE_SUAVIZADO = new Map<string, readonly Ponto[]>();
  * `rAF`, e densificar 22 vezes por frame alocaria ~5,8 mil pontos por frame só
  * pra jogar fora. Puro (mesma entrada ⇒ mesma saída, sem I/O).
  *
- * ⚠️ Isto memoiza a CURVA, não a busca por comprimento de arco dentro dela:
- * `pontoNoTracado` continua remontando a lista de segmentos a cada chamada, e
- * agora sobre 144-264 pontos em vez de 12-22. Essa é exatamente a degradação
- * que o **PR 7.5 (memoização da LUT)** existe pra resolver, e é por isso que o
- * PLANO registra o 7.5 como dependência DURA deste PR.
+ * ⚠️ **DEVOLVER A MESMA REFERÊNCIA pro mesmo `pistaId` virou CONTRATO, não
+ * detalhe.** O PR 7.5 memoizou a LUT de comprimento de arco em
+ * `lutDoTracado` (`fluxo-corrida.ts`) chaveada pela **identidade do array**
+ * que esta função devolve. Trocar este `Map` por algo que reconstrua a curva
+ * (ou devolver uma cópia "defensiva") não deixaria nada vermelho de imediato,
+ * mas **desligaria silenciosamente aquele cache** e traria de volta a pressão
+ * de GC no replay. Se um dia precisar mudar isto, mude os dois juntos.
+ *
+ * (Até o PR 7.5 este bloco dizia que `pontoNoTracado` remontava a lista de
+ * segmentos a cada chamada. Deixou de ser verdade — não reintroduza a afirmação.)
  */
 export function tracadoSuavizado(pistaId: string): readonly Ponto[] {
   const cache = CACHE_SUAVIZADO.get(pistaId);

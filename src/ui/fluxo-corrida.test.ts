@@ -547,6 +547,27 @@ describe('lutDoTracado (memoização por identidade)', () => {
     expect(lut.segmentos.length).toBe(outro.length);
     expect(lut.comprimentoTotal).toBeGreaterThan(0);
   });
+
+  // Bordas de `pontoNoTracado`: lacuna pré-existente, fechada aqui porque o
+  // PR 7.5 mexeu justamente na vizinhança destes três caminhos — a LUT passou
+  // a ser construída ANTES do check de `comprimentoTotal === 0`.
+  it('traçado vazio lança', () => {
+    expect(() => pontoNoTracado([], 0.5)).toThrow('traçado vazio');
+  });
+
+  it('traçado de 1 ponto devolve esse ponto', () => {
+    const unico: Ponto[] = [{ x: 7, y: 9 }];
+    expect(pontoNoTracado(unico, 0.42)).toEqual({ x: 7, y: 9 });
+  });
+
+  it('traçado degenerado (2 pontos idênticos, comprimento total 0) devolve o primeiro ponto', () => {
+    const degenerado: Ponto[] = [
+      { x: 3, y: 4 },
+      { x: 3, y: 4 },
+    ];
+    expect(pontoNoTracado(degenerado, 0.75)).toEqual({ x: 3, y: 4 });
+    expect(lutDoTracado(degenerado).comprimentoTotal).toBe(0);
+  });
 });
 
 /**
@@ -576,6 +597,9 @@ describe('pontoNoTracado sobre tracadoSuavizado — goldens bit a bit', () => {
   for (const [pistaId, esperados] of Object.entries(GOLDEN_PONTO)) {
     it(`${pistaId}: pontos batem bit a bit com o golden pré-PR 7.5`, () => {
       const tracado = tracadoSuavizado(pistaId);
+      // Trava de aridade: sem isto, REMOVER uma entrada de `FRACOES` deixaria o
+      // teste passar cobrindo menos, silenciosamente.
+      expect(esperados).toHaveLength(FRACOES.length);
       FRACOES.forEach((fracao, indice) => {
         const ponto = pontoNoTracado(tracado, fracao);
         const [x, y] = esperados[indice];
