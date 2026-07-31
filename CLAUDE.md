@@ -79,10 +79,37 @@ documentação do projeto somada. **Uma única leitura dele estoura a sessão in
   - **Haiku** (`scout`) — exploração barata, leitura de arquivos, busca.
 - Sessão principal costuma rodar em Opus pra planejar; implementação é delegada ao `junior-dev` (Sonnet) pra poupar custo.
 
+## RIGOR PROPORCIONAL AO RISCO (regra de custo — inviolável)
+
+O gargalo desta sessão não é documentação nem duração: é **volume de operações por PR**. Um PR
+pequeno tratado com fluxo de alto risco (subagente implementando + revisão token a token +
+mapeamento de todos os chamadores + re-verificação de cada correção) estoura o contexto sozinho.
+**Classificar o PR ANTES de começar e anunciar a classificação ao dev.**
+
+**ALTO RISCO** — engine, `src/data/`, balanceamento, portão visual (o que se vê na tela), netcode.
+Fluxo completo: baseline vermelho → implementação → `senior-reviewer` → teste de mutação →
+medição independente → preview mostrado, quando aplicável.
+
+**BAIXO RISCO** — docs, `chore`, refactor sem mudança de comportamento, `fix` de uma linha,
+mudança só de tipos sem efeito em runtime. Fluxo curto: **implementar → rodar testes → commitar.**
+**Sem `senior-reviewer`, sem mutação, sem auditoria token a token.** Se o teste passa e o diff é o
+que se pretendia, está pronto.
+
+Na dúvida entre os dois, **perguntar ao dev** — não escalar por precaução. Escalar "por via das
+dúvidas" é justamente o hábito que esta regra corta.
+
+## UM PR POR SESSÃO (padrão)
+
+Ao concluir um PR: **commitar, atualizar `HISTORICO.md` + `ESTADO.md`, PARAR e avisar o dev** —
+mesmo com mais itens aprovados na fila. **Quem decide se segue na mesma sessão é o dev, não eu.**
+Sessão nova custa ~2,4 mil tokens de abertura (`CLAUDE.md` + `ESTADO.md`); continuar numa sessão
+já carregada custa muito mais que isso. Exceção: o dev autorizar explicitamente vários itens numa
+sessão só — e mesmo aí, parar ao fim do lote autorizado.
+
 ## Definição de "pronto" (por PR)
 1. Testes passando (incluindo o baseline que começou vermelho, se aplicável).
 2. `balance-harness` rodado, se tocou em nota/lógica de corrida.
-3. Revisado pelo `senior-reviewer`.
+3. **Alto risco:** revisado pelo `senior-reviewer`. **Baixo risco: pular** (ver regra acima).
 4. Diff pequeno e reversível.
 5. **Se o PR muda o que se VÊ na tela: preview MOSTRADO ao dev, não apenas gerado.** São coisas
    diferentes e confundi-las já custou um PR — no 7.4 o preview foi gerado dois minutos antes do
