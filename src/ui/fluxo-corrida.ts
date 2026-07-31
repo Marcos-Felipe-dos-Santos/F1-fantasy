@@ -34,6 +34,16 @@ export interface Ponto {
 }
 
 /**
+ * Polilinha de traçado IMUTÁVEL. A imutabilidade não é preferência de estilo:
+ * `lutDoTracado` memoiza a tabela de comprimento de arco num `WeakMap` chaveado
+ * pela IDENTIDADE do array (PR 7.5). Mutar um ponto in place deixaria a LUT em
+ * cache permanentemente dessincronizada, **em silêncio** — antes do 7.5 o erro
+ * durava um frame e se auto-corrigia. Este tipo transforma a premissa em
+ * garantia do compilador.
+ */
+export type TracadoImutavel = ReadonlyArray<Readonly<Ponto>>;
+
+/**
  * Monta o grid da quali e simula a corrida a partir de um draft concluído:
  * os `Loadout[]` vêm de `draftState.loadouts`, ordenados por `jogadorId`
  * (estabilidade — a ordem de entrada não muda o resultado, ver contrato de
@@ -470,7 +480,7 @@ export function classificacaoAoVivo(
  * como o FALLBACK genérico de `tracadoDaPista` pra um id de pista sem
  * silhueta própria.
  */
-export const TRACADO_GENERICO: Ponto[] = [
+export const TRACADO_GENERICO: TracadoImutavel = [
   { x: 150, y: 500 }, // reta de largada/chegada
   { x: 650, y: 500 },
   { x: 700, y: 480 }, // Variante del Rettifilo (1a chicane) — entrada

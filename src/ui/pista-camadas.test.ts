@@ -550,7 +550,7 @@ describe('fusão de asfalto (3.8 — documenta e trava o que foi medido)', () =>
   }
 
   /** Menor distância entre trechos NÃO adjacentes, ignorando pares que COMPARTILHAM VÉRTICE (por coordenada, não só índice — preserva o "8" de Suzuka, igual a `tracados.test.ts`). */
-  function minNaoAdj(tracado: Ponto[]): number {
+  function minNaoAdj(tracado: readonly Ponto[]): number {
     const n = tracado.length;
     let min = Infinity;
     for (let i = 0; i < n; i++) {
@@ -670,7 +670,7 @@ describe('zebra (3.9)', () => {
     'pista-montreal': { candidatos: 7, escolhidos: 7, coberturaPct: 27.6 },
   };
 
-  function candidatos28(tracado: Ponto[]): number {
+  function candidatos28(tracado: readonly Ponto[]): number {
     const n = tracado.length;
     let total = 0;
     for (let i = 0; i < n; i++) {
@@ -683,7 +683,7 @@ describe('zebra (3.9)', () => {
   }
 
   /** Perímetro de uma polilinha fechada. */
-  function perimetro(tracado: Ponto[]): number {
+  function perimetro(tracado: readonly Ponto[]): number {
     let soma = 0;
     for (let i = 0; i < tracado.length; i++) {
       const a = tracado[i];
@@ -706,7 +706,7 @@ describe('zebra (3.9)', () => {
    * dos comprimentos nunca superestima a união, em qualquer uma das 10
    * pistas ou em traçados futuros.
    */
-  function coberturaAprox(tracado: Ponto[], trechos: readonly TrechoZebra[]): number {
+  function coberturaAprox(tracado: readonly Ponto[], trechos: readonly TrechoZebra[]): number {
     let soma = 0;
     for (const { antes, vertice, depois } of trechos) {
       soma += Math.hypot(vertice.x - antes.x, vertice.y - antes.y) + Math.hypot(depois.x - vertice.x, depois.y - vertice.y);

@@ -9,7 +9,7 @@ import { TRACADOS_POR_PISTA, tracadoDaPista } from './tracados';
 const dataset = criarDataset(equipeAnosReal, pecasReal, pistasReal);
 
 /** Perímetro de uma polilinha fechada (soma dos segmentos + o de fechamento último→primeiro). */
-function perimetro(tracado: Ponto[]): number {
+function perimetro(tracado: readonly Ponto[]): number {
   let soma = 0;
   for (let i = 0; i < tracado.length; i++) {
     const a = tracado[i];
@@ -20,7 +20,7 @@ function perimetro(tracado: Ponto[]): number {
 }
 
 /** Bounding box (min/max x/y) de uma polilinha. */
-function boundingBox(tracado: Ponto[]) {
+function boundingBox(tracado: readonly Ponto[]) {
   const xs = tracado.map((p) => p.x);
   const ys = tracado.map((p) => p.y);
   return { minX: Math.min(...xs), maxX: Math.max(...xs), minY: Math.min(...ys), maxY: Math.max(...ys) };
@@ -35,7 +35,7 @@ function boundingBox(tracado: Ponto[]) {
  * pedida na revisão do PR 2.8: as duas primeiras versões de Spa e Interlagos
  * tinham cruzamentos acidentais perto da largada.
  */
-function cruzamentosMidSegmento(tracado: Ponto[]): string[] {
+function cruzamentosMidSegmento(tracado: readonly Ponto[]): string[] {
   const n = tracado.length;
   const cruzamentos: string[] = [];
   for (let i = 0; i < n; i++) {

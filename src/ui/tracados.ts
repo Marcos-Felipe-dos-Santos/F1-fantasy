@@ -13,11 +13,11 @@
  * fim do array.
  */
 
-import type { Ponto } from './fluxo-corrida';
+import type { TracadoImutavel } from './fluxo-corrida';
 import { TRACADO_GENERICO } from './fluxo-corrida';
 
 /** Mônaco: circuito de rua apertado e anguloso — a hairpin (Loews/Fairmont) bem fechada e a seção "piscina" em zigue-zague, poucas retas. */
-const TRACADO_MONACO: Ponto[] = [
+const TRACADO_MONACO: TracadoImutavel = [
   { x: 150, y: 520 },
   { x: 450, y: 520 },
   { x: 500, y: 480 },
@@ -37,7 +37,7 @@ const TRACADO_MONACO: Ponto[] = [
 ];
 
 /** Spa-Francorchamps: longa e fluida, zigue-zague curto e agudo subindo logo após a largada (Eau Rouge/Raidillon), reta longa (Kemmel) e curvas amplas rápidas. */
-const TRACADO_SPA: Ponto[] = [
+const TRACADO_SPA: TracadoImutavel = [
   { x: 100, y: 500 },
   { x: 200, y: 520 },
   { x: 320, y: 480 },
@@ -56,7 +56,7 @@ const TRACADO_SPA: Ponto[] = [
 ];
 
 /** Silverstone: fluida e rápida, formato largo com um complexo de curvas encadeadas (tipo Maggotts/Becketts). */
-const TRACADO_SILVERSTONE: Ponto[] = [
+const TRACADO_SILVERSTONE: TracadoImutavel = [
   { x: 120, y: 500 },
   { x: 350, y: 520 },
   { x: 550, y: 500 },
@@ -85,7 +85,7 @@ const TRACADO_SILVERSTONE: Ponto[] = [
  * não afeta o movimento dos carros — eles simplesmente passam "por cima" no
  * desenho, como a ponte real.
  */
-const TRACADO_SUZUKA: Ponto[] = [
+const TRACADO_SUZUKA: TracadoImutavel = [
   { x: 900, y: 300 },
   { x: 870, y: 477 },
   { x: 783, y: 550 },
@@ -105,7 +105,7 @@ const TRACADO_SUZUKA: Ponto[] = [
 ];
 
 /** Interlagos: anti-horário compacto, curva ampla de largada descendo (tipo "S do Senna"), miolo torcido e uma reta oposta longa. */
-const TRACADO_INTERLAGOS: Ponto[] = [
+const TRACADO_INTERLAGOS: TracadoImutavel = [
   { x: 150, y: 200 },
   { x: 400, y: 160 },
   { x: 470, y: 220 },
@@ -125,7 +125,7 @@ const TRACADO_INTERLAGOS: Ponto[] = [
 ];
 
 /** Nürburgring (Nordschleife estilizada): contorno longo e irregular, muitas curvas pequenas serrilhadas, formato alongado "de floresta". */
-const TRACADO_NURBURGRING: Ponto[] = [
+const TRACADO_NURBURGRING: TracadoImutavel = [
   { x: 80, y: 300 },
   { x: 150, y: 150 },
   { x: 220, y: 190 },
@@ -151,7 +151,7 @@ const TRACADO_NURBURGRING: Ponto[] = [
 ];
 
 /** Imola: anti-horário, chicanes e curvas médias encadeadas (Tamburello/Variante Alta estilizadas), formato médio. */
-const TRACADO_IMOLA: Ponto[] = [
+const TRACADO_IMOLA: TracadoImutavel = [
   { x: 150, y: 500 },
   { x: 450, y: 510 },
   { x: 600, y: 480 },
@@ -171,7 +171,7 @@ const TRACADO_IMOLA: Ponto[] = [
 ];
 
 /** Red Bull Ring: curto e triangular, poucas retas em subida com 3-4 freadas fortes. */
-const TRACADO_RED_BULL_RING: Ponto[] = [
+const TRACADO_RED_BULL_RING: TracadoImutavel = [
   { x: 200, y: 500 },
   { x: 500, y: 520 },
   { x: 560, y: 440 },
@@ -187,7 +187,7 @@ const TRACADO_RED_BULL_RING: Ponto[] = [
 ];
 
 /** Montreal (Gilles Villeneuve): formato alongado/estreito tipo ilha, retas paralelas e a última chicane apertada antes da linha (Muro dos Campeões) bem marcada. */
-const TRACADO_MONTREAL: Ponto[] = [
+const TRACADO_MONTREAL: TracadoImutavel = [
   { x: 150, y: 540 },
   { x: 150, y: 460 },
   { x: 140, y: 300 },
@@ -205,7 +205,7 @@ const TRACADO_MONTREAL: Ponto[] = [
 ];
 
 /** Traçado por pista (id do dataset ⇒ polilinha); Monza reaproveita `TRACADO_GENERICO` (já é a Monza estilizada). */
-export const TRACADOS_POR_PISTA: Record<string, Ponto[]> = {
+export const TRACADOS_POR_PISTA: Readonly<Record<string, TracadoImutavel>> = {
   'pista-monaco': TRACADO_MONACO,
   'pista-spa': TRACADO_SPA,
   'pista-monza': TRACADO_GENERICO,
@@ -219,6 +219,6 @@ export const TRACADOS_POR_PISTA: Record<string, Ponto[]> = {
 };
 
 /** Traçado da pista `pistaId`, ou `TRACADO_GENERICO` como fallback pra um id sem silhueta própria (ex.: pista futura ainda não desenhada). */
-export function tracadoDaPista(pistaId: string): Ponto[] {
+export function tracadoDaPista(pistaId: string): TracadoImutavel {
   return TRACADOS_POR_PISTA[pistaId] ?? TRACADO_GENERICO;
 }
