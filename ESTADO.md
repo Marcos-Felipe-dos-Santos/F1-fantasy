@@ -7,13 +7,22 @@
 
 ## Estado atual
 
-- **Branch `main`** · último commit de feature **PR 7.4** (`b39782d`) · **851 testes** (33 arquivos)
-  verdes · working tree limpa.
-- `eslint` limpo. **`tsc --noEmit` e `npm run build` FALHAM** — ver pendência 0 (dívida do 7.4,
-  não é regressão nova). `npm run balance` idêntico ao baseline.
-- **`origin/main` está em `b39782d` — o PR 7.4 FOI PUSHADO.** (A linha "nada foi pushado" que ficou
-  aqui até 2026-07-30 era falsa.) Os chores locais posteriores **não** foram pushados.
-  **Push continua só com "ok" explícito do dev.**
+- **Branch `main`** em `2c04118` · último PR de feature **7.5** (merge `bfbbb98`) · **867 testes**
+  (33 arquivos) verdes · working tree limpa.
+- **Medido em 2026-07-31, não herdado:** `tsc --noEmit` **exit 0**, `npm run build` **exit 0**,
+  `eslint` limpo. `npm run balance` não se aplica aos PRs deste lote.
+- **`origin/main` está em `b39782d` (PR 7.4). A `main` local está 10 commits à frente e NADA
+  disso foi pushado.** **Push continua só com "ok" explícito do dev.**
+
+## Processo (mudou em 2026-07-31 — regra completa no `CLAUDE.md`)
+
+- **RIGOR PROPORCIONAL AO RISCO.** Alto risco (engine, `src/data/`, balanceamento, portão visual,
+  netcode) = fluxo completo com `senior-reviewer`. **Baixo risco (docs, chore, refactor sem
+  mudança de comportamento, fix de uma linha) = implementar → testes → commitar**, sem revisão,
+  sem mutação. Classificar e anunciar ANTES de começar; na dúvida, perguntar em vez de escalar.
+- **UM PR POR SESSÃO.** Ao concluir: commitar, atualizar os dois docs, **PARAR e avisar o dev** —
+  mesmo com fila aprovada. Causa: o contexto bateu 100% no 7.5 por **volume de operações**, não
+  por documentação nem duração.
 
 ## Onde parei
 
@@ -31,10 +40,11 @@ pensa *"poxa, Interlagos"* **sem ler o nome**. Portão visual dele, possivelment
 ## SEQUÊNCIA APROVADA (2026-07-30) — seguir nesta ordem
 
 1. ✅ **Chore docs + `permissions.deny`** — feito (merge `e941712`).
-2. ✅ **PR 7.5 — memoização da LUT** — implementado e revisado na branch
-   `feat/pr-7.5-memoizacao-lut`, **aguardando merge**. 867 testes. Saída de `pontoNoTracado`
-   confirmada **bit a bit idêntica** (golden de 10 pistas × 6 frações, `toBe`).
-3. **PR de ZEBRA INVARIANTE À DENSIDADE.** Virada acumulada em janela de arco no lugar de "ângulo
+2. ✅ **PR 7.5 — memoização da LUT** — **MERGEADO** (`bfbbb98`). 867 testes. Saída de
+   `pontoNoTracado` confirmada **bit a bit idêntica** (golden de 10 pistas × 6 frações, `toBe`).
+   Junto dele, no lote de baixo risco de 2026-07-31: **fix do shim** (`030a5f4`, build verde) e
+   **traçados imutáveis por tipo** (`2c04118`, aviso 🟡 do 7.5 fechado).
+3. ⬅️ **PRÓXIMO — PR de ZEBRA INVARIANTE À DENSIDADE (ALTO RISCO, sessão própria).** Virada acumulada em janela de arco no lugar de "ângulo
    ≥ 28° por vértice"; alcance grampeado por arco, não por `segmento/2`.
    🛑 **PARADA OBRIGATÓRIA: se a métrica nova não reproduzir ~11 trechos / 38,4% em Monza na
    densidade ATUAL, PARAR e mostrar ao dev.** Esse número é portão aprovado a olho no 7.1.
@@ -63,13 +73,10 @@ pensa *"poxa, Interlagos"* **sem ler o nome**. Portão visual dele, possivelment
 
 ## Pendências ATIVAS
 
-0. 🔴 **`npm run build` QUEBRADO na `main` desde o PR 7.4** — e está no `origin/main`.
-   `scripts/node-shims.d.ts:18` declara `writeFileSync(path, data)` com 2 parâmetros; o gerador de
-   preview do 7.4 (`scripts/preview-tracados.preview.test.ts:164`) passa 3 (`'utf8'`). Em runtime
-   funciona, então `npm run preview` roda e ninguém viu. **`tsc --noEmit` está inútil como portão
-   enquanto isso durar.** Correção é uma linha (encoding opcional no shim). ⚠️ Este arquivo afirmava
-   "`tsc --noEmit`, `eslint`, `npm run build` limpos" — **era falso desde o 7.4**; a afirmação foi
-   herdada e nunca medida. Ao reescrever este bloco, MEÇA.
+0. ✅ **FECHADA em 2026-07-31 (`030a5f4`): `npm run build` voltou a passar** — encoding opcional no
+   shim. ⚠️ **Lição que fica:** este arquivo afirmou por um dia "`tsc`/`build` limpos" sendo falso,
+   por herança de reescrita em reescrita **sem nunca medir**. **Afirmação de estado só entra
+   medida.** O `origin/main` ainda tem o build quebrado (não foi pushado).
 1. **Fusão de camadas.** Spa já está em **8,8** na curva suavizada (regressão herdada do 7.4,
    limiar ≥ 17); o redesenho de Spa fecha. Monza/Nordschleife vão aproximar mais trechos.
 2. **`tracados.test.ts:102` está desatualizado desde o 7.4** — ainda trava "pontos dentro de
@@ -80,7 +87,8 @@ pensa *"poxa, Interlagos"* **sem ler o nome**. Portão visual dele, possivelment
    do `<svg>` de `TelaCorrida` ainda passa. Limite conhecido.
 5. **Dívida de processo do 7.4.** A branch foi renomeada por cima da `main` (`git branch -M`), sem
    merge commit. O chore `50f5fd9` também foi direto na `main` e está à frente do `origin/main`.
-   Decidir se vira branch antes de qualquer push.
+   Decidir se vira branch antes de qualquer push. (Os 3 merges de 2026-07-31 já são `--no-ff`
+   com branch própria — a dívida é só do histórico anterior.)
 
 > ✅ Fechadas pelo 7.4: **dívida do viewBox** (`-10 -30 1000 660`, raios devolvidos bot 7→6 e humano
 > 12→10) e **exceção nomeada do Suzuka**. O **espinho de ~180°** no vértice #0 de Spa e Interlagos
