@@ -15,7 +15,7 @@
 declare module 'node:fs' {
   export function existsSync(path: string): boolean;
   export function readFileSync(path: string, encoding: 'utf8'): string;
-  export function writeFileSync(path: string, data: string): void;
+  export function writeFileSync(path: string, data: string, encoding?: 'utf8'): void;
   export function renameSync(oldPath: string, newPath: string): void;
   export function unlinkSync(path: string): void;
   export function mkdirSync(path: string, options?: { recursive?: boolean }): void;
