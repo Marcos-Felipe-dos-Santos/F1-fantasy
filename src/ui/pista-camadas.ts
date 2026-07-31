@@ -207,9 +207,42 @@ export const MEIA_CAMADA_MAIS_LARGA = 60;
  */
 export const LARGURA_SVG_MINIMA_PX = 320;
 
+/**
+ * Virada mínima (em graus) pra um vértice virar candidato a zebra — medida
+ * ACUMULADA em `JANELA_CURVATURA_ZEBRA`, não no vértice sozinho.
+ *
+ * O valor 28 é o mesmo desde o 7.1 e continua produzindo os MESMOS trechos nas
+ * 10 pistas de hoje (medido: índices e alcances idênticos, nas 10) — o que muda
+ * é o comportamento quando a silhueta é densificada. Ver `trechosDeZebra`.
+ *
+ * ⚠️ Por que a saída de hoje não se mexe, dito sem eufemismo: nas silhuetas de
+ * 16 pontos TODO segmento é maior que meia janela (44 u), então nenhum vizinho
+ * cai dentro dela e a virada acumulada é IDÊNTICA ao ângulo do vértice — a
+ * janela é **inerte** na geometria de produção atual. Isso é o que torna a
+ * preservação do desenho estrutural em vez de sorte; e é também o motivo de o
+ * mecanismo novo só ser exercitado por sintéticos e por curvas densificadas
+ * (`pista-camadas.test.ts`), não por pista nenhuma do jogo hoje.
+ */
 export const ANGULO_MINIMO_ZEBRA = 28;
 export const ALCANCE_ZEBRA = 44;
 export const COBERTURA_MAXIMA_ZEBRA = 0.4;
+
+/**
+ * Comprimento de arco (unidades do viewBox) da janela em que a virada é
+ * acumulada: `2 × ALCANCE_ZEBRA`, ou seja, exatamente o arco que um trecho de
+ * zebra de alcance máximo ocupa. É a escala natural do problema — a pergunta
+ * que o critério faz passa a ser "há virada suficiente no PEDAÇO DE PISTA que
+ * esta zebra cobriria?", em vez de "há virada suficiente NESTE VÉRTICE?".
+ *
+ * Por que 88 e não mais: medido em Monza, 44, 66 e 88 dão os mesmos 11 trechos
+ * / 38,4% (a seleção do 7.1, intacta); a 110 a janela já alcança a chicane
+ * vizinha e admite o vértice 1 (21,8°), mudando a seleção. O motivo de parar em
+ * 88 é esse — **preservar o desenho aprovado**, e não uma violação da regra 3:
+ * o vértice 1 é a PONTA da reta de largada e um trecho ali se estende só ±44 u,
+ * longe do meio da reta (250 u adiante). O teto de cima é o desenho, não a
+ * regra.
+ */
+export const JANELA_CURVATURA_ZEBRA = 2 * ALCANCE_ZEBRA;
 
 /**
  * Raio (unidades do viewBox) do marcador de carro-bot na tela.
@@ -249,6 +282,59 @@ export function anguloDeVirada(anterior: Ponto, vertice: Ponto, proximo: Ponto):
   const cosseno = (chegada.x * saida.x + chegada.y * saida.y) / (magChegada * magSaida);
   const cossenoClampado = Math.min(1, Math.max(-1, cosseno));
   return (Math.acos(cossenoClampado) * 180) / Math.PI;
+}
+
+/**
+ * Virada ACUMULADA (soma dos ângulos de virada, em graus) dos vértices que
+ * caem numa janela de `janela` unidades de ARCO centrada em `indice` — o
+ * próprio vértice incluído.
+ *
+ * É esta soma que é ~invariante à densidade: repartir uma curva de 90° em 4
+ * vértices dá 22,5° em cada um (o ângulo POR VÉRTICE se dilui e some sob
+ * qualquer limiar fixo), mas a SOMA ao longo do trecho continua ~90°, porque
+ * telescopa na virada total. É a versão discreta de "integral da curvatura ao
+ * longo do arco".
+ *
+ * Usa o módulo do ângulo, não a virada com sinal: numa chicane esquerda-direita
+ * a virada com sinal se CANCELA e a chicane — que é curva, e é onde a zebra
+ * mais importa — ficaria sem zebra.
+ *
+ * Caso degenerado documentado: se `janela` cobre a volta inteira, cada vértice
+ * é somado no máximo uma vez (os dois lados juntos andam no máximo `n - 1`
+ * passos), e o resultado tende à virada total da silhueta.
+ */
+export function viradaAcumuladaNaJanela(
+  pontos: readonly Ponto[],
+  indice: number,
+  janela: number = JANELA_CURVATURA_ZEBRA,
+): number {
+  const n = pontos.length;
+  if (n < 3) return 0;
+  const meia = janela / 2;
+  const anguloEm = (i: number) =>
+    anguloDeVirada(pontos[(i - 1 + n) % n], pontos[i], pontos[(i + 1) % n]);
+
+  let soma = anguloEm(indice);
+
+  let arco = 0;
+  let passosTras = 0;
+  for (let passo = 1; passo < n; passo++) {
+    const j = (indice - passo + n) % n;
+    arco += distancia(pontos[j], pontos[(j + 1) % n]);
+    if (arco > meia) break;
+    soma += anguloEm(j);
+    passosTras++;
+  }
+
+  arco = 0;
+  for (let passo = 0; passo < n - 1 - passosTras; passo++) {
+    const j = (indice + passo) % n;
+    arco += distancia(pontos[j], pontos[(j + 1) % n]);
+    if (arco > meia) break;
+    soma += anguloEm((j + 1) % n);
+  }
+
+  return soma;
 }
 
 /** Um sub-intervalo linear [inicio, fim) dentro de [0, perímetro) — resultado de "desenrolar" um trecho circular. */
@@ -325,7 +411,8 @@ export interface TrechoZebra {
  */
 interface CandidatoZebra {
   indice: number;
-  angulo: number;
+  /** Virada ACUMULADA na janela de arco (ver `viradaAcumuladaNaJanela`), não o ângulo do vértice sozinho. */
+  virada: number;
   trecho: TrechoZebra;
   intervalo: IntervaloArco[];
 }
@@ -333,10 +420,11 @@ interface CandidatoZebra {
 /**
  * Trechos de zebra de uma polilinha FECHADA (`pontos`): o algoritmo (ver
  * PLANO PR 7.3 §2/§3.9):
- * 1. calcula o ângulo de virada em cada vértice (o vértice 0 usa o último
- *    ponto como anterior — polilinha fechada);
- * 2. mantém só os `>= ANGULO_MINIMO_ZEBRA`;
- * 3. ordena por ângulo DECRESCENTE, desempate por índice CRESCENTE
+ * 1. calcula a VIRADA ACUMULADA em cada vértice — a soma dos ângulos de virada
+ *    dentro de `JANELA_CURVATURA_ZEBRA` de arco em torno dele (o vértice 0 usa
+ *    o último ponto como anterior — polilinha fechada);
+ * 2. mantém só as `>= ANGULO_MINIMO_ZEBRA`;
+ * 3. ordena por virada DECRESCENTE, desempate por índice CRESCENTE
  *    (determinismo);
  * 4. varre nessa ordem acumulando trechos; um trecho é o par de pontos
  *    recuado/avançado do vértice por `min(ALCANCE_ZEBRA, metade do segmento
@@ -354,6 +442,32 @@ interface CandidatoZebra {
  *    resultado nas 10 pistas hoje: confirmado contra os goldens de
  *    `pista-camadas.test.ts`);
  * 6. devolve os trechos reordenados por índice crescente.
+ *
+ * POR QUE A JANELA (PR da zebra invariante à densidade): o critério anterior
+ * era o ângulo de UM vértice, proxy de curvatura que só funciona na densidade
+ * de hoje (~16 pontos/volta). Medido sobre a curva suavizada das 10 pistas, a
+ * 120 pontos ele entrega **0,0-11,6% de cobertura** (Suzuka literalmente 0) contra
+ * 26-39% na densidade atual: a mesma curva repartida em mais vértices dilui o
+ * ângulo de cada um até sumir sob o corte. Como o redesenho das silhuetas vai
+ * a 42-115 pontos, o critério quebraria POR CONSTRUÇÃO — e o dev não
+ * conseguiria separar "a silhueta ficou ruim" de "as zebras sumiram" no portão
+ * visual. Com a janela, as mesmas 10 pistas a 120 pontos ficam em 16,6-40,0%
+ * (o pior caso é Suzuka; ver o piso do teste de invariância).
+ *
+ * O ALCANCE continua `min(ALCANCE_ZEBRA, segmento/2)` — o plano previa trocar
+ * também esse grampo por um em arco, e a MEDIÇÃO desaconselhou: com a janela
+ * no lugar, todo vértice de uma curva densificada vira candidato, e trechos
+ * vizinhos de meio-segmento cada PARTICIONAM o arco da curva (se tocam, nunca
+ * se sobrepõem) — a união já cobre a curva inteira. Trocar o grampo mudaria a
+ * saída nas 10 pistas de HOJE, quebrando a única coisa que este PR precisa
+ * preservar: o desenho aprovado a olho no 7.1. Fica registrado como opção
+ * disponível, não como dívida.
+ *
+ * Consequência aceita: o NÚMERO de trechos cresce com a densidade (Monza: 11 a
+ * 16 pontos, ~48 a 120), porque cada vértice da curva vira um trecho próprio.
+ * A cobertura — que é o que se VÊ — é que fica estável. Fundir trechos
+ * contíguos num só path reduziria a contagem, mas reiniciaria o tracejado
+ * `12 12` em outro lugar e mudaria o visual de hoje; fora de escopo aqui.
  */
 export function trechosDeZebra(pontos: readonly Ponto[]): TrechoZebra[] {
   const n = pontos.length;
@@ -376,8 +490,8 @@ export function trechosDeZebra(pontos: readonly Ponto[]): TrechoZebra[] {
   for (let i = 0; i < n; i++) {
     const anteriorIdx = (i - 1 + n) % n;
     const proximoIdx = (i + 1) % n;
-    const angulo = anguloDeVirada(pontos[anteriorIdx], pontos[i], pontos[proximoIdx]);
-    if (angulo < ANGULO_MINIMO_ZEBRA) continue;
+    const virada = viradaAcumuladaNaJanela(pontos, i);
+    if (virada < ANGULO_MINIMO_ZEBRA) continue;
 
     const comprimentoAnterior = comprimentosSegmento[anteriorIdx];
     const comprimentoProximo = comprimentosSegmento[i];
@@ -400,7 +514,7 @@ export function trechosDeZebra(pontos: readonly Ponto[]): TrechoZebra[] {
 
     candidatos.push({
       indice: i,
-      angulo,
+      virada,
       trecho: {
         indice: i,
         antes,
@@ -413,7 +527,7 @@ export function trechosDeZebra(pontos: readonly Ponto[]): TrechoZebra[] {
     });
   }
 
-  candidatos.sort((a, b) => (b.angulo !== a.angulo ? b.angulo - a.angulo : a.indice - b.indice));
+  candidatos.sort((a, b) => (b.virada !== a.virada ? b.virada - a.virada : a.indice - b.indice));
 
   const aceitos: CandidatoZebra[] = [];
   const intervalosAceitos: IntervaloArco[] = [];

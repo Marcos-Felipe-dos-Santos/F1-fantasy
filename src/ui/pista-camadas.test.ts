@@ -19,6 +19,7 @@ import { tracadoDaPista } from './tracados';
 import {
   ALCANCE_ZEBRA,
   ANGULO_MINIMO_ZEBRA,
+  viradaAcumuladaNaJanela,
   CAMADAS_PISTA,
   COBERTURA_MAXIMA_ZEBRA,
   CORRENTE_TONAL_DA_PILHA,
@@ -657,17 +658,30 @@ describe('anguloDeVirada', () => {
 });
 
 describe('zebra (3.9)', () => {
-  const GOLDEN_COBERTURA: Record<string, { candidatos: number; escolhidos: number; coberturaPct: number }> = {
-    'pista-monaco': { candidatos: 15, escolhidos: 8, coberturaPct: 39.4 },
-    'pista-spa': { candidatos: 9, escolhidos: 9, coberturaPct: 36.8 },
-    'pista-monza': { candidatos: 11, escolhidos: 11, coberturaPct: 38.4 },
-    'pista-silverstone': { candidatos: 11, escolhidos: 9, coberturaPct: 37.6 },
-    'pista-suzuka': { candidatos: 8, escolhidos: 8, coberturaPct: 26.0 },
-    'pista-interlagos': { candidatos: 12, escolhidos: 10, coberturaPct: 39.1 },
-    'pista-nurburgring': { candidatos: 22, escolhidos: 10, coberturaPct: 38.4 },
-    'pista-imola': { candidatos: 12, escolhidos: 9, coberturaPct: 38.1 },
-    'pista-red-bull-ring': { candidatos: 9, escolhidos: 7, coberturaPct: 38.1 },
-    'pista-montreal': { candidatos: 7, escolhidos: 7, coberturaPct: 27.6 },
+  /**
+   * `indices` entrou no golden junto com a métrica de janela: contagem +
+   * cobertura NÃO identificam a seleção. O teto de 40% é vinculante em 6 das 10
+   * pistas (Mônaco 15→8, Silverstone 11→9, Interlagos 12→10, Nürburgring 22→10,
+   * Imola 12→9, Red Bull Ring 9→7), e onde ele morde a ORDEM da varredura gulosa
+   * decide QUEM entra — a chave de ordenação mudou de `angulo` pra `virada`, então
+   * o mesmo conjunto de candidatos poderia produzir outra seleção com a mesma
+   * contagem e cobertura parecida. Preservar a seleção é a única coisa que este
+   * PR promete, e sem os índices nada a verificava.
+   */
+  const GOLDEN_COBERTURA: Record<
+    string,
+    { candidatos: number; escolhidos: number; coberturaPct: number; indices: number[] }
+  > = {
+    'pista-monaco': { candidatos: 15, escolhidos: 8, coberturaPct: 39.4, indices: [0, 2, 4, 5, 6, 11, 12, 15] },
+    'pista-spa': { candidatos: 9, escolhidos: 9, coberturaPct: 36.8, indices: [0, 1, 2, 3, 4, 5, 8, 9, 11] },
+    'pista-monza': { candidatos: 11, escolhidos: 11, coberturaPct: 38.4, indices: [0, 2, 3, 5, 6, 7, 8, 9, 11, 14, 15] },
+    'pista-silverstone': { candidatos: 11, escolhidos: 9, coberturaPct: 37.6, indices: [0, 4, 5, 6, 7, 8, 12, 13, 15] },
+    'pista-suzuka': { candidatos: 8, escolhidos: 8, coberturaPct: 26.0, indices: [1, 2, 6, 7, 9, 10, 14, 15] },
+    'pista-interlagos': { candidatos: 12, escolhidos: 10, coberturaPct: 39.1, indices: [0, 2, 3, 4, 5, 6, 7, 8, 9, 11] },
+    'pista-nurburgring': { candidatos: 22, escolhidos: 10, coberturaPct: 38.4, indices: [1, 2, 3, 4, 5, 9, 13, 19, 20, 21] },
+    'pista-imola': { candidatos: 12, escolhidos: 9, coberturaPct: 38.1, indices: [0, 2, 3, 5, 7, 8, 12, 13, 15] },
+    'pista-red-bull-ring': { candidatos: 9, escolhidos: 7, coberturaPct: 38.1, indices: [0, 1, 2, 3, 4, 5, 6] },
+    'pista-montreal': { candidatos: 7, escolhidos: 7, coberturaPct: 27.6, indices: [0, 3, 7, 9, 10, 11, 12] },
   };
 
   function candidatos28(tracado: readonly Ponto[]): number {
@@ -724,18 +738,33 @@ describe('zebra (3.9)', () => {
     },
   );
 
-  it.each(dataset.pistas.map((p) => [p.id] as const))('todos os vértices escolhidos em %s têm ângulo >= 28°', (pistaId) => {
+  it.each(dataset.pistas.map((p) => [p.id] as const))('todos os vértices escolhidos em %s têm VIRADA ACUMULADA >= 28° na janela', (pistaId) => {
     const tracado = tracadoDaPista(pistaId);
     const trechos = trechosDeZebra(tracado);
-    const n = tracado.length;
     // `indice` (Cosmetic 12) aponta direto pro vértice ORIGINAL no traçado —
     // não precisa mais de `findIndex` por coordenada (fragilidade que
     // quebraria se dois vértices caíssem na mesma coordenada, num traçado
     // curvo futuro).
     for (const { indice, vertice } of trechos) {
       expect(tracado[indice]).toEqual(vertice);
-      const ang = anguloDeVirada(tracado[(indice - 1 + n) % n], tracado[indice], tracado[(indice + 1) % n]);
-      expect(ang).toBeGreaterThanOrEqual(ANGULO_MINIMO_ZEBRA);
+      expect(viradaAcumuladaNaJanela(tracado, indice)).toBeGreaterThanOrEqual(ANGULO_MINIMO_ZEBRA);
+    }
+  });
+
+  it('nas 10 pistas de HOJE a virada acumulada seleciona os MESMOS vértices que o ângulo por vértice (o desenho aprovado no 7.1 não se mexe)', () => {
+    for (const { id } of dataset.pistas) {
+      const tracado = tracadoDaPista(id);
+      const n = tracado.length;
+      const porVertice: number[] = [];
+      for (let i = 0; i < n; i++) {
+        const ang = anguloDeVirada(tracado[(i - 1 + n) % n], tracado[i], tracado[(i + 1) % n]);
+        if (ang >= ANGULO_MINIMO_ZEBRA) porVertice.push(i);
+      }
+      const porJanela: number[] = [];
+      for (let i = 0; i < n; i++) {
+        if (viradaAcumuladaNaJanela(tracado, i) >= ANGULO_MINIMO_ZEBRA) porJanela.push(i);
+      }
+      expect(porJanela, `${id}: candidatos`).toEqual(porVertice);
     }
   });
 
@@ -745,6 +774,7 @@ describe('zebra (3.9)', () => {
     expect(candidatos28(tracado), `${pistaId} candidatos`).toBe(esperado.candidatos);
     expect(trechos.length, `${pistaId} escolhidos`).toBe(esperado.escolhidos);
     expect(coberturaAprox(tracado, trechos), `${pistaId} cobertura`).toBeCloseTo(esperado.coberturaPct, 0);
+    expect(trechos.map((t) => t.indice), `${pistaId} SELEÇÃO`).toEqual(esperado.indices);
   });
 
   // O teto de 40% NÃO é vinculante em Monza: ela dá 38,4% sem teto nenhum. O
@@ -785,6 +815,148 @@ describe('zebra (3.9)', () => {
 
   it('zebrasDaPista é memoizado: devolve a MESMA REFERÊNCIA em chamadas repetidas (o replay depende disso)', () => {
     expect(zebrasDaPista('pista-monza')).toBe(zebrasDaPista('pista-monza'));
+  });
+
+  /**
+   * INVARIÂNCIA À DENSIDADE (PR da zebra invariante). O critério "ângulo >= 28°
+   * POR VÉRTICE" é proxy de curvatura que só funciona na densidade de hoje
+   * (~16 pontos/volta): a mesma curva repartida em mais vértices dilui o
+   * ângulo de cada um (90° em 4 vértices = 22,5° cada, abaixo do corte) e a
+   * zebra SOME. O redesenho das silhuetas vai a 42-115 pontos, então o
+   * critério quebraria por construção — e o dev não conseguiria separar "a
+   * silhueta está errada" de "as zebras sumiram" no portão visual.
+   *
+   * A densidade é variada sobre a CURVA SUAVIZADA, não sobre a polilinha de
+   * quinas: reamostrar quinas CORTA CANTOS (muda a forma, não só a densidade),
+   * o que mediria outra coisa. A curva do 7.4 é a mesma silhueta já
+   * densificada — e é a geometria que o redesenho terá.
+   */
+  function reamostrarPorArco(pontos: readonly Ponto[], alvo: number): Ponto[] {
+    const n = pontos.length;
+    const seg: number[] = [];
+    const arco: number[] = [];
+    let acc = 0;
+    for (let i = 0; i < n; i++) {
+      arco.push(acc);
+      seg.push(Math.hypot(pontos[(i + 1) % n].x - pontos[i].x, pontos[(i + 1) % n].y - pontos[i].y));
+      acc += seg[i];
+    }
+    const saida: Ponto[] = [];
+    for (let k = 0; k < alvo; k++) {
+      const alvoArco = (acc * k) / alvo;
+      let i = 0;
+      while (i < n - 1 && arco[i + 1] <= alvoArco) i++;
+      const t = seg[i] === 0 ? 0 : (alvoArco - arco[i]) / seg[i];
+      saida.push({
+        x: pontos[i].x + (pontos[(i + 1) % n].x - pontos[i].x) * t,
+        y: pontos[i].y + (pontos[(i + 1) % n].y - pontos[i].y) * t,
+      });
+    }
+    return saida;
+  }
+
+  /**
+   * Piso de cobertura em densidade alta. Com o critério antigo as 10 pistas
+   * ficam em 0,0-11,6% a 120 pontos; com a janela, em 16,6-40,0%.
+   *
+   * A FRONTEIRA REAL É SUZUKA (16,6%) — as outras nove ficam em 25-40%. O piso
+   * é 12 e não 15 de propósito: 15 deixaria 1,6 ponto de folga em cima da pior
+   * pista, e qualquer mexida em `AMOSTRAS_POR_SEGMENTO`, no alpha da centrípeta
+   * ou no reamostrador derrubaria Suzuka primeiro — um vermelho que não
+   * significaria regressão da zebra. O que este piso precisa provar é que a
+   * zebra NÃO SOME (o antigo entrega 0% em Suzuka), não calibrar cobertura.
+   */
+  const PISO_COBERTURA_DENSA = 12;
+
+  it('viradaAcumuladaNaJanela: a soma numa curva repartida sobrevive à densidade que dilui o ângulo por vértice', () => {
+    // Quina de 90° isolada, com as duas retas longas o bastante pra janela não
+    // alcançar as outras quinas.
+    const quina: Ponto[] = [
+      { x: 0, y: 0 },
+      { x: 400, y: 0 },
+      { x: 400, y: 400 },
+      { x: 0, y: 400 },
+    ];
+    expect(viradaAcumuladaNaJanela(quina, 1)).toBeCloseTo(90, 6);
+
+    // MESMA virada de 90°, agora repartida num arco de raio 20 com 5 vértices
+    // (11,25° nas pontas, 22,5° nos internos): ~31 u de arco, cabe na janela.
+    // Cada vértice sozinho fica ABAIXO do corte de 28°...
+    const RAIO = 20;
+    const arco: Ponto[] = [];
+    for (let k = 0; k <= 4; k++) {
+      const t = -Math.PI / 2 + (k * Math.PI) / 8;
+      arco.push({ x: 400 - RAIO + RAIO * Math.cos(t), y: RAIO + RAIO * Math.sin(t) });
+    }
+    const repartida: Ponto[] = [{ x: 0, y: 0 }, ...arco, { x: 400, y: 400 }, { x: 0, y: 400 }];
+    for (const i of [1, 2, 3, 4, 5]) {
+      const ang = anguloDeVirada(
+        repartida[(i - 1 + repartida.length) % repartida.length],
+        repartida[i],
+        repartida[(i + 1) % repartida.length],
+      );
+      expect(ang, `vértice ${i} sozinho`).toBeLessThan(ANGULO_MINIMO_ZEBRA);
+    }
+    // ...mas a virada ACUMULADA em cada um deles recupera os ~90° da curva.
+    for (const i of [1, 2, 3, 4, 5]) {
+      expect(viradaAcumuladaNaJanela(repartida, i), `vértice ${i} na janela`).toBeCloseTo(90, 0);
+    }
+  });
+
+  it('viradaAcumuladaNaJanela: janela maior que a volta inteira não conta vértice duas vezes (soma = virada total)', () => {
+    const quadrado: Ponto[] = [
+      { x: 0, y: 0 },
+      { x: 10, y: 0 },
+      { x: 10, y: 10 },
+      { x: 0, y: 10 },
+    ];
+    expect(viradaAcumuladaNaJanela(quadrado, 0, 10_000)).toBeCloseTo(360, 6);
+  });
+
+  it.each(dataset.pistas.map((p) => [p.id] as const))(
+    'a zebra de %s NÃO some quando a mesma forma é densificada (120 pontos)',
+    (pistaId) => {
+      const densa = reamostrarPorArco(suavizarPolilinhaFechada(tracadoDaPista(pistaId)), 120);
+      const trechos = trechosDeZebra(densa);
+      expect(coberturaAprox(densa, trechos)).toBeGreaterThanOrEqual(PISO_COBERTURA_DENSA);
+    },
+  );
+
+  /**
+   * A regra inviolável 3 da Fase 7 ("zebra só em CURVA, nunca em reta") só era
+   * verificada na densidade de 16 pontos. O PR existe justamente pra sustentar
+   * densidades maiores, e piso de cobertura sozinho não protege contra o modo de
+   * falha oposto: cobrir DEMAIS e vazar pra reta. Aqui a regra passa a ser
+   * checada no regime novo — grade de proteção pro redesenho, não só piso.
+   */
+  it('regra 3 continua valendo em densidade alta: nenhum trecho de Monza cobre o meio das retas longas (48 → 80 → 120)', () => {
+    const curva = suavizarPolilinhaFechada(tracadoDaPista('pista-monza'));
+    const meioLargada = { x: 400, y: 500 };
+    const meioRettilineo = { x: 485, y: 105 };
+    for (const densidade of [48, 80, 120]) {
+      const pontos = reamostrarPorArco(curva, densidade);
+      for (const { antes, depois } of trechosDeZebra(pontos)) {
+        for (const meio of [meioLargada, meioRettilineo]) {
+          const dentro =
+            Math.min(antes.x, depois.x) - 1 <= meio.x &&
+            meio.x <= Math.max(antes.x, depois.x) + 1 &&
+            Math.min(antes.y, depois.y) - 1 <= meio.y &&
+            meio.y <= Math.max(antes.y, depois.y) + 1;
+          expect(dentro, `densidade ${densidade}, meio (${meio.x},${meio.y})`).toBe(false);
+        }
+      }
+    }
+  });
+
+  it('Monza: a cobertura não colapsa ao longo da escala de densidade do redesenho (48 → 80 → 120)', () => {
+    const curva = suavizarPolilinhaFechada(tracadoDaPista('pista-monza'));
+    for (const densidade of [48, 80, 120]) {
+      const pontos = reamostrarPorArco(curva, densidade);
+      expect(
+        coberturaAprox(pontos, trechosDeZebra(pontos)),
+        `Monza a ${densidade} pontos`,
+      ).toBeGreaterThanOrEqual(20);
+    }
   });
 
   it('zebra não invade reta: em Monza nenhum trecho cobre o meio das duas retas longas (largada e Rettilineo)', () => {

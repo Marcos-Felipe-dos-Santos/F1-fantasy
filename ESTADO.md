@@ -7,11 +7,11 @@
 
 ## Estado atual
 
-- **Branch `main`** em `2c04118` · último PR de feature **7.5** (merge `bfbbb98`) · **867 testes**
+- **Branch `main`** · último PR de feature **7.6** (zebra invariante à densidade) · **882 testes**
   (33 arquivos) verdes · working tree limpa.
 - **Medido em 2026-07-31, não herdado:** `tsc --noEmit` **exit 0**, `npm run build` **exit 0**,
-  `eslint` limpo. `npm run balance` não se aplica aos PRs deste lote.
-- **`origin/main` está em `b39782d` (PR 7.4). A `main` local está 10 commits à frente e NADA
+  `eslint` limpo. `npm run balance` não se aplica (nada de nota/lógica de corrida foi tocado).
+- **`origin/main` está em `b39782d` (PR 7.4). A `main` local está ~17 commits à frente e NADA
   disso foi pushado.** **Push continua só com "ok" explícito do dev.**
 
 ## Processo (mudou em 2026-07-31 — regra completa no `CLAUDE.md`)
@@ -44,13 +44,13 @@ pensa *"poxa, Interlagos"* **sem ler o nome**. Portão visual dele, possivelment
    `pontoNoTracado` confirmada **bit a bit idêntica** (golden de 10 pistas × 6 frações, `toBe`).
    Junto dele, no lote de baixo risco de 2026-07-31: **fix do shim** (`030a5f4`, build verde) e
    **traçados imutáveis por tipo** (`2c04118`, aviso 🟡 do 7.5 fechado).
-3. ⬅️ **PRÓXIMO — PR de ZEBRA INVARIANTE À DENSIDADE (ALTO RISCO, sessão própria).** Virada acumulada em janela de arco no lugar de "ângulo
-   ≥ 28° por vértice"; alcance grampeado por arco, não por `segmento/2`.
-   🛑 **PARADA OBRIGATÓRIA: se a métrica nova não reproduzir ~11 trechos / 38,4% em Monza na
-   densidade ATUAL, PARAR e mostrar ao dev.** Esse número é portão aprovado a olho no 7.1.
-4. **PR de INFRA** — restrições declaradas como testes vermelhos + allowlist `LEGADO` que só
-   encolhe + gerador do **preview cego**, rodado sobre as silhuetas ATUAIS como **linha de base
-   documentada**. Mostrar ao dev.
+3. ✅ **PR 7.6 — ZEBRA INVARIANTE À DENSIDADE — FEITO** (`f3653ab`). Virada acumulada em janela de
+   88 u de arco. 🛑 **O portão foi MEDIDO e PASSOU: Monza na densidade atual continua em 11
+   trechos / 38,4%, mesmos índices**, e as 10 pistas saem byte a byte iguais (sem mudança visual).
+   O alcance NÃO virou grampo por arco — a medição desaconselhou; ver `HISTORICO.md`.
+4. ⬅️ **PRÓXIMO — PR de INFRA (ALTO RISCO, sessão própria)** — restrições declaradas como testes
+   vermelhos + allowlist `LEGADO` que só encolhe + gerador do **preview cego**, rodado sobre as
+   silhuetas ATUAIS como **linha de base documentada**. Mostrar ao dev.
 5. **FATIA 1 — Monza + Interlagos.** Critério de fatiamento: **"estressa as restrições"**, não
    "as mais icônicas". Mostrar ao dev.
 6. 🛑 **PARAR e ir pro pit (7.7, 7.8).** As fatias 2-5 (Mônaco+Spa+Silverstone · Imola+Montreal+RBR ·
@@ -68,8 +68,10 @@ pensa *"poxa, Interlagos"* **sem ler o nome**. Portão visual dele, possivelment
 - **`AMOSTRAS_POR_SEGMENTO` cai de 12 pra 4-6** (sagita escala com a corda). N adaptativo rejeitado.
 - **Nada de métrica automatizável de reconhecimento.** Hausdorff contra a pista real recusado —
   aproximaria do mapa oficial (GDD §14.2).
-- **A zebra por 28°/vértice quebra por construção no redesenho** (medido: Monza 38,4% → 9,6% com
-  80 pontos, *mesma forma*). Por isso o passo 3 vem antes do 5.
+- ✅ **A zebra por 28°/vértice quebrava por construção no redesenho — RESOLVIDO pelo 7.6.** O que
+  fica travado: a detecção continua rodando no traçado de **CONTROLE**, não na curva suavizada, e
+  isso agora é **decisão de escopo** (preservar o desenho aprovado no 7.1), não impossibilidade
+  técnica — desde o 7.6 rodar na curva devolveria zebra sim (16,6-40,0% a 120 pontos).
 
 ## Pendências ATIVAS
 
@@ -83,9 +85,14 @@ pensa *"poxa, Interlagos"* **sem ler o nome**. Portão visual dele, possivelment
    `0 0 1000 600`", proibindo a faixa y 600-630 que o próprio 7.4 abriu. Corrigir no PR de infra.
 3. **Guardas O(n²)** (`minNaoAdj`, `separacaoMinima`, `cruzamentos`) sobre curvas 3-4x maiores vão
    desacelerar a suíte. Bucketizar no PR de infra.
-4. **O elo testado do 7.3 trava o componente, não o uso dele:** apagar `<CamadasDaPista/>` de dentro
+4. 🎨 **DECISÃO DE ARTE PENDENTE, levantada na revisão do 7.6 — o dev precisa VER antes de a fatia
+   1 fechar.** Na densidade do redesenho (~120 pontos) o **teto de 40% passa a ser vinculante em 7
+   das 10 pistas** e Monza vai de 11 pra ~48 trechos de zebra. Nesse regime quem decide o desenho é
+   **o teto + a ordem gulosa**, não a geometria — e o tracejado `12 12` reinicia a cada trecho.
+   Pede **preview na densidade alvo** antes de travar os valores 88/40%.
+5. **O elo testado do 7.3 trava o componente, não o uso dele:** apagar `<CamadasDaPista/>` de dentro
    do `<svg>` de `TelaCorrida` ainda passa. Limite conhecido.
-5. **Dívida de processo do 7.4.** A branch foi renomeada por cima da `main` (`git branch -M`), sem
+6. **Dívida de processo do 7.4.** A branch foi renomeada por cima da `main` (`git branch -M`), sem
    merge commit. O chore `50f5fd9` também foi direto na `main` e está à frente do `origin/main`.
    Decidir se vira branch antes de qualquer push. (Os 3 merges de 2026-07-31 já são `--no-ff`
    com branch própria — a dívida é só do histórico anterior.)
@@ -101,8 +108,11 @@ pensa *"poxa, Interlagos"* **sem ler o nome**. Portão visual dele, possivelment
    superfície mais clara; toda superfície nova passa por aqui antes de entrar.
 2. **Regra dos 360px.** Elemento ilegível a 360px de largura não entra. Já eliminou os acessos de
    serviço do paddock (7.1) e a linha central tracejada (7.3).
-3. **Zebra só em CURVA, nunca em reta.** Ângulo de virada ≥ 28° por vértice, com teto de 40% do
-   perímetro (sem o teto, Nürburgring dá 85% e vira a faixa contínua que o dev reprovou).
+3. **Zebra só em CURVA, nunca em reta.** **Virada ACUMULADA ≥ 28° numa janela de
+   `JANELA_CURVATURA_ZEBRA` = 88 u de arco** (PR 7.6 — antes era ângulo ≥ 28° *por vértice*, que
+   se diluía com a densidade), com teto de 40% do perímetro (sem o teto, Nürburgring dá 85% e vira
+   a faixa contínua que o dev reprovou). A regra é testada nas duas densidades: 16 pontos e
+   48/80/120.
 
 Mais dois critérios permanentes: **entorno é moldura, pista e carros são conteúdo** (adição que
 prejudique a leitura dos carros está errada); e **decisão de arte vai ao dev** — a base visual da
