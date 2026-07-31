@@ -8,18 +8,24 @@
  * separa DUAS representações que antes eram a mesma coisa:
  *
  * - `tracadoDaPista(id)` — a polilinha de CONTROLE, intocada. É a INTENÇÃO DE
- *   DESENHO (16 pontos à mão) e continua sendo a fonte da detecção de zebra,
- *   que depende de ângulo POR VÉRTICE (ver abaixo).
+ *   DESENHO (16 pontos à mão) e continua sendo a fonte da detecção de zebra
+ *   (ver abaixo).
  * - `tracadoSuavizado(id)` — a curva densificada de fato DESENHADA e por onde
  *   os carros andam.
  *
- * POR QUE A DETECÇÃO DE ZEBRA NÃO MIGRA PRA CURVA: `trechosDeZebra` aceita
- * vértices com virada `>= ANGULO_MINIMO_ZEBRA` (28°). Na curva densificada
- * NENHUM vértice chega perto disso por construção — a virada se dilui entre as
- * `AMOSTRAS_POR_SEGMENTO` amostras (o maior ângulo por vértice cai pela metade
- * a cada vez que se dobra N). Rodar a detecção na curva devolveria zero zebras
- * em todas as 10 pistas. A detecção fica no controle; só a GEOMETRIA do trecho
- * é remapeada pra curva, por `trechoPorArco`.
+ * POR QUE A DETECÇÃO DE ZEBRA NÃO MIGRA PRA CURVA — E O QUE MUDOU. Até o PR da
+ * zebra invariante à densidade, era IMPOSSIBILIDADE TÉCNICA: `trechosDeZebra`
+ * exigia virada `>= ANGULO_MINIMO_ZEBRA` (28°) POR VÉRTICE, e na curva
+ * densificada nenhum vértice chega perto disso — a virada se dilui entre as
+ * `AMOSTRAS_POR_SEGMENTO` amostras. Rodar a detecção na curva devolvia zebra
+ * quase nenhuma (medido depois: 0,0-11,6% de cobertura a 120 pontos).
+ *
+ * Desde que o critério passou a ser VIRADA ACUMULADA numa janela de arco, isso
+ * deixou de ser verdade: rodar a detecção na curva devolve zebra sim (medido,
+ * 120 pontos: 16,6-40,0% nas 10 pistas). **A detecção continua no controle por
+ * DECISÃO DE ESCOPO** — o desenho aprovado a olho no portão 7.1 é o das
+ * silhuetas de 16 pontos, e migrar a detecção mudaria o que o dev já aprovou.
+ * Só a GEOMETRIA do trecho é remapeada pra curva, por `trechoPorArco`.
  *
  * POR QUE CENTRÍPETA (alpha 0,5) E NÃO UNIFORME (0) OU CORDAL (1): medido nas
  * 10 pistas, maior overshoot fora do bounding box da polilinha de controle —
