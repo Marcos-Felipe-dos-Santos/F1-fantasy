@@ -11,6 +11,7 @@ import {
   classificacaoAoVivo,
   escalaReplay,
   fracaoVisual,
+  lutDoTracado,
   MS_REPLAY_POR_VOLTA,
   perfilPista,
   pontoNoTracado,
@@ -19,6 +20,7 @@ import {
   voltaAtual,
   type Ponto,
 } from './fluxo-corrida';
+import { tracadoSuavizado } from './suavizacao';
 
 const dataset = criarDataset(equipeAnosReal, pecasReal, pistasReal);
 
@@ -506,4 +508,80 @@ describe('pontoNoTracado', () => {
     expect(pontoNoTracado(quadrado, 1.25)).toEqual(pontoNoTracado(quadrado, 0.25));
     expect(pontoNoTracado(quadrado, -0.25)).toEqual(pontoNoTracado(quadrado, 0.75));
   });
+});
+
+/**
+ * PR 7.5: memoização da LUT de comprimento de arco por IDENTIDADE do array de
+ * traçado (não por conteúdo). `tracadoSuavizado` (suavizacao.ts:257) já
+ * devolve sempre a mesma referência pro mesmo `pistaId`, então cachear por
+ * identidade evita remontar a tabela de segmentos a cada frame do replay sem
+ * precisar mudar a assinatura pública de `pontoNoTracado`.
+ */
+describe('lutDoTracado (memoização por identidade)', () => {
+  const quadrado: Ponto[] = [
+    { x: 0, y: 0 },
+    { x: 1, y: 0 },
+    { x: 1, y: 1 },
+    { x: 0, y: 1 },
+  ];
+
+  it('mesma referência de traçado devolve a MESMA LUT (prova do cache)', () => {
+    expect(lutDoTracado(quadrado)).toBe(lutDoTracado(quadrado));
+  });
+
+  it('arrays distintos com o mesmo conteúdo devolvem LUTs distintas (chave é identidade, não conteúdo)', () => {
+    const copia: Ponto[] = quadrado.map((p) => ({ ...p }));
+    expect(lutDoTracado(copia)).not.toBe(lutDoTracado(quadrado));
+  });
+
+  it('pontoNoTracado usa a LUT cacheada (a LUT já vem populada após a chamada)', () => {
+    const outro: Ponto[] = [
+      { x: 0, y: 0 },
+      { x: 2, y: 0 },
+      { x: 2, y: 2 },
+      { x: 0, y: 2 },
+    ];
+    pontoNoTracado(outro, 0.3);
+    const lut = lutDoTracado(outro);
+    expect(lut).toBe(lutDoTracado(outro));
+    expect(lut.segmentos.length).toBe(outro.length);
+    expect(lut.comprimentoTotal).toBeGreaterThan(0);
+  });
+});
+
+/**
+ * Goldens capturados da implementação ANTES do PR 7.5 (varredura linear
+ * remontando os segmentos a cada chamada) — rede de segurança pra provar
+ * identidade BIT A BIT depois da memoização da LUT. Igualdade EXATA (`toBe`),
+ * nunca `toBeCloseTo`: a memoização só pode trocar alocação, nunca a
+ * aritmética de ponto flutuante (por isso a varredura linear com
+ * `alvo -= segmento.comprimento` foi preservada tal qual).
+ */
+describe('pontoNoTracado sobre tracadoSuavizado — goldens bit a bit', () => {
+  const FRACOES = [0, 0.125, 0.25, 0.5, 0.75, 0.999];
+
+  const GOLDEN_PONTO: Record<string, [number, number][]> = {
+    'pista-monaco': [[150, 520], [343.14919773614577, 533.679968629951], [500.1518297302881, 459.44843301868974], [474.26405663947963, 116.36663435777841], [300.10247352652124, 338.5429307676336], [148.9851737738031, 518.814752051671]],
+    'pista-spa': [[100, 500], [317.8603509221873, 462.9632153459497], [386.5574093132492, 279.07405097537196], [872.8534621203278, 204.70753385159446], [585.4467635843083, 503.6759170062563], [101.31460634571317, 501.48314804112107]],
+    'pista-monza': [[150, 500], [415.73054376182705, 513.6820903781669], [680.8430237566658, 492.7604771876899], [828.5329232533277, 155.67031006876175], [304.56266430399995, 104.31948458385577], [147.95046937015002, 499.411538510025]],
+    'pista-silverstone': [[120, 500], [354.1418526939863, 519.9446085686449], [588.2111928524535, 489.93535009144085], [662.4355331323331, 184.8665843428323], [237.5813493211116, 125.37269299352644], [118.48277237487251, 498.86604735486287]],
+    'pista-suzuka': [[900, 300], [740.776883928995, 539.7632805022446], [500.0000000000001, 300.0000000000001], [100, 300.0000000000004], [500.00000000000045, 299.9999999999995], [899.9785515317714, 297.26033323657146]],
+    'pista-interlagos': [[150, 200], [420.73889124984146, 168.3404372596405], [495.0438715253009, 359.3379214570515], [762.1566909998221, 499.52859940286226], [677.3472302311087, 174.3282250003049], [150.91045100317353, 197.97770820240999]],
+    'pista-nurburgring': [[80, 300], [248.79178589749407, 175.05279169999466], [497.9354460655906, 146.1162626340107], [920, 299.9999999999998], [497.93544606559146, 453.8837373659888], [80.14117687899203, 302.2911955534309]],
+    'pista-imola': [[150, 500], [366.8750096156514, 514.9989995319032], [583.7521441574031, 491.4519482139999], [658.8318929682183, 195.31388736731947], [250.83639068847972, 165.78618344987234], [148.47613037767857, 499.1402473473195]],
+    'pista-red-bull-ring': [[200, 500], [398.5319203571519, 534.2978299565234], [558.4489068160971, 440.85567814531663], [747.2388461870061, 214.8386128096255], [380.06878168898436, 170.86227847507612], [198.80567700162933, 498.891976908923]],
+    'pista-montreal': [[150, 540], [140.2503909918194, 285.23059068953484], [266.93170201030665, 104.44487157559456], [760.8289553032935, 163.30289960102377], [658.4234201014926, 534.2872853389914], [151.70493326103733, 541.1570996236121]],
+  };
+
+  for (const [pistaId, esperados] of Object.entries(GOLDEN_PONTO)) {
+    it(`${pistaId}: pontos batem bit a bit com o golden pré-PR 7.5`, () => {
+      const tracado = tracadoSuavizado(pistaId);
+      FRACOES.forEach((fracao, indice) => {
+        const ponto = pontoNoTracado(tracado, fracao);
+        const [x, y] = esperados[indice];
+        expect(ponto.x).toBe(x);
+        expect(ponto.y).toBe(y);
+      });
+    });
+  }
 });

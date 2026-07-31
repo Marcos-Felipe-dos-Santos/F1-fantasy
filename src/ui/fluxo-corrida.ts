@@ -215,6 +215,68 @@ export function voltaAtual(historico: number[], tempoSimMs: number, voltasTotais
   return Math.min(voltasTotais, Math.max(1, volta));
 }
 
+/** Segmento entre dois pontos consecutivos do traçado, com comprimento pré-calculado. */
+interface SegmentoTracado {
+  a: Ponto;
+  b: Ponto;
+  comprimento: number;
+}
+
+/** Tabela de comprimento de arco (LUT) de um traçado fechado — ver `lutDoTracado`. */
+interface LutTracado {
+  segmentos: SegmentoTracado[];
+  comprimentoTotal: number;
+}
+
+/**
+ * Cache da LUT de comprimento de arco, por IDENTIDADE do array de traçado
+ * (não por conteúdo — ver `lutDoTracado`). WeakMap, não `Map`: a chave é o
+ * próprio array do traçado, e um traçado que sai de uso (ex.: pista trocada)
+ * tem que poder ser coletado pelo GC junto com a entrada do cache. Um `Map`
+ * seguraria a referência pra sempre e vazaria memória a cada pista nova
+ * visitada na sessão.
+ */
+const CACHE_LUT = new WeakMap<readonly Ponto[], LutTracado>();
+
+/**
+ * LUT (tabela de comprimento de arco) de um `tracado`, MEMOIZADA por
+ * identidade do array (PR 7.5). Detalhe de PERFORMANCE, não de algoritmo:
+ * antes deste PR, `pontoNoTracado` remontava a lista de segmentos e recalculava
+ * `comprimentoTotal` a cada chamada — no replay isso é 22 carros × 60fps sobre
+ * um traçado já densificado pela suavização Bézier (PR 7.4, 144-264 pontos),
+ * até ~2,5 milhões de objetos alocados por segundo só pra jogar fora no
+ * próximo frame (não é gargalo de CPU — é pressão de GC).
+ *
+ * A chave ser a IDENTIDADE do array (não o conteúdo) só funciona porque
+ * `tracadoSuavizado(pistaId)` (`suavizacao.ts:257`) já é memoizada por
+ * `pistaId` e devolve sempre a MESMA referência de array pro mesmo id — e é
+ * essa mesma referência que `TelaCorrida` passa pra `pontoNoTracado` em todo
+ * frame do replay. Premissa (documentada, não garantida pelo tipo): o array
+ * do traçado é tratado como IMUTÁVEL depois de criado — nada muta os pontos
+ * no lugar. Se algo mutasse, esta LUT ficaria desatualizada silenciosamente.
+ *
+ * Exportada só porque o teste depende dela pra provar o cache; não é API
+ * pensada pra ser chamada fora de `pontoNoTracado`.
+ */
+export function lutDoTracado(tracado: readonly Ponto[]): LutTracado {
+  const existente = CACHE_LUT.get(tracado);
+  if (existente !== undefined) return existente;
+
+  const segmentos: SegmentoTracado[] = [];
+  let comprimentoTotal = 0;
+  for (let i = 0; i < tracado.length; i++) {
+    const a = tracado[i];
+    const b = tracado[(i + 1) % tracado.length];
+    const comprimento = Math.hypot(b.x - a.x, b.y - a.y);
+    segmentos.push({ a, b, comprimento });
+    comprimentoTotal += comprimento;
+  }
+
+  const lut: LutTracado = { segmentos, comprimentoTotal };
+  CACHE_LUT.set(tracado, lut);
+  return lut;
+}
+
 /**
  * Ponto ao longo de uma polilinha FECHADA (o último ponto liga de volta ao
  * primeiro), por comprimento de arco. `fracao` é tomada módulo 1 — o carro dá
@@ -225,6 +287,14 @@ export function voltaAtual(historico: number[], tempoSimMs: number, voltasTotais
  * `fracaoVisual` (fração cíclica por volta) — não `progressoNoReplay` direto
  * (fração da corrida inteira, o carro daria só 1 volta visual do início ao
  * fim, inconsistente com o contador "Volta X/N").
+ *
+ * A varredura linear (com `alvo -= segmento.comprimento` acumulativo) é
+ * proposital e NÃO deve virar soma de prefixos nem busca binária: qualquer
+ * uma das duas mudaria a ORDEM das operações de ponto flutuante e quebraria a
+ * identidade bit a bit do resultado nos últimos bits (há goldens do projeto
+ * sensíveis a isso, ex. `500.0000000000001`). A LUT (`lutDoTracado`) só
+ * evita realocar a mesma tabela a cada chamada — a aritmética abaixo é
+ * idêntica à de antes do PR 7.5.
  */
 export function pontoNoTracado(tracado: readonly Ponto[], fracao: number): Ponto {
   if (tracado.length === 0) {
@@ -236,15 +306,7 @@ export function pontoNoTracado(tracado: readonly Ponto[], fracao: number): Ponto
 
   const f = ((fracao % 1) + 1) % 1;
 
-  const segmentos: { a: Ponto; b: Ponto; comprimento: number }[] = [];
-  let comprimentoTotal = 0;
-  for (let i = 0; i < tracado.length; i++) {
-    const a = tracado[i];
-    const b = tracado[(i + 1) % tracado.length];
-    const comprimento = Math.hypot(b.x - a.x, b.y - a.y);
-    segmentos.push({ a, b, comprimento });
-    comprimentoTotal += comprimento;
-  }
+  const { segmentos, comprimentoTotal } = lutDoTracado(tracado);
 
   if (comprimentoTotal === 0) {
     return tracado[0];
