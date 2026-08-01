@@ -37,6 +37,7 @@ import {
   VIEWBOX_PISTA,
   VIEWBOX_X,
   VIEWBOX_Y,
+  JANELA_CURVATURA_ZEBRA,
   anguloDeVirada,
   pathDaVolta,
   pathDoTrecho,
@@ -921,6 +922,49 @@ describe('zebra (3.9)', () => {
       expect(coberturaAprox(densa, trechos)).toBeGreaterThanOrEqual(PISO_COBERTURA_DENSA);
     },
   );
+
+  /**
+   * `OpcoesZebra` existe pra o preview varrer 88/40% usando o algoritmo DE
+   * PRODUÇÃO em vez de uma cópia. O risco que isso cria é um só: alguém mexer
+   * no default e mudar a saída de produção sem perceber. Os goldens das 10
+   * pistas já pegariam a mudança pela SAÍDA; este teste pega pela CAUSA —
+   * passar os quatro parâmetros explicitamente nos valores das constantes tem
+   * de ser indistinguível de não passar nada.
+   */
+  it.each(dataset.pistas.map((p) => [p.id] as const))(
+    'OpcoesZebra: em %s, passar os defaults explicitamente é idêntico a omitir o argumento',
+    (pistaId) => {
+      const tracado = tracadoDaPista(pistaId);
+      expect(
+        trechosDeZebra(tracado, {
+          anguloMinimo: ANGULO_MINIMO_ZEBRA,
+          alcance: ALCANCE_ZEBRA,
+          coberturaMaxima: COBERTURA_MAXIMA_ZEBRA,
+          janela: JANELA_CURVATURA_ZEBRA,
+        }),
+      ).toEqual(trechosDeZebra(tracado));
+    },
+  );
+
+  /**
+   * O par que dá sentido ao de cima: se os parâmetros fossem ignorados (um
+   * `opcoes` esquecido em algum dos quatro usos), o teste de identidade acima
+   * passaria igual. Aqui cada parâmetro precisa MORDER quando sai do default.
+   */
+  it('OpcoesZebra: cada parâmetro afeta a saída quando sai do default', () => {
+    // Nürburgring e NÃO Monza: a 120 pontos o teto de 40% não é vinculante em
+    // Monza (48 trechos com teto e sem teto), então soltar o teto lá não muda
+    // nada e o parâmetro pareceria inerte. No Nürburgring morde — é a pista que
+    // dá 85% de cobertura sem teto.
+    const densa = reamostrarPorArco(suavizarPolilinhaFechada(tracadoDaPista('pista-nurburgring')), 120);
+    const base = trechosDeZebra(densa);
+    // Ângulo alto demais e janela curta demais derrubam candidatos; teto folgado
+    // admite os que o de 40% recusa; alcance menor encurta cada trecho.
+    expect(trechosDeZebra(densa, { anguloMinimo: 179 }).length).toBeLessThan(base.length);
+    expect(trechosDeZebra(densa, { janela: 1 }).length).toBeLessThan(base.length);
+    expect(trechosDeZebra(densa, { coberturaMaxima: 1 }).length).toBeGreaterThan(base.length);
+    expect(trechosDeZebra(densa, { alcance: 1 })[0].alcanceFrente).toBeLessThan(base[0].alcanceFrente);
+  });
 
   /**
    * A regra inviolável 3 da Fase 7 ("zebra só em CURVA, nunca em reta") só era
