@@ -11,8 +11,10 @@
   (33 arquivos) verdes · working tree limpa.
 - **Medido em 2026-08-01, não herdado:** `tsc --noEmit` **exit 0**, `npm run build` **exit 0**,
   `eslint` limpo. `npm run balance` não se aplica (nada de nota/lógica de corrida foi tocado).
-- **`origin/main` está em `b39782d` (PR 7.4). A `main` local está ~21 commits à frente e NADA
-  disso foi pushado.** **Push continua só com "ok" explícito do dev.**
+- **`origin/main` está em `b39782d` (PR 7.4). A `main` local está ~20 commits à frente e NADA
+  disso foi pushado** — número exato: `git rev-list --count b39782d..HEAD` (escrever a contagem aqui
+  a desatualiza no commit seguinte, que é o próprio commit que a escreve).
+  **Push continua só com "ok" explícito do dev.**
 
 ## 🛑 AGUARDANDO O DEV — dois previews gerados e MOSTRADOS, sem veredito ainda
 
