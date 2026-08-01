@@ -4,6 +4,7 @@ import equipeAnosReal from '../data/equipe-anos.json';
 import pecasReal from '../data/pecas.json';
 import pistasReal from '../data/pistas.json';
 import { pontoNoTracado, TRACADO_GENERICO, type Ponto } from './fluxo-corrida';
+import { VIEWBOX_ALTURA, VIEWBOX_LARGURA, VIEWBOX_X, VIEWBOX_Y } from './pista-camadas';
 import { TRACADOS_POR_PISTA, tracadoDaPista } from './tracados';
 
 const dataset = criarDataset(equipeAnosReal, pecasReal, pistasReal);
@@ -99,12 +100,26 @@ describe('tracadoDaPista', () => {
         expect(tracado.length).toBeGreaterThanOrEqual(10);
       });
 
-      it('todos os pontos estão dentro do viewBox 0 0 1000 600', () => {
+      /**
+       * Este teste travava `0 0 1000 600` — o viewBox de antes do PR 7.3. O 7.4
+       * mediu e escolheu `-10 -30 1000 660` (`VIEWBOX_*` em `pista-camadas.ts`),
+       * e o limite velho ficou proibindo a faixa y 600-630 que o próprio 7.4
+       * abriu: um redesenho que usasse essa faixa levaria um vermelho que não
+       * significa nada. Agora as bordas vêm das constantes, não de números
+       * soltos que envelhecem em silêncio.
+       *
+       * ESCOPO: guarda de que a INTENÇÃO DE DESENHO cabe na moldura. Não é a
+       * guarda do que se DESENHA — a curva suavizada estoura o bounding box do
+       * controle em até 15,1 u (Mônaco) e cada camada espalha
+       * `MEIA_CAMADA_MAIS_LARGA` pra cada lado. Essa restrição, medida sobre a
+       * curva, é do PR de infra do redesenho.
+       */
+      it('todos os pontos de controle estão dentro do viewBox do replay', () => {
         for (const ponto of tracado) {
-          expect(ponto.x).toBeGreaterThan(0);
-          expect(ponto.x).toBeLessThan(1000);
-          expect(ponto.y).toBeGreaterThan(0);
-          expect(ponto.y).toBeLessThan(600);
+          expect(ponto.x).toBeGreaterThan(VIEWBOX_X);
+          expect(ponto.x).toBeLessThan(VIEWBOX_X + VIEWBOX_LARGURA);
+          expect(ponto.y).toBeGreaterThan(VIEWBOX_Y);
+          expect(ponto.y).toBeLessThan(VIEWBOX_Y + VIEWBOX_ALTURA);
         }
       });
 

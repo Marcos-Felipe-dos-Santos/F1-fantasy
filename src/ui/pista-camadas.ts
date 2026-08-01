@@ -418,6 +418,28 @@ interface CandidatoZebra {
 }
 
 /**
+ * Sobrescritas dos quatro parâmetros do critério de zebra. **Existem pra
+ * MEDIÇÃO e PREVIEW, não pra configuração**: nenhum caminho de produção passa
+ * este argumento, e todos os campos caem nas constantes do módulo quando
+ * omitidos — `trechosDeZebra(pontos)` é, byte a byte, o que era antes de o
+ * parâmetro existir (`pista-camadas.test.ts` fixa isso comparando as duas
+ * chamadas, além dos goldens das 10 pistas).
+ *
+ * O motivo de a parametrização morar na produção, e não numa cópia do
+ * algoritmo dentro do script de preview: um preview que reimplementa o
+ * critério para de refletir a tela no dia em que os dois divergem, e aí não
+ * serve pra decidir nada — que é a premissa declarada no cabeçalho de
+ * `scripts/preview-tracados.preview.test.ts`. Varrer 88/40% num preview exige
+ * variar os valores; a alternativa honesta é esta.
+ */
+export interface OpcoesZebra {
+  readonly anguloMinimo?: number;
+  readonly alcance?: number;
+  readonly coberturaMaxima?: number;
+  readonly janela?: number;
+}
+
+/**
  * Trechos de zebra de uma polilinha FECHADA (`pontos`): o algoritmo (ver
  * PLANO PR 7.3 §2/§3.9):
  * 1. calcula a VIRADA ACUMULADA em cada vértice — a soma dos ângulos de virada
@@ -469,7 +491,12 @@ interface CandidatoZebra {
  * contíguos num só path reduziria a contagem, mas reiniciaria o tracejado
  * `12 12` em outro lugar e mudaria o visual de hoje; fora de escopo aqui.
  */
-export function trechosDeZebra(pontos: readonly Ponto[]): TrechoZebra[] {
+export function trechosDeZebra(pontos: readonly Ponto[], opcoes: OpcoesZebra = {}): TrechoZebra[] {
+  const anguloMinimo = opcoes.anguloMinimo ?? ANGULO_MINIMO_ZEBRA;
+  const alcanceMaximo = opcoes.alcance ?? ALCANCE_ZEBRA;
+  const coberturaMaxima = opcoes.coberturaMaxima ?? COBERTURA_MAXIMA_ZEBRA;
+  const janela = opcoes.janela ?? JANELA_CURVATURA_ZEBRA;
+
   const n = pontos.length;
   if (n < 3) return [];
 
@@ -490,13 +517,13 @@ export function trechosDeZebra(pontos: readonly Ponto[]): TrechoZebra[] {
   for (let i = 0; i < n; i++) {
     const anteriorIdx = (i - 1 + n) % n;
     const proximoIdx = (i + 1) % n;
-    const virada = viradaAcumuladaNaJanela(pontos, i);
-    if (virada < ANGULO_MINIMO_ZEBRA) continue;
+    const virada = viradaAcumuladaNaJanela(pontos, i, janela);
+    if (virada < anguloMinimo) continue;
 
     const comprimentoAnterior = comprimentosSegmento[anteriorIdx];
     const comprimentoProximo = comprimentosSegmento[i];
-    const alcanceTras = Math.min(ALCANCE_ZEBRA, comprimentoAnterior / 2);
-    const alcanceFrente = Math.min(ALCANCE_ZEBRA, comprimentoProximo / 2);
+    const alcanceTras = Math.min(alcanceMaximo, comprimentoAnterior / 2);
+    const alcanceFrente = Math.min(alcanceMaximo, comprimentoProximo / 2);
 
     const tAntes = comprimentoAnterior === 0 ? 0 : alcanceTras / comprimentoAnterior;
     const antes: Ponto = {
@@ -533,7 +560,7 @@ export function trechosDeZebra(pontos: readonly Ponto[]): TrechoZebra[] {
   const intervalosAceitos: IntervaloArco[] = [];
   for (const candidato of candidatos) {
     const cobertura = comprimentoUniao([...intervalosAceitos, ...candidato.intervalo]) / perimetro;
-    if (cobertura > COBERTURA_MAXIMA_ZEBRA) continue;
+    if (cobertura > coberturaMaxima) continue;
     aceitos.push(candidato);
     intervalosAceitos.push(...candidato.intervalo);
   }
