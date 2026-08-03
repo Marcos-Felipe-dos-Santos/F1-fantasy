@@ -86,7 +86,7 @@ const ROTULOS_ULTRAPASSAGEM: Record<Ultrapassagem, { rotulo: string; emoji: stri
  * Cortes do bucket de desgaste (§9): baixo <40, médio 40-69, alto ≥70.
  * Calibrados pros valores reais do dataset (`src/data/pistas.json`, só usa
  * 25/50/75) — Monza/Mônaco/Red Bull Ring (25) caem em baixo; Spa/Interlagos/
- * Imola (50) em médio; Silverstone/Suzuka/Nürburgring/Montreal (75) em alto,
+ * Imola/Nürburgring (50) em médio; Silverstone/Suzuka/Montreal (75) em alto,
  * batendo com a tabela do GDD §9.
  */
 function bucketDesgaste(desgaste: number): 'Baixo' | 'Médio' | 'Alto' {

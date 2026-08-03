@@ -131,15 +131,15 @@ describe('perfilPista', () => {
     }
   });
 
-  it('desgaste médio (40-69): Spa, Interlagos, Imola', () => {
-    for (const id of ['pista-spa', 'pista-interlagos', 'pista-imola']) {
+  it('desgaste médio (40-69): Spa, Interlagos, Imola, Nürburgring', () => {
+    for (const id of ['pista-spa', 'pista-interlagos', 'pista-imola', 'pista-nurburgring']) {
       const pista = dataset.pistasById.get(id)!;
       expect(perfilPista(pista).desgaste).toBe('Médio');
     }
   });
 
-  it('desgaste alto (>=70): Silverstone, Suzuka, Nürburgring, Montreal', () => {
-    for (const id of ['pista-silverstone', 'pista-suzuka', 'pista-nurburgring', 'pista-montreal']) {
+  it('desgaste alto (>=70): Silverstone, Suzuka, Montreal', () => {
+    for (const id of ['pista-silverstone', 'pista-suzuka', 'pista-montreal']) {
       const pista = dataset.pistasById.get(id)!;
       expect(perfilPista(pista).desgaste).toBe('Alto');
     }

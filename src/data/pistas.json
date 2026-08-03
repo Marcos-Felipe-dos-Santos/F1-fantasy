@@ -61,13 +61,13 @@
   },
   {
     "id": "pista-nurburgring",
-    "nome": "Nürburgring (Nordschleife)",
-    "pesos": { "aero": 0.3, "mec": 0.4, "motor": 0.3 },
+    "nome": "Nürburgring (GP-Strecke)",
+    "pesos": { "aero": 0.35, "mec": 0.4, "motor": 0.25 },
     "ultrapassagem": "media",
     "chanceChuva": 0.55,
-    "voltas": 10,
-    "tempoBaseMs": 420000,
-    "desgaste": 75
+    "voltas": 13,
+    "tempoBaseMs": 88000,
+    "desgaste": 50
   },
   {
     "id": "pista-imola",

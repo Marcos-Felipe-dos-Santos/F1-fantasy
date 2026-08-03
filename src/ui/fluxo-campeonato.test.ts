@@ -71,12 +71,15 @@ describe('calendarioPadrao', () => {
   // então uma reordenação passaria batido aqui. Quem detecta ordem é o teste
   // "devolve os ids na ordem do dataset.pistas" acima — os dois são
   // complementares; não apague aquele achando que este cobre.
-  it('soma de voltas: temporada curta = 68, completa = 132', () => {
+  it('soma de voltas: temporada curta = 68, completa = 135', () => {
     const somaVoltas = (ids: string[]) =>
       ids.reduce((soma, id) => soma + dataset.pistasById.get(id)!.voltas, 0);
 
+    // A curta segue em 68 porque o Nürburgring é a 6ª pista em ordem alfabética
+    // e fica de fora das 5 primeiras; só a completa sentiu o 10 → 13 voltas do
+    // GP-Strecke (132 + 3).
     expect(somaVoltas(calendarioPadrao(dataset, 'curta'))).toBe(68);
-    expect(somaVoltas(calendarioPadrao(dataset, 'completa'))).toBe(132);
+    expect(somaVoltas(calendarioPadrao(dataset, 'completa'))).toBe(135);
   });
 
   it('lança para formato fora do union (save/URL adulterado), em vez de devolver o calendário inteiro', () => {
