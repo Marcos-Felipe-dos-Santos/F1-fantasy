@@ -8,8 +8,8 @@
 ## Estado atual
 
 - **Branch `pr-7.7-dados-nurburgring`** · último PR **7.8** (paleta grafite/F1, dark + light) ·
-  **1012 testes** (34 arquivos) verdes · working tree limpa.
-- **Medido em 2026-08-06, não herdado:** `npm test` **1012/34**, `tsc --noEmit` **exit 0**,
+  **1018 testes** (34 arquivos) verdes · working tree limpa.
+- **Medido em 2026-08-06, não herdado:** `npm test` **1018/34**, `tsc --noEmit` **exit 0**,
   `npm run build` **exit 0**, `eslint src scripts` limpo, **Modo Cego verde** (3/3).
   **`npm run balance` inalterado por construção** — o harness importa só `src/engine/dataset`,
   `src/data/*.json` e `scripts/alavancas`, e nenhum dos três foi tocado pelo 7.8.
@@ -30,6 +30,11 @@ o que muda entre os modos.
 **Perguntas do portão:** (a) a tela diz "F1" agora? (b) o light mode entra ou fica só o dark?
 (c) o painel do traçado **não clareia** no light (é ilha escura por necessidade matemática, ver
 abaixo) — isso incomoda?
+
+⚠️ **O preview é MAQUETE, não o app rodando.** Ele monta CSS próprio a partir dos tokens reais;
+não carrega o `estilos.css`. Serve pra julgar a COR (é o que o portão pergunta), não pra auditar
+se cada seletor de produção usa o token certo — isso é papel dos testes, e o pareamento
+"preenchimento de acento + tinta escura" ganhou guarda de CSS no commit `358ab6f`.
 
 ### 2. AS SILHUETAS (herdado do 7.7, AINDA SEM VEREDITO)
 
@@ -110,7 +115,10 @@ dev reprovou.
 1. **Abertas pelo 7.8:** (a) o `BotaoTema` é um botão discreto no canto do `app-shell` — posição e
    forma **não passaram por veredito de arte**; (b) `erro` (salmão `#FF7B85`) e `raridadeProibido`
    (`#FF4757`) continuam sendo dois vermelhos ao lado do vermelho da marca — não foi mexido porque
-   é decisão de arte.
+   é decisão de arte; (c) **flash de tema no carregamento**: o `data-tema` só é escrito quando o
+   React monta e o efeito do `BotaoTema` roda, então quem tem o SO no claro e escolheu escuro vê
+   um lampejo claro (e vice-versa). Conserto padrão é um script inline de duas linhas no
+   `index.html` — fora do que foi pedido neste PR, registrado como limitação conhecida.
 2. **`AMOSTRAS_POR_SEGMENTO` pode cair de 12 pra 4-6 — COM o número.** A justificativa de N=12 era
    que N=8 estourava o teto de 0,7 u; com as silhuetas novas **N=8 desvia 0,539 u**. Baixar move
    todos os goldens, então é execução própria.
