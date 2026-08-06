@@ -458,7 +458,9 @@ export function classificacaoAoVivo(
 
     const ambosTerminaram = a.status === 'terminou' && b.status === 'terminou';
     if (ambosTerminaram) {
-      return (tempoTotalPorJogador.get(a.jogadorId) ?? 0) - (tempoTotalPorJogador.get(b.jogadorId) ?? 0);
+      return (
+        (tempoTotalPorJogador.get(a.jogadorId) ?? 0) - (tempoTotalPorJogador.get(b.jogadorId) ?? 0)
+      );
     }
 
     return (posicaoLargada.get(a.jogadorId) ?? 0) - (posicaoLargada.get(b.jogadorId) ?? 0);
@@ -468,33 +470,67 @@ export function classificacaoAoVivo(
 }
 
 /**
- * Traçado estilizado de Monza (não é o traçado real, precisão não importa,
- * §9/§10): retas longas, as 3 chicanes (Rettifilo, Roggia, Ascari), os Lesmos
- * e a Parabolica final. Polilinha fechada em viewBox 0 0 1000 600 — o
- * segmento de fechamento (último ponto → primeiro) é implícito, calculado
- * por `pontoNoTracado`.
+ * Traçado de MONZA (5,793 km, 11 curvas, HORÁRIO) — redesenhado no PR 7.7 a
+ * partir da geometria descrita em `referencias/REFERENCIA_TRACADOS.md` §1, sem
+ * decalcar mapa nenhum (GDD §14.2). É a única das dez sem imagem de referência:
+ * o dev mandou nove das dez, e Monza foi desenhada só pela descrição textual.
  *
- * PR 2.8: as outras 9 pistas ganharam silhueta própria em `tracados.ts`
- * (`TRACADOS_POR_PISTA`/`tracadoDaPista`) — este traçado permanece como a
- * silhueta de Monza (reaproveitada diretamente por `TRACADOS_POR_PISTA`) e
- * como o FALLBACK genérico de `tracadoDaPista` pra um id de pista sem
- * silhueta própria.
+ * Duas retas enormes em direções opostas dominam tudo, e é essa proporção
+ * reta/curva que carrega o reconhecimento. As três chicanes (Rettifilo, Roggia,
+ * Ascari) são DEGRAUS nas retas — se virarem curvas arredondadas, deixa de ser
+ * Monza na hora. Lesmo 1+2 juntas fazem o cotovelo, e a Parabólica é o único
+ * arco realmente longo e contínuo do traçado.
+ *
+ * Continua sendo a silhueta de Monza (reaproveitada diretamente por
+ * `TRACADOS_POR_PISTA`) E o FALLBACK genérico de `tracadoDaPista` pra um id de
+ * pista sem silhueta própria.
  */
 export const TRACADO_GENERICO: TracadoImutavel = [
-  { x: 150, y: 500 }, // reta de largada/chegada
-  { x: 650, y: 500 },
-  { x: 700, y: 480 }, // Variante del Rettifilo (1a chicane) — entrada
-  { x: 670, y: 445 }, // Rettifilo — apex 1
-  { x: 720, y: 415 }, // Rettifilo — apex 2
-  { x: 800, y: 400 }, // Curva Biassono
-  { x: 855, y: 320 }, // Variante della Roggia (2a chicane) — entrada
-  { x: 815, y: 270 }, // Roggia — apex
-  { x: 870, y: 210 }, // Lesmo 1
-  { x: 820, y: 150 }, // Lesmo 2
-  { x: 650, y: 110 }, // início do Rettilineo (reta dos boxes de trás)
-  { x: 320, y: 100 }, // Variante Ascari (3a chicane) — entrada
-  { x: 260, y: 130 }, // Ascari — apex
-  { x: 160, y: 210 }, // aproximação da Parabolica
-  { x: 70, y: 360 }, // Parabolica — ápice externo
-  { x: 100, y: 470 }, // saída da Parabolica, de volta à reta principal
+  // Reta principal (Rettifilo Tribune) — a mais longa.
+  { x: 134, y: 408 },
+  { x: 194, y: 332 },
+  { x: 258, y: 252 },
+  { x: 322, y: 172 },
+  { x: 378, y: 94 },
+  { x: 414, y: 48 },
+  // Variante del Rettifilo: degrau dir+esq.
+  { x: 440, y: 36 },
+  { x: 464, y: 84 },
+  { x: 512, y: 66 },
+  { x: 556, y: 68 },
+  // Curva Grande / Biassono: arco amplo à direita.
+  { x: 608, y: 78 },
+  { x: 668, y: 110 },
+  { x: 712, y: 162 },
+  { x: 738, y: 222 },
+  // Reta de Biassono.
+  { x: 756, y: 298 },
+  { x: 770, y: 362 },
+  // Variante della Roggia: segundo degrau.
+  { x: 792, y: 398 },
+  { x: 820, y: 388 },
+  { x: 832, y: 428 },
+  // Lesmo 1 + Lesmo 2 — o cotovelo do L.
+  { x: 858, y: 468 },
+  { x: 882, y: 500 },
+  { x: 876, y: 538 },
+  { x: 842, y: 558 },
+  // Reta do Serraglio, com kink leve no meio.
+  { x: 780, y: 564 },
+  { x: 704, y: 556 },
+  { x: 628, y: 564 },
+  // Variante Ascari: três degraus encadeados.
+  { x: 560, y: 562 },
+  { x: 514, y: 532 },
+  { x: 476, y: 548 },
+  { x: 436, y: 518 },
+  // Reta traseira.
+  { x: 376, y: 524 },
+  { x: 304, y: 534 },
+  { x: 236, y: 538 },
+  // Parabólica: arco longo de raio crescente, fecha na reta principal.
+  { x: 176, y: 532 },
+  { x: 124, y: 502 },
+  { x: 98, y: 460 },
+  { x: 106, y: 430 },
 ];

@@ -215,13 +215,20 @@ export const LARGURA_SVG_MINIMA_PX = 320;
  * 10 pistas de hoje (medido: índices e alcances idênticos, nas 10) — o que muda
  * é o comportamento quando a silhueta é densificada. Ver `trechosDeZebra`.
  *
- * ⚠️ Por que a saída de hoje não se mexe, dito sem eufemismo: nas silhuetas de
- * 16 pontos TODO segmento é maior que meia janela (44 u), então nenhum vizinho
- * cai dentro dela e a virada acumulada é IDÊNTICA ao ângulo do vértice — a
- * janela é **inerte** na geometria de produção atual. Isso é o que torna a
- * preservação do desenho estrutural em vez de sorte; e é também o motivo de o
- * mecanismo novo só ser exercitado por sintéticos e por curvas densificadas
- * (`pista-camadas.test.ts`), não por pista nenhuma do jogo hoje.
+ * ⚠️ Por que a saída não se mexia, dito sem eufemismo: nas silhuetas de 16
+ * pontos TODO segmento é maior que meia janela (44 u), então nenhum vizinho cai
+ * dentro dela e a virada acumulada é IDÊNTICA ao ângulo do vértice — a janela
+ * era **inerte** na geometria de produção. Isso é o que tornava a preservação
+ * do desenho estrutural em vez de sorte.
+ *
+ * ✅ **DEIXOU DE SER INERTE NO PR 7.7** (redesenho das 10). As silhuetas novas
+ * têm 34-48 pontos e segmentos bem menores que 44 u, então a janela passou a
+ * somar vizinhos e a ENCONTRAR curvas que o critério por vértice perde — de 1
+ * candidato extra (Silverstone) a 15 (Mônaco). É o mecanismo do 7.6 fazendo em
+ * produção o que só sintéticos exercitavam, e a razão de ele existir. Medido: a
+ * janela é SUPERCONJUNTO do vértice nas 10, nenhuma perde vértice que o critério
+ * antigo pegava. A única em que os dois coincidem é o Red Bull Ring, a mais
+ * simples do parque — lá cada curva ainda cabe num vértice só.
  */
 export const ANGULO_MINIMO_ZEBRA = 28;
 export const ALCANCE_ZEBRA = 44;
@@ -234,10 +241,17 @@ export const COBERTURA_MAXIMA_ZEBRA = 0.4;
  * que o critério faz passa a ser "há virada suficiente no PEDAÇO DE PISTA que
  * esta zebra cobriria?", em vez de "há virada suficiente NESTE VÉRTICE?".
  *
- * Por que 88 e não mais: medido em Monza, 44, 66 e 88 dão os mesmos 11 trechos
- * / 38,4% (a seleção do 7.1, intacta); a 110 a janela já alcança a chicane
- * vizinha e admite o vértice 1 (21,8°), mudando a seleção. O motivo de parar em
- * 88 é esse — **preservar o desenho aprovado**, e não uma violação da regra 3:
+ * Por que 88 e não mais: medido na Monza DE 16 PONTOS, 44, 66 e 88 davam os
+ * mesmos 11 trechos / 38,4% (a seleção do 7.1, intacta); a 110 a janela já
+ * alcançava a chicane vizinha e admitia o vértice 1 (21,8°), mudando a seleção.
+ * O motivo de parar em 88 era esse — **preservar o desenho aprovado**, e não uma
+ * violação da regra 3:
+ *
+ * ⚠️ Essa calibração foi feita contra silhuetas que o PR 7.7 substituiu INTEIRAS.
+ * Na Monza redesenhada (37 pontos) o número é outro: 18 trechos / 37,9%, com o
+ * teto de 40% cortando um 19º candidato. **O valor de 88 NÃO foi mexido aqui** —
+ * reabrir é decisão de arte do dev, e agora ela pode ser tomada com o parque
+ * redesenhado inteiro na mesa, que era a informação que faltava.
  * o vértice 1 é a PONTA da reta de largada e um trecho ali se estende só ±44 u,
  * longe do meio da reta (250 u adiante). O teto de cima é o desenho, não a
  * regra.
@@ -457,12 +471,14 @@ export interface OpcoesZebra {
  *    inteira no primeiro trecho grande que não coubesse, mesmo que
  *    candidatos menores mais adiante no ranking ainda coubessem. O teto de
  *    fato MORDE em 6 das 10 pistas (Mônaco, Silverstone, Interlagos,
- *    Nürburgring, Imola, Red Bull Ring); em Monza, Spa, Suzuka e Montreal
- *    TODOS os candidatos ≥28° cabem dentro do teto sem cortar nenhum — em
- *    particular, Monza dá 38,4% de cobertura com os 11 candidatos inteiros,
- *    sem o teto ser vinculante ali (o `break`/`continue` dão o mesmo
- *    resultado nas 10 pistas hoje: confirmado contra os goldens de
- *    `pista-camadas.test.ts`);
+ *    Nürburgring, Imola, Red Bull Ring). **Depois do redesenho das 10 (PR 7.7)
+ *    o teto morde em 8 das 10** — medido trecho a trecho, com e sem teto: só
+ *    Spa (33,4% de cobertura) e Red Bull Ring (28,0%) não perdem candidato
+ *    nenhum pro corte. Monza entrou no grupo — sem teto daria 19
+ *    trechos / 40,4%, e o corte tira a Parabólica (vértice 34). O caso extremo
+ *    segue sendo o Nürburgring: 29 trechos / 50,0% sem teto contra 24 / 38,7%
+ *    com ele. O `break`/`continue` seguem dando o mesmo resultado nas 10:
+ *    confirmado contra os goldens de `pista-camadas.test.ts`;
  * 6. devolve os trechos reordenados por índice crescente.
  *
  * POR QUE A JANELA (PR da zebra invariante à densidade): o critério anterior

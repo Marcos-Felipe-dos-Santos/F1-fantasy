@@ -180,30 +180,35 @@ describe('tracadoSuavizado', () => {
  * `angControle` é o quanto o polígono à mão "vira" no pior vértice — o número
  * que fazia as pistas lerem como quadradas.
  *
- * ⚠️ SPA (169,5° ⇒ 120,7°) e INTERLAGOS (164,1° ⇒ 101,6°) continuam angulosos,
- * e isso NÃO é falha da suavização. As duas silhuetas têm no vértice #0 um
- * ESPINHO de quase 180° (a polilinha volta por cima de si mesma na
- * largada/chegada). Catmull-Rom é INTERPOLANTE: a curva é obrigada a passar
- * pelo vértice, então arredonda o espinho com raio ~0,2 unidade — cusp-free na
- * matemática (o ângulo cai pela metade a cada vez que se dobra N, prova de C1),
- * mas invisível na tela. Só editar as duas silhuetas resolve, e silhueta é
- * DECISÃO DE ARTE — vai ao dev com o preview, não se conserta aqui.
+ * ✅ **A LISTA DE ESPINHO ZEROU NO PR 7.7** (redesenho das 10). Spa era o último
+ * caso — 169,5° ⇒ 120,7° — e virou **111,7° ⇒ 24,8°**. O espinho era um vértice
+ * de quase 180° no #0, onde a polilinha voltava por cima de si mesma na
+ * largada; Catmull-Rom é INTERPOLANTE, então a curva era obrigada a passar por
+ * ele e o arredondava com raio ~0,2 unidade — cusp-free na matemática, invisível
+ * na tela. Só editar a silhueta resolvia, e foi o que o redesenho fez: a volta
+ * agora fecha pela reta dos boxes em vez de dobrar sobre si mesma.
+ *
+ * Cuidado ao citar estes números: o primeiro de cada par é do traçado de
+ * CONTROLE e o segundo é da curva SUAVIZADA — misturar as duas grandezas faz a
+ * melhora parecer maior do que é. É a confirmação do que o `ESTADO.md` previa
+ * ("o espinho não se corrige separado — o redesenho resolve"), e é a lista de
+ * exceção indo a ZERO, que é o critério declarado.
  */
 const ANGULO_MEDIDO: Record<string, { controle: number; suavizado: number }> = {
-  'pista-monaco': { controle: 121.0, suavizado: 42.0 },
-  'pista-spa': { controle: 169.5, suavizado: 120.7 },
-  'pista-monza': { controle: 108.8, suavizado: 26.6 },
-  'pista-silverstone': { controle: 100.1, suavizado: 31.0 },
-  'pista-suzuka': { controle: 69.3, suavizado: 10.0 },
-  'pista-interlagos': { controle: 164.1, suavizado: 101.6 },
-  'pista-nurburgring': { controle: 94.7, suavizado: 21.5 },
-  'pista-imola': { controle: 102.1, suavizado: 29.7 },
-  'pista-red-bull-ring': { controle: 103.2, suavizado: 24.9 },
-  'pista-montreal': { controle: 95.0, suavizado: 24.3 },
+  'pista-monaco': { controle: 117.41, suavizado: 29.37 },
+  'pista-spa': { controle: 113.28, suavizado: 25.6 },
+  'pista-monza': { controle: 92.95, suavizado: 23.65 },
+  'pista-silverstone': { controle: 100.6, suavizado: 23.6 },
+  'pista-suzuka': { controle: 116.92, suavizado: 29.32 },
+  'pista-interlagos': { controle: 124.96, suavizado: 32.4 },
+  'pista-nurburgring': { controle: 91.74, suavizado: 16.64 },
+  'pista-imola': { controle: 110.38, suavizado: 27.4 },
+  'pista-red-bull-ring': { controle: 90.97, suavizado: 17.34 },
+  'pista-montreal': { controle: 126.2, suavizado: 37.15 },
 };
 
-/** As duas silhuetas com espinho de ~180° no vértice #0. Ver `ANGULO_MEDIDO`. */
-const SILHUETAS_COM_ESPINHO = ['pista-spa', 'pista-interlagos'];
+/** A silhueta com espinho de ~180° no vértice #0. Ver `ANGULO_MEDIDO`. */
+const SILHUETAS_COM_ESPINHO: string[] = [];
 
 describe('a suavização de fato tira a "quadratura" (baseline vermelho do 7.4)', () => {
   it.each(IDS.map((id) => [id] as const))('%s: maior ângulo de virada bate com o medido', (id) => {
@@ -219,7 +224,7 @@ describe('a suavização de fato tira a "quadratura" (baseline vermelho do 7.4)'
     },
   );
 
-  it('as 8 pistas sem espinho reduzem o ângulo do pior vértice em pelo menos 60%', () => {
+  it('as 10 pistas reduzem o ângulo do pior vértice em pelo menos 60%', () => {
     for (const id of IDS.filter((i) => !SILHUETAS_COM_ESPINHO.includes(i))) {
       const antes = maiorAnguloDeVirada(tracadoDaPista(id));
       const depois = maiorAnguloDeVirada(tracadoSuavizado(id));
@@ -227,24 +232,21 @@ describe('a suavização de fato tira a "quadratura" (baseline vermelho do 7.4)'
     }
   });
 
-  it('Spa e Interlagos MELHORAM mas continuam angulosas — decisão de arte pendente com o dev', () => {
-    for (const id of SILHUETAS_COM_ESPINHO) {
-      const antes = maiorAnguloDeVirada(tracadoDaPista(id));
-      const depois = maiorAnguloDeVirada(tracadoSuavizado(id));
-      expect(depois).toBeLessThan(antes);
-      expect(depois, `${id} deixou de ser um caso de espinho — revisar a nota do PR 7.4`).toBeGreaterThan(90);
-    }
-  });
-
-  it('o espinho está no vértice #0 das duas, e é o ÚNICO vértice acima de 150°', () => {
-    for (const id of SILHUETAS_COM_ESPINHO) {
+  /**
+   * A lista de exceção ZEROU no PR 7.7 e este teste é o que impede ela de
+   * voltar a crescer em silêncio: uma silhueta futura que reintroduza espinho
+   * vermelha aqui, com o nome da pista. Só ENCOLHER é progresso; ganhar nome de
+   * volta é regressão.
+   */
+  it('NENHUMA silhueta tem espinho — a lista de exceção está vazia e continua vazia', () => {
+    expect(SILHUETAS_COM_ESPINHO).toEqual([]);
+    const comEspinho = IDS.filter((id) => {
       const t = tracadoDaPista(id);
-      const agudos = t
-        .map((_, i) => [i, anguloDeVirada(t[(i - 1 + t.length) % t.length], t[i], t[(i + 1) % t.length])] as const)
-        .filter(([, a]) => a >= 150)
-        .map(([i]) => i);
-      expect(agudos, `${id}`).toEqual([0]);
-    }
+      return t.some((_, i) =>
+        anguloDeVirada(t[(i - 1 + t.length) % t.length], t[i], t[(i + 1) % t.length]) >= 150,
+      );
+    });
+    expect(comEspinho, 'silhueta com vértice de ≥150° voltou a existir').toEqual([]);
   });
 
   it('`pathDaVolta` desenha a CURVA, não a polilinha de controle (o elo com a tela)', () => {
@@ -294,7 +296,21 @@ describe('fidelidade da amostragem (escolha de AMOSTRAS_POR_SEGMENTO)', () => {
     expect(desvioDaCurvaIdeal(tracadoDaPista(id))).toBeLessThan(DESVIO_MAXIMO);
   });
 
-  it('N menor reprovaria — o teto de 0,7u de fato morde (o N não é chute)', () => {
+  /**
+   * ⚠️ ESTE TESTE MUDOU DE SINAL NO PR 7.7, e o número é o achado — não o
+   * conserto. Nas silhuetas de 16 pontos, N=8 desviava MAIS que o teto de 0,7u,
+   * e era isso que provava que N=12 não era chute. Com as 10 redesenhadas
+   * (34-48 pontos), as cordas encolheram, a sagita escala com a corda e **N=8
+   * agora desvia 0,539u — passa folgado**. A justificativa de N=12 caiu por
+   * terra.
+   *
+   * O teto de 0,7u NÃO foi mexido, e `AMOSTRAS_POR_SEGMENTO` continua 12: baixar
+   * a constante mudaria a geometria desenhada de todas as pistas de novo, e o
+   * `ESTADO.md` já registra "AMOSTRAS_POR_SEGMENTO cai de 12 pra 4-6" como
+   * decisão travada esperando execução própria. Este teste passa a MEDIR a
+   * folga, pra a redução ser feita depois com o número em mãos.
+   */
+  it('N=8 já não reprova depois do redesenho — a folga que habilita reduzir o N', () => {
     const piorEmN8 = Math.max(
       ...IDS.map((id) => {
         const controle = tracadoDaPista(id);
@@ -311,7 +327,10 @@ describe('fidelidade da amostragem (escolha de AMOSTRAS_POR_SEGMENTO)', () => {
         return maior;
       }),
     );
-    expect(piorEmN8).toBeGreaterThan(DESVIO_MAXIMO);
+    expect(piorEmN8).toBeCloseTo(0.539, 2);
+    expect(piorEmN8, 'N=8 voltou a estourar o teto — reabrir a escolha do N').toBeLessThan(
+      DESVIO_MAXIMO,
+    );
   });
 });
 
@@ -328,16 +347,20 @@ describe('fidelidade da amostragem (escolha de AMOSTRAS_POR_SEGMENTO)', () => {
  * extremo, então o golden é conservador em relação ao que se desenha.
  */
 const OVERSHOOT_MEDIDO: Record<string, number> = {
-  'pista-monaco': 15.1,
-  'pista-red-bull-ring': 14.45,
-  'pista-monza': 14.03,
-  'pista-interlagos': 10.53,
-  'pista-montreal': 10.08,
-  'pista-imola': 6.63,
-  'pista-spa': 4.29,
-  'pista-silverstone': 0.55,
-  'pista-suzuka': 0.2,
-  'pista-nurburgring': 0.0,
+  'pista-monaco': 1.12,
+  'pista-red-bull-ring': 3.09,
+  'pista-montreal': 1.32,
+  'pista-imola': 2.32,
+  'pista-spa': 1.78,
+  // Fatia 1 do redesenho (PR 7.7): Interlagos 10,53 ⇒ 3,96 e Monza 14,03 ⇒
+  // 0,91 — as duas saíram do topo da tabela. Menos overshoot é consequência
+  // direta de pontos de controle mais densos: a Catmull-Rom extrapola menos
+  // quando a corda é mais curta.
+  'pista-interlagos': 1.47,
+  'pista-monza': 1.67,
+  'pista-silverstone': 0.89,
+  'pista-suzuka': 2.54,
+  'pista-nurburgring': 3.4,
 };
 
 describe('overshoot da Catmull-Rom (a PARADA OBRIGATÓRIA do 7.4)', () => {
@@ -371,6 +394,12 @@ describe('overshoot da Catmull-Rom (a PARADA OBRIGATÓRIA do 7.4)', () => {
  * controle 4 e 12 na MESMA coordenada `(500, 300)`, evocando a ponte que passa
  * por cima da pista. Toda pista sem entrada aqui tem tolerância ZERO.
  *
+ * PR 7.7: o 8 foi redesenhado ASSIMÉTRICO (o laço dos Esses é maior que o da
+ * hairpin) e o cruzamento saiu do centro geométrico — passou dos vértices 4 e 12
+ * em (500,300) pros vértices 16 e 33 em (452,376). A propriedade que importa não
+ * mudou: continua havendo EXATAMENTE UM par de vértices coincidentes, e é ele
+ * que faz o X. Um segundo par aqui seria bug de desenho, não golden velho.
+ *
  * Como a curva é interpolante e `amostrarSegmento` emite o ponto de controle
  * por CÓPIA (não pela fórmula), os dois vértices continuam bit a bit iguais
  * depois de suavizar — é isso que mantém o X de Suzuka num vértice
@@ -378,7 +407,7 @@ describe('overshoot da Catmull-Rom (a PARADA OBRIGATÓRIA do 7.4)', () => {
  * flutuante. O teste logo abaixo trava essa propriedade.
  */
 const AUTOCONTATOS_INTENCIONAIS: Record<string, readonly Ponto[]> = {
-  'pista-suzuka': [{ x: 500, y: 300 }],
+  'pista-suzuka': [{ x: 452, y: 376 }],
 };
 
 describe('auto-interseção da curva suavizada', () => {
@@ -417,24 +446,24 @@ describe('auto-interseção da curva suavizada', () => {
     expect(Object.keys(AUTOCONTATOS_INTENCIONAIS)).toEqual(['pista-suzuka']);
   });
 
-  it('Suzuka: o X do "8" ainda existe na curva e cai exatamente em (500,300)', () => {
+  it('Suzuka: o X do "8" ainda existe na curva e cai exatamente em (452,376)', () => {
     const achados = cruzamentos(tracadoSuavizado('pista-suzuka'), {
       inclusivo: true,
       ignorarVerticeCompartilhado: false,
     });
     expect(achados.length).toBeGreaterThan(0);
     for (const p of achados) {
-      expect(Math.hypot(p.x - 500, p.y - 300)).toBeLessThanOrEqual(TOLERANCIA);
+      expect(Math.hypot(p.x - 452, p.y - 376)).toBeLessThanOrEqual(TOLERANCIA);
     }
   });
 
-  it('Suzuka: os vértices 4 e 12 seguem BIT A BIT iguais depois de suavizar', () => {
+  it('Suzuka: os vértices 16 e 33 seguem BIT A BIT iguais depois de suavizar', () => {
     const curva = tracadoSuavizado('pista-suzuka');
     const coincidentes = curva
       .map((p, i) => [p, i] as const)
-      .filter(([p]) => p.x === 500 && p.y === 300)
+      .filter(([p]) => p.x === 452 && p.y === 376)
       .map(([, i]) => i);
-    expect(coincidentes).toEqual([indiceDoVertice(4), indiceDoVertice(12)]);
+    expect(coincidentes).toEqual([indiceDoVertice(16), indiceDoVertice(33)]);
   });
 });
 
@@ -451,15 +480,20 @@ describe('auto-interseção da curva suavizada', () => {
  * diferentes da pista" quer dizer de fato.
  */
 const SEPARACAO_MEDIDA: Record<string, number> = {
-  'pista-red-bull-ring': 59.7,
-  'pista-nurburgring': 57.0,
-  'pista-montreal': 47.1,
-  'pista-silverstone': 45.9,
-  'pista-imola': 42.1,
-  'pista-monza': 40.5,
-  'pista-monaco': 34.7,
-  'pista-interlagos': 20.1,
-  'pista-spa': 8.8,
+  'pista-red-bull-ring': 48.0,
+  'pista-nurburgring': 36.43,
+  // Fatia 1 do redesenho (PR 7.7): Interlagos era o pior caso NÃO-exceção da
+  // tabela, a 20,1 — 3,1 acima do limiar de 17. Foi a restrição que mandou no
+  // desenho do miolo (T6→T12): sete curvas lentas em pouco espaço tinham que
+  // caber sem que dois ramos do traçado se aproximassem. Deu 53,9. Monza subiu
+  // de 40,5 pra 51,8 no mesmo movimento.
+  'pista-interlagos': 35.72,
+  'pista-monza': 46.27,
+  'pista-montreal': 31.46,
+  'pista-silverstone': 31.48,
+  'pista-imola': 39.62,
+  'pista-monaco': 35.96,
+  'pista-spa': 39.67,
   'pista-suzuka': 0.0,
 };
 
@@ -467,13 +501,14 @@ const SEPARACAO_MEDIDA: Record<string, number> = {
  * As duas pistas cujo EIXO cai dentro do asfalto vizinho depois de suavizar.
  * Está aqui pra ficar VISÍVEL, não pra ser tolerado em silêncio:
  * - Suzuka (0,0) é o X do "8", intencional (ver `AUTOCONTATOS_INTENCIONAIS`);
- * - **Spa (8,8) é REGRESSÃO da suavização** — era 18,6 na polilinha de
- *   controle. Mesma causa raiz do espinho de 169,5° no vértice #0: ao
- *   arredondar a volta por cima de si mesma na largada, os dois ramos se
- *   aproximam. Vai ao dev junto com o preview; corrigir exige mexer na
- *   silhueta, que é decisão de arte.
+ * - ✅ **SPA SAIU NO PR 7.7**, e era a única entrada não intencional: estava em
+ *   8,8 (regressão da suavização, contra 18,6 na polilinha de controle) e foi a
+ *   41,3. Mesma causa raiz do espinho do vértice #0 — a volta dobrava por cima
+ *   de si mesma na largada e a suavização aproximava os dois ramos —, e o
+ *   redesenho da silhueta resolveu as duas de uma vez. Era a **pendência 1** do
+ *   `ESTADO.md`.
  */
-const FUNDEM_APOS_SUAVIZAR = ['pista-spa', 'pista-suzuka'];
+const FUNDEM_APOS_SUAVIZAR = ['pista-suzuka'];
 
 describe('fusão de asfalto na curva suavizada (recomparação da pendência 3 do 7.3)', () => {
   const JANELA_ARCO = 2 * LARGURA_ASFALTO;
