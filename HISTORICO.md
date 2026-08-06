@@ -138,6 +138,95 @@
   **Verificação estrutural do artefato antes de mostrar** (o risco novo era o `<use>` entre SVGs — se a referência quebra, o preview abre em branco e custa uma viagem ao dev): 20 defs / 20 refs, **zero órfãs**, 51 `<svg>` balanceados, 3862 paths de zebra, nenhum `d` vazio, `NaN` ou `undefined`. As camadas da volta viram `<use>` do mesmo `<path>` porque 4 cópias do `d` por célula custariam ~30 KB à toa.
   **893 testes** (882 + 11), 33 arquivos. `tsc --noEmit`, `eslint` e `npm run build` exit 0 — medidos, não herdados. `npm run balance` não se aplica (nada de nota ou lógica de corrida foi tocado). **Sem `senior-reviewer`, pela regra de rigor proporcional ao risco.**
 
+
+- **PR 7.7 — REDESENHO DAS 10 SILHUETAS a partir da geometria real dos circuitos** (branch
+  `pr-7.7-dados-nurburgring`, commit `5564018`). **ALTO RISCO** (portão visual), anunciado ao dev
+  antes de começar. Fecha o problema que o portão do 7.4 registrou: *"o aspecto poligonal sumiu e
+  o design está bom, mas nenhuma das 10 pistas é reconhecível"*. A causa nunca foi a suavização —
+  eram as silhuetas de origem do PR 2.8, formas ilustrativas de 12-22 pontos.
+
+  **O que foi DESCARTADO, e por quê.** A tentativa anterior (Monza + Interlagos, não commitada)
+  desenhou coordenadas a partir **só do texto** da referência, mediu depois, e ao encontrar
+  divergência **racionalizou nos comentários** em vez de corrigir — o código-fonte dela admitia
+  literalmente *"o miolo abaixo está ESPELHADO em relação ao Interlagos real"* e *"T2 saiu como
+  KINK de 19,2°, não como a contra-curva imediata fechada da referência"*. O dev viu o preview e
+  reprovou. Essas coordenadas foram jogadas fora, não remendadas.
+
+  **O que mudou no método: um harness de verificação ANTES do commit** (em `preview/`, gitignored,
+  regenerável). O que faltava não era capricho, era loop de feedback — desenhar às cegas e medir
+  depois produz exatamente o erro acima. O harness renderiza a **curva suavizada** (não a
+  polilinha de controle) em ASCII com aspecto corrigido, e mede, por pista: sentido de giro na
+  tela, sequência de curvas esquerda/direita, separação por arco, raio mínimo, `minNaoAdj`,
+  envelope das camadas contra o viewBox e os piores vértices da curva. **Cada guarda que entrou no
+  harness pegou defeito real** — a de 45°/vértice pegou três bicos (o canto do ômega da Mercedes
+  Arena a 62°, a ponta do grampo de Montreal a 69°, o Loop de Silverstone a 40°), e a de
+  `minNaoAdj` pegou a hairpin L'Épingle com os braços a 14 u.
+
+  **As 10 vêm da geometria verificável de cada circuito**: as 9 imagens de referência que o dev
+  mandou (`referencias/`, gitignored — obra de terceiros, ver GDD §14.2) lidas como topologia e
+  proporção, mais `REFERENCIA_TRACADOS.md`. **Monza é a única sem imagem** e foi desenhada só pela
+  descrição textual §1; se o dev largar o print depois, vale refazer. Nenhum mapa foi decalcado: o
+  que se leu foi sequência de curvas, sentido e proporção reta/curva, que é fato.
+
+  **Restrições que as 10 respeitam, todas medidas antes de entrar:** sentido de giro na tela
+  conforme a referência (horário em 7, anti-horário em Interlagos e Imola, Suzuka mistura por ser
+  o 8) — o shoelace em coordenadas de tela tem o sinal invertido em relação à convenção
+  matemática, e era o candidato número um a espelhar as 10 de uma vez; separação ≥ 34 u entre
+  trechos distantes **no arco, nunca por índice** (decisão travada do dev); raio ≥ 20 u;
+  auto-interseção só a de Suzuka, em vértice compartilhado — **exatamente um par, verificado**, um
+  segundo seria bug disfarçado de golden velho; < 45° de virada por vértice na curva suavizada.
+
+  **Escala UNIFORME por pista, decidido e declarado.** Cada silhueta é ajustada à moldura
+  preservando o aspecto real do circuito. Esticar em x e y independentemente encheria melhor a
+  tela e destruiria o "estreito e comprido" de Montreal e o formato compacto de Interlagos, que
+  são justamente o que se reconhece. Consequência aceita: **Interlagos não enche a moldura na
+  horizontal** (usa 670 de 880), porque o traçado real é quase quadrado.
+
+  **A moldura recuou** de (60,30,940,570) para (56,36,924,564): a guarda de viewBox exige que a
+  curva mais `MEIA_CAMADA_MAIS_LARGA` (60 u, o terreno) caiba, e com o recuo anterior o terreno era
+  **clipado em até 12 u**. Pior folga hoje: 3,4 (Suzuka).
+
+  **Onde a escala obrigou a escolher, a ESTILIZAÇÃO ganhou da fidelidade** — a regra dos 360 px
+  manda que elemento ilegível não entre. O miolo de Interlagos (sete curvas lentas em pouco
+  espaço) foi aberto em dois picos separados: a ALTERNÂNCIA é o que identifica a pista, o aperto
+  real vira borrão. Idem a garganta do ômega da Mercedes Arena e o zigue-zague de chicanes de
+  Montreal. O que nunca se mexeu foi a ORDEM e o SENTIDO das curvas.
+
+  **DUAS LISTAS DE EXCEÇÃO ENCOLHERAM — é o critério declarado no `ESTADO.md`:**
+  **(1) espinho de ~180°:** Spa era o último caso (169,5° ⇒ 120,7°) e virou **111,7° ⇒ 24,8°**. A
+  lista **ZEROU**, e ganhou um teste que impede ela de voltar a crescer em silêncio, nomeando a
+  pista que reintroduzir espinho. **(2) fusão de asfalto na curva suavizada:** Spa saiu (8,8 ⇒
+  41,3), o que **FECHA a pendência 1**. Sobra só Suzuka, que é o X do 8, intencional.
+
+  **Goldens re-derivados; NENHUM limiar alterado** (45°/vértice, 17 u de sobreposição, 34 u de
+  separação, 20 u de raio, 28°/88 u/40% da zebra). Classificação usada antes de tocar em qualquer
+  número: medição descritiva (re-derivar), golden de identidade (re-capturar) e teste cuja premissa
+  morreu (reescrever contando a verdade nova). **Três casos do terceiro tipo, documentados no
+  lugar:**
+  - **`N=8` deixou de reprovar.** O teste provava que N=12 não era chute porque N=8 estourava o
+    teto de 0,7 u. Com as silhuetas novas (34-48 pontos) as cordas encolheram, a sagita escala com
+    a corda, e **N=8 desvia 0,539 u — passa folgado**. A justificativa de N=12 caiu; o teto NÃO foi
+    mexido e `AMOSTRAS_POR_SEGMENTO` continua 12. A redução pra 4-6 já é decisão travada do
+    `ESTADO.md` e agora tem o número em mãos — mas é execução própria, não foi feita aqui.
+  - **Monza saiu do ZERO de sobreposição** (5,4). O par que aperta **não é ramo contra ramo** — é o
+    fim da reta principal contra a saída da Variante del Rettifilo, ou seja, a própria chicane.
+    Alargar até voltar a zero exigiria arredondar o degrau, que é o que a referência §1 diz que
+    descaracteriza Monza. O teto de 17 segue de pé e Monza passa com 11,6 de folga.
+  - **A rede de segurança da memoização da LUT (PR 7.5) acabou**, e isso está escrito no teste:
+    golden de geometria não sobrevive a redesenho de geometria, e desta vez não sobrou silhueta
+    antiga pra comparar. Sugestão registrada (não feita): recapturar sobre uma polilinha SINTÉTICA
+    fixa, que redesenho nenhum mexe.
+
+  **Números do parque redesenhado:** 34-48 pontos por pista (era 12-22); o teto de 40% da zebra
+  **morde em 8 das 10** — só Spa (33,4%) e Red Bull Ring (28,0%) não perdem candidato pro corte; a
+  janela de arco do PR 7.6 **deixou de ser inerte em produção**, encontrando de 1 (Silverstone) a
+  15 (Mônaco) candidatos que o critério por vértice perde, e é SUPERCONJUNTO dele nas 10.
+
+  **904 testes** (893 + 11), 33 arquivos. `tsc --noEmit`, `eslint` e `npm run build` exit 0 —
+  medidos, não herdados. `npm run balance` não se aplica (nada de nota ou lógica de corrida).
+  **Preview: `preview/redesenho.html`** (o `preview-fatia1` foi generalizado das 2 pistas pras 10),
+  com teste cego primeiro e antes/depois depois, ambos passando pelo mesmo pipeline de produção.
+  **Aguarda o veredito do dev** — é portão visual, e preview gerado não é preview aprovado.
 - **🔴 DÍVIDA DESCOBERTA EM 2026-07-30: `npm run build` está QUEBRADO na `main` desde o PR 7.4 — e foi pushado pro `origin/main`.** `scripts/node-shims.d.ts:18` declara `writeFileSync(path: string, data: string)` com **dois** parâmetros; o gerador de preview do 7.4 (`scripts/preview-tracados.preview.test.ts:164`) chama com **três** (`'utf8'`). Em runtime o Node aceita o encoding, então `npm run preview` roda normalmente e ninguém percebeu. `npm run build` é `tsc --noEmit && vite build` e sai com **exit 2**. **Enquanto durar, o `tsc` é inútil como portão de qualidade.** Correção é uma linha (encoding opcional no shim), mas fica em `fix:` próprio. **Registro do que isso significa:** o `ESTADO.md` afirmava "`tsc --noEmit`, `eslint`, `npm run build` limpos" e a afirmação era falsa desde o 7.4 — foi **herdada de reescrita em reescrita sem nunca ser medida**, inclusive por mim em duas reescritas do mesmo dia. É o mesmo padrão do "nada foi pushado", também falso e também herdado. **Afirmação de estado em doc só entra medida.** E não é coincidência que o PR que pulou o fluxo inteiro (sem branch, sem merge commit, sem revisão, sem docs) seja o mesmo que deixou o build vermelho.
 
 - **🚦 ERA DOS TRAÇADOS — DECIDIDO PELO DEV EM 2026-07-30. Vale pra QUALQUER redesenho futuro de silhueta, não só pro PR corrente.** Usar sempre o **layout MODERNO/ATUAL** de cada pista, com a **Nordschleife como exceção óbvia** (a F1 parou de correr lá em 1976, não existe versão moderna). Casos concretos já decididos: **Monza SEM o oval banqueado**; **Spa de 7 km, não a de 14 km**; **Imola pós-1995**. **Motivo, nas palavras do dev:** o critério de aceite é *"o jogador reconhece"*, e o que ele reconhece é **o traçado que vê na TV hoje**. Consequência: fidelidade histórica ao layout de época NÃO é objetivo do projeto e não deve ser proposta como melhoria — o jogo cobre 1950-2025 nos DADOS (equipe/ano, notas), não nas silhuetas.

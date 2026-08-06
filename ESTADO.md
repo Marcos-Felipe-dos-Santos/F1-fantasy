@@ -7,118 +7,106 @@
 
 ## Estado atual
 
-- **Branch `main`** · último PR **7.6.1** (previews de decisão + pendência 2) · **893 testes**
-  (33 arquivos) verdes · working tree limpa.
-- **Medido em 2026-08-01, não herdado:** `tsc --noEmit` **exit 0**, `npm run build` **exit 0**,
+- **Branch `pr-7.7-dados-nurburgring`** · último PR **7.7** (redesenho das 10 silhuetas) ·
+  **904 testes** (33 arquivos) verdes · working tree limpa.
+- **Medido em 2026-08-05, não herdado:** `tsc --noEmit` **exit 0**, `npm run build` **exit 0**,
   `eslint` limpo. `npm run balance` não se aplica (nada de nota/lógica de corrida foi tocado).
-- **`origin/main` está em `b39782d` (PR 7.4). A `main` local está ~20 commits à frente e NADA
-  disso foi pushado** — número exato: `git rev-list --count b39782d..HEAD` (escrever a contagem aqui
-  a desatualiza no commit seguinte, que é o próprio commit que a escreve).
+- **A branch está à frente do `origin/main`, que segue em `b39782d` (PR 7.4), e NADA foi
+  pushado** — contagem exata: `git rev-list --count b39782d..HEAD`.
   **Push continua só com "ok" explícito do dev.**
 
-## 🛑 AGUARDANDO O DEV — dois previews gerados e MOSTRADOS, sem veredito ainda
+## 🛑 AGUARDANDO O DEV — o portão visual do redesenho
 
-    start "" "E:\projetos\F1 fantasy\preview\cego.html"
-    start "" "E:\projetos\F1 fantasy\preview\zebra-densidade.html"
+    start "" "E:\projetos\F1 fantasy\preview\redesenho.html"
 
-Regenerar: `npm run preview` (escreve os três: traçados, cego, zebra). `preview/` é gitignored.
+Regenerar: `npm run preview` (escreve os quatro). `preview/` é gitignored.
 
-1. **`cego.html` — a LINHA DE BASE.** 10 silhuetas atuais sem nome, ordem por hash do id, com
-   placar. **O placar precisa ser anotado aqui embaixo** — é a régua da fatia 1 e o insumo do
-   gatilho de abandono. Placar baixo é o esperado (as silhuetas são as que o 7.4 reprovou).
-2. **`zebra-densidade.html` — a decisão 88/40%** (pendência 4). Ver o achado abaixo antes de decidir.
+**As 10 pistas foram redesenhadas.** O `redesenho.html` tem duas seções: **teste cego** (as 10
+silhuetas novas sem nome, ordem por hash do id — responder antes de revelar) e **antes/depois**
+(PR 2.8 à esquerda, redesenhada à direita, mesmo pipeline de produção nas duas).
+
+**A pergunta é a do critério de aceite do dev:** *o jogador vê a pista e pensa "poxa, Interlagos"
+sem ler o nome?* **Linha de base: 0/10.** O placar do teste cego precisa ser anotado aqui embaixo.
+
+**Se o ponteiro não se mover, o gatilho de abandono aceito pelo dev vale igual:** parar e reabrir
+a pergunta, em vez de seguir ajustando por inércia.
 
 ## Onde parei
 
 Concluído: Fases 0-2 (engine, Single, Local hotseat, Modo Cego), dataset 1950-2025 (PR 4.x),
-design system arcade (5.1a/b/c), Modo Campeonato (6.1-6.5), Fase 7 até o **7.6.1**.
+design system arcade (5.1a/b/c), Modo Campeonato (6.1-6.5), Fase 7 até o **7.7**.
 
-**PORTÃO DO 7.4 (2026-07-30): suavização APROVADA, objetivo NÃO atingido.** O dev viu o preview:
-*"o aspecto poligonal sumiu e o design está bom"*, **mas nenhuma das 10 pistas é reconhecível**.
-Não é falha do 7.4 — a causa são as **silhuetas de origem** do PR 2.8 (formas ilustrativas de 12-22
-pontos). Suavizar forma genérica dá forma genérica arredondada. Daí a trilha de redesenho abaixo.
+O **PR 7.7 redesenhou as 10** a partir da geometria real dos circuitos (9 imagens de referência do
+dev + a descrição textual de Monza, a única sem imagem). Método novo, que é o que mudou: um
+**harness de verificação em `preview/`** (gitignored) que renderiza a curva suavizada em ASCII e
+mede sentido de giro, separação por arco, raio, `minNaoAdj`, envelope das camadas e piores
+vértices — **antes** do commit. A tentativa anterior desenhou às cegas e racionalizou a divergência
+nos comentários; foi descartada.
 
-**Critério de aceite do dev (subjetivo e não automatizável, ele assume):** o jogador vê a pista e
-pensa *"poxa, Interlagos"* **sem ler o nome**. Portão visual dele, possivelmente em várias rodadas.
+## SEQUÊNCIA — o que sobrou
 
-## SEQUÊNCIA APROVADA — seguir nesta ordem
-
-1. ✅ **Chore docs + `permissions.deny`** · 2. ✅ **PR 7.5 — memoização da LUT** (`bfbbb98`) ·
-   3. ✅ **PR 7.6 — zebra invariante à densidade** (`f3653ab`; portão medido e PASSOU, 10 pistas
-   byte a byte iguais).
-2. ✅ **PR 7.6.1 — os dois previews + pendência 2.** Fatiamento decidido pelo dev em 2026-08-01:
-   **previews ANTES da infra** — o preview da zebra destrava a decisão 88/40% que precede a fatia 1,
-   é o item mais barato, e a infra merece sessão limpa. **Aguarda veredito do dev (ver acima).**
-3. ⬅️ **PRÓXIMO — PR de INFRA (ALTO RISCO, sessão própria)** — restrições declaradas como testes
-   vermelhos + allowlist `LEGADO` que só encolhe.
-4. **FATIA 1 — Monza + Interlagos.** Critério de fatiamento: **"estressa as restrições"**, não
-   "as mais icônicas". Mostrar ao dev.
-5. 🛑 **PARAR e ir pro pit (7.7, 7.8).** As fatias 2-5 (Mônaco+Spa+Silverstone · Imola+Montreal+RBR ·
-   Suzuka sozinha · Nordschleife sozinha · fechamento) só **depois** do pit.
-   **Gatilho de abandono aceito pelo dev: se a fatia 1 não mover o ponteiro contra a linha de base
-   cega, PARAR e reabrir a pergunta** em vez de fazer as outras 8 por inércia.
+1. ⬅️ **VEREDITO DO DEV sobre `redesenho.html`.** Nada segue antes disso.
+2. **Se aprovado:** o PR de INFRA (restrições como testes vermelhos + allowlist `LEGADO` que só
+   encolhe) deixa de ser pré-requisito e vira consolidação — as restrições que ele ia declarar já
+   estão medidas e verdes nas 10. Reavaliar o escopo dele com o dev antes de fazer.
+3. **Se reprovado:** o gatilho de abandono, não mais uma rodada por inércia.
+4. 🛑 **Depois, o pit (7.8).**
 
 ## Decisões travadas do redesenho (não reabrir sem o dev)
 
 - 🔒 **TODA guarda geométrica nova neste projeto MEDE EM ARCO, NUNCA EM ÍNDICE** (dev, 2026-08-01).
-  Medir "não adjacente" ou "alcance" contando pontos é dependente de densidade e vira falso positivo
-  assim que as curvas triplicam. **Palavras do dev: "já custou duas vezes"** — a mais recente foi o
-  bug que o 7.6 consertou na zebra. Vale pra `minNaoAdj`, `separacaoMinima`, raio, e para qualquer
-  guarda futura — em especial as que o PR de infra vai declarar.
-- **Era dos traçados: layout MODERNO/ATUAL**, Nordschleife como exceção. Monza sem oval banqueado,
-  Spa de 7 km, Imola pós-95. Vale pra qualquer redesenho futuro.
-- **Nordschleife perde ~40 das ~73 curvas.** Karussell ilegível a 360px é consequência aceita.
-- **`LARGURA_ASFALTO = 34` mantida.** Largura por pista foi rejeitada (colide com a guarda de raio
-  de carro). Separação ≥ 34 u e raio ≥ 20 u viram restrições de desenho testadas.
-- **`AMOSTRAS_POR_SEGMENTO` cai de 12 pra 4-6** (sagita escala com a corda). N adaptativo rejeitado.
-- **Nada de métrica automatizável de reconhecimento.** Hausdorff contra a pista real recusado —
-  aproximaria do mapa oficial (GDD §14.2).
-- **A allowlist `LEGADO` do PR de infra é CONTRATO DE PROGRESSO, não guarda de regressão** (dev,
-  2026-08-01). Ela nasce com as **10 pistas dentro**, ou seja, **sem poder de detecção nenhum** — e
-  isso é o desenho, não um defeito a corrigir. **Proibido calibrar limiar pra "morder" parte do
-  parque hoje:** limiar afrouxado pra dar verde esconderia exatamente o que o dev quer ver melhorar.
-  O valor está em ela ENCOLHER a cada fatia. Deixar isso explícito no código.
-- **A detecção de zebra continua rodando no traçado de CONTROLE**, não na curva suavizada — desde o
-  7.6 isso é **decisão de escopo** (preservar o desenho aprovado no 7.1), não impossibilidade
-  técnica: rodar na curva devolveria zebra sim (16,6-40,0% a 120 pontos).
+  **Palavras do dev: "já custou duas vezes".** Confirmado de novo no 7.7: `minNaoAdj` (que mede por
+  índice) acusou 14 u em Montreal onde o problema real era densidade — dois pontos de controle
+  consecutivos a 13 u faziam `seg(i)` e `seg(i+2)` medirem como se fossem trechos diferentes da
+  pista. Foi corrigido no DESENHO (espaçar os pontos), não no teste.
+- **Era dos traçados: layout MODERNO/ATUAL.** Nürburgring = GP-Strecke, não Nordschleife.
+- **`LARGURA_ASFALTO = 34` mantida.** Separação ≥ 34 u e raio ≥ 20 u são restrições de desenho, e
+  as 10 passam.
+- **Escala UNIFORME por pista** (nunca esticar x e y independentemente): destruiria o "estreito e
+  comprido" de Montreal e o formato compacto de Interlagos, que é o que se reconhece. Consequência
+  aceita: Interlagos não enche a moldura na horizontal.
+- **Moldura de desenho: x ∈ [56, 924], y ∈ [36, 564].** Não é estética — a guarda de viewBox exige
+  que a curva mais `MEIA_CAMADA_MAIS_LARGA` (60) caiba. Com o recuo anterior o terreno era clipado.
+- **Nada de métrica automatizável de reconhecimento.** Hausdorff contra a pista real recusado.
+- **A detecção de zebra continua rodando no traçado de CONTROLE**, não na curva suavizada — decisão
+  de escopo desde o 7.6.
 
-## 🎨 DECISÃO DE ARTE ABERTA — 88/40%, com o achado que o preview trouxe
+## 🎨 DECISÃO DE ARTE ABERTA — 88/40%, agora com o parque inteiro na mesa
 
-**A 120 pontos uniformes, o teto de 40% deixa de ser restrição geométrica e vira COTA DE CONTAGEM.**
-Cada trecho cobre ~1/120 do perímetro (alcance = `segmento/2` de cada lado), então o teto admite
-exatamente `0,40 × 120 = 48` trechos — e **7 das 10 pistas param em 48 trechos / ~39,8%**. Mônaco tem
-93 candidatos, o Nordschleife 102; as duas desenham a **mesma quantidade de zebra que Monza**, que
-tem 48. Quem escolhe QUAIS 48 é a **ordem gulosa**, não a geometria da pista.
-**Consequência a pesar: mantido o teto em 40%, o redesenho não muda a QUANTIDADE de zebra de pista
-nenhuma — só a posição dela.**
+O valor de `JANELA_CURVATURA_ZEBRA = 88` foi calibrado contra a Monza de 16 pontos, que **não
+existe mais**. **Não foi mexido no 7.7 de propósito:** reabrir é decisão de arte do dev, e agora ela
+pode ser tomada com as 10 redesenhadas medidas, que era a informação que faltava.
 
-Medido por pista a 120 pts (aceitos/candidatos · cobertura): o teto **CORTA em 6** — Mônaco 48/93 ·
-Nordschleife 48/102 · Imola 48/64 · Red Bull Ring 48/61 · Interlagos 48/63 · Silverstone 48/53 — e
-**SATURA em 7** (as 6 + Monza 48/48 · 39,8%). Folgadas: Spa 46/46 · 38,2%, Montreal 34/34 · 28,2%,
-Suzuka 20/20 · 16,6%. *(Reconcilia o "7 das 10" da revisão do 7.6: os dois números estavam certos sob
-definições diferentes — cortar candidatos vs. encher o teto.)*
+Medido no parque novo: o teto de 40% **morde em 8 das 10** — só Spa (33,4% de cobertura) e Red Bull
+Ring (28,0%) não perdem candidato nenhum pro corte. O caso extremo é o Nürburgring: **29 trechos /
+50,0% sem teto contra 24 / 38,7% com ele** — é o teto que segue impedindo a faixa contínua que o
+dev reprovou. A janela do 7.6 **deixou de ser inerte**: encontra de 1 (Silverstone) a 15 (Mônaco)
+candidatos que o critério por vértice perde, e é superconjunto dele nas 10.
 
 ## Pendências ATIVAS
 
-1. **Fusão de camadas.** Spa já está em **8,8** na curva suavizada (regressão herdada do 7.4,
-   limiar ≥ 17); o redesenho de Spa fecha. Monza/Nordschleife vão aproximar mais trechos.
-2. **Guardas O(n²) — ADIADA por decisão do dev (2026-08-01), não esquecida.** `minNaoAdj`,
-   `separacaoMinima` e `cruzamentos` sobre curvas 3-4x maiores vão desacelerar a suíte. **Custo
-   medido hoje: ~9 ms** (medição da sessão de 2026-07-31). Não é problema demonstrado, e bucketizar
-   código espacial é otimização preventiva sutil — o `CLAUDE.md` manda não escalar por precaução.
-   **Reavaliar quando a fatia 1 mostrar o custo real**, com o número novo em mãos.
-3. **O elo testado do 7.3 trava o componente, não o uso dele:** apagar `<CamadasDaPista/>` de dentro
+1. **`AMOSTRAS_POR_SEGMENTO` pode cair de 12 pra 4-6 — agora COM o número.** A justificativa de
+   N=12 era que N=8 estourava o teto de 0,7 u. Com as silhuetas novas as cordas encolheram e **N=8
+   desvia 0,539 u**. O teto não foi mexido e a constante continua 12: baixar muda a geometria
+   desenhada das 10 de novo e move todos os goldens, então é execução própria.
+2. **Fusão de camadas — o ASFALTO está resolvido, o resto não.** As 10 passam a guarda do asfalto
+   (34), mas **as 10 fundem a camada de LIMITE** (42), de 8,5 (Red Bull Ring) a 21,1 (Suzuka). É
+   report-only, documenta e não trava limiar — mas agora tem os números das 10 pra decidir.
+3. **Guardas O(n²) — ADIADA por decisão do dev (2026-08-01).** Com 34-48 pontos por pista a suíte
+   segue rápida (904 testes em ~2 s). Não é problema demonstrado.
+4. **O elo testado do 7.3 trava o componente, não o uso dele:** apagar `<CamadasDaPista/>` de dentro
    do `<svg>` de `TelaCorrida` ainda passa. Limite conhecido.
-4. **Dívida de processo do 7.4.** A branch foi renomeada por cima da `main` (`git branch -M`), sem
-   merge commit. O chore `50f5fd9` também foi direto na `main` e está à frente do `origin/main`.
-   Decidir se vira branch antes de qualquer push. (Os merges desde 2026-07-31 já são `--no-ff`
-   com branch própria — a dívida é só do histórico anterior.)
+5. **Dívida de processo do 7.4.** A branch foi renomeada por cima da `main` (`git branch -M`), sem
+   merge commit. Decidir se vira branch antes de qualquer push.
+6. **Monza é a única sem imagem de referência** — veio só da descrição textual §1. Se o dev largar o
+   print, vale refazer.
+7. **A rede de segurança da memoização da LUT (7.5) acabou.** Golden de geometria não sobrevive a
+   redesenho de geometria, e não sobrou silhueta antiga pra comparar. Recuperar exige capturar o
+   golden sobre uma polilinha SINTÉTICA fixa — registrado, não feito.
 
-> ✅ Fechadas: **pendência 0** (`build` quebrado, `030a5f4`) · **pendência 2** (`tracados.test.ts`
-> travava o viewBox `0 0 1000 600` de antes do 7.3, proibindo a faixa y 600-630 que o 7.4 abriu —
-> agora lê de `VIEWBOX_*`) · **pendência 4** (preview da densidade alvo gerado; falta o veredito).
-> Pelo 7.4: dívida do viewBox e exceção nomeada do Suzuka. O **espinho de ~180°** no vértice #0 de
-> Spa e Interlagos **não se corrige separado** — o redesenho resolve.
+> ✅ Fechadas no 7.7: **pendência 1 antiga** (Spa fundia asfalto a 8,8 → 41,3) · **espinho de ~180°
+> no vértice #0 de Spa** (169,5° ⇒ 120,7° virou 111,7° ⇒ 24,8°; a lista de exceção ZEROU e ganhou
+> teste que impede ela de crescer) · **pendência 4** (preview da densidade alvo).
 >
 > ⚠️ **Lição permanente:** este arquivo já afirmou por um dia "`tsc`/`build` limpos" sendo falso, por
 > herança de reescrita em reescrita **sem nunca medir**. **Afirmação de estado só entra medida.**
@@ -128,38 +116,37 @@ definições diferentes — cortar candidatos vs. encher o teto.)*
 1. **Tabela de luminância.** Ordem travada: escape 0,005 < fundo 0,008 < terreno 0,011 <
    escape-de-curva/paddock 0,017 < muro 0,029 < **asfalto 0,048** < carro 0,477. O asfalto é sempre a
    superfície mais clara; toda superfície nova passa por aqui antes de entrar.
-2. **Regra dos 360px.** Elemento ilegível a 360px de largura não entra. Já eliminou os acessos de
-   serviço do paddock (7.1) e a linha central tracejada (7.3).
+2. **Regra dos 360px.** Elemento ilegível a 360px de largura não entra. No 7.7 foi ela que mandou
+   abrir o miolo de Interlagos e a garganta do ômega da Mercedes Arena: o aperto real das duas vira
+   borrão nessa escala. A ordem e o sentido das curvas nunca se mexem por esse motivo.
 3. **Zebra só em CURVA, nunca em reta.** **Virada ACUMULADA ≥ 28° numa janela de
-   `JANELA_CURVATURA_ZEBRA` = 88 u de arco** (PR 7.6 — antes era ângulo ≥ 28° *por vértice*, que
-   se diluía com a densidade), com teto de 40% do perímetro (sem o teto, Nürburgring dá 85% e vira
-   a faixa contínua que o dev reprovou). A regra é testada nas duas densidades: 16 pontos e
-   48/80/120.
+   `JANELA_CURVATURA_ZEBRA` = 88 u de arco**, com teto de 40% do perímetro (sem o teto o
+   Nürburgring vai a 50% e vira a faixa contínua que o dev reprovou). Testada em duas densidades.
 
-Mais dois critérios permanentes: **entorno é moldura, pista e carros são conteúdo** (adição que
-prejudique a leitura dos carros está errada); e **decisão de arte vai ao dev** — a base visual da
-fase é um portão aprovado a olho (7.1), e mudar composição sozinho já custou 2 bloqueantes no 7.3.
+Mais dois critérios permanentes: **entorno é moldura, pista e carros são conteúdo**; e **decisão de
+arte vai ao dev** — mudar composição sozinho já custou 2 bloqueantes no 7.3.
 
 ## Processo (regra completa no `CLAUDE.md`)
 
-- **RIGOR PROPORCIONAL AO RISCO.** Alto risco (engine, `src/data/`, balanceamento, portão visual,
-  netcode) = fluxo completo com `senior-reviewer`. **Baixo risco (docs, chore, refactor sem
-  mudança de comportamento, fix de uma linha) = implementar → testes → commitar.** Classificar e
-  anunciar ANTES de começar; na dúvida, perguntar em vez de escalar.
+- **RIGOR PROPORCIONAL AO RISCO.** Classificar e anunciar ANTES de começar; na dúvida, perguntar em
+  vez de escalar.
 - **UM PR POR SESSÃO.** Ao concluir: commitar, atualizar os dois docs, **PARAR e avisar o dev.**
-- **`OpcoesZebra` é andaime de MEDIÇÃO, não configuração.** `trechosDeZebra` aceita sobrescrita dos
-  4 parâmetros, com default nas constantes; **nenhum caminho de produção passa o argumento.** Existe
-  pra o preview varrer valores com o algoritmo de produção em vez de uma cópia — preview que
-  reimplementa o critério para de refletir a tela e não decide nada.
+- **Ao mexer em silhueta, use o harness de `preview/`** (`preview/harness.test.ts` +
+  `preview/desenhos.ts`, gitignored). Desenhar coordenadas sem olhar o resultado já custou um PR
+  inteiro: a versão descartada admitia nos próprios comentários que o miolo saiu espelhado.
+  Rodar: `npx vitest run --config preview/harness.config.ts --reporter=verbose --silent=false`.
+- **`OpcoesZebra` é andaime de MEDIÇÃO, não configuração.** Nenhum caminho de produção passa o
+  argumento.
 
 ## Convenções (as demais estão no `CLAUDE.md`)
 
 - **Ao concluir um PR, atualizar OS DOIS:** entrada detalhada no `HISTORICO.md` (acumula) e este
   `ESTADO.md` **reescrito** (substitui, não acumula).
-- Previews visuais em `preview/` (gitignored). **Gitignored significa que ninguém vê por acidente:
-  preview gerado só conta como entregue depois de MOSTRADO ao dev, com CAMINHO ABSOLUTO** — foi
-  exatamente o que falhou no 7.4.
+- Previews visuais em `preview/` (gitignored). **Preview gerado só conta como entregue depois de
+  MOSTRADO ao dev, com CAMINHO ABSOLUTO** — foi exatamente o que falhou no 7.4.
+- **`referencias/` é gitignored** (imagens de terceiros, GDD §14.2). Servem pra ler geometria —
+  sequência de curvas, sentido, proporção —, nunca pra virar asset.
 - Harness: `npm run balance` já embute `--reporter=verbose --silent=false`. Ao chamar o vitest na
   mão, passar as flags, senão a tabela é engolida.
 - **Nunca ler `src/data/*.json` por completo** (`equipe-anos.json` ≈ 324 mil tokens). Formato:
-  `src/fixtures/dataset-semente/`. Consulta: `jq`/`grep` com filtro. Regra completa no `CLAUDE.md`.
+  `src/fixtures/dataset-semente/`. Consulta: `jq`/`grep` com filtro.
