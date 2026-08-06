@@ -7,7 +7,7 @@
 
 ## Estado atual
 
-- **Branch `pr-7.7-dados-nurburgring`** · último PR **7.7** (redesenho das 10 silhuetas) ·
+- **Branch `pr-7.7-dados-nurburgring`** · último PR **7.7.1** (Monza refeita com a imagem) ·
   **904 testes** (33 arquivos) verdes · working tree limpa.
 - **Medido em 2026-08-05, não herdado:** `tsc --noEmit` **exit 0**, `npm run build` **exit 0**,
   `eslint` limpo. `npm run balance` não se aplica (nada de nota/lógica de corrida foi tocado).
@@ -21,7 +21,8 @@
 
 Regenerar: `npm run preview` (escreve os quatro). `preview/` é gitignored.
 
-**As 10 pistas foram redesenhadas.** O `redesenho.html` tem duas seções: **teste cego** (as 10
+**As 10 pistas foram redesenhadas** (Monza refeita no 7.7.1, com a imagem). O `redesenho.html`
+tem duas seções: **teste cego** (as 10
 silhuetas novas sem nome, ordem por hash do id — responder antes de revelar) e **antes/depois**
 (PR 2.8 à esquerda, redesenhada à direita, mesmo pipeline de produção nas duas).
 
@@ -36,8 +37,10 @@ a pergunta, em vez de seguir ajustando por inércia.
 Concluído: Fases 0-2 (engine, Single, Local hotseat, Modo Cego), dataset 1950-2025 (PR 4.x),
 design system arcade (5.1a/b/c), Modo Campeonato (6.1-6.5), Fase 7 até o **7.7**.
 
-O **PR 7.7 redesenhou as 10** a partir da geometria real dos circuitos (9 imagens de referência do
-dev + a descrição textual de Monza, a única sem imagem). Método novo, que é o que mudou: um
+O **PR 7.7 redesenhou as 10** a partir da geometria real dos circuitos, e o **7.7.1 refez Monza**
+quando a imagem dela chegou (era a única que tinha saído só da descrição textual — e tinha saído
+errada: reta principal em diagonal onde o real é uma cunha com a reta HORIZONTAL embaixo). Método
+novo, que é o que mudou: um
 **harness de verificação em `preview/`** (gitignored) que renderiza a curva suavizada em ASCII e
 mede sentido de giro, separação por arco, raio, `minNaoAdj`, envelope das camadas e piores
 vértices — **antes** do commit. A tentativa anterior desenhou às cegas e racionalizou a divergência
@@ -80,7 +83,7 @@ pode ser tomada com as 10 redesenhadas medidas, que era a informação que falta
 Medido no parque novo: o teto de 40% **morde em 8 das 10** — só Spa (33,4% de cobertura) e Red Bull
 Ring (28,0%) não perdem candidato nenhum pro corte. O caso extremo é o Nürburgring: **29 trechos /
 50,0% sem teto contra 24 / 38,7% com ele** — é o teto que segue impedindo a faixa contínua que o
-dev reprovou. A janela do 7.6 **deixou de ser inerte**: encontra de 1 (Silverstone) a 15 (Mônaco)
+dev reprovou. A janela do 7.6 **deixou de ser inerte**: encontra de 1 (Silverstone) a 20 (Monza)
 candidatos que o critério por vértice perde, e é superconjunto dele nas 10.
 
 ## Pendências ATIVAS
@@ -92,21 +95,21 @@ candidatos que o critério por vértice perde, e é superconjunto dele nas 10.
 2. **Fusão de camadas — o ASFALTO está resolvido, o resto não.** As 10 passam a guarda do asfalto
    (34), mas **as 10 fundem a camada de LIMITE** (42), de 8,5 (Red Bull Ring) a 21,1 (Suzuka). É
    report-only, documenta e não trava limiar — mas agora tem os números das 10 pra decidir.
-3. **Guardas O(n²) — ADIADA por decisão do dev (2026-08-01).** Com 34-48 pontos por pista a suíte
+3. **Guardas O(n²) — ADIADA por decisão do dev (2026-08-01).** Com 34-49 pontos por pista a suíte
    segue rápida (904 testes em ~2 s). Não é problema demonstrado.
 4. **O elo testado do 7.3 trava o componente, não o uso dele:** apagar `<CamadasDaPista/>` de dentro
    do `<svg>` de `TelaCorrida` ainda passa. Limite conhecido.
 5. **Dívida de processo do 7.4.** A branch foi renomeada por cima da `main` (`git branch -M`), sem
    merge commit. Decidir se vira branch antes de qualquer push.
-6. **Monza é a única sem imagem de referência** — veio só da descrição textual §1. Se o dev largar o
-   print, vale refazer.
-7. **A rede de segurança da memoização da LUT (7.5) acabou.** Golden de geometria não sobrevive a
+6. **A rede de segurança da memoização da LUT (7.5) acabou.** Golden de geometria não sobrevive a
    redesenho de geometria, e não sobrou silhueta antiga pra comparar. Recuperar exige capturar o
    golden sobre uma polilinha SINTÉTICA fixa — registrado, não feito.
 
 > ✅ Fechadas no 7.7: **pendência 1 antiga** (Spa fundia asfalto a 8,8 → 41,3) · **espinho de ~180°
 > no vértice #0 de Spa** (169,5° ⇒ 120,7° virou 111,7° ⇒ 24,8°; a lista de exceção ZEROU e ganhou
 > teste que impede ela de crescer) · **pendência 4** (preview da densidade alvo).
+> Fechada no 7.7.1: **Monza sem imagem** — a imagem chegou e a pista foi refeita. **As 10 agora
+> vêm de imagem de referência; nenhuma sobrou só na descrição textual.**
 >
 > ⚠️ **Lição permanente:** este arquivo já afirmou por um dia "`tsc`/`build` limpos" sendo falso, por
 > herança de reescrita em reescrita **sem nunca medir**. **Afirmação de estado só entra medida.**

@@ -224,9 +224,49 @@
 
   **904 testes** (893 + 11), 33 arquivos. `tsc --noEmit`, `eslint` e `npm run build` exit 0 —
   medidos, não herdados. `npm run balance` não se aplica (nada de nota ou lógica de corrida).
+  ⚠️ **Os números de MONZA nesta entrada foram substituídos pelo PR 7.7.1**, que refez a pista
+  quando a imagem de referência dela chegou. O resto da entrada continua valendo.
+
   **Preview: `preview/redesenho.html`** (o `preview-fatia1` foi generalizado das 2 pistas pras 10),
   com teste cego primeiro e antes/depois depois, ambos passando pelo mesmo pipeline de produção.
   **Aguarda o veredito do dev** — é portão visual, e preview gerado não é preview aprovado.
+- **PR 7.7.1 — MONZA REFEITA COM A IMAGEM DE REFERÊNCIA.** A imagem de Monza chegou depois das
+  outras nove; no 7.7 ela foi a única desenhada só pela descrição textual de
+  `REFERENCIA_TRACADOS.md` §1, e **saiu errada**. O dev mandou o print e pediu o mesmo tratamento,
+  sem mexer no resto — foi o que se fez: **só `TRACADO_GENERICO` mudou**, as outras 9 silhuetas
+  estão byte a byte iguais.
+
+  **O que a descrição textual não entregou.** A §1 diz "um L muito alongado e achatado", "duas
+  retas enormes em direções opostas", "as Lesmo juntas viram ~170°". Tudo verdade, e ainda assim a
+  silhueta saiu com a **reta principal em diagonal subindo pela esquerda**. A real é uma **CUNHA**:
+  reta principal HORIZONTAL embaixo, lado esquerdo subindo até as Lesmo no canto de cima, a
+  diagonal longa do Serraglio descendo até Ascari, reta de volta pra direita e a Parabólica
+  fechando na ponta direita. **Prosa correta, forma errada** — é o argumento empírico de que
+  descrição textual não substitui ver o traçado, e vale registrar porque foi exatamente o erro que
+  o 7.7 corrigiu nas outras.
+
+  **Mesmo método, mesmas guardas, medidas antes do commit:** sentido horário ✅ · envelope das
+  camadas cabe no viewBox com folga 4,5 ✅ · separação por arco 90,9 u ✅ · raio mínimo 40,8 u ✅ ·
+  pior vértice da curva suavizada 15,7° (guarda < 45°) ✅ · `minNaoAdj` 21,5 ✅. Duas iterações
+  vieram do harness: o degrau da **Roggia** estava a 18,4 u (alargado até 21,5) e a **subida do
+  lado esquerdo** tinha quatro pontos quase colineares, o que fazia `seg(i)` e `seg(i+2)` medirem
+  como trechos diferentes da pista — o mesmo falso positivo de densidade que Montreal deu no 7.7,
+  corrigido do mesmo jeito: no DESENHO, espaçando os pontos, nunca no teste.
+
+  **Números que se moveram (só Monza).** 37 ⇒ **49 pontos**. Ângulo do pior vértice 92,95° ⇒ 75,68°
+  no controle e 23,65° ⇒ **15,73°** na curva. Overshoot 1,67 ⇒ 1,49. Separação na curva 46,27 ⇒
+  50,30. `minNaoAdj` 28,6 ⇒ 21,5, ou seja **sobreposição de asfalto 5,4 ⇒ 12,5** — subiu, e o motivo
+  é o mesmo de antes: quem aperta é a chicane desenhada como DEGRAU, agora a Roggia. **O teto de 17
+  não foi mexido e Monza passa com 4,5 de folga**; o degrau já foi alargado o quanto dava sem virar
+  curva, e arredondar é justamente o que a §1 diz que descaracteriza a pista. Zebra: 18 trechos /
+  37,9% ⇒ **27 / 38,5%**, com o teto cortando 4 candidatos (eram 31 / 45,9% sem teto). A janela de
+  arco do 7.6 encontra **20 candidatos** que o critério por vértice perde em Monza — passou a ser a
+  maior divergência do parque (era Mônaco, com 15).
+
+  **904 testes** verdes, os mesmos do 7.7 (nenhum teste novo; 10 goldens de Monza re-derivados e
+  nenhum limiar alterado). `tsc`, `eslint` e `build` exit 0. Preview regenerado em
+  `preview/redesenho.html`. **O veredito do dev sobre o portão visual segue pendente.**
+
 - **🔴 DÍVIDA DESCOBERTA EM 2026-07-30: `npm run build` está QUEBRADO na `main` desde o PR 7.4 — e foi pushado pro `origin/main`.** `scripts/node-shims.d.ts:18` declara `writeFileSync(path: string, data: string)` com **dois** parâmetros; o gerador de preview do 7.4 (`scripts/preview-tracados.preview.test.ts:164`) chama com **três** (`'utf8'`). Em runtime o Node aceita o encoding, então `npm run preview` roda normalmente e ninguém percebeu. `npm run build` é `tsc --noEmit && vite build` e sai com **exit 2**. **Enquanto durar, o `tsc` é inútil como portão de qualidade.** Correção é uma linha (encoding opcional no shim), mas fica em `fix:` próprio. **Registro do que isso significa:** o `ESTADO.md` afirmava "`tsc --noEmit`, `eslint`, `npm run build` limpos" e a afirmação era falsa desde o 7.4 — foi **herdada de reescrita em reescrita sem nunca ser medida**, inclusive por mim em duas reescritas do mesmo dia. É o mesmo padrão do "nada foi pushado", também falso e também herdado. **Afirmação de estado em doc só entra medida.** E não é coincidência que o PR que pulou o fluxo inteiro (sem branch, sem merge commit, sem revisão, sem docs) seja o mesmo que deixou o build vermelho.
 
 - **🚦 ERA DOS TRAÇADOS — DECIDIDO PELO DEV EM 2026-07-30. Vale pra QUALQUER redesenho futuro de silhueta, não só pro PR corrente.** Usar sempre o **layout MODERNO/ATUAL** de cada pista, com a **Nordschleife como exceção óbvia** (a F1 parou de correr lá em 1976, não existe versão moderna). Casos concretos já decididos: **Monza SEM o oval banqueado**; **Spa de 7 km, não a de 14 km**; **Imola pós-1995**. **Motivo, nas palavras do dev:** o critério de aceite é *"o jogador reconhece"*, e o que ele reconhece é **o traçado que vê na TV hoje**. Consequência: fidelidade histórica ao layout de época NÃO é objetivo do projeto e não deve ser proposta como melhoria — o jogo cobre 1950-2025 nos DADOS (equipe/ano, notas), não nas silhuetas.

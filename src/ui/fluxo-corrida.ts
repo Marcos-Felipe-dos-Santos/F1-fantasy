@@ -471,9 +471,16 @@ export function classificacaoAoVivo(
 
 /**
  * Traçado de MONZA (5,793 km, 11 curvas, HORÁRIO) — redesenhado no PR 7.7 a
- * partir da geometria descrita em `referencias/REFERENCIA_TRACADOS.md` §1, sem
- * decalcar mapa nenhum (GDD §14.2). É a única das dez sem imagem de referência:
- * o dev mandou nove das dez, e Monza foi desenhada só pela descrição textual.
+ * partir da geometria do circuito, sem decalcar mapa nenhum (GDD §14.2).
+ *
+ * ⚠️ REDESENHADA DE NOVO quando a imagem de referência chegou (ela veio depois
+ * das outras nove). A primeira versão saiu só da descrição textual de
+ * `referencias/REFERENCIA_TRACADOS.md` §1 e pôs a reta principal em diagonal
+ * subindo pela esquerda — está errado, e é a prova de que descrição textual não
+ * substitui ver a forma. A silhueta real é uma CUNHA muito alongada: reta
+ * principal HORIZONTAL embaixo, lado esquerdo subindo até as Lesmo no canto de
+ * cima, a diagonal longa do Serraglio descendo até Ascari, reta de volta pra
+ * direita e a Parabólica fechando na ponta.
  *
  * Duas retas enormes em direções opostas dominam tudo, e é essa proporção
  * reta/curva que carrega o reconhecimento. As três chicanes (Rettifilo, Roggia,
@@ -486,51 +493,67 @@ export function classificacaoAoVivo(
  * pista sem silhueta própria.
  */
 export const TRACADO_GENERICO: TracadoImutavel = [
-  // Reta principal (Rettifilo Tribune) — a mais longa.
-  { x: 134, y: 408 },
-  { x: 194, y: 332 },
-  { x: 258, y: 252 },
-  { x: 322, y: 172 },
-  { x: 378, y: 94 },
-  { x: 414, y: 48 },
-  // Variante del Rettifilo: degrau dir+esq.
-  { x: 440, y: 36 },
-  { x: 464, y: 84 },
-  { x: 512, y: 66 },
-  { x: 556, y: 68 },
-  // Curva Grande / Biassono: arco amplo à direita.
-  { x: 608, y: 78 },
-  { x: 668, y: 110 },
-  { x: 712, y: 162 },
-  { x: 738, y: 222 },
-  // Reta de Biassono.
-  { x: 756, y: 298 },
-  { x: 770, y: 362 },
-  // Variante della Roggia: segundo degrau.
-  { x: 792, y: 398 },
-  { x: 820, y: 388 },
-  { x: 832, y: 428 },
-  // Lesmo 1 + Lesmo 2 — o cotovelo do L.
-  { x: 858, y: 468 },
-  { x: 882, y: 500 },
-  { x: 876, y: 538 },
-  { x: 842, y: 558 },
-  // Reta do Serraglio, com kink leve no meio.
-  { x: 780, y: 564 },
-  { x: 704, y: 556 },
-  { x: 628, y: 564 },
+  // Reta principal (Rettifilo Tribune) — horizontal, da direita pra
+  // esquerda, a mais longa do traçado.
+  { x: 636, y: 510 },
+  { x: 556, y: 506 },
+  { x: 476, y: 504 },
+  { x: 434, y: 502 },
+  // Variante del Rettifilo: degrau logo no fim da reta. Largo o bastante pra
+  // os dois lados não fundirem (é o que aperta o `minNaoAdj` em Monza), mas
+  // ainda um DEGRAU — arredondar aqui tira a Monza na hora.
+  { x: 410, y: 490 },
+  { x: 390, y: 472 },
+  { x: 366, y: 488 },
+  { x: 352, y: 512 },
+  { x: 320, y: 520 },
+  { x: 278, y: 520 },
+  { x: 234, y: 516 },
+  // Curva Grande / Biassono: arco amplo à direita, vira a pista pra cima.
+  { x: 202, y: 510 },
+  { x: 180, y: 494 },
+  { x: 166, y: 468 },
+  { x: 160, y: 436 },
+  // Subida pelo lado esquerdo (reta de Biassono).
+  { x: 158, y: 384 },
+  { x: 154, y: 314 },
+  // Variante della Roggia: segundo degrau, no lado esquerdo.
+  { x: 152, y: 282 },
+  { x: 142, y: 258 },
+  { x: 100, y: 246 },
+  { x: 92, y: 226 },
+  // Subida pras Lesmo.
+  { x: 92, y: 204 },
+  { x: 78, y: 170 },
+  { x: 64, y: 140 },
+  // Lesmo 1 + Lesmo 2, no canto de cima — o cotovelo da cunha.
+  { x: 56, y: 120 },
+  { x: 76, y: 102 },
+  { x: 108, y: 92 },
+  { x: 150, y: 86 },
+  { x: 190, y: 80 },
+  // Reta do Serraglio: a diagonal longa descendo pra direita.
+  { x: 226, y: 112 },
+  { x: 270, y: 156 },
+  { x: 320, y: 212 },
+  { x: 376, y: 274 },
+  { x: 430, y: 332 },
   // Variante Ascari: três degraus encadeados.
-  { x: 560, y: 562 },
-  { x: 514, y: 532 },
-  { x: 476, y: 548 },
-  { x: 436, y: 518 },
-  // Reta traseira.
-  { x: 376, y: 524 },
-  { x: 304, y: 534 },
-  { x: 236, y: 538 },
-  // Parabólica: arco longo de raio crescente, fecha na reta principal.
-  { x: 176, y: 532 },
-  { x: 124, y: 502 },
-  { x: 98, y: 460 },
-  { x: 106, y: 430 },
+  { x: 452, y: 354 },
+  { x: 476, y: 376 },
+  { x: 502, y: 362 },
+  { x: 528, y: 382 },
+  { x: 550, y: 394 },
+  // Reta traseira, horizontal.
+  { x: 640, y: 402 },
+  { x: 746, y: 404 },
+  { x: 830, y: 406 },
+  // Parabólica / Alboreto: o único arco longo e contínuo, de raio crescente.
+  { x: 888, y: 410 },
+  { x: 920, y: 428 },
+  { x: 924, y: 460 },
+  { x: 900, y: 488 },
+  { x: 854, y: 502 },
+  { x: 790, y: 506 },
+  { x: 714, y: 508 },
 ];

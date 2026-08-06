@@ -591,7 +591,7 @@ describe('fusão de asfalto (3.8 — documenta e trava o que foi medido)', () =>
     'pista-interlagos': 29.7,
     'pista-nurburgring': 29.5,
     'pista-monaco': 29.1,
-    'pista-monza': 28.6,
+    'pista-monza': 21.5,
     'pista-silverstone': 27.5,
     'pista-montreal': 23.8,
     'pista-suzuka': 20.9,
@@ -627,21 +627,22 @@ describe('fusão de asfalto (3.8 — documenta e trava o que foi medido)', () =>
 
   /**
    * ⚠️ MONZA SAIU DO ZERO NO PR 7.7, e o número é consequência do desenho, não
-   * descuido: 5,4 de sobreposição (minNaoAdj 28,6 contra 34 de asfalto). O par
-   * que aperta NÃO é ramo contra ramo — é o fim da reta principal contra a saída
-   * da Variante del Rettifilo, ou seja, a própria chicane. Alargar até voltar a
-   * zero exigiria arredondar o degrau, que é exatamente o que a referência §1 diz
-   * que descaracteriza Monza ("se as chicanes virarem curvas arredondadas, deixa
-   * de ser Monza imediatamente").
+   * descuido: 12,5 de sobreposição (minNaoAdj 21,5 contra 34 de asfalto). O par
+   * que aperta NÃO é ramo contra ramo — é a Variante della Roggia, ou seja, a
+   * própria chicane desenhada como DEGRAU. Alargar até voltar a zero exigiria
+   * arredondar o degrau, que é exatamente o que a referência §1 diz que
+   * descaracteriza Monza ("se as chicanes virarem curvas arredondadas, deixa de
+   * ser Monza imediatamente"). O degrau JÁ foi alargado o quanto dava sem virar
+   * curva: de 18,4 pra 21,5 de folga interna.
    *
    * O LIMIAR NÃO FOI MEXIDO: a guarda geral (`sobreposição <= 17`) continua
    * valendo pras 10 e Monza passa com 11,6 de folga. O que este teste trava agora
    * é o VALOR medido — se subir, alguém mexeu na chicane sem perceber.
    */
-  it('Monza: 5,4 de sobreposição — a chicane como degrau custa isso, e o teto de 17 segue de pé', () => {
+  it('Monza: 12,5 de sobreposição — a chicane como degrau custa isso, e o teto de 17 segue de pé', () => {
     const tracado = tracadoDaPista('pista-monza');
     const sobreposicao = Math.max(0, LARGURA_ASFALTO - minNaoAdj(tracado));
-    expect(sobreposicao).toBeCloseTo(5.4, 1);
+    expect(sobreposicao).toBeCloseTo(12.5, 1);
     expect(sobreposicao).toBeLessThanOrEqual(LARGURA_ASFALTO / 2);
   });
 
@@ -667,7 +668,7 @@ describe('fusão de asfalto (3.8 — documenta e trava o que foi medido)', () =>
       'pista-suzuka': 21.1,
       'pista-montreal': 18.2,
       'pista-silverstone': 14.5,
-      'pista-monza': 13.4,
+      'pista-monza': 20.5,
       'pista-monaco': 12.9,
       'pista-nurburgring': 12.5,
       'pista-interlagos': 12.3,
@@ -718,7 +719,7 @@ describe('zebra (3.9)', () => {
   > = {
     'pista-monaco': { candidatos: 16, candidatosPorJanela: 31, escolhidos: 24, coberturaPct: 39.0, indices: [3, 4, 10, 11, 12, 17, 18, 19, 20, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45] },
     'pista-spa': { candidatos: 13, candidatosPorJanela: 18, escolhidos: 18, coberturaPct: 33.4, indices: [2, 3, 4, 5, 18, 19, 20, 22, 23, 24, 28, 34, 35, 37, 41, 42, 45, 46] },
-    'pista-monza': { candidatos: 13, candidatosPorJanela: 19, escolhidos: 18, coberturaPct: 37.9, indices: [0, 5, 6, 7, 15, 16, 17, 18, 19, 20, 21, 22, 26, 27, 28, 29, 35, 36] },
+    'pista-monza': { candidatos: 11, candidatosPorJanela: 31, escolhidos: 27, coberturaPct: 38.5, indices: [3, 4, 5, 6, 7, 8, 11, 12, 13, 17, 18, 19, 20, 21, 23, 24, 25, 27, 28, 34, 35, 36, 37, 42, 43, 44, 45] },
     'pista-silverstone': { candidatos: 22, candidatosPorJanela: 23, escolhidos: 22, coberturaPct: 39.7, indices: [3, 4, 6, 7, 8, 9, 10, 11, 15, 16, 18, 19, 20, 26, 30, 31, 32, 37, 38, 40, 41, 42] },
     'pista-suzuka': { candidatos: 23, candidatosPorJanela: 29, escolhidos: 20, coberturaPct: 38.7, indices: [3, 4, 7, 8, 9, 10, 11, 12, 15, 16, 19, 20, 21, 22, 23, 26, 27, 29, 38, 39] },
     'pista-interlagos': { candidatos: 19, candidatosPorJanela: 26, escolhidos: 22, coberturaPct: 39.4, indices: [3, 4, 5, 6, 7, 8, 9, 14, 15, 16, 20, 21, 22, 23, 24, 26, 27, 28, 29, 31, 33, 34] },
@@ -831,7 +832,7 @@ describe('zebra (3.9)', () => {
   const DIVERGENCIA_POS_REDESENHO: Record<string, number[]> = {
     'pista-monaco': [5, 12, 13, 16, 20, 22, 32, 34, 35, 37, 39, 40, 42, 43, 45],
     'pista-spa': [2, 5, 34, 41, 46],
-    'pista-monza': [0, 5, 15, 18, 19, 22],
+    'pista-monza': [3, 4, 6, 8, 10, 11, 12, 13, 17, 20, 21, 22, 23, 25, 26, 27, 34, 37, 38, 42],
     'pista-silverstone': [41],
     'pista-suzuka': [9, 11, 16, 19, 26, 37],
     'pista-interlagos': [3, 5, 7, 9, 14, 16, 28],
@@ -914,19 +915,19 @@ describe('zebra (3.9)', () => {
    * algoritmo faz `continue` quando estouraria o teto, então essa comparação
    * não pode falhar e não detecta nada.
    */
-  it('não-regressão da zebra de Monza REDESENHADA: 18 trechos e 37,9% — e o teto de 40% MORDE, cortando a Parabólica', () => {
+  it('não-regressão da zebra de Monza REDESENHADA: 27 trechos e 38,5% — e o teto de 40% MORDE, cortando 4 candidatos', () => {
     const tracado = tracadoDaPista('pista-monza');
     const trechos = trechosDeZebra(tracado);
-    expect(trechos.length).toBe(18);
-    expect(coberturaAprox(tracado, trechos)).toBeCloseTo(37.9, 0);
+    expect(trechos.length).toBe(27);
+    expect(coberturaAprox(tracado, trechos)).toBeCloseTo(38.5, 0);
 
-    // Sem teto seriam 19 trechos / 40,4% — a diferença é o corte, e é ela que
+    // Sem teto seriam 31 trechos / 45,9% — a diferença é o corte, e é ela que
     // prova que o teto é vinculante nesta pista.
     const semTeto = trechosDeZebra(tracado, { coberturaMaxima: 1 });
-    expect(semTeto).toHaveLength(19);
-    expect(coberturaAprox(tracado, semTeto)).toBeCloseTo(40.4, 0);
+    expect(semTeto).toHaveLength(31);
+    expect(coberturaAprox(tracado, semTeto)).toBeCloseTo(45.9, 0);
     const cortados = semTeto.map((t) => t.indice).filter((i) => !trechos.some((t) => t.indice === i));
-    expect(cortados, 'o cortado é a Parabólica').toEqual([34]);
+    expect(cortados).toEqual([10, 22, 26, 38]);
   });
 
   /**

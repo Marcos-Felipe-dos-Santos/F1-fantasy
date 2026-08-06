@@ -197,7 +197,7 @@ describe('tracadoSuavizado', () => {
 const ANGULO_MEDIDO: Record<string, { controle: number; suavizado: number }> = {
   'pista-monaco': { controle: 117.41, suavizado: 29.37 },
   'pista-spa': { controle: 113.28, suavizado: 25.6 },
-  'pista-monza': { controle: 92.95, suavizado: 23.65 },
+  'pista-monza': { controle: 75.68, suavizado: 15.73 },
   'pista-silverstone': { controle: 100.6, suavizado: 23.6 },
   'pista-suzuka': { controle: 116.92, suavizado: 29.32 },
   'pista-interlagos': { controle: 124.96, suavizado: 32.4 },
@@ -357,7 +357,7 @@ const OVERSHOOT_MEDIDO: Record<string, number> = {
   // direta de pontos de controle mais densos: a Catmull-Rom extrapola menos
   // quando a corda é mais curta.
   'pista-interlagos': 1.47,
-  'pista-monza': 1.67,
+  'pista-monza': 1.49,
   'pista-silverstone': 0.89,
   'pista-suzuka': 2.54,
   'pista-nurburgring': 3.4,
@@ -488,7 +488,7 @@ const SEPARACAO_MEDIDA: Record<string, number> = {
   // caber sem que dois ramos do traçado se aproximassem. Deu 53,9. Monza subiu
   // de 40,5 pra 51,8 no mesmo movimento.
   'pista-interlagos': 35.72,
-  'pista-monza': 46.27,
+  'pista-monza': 50.3,
   'pista-montreal': 31.46,
   'pista-silverstone': 31.48,
   'pista-imola': 39.62,

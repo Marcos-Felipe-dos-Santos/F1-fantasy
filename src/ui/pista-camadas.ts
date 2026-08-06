@@ -224,7 +224,7 @@ export const LARGURA_SVG_MINIMA_PX = 320;
  * ✅ **DEIXOU DE SER INERTE NO PR 7.7** (redesenho das 10). As silhuetas novas
  * têm 34-48 pontos e segmentos bem menores que 44 u, então a janela passou a
  * somar vizinhos e a ENCONTRAR curvas que o critério por vértice perde — de 1
- * candidato extra (Silverstone) a 15 (Mônaco). É o mecanismo do 7.6 fazendo em
+ * candidato extra (Silverstone) a 20 (Monza). É o mecanismo do 7.6 fazendo em
  * produção o que só sintéticos exercitavam, e a razão de ele existir. Medido: a
  * janela é SUPERCONJUNTO do vértice nas 10, nenhuma perde vértice que o critério
  * antigo pegava. A única em que os dois coincidem é o Red Bull Ring, a mais
@@ -248,8 +248,8 @@ export const COBERTURA_MAXIMA_ZEBRA = 0.4;
  * violação da regra 3:
  *
  * ⚠️ Essa calibração foi feita contra silhuetas que o PR 7.7 substituiu INTEIRAS.
- * Na Monza redesenhada (37 pontos) o número é outro: 18 trechos / 37,9%, com o
- * teto de 40% cortando um 19º candidato. **O valor de 88 NÃO foi mexido aqui** —
+ * Na Monza redesenhada (49 pontos) o número é outro: 27 trechos / 38,5%, com o
+ * teto de 40% cortando 4 candidatos. **O valor de 88 NÃO foi mexido aqui** —
  * reabrir é decisão de arte do dev, e agora ela pode ser tomada com o parque
  * redesenhado inteiro na mesa, que era a informação que faltava.
  * o vértice 1 é a PONTA da reta de largada e um trecho ali se estende só ±44 u,
@@ -474,8 +474,8 @@ export interface OpcoesZebra {
  *    Nürburgring, Imola, Red Bull Ring). **Depois do redesenho das 10 (PR 7.7)
  *    o teto morde em 8 das 10** — medido trecho a trecho, com e sem teto: só
  *    Spa (33,4% de cobertura) e Red Bull Ring (28,0%) não perdem candidato
- *    nenhum pro corte. Monza entrou no grupo — sem teto daria 19
- *    trechos / 40,4%, e o corte tira a Parabólica (vértice 34). O caso extremo
+ *    nenhum pro corte. Monza entrou no grupo — sem teto daria 31
+ *    trechos / 45,9%, e o corte tira 4 candidatos. O caso extremo
  *    segue sendo o Nürburgring: 29 trechos / 50,0% sem teto contra 24 / 38,7%
  *    com ele. O `break`/`continue` seguem dando o mesmo resultado nas 10:
  *    confirmado contra os goldens de `pista-camadas.test.ts`;
