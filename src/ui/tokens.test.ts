@@ -247,6 +247,75 @@ describe('impossibilidade do par pistaAsfalto/fundo', () => {
 });
 
 // ---------------------------------------------------------------------------
+// 2b. CASAMENTO ENTRE O PAR DECLARADO E O CSS REAL
+// ---------------------------------------------------------------------------
+
+/**
+ * `PARES_CONTRASTE` declara `textoEscuro/primaria = 4,914`. Isso é uma
+ * afirmação sobre dois VALORES — não prova que o CSS realmente põe
+ * `--texto-escuro` em cima de `--primaria`. Sem esta guarda, trocar o texto do
+ * botão primário pra `--texto` deixaria a suíte inteira verde.
+ *
+ * E o risco cresceu exatamente com a paleta nova. A `primaria` antiga era o
+ * amarelo `#FFCC00` (luminância 0,555): texto branco em cima dá 1,53:1, um
+ * horror que se vê de longe. A `primaria` nova é `#FF1801` (0,219), e branco
+ * em cima dá **3,445:1** — reprova AA, e parece perfeitamente aceitável a
+ * olho. É a classe de erro que passa por revisão e por portão visual.
+ *
+ * Mesmo formato da guarda `.tracado-svg__chao` em `pista-camadas.test.ts`:
+ * ler o bloco do seletor e exigir o `var(--...)` esperado.
+ */
+describe('preenchimento de acento vem sempre com a tinta escura por cima', () => {
+  const estilos = readFileSync(join(__dirname, 'estilos.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+
+  /** Blocos `seletor { corpo }` — o arquivo não tem regra aninhada. */
+  const blocos: Array<{ seletor: string; corpo: string }> = [];
+  const regexBloco = /([^{}]*)\{([^{}]*)\}/g;
+  let b: RegExpExecArray | null;
+  while ((b = regexBloco.exec(estilos)) !== null) {
+    blocos.push({ seletor: b[1].trim(), corpo: b[2] });
+  }
+
+  /**
+   * Preenchimentos que carregam texto. Cada um tem um par
+   * `textoEscuro/<token>` em `PARES_CONTRASTE` — é esse par que a guarda
+   * conecta ao CSS. `borda`/`bordaInterativa` ficam de fora: são contorno, não
+   * superfície de texto.
+   */
+  const PREENCHIMENTOS: NomeCor[] = ['primaria', 'acento', 'sucesso', 'erro', 'raridadeLendario'];
+
+  const kebabPreenchimentos = new Map(PREENCHIMENTOS.map((n) => [paraKebabCase(n), n]));
+
+  const usos = blocos.flatMap(({ seletor, corpo }) => {
+    const m = corpo.match(/background:\s*var\(--([a-z0-9-]+)\)/);
+    if (!m || !kebabPreenchimentos.has(m[1])) return [];
+    return [{ seletor, corpo, token: kebabPreenchimentos.get(m[1]) as NomeCor }];
+  });
+
+  it('a guarda encontrou usos de verdade (anti-tautologia: um rename de classe não pode fazê-la passar vazia)', () => {
+    expect(usos.length, 'nenhuma regra pinta acento como background — a guarda estaria vazia').toBeGreaterThanOrEqual(4);
+  });
+
+  for (const { seletor, corpo, token } of usos) {
+    it(`${seletor} usa background: var(--${paraKebabCase(token)}) e por isso precisa de color: var(--texto-escuro)`, () => {
+      expect(
+        corpo,
+        `${seletor} pinta o fundo com --${paraKebabCase(token)} mas não declara a tinta escura. ` +
+          `Com --texto (${cores.texto}) sobre ${cores[token]} o contraste seria ` +
+          `${((Math.max(luminanciaRelativa(cores.texto), luminanciaRelativa(cores[token])) + 0.05) / (Math.min(luminanciaRelativa(cores.texto), luminanciaRelativa(cores[token])) + 0.05)).toFixed(3)}:1.`,
+      ).toMatch(/color:\s*var\(--texto-escuro\)/);
+    });
+  }
+
+  it('todo preenchimento usado no CSS tem par declarado em PARES_CONTRASTE', () => {
+    for (const { token } of usos) {
+      const par = PARES_CONTRASTE.find((p) => p.fg === 'textoEscuro' && p.bg === token);
+      expect(par, `falta o par textoEscuro/${token} em PARES_CONTRASTE`).toBeDefined();
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------
 // 3. SINCRONIA tokens.ts <-> tokens.css (bloco a bloco)
 // ---------------------------------------------------------------------------
 
