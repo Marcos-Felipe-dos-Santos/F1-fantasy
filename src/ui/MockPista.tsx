@@ -53,28 +53,30 @@ const ZEBRAS: string[] = [
   'M88.4,427.6 L100.0,470.0 L137.7,492.6',
 ];
 
-const ASFALTO = '#3E3A5C'; // token proposto pro 7.2 (`pistaAsfalto`)
-const ESCAPE = '#0E0C20'; // = fundoAfundado
+const ASFALTO = '#363636'; // = pistaAsfalto (7.8: desceu de #3E3A5C — teto imposto pelo carro vermelho)
+const ESCAPE = '#121212'; // = pistaEscape (7.8: token proprio, era fundoAfundado)
 /**
- * Muro ESCURECIDO na revisão 2 (era `borda #3A3468`). Não veio de referência:
- * medindo, `#3A3468` tem luminância 0.0435 contra 0.0482 do asfalto — 10% de
+ * Muro ESCURECIDO na revisão 2. Não veio de referência: na paleta antiga, o
+ * `borda` de então tinha luminância 0.0435 contra 0.0482 do asfalto — 10% de
  * diferença. O aro do muro competia com a própria pista pela atenção. Em
- * `#2F2A55` (0.0292) o asfalto volta a ser, com folga, a superfície mais clara.
+ * um muro mais escuro que a borda o asfalto volta a ser, com folga, a
+ * superfície mais clara. Na paleta grafite do 7.8 o muro é `#2E2E2E` (0.0273)
+ * contra 0.0369 do asfalto — mesma folga, valores recalculados.
  */
-const MURO = '#2F2A55';
+const MURO = '#2E2E2E'; // = pistaMuro
 /** Terreno do autódromo (revisão 2): a faixa larga que faz a pista deixar de flutuar no vazio. */
-const TERRENO = '#1B1738';
+const TERRENO = '#202020'; // = pistaTerreno
 /** Áreas de escape nas curvas e plataforma do paddock (revisão 2). */
-const SERVICO = '#221E42';
-const MARCACAO = '#B9B3DC'; // = textoSuave
-const ZEBRA_A = '#FFCC00'; // = primaria
-const ZEBRA_B = '#FF7B85'; // = erro
-const CORPO_BOT = '#B9B3DC';
-const CORPO_BOT_ASA = '#8E88B8';
-const CAPACETE_BOT = '#29D9F5'; // = acento
-const CORPO_HUMANO = '#FF4FA3'; // = magenta
-const CORPO_HUMANO_ASA = '#D93B85';
-const CAPACETE_HUMANO = '#FFCC00';
+const SERVICO = '#262626'; // = pistaServico
+const MARCACAO = '#9A9A9A'; // = pistaLimite
+const ZEBRA_A = '#FF1801'; // = pistaZebraA (7.8: zebra vermelho/branco, como o real)
+const ZEBRA_B = '#F5F0EB'; // = pistaZebraB
+const CORPO_BOT = '#B0B0B0'; // = carroBot
+const CORPO_BOT_ASA = '#8A8A8A';
+const CAPACETE_BOT = '#FFB800'; // = acento (dourado)
+const CORPO_HUMANO = '#FF1801'; // = primaria (7.8: vermelho F1 no lugar do magenta)
+const CORPO_HUMANO_ASA = '#C21301';
+const CAPACETE_HUMANO = '#FFB800';
 
 /**
  * Posições e ângulos pré-calculados ao longo do traçado (o PR 7.9 deriva isso
@@ -129,7 +131,7 @@ const CAMADAS_TOPO: { cor: string; largura: number; tracejado?: string; opacidad
   // Limite de pista: linha branca FINA e discreta em toda a volta (2 unidades
   // de cada lado ⇒ ~1,4px na tela). É ela que delimita a pista na reta, onde
   // zebra não existe.
-  { cor: '#F4F2FF', largura: 56, opacidade: 0.5 },
+  { cor: '#F5F0EB', largura: 56, opacidade: 0.5 },
   { cor: ASFALTO, largura: 52 },
   { cor: MARCACAO, largura: 1.6, tracejado: '14 18', opacidade: 0.5 },
 ];
@@ -151,7 +153,7 @@ function Carro({ n, x, y, ang }: { n: number; x: number; y: number; ang: number 
         {/* cockpit = disco do capacete (decisão D5) — superfície do editor do PR 5.3 */}
         <circle cx={-1} cy={0} r={5 * e} fill={capacete} />
       </g>
-      <text y={4} textAnchor="middle" fontSize={11} fontWeight={700} fill="#16132E">
+      <text y={4} textAnchor="middle" fontSize={11} fontWeight={700} fill="#0F0F0F">
         {n}
       </text>
     </g>
@@ -160,19 +162,19 @@ function Carro({ n, x, y, ang }: { n: number; x: number; y: number; ang: number 
 
 export function MockPista() {
   return (
-    <div style={{ background: '#0E0C20', minHeight: '100vh', padding: 24 }}>
-      <p style={{ color: '#29D9F5', fontFamily: 'monospace', letterSpacing: 3, fontSize: 12 }}>
+    <div style={{ background: '#121212', minHeight: '100vh', padding: 24 }}>
+      <p style={{ color: '#FFB800', fontFamily: 'monospace', letterSpacing: 3, fontSize: 12 }}>
         PR 7.1 · MAQUETE DESCARTÁVEL · NÃO É PRODUÇÃO
       </p>
       <svg viewBox="-40 -40 1080 700" style={{ width: '100%', height: 'auto', maxWidth: 1100 }}>
         <defs>
           <linearGradient id="mockVinheta" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#241F45" stopOpacity="0.55" />
-            <stop offset="55%" stopColor="#16132E" stopOpacity="0" />
+            <stop offset="0%" stopColor="#2A2A2A" stopOpacity="0.55" />
+            <stop offset="55%" stopColor="#1A1A1A" stopOpacity="0" />
           </linearGradient>
         </defs>
 
-        <rect x={-40} y={-40} width={1080} height={700} fill="#16132E" />
+        <rect x={-40} y={-40} width={1080} height={700} fill="#1A1A1A" />
         <rect x={-40} y={-40} width={1080} height={700} fill="url(#mockVinheta)" />
 
         {/*
@@ -232,8 +234,8 @@ export function MockPista() {
         </g>
 
         {/* pit lane: ilha, garagens, via */}
-        <rect x={168} y={512} width={452} height={34} rx={6} fill="#241F45" stroke={MURO} strokeWidth={1.5} />
-        <g fill="#2E2952" stroke={MURO} strokeWidth={1.2}>
+        <rect x={168} y={512} width={452} height={34} rx={6} fill="#2A2A2A" stroke={MURO} strokeWidth={1.5} />
+        <g fill="#2E2E2E" stroke={MURO} strokeWidth={1.2}>
           {Array.from({ length: 12 }, (_, i) => (
             <rect key={i} x={178 + i * 36} y={516} width={30} height={26} rx={3} />
           ))}
@@ -242,11 +244,11 @@ export function MockPista() {
         <rect x={358} y={516} width={30} height={26} rx={3} fill={ASFALTO} stroke={ZEBRA_A} strokeWidth={1.6} />
 
         <path d={D_PIT} fill="none" stroke={MURO} strokeWidth={30} strokeLinecap="round" />
-        <path d={D_PIT} fill="none" stroke="#37334F" strokeWidth={22} strokeLinecap="round" />
+        <path d={D_PIT} fill="none" stroke="#363636" strokeWidth={22} strokeLinecap="round" />
         <path d={D_PIT} fill="none" stroke={CAPACETE_BOT} strokeWidth={1.4} strokeDasharray="10 14" opacity={0.5} />
 
         {/* largada */}
-        <rect x={196} y={474} width={4} height={52} fill="#F4F2FF" opacity={0.9} />
+        <rect x={196} y={474} width={4} height={52} fill="#F5F0EB" opacity={0.9} />
 
         <g fontFamily="monospace">
           {CARROS.map((c) => (

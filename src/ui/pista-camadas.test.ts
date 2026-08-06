@@ -12,7 +12,7 @@ import { criarDataset } from '../engine/dataset';
 import equipeAnosReal from '../data/equipe-anos.json';
 import pecasReal from '../data/pecas.json';
 import pistasReal from '../data/pistas.json';
-import { cores, type NomeCor } from './tokens';
+import { cores, coresLight, type NomeCor } from './tokens';
 import type { Ponto } from './fluxo-corrida';
 import { suavizarPolilinhaFechada } from './suavizacao';
 import { tracadoDaPista } from './tracados';
@@ -115,20 +115,27 @@ describe('separação mínima de luminância da hierarquia (3.1 — fecha a pend
   });
 
   /**
-   * Teste ANTI-TAUTOLÓGICO obrigatório, com o MUTANTE nomeado: `#322D58` no
-   * lugar de `pistaAsfalto` é exatamente o mutante que a revisão do PR 7.2
-   * provou passar em 608 testes preservando a ORDEM inteira de luminância
-   * (fundoAfundado < fundo < ... < pistaAsfalto continua verdadeira com
-   * `#322D58`) — é por isso que a guarda de ORDEM sozinha não basta: ela não
-   * pega separação insuficiente entre vizinhos. Contra `pistaMuro`, a razão
-   * de `#322D58` é 1,118 — abaixo do mínimo 1,25 — e esta guarda TEM que
-   * reprovar isso.
+   * Teste ANTI-TAUTOLÓGICO obrigatório, com o MUTANTE nomeado. O mutante
+   * original era `#322D58` (razão 1,118 contra o muro roxo) — o análogo na
+   * paleta grafite é `#313131`, escolhido pelo MESMO critério e com razão
+   * praticamente igual (1,124):
+   *
+   * - preserva a ORDEM inteira de luminância (escape < chão < terreno <
+   *   serviço < muro < `#313131`), que é o que torna o mutante interessante:
+   *   a guarda de ordem sozinha o deixa passar;
+   * - mas fica a 1,124 do muro, abaixo do mínimo 1,25.
+   *
+   * É por isso que a guarda de ORDEM não basta — ela não pega separação
+   * insuficiente entre vizinhos. Esta guarda TEM que reprovar isso.
    */
-  it('mutante nomeado: #322D58 no lugar de pistaAsfalto reprova contra pistaMuro (razão 1,118 < 1,25)', () => {
-    const MUTANTE_ASFALTO = '#322D58';
+  it('mutante nomeado: #313131 no lugar de pistaAsfalto reprova contra pistaMuro (razão 1,124 < 1,25)', () => {
+    const MUTANTE_ASFALTO = '#313131';
     const razao = razaoSeparacao(MUTANTE_ASFALTO, cores.pistaMuro);
     expect(razao).toBeLessThan(SEPARACAO_MINIMA_LUMINANCIA);
-    expect(razao).toBeCloseTo(1.118, 2);
+    expect(razao).toBeCloseTo(1.124, 2);
+
+    // O que faz dele um mutante DE VERDADE: a guarda de ordem o aprova.
+    expect(luminanciaRelativa(MUTANTE_ASFALTO)).toBeGreaterThan(luminanciaRelativa(cores.pistaMuro));
   });
 });
 
@@ -249,16 +256,32 @@ describe('casamento com a realidade (3.3 — o dado não pode divergir do CSS)',
   });
 
   /**
-   * Trava a DECISÃO DE OLHO do dev no PR 7.3.1: o chão do replay é `fundo`,
-   * não `fundoElevado`. É `fundo` que deixa o terreno (mais claro) ler como
-   * degrau que sobe — o relevo da maquete do 7.1. Voltar o chão pra
-   * `fundoElevado` devolve o painel ao visual de card, mas apaga o relevo, e
-   * o dev escolheu o relevo aceitando esse custo. Nenhuma guarda de contraste
+   * Trava a DECISÃO DE OLHO do dev no PR 7.3.1: o chão do replay é o tom de
+   * BASE escuro, não o tom de card. É ele que deixa o terreno (mais claro) ler
+   * como degrau que sobe — o relevo da maquete do 7.1. Voltar o chão pro tom
+   * de card devolve o painel ao visual de card, mas apaga o relevo, e o dev
+   * escolheu o relevo aceitando esse custo. Nenhuma guarda de contraste
    * reprovaria a volta (as duas passam), então sem este teste a decisão se
    * desfaz sozinha na próxima refatoração.
+   *
+   * ⚠️ PR 7.8 — o NOME do token mudou (`fundo` -> `pistaChao`), a decisão não.
+   * O valor no escuro é o mesmo `#1A1A1A`, então o replay não mudou de
+   * aparência; o que mudou é que o chão parou de depender de um token que
+   * troca com o tema (`fundo` vira `#F5F0EB` no claro, o que inverteria o
+   * relevo num "poço" — exatamente a alternativa que o dev REJEITOU).
+   *
+   * Este teste passou a travar a SUBSTÂNCIA da decisão em vez do nome: chão
+   * escuro, terreno como degrau que SOBE, e o chão fora do alcance do tema.
    */
-  it('o chão do replay é `fundo` — decisão de olho do dev no 7.3.1 (relevo do terreno), que nenhuma guarda de contraste protege', () => {
-    expect(SUPERFICIE_BASE_REPLAY).toBe('fundo');
+  it('o chão do replay é o tom de base ESCURO e imune ao tema — decisão de olho do dev no 7.3.1 (relevo do terreno)', () => {
+    expect(SUPERFICIE_BASE_REPLAY).toBe('pistaChao');
+
+    // A parte da decisão que o tema poderia desfazer sem ninguém ver: se o
+    // chão voltar a ser um token mode-scoped, o relevo inverte no claro.
+    expect(
+      coresLight[SUPERFICIE_BASE_REPLAY as NomeCor],
+      'o chão do replay não pode ser mode-scoped — no claro o relevo vira poço',
+    ).toBeUndefined();
 
     // O SINAL do degrau é o que carrega a decisão: terreno MAIS CLARO que o
     // chão = degrau que sobe = relevo. (`razaoSeparacao` não serve pra isso —
@@ -267,12 +290,13 @@ describe('casamento com a realidade (3.3 — o dado não pode divergir do CSS)',
       luminanciaRelativa(cores[SUPERFICIE_BASE_REPLAY as NomeCor]),
     );
 
-    // E a MAGNITUDE do degrau: 1,357: é a adjacência mais apertada de toda a
-    // pilha (com `fundoElevado` era 1,578), então qualquer ajuste futuro em
-    // `fundo` ou `pistaTerreno` estoura aqui antes de qualquer outro lugar.
+    // E a MAGNITUDE do degrau: 1,398 na paleta grafite (era 1,357 na
+    // azul-noite). Deixou de ser a adjacência mais apertada da pilha — agora
+    // quem é o gargalo é muro->asfalto, a 1,350, porque o teto de luminância
+    // do asfalto encolheu com o vermelho no lugar do magenta.
     const razaoRelevo = razaoSeparacao(cores.pistaTerreno, cores[SUPERFICIE_BASE_REPLAY as NomeCor]);
     expect(razaoRelevo).toBeGreaterThanOrEqual(SEPARACAO_MINIMA_LUMINANCIA);
-    expect(razaoRelevo).toBeCloseTo(1.357, 2);
+    expect(razaoRelevo).toBeCloseTo(1.398, 2);
   });
 });
 
@@ -397,7 +421,10 @@ describe('cor de cada camada casada com a hierarquia (Aviso 4 da revisão do PR 
   /** Golden explícito id -> cor: mutar QUALQUER cor de CAMADAS_PISTA quebra este teste. */
   const GOLDEN_COR: Record<string, CorDePista> = {
     terreno: 'pistaTerreno',
-    escape: 'fundoAfundado',
+    // PR 7.8: era `fundoAfundado`. Virou token próprio de MESMO valor porque
+    // `fundoAfundado` clareia no tema claro e o sulco de escape viraria uma
+    // faixa branca no meio da pista.
+    escape: 'pistaEscape',
     muro: 'pistaMuro',
     'zebra-a': 'pistaZebraA',
     'zebra-b': 'pistaZebraB',
@@ -1199,7 +1226,9 @@ describe('pathDaVolta / pathDoTrecho / varDeCor', () => {
   it('varDeCor converte camelCase pra kebab-case dentro de var(--...)', () => {
     expect(varDeCor('pistaAsfalto')).toBe('var(--pista-asfalto)');
     expect(varDeCor('pistaLimite')).toBe('var(--pista-limite)');
-    expect(varDeCor('fundo')).toBe('var(--fundo)');
+    // Um nome de UMA palavra (sem camelCase pra quebrar) — antes era `fundo`,
+    // que saiu de `CorDePista` no 7.8 porque agora muda com o tema.
+    expect(varDeCor('pistaChao')).toBe('var(--pista-chao)');
   });
 });
 

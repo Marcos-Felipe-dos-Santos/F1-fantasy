@@ -1,5 +1,24 @@
-/* Design tokens do F1 Fantasy (PR 5.1a). Fonte da verdade dos valores:
-   `tokens.ts` (mesmos hex/px). `tokens.test.ts` garante a sincronia. */
+/* Design tokens do F1 Fantasy. Fonte da verdade dos valores: `tokens.ts`
+   (mesmos hex/px). `tokens.test.ts` garante a sincronia BLOCO A BLOCO — o
+   `:root` tem que bater com `cores` e os dois blocos claros com
+   `cores + coresLight`.
+
+   CASCATA DOS TEMAS — a ordem dos três blocos abaixo é significativa:
+
+     1. `:root`                                    -> dark, o padrão
+     2. `@media (prefers-color-scheme: light)`
+          `:root:not([data-tema])`                 -> segue o sistema
+     3. `:root[data-tema='light']`                 -> escolha manual
+
+   O `:not([data-tema])` no bloco 2 é o que faz o toggle manual ganhar do
+   sistema NOS DOIS SENTIDOS. Sem ele, um usuário com o SO no claro que
+   escolhesse "escuro" continuaria no claro: o `@media` viria depois na
+   cascata, com a mesma especificidade, e venceria. Com ele, o `@media` se
+   desliga sozinho no instante em que o atributo existe.
+
+   `color-scheme` acompanha cada bloco pra que os controles nativos (scrollbar,
+   caixa de seleção, autofill) troquem junto — sem isso a UI fica clara com
+   scrollbar escura. */
 
 @font-face {
   font-family: 'Bungee';
@@ -9,36 +28,47 @@
   font-display: swap;
 }
 
+/* ---- 1. DARK: o padrão ---------------------------------------------------- */
 :root {
-  --fundo: #16132E;
-  --fundo-elevado: #241F45;
-  --fundo-afundado: #0E0C20;
-  --texto: #F4F2FF;
-  --texto-suave: #B9B3DC;
-  --texto-escuro: #16132E;
-  --primaria: #FFCC00;
-  --acento: #29D9F5;
-  --magenta: #FF4FA3;
-  --sucesso: #3DDC64;
+  color-scheme: dark;
+
+  --fundo: #1A1A1A;
+  --fundo-elevado: #2A2A2A;
+  --fundo-afundado: #121212;
+  --texto: #F5F0EB;
+  --texto-suave: #9A9A9A;
+  --texto-escuro: #0F0F0F;
+  --primaria: #FF1801;
+  --primaria-texto: #FF5443;
+  --acento: #FFB800;
+  --acento-texto: #FFB800;
+  --sucesso: #00D26A;
+  --sucesso-texto: #00D26A;
   --erro: #FF7B85;
-  --borda: #3A3468;
-  --borda-interativa: #756CC7;
+  --erro-texto: #FF7B85;
+  --borda: #3A3A3A;
+  --borda-interativa: #8A8A8A;
   --raridade-comum: #3DDC64;
   --raridade-raro: #3FA9FF;
   --raridade-epico: #B45BFF;
   --raridade-lendario: #FFC93C;
+  --raridade-lendario-texto: #FFC93C;
   --raridade-proibido: #FF4757;
 
-  /* Pista (PR 7.2) — ver comentários em tokens.ts sobre ordem de luminância
-     e sobre carroBot ser token próprio (não raridade-comum). */
-  --pista-asfalto: #3E3A5C;
-  --pista-muro: #2F2A55;
-  --pista-terreno: #1B1738;
-  --pista-servico: #221E42;
-  --pista-limite: #A5A2BB;
-  --pista-zebra-a: #FFCC00;
-  --pista-zebra-b: #FF7B85;
-  --carro-bot: #B9B3DC;
+  /* Pista — MODE-INVARIANTE: nenhum destes reaparece nos blocos claros. O
+     painel do replay é uma ilha escura nos dois modos, e é isso que mantém a
+     regra 1 da Fase 7 (asfalto é a superfície mais clara) possível. Ver
+     `tokens.ts` -> `coresLight`. */
+  --pista-chao: #1A1A1A;
+  --pista-escape: #121212;
+  --pista-asfalto: #363636;
+  --pista-muro: #2E2E2E;
+  --pista-terreno: #202020;
+  --pista-servico: #262626;
+  --pista-limite: #9A9A9A;
+  --pista-zebra-a: #FF1801;
+  --pista-zebra-b: #F5F0EB;
+  --carro-bot: #B0B0B0;
 
   --espaco-xs: 4px;
   --espaco-sm: 8px;
@@ -57,6 +87,57 @@
   --fonte-display: 'Bungee', 'Arial Black', sans-serif;
   --fonte-corpo: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 }
+
+/* ---- 2. LIGHT pela preferência do SISTEMA (só sem escolha manual) --------- */
+@media (prefers-color-scheme: light) {
+  :root:not([data-tema]) {
+    color-scheme: light;
+
+    --fundo: #F5F0EB;
+    --fundo-elevado: #FFFFFF;
+    --fundo-afundado: #E8E3DE;
+    --texto: #2A2A2A;
+    --texto-suave: #666666;
+    --primaria-texto: #CB1301;
+    --acento-texto: #845F00;
+    --sucesso-texto: #00763C;
+    --erro-texto: #9F4D53;
+    --raridade-comum: #299544;
+    --raridade-raro: #3287CC;
+    --raridade-epico: #AD57F5;
+    --raridade-lendario: #9F7E26;
+    --raridade-lendario-texto: #7D621D;
+    --raridade-proibido: #EC4250;
+    --borda: #D5CEC6;
+    --borda-interativa: #6A6A6A;
+  }
+}
+
+/* ---- 3. LIGHT por escolha MANUAL (ganha do sistema) ---------------------- */
+:root[data-tema='light'] {
+  color-scheme: light;
+
+  --fundo: #F5F0EB;
+  --fundo-elevado: #FFFFFF;
+  --fundo-afundado: #E8E3DE;
+  --texto: #2A2A2A;
+  --texto-suave: #666666;
+  --primaria-texto: #CB1301;
+  --acento-texto: #845F00;
+  --sucesso-texto: #00763C;
+  --erro-texto: #9F4D53;
+  --raridade-comum: #299544;
+  --raridade-raro: #3287CC;
+  --raridade-epico: #AD57F5;
+  --raridade-lendario: #9F7E26;
+  --raridade-lendario-texto: #7D621D;
+  --raridade-proibido: #EC4250;
+  --borda: #D5CEC6;
+  --borda-interativa: #6A6A6A;
+}
+
+/* `data-tema='dark'` não precisa de bloco próprio: o `:root` já é o dark, e o
+   `:not([data-tema])` do bloco 2 impede o sistema de sobrepor. */
 
 /* Breakpoints (documentados, não expostos como custom property — media
    queries não resolvem var() no CSS): mobile 480 / tablet 768 / desktop 1024

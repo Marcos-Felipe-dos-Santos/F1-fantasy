@@ -12,6 +12,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import './estilos.css';
 import type { Dificuldade, EscolhaDraft } from '../engine/types';
+import { BotaoTema } from './BotaoTema';
 import { FluxoCorrida } from './FluxoCorrida';
 import { PISTA_CORRIDA_ID } from './fluxo-corrida';
 import type { HumanoConfig } from './fluxo-draft';
@@ -87,6 +88,8 @@ function App() {
 
   return (
     <div className="app-shell">
+      <BotaoTema />
+
       {!state && <TelaInicio onComecar={comecarPartida} />}
 
       {state && decisao?.tipo === 'handoff' && nomeDoAlvo !== null && (
