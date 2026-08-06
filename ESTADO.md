@@ -13,9 +13,13 @@
   `npm run build` **exit 0**, `eslint src scripts` limpo, **Modo Cego verde** (3/3).
   **`npm run balance` inalterado por construção** — o harness importa só `src/engine/dataset`,
   `src/data/*.json` e `scripts/alavancas`, e nenhum dos três foi tocado pelo 7.8.
-- **A branch está à frente do `origin/main`, que segue em `b39782d` (PR 7.4), e NADA foi
-  pushado** — contagem exata: `git rev-list --count b39782d..HEAD`.
-  **Push continua só com "ok" explícito do dev.**
+- **A branch FOI PUSHADA** em 2026-08-06, com "ok" explícito do dev: existe em
+  `origin/pr-7.7-dados-nurburgring`, com os 29 commits, e local/remoto em sincronia (0 à frente,
+  0 atrás). Verificar: `git rev-list --count '@{u}'..HEAD` e o inverso.
+- **`origin/main` NÃO foi tocada** — segue em `b39782d` (PR 7.4). O que subiu foi a branch, não um
+  avanço da main: o dev pediu *push*, não merge, e os dois portões visuais seguem abertos.
+  **Merge na `main` continua exigindo "ok" próprio** (e a tag, se houver, só DEPOIS do merge).
+  Distância: `git rev-list --count origin/main..HEAD`.
 
 ## 🛑 DOIS PORTÕES VISUAIS ABERTOS — não confundir um com o outro
 
@@ -128,8 +132,13 @@ dev reprovou.
 4. **Guardas O(n²) — ADIADA por decisão do dev (2026-08-01).** Não é problema demonstrado.
 5. **O elo testado do 7.3 trava o componente, não o uso dele:** apagar `<CamadasDaPista/>` de dentro
    do `<svg>` de `TelaCorrida` ainda passa. Limite conhecido.
-6. **Dívida de processo do 7.4.** A branch foi renomeada por cima da `main` (`git branch -M`), sem
-   merge commit. Decidir se vira branch antes de qualquer push.
+6. **Dívida de processo do 7.4 — RESOLVIDA na prática em 2026-08-06.** A branch tinha sido
+   renomeada por cima da `main` (`git branch -M`), sem merge commit, e a pendência era "decidir se
+   vira branch antes de qualquer push". **Virou branch:** o push criou
+   `origin/pr-7.7-dados-nurburgring` e deixou a `main` remota parada em `b39782d`. O que sobra é o
+   passo seguinte, e ele é uma decisão do dev, não uma dívida: como a `main` recebe esses 29
+   commits — PR no GitHub (o remoto já ofereceu o link no push) ou fast-forward direto, que é
+   possível porque o histórico é linear (`git merge-base --is-ancestor origin/main HEAD` = 0).
 7. **A rede de segurança da memoização da LUT (7.5) acabou.** Recuperar exige capturar o golden
    sobre uma polilinha SINTÉTICA fixa — registrado, não feito.
 
