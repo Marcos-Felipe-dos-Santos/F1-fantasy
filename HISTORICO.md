@@ -289,6 +289,104 @@
   **Medição que sustenta o "só trecho significativo"** (20 corridas × 5 pistas, arquivo temporário, não commitado): derivar ultrapassagem comparando a ordem entre voltas consecutivas dá **9,1 trocas de posição por volta** num grid de 22 — 41% do grid muda de lugar toda volta — e **só 22,8% têm explicação narrável (pit do próprio carro)**. Em Monza dariam ~127 "ultrapassagens" por corrida. Sem filtro, é ruído, não narração.
   **(b) — modelar interação carro-a-carro de verdade — está DESCARTADO**, com o motivo registrado pelo dev: reabriria o portão 6.3 fechado no mesmo dia. Mudaria os tempos de volta de todo mundo, quebraria as 2 seeds de ouro de `corrida.test.ts`, forçaria recalibrar as Metas 1-3 do balance-harness e **aumentaria a variância da corrida** — ou seja, mexeria justamente no ρ que a opção B do portão decidiu aceitar.
 
+- **PR 7.8 - PALETA GRAFITE/F1, COM DARK E LIGHT MODE** (branch `pr-7.7-dados-nurburgring`, commit
+  `f736e6c`). O dev pediu a troca da paleta azul-noite (`#16132E` e derivados) porque ela "parece
+  genérica e feita com IA — todo projeto que usa IA gera esse mesmo azul-roxo", e especificou a
+  substituta: grafite neutro com três acentos que têm SIGNIFICADO em F1 — vermelho `#FF1801`
+  (marca/ação primária/jogador), dourado `#FFB800` (pódio/campeão), verde `#00D26A`
+  (largada/status ok). **Engine intocada; `src/engine/` e `src/data/` não aparecem no diff.**
+
+  **O que a medição achou ANTES de escrever código** (é o que definiu o PR). O dark mode proposto
+  passou quase inteiro: **uma única falha**, `vermelho/fundo` a 4,461 contra 4,5 — 0,9%. O light
+  mode teve **9 falhas**, todas com a mesma causa raiz, que não é ajustável: `#FFB800` tem
+  luminância 0,555 e `#00D26A`, 0,471; contra o branco quente `#F5F0EB` (0,877) eles dão **1,53:1
+  e 1,78:1**. Acento de luminância média não pode ser texto sobre fundo quase branco — é teto da
+  cor, não par a corrigir. Isso conflitava de frente com o pedido explícito "os três acentos ficam
+  IGUAIS nos dois modos", então foi ao dev com os números em vez de ser resolvido por conta.
+
+  **Três decisões do dev** (todas as recomendadas): (1) **hex da marca idêntico nos dois modos onde
+  é PREENCHIMENTO**, e um token irmão `*Texto` mode-scoped só onde a cor vira tinta (texto, ícone,
+  linha de 1px) — botão dourado com texto `#0F0F0F` dá 11,05:1 nos dois modos, e o link dourado no
+  claro sai de 1,53 pra 4,52; (2) **`primaria/fundo` reclassificado pra 3:1**, porque pelo próprio
+  brief o vermelho é botão/destaque/carro — elemento de UI, não corpo de texto — e `#FF1801` tem
+  teto de 5,383 contra preto puro, de modo que exigir 4,5 significaria abandonar o hex da marca;
+  (3) **zebra vermelho + branco**, que é o zebra real de F1 e saiu de graça com o vermelho virando
+  a primária (era amarelo + salmão).
+
+  **A CONSEQUÊNCIA QUE NINGUÉM TINHA PEDIDO: a pista inteira teve que escurecer.** O teto de
+  luminância do asfalto não é escolha de gosto — é derivado do par `carro do jogador / asfalto >=
+  3`. Com o magenta (L 0,295) o teto era **0,0650**; com o vermelho `#FF1801` (L 0,219) caiu pra
+  **0,0397**, e o asfalto roxo antigo (`#3E3A5C`, 0,0482) **deixou de caber**. Tabela recalculada:
+  escape 0,0060 < chão 0,0103 < terreno 0,0144 < serviço 0,0194 < muro 0,0273 < **asfalto 0,0369**
+  (7,7% de folga sob o teto). Ordem e hierarquia preservadas; a adjacência mais apertada deixou de
+  ser chão->terreno (agora 1,398) e passou a ser muro->asfalto (1,350). Ganhou teste dedicado que
+  falha apontando a CAUSA ("o carro do jogador some") em vez de um par genérico, mais um teste que
+  registra que o asfalto antigo não caberia — pra ninguém "restaurar" achando que foi troca de
+  gosto.
+
+  **`pistaChao` e `pistaEscape`: tokens novos, mesmos valores do escuro.** Estes dois papéis eram
+  de `fundo` e `fundoAfundado`, e esses agora MUDAM com o tema. No claro, o chão do replay viraria
+  `#F5F0EB` e o sulco de escape `#E8E3DE`: o terreno ficaria muito mais escuro que o chão, o relevo
+  aprovado no 7.3.1 inverteria pro "poço" que o dev REJEITOU, e uma faixa branca apareceria no meio
+  da pista. Como os valores no escuro são idênticos aos de antes, **o modo escuro não mudou de
+  aparência em nada**. A guarda mais barata do PR veio junto: `fundo`, `fundoAfundado` e
+  `fundoElevado` **saíram da união `CorDePista`**, então pintar camada de pista com token que muda
+  de tema **nem compila**.
+
+  **O painel do replay é ilha escura nos dois temas**, e isso é estrutural, não estético: a regra 1
+  da Fase 7 (asfalto é a superfície mais clara) é impossível sobre base clara — o teto do asfalto é
+  0,0397 e a base clara está em 0,877. Consequência registrada: `SUPERFICIES_DO_REPLAY` perdeu
+  `fundo`/`fundoElevado`, porque o limite de pista não encosta neles (e não passaria: `pistaLimite`
+  contra card branco dá 2,81).
+
+  **Decisão de olho do 7.3.1 preservada, com o teste reescrito pra travar a SUBSTÂNCIA.** O teste
+  afirmava `SUPERFICIE_BASE_REPLAY === 'fundo'`; agora afirma `'pistaChao'` + que o chão **não pode
+  ser mode-scoped** + que o terreno é degrau que SOBE. Travar o nome do token teria feito a decisão
+  passar no escuro e ser falsa no claro.
+
+  **`borda` continua DECORATIVA** (fora de `PARES_CONTRASTE`) — foi verificado, não assumido: a
+  separação card/base é fraca nos DOIS modos por construção (1,213 no escuro, 1,132 no claro), o
+  claro não piorou nada, e exigir 3:1 da borda transformaria todo card em wireframe.
+
+  **Tema em três blocos de cascata** (`tokens.css`): `:root` escuro -> `@media
+  (prefers-color-scheme: light)` escopado com **`:root:not([data-tema])`** -> `:root[data-tema]`
+  manual. O `:not()` é o que faz o toggle vencer o SO **nos dois sentidos** — sem ele, quem tem o
+  SO no claro e escolhe escuro continua no claro, porque o `@media` vem depois com a mesma
+  especificidade. É um bug que passa despercebido em quem testa num SO só, então ganhou teste.
+  `tema.ts` (lógica pura) tem TRÊS estados, não dois: `'sistema'` REMOVE o atributo, que é o que
+  reativa o `@media`.
+
+  **A sincronia `tokens.ts` <-> `tokens.css` teve que mudar de forma.** O parser antigo varria o
+  arquivo inteiro com um regex e jogava tudo num `Map`: com dois temas, a última declaração de
+  `--fundo` (a do bloco claro) sobrescreveria a do `:root` e o teste passaria a comparar o valor
+  CLARO contra `cores`. Agora lê **bloco a bloco**, cada um contra a paleta do seu modo, e reprova
+  token declarado só no tema claro.
+
+  **Medido, não herdado (2026-08-06):** `npm test` **1012 passando, 34 arquivos** (eram 904/33 —
+  os pares rodando nos dois modos somaram ~97); `tsc --noEmit` e `npm run build` **exit 0**;
+  `eslint src scripts` **limpo**; **Modo Cego verde** (`card-peca-cego`, 3/3 — a troca de paleta
+  não introduziu vazamento de raridade). **`npm run balance` inalterado por construção**, e a prova
+  é de dependência, não de olho: o harness importa só `src/engine/dataset`, `src/data/*.json` e
+  `scripts/alavancas`, e **nenhum dos três aparece no diff** — a paleta não tem caminho até ele.
+
+  **Mutação (7 mutantes, todos mortos):** asfalto clareado pra `#3C3C3C` -> 5 falhas; `primaria`
+  virando mode-scoped -> 4; `pistaChao` virando mode-scoped -> 4; `textoEscuro` voltando a ser
+  igual ao `fundo` -> 3; zebra sumindo contra o asfalto -> 2; `@media` sem o `:not([data-tema])`
+  -> 1; `tokens.css` dessincronizado do `tokens.ts` -> 1. O mutante nomeado do 7.2 (`#322D58`,
+  razão 1,118 contra o muro) foi trocado pelo análogo grafite `#313131` (1,124), escolhido pelo
+  mesmo critério: preserva a ordem inteira de luminância e mesmo assim reprova na separação.
+
+  **Preview: `preview/paleta.html`, ARQUIVO NOVO de propósito.** Não regenera `redesenho.html` —
+  aquele é o portão AINDA ABERTO das silhuetas, e repintá-lo misturaria duas perguntas que o dev
+  precisa responder separado. ATENÇÃO: **`npm run preview` roda TODOS os geradores e repintaria o
+  `redesenho.html` com a paleta nova**; enquanto o veredito das silhuetas não sair, gerar só este:
+  `npx vitest run --config vitest.preview.config.ts scripts/preview-paleta.preview.test.ts`.
+
+  **Pendências abertas por este PR:** (1) o `BotaoTema` é um botão discreto no canto do
+  `app-shell` — posição e forma não passaram por veredito de arte; (2) `erro` (salmão `#FF7B85`) e
+  `raridadeProibido` (`#FF4757`) continuam sendo dois vermelhos ao lado do vermelho da marca — não
+  foi mexido porque é decisão de arte, mas o dev pode querer olhar com a paleta nova na tela.
+
 **Testes na main: 893 passando (33 arquivos)** — medido em 2026-08-01 via `npm test`. Mais o harness, por config própria (`npm run balance`), e os **três** geradores de preview (`npm run preview`: traçados, cego, zebra), todos fora do `npm test`.
 > A linha anterior dizia **"521 passando (27 arquivos)"**, número da época do PR 6.2 — ficou parada enquanto a suíte crescia até 851. Corrigida no chore de 2026-07-30. Contagem de teste envelhece rápido: quem atualizar, **meça** (`npm test`), não some de cabeça.
 
