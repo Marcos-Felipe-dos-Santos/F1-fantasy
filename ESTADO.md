@@ -7,9 +7,10 @@
 
 ## Estado atual
 
-- **Branch `pr-8.1-calendario-sorteado`** · último PR **8.1** (calendário do campeonato sorteado por
-  seed, commit `63e3e82`) · **1028 testes** (34 arquivos) verdes.
-- **Medido em 2026-08-07, não herdado:** `npm test` **1028/34**, `tsc --noEmit` **exit 0**,
+- **Branch `pr-8.1-calendario-sorteado`** · últimos PRs **8.1** (calendário sorteado por seed,
+  commit `63e3e82`) e **8.2** (round-trip do save com calendário sorteado, commit `6cb02cc`) ·
+  **1031 testes** (34 arquivos) verdes.
+- **Medido em 2026-08-07, não herdado:** `npm test` **1031/34**, `tsc --noEmit` **exit 0**,
   `eslint src scripts` **exit 0**. **`npm run balance` inalterado por construção** — o harness
   importa só `src/engine/dataset`, `src/data/*.json` e `scripts/alavancas`, e nenhum dos três foi
   tocado pelo 8.1. `prettier --check` reprova `fluxo-campeonato.ts`/`.test.ts`, mas **já reprovava
@@ -17,8 +18,10 @@
 - **Working tree:** só `tmp-medir-save.ts` untracked — script descartável do dev, **quebrado**
   (`criarDraft` exige 22 jogadores + `atribuirPerfis` antes; o arquivo passa 4). Não commitar. A
   medição que ele buscava já foi feita e está registrada abaixo.
-- **`origin/pr-7.7-dados-nurburgring` existe** (pushada em 2026-08-06 com "ok" do dev, 29 commits).
-  A branch atual saiu dali e **ainda não foi pushada** — o dev pediu explicitamente **sem push**.
+- **Estado do remoto MEDIDO em 2026-08-07** (`git ls-remote --heads origin`): existem exatamente
+  duas branches lá — `main` em `b39782d` e `pr-7.7-dados-nurburgring` em `ccfc035`.
+  **`pr-8.1-calendario-sorteado` NÃO existe no remoto**; a branch atual saiu da 7.7 e nunca foi
+  pushada — o dev pediu explicitamente **sem push**.
 - **`origin/main` NÃO foi tocada** — segue em `b39782d` (PR 7.4), e os dois portões visuais seguem
   abertos. **Merge na `main` continua exigindo "ok" próprio** (e a tag, se houver, só DEPOIS do
   merge). Distância: `git rev-list --count origin/main..HEAD`.
@@ -75,17 +78,20 @@ balance-harness pra engine" **já tinha acontecido**.
 importa campeonato (confirmado por grep). **O modo existe, é determinístico, é testado, e é
 INALCANÇÁVEL pelo jogador.** É daí que vem o desalinhamento inteiro.
 
-### O 8.2 colapsou — e o ponto de parada do dev não é satisfazível como está
+### O 8.2 colapsou — FEITO, mas não é o PR que o plano descrevia
 
 - **compress+base64: MORTO pela medição.** Save real = **16,48 KB** (22 jogadores, completa;
   16,39 KB na curta) = **0,32% de uma quota de 5 MB**. Método: draft REAL resolvido por bots, não
   save sintético. Comprimir seria dependência nova sem problema pra resolver.
-- **Camada de abstração e impressão digital: já existem** (PR 6.5 / 6.2).
+- **Camada de abstração e impressão digital: já existiam** (PR 6.5 / 6.2).
 - **"Salvar após cada corrida" depende da UI**, que é o 8.4.
-- **Verificado por leitura, SEM teste:** `SaveCampeonato.calendario` é `string[]` persistido e
-  `retomarCampeonato` re-hidrata a partir DELE, nunca recomputando da seed ⇒ **calendário sorteado
-  faz round-trip sem bump de `VERSAO_FORMATO`**. Esse teste de round-trip é o que sobra de real —
-  uma guarda, não um PR de persistência.
+- ✅ **O que sobrou virou o commit `6cb02cc` — diff SÓ DE TESTE, `persistencia.ts` intacto.** Três
+  testes provam que o save aguenta o calendário sorteado: round-trip preserva o calendário
+  embaralhado e o cursor **sem bump de `VERSAO_FORMATO`**; a classificação sobrevive idêntica; e o
+  discriminante — **um save com o calendário REORDENADO é REJEITADO**. `calcularImpressaoDigital` é
+  `etapas.map(resumoDaEtapa).join('||')` e junta na **ordem** do array, então a integridade cobre a
+  ORDEM, não só o conjunto. Isso importa pro 8.3/8.4: é a UI que vai gravar e reler esse save.
+  Mutação: fazer a impressão digital ordenar as etapas antes de juntar mata exatamente esse teste.
 - 🛑 **O dev pediu "pare ao final do 8.2 pra eu ver a mecânica rodando". Depois do 8.2 não há nada
   pra ver rodando** — não existe UI. As duas saídas oferecidas a ele: **(a)** demo por script
   (`npm run` novo que imprime calendário sorteado + tabela final; barato, baixo risco, PR próprio —

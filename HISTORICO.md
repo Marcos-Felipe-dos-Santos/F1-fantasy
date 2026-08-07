@@ -17,7 +17,12 @@
 > **Ao concluir um PR, atualizar OS DOIS:** entrada nova aqui (acumula) e o `ESTADO.md` reescrito
 > (substitui, não acumula).
 
-## Concluídos (mergeados na main)
+## Concluídos (mergeados na main — **exceto os do fim da lista**)
+
+> ⚠️ **O título desta seção está parcialmente desatualizado e ficou assim de propósito, medido em
+> 2026-08-07:** `origin/main` está em `b39782d` (PR 7.4), então os PRs **7.7, 7.7.1, 7.8, 8.1 e 8.2
+> NÃO estão na main** — vivem em branch. "Concluído" aqui significa "PR fechado", não "mergeado".
+> Confira antes de assumir: `git ls-remote --heads origin` e `git rev-list --count origin/main..HEAD`.
 
 > 📦 **Fases 0 a 5 (encerradas) foram movidas para `HISTORICO_ARQUIVO.md`** no chore de
 > 2026-07-30 — PRs 0.1 a 5.1c e os marcos daquelas fases. Consulte lá quando precisar do
@@ -463,6 +468,30 @@
   hoje é barato (as 4 exportações vão pra `engine/campeonato.ts` e `fluxo-campeonato.ts`
   re-exporta, zero mudança em ~90 referências de teste); depois que a UI da Fase 8 e os caminhos de
   save apontarem pro path de `ui/`, fica caro.
+
+- **PR 8.2 — SAVE DO CAMPEONATO AGUENTA CALENDÁRIO SORTEADO** (branch `pr-8.1-calendario-sorteado`,
+  commit `6cb02cc`). **Diff SÓ DE TESTE — `persistencia.ts` não foi tocado.** O 8.2 do plano previa
+  compress+base64 e uma camada de abstração; a camada já existia (PR 6.5) e a compressão morreu na
+  medição registrada na entrada do 8.1 (**16,48 KB = 0,32% de 5 MB**). Sobrou uma pergunta, e este
+  PR é ela: o save aguenta o calendário sorteado do 8.1? Era "sim, por leitura" — virou medido, que
+  é a regra do projeto.
+
+  **O teste discriminante, e por que ele é o que vale:** um save cujo `calendario` foi **REORDENADO**
+  (mesmos 10 ids, ordem trocada) é **REJEITADO** na retomada. `calcularImpressaoDigital` é
+  `seedFromString(etapas.map(resumoDaEtapa).join('||'))` — junta na **ORDEM** do array. Se cobrisse
+  só o CONJUNTO de resultados, um save adulterado (ou mangled por bug de serialização) retomaria em
+  SILÊNCIO com outra ordem de corridas, e o jogador veria um campeonato diferente do que salvou.
+  Não é hipotético pro resto da fase: é a UI dos PRs 8.3/8.4 que vai gravar e reler esse save.
+  **Mutação:** fazer a impressão digital ordenar as etapas antes de juntar (isto é, cobrir só o
+  conjunto) mata exatamente esse teste, e só ele.
+
+  Os outros dois: round-trip preserva o calendário embaralhado e o cursor **sem bump de
+  `VERSAO_FORMATO`** — com anti-tautologia explícita (`expect(calendario).not.toEqual(
+  calendarioPadrao(...))`, sem a qual uma implementação que ignorasse `estado.calendario` e
+  recomputasse a ordem do dataset passaria) —; e a classificação sobrevive ao round-trip idêntica.
+
+  **Medido em 2026-08-07:** `npm test` **1031/34** (era 1028), `tsc --noEmit` e `eslint src scripts`
+  **exit 0**.
 
 **Testes na main: 893 passando (33 arquivos)** — medido em 2026-08-01 via `npm test`. Mais o harness, por config própria (`npm run balance`), e os **três** geradores de preview (`npm run preview`: traçados, cego, zebra), todos fora do `npm test`.
 > A linha anterior dizia **"521 passando (27 arquivos)"**, número da época do PR 6.2 — ficou parada enquanto a suíte crescia até 851. Corrigida no chore de 2026-07-30. Contagem de teste envelhece rápido: quem atualizar, **meça** (`npm test`), não some de cabeça.
