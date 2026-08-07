@@ -898,3 +898,49 @@ button.card {
     grid-template-columns: 1fr;
   }
 }
+
+/* ---- Modo Campeonato (PR 8.4-mínimo) ----
+   Estilo deliberadamente CRU: o painel só precisa ser legível pra que a
+   mecânica possa ser jogada e julgada. As telas de verdade (calendário,
+   classificação navegável, fim de temporada) são o PR 8.3, e é lá que entra
+   a decisão de arte. A tabela reusa `.tabela-grid`, então o destaque do
+   humano (`.linha-humano`) já vale aqui de graça. */
+.painel-campeonato {
+  margin: var(--espaco-xl) 0;
+  padding: var(--espaco-lg);
+  background: var(--cor-superficie);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-md);
+}
+
+.painel-campeonato h3 {
+  margin: 0 0 var(--espaco-md);
+  font-size: 1rem;
+}
+
+/* Campeão é TEXTO, então usa a tinta do dourado (`--acento-texto`), nunca o
+   preenchimento — mesma regra travada no 7.8. */
+.painel-campeonato__campeao {
+  color: var(--acento-texto);
+  font-weight: 700;
+  margin: 0 0 var(--espaco-md);
+}
+
+/* Bloco "Continuar campeonato" no topo da TelaInicio: separado do formulário
+   por uma borda, porque é um caminho ALTERNATIVO a ele, não mais um campo. */
+.tela-inicio__continuar {
+  margin-bottom: var(--espaco-xl);
+  padding-bottom: var(--espaco-lg);
+  border-bottom: 1px solid var(--cor-borda);
+}
+
+.tela-inicio__continuar-info {
+  margin: var(--espaco-sm) 0 0;
+  font-size: 0.9rem;
+}
+
+.tela-inicio__continuar-aviso {
+  margin: var(--espaco-xs) 0 0;
+  font-size: 0.8rem;
+  color: var(--cor-texto-fraco);
+}

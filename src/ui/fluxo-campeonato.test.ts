@@ -24,10 +24,16 @@ import {
   calendarioSorteado,
   campeonatoConcluido,
   classificacaoApos,
+  ehCampeonato,
   FORMATO_PADRAO,
+  formatoDoCalendario,
+  type FormatoPartida,
   type FormatoTemporada,
   iniciarCampeonato,
+  mostraSeletorDePista,
   N_ETAPAS,
+  resumoCampeonatoSalvo,
+  ROTULO_FORMATO,
   simularOResto,
 } from './fluxo-campeonato';
 
@@ -212,6 +218,88 @@ describe('calendarioSorteado', () => {
     const padrao = iniciarCampeonato(dataset, loadouts, 42, calendarioPadrao(dataset, 'completa'));
     expect(classificacaoApos(sorteado, 10)).toEqual(classificacaoApos(padrao, 10));
     expect(sorteado.calendario).not.toEqual(padrao.calendario);
+  });
+});
+
+/**
+ * PR 8.4-mínimo — as decisões da `TelaInicio` moram aqui, não no `.tsx`.
+ * O projeto não tem jsdom (ver cabeçalho de `persistencia.test.ts`): nenhum
+ * componente é testado diretamente, então a regra condicional pedida pelo dev
+ * ("o seletor de Pista some nos campeonatos") só vira teste se for função pura.
+ */
+describe('formato da partida (TelaInicio)', () => {
+  it('ehCampeonato separa a corrida única dos dois campeonatos', () => {
+    expect(ehCampeonato('unica')).toBe(false);
+    expect(ehCampeonato('curta')).toBe(true);
+    expect(ehCampeonato('completa')).toBe(true);
+  });
+
+  it('o seletor de pista SÓ aparece na corrida única', () => {
+    expect(mostraSeletorDePista('unica')).toBe(true);
+    expect(mostraSeletorDePista('curta')).toBe(false);
+    expect(mostraSeletorDePista('completa')).toBe(false);
+  });
+
+  it('há rótulo pros três formatos, e os dois campeonatos anunciam o número de pistas', () => {
+    const formatos: FormatoPartida[] = ['unica', 'curta', 'completa'];
+    for (const formato of formatos) expect(ROTULO_FORMATO[formato]).toBeTruthy();
+    expect(ROTULO_FORMATO.curta).toContain(String(N_ETAPAS.curta));
+    expect(ROTULO_FORMATO.completa).toContain(String(N_ETAPAS.completa));
+  });
+
+  it('os valores de campeonato passam DIRETO pra calendarioSorteado, sem tradução', () => {
+    // É o motivo de `FormatoPartida` ser `'unica' | FormatoTemporada` em vez
+    // de um union novo: nenhuma tabela de conversão pra sair de sincronia.
+    const formato: FormatoPartida = 'curta';
+    if (!ehCampeonato(formato)) throw new Error('esperado campeonato');
+    expect(calendarioSorteado(dataset, 42, formato)).toHaveLength(N_ETAPAS.curta);
+  });
+});
+
+describe('resumoCampeonatoSalvo (botão "Continuar campeonato")', () => {
+  it('deriva o formato do TAMANHO do calendário — o save não guarda esse campo', () => {
+    expect(formatoDoCalendario(calendarioSorteado(dataset, 1, 'curta'))).toBe('curta');
+    expect(formatoDoCalendario(calendarioSorteado(dataset, 1, 'completa'))).toBe('completa');
+  });
+
+  it('descreve onde o jogador parou, em linguagem 1-based de UI', () => {
+    const calendario = calendarioSorteado(dataset, 42, 'curta');
+    // `etapaAtual` 0-based = 2 ⇒ já correu 2, está PRESTES a correr a 3ª.
+    expect(resumoCampeonatoSalvo(calendario, 2)).toEqual({
+      formato: 'curta',
+      corridaAtual: 3,
+      totalCorridas: 5,
+      concluido: false,
+    });
+  });
+
+  it('campeonato recém-começado aponta pra corrida 1, não pra corrida 0', () => {
+    expect(resumoCampeonatoSalvo(calendarioSorteado(dataset, 42, 'completa'), 0)).toMatchObject({
+      corridaAtual: 1,
+      totalCorridas: 10,
+      concluido: false,
+    });
+  });
+
+  it('campeonato CONCLUÍDO satura no total em vez de anunciar "corrida 6 de 5"', () => {
+    expect(resumoCampeonatoSalvo(calendarioSorteado(dataset, 42, 'curta'), 5)).toEqual({
+      formato: 'curta',
+      corridaAtual: 5,
+      totalCorridas: 5,
+      concluido: true,
+    });
+  });
+
+  it('devolve null (não lança) pra save irreconhecível — a tela só não mostra o botão', () => {
+    // Tamanho que não corresponde a formato nenhum: save adulterado ou de um
+    // dataset com outro número de pistas.
+    expect(resumoCampeonatoSalvo(['pista-monza', 'pista-imola', 'pista-spa'], 1)).toBeNull();
+    expect(resumoCampeonatoSalvo([], 0)).toBeNull();
+    // Cursor fora de faixa, pelos dois lados.
+    const calendario = calendarioSorteado(dataset, 42, 'curta');
+    expect(resumoCampeonatoSalvo(calendario, -1)).toBeNull();
+    expect(resumoCampeonatoSalvo(calendario, 6)).toBeNull();
+    expect(resumoCampeonatoSalvo(calendario, 1.5)).toBeNull();
   });
 });
 

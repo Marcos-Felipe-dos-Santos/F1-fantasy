@@ -21,6 +21,7 @@ import {
   seedDeTexto,
 } from './fluxo-draft';
 import { seedFromString } from '../engine/rng';
+import { humanosDoDraft } from './useDraft';
 
 const dataset = criarDataset(equipeAnosReal, pecasReal, pistasReal);
 
@@ -280,5 +281,37 @@ describe('dificuldade', () => {
     const contarPraGanhar = (estado: typeof facil) =>
       estado.jogadores.filter((j) => j.perfilBot === 'praGanhar').length;
     expect(contarPraGanhar(dificil)).toBeGreaterThan(contarPraGanhar(facil));
+  });
+});
+
+/**
+ * PR 8.4-mínimo — `humanosDoDraft` é o que sustenta o "Continuar campeonato":
+ * o save guarda o `DraftState`, não a config de humanos da TelaInicio, então a
+ * lista precisa ser reconstruída na retomada. Se ela vier errada, o modo Local
+ * volta do save com os nomes trocados (ou sem nome), e o roteamento de turno
+ * hotseat (`decisaoLocal`, que consome os ids) passa a apontar pra jogador
+ * errado.
+ */
+describe('humanosDoDraft (retomada de save)', () => {
+  it('no Single devolve exatamente o humano do draft', () => {
+    const draft = iniciarDraftSingle(dataset, 'retomar-single', 'facil');
+    expect(humanosDoDraft(draft)).toEqual([{ id: ID_HUMANO, nome: undefined }]);
+  });
+
+  it('no Local preserva ids, NOMES e a ORDEM de cadastro', () => {
+    const humanos = [
+      { id: 'humano-1', nome: 'Ayrton' },
+      { id: 'humano-2', nome: 'Alain' },
+      { id: 'humano-3', nome: 'Nelson' },
+    ];
+    const draft = iniciarDraft(dataset, 'retomar-local', 'facil', humanos);
+    expect(humanosDoDraft(draft)).toEqual(humanos);
+  });
+
+  it('descarta os bots — só humanos voltam', () => {
+    const draft = iniciarDraftSingle(dataset, 'retomar-sem-bots', 'facil');
+    expect(draft.jogadores.filter((j) => j.tipo === 'bot').length).toBeGreaterThan(0);
+    expect(humanosDoDraft(draft).every((h) => h.id === ID_HUMANO)).toBe(true);
+    expect(humanosDoDraft(draft)).toHaveLength(1);
   });
 });

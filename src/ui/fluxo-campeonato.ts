@@ -113,6 +113,99 @@ export function calendarioSorteado(
 }
 
 /**
+ * Formato da PARTIDA escolhido na `TelaInicio` (PR 8.4-mínimo): a corrida
+ * avulsa de sempre, ou um dos dois campeonatos.
+ *
+ * É deliberadamente `'unica' | FormatoTemporada` em vez de um union novo de
+ * três valores: assim os dois valores de campeonato passam DIRETO pra
+ * `calendarioSorteado`/`N_ETAPAS`, sem tabela de tradução no meio pra sair de
+ * sincronia depois.
+ */
+export type FormatoPartida = 'unica' | FormatoTemporada;
+
+/** Estreita `FormatoPartida` pros dois formatos de campeonato. */
+export function ehCampeonato(formato: FormatoPartida): formato is FormatoTemporada {
+  return formato !== 'unica';
+}
+
+/**
+ * A regra condicional da `TelaInicio` (PR 8.4-mínimo): o seletor de pista — e
+ * a linha de perfil da pista que vem junto — só aparecem na corrida única.
+ *
+ * Nos campeonatos as pistas são SORTEADAS por seed, então um seletor de pista
+ * ali seria mentira: o jogador escolheria Monza e correria em outras cinco.
+ * Some, não desabilita (decisão do dev: "sumir mesmo, pra não confundir").
+ *
+ * Vive aqui, e não dentro do componente, porque o projeto não tem jsdom — a
+ * lógica testável mora nos `fluxo-*.ts` e o `.tsx` é casca fina (mesmo padrão
+ * de `decisaoLocal`, `seedEfetivaTexto` e `perfilPista`).
+ */
+export function mostraSeletorDePista(formato: FormatoPartida): boolean {
+  return !ehCampeonato(formato);
+}
+
+/** Rótulos de exibição dos três formatos (a `TelaInicio` não monta texto na mão). */
+export const ROTULO_FORMATO: Record<FormatoPartida, string> = {
+  unica: 'Corrida única (uma corrida só)',
+  curta: `Campeonato curto (${N_ETAPAS.curta} pistas sorteadas)`,
+  completa: `Campeonato completo (${N_ETAPAS.completa} pistas)`,
+};
+
+/**
+ * Descobre o formato a partir do TAMANHO do calendário salvo.
+ *
+ * O save (`SaveCampeonato`, PR 6.5) guarda `calendario: string[]` mas NÃO
+ * guarda o formato — e acrescentar o campo obrigaria a bumpar
+ * `VERSAO_FORMATO` e invalidar todo save existente, por uma informação que já
+ * está lá implícita. Devolve `null` (nunca lança) pra um tamanho que não
+ * corresponde a formato nenhum: é save adulterado ou de um dataset com outro
+ * número de pistas, e quem chama é a tela de início, que só quer decidir se
+ * mostra o botão "Continuar".
+ */
+export function formatoDoCalendario(calendario: readonly string[]): FormatoTemporada | null {
+  const formatos: FormatoTemporada[] = ['curta', 'completa'];
+  return formatos.find((formato) => N_ETAPAS[formato] === calendario.length) ?? null;
+}
+
+/** O que o botão "Continuar campeonato" precisa mostrar, derivado do save. */
+export interface ResumoCampeonatoSalvo {
+  formato: FormatoTemporada;
+  /** Número da corrida em que parou, 1-based e pronto pra exibir ("corrida 3 de 5"). */
+  corridaAtual: number;
+  totalCorridas: number;
+  concluido: boolean;
+}
+
+/**
+ * Traduz um save carregado no resumo que o botão "Continuar campeonato"
+ * exibe. Devolve `null` quando o save não descreve um campeonato reconhecível
+ * — a tela de início simplesmente não mostra o botão, em vez de mostrar um
+ * botão que leva a um erro.
+ *
+ * `corridaAtual` é 1-based porque é texto de UI: com `etapaAtual` (0-based) em
+ * 2 e 5 etapas, o jogador está PRESTES a correr a 3ª. Num campeonato já
+ * concluído (`etapaAtual === total`) satura no total, senão anunciaria uma
+ * "corrida 6 de 5".
+ */
+export function resumoCampeonatoSalvo(
+  calendario: readonly string[],
+  etapaAtual: number,
+): ResumoCampeonatoSalvo | null {
+  const formato = formatoDoCalendario(calendario);
+  if (formato === null) return null;
+  if (!Number.isInteger(etapaAtual) || etapaAtual < 0 || etapaAtual > calendario.length) return null;
+
+  const totalCorridas = calendario.length;
+  const concluido = etapaAtual >= totalCorridas;
+  return {
+    formato,
+    corridaAtual: concluido ? totalCorridas : etapaAtual + 1,
+    totalCorridas,
+    concluido,
+  };
+}
+
+/**
  * Estado do modo Campeonato. `etapas` já vem PRÉ-SIMULADA por inteiro no
  * `iniciarCampeonato` (decisão D3 do plano da Fase 6, custo <2ms) —
  * `etapaAtual` é só um cursor de apresentação (quantas etapas já foram

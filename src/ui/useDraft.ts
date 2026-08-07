@@ -21,7 +21,26 @@ export interface UseDraftResultado {
   erro: string | null;
   comecar: (seedTexto: string, dificuldade: Dificuldade, humanos?: HumanoConfig[]) => void;
   escolher: (jogadorId: string, escolha: EscolhaDraft) => void;
+  /**
+   * Adota um `DraftState` JÁ CONCLUÍDO vindo de um save (PR 8.4-mínimo,
+   * "Continuar campeonato"). É o único caminho que injeta estado de fora, e
+   * por isso é o único que precisa recuperar a lista de humanos — ela não
+   * está no save como tal, mas é derivável de `draft.jogadores`.
+   */
+  retomar: (draft: DraftState) => void;
   reiniciar: () => void;
+}
+
+/**
+ * Reconstrói os `HumanoConfig` a partir do `DraftState` salvo. O save guarda
+ * `jogadores` (com `tipo` e `nome`), não a config original da TelaInicio, mas
+ * a config é um subconjunto: id + nome dos que são humanos, na ordem em que
+ * estão no draft — que é a ordem de cadastro, preservada por `iniciarDraft`.
+ */
+export function humanosDoDraft(draft: DraftState): HumanoConfig[] {
+  return draft.jogadores
+    .filter((jogador) => jogador.tipo === 'humano')
+    .map((jogador) => ({ id: jogador.id, nome: jogador.nome }));
 }
 
 /** Default do modo Single: 1 humano com o id fixo `ID_HUMANO`, sem nome (fallback "Você" na UI). */
@@ -54,11 +73,17 @@ export function useDraft(): UseDraftResultado {
     [state],
   );
 
+  const retomar = useCallback((draft: DraftState) => {
+    setErro(null);
+    setHumanos(humanosDoDraft(draft));
+    setState(draft);
+  }, []);
+
   const reiniciar = useCallback(() => {
     setState(null);
     setHumanos([]);
     setErro(null);
   }, []);
 
-  return { state, humanos, erro, comecar, escolher, reiniciar };
+  return { state, humanos, erro, comecar, escolher, retomar, reiniciar };
 }

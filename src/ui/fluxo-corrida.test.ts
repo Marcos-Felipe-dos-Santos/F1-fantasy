@@ -4,6 +4,7 @@ import equipeAnosReal from '../fixtures/dataset-semente/equipe-anos.json';
 import pecasReal from '../fixtures/dataset-semente/pecas.json';
 import pistasReal from '../fixtures/dataset-semente/pistas.json';
 import { revelarRodada } from '../engine/draft';
+import { seedDaEtapa, simularEtapa } from '../engine/campeonato';
 import type { DraftState, EscolhaDraft } from '../engine/types';
 import { aplicarEscolhaHumano, ID_HUMANO, iniciarDraftSingle } from './fluxo-draft';
 import {
@@ -105,6 +106,54 @@ describe('prepararCorrida', () => {
     expect(() => prepararCorrida(dataset, draft, 'pista-inexistente')).toThrow(
       /pista-inexistente.*não encontrada/,
     );
+  });
+
+  // ---- seed injetável (PR 8.4-mínimo) ----
+  // Estes três testes são a guarda do bug mais perigoso do wiring de
+  // campeonato: a corrida ASSISTIDA e a etapa PONTUADA usarem seeds
+  // diferentes. `iniciarCampeonato` pré-simula todas as etapas com
+  // `seedDaEtapa(seed, pistaId)`, enquanto a corrida avulsa usa a seed CRUA
+  // do draft (decisão D6). Sem o parâmetro `seed`, o jogador assistiria a uma
+  // corrida e veria OUTRA na tabela de pontos — e nada em `npm test` pegaria,
+  // porque cada lado, isolado, está certo.
+
+  it('sem `seed` explícita usa a do draft — corrida avulsa inalterada, bit a bit', () => {
+    const draft1 = jogarDraftAteConcluir('corrida-seed-default');
+    const draft2 = jogarDraftAteConcluir('corrida-seed-default');
+    const implicita = prepararCorrida(dataset, draft1, 'pista-monza');
+    const explicita = prepararCorrida(dataset, draft2, 'pista-monza', draft2.seed);
+
+    expect(explicita.grid).toEqual(implicita.grid);
+    expect(explicita.resultado).toEqual(implicita.resultado);
+  });
+
+  it('a seed injetada MUDA a corrida (o parâmetro não é decorativo)', () => {
+    const draft = jogarDraftAteConcluir('corrida-seed-injetada');
+    const comSeedDoDraft = prepararCorrida(dataset, draft, 'pista-monza');
+    const comOutraSeed = prepararCorrida(dataset, draft, 'pista-monza', draft.seed + 1);
+
+    expect(comOutraSeed.resultado.classificacao).not.toEqual(comSeedDoDraft.resultado.classificacao);
+  });
+
+  it('com `seedDaEtapa` reproduz a etapa pré-simulada do campeonato BIT A BIT', () => {
+    // A asserção que sustenta o wiring inteiro: o que o jogador assiste é
+    // exatamente o que foi pontuado.
+    const draft = jogarDraftAteConcluir('corrida-igual-a-etapa');
+    const loadouts = Object.entries(draft.loadouts)
+      .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+      .map(([, loadout]) => loadout);
+    const pista = dataset.pistas[0];
+
+    const etapa = simularEtapa(dataset, loadouts, pista, seedDaEtapa(draft.seed, pista.id));
+    const assistida = prepararCorrida(
+      dataset,
+      draft,
+      pista.id,
+      seedDaEtapa(draft.seed, pista.id),
+    );
+
+    expect(assistida.grid).toEqual(etapa.grid);
+    expect(assistida.resultado).toEqual(etapa.resultado);
   });
 });
 

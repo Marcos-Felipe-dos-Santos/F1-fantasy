@@ -33,8 +33,19 @@ export interface UseCorridaResultado {
   setVelocidade: (velocidade: VelocidadeReplay) => void;
 }
 
-export function useCorrida(state: DraftState, pistaId: string): UseCorridaResultado {
-  const [{ pista, grid, resultado }] = useState(() => prepararCorrida(dataset, state, pistaId));
+export function useCorrida(
+  state: DraftState,
+  pistaId: string,
+  /** Seed da corrida; `undefined` mantém a da partida (corrida avulsa). Ver `prepararCorrida`. */
+  seed?: number,
+): UseCorridaResultado {
+  // O inicializador do `useState` roda uma vez por MONTAGEM do hook. No
+  // campeonato, cada etapa monta um `FluxoCorrida` novo (o `key` no `App`
+  // garante isso) — sem essa remontagem, trocar de etapa não re-prepararia a
+  // corrida e o jogador correria a primeira pista o campeonato inteiro.
+  const [{ pista, grid, resultado }] = useState(() =>
+    prepararCorrida(dataset, state, pistaId, seed),
+  );
   const [fase, setFase] = useState<FaseCorrida>('grid');
   const [tempoSimMs, setTempoSimMs] = useState(0);
   const [velocidade, setVelocidadeState] = useState<VelocidadeReplay>('media');

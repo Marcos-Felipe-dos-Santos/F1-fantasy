@@ -50,11 +50,23 @@ export type TracadoImutavel = ReadonlyArray<Readonly<Ponto>>;
  * RNG por jogador em `quali.ts`/`corrida.ts`, mas mantém a construção
  * determinística mesmo assim). Usa a seed do próprio draft, então a corrida
  * de um draft concluído é sempre a mesma.
+ *
+ * 🔑 **`seed` é o parâmetro que faz o modo Campeonato existir (PR 8.4-mínimo),
+ * e o default preserva a corrida avulsa bit a bit.** As duas trilhas de
+ * corrida usam seeds DIFERENTES de propósito (decisão D6, ver
+ * `simularEtapa` em `engine/campeonato.ts`): a avulsa usa a seed CRUA do
+ * draft; a etapa de campeonato usa `seedDaEtapa(seed, pistaId)`. Sem poder
+ * injetar a seed aqui, uma etapa de campeonato exibida por esta função seria
+ * simulada com a seed errada — o jogador assistiria a uma corrida e veria
+ * OUTRA na tabela de pontos, porque `iniciarCampeonato` pré-simula todas as
+ * etapas. Passando `seedDaEtapa(...)`, o replay bate bit a bit com a etapa
+ * pré-simulada, que continua sendo a fonte única da pontuação.
  */
 export function prepararCorrida(
   dataset: Dataset,
   draftState: DraftState,
   pistaId: string = PISTA_CORRIDA_ID,
+  seed: number = draftState.seed,
 ): { pista: Pista; grid: ResultadoQuali; resultado: ResultadoCorrida } {
   if (draftState.fase !== 'concluido') {
     throw new Error('prepararCorrida: o draft precisa estar concluído (fase "concluido")');
@@ -69,8 +81,8 @@ export function prepararCorrida(
     .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
     .map(([, loadout]) => loadout);
 
-  const grid = simularQuali(dataset, loadouts, pista, draftState.seed);
-  const resultado = simularCorrida(dataset, loadouts, pista, grid, draftState.seed);
+  const grid = simularQuali(dataset, loadouts, pista, seed);
+  const resultado = simularCorrida(dataset, loadouts, pista, grid, seed);
 
   return { pista, grid, resultado };
 }
