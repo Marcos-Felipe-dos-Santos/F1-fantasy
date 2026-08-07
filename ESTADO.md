@@ -7,19 +7,21 @@
 
 ## Estado atual
 
-- **Branch `pr-7.7-dados-nurburgring`** · último PR **7.8** (paleta grafite/F1, dark + light) ·
-  **1018 testes** (34 arquivos) verdes · working tree limpa.
-- **Medido em 2026-08-06, não herdado:** `npm test` **1018/34**, `tsc --noEmit` **exit 0**,
-  `npm run build` **exit 0**, `eslint src scripts` limpo, **Modo Cego verde** (3/3).
-  **`npm run balance` inalterado por construção** — o harness importa só `src/engine/dataset`,
-  `src/data/*.json` e `scripts/alavancas`, e nenhum dos três foi tocado pelo 7.8.
-- **A branch FOI PUSHADA** em 2026-08-06, com "ok" explícito do dev: existe em
-  `origin/pr-7.7-dados-nurburgring`, com os 29 commits, e local/remoto em sincronia (0 à frente,
-  0 atrás). Verificar: `git rev-list --count '@{u}'..HEAD` e o inverso.
-- **`origin/main` NÃO foi tocada** — segue em `b39782d` (PR 7.4). O que subiu foi a branch, não um
-  avanço da main: o dev pediu *push*, não merge, e os dois portões visuais seguem abertos.
-  **Merge na `main` continua exigindo "ok" próprio** (e a tag, se houver, só DEPOIS do merge).
-  Distância: `git rev-list --count origin/main..HEAD`.
+- **Branch `pr-8.1-calendario-sorteado`** · último PR **8.1** (calendário do campeonato sorteado por
+  seed, commit `63e3e82`) · **1028 testes** (34 arquivos) verdes.
+- **Medido em 2026-08-07, não herdado:** `npm test` **1028/34**, `tsc --noEmit` **exit 0**,
+  `eslint src scripts` **exit 0**. **`npm run balance` inalterado por construção** — o harness
+  importa só `src/engine/dataset`, `src/data/*.json` e `scripts/alavancas`, e nenhum dos três foi
+  tocado pelo 8.1. `prettier --check` reprova `fluxo-campeonato.ts`/`.test.ts`, mas **já reprovava
+  no HEAD** (verificado com `git show HEAD:<arquivo>`) — pré-existente, e prettier não é gate.
+- **Working tree:** só `tmp-medir-save.ts` untracked — script descartável do dev, **quebrado**
+  (`criarDraft` exige 22 jogadores + `atribuirPerfis` antes; o arquivo passa 4). Não commitar. A
+  medição que ele buscava já foi feita e está registrada abaixo.
+- **`origin/pr-7.7-dados-nurburgring` existe** (pushada em 2026-08-06 com "ok" do dev, 29 commits).
+  A branch atual saiu dali e **ainda não foi pushada** — o dev pediu explicitamente **sem push**.
+- **`origin/main` NÃO foi tocada** — segue em `b39782d` (PR 7.4), e os dois portões visuais seguem
+  abertos. **Merge na `main` continua exigindo "ok" próprio** (e a tag, se houver, só DEPOIS do
+  merge). Distância: `git rev-list --count origin/main..HEAD`.
 
 ## 🛑 DOIS PORTÕES VISUAIS ABERTOS — não confundir um com o outro
 
@@ -54,10 +56,56 @@ Se o ponteiro não se mover, vale o gatilho de abandono aceito pelo dev: parar e
 > `npx vitest run --config vitest.preview.config.ts scripts/preview-paleta.preview.test.ts`
 > `preview/` é gitignored.
 
+## 🚩 FASE 8 — MODO CAMPEONATO: o plano aprovado NÃO bate com o código
+
+Plano aprovado pelo dev (sessão de 2026-08-07), 4 PRs: **8.1** engine · **8.2** persistência ·
+**8.3** telas · **8.4** integração. Dois submodos — **curta** (5 pistas sorteadas das 10, default) e
+**completa** (10 embaralhadas) — convivendo com "Corrida rápida" na `TelaInicio` (3 opções).
+Decisões travadas: **nenhuma alavanca** (sem lastro, sem pit de meio de temporada) — é jogo de
+draft, o campeonato é confirmação. Draft único por campeonato. Ordem embaralhada nas duas modalidades.
+
+**O achado do 8.1, que reordena o resto da fase:** o 8.1 e o 8.2 do plano descreviam trabalho que
+**a Fase 6 já tinha feito**. Já existiam e são testados: `src/engine/campeonato.ts` (etapas,
+pontuação FIA, desempate countback), `src/ui/fluxo-campeonato.ts` (curta/completa,
+`iniciarCampeonato`, `avancarEtapa`, `simularOResto`, `classificacaoApos`) e
+`src/ui/persistencia.ts` (save, impressão digital, `retomarCampeonato`). A "promoção da lógica do
+balance-harness pra engine" **já tinha acontecido**.
+
+**O que NUNCA foi feito é o antigo PR 6.6 — as TELAS.** Nada em `App.tsx` / `TelaInicio.tsx`
+importa campeonato (confirmado por grep). **O modo existe, é determinístico, é testado, e é
+INALCANÇÁVEL pelo jogador.** É daí que vem o desalinhamento inteiro.
+
+### O 8.2 colapsou — e o ponto de parada do dev não é satisfazível como está
+
+- **compress+base64: MORTO pela medição.** Save real = **16,48 KB** (22 jogadores, completa;
+  16,39 KB na curta) = **0,32% de uma quota de 5 MB**. Método: draft REAL resolvido por bots, não
+  save sintético. Comprimir seria dependência nova sem problema pra resolver.
+- **Camada de abstração e impressão digital: já existem** (PR 6.5 / 6.2).
+- **"Salvar após cada corrida" depende da UI**, que é o 8.4.
+- **Verificado por leitura, SEM teste:** `SaveCampeonato.calendario` é `string[]` persistido e
+  `retomarCampeonato` re-hidrata a partir DELE, nunca recomputando da seed ⇒ **calendário sorteado
+  faz round-trip sem bump de `VERSAO_FORMATO`**. Esse teste de round-trip é o que sobra de real —
+  uma guarda, não um PR de persistência.
+- 🛑 **O dev pediu "pare ao final do 8.2 pra eu ver a mecânica rodando". Depois do 8.2 não há nada
+  pra ver rodando** — não existe UI. As duas saídas oferecidas a ele: **(a)** demo por script
+  (`npm run` novo que imprime calendário sorteado + tabela final; barato, baixo risco, PR próprio —
+  **não empacotar no 8.1**); **(b)** puxar o wiring mínimo do 8.4 pra frente, o que torna o PR
+  **visual ⇒ ALTO RISCO com preview mostrado**. **Aguardando a escolha do dev.**
+
 ## Onde parei
 
 Concluído: Fases 0-2 (engine, Single, Local hotseat, Modo Cego), dataset 1950-2025 (PR 4.x),
-design system arcade (5.1a/b/c), Modo Campeonato (6.1-6.5), Fase 7 até o **7.8**.
+design system arcade (5.1a/b/c), Modo Campeonato **sem UI** (6.1-6.5), Fase 7 até o **7.8**, e o
+**8.1** (calendário sorteado por seed).
+
+**PR 8.1, em uma linha:** `calendarioSorteado(dataset, seed, formato)` entrou como função IRMÃ de
+`calendarioPadrao`, que **não foi tocado** (é o calendário estável dos testes, goldens e harness, e
+um teste trava literalmente a ordem do dataset). Embaralha as 10 e **só então** corta em N — é isso
+que faz a curta ser prefixo da completa pra QUALQUER seed. Namespace próprio
+`deriveSeed(seed, 'calendario')`, sem colisão com `camp:<pistaId>`/`bots`/`draft:*`.
+**A classificação final não depende da ordem** porque o comparador de `acumularClassificacao`
+termina em `cmpJogadorId` (`campeonato.ts:204-209`) e portanto é ordem **total** — sem isso o teste
+de equivalência estaria passando por sorte do fixture. Revisão sem bloqueante.
 
 O **7.8 trocou a paleta inteira** (azul-noite → grafite + vermelho `#FF1801` / dourado `#FFB800` /
 verde `#00D26A`) e adicionou light mode. O que esse PR ensinou, e que vale além dele: **a cor do
@@ -67,6 +115,9 @@ de 0,0650 pra **0,0397** e obrigou a redesenhar a escada tonal inteira. Não foi
 
 ## SEQUÊNCIA — o que sobrou
 
+0. ⬅️ **DECISÃO DO DEV sobre a Fase 8** (ver seção 🚩 acima): como ele quer "ver a mecânica
+   rodando", já que o 8.2 colapsou e não existe UI — demo por script ou wiring mínimo do 8.4.
+   **Independente dos portões visuais abaixo: a Fase 8 não toca em nada visual até agora.**
 1. ⬅️ **VEREDITO DO DEV sobre `paleta.html`** (portão novo) **e sobre `redesenho.html`** (portão
    herdado). São perguntas independentes e podem ser respondidas em qualquer ordem.
 2. **Se a paleta for reprovada:** o diff é reversível num commit só (`f736e6c`) — `src/engine/` e
@@ -116,6 +167,15 @@ dev reprovou.
 
 ## Pendências ATIVAS
 
+0. **Aberta pelo 8.1 — RNG semeado fora da engine (aviso da revisão, decisão do dev).**
+   `calendarioSorteado` é o **primeiro consumidor de RNG semeado fora de `src/engine/`** (os outros
+   13 usos de `deriveSeed` em `src/` estão todos na engine). Não é bloqueante: `calendarioPadrao` já
+   morava em `src/ui/fluxo-campeonato.ts` desde a Fase 6, e `eslint.config.js:76` já trata esse
+   arquivo como crítico de determinismo. **O custo é na Fase 3 (online):** o desenho natural é
+   "servidor escolhe a seed, todo cliente deriva o mesmo calendário", o que faria `src/net/`
+   importar de `src/ui/`. **Mover hoje é barato** (as 4 exportações vão pra `engine/campeonato.ts` e
+   `fluxo-campeonato.ts` re-exporta — zero mudança nas ~90 referências de teste); depois que a UI da
+   Fase 8 e os caminhos de save apontarem pro path de `ui/`, fica caro.
 1. **Abertas pelo 7.8:** (a) o `BotaoTema` é um botão discreto no canto do `app-shell` — posição e
    forma **não passaram por veredito de arte**; (b) `erro` (salmão `#FF7B85`) e `raridadeProibido`
    (`#FF4757`) continuam sendo dois vermelhos ao lado do vermelho da marca — não foi mexido porque

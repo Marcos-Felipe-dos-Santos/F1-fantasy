@@ -387,6 +387,83 @@
   `raridadeProibido` (`#FF4757`) continuam sendo dois vermelhos ao lado do vermelho da marca — não
   foi mexido porque é decisão de arte, mas o dev pode querer olhar com a paleta nova na tela.
 
+- **PR 8.1 — CALENDÁRIO DO CAMPEONATO SORTEADO POR SEED** (branch `pr-8.1-calendario-sorteado`,
+  commit `63e3e82`). Abre a **Fase 8 — Modo Campeonato**, aprovada pelo dev na sessão anterior em 4
+  PRs (8.1 engine, 8.2 persistência, 8.3 telas, 8.4 integração), com dois submodos: **curta** (5
+  pistas sorteadas das 10, default) e **completa** (10 pistas em ordem embaralhada), convivendo com
+  a "Corrida rápida" de hoje.
+
+  🔎 **O ACHADO QUE REDESENHOU A FASE, e vale mais que o PR:** o plano aprovado descrevia o 8.1 como
+  "engine do campeonato: encadear N corridas acumulando pontos FIA, promover a lógica do
+  balance-harness". **Isso já existia inteiro desde a Fase 6** e a promoção já tinha acontecido —
+  `src/engine/campeonato.ts` (simulação por etapa, pontuação FIA, `acumularClassificacao` com
+  desempate countback), `src/ui/fluxo-campeonato.ts` (formatos curta/completa, `N_ETAPAS`,
+  `iniciarCampeonato`, `avancarEtapa`, `simularOResto`, `classificacaoApos`) e
+  `src/ui/persistencia.ts` (save, impressão digital, `retomarCampeonato`) já estavam escritos e
+  testados. **O que NUNCA foi feito é o antigo PR 6.6 — as telas.** Nada em `App.tsx` /
+  `TelaInicio.tsx` importa campeonato: o modo existe, é determinístico, é testado, e é
+  **inalcançável pelo jogador**. Sobrou de verdade pro 8.1 exatamente uma coisa: o sorteio do
+  calendário — que é, literalmente, o nome da branch.
+
+  **`calendarioPadrao` NÃO foi tocado.** Ele é o calendário estável dos testes, dos goldens e do
+  harness, e um teste existente (`fluxo-campeonato.test.ts`, "devolve os ids na ordem do
+  dataset.pistas") trava essa ordem de propósito. O sorteio entrou como função IRMÃ,
+  `calendarioSorteado(dataset, seed, formato)`; os dois guards de validação (formato fora do union,
+  dataset menor que o formato) viraram o helper `etapasDoFormato`, que recebe o nome da função pra
+  a mensagem de erro sair byte a byte igual à de antes.
+
+  **Três propriedades do desenho, cada uma com o teste que a trava:**
+  1. **Embaralha as 10 e SÓ ENTÃO corta em N** — nunca sorteia 5 direto. Por isso a curta é prefixo
+     da completa pra QUALQUER seed: `formato` não entra no `deriveSeed` nem no input do `shuffle`,
+     então as duas chamadas consomem o mesmo stream e só diferem no corte. É propriedade por
+     construção, não empírica — travada num loop de 50 seeds, não numa seed de sorte.
+  2. **Namespace de seed próprio**, `deriveSeed(seed, 'calendario')`, nunca a seed crua. Inventário
+     de labels em uso conferido na revisão: `bots`, `draft:*`, `quali:*`, `corrida:*`,
+     `camp:<pistaId>`, `pit:*`, `grid:*`, `paradas:*` — sem colisão.
+  3. **A classificação final NÃO depende da ordem do calendário.** `seedDaEtapa` deriva a seed só do
+     id da pista e a soma de pontos é comutativa. Isso só é PROVA porque o comparador de
+     `acumularClassificacao` termina em `cmpJogadorId` (`campeonato.ts:204-209`) e portanto é ordem
+     **total** — se ele pudesse devolver 0, o `sort` estável preservaria a ordem de inserção (que
+     difere entre os dois calendários) e o teste estaria passando por sorte do fixture. Verificado
+     no código, não na doc.
+
+  **Medido, não herdado (2026-08-07):** `npm test` **1028 passando, 34 arquivos** (era 1018 — os 10
+  novos são o baseline vermelho deste PR); `tsc --noEmit` e `eslint src scripts` **exit 0**.
+  Baseline vermelho legítimo antes da implementação: 10 falhas, todas `calendarioSorteado is not a
+  function`. **Mutação:** trocar o namespace pela seed crua mata o teste de namespace; cortar antes
+  de embaralhar mata o teste de prefixo. `npm run balance` **inalterado por construção** — o harness
+  importa `src/engine/dataset`, `src/data/*.json` e `scripts/alavancas`, e nenhum dos três foi tocado.
+  **`prettier --check` reprova os dois arquivos, mas já reprovava no HEAD** (verificado com
+  `git show HEAD:<arquivo>`): é pré-existente, não regressão, e prettier não está no gate.
+
+  **Revisão (`senior-reviewer`): sem bloqueante.** Avisos aplicados: precondição explícita
+  `expect(dataset.pistas).toHaveLength(N_ETAPAS.completa)` nos dois testes que assumiam 10 pistas em
+  silêncio (com 11, falhariam parecendo bug de calendário em vez de premissa velha); prefixo virou
+  propriedade sobre 50 seeds; `nomeFn` virou union em vez de `string`.
+
+  **📏 MEDIÇÃO DO SAVE — o número que mata o compress+base64 do plano do 8.2.** O save real do
+  campeonato é **16.876 chars ≈ 16,48 KB** (22 jogadores, temporada completa; a curta dá 16.784) —
+  **0,32% de uma quota de 5 MB**. Método: draft REAL resolvido por bots até `fase === 'concluido'`
+  (com sorteios/progresso/`copiasRestantes` populados), não save sintético de teste, que é menor que
+  a vida real. **Compressão seria dependência nova sem problema pra resolver.**
+
+  **Verificado por LEITURA, sem teste** (candidato natural ao que sobra do 8.2):
+  `SaveCampeonato.calendario` é `string[]` persistido explicitamente e `retomarCampeonato`
+  re-hidrata a partir DELE (`iniciarCampeonato(dataset, loadouts, save.seed, save.calendario)`),
+  nunca recomputando o calendário a partir da seed. Logo **calendário sorteado faz round-trip sem
+  bump de `VERSAO_FORMATO`** — e, de quebra, reordenar/acrescentar pista no dataset não corrompe
+  save existente, o que torna a ausência de um golden "seed 42 ⇒ [ids…]" correta, não uma lacuna.
+
+  **Pendência aberta por este PR (aviso da revisão, NÃO aplicado — é decisão do dev):**
+  `calendarioSorteado` é o **primeiro consumidor de RNG semeado fora de `src/engine/`** (os outros 13
+  usos de `deriveSeed` em `src/` estão todos na engine). Não é bloqueante — `calendarioPadrao` já
+  morava aqui desde a Fase 6, e `eslint.config.js:76` já trata `fluxo-campeonato.ts` como arquivo
+  crítico de determinismo. O custo é na **Fase 3 (online)**: o desenho natural é "servidor escolhe a
+  seed, todo cliente deriva o mesmo calendário", o que faria `src/net/` importar de `src/ui/`. Mover
+  hoje é barato (as 4 exportações vão pra `engine/campeonato.ts` e `fluxo-campeonato.ts`
+  re-exporta, zero mudança em ~90 referências de teste); depois que a UI da Fase 8 e os caminhos de
+  save apontarem pro path de `ui/`, fica caro.
+
 **Testes na main: 893 passando (33 arquivos)** — medido em 2026-08-01 via `npm test`. Mais o harness, por config própria (`npm run balance`), e os **três** geradores de preview (`npm run preview`: traçados, cego, zebra), todos fora do `npm test`.
 > A linha anterior dizia **"521 passando (27 arquivos)"**, número da época do PR 6.2 — ficou parada enquanto a suíte crescia até 851. Corrigida no chore de 2026-07-30. Contagem de teste envelhece rápido: quem atualizar, **meça** (`npm test`), não some de cabeça.
 
