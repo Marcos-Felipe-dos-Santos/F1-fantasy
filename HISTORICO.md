@@ -19,10 +19,15 @@
 
 ## Concluídos (mergeados na main — **exceto os do fim da lista**)
 
-> ⚠️ **O título desta seção está parcialmente desatualizado e ficou assim de propósito, medido em
-> 2026-08-07:** `origin/main` está em `b39782d` (PR 7.4), então os PRs **7.7, 7.7.1, 7.8, 8.1 e 8.2
-> NÃO estão na main** — vivem em branch. "Concluído" aqui significa "PR fechado", não "mergeado".
-> Confira antes de assumir: `git ls-remote --heads origin` e `git rev-list --count origin/main..HEAD`.
+> ⚠️ **"Concluído" aqui significa "PR fechado", não "mergeado" — e existem DUAS `main`s. Medido em
+> 2026-08-07** (`git rev-parse main origin/main`):
+> - **`main` LOCAL = `49f3ca8`**, **21 commits à frente** de `origin/main`. É onde uma sessão que
+>   fizer `git checkout main` vai parar. Contém, com merge commit, até o **PR 7.6.1**.
+> - **`origin/main` = `b39782d`** (PR 7.4). Nunca recebeu 7.5, 7.6 nem 7.6.1.
+> - **Nenhuma das duas tem 7.7, 7.7.1, 7.8, 8.1 e 8.2** — esses vivem só na branch de trabalho.
+>
+> Confira antes de assumir, nunca herde daqui: `git rev-parse main origin/main`,
+> `git log --oneline origin/main..main`, `git rev-list --count origin/main..HEAD`.
 
 > 📦 **Fases 0 a 5 (encerradas) foram movidas para `HISTORICO_ARQUIVO.md`** no chore de
 > 2026-07-30 — PRs 0.1 a 5.1c e os marcos daquelas fases. Consulte lá quando precisar do

@@ -22,9 +22,12 @@
   duas branches lá — `main` em `b39782d` e `pr-7.7-dados-nurburgring` em `ccfc035`.
   **`pr-8.1-calendario-sorteado` NÃO existe no remoto**; a branch atual saiu da 7.7 e nunca foi
   pushada — o dev pediu explicitamente **sem push**.
-- **`origin/main` NÃO foi tocada** — segue em `b39782d` (PR 7.4), e os dois portões visuais seguem
-  abertos. **Merge na `main` continua exigindo "ok" próprio** (e a tag, se houver, só DEPOIS do
-  merge). Distância: `git rev-list --count origin/main..HEAD`.
+- ⚠️ **EXISTEM DUAS `main`s e elas divergem** (medido em 2026-08-07, `git rev-parse main origin/main`):
+  **`main` local = `49f3ca8`** (contém até o PR 7.6.1, com merge commits) está **21 commits à frente**
+  de **`origin/main` = `b39782d`** (PR 7.4). Quem fizer `git checkout main` cai na LOCAL, não na do
+  remoto. **Nenhuma das duas tem 7.7, 7.7.1, 7.8, 8.1 e 8.2** — esses só existem nesta branch, que
+  está **34 commits à frente de `origin/main`**. Os dois portões visuais seguem abertos.
+  **Merge na `main` continua exigindo "ok" próprio** (e a tag, se houver, só DEPOIS do merge).
 
 ## 🛑 DOIS PORTÕES VISUAIS ABERTOS — não confundir um com o outro
 
