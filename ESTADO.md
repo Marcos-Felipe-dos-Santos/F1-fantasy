@@ -99,11 +99,31 @@ INALCANÇÁVEL pelo jogador.** É daí que vem o desalinhamento inteiro.
   **Revisão: sem bloqueante, 3 avisos aplicados** — o mais útil deles é que duas asserções que eu
   tinha escrito eram **infalsificáveis** (implicadas por `carga.ok` e pelo próprio `throw` do
   `retomar`). Asserção que não pode falhar se lê como cobertura e não é.
-- 🛑 **O dev pediu "pare ao final do 8.2 pra eu ver a mecânica rodando". Depois do 8.2 não há nada
-  pra ver rodando** — não existe UI. As duas saídas oferecidas a ele: **(a)** demo por script
-  (`npm run` novo que imprime calendário sorteado + tabela final; barato, baixo risco, PR próprio —
-  **não empacotar no 8.1**); **(b)** puxar o wiring mínimo do 8.4 pra frente, o que torna o PR
-  **visual ⇒ ALTO RISCO com preview mostrado**. **Aguardando a escolha do dev.**
+- 🛑 **O dev pediu "pare ao final do 8.2 pra eu ver a mecânica rodando", mas depois do 8.2 não há
+  nada pra ver rodando** — não existe UI. **DECIDIDO pelo dev em 2026-08-07 (ver seção abaixo):
+  wiring mínimo do 8.4, não script de demo.**
+
+### ⬅️ PRÓXIMOS DOIS PRs — decididos pelo dev em 2026-08-07. **A ORDEM IMPORTA.**
+
+**1º — PR 8.2.1: mover o calendário pra `src/engine/`.** BAIXO RISCO, mecânico.
+`N_ETAPAS`, `FORMATO_PADRAO`, `calendarioPadrao` e `calendarioSorteado` saem de
+`src/ui/fluxo-campeonato.ts` e vão pra `src/engine/campeonato.ts`; `fluxo-campeonato.ts`
+**re-exporta**, então as ~90 referências de teste não mudam. Fecha a pendência 0.
+**Tem que vir ANTES do wiring** — o argumento inteiro do "é barato hoje" é ser feito *antes* de a UI
+e os caminhos de save apontarem pro path de `src/ui/`. Fazer depois é justamente o caro.
+
+**2º — PR 8.4-mínimo: wiring pra ver a mecânica rodando.** 🛑 **ALTO RISCO — É PORTÃO VISUAL.**
+Escopo: 3ª opção na `TelaInicio` (Corrida rápida / Campeonato curto / Campeonato completo) +
+`iniciarCampeonato` + tabela final crua. O dev escolheu isto **em vez** do script de demo, sabendo
+que vira portão visual. Consequências que não podem ser esquecidas:
+- Fluxo completo: baseline vermelho → implementação → `senior-reviewer` → mutação → **preview
+  gerado E MOSTRADO ao dev, com CAMINHO ABSOLUTO na mensagem final**. Preview gerado não é preview
+  aprovado — isso já custou o PR 7.4.
+- ⚠️ **`npm run preview` regenera TODOS os previews e repintaria o `redesenho.html`**, misturando a
+  pergunta nova com o portão herdado das silhuetas, que segue sem veredito. Gerar só o que interessa.
+- Provavelmente **não fecha numa sessão**. Se não fechar, parar e avisar, não empurrar.
+- **Design system da paleta nova** (7.8) — e ela também segue sem veredito. São três portões
+  visuais abertos ao mesmo tempo; não confundir um com o outro.
 
 ## Onde parei
 
@@ -128,9 +148,9 @@ de 0,0650 pra **0,0397** e obrigou a redesenhar a escada tonal inteira. Não foi
 
 ## SEQUÊNCIA — o que sobrou
 
-0. ⬅️ **DECISÃO DO DEV sobre a Fase 8** (ver seção 🚩 acima): como ele quer "ver a mecânica
-   rodando", já que o 8.2 colapsou e não existe UI — demo por script ou wiring mínimo do 8.4.
-   **Independente dos portões visuais abaixo: a Fase 8 não toca em nada visual até agora.**
+0. ⬅️ **PR 8.2.1 (mover calendário pra engine) e depois o 8.4-mínimo (wiring)** — decididos pelo dev
+   em 2026-08-07, **nessa ordem**, ver a seção 🚩 acima. O 8.4-mínimo **abre um terceiro portão
+   visual**, somando-se aos dois abaixo que seguem sem veredito.
 1. ⬅️ **VEREDITO DO DEV sobre `paleta.html`** (portão novo) **e sobre `redesenho.html`** (portão
    herdado). São perguntas independentes e podem ser respondidas em qualquer ordem.
 2. **Se a paleta for reprovada:** o diff é reversível num commit só (`f736e6c`) — `src/engine/` e
@@ -180,7 +200,9 @@ dev reprovou.
 
 ## Pendências ATIVAS
 
-0. **Aberta pelo 8.1 — RNG semeado fora da engine (aviso da revisão, decisão do dev).**
+0. ✅ **DECIDIDA em 2026-08-07 — o dev escolheu MOVER. Vira o PR 8.2.1, o próximo da fila** (ver
+   seção "PRÓXIMOS DOIS PRs"). Fica aqui até ser executada. Contexto original:
+   **RNG semeado fora da engine (aviso da revisão do 8.1).**
    `calendarioSorteado` é o **primeiro consumidor de RNG semeado fora de `src/engine/`** (os outros
    13 usos de `deriveSeed` em `src/` estão todos na engine). Não é bloqueante: `calendarioPadrao` já
    morava em `src/ui/fluxo-campeonato.ts` desde a Fase 6, e `eslint.config.js:76` já trata esse
