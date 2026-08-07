@@ -493,10 +493,24 @@
   Os outros dois: round-trip preserva o calendário embaralhado e o cursor **sem bump de
   `VERSAO_FORMATO`** — com anti-tautologia explícita (`expect(calendario).not.toEqual(
   calendarioPadrao(...))`, sem a qual uma implementação que ignorasse `estado.calendario` e
-  recomputasse a ordem do dataset passaria) —; e a classificação sobrevive ao round-trip idêntica.
+  recomputasse a ordem do dataset passaria) —; e **temporada curta sorteada e CONCLUÍDA**
+  (`etapaAtual === etapas.length`) fazendo round-trip inteiro.
+
+  **Revisão (`senior-reviewer`): sem bloqueante, três avisos, todos aplicados** no commit `0f3e178`.
+  O aviso que vale registrar como lição: **duas das quatro asserções do primeiro teste eram
+  INFALSIFICÁVEIS.** `versaoFormato === VERSAO_FORMATO` é implicado por `carga.ok` (o `carregar` já
+  devolve `versao-incompativel` pra qualquer outro valor) e comparar a impressão digital do estado
+  retomado com a do save é implicado por `retomarCampeonato` ter retornado (ele LANÇA quando
+  divergem). **Bumpar `VERSAO_FORMATO` pra 2 não quebrava a primeira** — asserção que não pode
+  falhar é ruído que se lê como cobertura. Quem de fato garante a ausência de bump é a lista literal
+  de chaves de `salvarCampeonato`. Também entrou o caso de borda que faltava e que o 8.4 vai gerar
+  toda vez que alguém terminar um campeonato: o guard de `persistencia.ts:368-376` rejeita
+  `etapaAtual > length` e **aceita `=== length`**, mas os testes só exercitavam os valores fora de
+  faixa (999, -1) — o limite VÁLIDO, que é o estado da tela de fim de temporada, nunca era exercido.
 
   **Medido em 2026-08-07:** `npm test` **1031/34** (era 1028), `tsc --noEmit` e `eslint src scripts`
-  **exit 0**.
+  **exit 0**. **Duas mutações:** ordenar as etapas na impressão digital mata o teste de reordenação;
+  trocar o guard pra `>= length` mata o teste de borda. Cada uma mata um teste, e só ele.
 
 **Testes na main: 893 passando (33 arquivos)** — medido em 2026-08-01 via `npm test`. Mais o harness, por config própria (`npm run balance`), e os **três** geradores de preview (`npm run preview`: traçados, cego, zebra), todos fora do `npm test`.
 > A linha anterior dizia **"521 passando (27 arquivos)"**, número da época do PR 6.2 — ficou parada enquanto a suíte crescia até 851. Corrigida no chore de 2026-07-30. Contagem de teste envelhece rápido: quem atualizar, **meça** (`npm test`), não some de cabeça.

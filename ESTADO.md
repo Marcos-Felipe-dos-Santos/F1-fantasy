@@ -88,13 +88,17 @@ INALCANÇÁVEL pelo jogador.** É daí que vem o desalinhamento inteiro.
   save sintético. Comprimir seria dependência nova sem problema pra resolver.
 - **Camada de abstração e impressão digital: já existiam** (PR 6.5 / 6.2).
 - **"Salvar após cada corrida" depende da UI**, que é o 8.4.
-- ✅ **O que sobrou virou o commit `6cb02cc` — diff SÓ DE TESTE, `persistencia.ts` intacto.** Três
-  testes provam que o save aguenta o calendário sorteado: round-trip preserva o calendário
-  embaralhado e o cursor **sem bump de `VERSAO_FORMATO`**; a classificação sobrevive idêntica; e o
-  discriminante — **um save com o calendário REORDENADO é REJEITADO**. `calcularImpressaoDigital` é
-  `etapas.map(resumoDaEtapa).join('||')` e junta na **ordem** do array, então a integridade cobre a
-  ORDEM, não só o conjunto. Isso importa pro 8.3/8.4: é a UI que vai gravar e reler esse save.
-  Mutação: fazer a impressão digital ordenar as etapas antes de juntar mata exatamente esse teste.
+- ✅ **O que sobrou virou os commits `6cb02cc` + `0f3e178` — diff SÓ DE TESTE, `persistencia.ts`
+  intacto.** Três testes provam que o save aguenta o calendário sorteado: round-trip preserva o
+  calendário embaralhado e o cursor **sem bump de `VERSAO_FORMATO`**; temporada curta **concluída**
+  (`etapaAtual === etapas.length`) faz round-trip inteiro; e o discriminante — **um save com o
+  calendário REORDENADO é REJEITADO**. `calcularImpressaoDigital` junta as etapas na **ORDEM** do
+  array, então a integridade cobre a ordem, não só o conjunto. Isso importa pro 8.3/8.4: é a UI que
+  vai gravar e reler esse save. **Duas mutações:** ordenar as etapas na impressão digital mata o
+  teste de reordenação; trocar o guard pra `>= length` mata o teste de borda.
+  **Revisão: sem bloqueante, 3 avisos aplicados** — o mais útil deles é que duas asserções que eu
+  tinha escrito eram **infalsificáveis** (implicadas por `carga.ok` e pelo próprio `throw` do
+  `retomar`). Asserção que não pode falhar se lê como cobertura e não é.
 - 🛑 **O dev pediu "pare ao final do 8.2 pra eu ver a mecânica rodando". Depois do 8.2 não há nada
   pra ver rodando** — não existe UI. As duas saídas oferecidas a ele: **(a)** demo por script
   (`npm run` novo que imprime calendário sorteado + tabela final; barato, baixo risco, PR próprio —
