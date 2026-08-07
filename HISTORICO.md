@@ -512,6 +512,57 @@
   **exit 0**. **Duas mutações:** ordenar as etapas na impressão digital mata o teste de reordenação;
   trocar o guard pra `>= length` mata o teste de borda. Cada uma mata um teste, e só ele.
 
+- **PR 8.4-mínimo — SELETOR DE FORMATO E MODO CAMPEONATO JOGÁVEL** (branch
+  `pr-8.1-calendario-sorteado`, commit `4ba4f50`). O dev pediu o seletor de "Formato" na
+  `TelaInicio` e classificou como **baixo risco (UI)** — classificação mantida, porque ele mesmo vai
+  rodar o app, o que é mais forte que qualquer preview.
+
+  **O PR é maior que o pedido literal, e de propósito.** Um seletor de Formato sozinho seria
+  decorativo: antes deste commit **nada** em `App.tsx`/`TelaInicio.tsx` importava campeonato e
+  **nada** chamava `salvarCampeonato`, então escolher "Campeonato curto" levaria a uma corrida
+  avulsa e o botão "Continuar" nunca apareceria. O critério de aceite do dev era testar o
+  campeonato inteiro; entregar só o `<select>` falharia nele.
+
+  🔑 **O BUG QUE QUASE ENTROU — vale mais que o resto da entrada.** As duas trilhas de corrida usam
+  seeds **diferentes de propósito** (decisão D6, `engine/campeonato.ts`): a corrida avulsa simula
+  com a seed **crua** do draft; a etapa de campeonato usa `seedDaEtapa(seed, pistaId)`. Como
+  `iniciarCampeonato` **pré-simula todas as etapas** e a pontuação sai dali, rotear o campeonato
+  pelo `FluxoCorrida` existente faria o jogador **assistir a uma corrida e ver OUTRA na tabela** —
+  vencer na tela e aparecer em 8º nos pontos. **Nada em `npm test` pegaria**, porque cada lado,
+  isolado, está correto; só a composição está errada. Conserto: `prepararCorrida` ganhou o parâmetro
+  `seed` (default = seed do draft, então a corrida avulsa fica bit a bit igual), e há teste provando
+  que, com `seedDaEtapa`, o que se assiste **reproduz a etapa pré-simulada bit a bit**.
+
+  **Decisões de desenho que valem além deste PR:**
+  - `FormatoPartida` é `'unica' | FormatoTemporada`, **não** um union novo de três valores: os dois
+    valores de campeonato passam DIRETO pra `calendarioSorteado`/`N_ETAPAS`, sem tabela de tradução
+    no meio pra sair de sincronia depois.
+  - A regra condicional (`mostraSeletorDePista`) e o resumo do save (`resumoCampeonatoSalvo`) moram
+    em `fluxo-campeonato.ts`, **não no `.tsx`** — o projeto não tem jsdom, então lógica dentro de
+    componente é lógica sem teste. Mesmo padrão de `decisaoLocal`/`seedEfetivaTexto`.
+  - **O formato NÃO foi acrescentado ao save.** É derivável do tamanho do calendário, e o campo novo
+    obrigaria a bumpar `VERSAO_FORMATO` e invalidar todo save existente por informação já implícita.
+  - **`key` por etapa no `FluxoCorrida`**: o `useState` de `useCorrida` só roda o inicializador na
+    montagem — sem a `key`, trocar de etapa não re-prepararia a corrida e o jogador correria a
+    primeira pista o campeonato inteiro.
+  - **O save só é apagado no "Novo draft" explícito e ao começar partida nova**, nunca ao abrir a
+    página: fechar a aba no meio de um campeonato não pode perder progresso, que é o ponto do
+    "Continuar".
+  - "Continuar campeonato" exigiu um caminho de **hidratação** no `useDraft` (`retomar`), que não
+    existia — o hook só sabia criar draft do zero. `humanosDoDraft` reconstrói a lista de humanos a
+    partir de `draft.jogadores` (o save não guarda a config da TelaInicio) e ganhou teste próprio,
+    porque errar ali traz o modo Local de volta com nomes trocados e quebra o roteamento hotseat.
+
+  O `PainelCampeonato` é **cru de propósito** (reusa `.tabela-grid`, ~40 linhas de CSS novas): as
+  telas de verdade são o **PR 8.3**. Ele existe pra tornar a mecânica jogável e julgável ANTES de
+  investir no design.
+
+  **Medido em 2026-08-07:** `npm test` **1051/35** (era 1046), `tsc --noEmit`, `eslint src scripts` e
+  `npm run build` **exit 0**. Entrou `campeonato-render.test.ts`, que renderiza as telas novas com
+  `renderToStaticMarkup` em Node puro (padrão já usado em `pista-camadas-render.test.ts`): **um erro
+  de runtime na primeira tela passaria por `tsc`, por `eslint` e pela suíte inteira** e só apareceria
+  como tela branca na mão do dev.
+
 **Testes na main: 893 passando (33 arquivos)** — medido em 2026-08-01 via `npm test`. Mais o harness, por config própria (`npm run balance`), e os **três** geradores de preview (`npm run preview`: traçados, cego, zebra), todos fora do `npm test`.
 > A linha anterior dizia **"521 passando (27 arquivos)"**, número da época do PR 6.2 — ficou parada enquanto a suíte crescia até 851. Corrigida no chore de 2026-07-30. Contagem de teste envelhece rápido: quem atualizar, **meça** (`npm test`), não some de cabeça.
 

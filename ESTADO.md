@@ -7,14 +7,18 @@
 
 ## Estado atual
 
-- **Branch `pr-8.1-calendario-sorteado`** · últimos PRs **8.1** (calendário sorteado por seed,
-  commit `63e3e82`) e **8.2** (round-trip do save com calendário sorteado, commit `6cb02cc`) ·
-  **1031 testes** (34 arquivos) verdes.
-- **Medido em 2026-08-07, não herdado:** `npm test` **1031/34**, `tsc --noEmit` **exit 0**,
-  `eslint src scripts` **exit 0**. **`npm run balance` inalterado por construção** — o harness
-  importa só `src/engine/dataset`, `src/data/*.json` e `scripts/alavancas`, e nenhum dos três foi
-  tocado pelo 8.1. `prettier --check` reprova `fluxo-campeonato.ts`/`.test.ts`, mas **já reprovava
-  no HEAD** (verificado com `git show HEAD:<arquivo>`) — pré-existente, e prettier não é gate.
+- **Branch `pr-8.1-calendario-sorteado`** · últimos PRs **8.1** (calendário sorteado, `63e3e82`),
+  **8.2** (round-trip do save, `6cb02cc`) e **8.4-mínimo** (seletor de Formato + campeonato jogável,
+  `4ba4f50`) · **1051 testes** (35 arquivos) verdes.
+- **Medido em 2026-08-07, não herdado:** `npm test` **1051/35**, `tsc --noEmit` **exit 0**,
+  `eslint src scripts` **exit 0**, `npm run build` **exit 0**. **`npm run balance` inalterado por
+  construção** — o harness importa só `src/engine/dataset`, `src/data/*.json` e `scripts/alavancas`,
+  e nenhum dos três foi tocado. `prettier --check` reprova `fluxo-campeonato.ts`/`.test.ts`, mas
+  **já reprovava no HEAD** (verificado com `git show HEAD:<arquivo>`) — pré-existente, não é gate.
+- 🎮 **COMO TESTAR O CAMPEONATO** (é o que o dev pediu pra fazer antes do 8.3):
+  `npm run dev` → `http://localhost:5173/` → **Formato: "Campeonato curto"** → Começar draft →
+  jogar o draft → **Ir pra corrida**. No fim de cada corrida, a tabela acumulada e "Próxima
+  corrida". Recarregar a página no meio deve oferecer **"Continuar campeonato"** no topo.
 - **Working tree:** só `tmp-medir-save.ts` untracked — script descartável do dev, **quebrado**
   (`criarDraft` exige 22 jogadores + `atribuirPerfis` antes; o arquivo passa 4). Não commitar. A
   medição que ele buscava já foi feita e está registrada abaixo.
@@ -77,9 +81,11 @@ pontuação FIA, desempate countback), `src/ui/fluxo-campeonato.ts` (curta/compl
 `src/ui/persistencia.ts` (save, impressão digital, `retomarCampeonato`). A "promoção da lógica do
 balance-harness pra engine" **já tinha acontecido**.
 
-**O que NUNCA foi feito é o antigo PR 6.6 — as TELAS.** Nada em `App.tsx` / `TelaInicio.tsx`
-importa campeonato (confirmado por grep). **O modo existe, é determinístico, é testado, e é
-INALCANÇÁVEL pelo jogador.** É daí que vem o desalinhamento inteiro.
+**O que NUNCA tinha sido feito é o antigo PR 6.6 — as TELAS.** Era daí que vinha o desalinhamento
+inteiro: o modo existia, determinístico e testado, e era **inalcançável pelo jogador**.
+✅ **Resolvido no 8.4-mínimo** (`4ba4f50`): o campeonato agora tem seletor, encadeia corridas, salva
+e retoma. O que falta é o **8.3** — as telas de verdade (calendário, classificação navegável, fim de
+temporada); o painel de hoje é cru de propósito.
 
 ### O 8.2 colapsou — FEITO, mas não é o PR que o plano descrevia
 
@@ -103,33 +109,42 @@ INALCANÇÁVEL pelo jogador.** É daí que vem o desalinhamento inteiro.
   nada pra ver rodando** — não existe UI. **DECIDIDO pelo dev em 2026-08-07 (ver seção abaixo):
   wiring mínimo do 8.4, não script de demo.**
 
-### ⬅️ PRÓXIMOS DOIS PRs — decididos pelo dev em 2026-08-07. **A ORDEM IMPORTA.**
+### ✅ PR 8.4-mínimo FEITO (commit `4ba4f50`) — o campeonato é JOGÁVEL
 
-**1º — PR 8.2.1: mover o calendário pra `src/engine/`.** BAIXO RISCO, mecânico.
-`N_ETAPAS`, `FORMATO_PADRAO`, `calendarioPadrao` e `calendarioSorteado` saem de
-`src/ui/fluxo-campeonato.ts` e vão pra `src/engine/campeonato.ts`; `fluxo-campeonato.ts`
-**re-exporta**, então as ~90 referências de teste não mudam. Fecha a pendência 0.
-**Tem que vir ANTES do wiring** — o argumento inteiro do "é barato hoje" é ser feito *antes* de a UI
-e os caminhos de save apontarem pro path de `src/ui/`. Fazer depois é justamente o caro.
+O dev pediu o seletor de "Formato" e classificou como **baixo risco (UI)** — a classificação vale,
+porque **ele mesmo vai rodar o app**, o que é mais forte que preview. (A entrada anterior deste
+arquivo dizia "alto risco, portão visual"; foi superada pela classificação do dev.)
 
-**2º — PR 8.4-mínimo: wiring pra ver a mecânica rodando.** 🛑 **ALTO RISCO — É PORTÃO VISUAL.**
-Escopo: 3ª opção na `TelaInicio` (Corrida rápida / Campeonato curto / Campeonato completo) +
-`iniciarCampeonato` + tabela final crua. O dev escolheu isto **em vez** do script de demo, sabendo
-que vira portão visual. Consequências que não podem ser esquecidas:
-- Fluxo completo: baseline vermelho → implementação → `senior-reviewer` → mutação → **preview
-  gerado E MOSTRADO ao dev, com CAMINHO ABSOLUTO na mensagem final**. Preview gerado não é preview
-  aprovado — isso já custou o PR 7.4.
-- ⚠️ **`npm run preview` regenera TODOS os previews e repintaria o `redesenho.html`**, misturando a
-  pergunta nova com o portão herdado das silhuetas, que segue sem veredito. Gerar só o que interessa.
-- Provavelmente **não fecha numa sessão**. Se não fechar, parar e avisar, não empurrar.
-- **Design system da paleta nova** (7.8) — e ela também segue sem veredito. São três portões
-  visuais abertos ao mesmo tempo; não confundir um com o outro.
+**Entregue mais que o `<select>`, porque o `<select>` sozinho seria decorativo:** antes do commit
+nada em `App.tsx` importava campeonato e nada chamava `salvarCampeonato`. Agora: seletor Formato
+(única/curta/completa), Pista **e a linha de perfil** somem nos campeonatos, corridas encadeiam de
+verdade, save a cada corrida, e "Continuar campeonato" no topo da `TelaInicio`.
+
+🔑 **O BUG QUE QUASE ENTROU — a lição que sobrevive ao PR.** As duas trilhas de corrida usam seeds
+**diferentes de propósito** (decisão D6): a avulsa usa a seed **crua** do draft, a etapa de
+campeonato usa `seedDaEtapa(seed, pistaId)`. Como `iniciarCampeonato` **pré-simula** as etapas e a
+pontuação sai dali, ligar o campeonato no `FluxoCorrida` existente faria o jogador **assistir a uma
+corrida e ver OUTRA na tabela**. **`npm test` não pegaria** — cada lado, isolado, está certo; só a
+composição estava errada. `prepararCorrida` ganhou `seed` (default preserva a avulsa bit a bit) e há
+teste provando a reprodução bit a bit da etapa pré-simulada.
+
+### ⬅️ PRÓXIMO — PR 8.2.1: mover o calendário pra `src/engine/`
+
+BAIXO RISCO, mecânico. `N_ETAPAS`, `FORMATO_PADRAO`, `calendarioPadrao` e `calendarioSorteado` saem
+de `src/ui/fluxo-campeonato.ts` pra `src/engine/campeonato.ts`; `fluxo-campeonato.ts` **re-exporta**,
+então nenhum chamador muda. Fecha a pendência 0.
+
+⚠️ **A ordem que o dev decidiu foi invertida na prática** — ele pediu o wiring primeiro, e o wiring
+já foi feito. **Isso NÃO encareceu o move**, porque a UI importa de `./fluxo-campeonato` e o
+re-export mantém esse caminho válido. O que ficaria caro é remover o re-export, e isso não é
+necessário. Registrado pra ninguém concluir que a pendência 0 virou dívida.
 
 ## Onde parei
 
 Concluído: Fases 0-2 (engine, Single, Local hotseat, Modo Cego), dataset 1950-2025 (PR 4.x),
-design system arcade (5.1a/b/c), Modo Campeonato **sem UI** (6.1-6.5), Fase 7 até o **7.8**, e o
-**8.1** (calendário sorteado por seed).
+design system arcade (5.1a/b/c), Modo Campeonato (6.1-6.5), Fase 7 até o **7.8**, e a Fase 8 nos
+PRs **8.1** (calendário sorteado), **8.2** (round-trip do save) e **8.4-mínimo** (o campeonato
+deixou de ser inalcançável — tem seletor, encadeia corridas, salva e retoma).
 
 **PR 8.1, em uma linha:** `calendarioSorteado(dataset, seed, formato)` entrou como função IRMÃ de
 `calendarioPadrao`, que **não foi tocado** (é o calendário estável dos testes, goldens e harness, e
