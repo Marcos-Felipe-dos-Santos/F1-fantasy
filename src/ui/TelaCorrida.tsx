@@ -5,7 +5,7 @@
  * componente só resolve nomes pro dataset e desenha.
  */
 
-import type { DraftState, EventoCorrida, Pista, ResultadoCorrida, ResultadoQuali } from '../engine/types';
+import type { DraftState, Pista, ResultadoCorrida, ResultadoQuali } from '../engine/types';
 import { dataset } from './dataset-app';
 import {
   acumularVoltas,
@@ -16,6 +16,7 @@ import {
   type VelocidadeReplay,
 } from './fluxo-corrida';
 import { nomeJogador } from './loadout-view';
+import { narrarEvento } from './narracao';
 import {
   CAMADAS_PISTA,
   RAIO_CARRO_BOT,
@@ -93,14 +94,6 @@ const OPCOES_VELOCIDADE: { valor: VelocidadeReplay; rotulo: string; emoji: strin
   { valor: 'media', rotulo: 'Média', emoji: '▶️' },
   { valor: 'rapida', rotulo: 'Rápida', emoji: '🐇' },
 ];
-
-const ROTULOS_EVENTO: Record<EventoCorrida['tipo'], string> = {
-  'erro-piloto': 'Erro de pilotagem',
-  'quebra-chassi': 'Quebra de chassi — abandonou',
-  'quebra-motor': 'Quebra de motor — abandonou',
-  'problema-tecnico': 'Problema técnico',
-  investigacao: 'Investigação pós-corrida',
-};
 
 /** Nome de exibição via `nomeJogador` (PR 2.1a); cai no próprio id se o jogador não for encontrado. */
 function nomeDoJogadorId(state: DraftState, jogadorId: string): string {
@@ -275,7 +268,7 @@ export function TelaCorrida({
               <span className="ticker-eventos__volta">V{evento.volta}</span>
               <span>
                 {nomeDoJogadorId(state, evento.jogadorId)} ({nomePiloto(state, evento.jogadorId)}) —{' '}
-                {ROTULOS_EVENTO[evento.tipo]}
+                {narrarEvento(evento, resultado.seed, resultado.chuva)}
               </span>
             </li>
           ))}
