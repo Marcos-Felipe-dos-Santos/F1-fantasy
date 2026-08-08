@@ -708,6 +708,28 @@
   - **Sai o motivo que segurava 7.7/7.8 fora da `main`.** O merge agora é decisão de processo do
     dev, não espera de veredito visual.
 
+- **PR 8.2.1 — CALENDÁRIO DO CAMPEONATO VAI PRA `src/engine/`** (commit `4d38aa7`). Fecha a
+  **pendência 0**, aberta pela revisão do 8.1: `calendarioSorteado` era o ÚNICO consumidor de RNG
+  semeado fora de `src/engine/` (os outros 13 usos de `deriveSeed` em `src/` já estavam na engine).
+
+  Movidos: `FormatoTemporada`, `FORMATO_PADRAO`, `N_ETAPAS`, `calendarioPadrao`,
+  `calendarioSorteado` e o helper `etapasDoFormato`. **`fluxo-campeonato.ts` RE-EXPORTA os cinco
+  públicos, então nenhum chamador mudou** — nem as ~90 referências de teste, nem a UI. Foi o
+  re-export que tornou isto um diff de dois arquivos em vez de um sed global.
+
+  **Por que agora, e não depois:** o custo aparece na Fase 3 (online), cujo desenho natural é
+  "servidor escolhe a seed, todo cliente deriva o mesmo calendário". Com o calendário na UI,
+  `src/net/` teria que importar de `src/ui/` — inversão da dependência que a arquitetura proíbe.
+
+  **O que FICOU na UI, de propósito:** `FormatoPartida`, `ehCampeonato`, `mostraSeletorDePista`,
+  `ROTULO_FORMATO`, `formatoDoCalendario`, `resumoCampeonatoSalvo`. Nenhum é regra de jogo — são
+  decisões de TELA. Movê-los levaria UI pra dentro da engine, que é a violação inversa.
+
+  **Refactor sem mudança de comportamento: os mesmos 1078 testes passam, sem nenhum teste novo — e o
+  ponto é esse.** `tsc`, `eslint` e `build` limpos. **`npm run balance` rodado** porque mexeu em
+  `src/engine/`: **tabela idêntica, mesmos números por cenário** — `seedDaEtapa` e
+  `simularCampeonato` não foram tocados, só mudaram de vizinhança.
+
 **Testes na main: 893 passando (33 arquivos)** — medido em 2026-08-01 via `npm test`. Mais o harness, por config própria (`npm run balance`), e os **três** geradores de preview (`npm run preview`: traçados, cego, zebra), todos fora do `npm test`.
 > A linha anterior dizia **"521 passando (27 arquivos)"**, número da época do PR 6.2 — ficou parada enquanto a suíte crescia até 851. Corrigida no chore de 2026-07-30. Contagem de teste envelhece rápido: quem atualizar, **meça** (`npm test`), não some de cabeça.
 

@@ -156,16 +156,20 @@ troca de posição, **pit não é ultrapassagem** — pit de qualquer um dos doi
 Hoje não existe narração de troca de posição (a única narração do jogo era `ROTULOS_EVENTO`), então
 a regra fica aqui aguardando o código que a consumirá.
 
-### ⬅️ PRÓXIMO — PR 8.2.1: mover o calendário pra `src/engine/`
+### ✅ PR 8.2.1 FEITO — calendário mora na engine (fecha a pendência 0)
 
-BAIXO RISCO, mecânico. `N_ETAPAS`, `FORMATO_PADRAO`, `calendarioPadrao` e `calendarioSorteado` saem
-de `src/ui/fluxo-campeonato.ts` pra `src/engine/campeonato.ts`; `fluxo-campeonato.ts` **re-exporta**,
-então nenhum chamador muda. Fecha a pendência 0.
+`FormatoTemporada`, `FORMATO_PADRAO`, `N_ETAPAS`, `calendarioPadrao`, `calendarioSorteado` e o
+helper `etapasDoFormato` foram pra `src/engine/campeonato.ts`. **`fluxo-campeonato.ts` re-exporta os
+cinco públicos, então NENHUM chamador mudou** — nem as ~90 referências de teste, nem a UI.
 
-⚠️ **A ordem que o dev decidiu foi invertida na prática** — ele pediu o wiring primeiro, e o wiring
-já foi feito. **Isso NÃO encareceu o move**, porque a UI importa de `./fluxo-campeonato` e o
-re-export mantém esse caminho válido. O que ficaria caro é remover o re-export, e isso não é
-necessário. Registrado pra ninguém concluir que a pendência 0 virou dívida.
+**O que FICOU na UI, de propósito:** `FormatoPartida`, `ehCampeonato`, `mostraSeletorDePista`,
+`ROTULO_FORMATO`, `formatoDoCalendario`, `resumoCampeonatoSalvo`. Nenhum é regra de jogo — são
+decisões de TELA (qual seletor aparece, que texto o botão mostra). Movê-los levaria UI pra dentro da
+engine, que é a violação inversa.
+
+**Refactor sem mudança de comportamento: 1078 testes seguem passando, os mesmos, sem teste novo — e
+o ponto é esse.** `npm run balance` rodado (mexeu em `src/engine/`): **tabela idêntica**,
+`seedDaEtapa` e `simularCampeonato` só mudaram de vizinhança.
 
 ## Onde parei
 
@@ -193,7 +197,9 @@ de 0,0650 pra **0,0397** e obrigou a redesenhar a escada tonal inteira. Não foi
 
 **Os portões visuais saíram desta lista: os dois foram aprovados em 2026-08-07.**
 
-1. ⬅️ **PR 8.2.1 — mover o calendário pra `src/engine/`.** Baixo risco, mecânico. Fecha a pendência 0.
+1. ⬅️ **PR 8.3 — as telas do campeonato** (calendário com as silhuetas, classificação entre corridas
+   com variação de posição, fim de campeonato). **A mecânica NÃO se refaz** — o dev testou single e
+   local com 2 jogadores e o wiring funciona; o 8.3 substitui as telas cruas pelas bonitas.
 2. **PR de INFRA — DESTRAVADO pela aprovação das silhuetas.** Era "pré-requisito caso as silhuetas
    fossem aprovadas"; com o 10/10, **deixa de ser pré-requisito e vira consolidação**: restrições
    geométricas como testes vermelhos + allowlist `LEGADO` que só encolhe. **Reavaliar o escopo com o
@@ -244,17 +250,6 @@ dev reprovou.
 
 ## Pendências ATIVAS
 
-0. ✅ **DECIDIDA em 2026-08-07 — o dev escolheu MOVER. Vira o PR 8.2.1, o próximo da fila** (ver
-   seção "PRÓXIMOS DOIS PRs"). Fica aqui até ser executada. Contexto original:
-   **RNG semeado fora da engine (aviso da revisão do 8.1).**
-   `calendarioSorteado` é o **primeiro consumidor de RNG semeado fora de `src/engine/`** (os outros
-   13 usos de `deriveSeed` em `src/` estão todos na engine). Não é bloqueante: `calendarioPadrao` já
-   morava em `src/ui/fluxo-campeonato.ts` desde a Fase 6, e `eslint.config.js:76` já trata esse
-   arquivo como crítico de determinismo. **O custo é na Fase 3 (online):** o desenho natural é
-   "servidor escolhe a seed, todo cliente deriva o mesmo calendário", o que faria `src/net/`
-   importar de `src/ui/`. **Mover hoje é barato** (as 4 exportações vão pra `engine/campeonato.ts` e
-   `fluxo-campeonato.ts` re-exporta — zero mudança nas ~90 referências de teste); depois que a UI da
-   Fase 8 e os caminhos de save apontarem pro path de `ui/`, fica caro.
 1. **Abertas pelo 7.8:** (a) o `BotaoTema` é um botão discreto no canto do `app-shell` — posição e
    forma **não passaram por veredito de arte**; (b) `erro` (salmão `#FF7B85`) e `raridadeProibido`
    (`#FF4757`) continuam sendo dois vermelhos ao lado do vermelho da marca — não foi mexido porque
