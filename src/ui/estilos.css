@@ -13,21 +13,28 @@
  * Mapeamento (mecânico, por uso dominante da variável antiga):
  * - --cor-destaque / --cor-destaque-clara: usadas hoje em botão primário,
  *   "ativo" de velocidade e títulos de destaque — um único par servindo
- *   vários papéis que os tokens novos separam (`primaria`, `acento`,
- *   `magenta`). Replumbing seletor a seletor é redesenho de componente
- *   (5.1b/c); aqui mapeamos pelo uso dominante: `--cor-destaque` ->
- *   `primaria` (ação primária, é o que `.botao-primario`/
- *   `.botao-velocidade--ativo` usam), `--cor-destaque-clara` -> `acento`
- *   (destaque de texto/título). Exceção já replugada: o carro do humano no
- *   traçado usa `--magenta` direto (papel dedicado na paleta, aviso da
- *   revisão do 5.1a).
+ *   vários papéis que os tokens novos separam (`primaria`, `acento`).
+ *   Replumbing seletor a seletor é redesenho de componente (5.1b/c); aqui
+ *   mapeamos pelo uso dominante: `--cor-destaque` -> `primaria` (ação
+ *   primária, é o que `.botao-primario`/`.botao-velocidade--ativo` usam),
+ *   `--cor-destaque-clara` -> `acento-texto` (destaque de TEXTO, logo tinta).
+ *
+ * PR 7.8 — o token `magenta` NÃO EXISTE MAIS. O destaque do jogador humano
+ * passou a ser o vermelho da marca (`primaria`), que era o pedido do dev
+ * ("vermelho ... posição do jogador — substitui o magenta"). Onde o destaque
+ * é TEXTO usa-se `--primaria-texto`, não `--primaria`: o `#FF1801` cheio dá
+ * 4,461 contra a base escura e 3,445 contra a clara, abaixo dos 4,5 de texto.
+ * A regra geral do arquivo: PREENCHIMENTO usa a cor da marca, TINTA usa o
+ * token `*-texto` correspondente.
  * - --cor-superficie-alta: não há um terceiro tom de "superfície elevada"
  *   nos tokens novos (só `fundo`/`fundoElevado`/`fundoAfundado`); colapsada
  *   em `fundo-elevado` por ora — perde a distinção de hover até 5.1b (não
  *   é permitido inventar cor fora da paleta aprovada).
  */
 :root {
-  color-scheme: dark;
+  /* `color-scheme` saiu daqui no PR 7.8: agora vem de `tokens.css`, um por
+     bloco de tema. Fixo em `dark` aqui, ele venceria o tema claro e deixaria
+     scrollbar/autofill escuros sobre a UI clara. */
   --cor-fundo: var(--fundo);
   --cor-superficie: var(--fundo-elevado);
   --cor-superficie-alta: var(--fundo-elevado);
@@ -35,8 +42,8 @@
   --cor-texto: var(--texto);
   --cor-texto-fraco: var(--texto-suave);
   --cor-destaque: var(--primaria);
-  --cor-destaque-clara: var(--acento);
-  --cor-erro: var(--erro);
+  --cor-destaque-clara: var(--acento-texto); /* uso e cor de TEXTO -> tinta */
+  --cor-erro: var(--erro-texto); /* uso dominante e TEXTO/borda do painel .erro -> tinta */
 }
 
 * {
@@ -57,9 +64,41 @@ body {
 }
 
 .app-shell {
+  position: relative; /* âncora do `.botao-tema`, posicionado no canto */
   max-width: 1000px;
   margin: 0 auto;
   padding: var(--espaco-xl) var(--espaco-lg) calc(var(--espaco-xxl) * 2);
+}
+
+/* Botão de tema (PR 7.8): canto superior direito do shell, discreto — é
+   controle de preferência, não ação de jogo, e não pode competir com o botão
+   primário vermelho. Cor de borda `--borda-interativa` porque é interativo e
+   precisa dos 3:1 (a `--borda` decorativa não serve aqui). */
+.botao-tema {
+  position: absolute;
+  top: var(--espaco-lg);
+  right: var(--espaco-lg);
+  min-width: var(--alvo-toque);
+  min-height: var(--alvo-toque);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--texto-suave);
+  background: var(--fundo-elevado);
+  border: 2px solid var(--borda-interativa);
+  border-radius: var(--raio-pill);
+}
+
+.botao-tema:hover {
+  color: var(--texto);
+}
+
+.botao-tema:focus-visible {
+  outline: 3px solid var(--acento);
+  outline-offset: 2px;
 }
 
 /* Fonte display (Bungee) só em h1/h2 — h3 e corpo seguem a fonte de sistema.
@@ -288,7 +327,7 @@ h3 {
 .tela-draft__equipe-ano {
   /* Replumbing 5.1b: papel de "destaque de título" é do ciano (`acento`),
      direto — não via a variável-ponte `--cor-destaque-clara`. */
-  color: var(--acento);
+  color: var(--acento-texto);
   font-size: clamp(1.05rem, 3vw + 0.4rem, 1.3rem);
   font-weight: 700;
   margin: 0;
@@ -529,13 +568,14 @@ button.card {
   letter-spacing: 0.04em;
 }
 
-/* Papel dedicado do magenta na paleta (5.1a): destaque do jogador humano —
-   aqui como friso na primeira célula da linha, em vez do vermelho solto
-   fora da paleta que existia antes (nenhum hex novo). `border-left` na
+/* Destaque do jogador humano (5.1a; vermelho da marca desde o 7.8) — aqui
+   como friso na primeira célula da linha. Friso de 4px é elemento de UI, não
+   texto: `--primaria` cheio serve, e é o mesmo vermelho do carro dele no
+   traçado, que é o ponto. `border-left` na
    célula (não na `tr`) por compatibilidade de renderização com
    `border-collapse: collapse`. */
 .linha-humano td:first-child {
-  border-left: 4px solid var(--magenta);
+  border-left: 4px solid var(--primaria);
 }
 
 .linha-humano {
@@ -581,7 +621,7 @@ button.card {
   width: 100%;
   max-width: 700px;
   height: auto;
-  background: var(--fundo);
+  background: var(--pista-chao);
   border: 3px solid var(--borda);
   border-radius: var(--raio-lg);
   box-shadow: 4px 4px 0 var(--borda);
@@ -595,7 +635,7 @@ button.card {
    contra o que está de fato na tela, e não dependa de o `<rect>` cobrir 100%
    do viewBox só "por acidente" de layout. */
 .tracado-svg__chao {
-  fill: var(--fundo);
+  fill: var(--pista-chao);
 }
 
 /* Uma camada da pilha de `CAMADAS_PISTA` (PR 7.3): terreno/escape/muro/zebra/limite/asfalto. */
@@ -621,9 +661,11 @@ button.card {
 }
 
 .tracado-svg__carro--humano {
-  /* Papel dedicado na paleta 5.1a: magenta = destaque do jogador humano
-     (não compartilha cor com botão primário/badges amarelos). */
-  fill: var(--magenta);
+  /* O carro do jogador é o vermelho da marca (7.8; era magenta). É este par
+     que impõe o TETO DE LUMINÂNCIA DO ASFALTO: `primaria/pistaAsfalto` >= 3
+     exige asfalto <= 0,0397, e foi por isso que a pista inteira escureceu
+     junto com a paleta. Ver `tokens.ts`. */
+  fill: var(--primaria);
 }
 
 .tracado-svg__carro--congelado {
@@ -748,9 +790,9 @@ button.card {
 /* Destaque do humano na classificação ao vivo: o `.linha-humano` genérico
    (ver acima) só desenha o friso em `td:first-child` — aqui é uma `<li>`,
    não uma linha de tabela, então o friso precisa de seletor próprio. Mesmo
-   papel dedicado do magenta, mesma ideia visual (friso à esquerda). */
+   papel dedicado do jogador humano, mesma ideia visual (friso à esquerda). */
 .classificacao-ao-vivo__linha.linha-humano {
-  border-left: 4px solid var(--magenta);
+  border-left: 4px solid var(--primaria);
   padding-left: calc(var(--espaco-md) - 4px);
 }
 
@@ -772,7 +814,7 @@ button.card {
 }
 
 .badge-dnf {
-  background: var(--cor-erro);
+  background: var(--erro); /* PREENCHIMENTO do badge: cor cheia, nao a tinta */
   color: var(--texto-escuro);
   border-radius: var(--raio-pill);
   padding: 1px var(--espaco-sm);
@@ -784,7 +826,7 @@ button.card {
 
 /* Badge de pit stop no painel ao vivo (PR 2.7) — mesmo estilo do badge de DNF;
    cor própria (amarelo de aviso, já usado pra raridade "lendário") pra não se
-   confundir com o badge de DNF (vermelho) nem com o magenta do carro humano. */
+   confundir com o badge de DNF (salmão) nem com o vermelho do carro humano. */
 .badge-pit {
   background: var(--raridade-lendario);
   color: var(--texto-escuro);
@@ -826,12 +868,12 @@ button.card {
 }
 
 /* Destaque do humano no resultado final (PR 2.4/5.1c): mesmo papel dedicado
-   do magenta usado no traçado e na classificação ao vivo — não mais o
-   ciano genérico de título (`--cor-destaque-clara`). */
+   usado no traçado e na classificação ao vivo. Aqui é TEXTO, então usa a
+   tinta (`--primaria-texto`), não o vermelho cheio do carro. */
 .resultado-corrida__destaque {
   font-size: 1.1rem;
   font-weight: 700;
-  color: var(--magenta);
+  color: var(--primaria-texto); /* TEXTO -> tinta */
   margin: var(--espaco-sm) 0 var(--espaco-lg);
 }
 
@@ -842,7 +884,7 @@ button.card {
 }
 
 .linha-volta-rapida {
-  color: var(--raridade-lendario);
+  color: var(--raridade-lendario-texto);
 }
 
 /* Responsivo básico */
@@ -854,5 +896,289 @@ button.card {
 
   .grid-cards {
     grid-template-columns: 1fr;
+  }
+}
+
+/* ---- Modo Campeonato (PR 8.4-mínimo) ----
+   Estilo deliberadamente CRU: o painel só precisa ser legível pra que a
+   mecânica possa ser jogada e julgada. As telas de verdade (calendário,
+   classificação navegável, fim de temporada) são o PR 8.3, e é lá que entra
+   a decisão de arte. A tabela reusa `.tabela-grid`, então o destaque do
+   humano (`.linha-humano`) já vale aqui de graça. */
+.painel-campeonato {
+  margin: var(--espaco-xl) 0;
+  padding: var(--espaco-lg);
+  background: var(--cor-superficie);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-md);
+}
+
+.painel-campeonato h3 {
+  margin: 0 0 var(--espaco-md);
+  font-size: 1rem;
+}
+
+/* Campeão é TEXTO, então usa a tinta do dourado (`--acento-texto`), nunca o
+   preenchimento — mesma regra travada no 7.8. */
+.painel-campeonato__campeao {
+  color: var(--acento-texto);
+  font-weight: 700;
+  margin: 0 0 var(--espaco-md);
+}
+
+/* Bloco "Continuar campeonato" no topo da TelaInicio: separado do formulário
+   por uma borda, porque é um caminho ALTERNATIVO a ele, não mais um campo. */
+.tela-inicio__continuar {
+  margin-bottom: var(--espaco-xl);
+  padding-bottom: var(--espaco-lg);
+  border-bottom: 1px solid var(--cor-borda);
+}
+
+.tela-inicio__continuar-info {
+  margin: var(--espaco-sm) 0 0;
+  font-size: 0.9rem;
+}
+
+.tela-inicio__continuar-aviso {
+  margin: var(--espaco-xs) 0 0;
+  font-size: 0.8rem;
+  color: var(--cor-texto-fraco);
+}
+
+/* Consequência causal no ticker (PR B da narração): só aparece quando o
+   critério contrafactual confirma que o incidente explica a troca de posição.
+   Fraseado relacional ("caiu atrás de Y"), nunca posição absoluta — o painel
+   ao lado ordena por progresso contínuo e um número aqui brigaria com ele. */
+.ticker-eventos__consequencia {
+  color: var(--primaria-texto); /* TEXTO -> tinta */
+  font-weight: 700;
+}
+
+.ticker-eventos__pit {
+  color: var(--cor-texto-fraco);
+}
+
+/* Modo automático do campeonato (PR C): o toggle fica ao lado do botão e
+   segue clicável durante a contagem — é assim que se desliga no meio. */
+.painel-campeonato__acoes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--espaco-md);
+  margin-top: var(--espaco-lg);
+}
+
+.painel-campeonato__auto {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-xs);
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.painel-campeonato__contagem {
+  color: var(--cor-texto-fraco);
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ====================================================================
+   TELAS DO CAMPEONATO (PR 8.3) — com a paleta grafite/F1 aprovada.
+   Regra do 7.8 respeitada em todo este bloco: acento como PREENCHIMENTO
+   usa o token cheio; acento como TINTA (texto, ícone, linha de 1px) usa
+   o irmão `*Texto`. Por isso o dourado do campeão é `--acento-texto` e o
+   vermelho da próxima etapa é `--primaria` (é friso, não texto).
+   ==================================================================== */
+
+/* ---- Silhueta (miniatura do traçado) ---- */
+.silhueta-pista {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1000 / 660;
+  display: block;
+}
+
+/* Uma linha só, sem a pilha de camadas: no tamanho de miniatura o asfalto +
+   limite + zebra viram borrão, e o que precisa ser legível aqui é a FORMA. */
+.silhueta-pista__volta {
+  fill: none;
+  stroke-width: 26;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke: var(--carro-bot);
+}
+
+.silhueta-pista--disputada .silhueta-pista__volta {
+  stroke: var(--texto-suave);
+  opacity: 0.55;
+}
+
+.silhueta-pista--proxima .silhueta-pista__volta {
+  stroke: var(--primaria);
+}
+
+.silhueta-pista--futura .silhueta-pista__volta {
+  stroke: var(--borda-interativa);
+  opacity: 0.7;
+}
+
+/* ---- Calendário ---- */
+.painel-calendario {
+  margin: var(--espaco-xl) 0;
+}
+
+.painel-calendario h3 {
+  margin: 0 0 var(--espaco-md);
+  font-size: 1rem;
+}
+
+.painel-calendario__lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: var(--espaco-md);
+}
+
+.painel-calendario__etapa {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-areas:
+    'silhueta silhueta'
+    'numero nome'
+    'numero status';
+  gap: 0 var(--espaco-sm);
+  padding: var(--espaco-sm);
+  background: var(--cor-superficie);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-sm);
+}
+
+.painel-calendario__etapa .silhueta-pista {
+  grid-area: silhueta;
+}
+
+/* A próxima etapa é a única com friso da marca — é o destaque que o dev
+   pediu, e friso é PREENCHIMENTO, então usa `--primaria` cheio. */
+.painel-calendario__etapa--proxima {
+  border-color: var(--primaria);
+  border-left-width: 4px;
+}
+
+.painel-calendario__etapa--disputada {
+  opacity: 0.75;
+}
+
+.painel-calendario__numero {
+  grid-area: numero;
+  align-self: center;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--cor-texto-fraco);
+  font-variant-numeric: tabular-nums;
+}
+
+.painel-calendario__nome {
+  grid-area: nome;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.painel-calendario__status {
+  grid-area: status;
+  font-size: 0.8rem;
+  color: var(--cor-texto-fraco);
+}
+
+/* ---- Variação de posição na classificação ---- */
+.variacao {
+  font-variant-numeric: tabular-nums;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+/* Ambos são TEXTO, então tinta (`*Texto`), nunca o token cheio. */
+.variacao--subiu {
+  color: var(--sucesso-texto);
+}
+
+.variacao--caiu {
+  color: var(--primaria-texto);
+}
+
+.variacao--igual {
+  color: var(--cor-texto-fraco);
+}
+
+/* ---- Pódio (fim de campeonato) ---- */
+.tela-fim-campeonato h2 {
+  text-align: center;
+}
+
+.podio {
+  list-style: none;
+  margin: var(--espaco-xl) auto;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: var(--espaco-md);
+  max-width: 520px;
+}
+
+.podio__lugar {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--espaco-xs);
+  padding: var(--espaco-md) var(--espaco-sm);
+  background: var(--cor-superficie);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-sm);
+  text-align: center;
+}
+
+/* A altura é o que faz o pódio parecer um pódio. */
+.podio__lugar--1 {
+  padding-top: var(--espaco-xxl);
+  border-color: var(--acento);
+}
+
+.podio__lugar--2 {
+  padding-top: var(--espaco-xl);
+}
+
+.podio__medalha {
+  font-size: 1.6rem;
+}
+
+.podio__nome {
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+/* Pontos do campeão em dourado: é TEXTO ⇒ tinta (`--acento-texto`). */
+.podio__lugar--1 .podio__pontos {
+  color: var(--acento-texto);
+  font-weight: 700;
+}
+
+.podio__pontos {
+  font-size: 0.85rem;
+  color: var(--cor-texto-fraco);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 360px) {
+  /* Regra dos 360px: o pódio lado a lado fica ilegível, então empilha. */
+  .podio {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .podio__lugar--1,
+  .podio__lugar--2 {
+    padding-top: var(--espaco-md);
   }
 }

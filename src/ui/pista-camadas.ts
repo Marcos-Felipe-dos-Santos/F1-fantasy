@@ -20,11 +20,18 @@ import { tracadoDaPista } from './tracados';
  * corrida (ver `carroBot` em `tokens.ts`). O tipo impede o acoplamento em
  * tempo de compilação; `pista-camadas.test.ts` repete a guarda em runtime,
  * porque o tipo some no JS compilado.
+ *
+ * PR 7.8 — `fundo`, `fundoAfundado` e `fundoElevado` SAÍRAM desta união, e a
+ * remoção é a guarda mais barata do PR: esses três agora mudam de valor com o
+ * tema. Qualquer camada de pista pintada com um deles ficaria correta no
+ * escuro e absurda no claro (chão branco, sulco de escape branco), e nenhum
+ * teste de contraste pegaria — os testes medem `cores`, que é a paleta ESCURA.
+ * Com eles fora da união, a tentativa nem compila. Os substitutos `pistaChao`
+ * e `pistaEscape` têm os mesmos valores do modo escuro.
  */
 export type CorDePista =
-  | 'fundo'
-  | 'fundoAfundado'
-  | 'fundoElevado'
+  | 'pistaChao'
+  | 'pistaEscape'
   | 'pistaTerreno'
   | 'pistaServico'
   | 'pistaMuro'
@@ -65,15 +72,21 @@ export interface CamadaPista {
  * (`pista-camadas.test.ts`, "regra dos 360px").
  *
  * Fiel à maquete aprovada A OLHO no portão 7.1 (`MockPista.tsx`, const
- * `ESCAPE = '#0E0C20'`): o anel de escape usa `fundoAfundado`, não
- * `pistaServico`. Isso NÃO quebra a hierarquia tonal monotônica — a tabela de
- * luminância permanente (`PLANO_CLAUDE_CODE.md`) registra "escape" (0,005,
- * `fundoAfundado`) e "escape-de-curva/paddock" (0,017, `pistaServico`) como
- * DOIS PAPÉIS DISTINTOS. Usar a superfície de 0,017 no papel de 0,005
- * inverteria a leitura contra o terreno: a maquete tem um anel MAIS ESCURO
- * que o terreno ao redor (um sulco), não um degrau que sobe. `pistaServico`
- * continua reservado pro seu próprio papel (plataforma de paddock/pit, PR
- * 7.7), fora da pilha de camadas do traçado.
+ * `ESCAPE`, à época `#0E0C20`): o anel de escape é a superfície MAIS ESCURA da pilha,
+ * não `pistaServico`. Isso NÃO quebra a hierarquia tonal monotônica — a tabela
+ * de luminância permanente (`PLANO_CLAUDE_CODE.md`) registra "escape" e
+ * "escape-de-curva/paddock" (`pistaServico`) como DOIS PAPÉIS DISTINTOS. Usar
+ * a superfície mais clara no papel da mais escura inverteria a leitura contra
+ * o terreno: a maquete tem um anel MAIS ESCURO que o terreno ao redor (um
+ * sulco), não um degrau que sobe. `pistaServico` continua reservado pro seu
+ * próprio papel (plataforma de paddock/pit, PR 7.7), fora da pilha de camadas
+ * do traçado.
+ *
+ * ⚠️ PR 7.8: o escape era pintado com `fundoAfundado`. Passou a ter token
+ * próprio (`pistaEscape`, MESMO valor) porque `fundoAfundado` agora muda com o
+ * tema — no modo claro ele vira `#E8E3DE` e o "sulco" viraria uma faixa branca
+ * no meio da pista. Toda a pilha do traçado usa exclusivamente tokens
+ * `pista*`, que são mode-invariantes; `tokens.test.ts` trava isso.
  *
  * OMISSÃO DELIBERADA (registrada, não é dívida silenciosa): a maquete do 7.1
  * tem uma linha central tracejada, mas ela SAI do escopo do 7.3. 1,6 unidade
@@ -84,7 +97,7 @@ export interface CamadaPista {
  */
 export const CAMADAS_PISTA: readonly CamadaPista[] = [
   { id: 'terreno', cor: 'pistaTerreno', largura: 120, alvo: 'volta', papel: 'superficie' },
-  { id: 'escape', cor: 'fundoAfundado', largura: 86, alvo: 'volta', papel: 'superficie' },
+  { id: 'escape', cor: 'pistaEscape', largura: 86, alvo: 'volta', papel: 'superficie' },
   { id: 'muro', cor: 'pistaMuro', largura: 72, alvo: 'volta', papel: 'superficie' },
   { id: 'zebra-a', cor: 'pistaZebraA', largura: 58, alvo: 'curvas', papel: 'marcacao', tracejado: '12 12' },
   {
@@ -107,22 +120,30 @@ export const CAMADAS_PISTA: readonly CamadaPista[] = [
  * ela que a guarda de contraste do limite de pista mede
  * (`pista-camadas.test.ts`).
  *
- * ⚠️ DECISÃO DE OLHO DO DEV (PR 7.3.1), não de teste. Este valor já foi
- * `fundoElevado` (a cor de card do painel, PR 7.3) e voltou pra `fundo`. Com
- * `fundoElevado` (0,0178) o terreno (0,0113) fica MAIS ESCURO que o chão e a
- * moldura lê como um "poço"; com `fundo` (0,0083) o terreno volta a ser um
- * degrau CLARO sobre o chão e faz relevo — a composição da maquete aprovada no
- * portão 7.1. O dev escolheu o relevo e **aceitou o custo**: o painel do
- * traçado deixa de ler como card (fica na cor do corpo da página, delimitado
- * só pela borda).
+ * ⚠️ DECISÃO DE OLHO DO DEV (PR 7.3.1), não de teste — e ela CONTINUA VALENDO
+ * na paleta nova. Este papel já foi `fundoElevado` (a cor de card do painel,
+ * PR 7.3) e voltou pro tom de base. Com o tom de card o terreno fica MAIS
+ * ESCURO que o chão e a moldura lê como um "poço"; com o tom de base o terreno
+ * volta a ser um degrau CLARO sobre o chão e faz relevo — a composição da
+ * maquete aprovada no portão 7.1. O dev escolheu o relevo e **aceitou o
+ * custo**: o painel do traçado deixa de ler como card.
  *
- * **Nenhum teste reprova nenhuma das duas opções** — as duas passam em todas
- * as guardas de contraste e de separação. A restrição que torna as duas
- * mutuamente exclusivas é de PALETA: não existe token entre `fundoElevado`
- * (0,0178) e `pistaMuro` (0,0292) pra servir de terreno claro mantendo o
- * painel elevado. Se um dia surgir, dá pra ter as duas coisas.
+ * **Nenhum teste de contraste reprova nenhuma das duas opções** — as duas
+ * passam. Por isso a decisão é travada por teste explícito
+ * (`pista-camadas.test.ts`): sem ele ela se desfaz sozinha na próxima
+ * refatoração.
+ *
+ * ⚠️ PR 7.8 — o TOKEN mudou, a decisão NÃO. Era `'fundo'`; virou `'pistaChao'`,
+ * que tem exatamente o mesmo valor que `fundo` tinha no escuro (`#1A1A1A`), de
+ * modo que **o modo escuro não mudou de aparência em nada**. A troca foi
+ * forçada pelo tema claro: `fundo` agora vira `#F5F0EB`, e o chão do replay
+ * seguiria junto — o terreno (0,0144) ficaria muito mais escuro que o chão
+ * (0,877), o relevo inverteria pra "poço" e a regra 1 da Fase 7 (asfalto é a
+ * superfície mais clara) ficaria matematicamente impossível. O que o teste
+ * trava agora é a SUBSTÂNCIA da decisão — chão escuro, terreno como degrau que
+ * sobe — em vez do nome do token.
  */
-export const SUPERFICIE_BASE_REPLAY: CorDePista = 'fundo';
+export const SUPERFICIE_BASE_REPLAY: CorDePista = 'pistaChao';
 
 /**
  * A corrente tonal da PILHA REAL, de fora pra dentro: a superfície de base do
@@ -137,10 +158,17 @@ export const CORRENTE_TONAL_DA_PILHA: readonly CorDePista[] = [
   ...CAMADAS_PISTA.filter((c) => c.papel === 'superficie').map((c) => c.cor),
 ];
 
-/** Hierarquia tonal (critério permanente da Fase 7): asfalto é a superfície mais clara. */
+/**
+ * Hierarquia tonal (critério permanente da Fase 7): asfalto é a superfície
+ * mais clara.
+ *
+ * PR 7.8: `fundoAfundado`/`fundo` deram lugar a `pistaEscape`/`pistaChao`
+ * (mesmos valores no escuro). Uma hierarquia de PISTA não pode ser ancorada em
+ * tokens que mudam com o tema, ou ela passa no escuro e é falsa no claro.
+ */
 export const HIERARQUIA_SUPERFICIES = [
-  'fundoAfundado',
-  'fundo',
+  'pistaEscape',
+  'pistaChao',
   'pistaTerreno',
   'pistaServico',
   'pistaMuro',
@@ -154,11 +182,19 @@ export const HIERARQUIA_SUPERFICIES = [
  */
 export const SEPARACAO_MINIMA_LUMINANCIA = 1.25;
 
-/** Toda superfície contra a qual o limite de pista pode acabar encostando. */
+/**
+ * Toda superfície contra a qual o limite de pista pode acabar encostando.
+ *
+ * PR 7.8: `fundo`/`fundoElevado` SAÍRAM da lista, e não por descuido. O painel
+ * do replay é uma ilha escura nos dois temas (`pistaChao`), então o limite
+ * nunca encosta na base clara da página — e se encostasse, não passaria:
+ * `pistaLimite` (#9A9A9A) contra o card branco do tema claro dá 2,81, abaixo
+ * de 3. Manter os dois na lista transformaria uma superfície que o limite não
+ * toca numa restrição que forçaria clarear o limite sem motivo.
+ */
 export const SUPERFICIES_DO_REPLAY = [
-  'fundo',
-  'fundoElevado',
-  'fundoAfundado',
+  'pistaChao',
+  'pistaEscape',
   'pistaTerreno',
   'pistaServico',
   'pistaMuro',
@@ -215,13 +251,20 @@ export const LARGURA_SVG_MINIMA_PX = 320;
  * 10 pistas de hoje (medido: índices e alcances idênticos, nas 10) — o que muda
  * é o comportamento quando a silhueta é densificada. Ver `trechosDeZebra`.
  *
- * ⚠️ Por que a saída de hoje não se mexe, dito sem eufemismo: nas silhuetas de
- * 16 pontos TODO segmento é maior que meia janela (44 u), então nenhum vizinho
- * cai dentro dela e a virada acumulada é IDÊNTICA ao ângulo do vértice — a
- * janela é **inerte** na geometria de produção atual. Isso é o que torna a
- * preservação do desenho estrutural em vez de sorte; e é também o motivo de o
- * mecanismo novo só ser exercitado por sintéticos e por curvas densificadas
- * (`pista-camadas.test.ts`), não por pista nenhuma do jogo hoje.
+ * ⚠️ Por que a saída não se mexia, dito sem eufemismo: nas silhuetas de 16
+ * pontos TODO segmento é maior que meia janela (44 u), então nenhum vizinho cai
+ * dentro dela e a virada acumulada é IDÊNTICA ao ângulo do vértice — a janela
+ * era **inerte** na geometria de produção. Isso é o que tornava a preservação
+ * do desenho estrutural em vez de sorte.
+ *
+ * ✅ **DEIXOU DE SER INERTE NO PR 7.7** (redesenho das 10). As silhuetas novas
+ * têm 34-48 pontos e segmentos bem menores que 44 u, então a janela passou a
+ * somar vizinhos e a ENCONTRAR curvas que o critério por vértice perde — de 1
+ * candidato extra (Silverstone) a 20 (Monza). É o mecanismo do 7.6 fazendo em
+ * produção o que só sintéticos exercitavam, e a razão de ele existir. Medido: a
+ * janela é SUPERCONJUNTO do vértice nas 10, nenhuma perde vértice que o critério
+ * antigo pegava. A única em que os dois coincidem é o Red Bull Ring, a mais
+ * simples do parque — lá cada curva ainda cabe num vértice só.
  */
 export const ANGULO_MINIMO_ZEBRA = 28;
 export const ALCANCE_ZEBRA = 44;
@@ -234,10 +277,17 @@ export const COBERTURA_MAXIMA_ZEBRA = 0.4;
  * que o critério faz passa a ser "há virada suficiente no PEDAÇO DE PISTA que
  * esta zebra cobriria?", em vez de "há virada suficiente NESTE VÉRTICE?".
  *
- * Por que 88 e não mais: medido em Monza, 44, 66 e 88 dão os mesmos 11 trechos
- * / 38,4% (a seleção do 7.1, intacta); a 110 a janela já alcança a chicane
- * vizinha e admite o vértice 1 (21,8°), mudando a seleção. O motivo de parar em
- * 88 é esse — **preservar o desenho aprovado**, e não uma violação da regra 3:
+ * Por que 88 e não mais: medido na Monza DE 16 PONTOS, 44, 66 e 88 davam os
+ * mesmos 11 trechos / 38,4% (a seleção do 7.1, intacta); a 110 a janela já
+ * alcançava a chicane vizinha e admitia o vértice 1 (21,8°), mudando a seleção.
+ * O motivo de parar em 88 era esse — **preservar o desenho aprovado**, e não uma
+ * violação da regra 3:
+ *
+ * ⚠️ Essa calibração foi feita contra silhuetas que o PR 7.7 substituiu INTEIRAS.
+ * Na Monza redesenhada (49 pontos) o número é outro: 27 trechos / 38,5%, com o
+ * teto de 40% cortando 4 candidatos. **O valor de 88 NÃO foi mexido aqui** —
+ * reabrir é decisão de arte do dev, e agora ela pode ser tomada com o parque
+ * redesenhado inteiro na mesa, que era a informação que faltava.
  * o vértice 1 é a PONTA da reta de largada e um trecho ali se estende só ±44 u,
  * longe do meio da reta (250 u adiante). O teto de cima é o desenho, não a
  * regra.
@@ -457,12 +507,14 @@ export interface OpcoesZebra {
  *    inteira no primeiro trecho grande que não coubesse, mesmo que
  *    candidatos menores mais adiante no ranking ainda coubessem. O teto de
  *    fato MORDE em 6 das 10 pistas (Mônaco, Silverstone, Interlagos,
- *    Nürburgring, Imola, Red Bull Ring); em Monza, Spa, Suzuka e Montreal
- *    TODOS os candidatos ≥28° cabem dentro do teto sem cortar nenhum — em
- *    particular, Monza dá 38,4% de cobertura com os 11 candidatos inteiros,
- *    sem o teto ser vinculante ali (o `break`/`continue` dão o mesmo
- *    resultado nas 10 pistas hoje: confirmado contra os goldens de
- *    `pista-camadas.test.ts`);
+ *    Nürburgring, Imola, Red Bull Ring). **Depois do redesenho das 10 (PR 7.7)
+ *    o teto morde em 8 das 10** — medido trecho a trecho, com e sem teto: só
+ *    Spa (33,4% de cobertura) e Red Bull Ring (28,0%) não perdem candidato
+ *    nenhum pro corte. Monza entrou no grupo — sem teto daria 31
+ *    trechos / 45,9%, e o corte tira 4 candidatos. O caso extremo
+ *    segue sendo o Nürburgring: 29 trechos / 50,0% sem teto contra 24 / 38,7%
+ *    com ele. O `break`/`continue` seguem dando o mesmo resultado nas 10:
+ *    confirmado contra os goldens de `pista-camadas.test.ts`;
  * 6. devolve os trechos reordenados por índice crescente.
  *
  * POR QUE A JANELA (PR da zebra invariante à densidade): o critério anterior

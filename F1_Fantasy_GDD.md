@@ -225,7 +225,7 @@ O campeonato nunca para. O pior é uma corrida ruim.
 | Silverstone | Curvas rápidas, AERO pesa | 🟡 Média | Alto |
 | Suzuka | Técnica, testa consistência | 🔴 Difícil | Alto |
 | Interlagos | Clima imprevisível, corridas caóticas | 🟢 Fácil | Médio |
-| Nürburgring (Nordschleife) | Perigo puro, mista, clima | 🟡 Média | Alto |
+| Nürburgring (GP-Strecke) | Técnica, Mercedes Arena lenta, freadas pesadas, clima do Eifel | 🟡 Média | Médio |
 | Imola | Técnica, histórica | 🔴 Difícil | Médio |
 | Red Bull Ring | Curta, freadas e retas, premia ULT | 🟢 Fácil | Baixo |
 | Montreal (Gilles Villeneuve) | Stop-and-go, freada pesada, Muro dos Campeões | 🟢 Fácil | Alto |

@@ -33,8 +33,25 @@ export interface UseCorridaResultado {
   setVelocidade: (velocidade: VelocidadeReplay) => void;
 }
 
-export function useCorrida(state: DraftState, pistaId: string): UseCorridaResultado {
-  const [{ pista, grid, resultado }] = useState(() => prepararCorrida(dataset, state, pistaId));
+export function useCorrida(
+  state: DraftState,
+  pistaId: string,
+  /** Seed da corrida; `undefined` mantém a da partida (corrida avulsa). Ver `prepararCorrida`. */
+  seed?: number,
+  /**
+   * Larga sozinho ao montar, sem esperar clique (PR C, modo automático do
+   * campeonato). Sem isto o auto-avanço empacaria na tela de grid: avançar o
+   * cursor do campeonato leva à fase `'grid'`, que só sai no botão "Largar".
+   */
+  autoLargar = false,
+): UseCorridaResultado {
+  // O inicializador do `useState` roda uma vez por MONTAGEM do hook. No
+  // campeonato, cada etapa monta um `FluxoCorrida` novo (o `key` no `App`
+  // garante isso) — sem essa remontagem, trocar de etapa não re-prepararia a
+  // corrida e o jogador correria a primeira pista o campeonato inteiro.
+  const [{ pista, grid, resultado }] = useState(() =>
+    prepararCorrida(dataset, state, pistaId, seed),
+  );
   const [fase, setFase] = useState<FaseCorrida>('grid');
   const [tempoSimMs, setTempoSimMs] = useState(0);
   const [velocidade, setVelocidadeState] = useState<VelocidadeReplay>('media');
@@ -110,6 +127,15 @@ export function useCorrida(state: DraftState, pistaId: string): UseCorridaResult
 
     rafRef.current = requestAnimationFrame(passo);
   }, [tempoVencedorMs, pararAnimacao]);
+
+  // Auto-largada (PR C). Roda uma vez, na fase 'grid': a guarda de fase evita
+  // relargar se `largar` mudar de identidade no meio do replay. `largar` já
+  // limpa animação pendente antes de começar, então mesmo o duplo-invoke do
+  // StrictMode não deixa dois rAF vivos.
+  useEffect(() => {
+    if (!autoLargar || fase !== 'grid') return;
+    largar();
+  }, [autoLargar, fase, largar]);
 
   const acelerar = useCallback(() => {
     pararAnimacao();

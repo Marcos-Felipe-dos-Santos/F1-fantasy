@@ -50,11 +50,23 @@ export type TracadoImutavel = ReadonlyArray<Readonly<Ponto>>;
  * RNG por jogador em `quali.ts`/`corrida.ts`, mas mantém a construção
  * determinística mesmo assim). Usa a seed do próprio draft, então a corrida
  * de um draft concluído é sempre a mesma.
+ *
+ * 🔑 **`seed` é o parâmetro que faz o modo Campeonato existir (PR 8.4-mínimo),
+ * e o default preserva a corrida avulsa bit a bit.** As duas trilhas de
+ * corrida usam seeds DIFERENTES de propósito (decisão D6, ver
+ * `simularEtapa` em `engine/campeonato.ts`): a avulsa usa a seed CRUA do
+ * draft; a etapa de campeonato usa `seedDaEtapa(seed, pistaId)`. Sem poder
+ * injetar a seed aqui, uma etapa de campeonato exibida por esta função seria
+ * simulada com a seed errada — o jogador assistiria a uma corrida e veria
+ * OUTRA na tabela de pontos, porque `iniciarCampeonato` pré-simula todas as
+ * etapas. Passando `seedDaEtapa(...)`, o replay bate bit a bit com a etapa
+ * pré-simulada, que continua sendo a fonte única da pontuação.
  */
 export function prepararCorrida(
   dataset: Dataset,
   draftState: DraftState,
   pistaId: string = PISTA_CORRIDA_ID,
+  seed: number = draftState.seed,
 ): { pista: Pista; grid: ResultadoQuali; resultado: ResultadoCorrida } {
   if (draftState.fase !== 'concluido') {
     throw new Error('prepararCorrida: o draft precisa estar concluído (fase "concluido")');
@@ -69,8 +81,8 @@ export function prepararCorrida(
     .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
     .map(([, loadout]) => loadout);
 
-  const grid = simularQuali(dataset, loadouts, pista, draftState.seed);
-  const resultado = simularCorrida(dataset, loadouts, pista, grid, draftState.seed);
+  const grid = simularQuali(dataset, loadouts, pista, seed);
+  const resultado = simularCorrida(dataset, loadouts, pista, grid, seed);
 
   return { pista, grid, resultado };
 }
@@ -86,7 +98,7 @@ const ROTULOS_ULTRAPASSAGEM: Record<Ultrapassagem, { rotulo: string; emoji: stri
  * Cortes do bucket de desgaste (§9): baixo <40, médio 40-69, alto ≥70.
  * Calibrados pros valores reais do dataset (`src/data/pistas.json`, só usa
  * 25/50/75) — Monza/Mônaco/Red Bull Ring (25) caem em baixo; Spa/Interlagos/
- * Imola (50) em médio; Silverstone/Suzuka/Nürburgring/Montreal (75) em alto,
+ * Imola/Nürburgring (50) em médio; Silverstone/Suzuka/Montreal (75) em alto,
  * batendo com a tabela do GDD §9.
  */
 function bucketDesgaste(desgaste: number): 'Baixo' | 'Médio' | 'Alto' {
@@ -458,7 +470,9 @@ export function classificacaoAoVivo(
 
     const ambosTerminaram = a.status === 'terminou' && b.status === 'terminou';
     if (ambosTerminaram) {
-      return (tempoTotalPorJogador.get(a.jogadorId) ?? 0) - (tempoTotalPorJogador.get(b.jogadorId) ?? 0);
+      return (
+        (tempoTotalPorJogador.get(a.jogadorId) ?? 0) - (tempoTotalPorJogador.get(b.jogadorId) ?? 0)
+      );
     }
 
     return (posicaoLargada.get(a.jogadorId) ?? 0) - (posicaoLargada.get(b.jogadorId) ?? 0);
@@ -468,33 +482,90 @@ export function classificacaoAoVivo(
 }
 
 /**
- * Traçado estilizado de Monza (não é o traçado real, precisão não importa,
- * §9/§10): retas longas, as 3 chicanes (Rettifilo, Roggia, Ascari), os Lesmos
- * e a Parabolica final. Polilinha fechada em viewBox 0 0 1000 600 — o
- * segmento de fechamento (último ponto → primeiro) é implícito, calculado
- * por `pontoNoTracado`.
+ * Traçado de MONZA (5,793 km, 11 curvas, HORÁRIO) — redesenhado no PR 7.7 a
+ * partir da geometria do circuito, sem decalcar mapa nenhum (GDD §14.2).
  *
- * PR 2.8: as outras 9 pistas ganharam silhueta própria em `tracados.ts`
- * (`TRACADOS_POR_PISTA`/`tracadoDaPista`) — este traçado permanece como a
- * silhueta de Monza (reaproveitada diretamente por `TRACADOS_POR_PISTA`) e
- * como o FALLBACK genérico de `tracadoDaPista` pra um id de pista sem
- * silhueta própria.
+ * ⚠️ REDESENHADA DE NOVO quando a imagem de referência chegou (ela veio depois
+ * das outras nove). A primeira versão saiu só da descrição textual de
+ * `referencias/REFERENCIA_TRACADOS.md` §1 e pôs a reta principal em diagonal
+ * subindo pela esquerda — está errado, e é a prova de que descrição textual não
+ * substitui ver a forma. A silhueta real é uma CUNHA muito alongada: reta
+ * principal HORIZONTAL embaixo, lado esquerdo subindo até as Lesmo no canto de
+ * cima, a diagonal longa do Serraglio descendo até Ascari, reta de volta pra
+ * direita e a Parabólica fechando na ponta.
+ *
+ * Duas retas enormes em direções opostas dominam tudo, e é essa proporção
+ * reta/curva que carrega o reconhecimento. As três chicanes (Rettifilo, Roggia,
+ * Ascari) são DEGRAUS nas retas — se virarem curvas arredondadas, deixa de ser
+ * Monza na hora. Lesmo 1+2 juntas fazem o cotovelo, e a Parabólica é o único
+ * arco realmente longo e contínuo do traçado.
+ *
+ * Continua sendo a silhueta de Monza (reaproveitada diretamente por
+ * `TRACADOS_POR_PISTA`) E o FALLBACK genérico de `tracadoDaPista` pra um id de
+ * pista sem silhueta própria.
  */
 export const TRACADO_GENERICO: TracadoImutavel = [
-  { x: 150, y: 500 }, // reta de largada/chegada
-  { x: 650, y: 500 },
-  { x: 700, y: 480 }, // Variante del Rettifilo (1a chicane) — entrada
-  { x: 670, y: 445 }, // Rettifilo — apex 1
-  { x: 720, y: 415 }, // Rettifilo — apex 2
-  { x: 800, y: 400 }, // Curva Biassono
-  { x: 855, y: 320 }, // Variante della Roggia (2a chicane) — entrada
-  { x: 815, y: 270 }, // Roggia — apex
-  { x: 870, y: 210 }, // Lesmo 1
-  { x: 820, y: 150 }, // Lesmo 2
-  { x: 650, y: 110 }, // início do Rettilineo (reta dos boxes de trás)
-  { x: 320, y: 100 }, // Variante Ascari (3a chicane) — entrada
-  { x: 260, y: 130 }, // Ascari — apex
-  { x: 160, y: 210 }, // aproximação da Parabolica
-  { x: 70, y: 360 }, // Parabolica — ápice externo
-  { x: 100, y: 470 }, // saída da Parabolica, de volta à reta principal
+  // Reta principal (Rettifilo Tribune) — horizontal, da direita pra
+  // esquerda, a mais longa do traçado.
+  { x: 636, y: 510 },
+  { x: 556, y: 506 },
+  { x: 476, y: 504 },
+  { x: 434, y: 502 },
+  // Variante del Rettifilo: degrau logo no fim da reta. Largo o bastante pra
+  // os dois lados não fundirem (é o que aperta o `minNaoAdj` em Monza), mas
+  // ainda um DEGRAU — arredondar aqui tira a Monza na hora.
+  { x: 410, y: 490 },
+  { x: 390, y: 472 },
+  { x: 366, y: 488 },
+  { x: 352, y: 512 },
+  { x: 320, y: 520 },
+  { x: 278, y: 520 },
+  { x: 234, y: 516 },
+  // Curva Grande / Biassono: arco amplo à direita, vira a pista pra cima.
+  { x: 202, y: 510 },
+  { x: 180, y: 494 },
+  { x: 166, y: 468 },
+  { x: 160, y: 436 },
+  // Subida pelo lado esquerdo (reta de Biassono).
+  { x: 158, y: 384 },
+  { x: 154, y: 314 },
+  // Variante della Roggia: segundo degrau, no lado esquerdo.
+  { x: 152, y: 282 },
+  { x: 142, y: 258 },
+  { x: 100, y: 246 },
+  { x: 92, y: 226 },
+  // Subida pras Lesmo.
+  { x: 92, y: 204 },
+  { x: 78, y: 170 },
+  { x: 64, y: 140 },
+  // Lesmo 1 + Lesmo 2, no canto de cima — o cotovelo da cunha.
+  { x: 56, y: 120 },
+  { x: 76, y: 102 },
+  { x: 108, y: 92 },
+  { x: 150, y: 86 },
+  { x: 190, y: 80 },
+  // Reta do Serraglio: a diagonal longa descendo pra direita.
+  { x: 226, y: 112 },
+  { x: 270, y: 156 },
+  { x: 320, y: 212 },
+  { x: 376, y: 274 },
+  { x: 430, y: 332 },
+  // Variante Ascari: três degraus encadeados.
+  { x: 452, y: 354 },
+  { x: 476, y: 376 },
+  { x: 502, y: 362 },
+  { x: 528, y: 382 },
+  { x: 550, y: 394 },
+  // Reta traseira, horizontal.
+  { x: 640, y: 402 },
+  { x: 746, y: 404 },
+  { x: 830, y: 406 },
+  // Parabólica / Alboreto: o único arco longo e contínuo, de raio crescente.
+  { x: 888, y: 410 },
+  { x: 920, y: 428 },
+  { x: 924, y: 460 },
+  { x: 900, y: 488 },
+  { x: 854, y: 502 },
+  { x: 790, y: 506 },
+  { x: 714, y: 508 },
 ];

@@ -73,7 +73,12 @@ export default tseslint.config(
     // PR 6.5). `persistencia.ts` calcula a impressão digital que valida saves:
     // um `Math.random` ou um `localeCompare` ali quebraria todo save em sessão
     // nova ou entre máquinas, e nenhuma rede de lint pegava.
-    files: ['src/ui/persistencia.ts', 'src/ui/fluxo-campeonato.ts'],
+    // `narracao.ts` entrou nesta lista no PR da narração rica: ele escolhe o
+    // texto do evento por HASH (`deriveSeed`) sobre dados congelados. Um
+    // `Math.random` ali faria a mesma corrida narrar diferente a cada render
+    // do React — e nenhum teste de simulação pegaria, porque nada na engine
+    // teria mudado.
+    files: ['src/ui/persistencia.ts', 'src/ui/fluxo-campeonato.ts', 'src/ui/narracao.ts'],
     rules: {
       'no-restricted-properties': [
         'error',

@@ -12,7 +12,7 @@ import { criarDataset } from '../engine/dataset';
 import equipeAnosReal from '../data/equipe-anos.json';
 import pecasReal from '../data/pecas.json';
 import pistasReal from '../data/pistas.json';
-import { cores, type NomeCor } from './tokens';
+import { cores, coresLight, type NomeCor } from './tokens';
 import type { Ponto } from './fluxo-corrida';
 import { suavizarPolilinhaFechada } from './suavizacao';
 import { tracadoDaPista } from './tracados';
@@ -115,20 +115,27 @@ describe('separação mínima de luminância da hierarquia (3.1 — fecha a pend
   });
 
   /**
-   * Teste ANTI-TAUTOLÓGICO obrigatório, com o MUTANTE nomeado: `#322D58` no
-   * lugar de `pistaAsfalto` é exatamente o mutante que a revisão do PR 7.2
-   * provou passar em 608 testes preservando a ORDEM inteira de luminância
-   * (fundoAfundado < fundo < ... < pistaAsfalto continua verdadeira com
-   * `#322D58`) — é por isso que a guarda de ORDEM sozinha não basta: ela não
-   * pega separação insuficiente entre vizinhos. Contra `pistaMuro`, a razão
-   * de `#322D58` é 1,118 — abaixo do mínimo 1,25 — e esta guarda TEM que
-   * reprovar isso.
+   * Teste ANTI-TAUTOLÓGICO obrigatório, com o MUTANTE nomeado. O mutante
+   * original era `#322D58` (razão 1,118 contra o muro roxo) — o análogo na
+   * paleta grafite é `#313131`, escolhido pelo MESMO critério e com razão
+   * praticamente igual (1,124):
+   *
+   * - preserva a ORDEM inteira de luminância (escape < chão < terreno <
+   *   serviço < muro < `#313131`), que é o que torna o mutante interessante:
+   *   a guarda de ordem sozinha o deixa passar;
+   * - mas fica a 1,124 do muro, abaixo do mínimo 1,25.
+   *
+   * É por isso que a guarda de ORDEM não basta — ela não pega separação
+   * insuficiente entre vizinhos. Esta guarda TEM que reprovar isso.
    */
-  it('mutante nomeado: #322D58 no lugar de pistaAsfalto reprova contra pistaMuro (razão 1,118 < 1,25)', () => {
-    const MUTANTE_ASFALTO = '#322D58';
+  it('mutante nomeado: #313131 no lugar de pistaAsfalto reprova contra pistaMuro (razão 1,124 < 1,25)', () => {
+    const MUTANTE_ASFALTO = '#313131';
     const razao = razaoSeparacao(MUTANTE_ASFALTO, cores.pistaMuro);
     expect(razao).toBeLessThan(SEPARACAO_MINIMA_LUMINANCIA);
-    expect(razao).toBeCloseTo(1.118, 2);
+    expect(razao).toBeCloseTo(1.124, 2);
+
+    // O que faz dele um mutante DE VERDADE: a guarda de ordem o aprova.
+    expect(luminanciaRelativa(MUTANTE_ASFALTO)).toBeGreaterThan(luminanciaRelativa(cores.pistaMuro));
   });
 });
 
@@ -249,16 +256,32 @@ describe('casamento com a realidade (3.3 — o dado não pode divergir do CSS)',
   });
 
   /**
-   * Trava a DECISÃO DE OLHO do dev no PR 7.3.1: o chão do replay é `fundo`,
-   * não `fundoElevado`. É `fundo` que deixa o terreno (mais claro) ler como
-   * degrau que sobe — o relevo da maquete do 7.1. Voltar o chão pra
-   * `fundoElevado` devolve o painel ao visual de card, mas apaga o relevo, e
-   * o dev escolheu o relevo aceitando esse custo. Nenhuma guarda de contraste
+   * Trava a DECISÃO DE OLHO do dev no PR 7.3.1: o chão do replay é o tom de
+   * BASE escuro, não o tom de card. É ele que deixa o terreno (mais claro) ler
+   * como degrau que sobe — o relevo da maquete do 7.1. Voltar o chão pro tom
+   * de card devolve o painel ao visual de card, mas apaga o relevo, e o dev
+   * escolheu o relevo aceitando esse custo. Nenhuma guarda de contraste
    * reprovaria a volta (as duas passam), então sem este teste a decisão se
    * desfaz sozinha na próxima refatoração.
+   *
+   * ⚠️ PR 7.8 — o NOME do token mudou (`fundo` -> `pistaChao`), a decisão não.
+   * O valor no escuro é o mesmo `#1A1A1A`, então o replay não mudou de
+   * aparência; o que mudou é que o chão parou de depender de um token que
+   * troca com o tema (`fundo` vira `#F5F0EB` no claro, o que inverteria o
+   * relevo num "poço" — exatamente a alternativa que o dev REJEITOU).
+   *
+   * Este teste passou a travar a SUBSTÂNCIA da decisão em vez do nome: chão
+   * escuro, terreno como degrau que SOBE, e o chão fora do alcance do tema.
    */
-  it('o chão do replay é `fundo` — decisão de olho do dev no 7.3.1 (relevo do terreno), que nenhuma guarda de contraste protege', () => {
-    expect(SUPERFICIE_BASE_REPLAY).toBe('fundo');
+  it('o chão do replay é o tom de base ESCURO e imune ao tema — decisão de olho do dev no 7.3.1 (relevo do terreno)', () => {
+    expect(SUPERFICIE_BASE_REPLAY).toBe('pistaChao');
+
+    // A parte da decisão que o tema poderia desfazer sem ninguém ver: se o
+    // chão voltar a ser um token mode-scoped, o relevo inverte no claro.
+    expect(
+      coresLight[SUPERFICIE_BASE_REPLAY as NomeCor],
+      'o chão do replay não pode ser mode-scoped — no claro o relevo vira poço',
+    ).toBeUndefined();
 
     // O SINAL do degrau é o que carrega a decisão: terreno MAIS CLARO que o
     // chão = degrau que sobe = relevo. (`razaoSeparacao` não serve pra isso —
@@ -267,12 +290,13 @@ describe('casamento com a realidade (3.3 — o dado não pode divergir do CSS)',
       luminanciaRelativa(cores[SUPERFICIE_BASE_REPLAY as NomeCor]),
     );
 
-    // E a MAGNITUDE do degrau: 1,357: é a adjacência mais apertada de toda a
-    // pilha (com `fundoElevado` era 1,578), então qualquer ajuste futuro em
-    // `fundo` ou `pistaTerreno` estoura aqui antes de qualquer outro lugar.
+    // E a MAGNITUDE do degrau: 1,398 na paleta grafite (era 1,357 na
+    // azul-noite). Deixou de ser a adjacência mais apertada da pilha — agora
+    // quem é o gargalo é muro->asfalto, a 1,350, porque o teto de luminância
+    // do asfalto encolheu com o vermelho no lugar do magenta.
     const razaoRelevo = razaoSeparacao(cores.pistaTerreno, cores[SUPERFICIE_BASE_REPLAY as NomeCor]);
     expect(razaoRelevo).toBeGreaterThanOrEqual(SEPARACAO_MINIMA_LUMINANCIA);
-    expect(razaoRelevo).toBeCloseTo(1.357, 2);
+    expect(razaoRelevo).toBeCloseTo(1.398, 2);
   });
 });
 
@@ -397,7 +421,10 @@ describe('cor de cada camada casada com a hierarquia (Aviso 4 da revisão do PR 
   /** Golden explícito id -> cor: mutar QUALQUER cor de CAMADAS_PISTA quebra este teste. */
   const GOLDEN_COR: Record<string, CorDePista> = {
     terreno: 'pistaTerreno',
-    escape: 'fundoAfundado',
+    // PR 7.8: era `fundoAfundado`. Virou token próprio de MESMO valor porque
+    // `fundoAfundado` clareia no tema claro e o sulco de escape viraria uma
+    // faixa branca no meio da pista.
+    escape: 'pistaEscape',
     muro: 'pistaMuro',
     'zebra-a': 'pistaZebraA',
     'zebra-b': 'pistaZebraB',
@@ -487,9 +514,14 @@ describe('viewBox contém todas as 10 pistas (3.7 — reapertado no 7.4)', () =>
   /**
    * A folga que sobra depois de apertar. Fica DOCUMENTADA em número (era a
    * queixa da pendência 1 do 7.3: `MARGEM_VIEWBOX = 70` sem medição por trás).
-   * Pior lado é a direita, 10,0 — Nürburgring, cujo x máximo é 920.
+   *
+   * PR 7.7: caiu de 10,0 pra 3,4 porque o redesenho encosta mais na moldura de
+   * propósito — a regra dos 360 px manda encher a tela, e as silhuetas novas
+   * usam a moldura inteira (a antiga parava em x=920). 3,4 é apertado mas não é
+   * chute: a moldura do redesenho já recua `MEIA_CAMADA_MAIS_LARGA` (60) mais
+   * uma margem pro overshoot da Catmull-Rom, e a pior é Suzuka.
    */
-  it('pior folga real é 10 (borda direita, Nürburgring)', () => {
+  it('pior folga real é 3,4 (Suzuka)', () => {
     let piorFolga = Infinity;
     for (const pista of dataset.pistas) {
       const e = envelope(pista.id);
@@ -501,7 +533,7 @@ describe('viewBox contém todas as 10 pistas (3.7 — reapertado no 7.4)', () =>
         maxYViewbox - e.maxY,
       );
     }
-    expect(piorFolga).toBeCloseTo(10, 1);
+    expect(piorFolga).toBeCloseTo(3.4, 1);
   });
 
   /**
@@ -571,16 +603,25 @@ describe('fusão de asfalto (3.8 — documenta e trava o que foi medido)', () =>
   }
 
   const MIN_NAO_ADJ_MEDIDO: Record<string, number> = {
-    'pista-spa': 18.6,
-    'pista-monaco': 20.0,
-    'pista-interlagos': 26.7,
-    'pista-monza': 43.6,
-    'pista-silverstone': 44.7,
-    'pista-imola': 50.0,
-    'pista-montreal': 63.8,
-    'pista-red-bull-ring': 72.8,
-    'pista-nurburgring': 80.3,
-    'pista-suzuka': 113.6,
+    // Redesenho das 10 (PR 7.7). A tabela inteira se moveu pra a faixa 21-34: as
+    // silhuetas novas têm chicane desenhada como DEGRAU, e é a largura interna do
+    // degrau que manda nesta métrica — não ramo contra ramo do traçado. Quem
+    // aperta é justamente o que a referência pede.
+    //
+    // O limiar NÃO mudou: sobreposição = 34 − este número, e o teto continua
+    // 17 (= LARGURA_ASFALTO / 2). A pior é Suzuka em 20,9, que é o X do 8 —
+    // auto-contato intencional —, seguida de Montreal em 23,8 (hairpin
+    // L'Épingle). Folga de 3,9 sobre o limiar no pior caso.
+    'pista-red-bull-ring': 33.5,
+    'pista-imola': 32.2,
+    'pista-spa': 31.5,
+    'pista-interlagos': 29.7,
+    'pista-nurburgring': 29.5,
+    'pista-monaco': 29.1,
+    'pista-monza': 21.5,
+    'pista-silverstone': 27.5,
+    'pista-montreal': 23.8,
+    'pista-suzuka': 20.9,
   };
 
   /**
@@ -611,10 +652,25 @@ describe('fusão de asfalto (3.8 — documenta e trava o que foi medido)', () =>
     }
   });
 
-  it('Monza fica em ZERO de sobreposição com largura 34 (a maquete aprovada já fundia 8,4) — a guarda existe pra o 7.4 (Bézier) não piorar isso em silêncio', () => {
+  /**
+   * ⚠️ MONZA SAIU DO ZERO NO PR 7.7, e o número é consequência do desenho, não
+   * descuido: 12,5 de sobreposição (minNaoAdj 21,5 contra 34 de asfalto). O par
+   * que aperta NÃO é ramo contra ramo — é a Variante della Roggia, ou seja, a
+   * própria chicane desenhada como DEGRAU. Alargar até voltar a zero exigiria
+   * arredondar o degrau, que é exatamente o que a referência §1 diz que
+   * descaracteriza Monza ("se as chicanes virarem curvas arredondadas, deixa de
+   * ser Monza imediatamente"). O degrau JÁ foi alargado o quanto dava sem virar
+   * curva: de 18,4 pra 21,5 de folga interna.
+   *
+   * O LIMIAR NÃO FOI MEXIDO: a guarda geral (`sobreposição <= 17`) continua
+   * valendo pras 10 e Monza passa com 11,6 de folga. O que este teste trava agora
+   * é o VALOR medido — se subir, alguém mexeu na chicane sem perceber.
+   */
+  it('Monza: 12,5 de sobreposição — a chicane como degrau custa isso, e o teto de 17 segue de pé', () => {
     const tracado = tracadoDaPista('pista-monza');
     const sobreposicao = Math.max(0, LARGURA_ASFALTO - minNaoAdj(tracado));
-    expect(sobreposicao).toBe(0);
+    expect(sobreposicao).toBeCloseTo(12.5, 1);
+    expect(sobreposicao).toBeLessThanOrEqual(LARGURA_ASFALTO / 2);
   });
 
   /**
@@ -624,13 +680,28 @@ describe('fusão de asfalto (3.8 — documenta e trava o que foi medido)', () =>
    * desenhar ali, então a camada de limite também se funde). Números
    * escritos pro 7.4 (Bézier) comparar antes/depois da suavização.
    */
-  it('report-only: fusão da camada de LIMITE (largura 42) — Spa 23,4 · Mônaco 22,0 · Interlagos 15,3 · as outras 7 zero', () => {
+  it('report-only: fusão da camada de LIMITE (largura 42) — as 10 fundem depois do redesenho, de 8,5 (RBR) a 21,1 (Suzuka)', () => {
     const larguraLimite = CAMADAS_PISTA.find((c) => c.id === 'limite')?.largura;
     expect(larguraLimite).toBe(42);
+    /**
+     * Redesenho das 10 (PR 7.7): **as 10 entraram na lista**, porque nenhuma tem
+     * mais `minNaoAdj` acima dos 42 da camada de limite. Isso era esperado —
+     * silhueta detalhada aproxima trechos —, e é report-only de propósito:
+     * documenta, não trava limiar. A guarda que importa é a do ASFALTO (34), e
+     * essa as 10 passam. A pendência 1 do `ESTADO.md` (fusão de camadas) segue
+     * aberta e agora tem os números das 10 pra decidir.
+     */
     const PISTAS_COM_FUSAO_DE_LIMITE: Record<string, number> = {
-      'pista-spa': 23.4,
-      'pista-monaco': 22.0,
-      'pista-interlagos': 15.3,
+      'pista-suzuka': 21.1,
+      'pista-montreal': 18.2,
+      'pista-silverstone': 14.5,
+      'pista-monza': 20.5,
+      'pista-monaco': 12.9,
+      'pista-nurburgring': 12.5,
+      'pista-interlagos': 12.3,
+      'pista-spa': 10.5,
+      'pista-imola': 9.8,
+      'pista-red-bull-ring': 8.5,
     };
     for (const [pistaId, esperado] of Object.entries(PISTAS_COM_FUSAO_DE_LIMITE)) {
       const sobreposicao = Math.max(0, (larguraLimite as number) - minNaoAdj(tracadoDaPista(pistaId)));
@@ -671,18 +742,18 @@ describe('zebra (3.9)', () => {
    */
   const GOLDEN_COBERTURA: Record<
     string,
-    { candidatos: number; escolhidos: number; coberturaPct: number; indices: number[] }
+    { candidatos: number; candidatosPorJanela: number; escolhidos: number; coberturaPct: number; indices: number[] }
   > = {
-    'pista-monaco': { candidatos: 15, escolhidos: 8, coberturaPct: 39.4, indices: [0, 2, 4, 5, 6, 11, 12, 15] },
-    'pista-spa': { candidatos: 9, escolhidos: 9, coberturaPct: 36.8, indices: [0, 1, 2, 3, 4, 5, 8, 9, 11] },
-    'pista-monza': { candidatos: 11, escolhidos: 11, coberturaPct: 38.4, indices: [0, 2, 3, 5, 6, 7, 8, 9, 11, 14, 15] },
-    'pista-silverstone': { candidatos: 11, escolhidos: 9, coberturaPct: 37.6, indices: [0, 4, 5, 6, 7, 8, 12, 13, 15] },
-    'pista-suzuka': { candidatos: 8, escolhidos: 8, coberturaPct: 26.0, indices: [1, 2, 6, 7, 9, 10, 14, 15] },
-    'pista-interlagos': { candidatos: 12, escolhidos: 10, coberturaPct: 39.1, indices: [0, 2, 3, 4, 5, 6, 7, 8, 9, 11] },
-    'pista-nurburgring': { candidatos: 22, escolhidos: 10, coberturaPct: 38.4, indices: [1, 2, 3, 4, 5, 9, 13, 19, 20, 21] },
-    'pista-imola': { candidatos: 12, escolhidos: 9, coberturaPct: 38.1, indices: [0, 2, 3, 5, 7, 8, 12, 13, 15] },
-    'pista-red-bull-ring': { candidatos: 9, escolhidos: 7, coberturaPct: 38.1, indices: [0, 1, 2, 3, 4, 5, 6] },
-    'pista-montreal': { candidatos: 7, escolhidos: 7, coberturaPct: 27.6, indices: [0, 3, 7, 9, 10, 11, 12] },
+    'pista-monaco': { candidatos: 16, candidatosPorJanela: 31, escolhidos: 24, coberturaPct: 39.0, indices: [3, 4, 10, 11, 12, 17, 18, 19, 20, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45] },
+    'pista-spa': { candidatos: 13, candidatosPorJanela: 18, escolhidos: 18, coberturaPct: 33.4, indices: [2, 3, 4, 5, 18, 19, 20, 22, 23, 24, 28, 34, 35, 37, 41, 42, 45, 46] },
+    'pista-monza': { candidatos: 11, candidatosPorJanela: 31, escolhidos: 27, coberturaPct: 38.5, indices: [3, 4, 5, 6, 7, 8, 11, 12, 13, 17, 18, 19, 20, 21, 23, 24, 25, 27, 28, 34, 35, 36, 37, 42, 43, 44, 45] },
+    'pista-silverstone': { candidatos: 22, candidatosPorJanela: 23, escolhidos: 22, coberturaPct: 39.7, indices: [3, 4, 6, 7, 8, 9, 10, 11, 15, 16, 18, 19, 20, 26, 30, 31, 32, 37, 38, 40, 41, 42] },
+    'pista-suzuka': { candidatos: 23, candidatosPorJanela: 29, escolhidos: 20, coberturaPct: 38.7, indices: [3, 4, 7, 8, 9, 10, 11, 12, 15, 16, 19, 20, 21, 22, 23, 26, 27, 29, 38, 39] },
+    'pista-interlagos': { candidatos: 19, candidatosPorJanela: 26, escolhidos: 22, coberturaPct: 39.4, indices: [3, 4, 5, 6, 7, 8, 9, 14, 15, 16, 20, 21, 22, 23, 24, 26, 27, 28, 29, 31, 33, 34] },
+    'pista-nurburgring': { candidatos: 23, candidatosPorJanela: 29, escolhidos: 24, coberturaPct: 38.7, indices: [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 21, 25, 26, 32, 33, 34, 40, 41, 42, 43, 44, 45, 46] },
+    'pista-imola': { candidatos: 19, candidatosPorJanela: 23, escolhidos: 22, coberturaPct: 39.3, indices: [6, 7, 8, 9, 10, 13, 14, 15, 18, 19, 20, 26, 27, 29, 30, 31, 34, 35, 36, 41, 42, 43] },
+    'pista-red-bull-ring': { candidatos: 13, candidatosPorJanela: 13, escolhidos: 13, coberturaPct: 28.0, indices: [2, 7, 8, 9, 13, 14, 18, 21, 22, 24, 28, 29, 30] },
+    'pista-montreal': { candidatos: 20, candidatosPorJanela: 29, escolhidos: 24, coberturaPct: 39.3, indices: [4, 5, 6, 7, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 24, 25, 30, 31, 32, 38, 39, 40, 41] },
   };
 
   function candidatos28(tracado: readonly Ponto[]): number {
@@ -752,48 +823,161 @@ describe('zebra (3.9)', () => {
     }
   });
 
-  it('nas 10 pistas de HOJE a virada acumulada seleciona os MESMOS vértices que o ângulo por vértice (o desenho aprovado no 7.1 não se mexe)', () => {
-    for (const { id } of dataset.pistas) {
-      const tracado = tracadoDaPista(id);
-      const n = tracado.length;
-      const porVertice: number[] = [];
-      for (let i = 0; i < n; i++) {
-        const ang = anguloDeVirada(tracado[(i - 1 + n) % n], tracado[i], tracado[(i + 1) % n]);
-        if (ang >= ANGULO_MINIMO_ZEBRA) porVertice.push(i);
-      }
-      const porJanela: number[] = [];
-      for (let i = 0; i < n; i++) {
-        if (viradaAcumuladaNaJanela(tracado, i) >= ANGULO_MINIMO_ZEBRA) porJanela.push(i);
-      }
+  /** Critérios por vértice (≥28° num vértice só) e por janela de arco (88 u). */
+  function candidatosPorCriterio(tracado: readonly Ponto[]): { porVertice: number[]; porJanela: number[] } {
+    const n = tracado.length;
+    const porVertice: number[] = [];
+    const porJanela: number[] = [];
+    for (let i = 0; i < n; i++) {
+      const ang = anguloDeVirada(tracado[(i - 1 + n) % n], tracado[i], tracado[(i + 1) % n]);
+      if (ang >= ANGULO_MINIMO_ZEBRA) porVertice.push(i);
+      if (viradaAcumuladaNaJanela(tracado, i) >= ANGULO_MINIMO_ZEBRA) porJanela.push(i);
+    }
+    return { porVertice, porJanela };
+  }
+
+  /**
+   * As silhuetas JÁ REDESENHADAS, e os vértices em que os dois critérios
+   * divergem. É o CONTRÁRIO do teste de coincidência logo abaixo, e de
+   * propósito: nas silhuetas densas os dois critérios DIVERGEM, e é exatamente
+   * para isso que o PR 7.6 trocou "ângulo ≥ 28° por vértice" por "virada
+   * ACUMULADA ≥ 28° em 88 u de arco".
+   *
+   * Com as silhuetas de 16 pontos, cada vértice carregava uma curva inteira e os
+   * dois critérios davam no mesmo. Com as redesenhadas (34-48 pontos), uma curva
+   * vira 3-4 vértices de ~15° cada: o critério por VÉRTICE perde a curva
+   * (nenhum vértice chega a 28° sozinho), o por JANELA a encontra. Os vértices
+   * extras são justamente os arcos longos que a referência manda preservar.
+   *
+   * Medido no PR 7.7: a janela é SUPERCONJUNTO do vértice nas 10 — nenhuma pista
+   * tem vértice que o critério antigo pegava e o novo perde. É o mecanismo do
+   * 7.6 fazendo em produção o que só sintéticos exercitavam.
+   *
+   * Se um destes testes começar a falhar porque a divergência SUMIU, a suspeita
+   * é silhueta perdendo densidade, não a zebra.
+   */
+  const DIVERGENCIA_POS_REDESENHO: Record<string, number[]> = {
+    'pista-monaco': [5, 12, 13, 16, 20, 22, 32, 34, 35, 37, 39, 40, 42, 43, 45],
+    'pista-spa': [2, 5, 34, 41, 46],
+    'pista-monza': [3, 4, 6, 8, 10, 11, 12, 13, 17, 20, 21, 22, 23, 25, 26, 27, 34, 37, 38, 42],
+    'pista-silverstone': [41],
+    'pista-suzuka': [9, 11, 16, 19, 26, 37],
+    'pista-interlagos': [3, 5, 7, 9, 14, 16, 28],
+    'pista-nurburgring': [12, 13, 33, 41, 43, 44],
+    'pista-imola': [6, 9, 18, 31],
+    'pista-montreal': [3, 7, 8, 9, 10, 15, 29, 33, 38],
+  };
+
+  /**
+   * As pistas onde os dois critérios COINCIDEM. Depois do PR 7.7 não sobrou
+   * nenhuma silhueta pré-redesenho: as 10 foram refeitas, e a única em que a
+   * janela não encontra nada além do vértice é o **Red Bull Ring** — a mais
+   * simples do parque, com curvas amplas e poucos pontos, onde cada curva ainda
+   * cabe num vértice só. Não é resíduo do 2.8; é a geometria da pista.
+   *
+   * DERIVADA do dataset, nunca listada à mão: com lista hardcoded, uma pista
+   * nova não cairia em nenhum dos dois testes (nem no de coincidência nem no de
+   * divergência) e passaria despercebida. Assim toda pista do dataset está
+   * sempre em exatamente um dos dois.
+   */
+  const CRITERIOS_COINCIDEM = dataset.pistas
+    .map((p) => p.id)
+    .filter((id) => !(id in DIVERGENCIA_POS_REDESENHO));
+
+  it('onde os dois critérios coincidem, coincidem de verdade — e sobrou só o Red Bull Ring', () => {
+    expect(CRITERIOS_COINCIDEM).toEqual(['pista-red-bull-ring']);
+    for (const id of CRITERIOS_COINCIDEM) {
+      const { porVertice, porJanela } = candidatosPorCriterio(tracadoDaPista(id));
       expect(porJanela, `${id}: candidatos`).toEqual(porVertice);
     }
   });
+
+  it.each(Object.entries(DIVERGENCIA_POS_REDESENHO))(
+    'em %s (redesenhada) a janela de arco encontra curvas que o ângulo por vértice PERDE',
+    (id, extras) => {
+      const { porVertice, porJanela } = candidatosPorCriterio(tracadoDaPista(id));
+      expect(porJanela).toEqual([...porVertice, ...extras].sort((a, b) => a - b));
+    },
+  );
 
   it.each(Object.entries(GOLDEN_COBERTURA))('golden de %s: candidatos/escolhidos/cobertura batem com a tabela do plano', (pistaId, esperado) => {
     const tracado = tracadoDaPista(pistaId);
     const trechos = trechosDeZebra(tracado);
     expect(candidatos28(tracado), `${pistaId} candidatos`).toBe(esperado.candidatos);
+    // O critério que a seleção REALMENTE usa. `escolhidos < candidatosPorJanela`
+    // significa que o teto de 40% cortou — é a relação que denuncia corte.
+    expect(candidatosPorCriterio(tracado).porJanela.length, `${pistaId} candidatosPorJanela`).toBe(
+      esperado.candidatosPorJanela,
+    );
     expect(trechos.length, `${pistaId} escolhidos`).toBe(esperado.escolhidos);
     expect(coberturaAprox(tracado, trechos), `${pistaId} cobertura`).toBeCloseTo(esperado.coberturaPct, 0);
     expect(trechos.map((t) => t.indice), `${pistaId} SELEÇÃO`).toEqual(esperado.indices);
   });
 
-  // O teto de 40% NÃO é vinculante em Monza: ela dá 38,4% sem teto nenhum. O
-  // teto foi ESCOLHIDO acima de 38,4% justamente pra não mexer no que o dev
-  // aprovou — que é diferente de "preservá-lo", como uma versão anterior
-  // deste título dizia.
-  it('golden do mock aprovado: Monza tem exatamente 11 trechos e cobertura 38,4% (o que o dev aprovou na revisão 3 do PR 7.1 — e o teto de 40% ficou acima disso pra não mexer nela)', () => {
+  /**
+   * ⚠️ ESTE GOLDEN DEIXOU DE SER "O MOCK APROVADO NO 7.1".
+   *
+   * Até o PR 7.6 ele guardava o que o dev aprovou na revisão 3 do PR 7.1: a
+   * Monza de 16 pontos com 11 trechos de zebra e 38,4% de cobertura, e o teto
+   * de 40% tinha sido ESCOLHIDO acima de 38,4% justamente pra não mexer nisso.
+   *
+   * A fatia 1 do redesenho (PR 7.7) trocou a silhueta de Monza por uma de 31
+   * pontos, então o desenho que o dev aprovou **não existe mais** — não há como
+   * preservar o golden e redesenhar a pista ao mesmo tempo. Os números aqui
+   * são RE-DERIVADOS da silhueta nova e valem como não-regressão a partir de
+   * agora; o veredito visual do dev sobre a zebra nova é do preview da fatia 1,
+   * não deste teste. **Teste verde aqui não substitui aquele veredito.**
+   *
+   * ⚠️ E O QUE **NÃO** SE PRESERVOU: até o 7.6, o teto de 40% não era
+   * vinculante em Monza — ela dava 38,4% com os 11 candidatos inteiros, e o
+   * teto tinha sido posto acima disso de propósito. **Agora o teto MORDE:** sem
+   * teto a silhueta nova dá 16 trechos e 41,64%, e o teto corta exatamente um
+   * — o vértice 27, a ENTRADA DA PARABÓLICA (virada acumulada 31,9°). Ou seja,
+   * quem escolhe os 15 finais de Monza passou a ser a ordem gulosa, não só a
+   * geometria. Isso é o mesmo efeito de "cota de contagem" que o `ESTADO.md`
+   * já descreve para as outras 6 pistas onde o teto corta — Monza virou a 7ª.
+   *
+   * O assert de baixo mede isso DE VERDADE (contar sem teto), em vez de
+   * afirmar `cobertura < COBERTURA_MAXIMA_ZEBRA`, que é tautológico: o
+   * algoritmo faz `continue` quando estouraria o teto, então essa comparação
+   * não pode falhar e não detecta nada.
+   */
+  it('não-regressão da zebra de Monza REDESENHADA: 27 trechos e 38,5% — e o teto de 40% MORDE, cortando 4 candidatos', () => {
     const tracado = tracadoDaPista('pista-monza');
     const trechos = trechosDeZebra(tracado);
-    expect(trechos.length).toBe(11);
-    expect(coberturaAprox(tracado, trechos)).toBeCloseTo(38.4, 0);
+    expect(trechos.length).toBe(27);
+    expect(coberturaAprox(tracado, trechos)).toBeCloseTo(38.5, 0);
+
+    // Sem teto seriam 31 trechos / 45,9% — a diferença é o corte, e é ela que
+    // prova que o teto é vinculante nesta pista.
+    const semTeto = trechosDeZebra(tracado, { coberturaMaxima: 1 });
+    expect(semTeto).toHaveLength(31);
+    expect(coberturaAprox(tracado, semTeto)).toBeCloseTo(45.9, 0);
+    const cortados = semTeto.map((t) => t.indice).filter((i) => !trechos.some((t) => t.indice === i));
+    expect(cortados).toEqual([10, 22, 26, 38]);
   });
 
-  it('anti-regressão nomeada: Nürburgring tem 22 vértices TODOS >=28° (85% do perímetro sem teto) mas fica em 10 trechos com o teto de 40% — é a "faixa contínua" que o dev reprovou, cortada pelo teto', () => {
+  /**
+   * A versão anterior deste teste dizia "22 vértices TODOS >=28°, 85% do
+   * perímetro sem teto". Era a silhueta serrilhada da Nordschleife estilizada,
+   * de 22 pontos, em que cada vértice era um bico. O PR 7.7 trocou por
+   * GP-Strecke redesenhado (48 pontos): as curvas viraram arcos de vários
+   * vértices, e só 23 dos 48 passam de 28° sozinhos.
+   *
+   * O QUE NÃO MUDOU, e é o motivo do teste existir: o Nürburgring segue sendo a
+   * pista que mais candidata zebra, e **o teto de 40% continua sendo o que
+   * impede a faixa contínua** que o dev reprovou — 29 trechos / 50,0% sem teto
+   * contra 24 / 38,7% com ele.
+   */
+  it('anti-regressão nomeada: sem o teto de 40% o Nürburgring vai a 50% do perímetro — é a "faixa contínua" que o dev reprovou', () => {
     const tracado = tracadoDaPista('pista-nurburgring');
-    expect(candidatos28(tracado)).toBe(tracado.length); // TODOS os vértices passam de 28°
     const trechos = trechosDeZebra(tracado);
-    expect(trechos.length).toBe(10);
+    expect(trechos.length).toBe(24);
+    expect(coberturaAprox(tracado, trechos)).toBeCloseTo(38.7, 0);
+
+    const semTeto = trechosDeZebra(tracado, { coberturaMaxima: 1 });
+    expect(semTeto).toHaveLength(29);
+    expect(coberturaAprox(tracado, semTeto)).toBeCloseTo(50.0, 0);
     expect(trechos.length).toBeLessThan(tracado.length);
   });
 
@@ -1042,7 +1226,9 @@ describe('pathDaVolta / pathDoTrecho / varDeCor', () => {
   it('varDeCor converte camelCase pra kebab-case dentro de var(--...)', () => {
     expect(varDeCor('pistaAsfalto')).toBe('var(--pista-asfalto)');
     expect(varDeCor('pistaLimite')).toBe('var(--pista-limite)');
-    expect(varDeCor('fundo')).toBe('var(--fundo)');
+    // Um nome de UMA palavra (sem camelCase pra quebrar) — antes era `fundo`,
+    // que saiu de `CorDePista` no 7.8 porque agora muda com o tema.
+    expect(varDeCor('pistaChao')).toBe('var(--pista-chao)');
   });
 });
 

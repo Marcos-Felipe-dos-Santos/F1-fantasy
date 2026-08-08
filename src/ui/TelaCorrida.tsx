@@ -5,7 +5,7 @@
  * componente só resolve nomes pro dataset e desenha.
  */
 
-import type { DraftState, EventoCorrida, Pista, ResultadoCorrida, ResultadoQuali } from '../engine/types';
+import type { DraftState, Pista, ResultadoCorrida, ResultadoQuali } from '../engine/types';
 import { dataset } from './dataset-app';
 import {
   acumularVoltas,
@@ -16,6 +16,7 @@ import {
   type VelocidadeReplay,
 } from './fluxo-corrida';
 import { nomeJogador } from './loadout-view';
+import { narrarEventos } from './narracao';
 import {
   CAMADAS_PISTA,
   RAIO_CARRO_BOT,
@@ -94,14 +95,6 @@ const OPCOES_VELOCIDADE: { valor: VelocidadeReplay; rotulo: string; emoji: strin
   { valor: 'rapida', rotulo: 'Rápida', emoji: '🐇' },
 ];
 
-const ROTULOS_EVENTO: Record<EventoCorrida['tipo'], string> = {
-  'erro-piloto': 'Erro de pilotagem',
-  'quebra-chassi': 'Quebra de chassi — abandonou',
-  'quebra-motor': 'Quebra de motor — abandonou',
-  'problema-tecnico': 'Problema técnico',
-  investigacao: 'Investigação pós-corrida',
-};
-
 /** Nome de exibição via `nomeJogador` (PR 2.1a); cai no próprio id se o jogador não for encontrado. */
 function nomeDoJogadorId(state: DraftState, jogadorId: string): string {
   const jogador = state.jogadores.find((j) => j.id === jogadorId);
@@ -171,7 +164,13 @@ export function TelaCorrida({
   const historicoLider = resultado.historicoVoltas[lider.jogadorId] ?? [];
   const volta = voltaAtual(historicoLider, tempoSimMs, pista.voltas);
 
-  const eventosOcorridos = resultado.eventos.filter((evento) => evento.volta <= volta);
+  // Narração completa da corrida (PR A/B), filtrada pela volta já revelada.
+  // O enriquecimento causal é calculado sobre a corrida INTEIRA e só depois
+  // filtrado — o critério compara fronteiras de volta, não depende de até onde
+  // o replay chegou.
+  const eventosOcorridos = narrarEventos(resultado).filter(
+    (narrada) => narrada.evento.volta <= volta,
+  );
   const gridLargada = grid.grid.map((item) => item.jogadorId);
   const classificacaoAtual = classificacaoAoVivo(resultado, gridLargada, tempoSimMs, pista.voltas);
 
@@ -270,12 +269,23 @@ export function TelaCorrida({
         {eventosOcorridos
           .slice()
           .reverse()
-          .map((evento, idx) => (
+          .map(({ evento, frase, caiuAtrasDe, entrouNosBoxes }, idx) => (
             <li key={`${evento.jogadorId}-${evento.tipo}-${evento.volta}-${idx}`}>
               <span className="ticker-eventos__volta">V{evento.volta}</span>
               <span>
                 {nomeDoJogadorId(state, evento.jogadorId)} ({nomePiloto(state, evento.jogadorId)}) —{' '}
-                {ROTULOS_EVENTO[evento.tipo]}
+                {frase}
+                {/* Fraseado RELACIONAL, nunca posição absoluta ("caiu para
+                    8º"): o painel ao lado ordena por progresso contínuo no
+                    instante do replay, e esta comparação é na fronteira da
+                    volta — um número aqui brigaria com o número de lá. */}
+                {caiuAtrasDe !== null && (
+                  <span className="ticker-eventos__consequencia">
+                    {' '}
+                    e caiu atrás de {nomeDoJogadorId(state, caiuAtrasDe)}
+                  </span>
+                )}
+                {entrouNosBoxes && <span className="ticker-eventos__pit"> · entrou nos boxes</span>}
               </span>
             </li>
           ))}

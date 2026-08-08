@@ -17,7 +17,14 @@ import equipeAnos from '../data/equipe-anos.json';
 import pecas from '../data/pecas.json';
 import pistas from '../data/pistas.json';
 import type { DraftState, EtapaCampeonato, Jogador, Loadout } from '../engine/types';
-import { avancarEtapa, calendarioPadrao, iniciarCampeonato } from './fluxo-campeonato';
+import {
+  avancarEtapa,
+  calendarioPadrao,
+  calendarioSorteado,
+  campeonatoConcluido,
+  iniciarCampeonato,
+  simularOResto,
+} from './fluxo-campeonato';
 import {
   calcularImpressaoDigital,
   carregarCampeonato,
@@ -445,6 +452,114 @@ describe('carregarCampeonato — motivos de falha', () => {
     storage.setItem(CHAVE_SAVE, JSON.stringify({ versaoFormato: VERSAO_FORMATO + 1, formatoTotalmenteDiferente: true }));
 
     expect(carregarCampeonato(storage)).toEqual({ ok: false, motivo: 'versao-incompativel' });
+  });
+});
+
+/**
+ * PR 8.2 — a guarda que sobrou do "PR de persistência" do plano da Fase 8.
+ *
+ * O plano previa compress+base64 e uma camada de abstração. A camada já existia
+ * (este módulo, PR 6.5) e a compressão morreu na medição: o save real é
+ * **16,48 KB** com 22 jogadores e temporada completa — 0,32% de uma quota de
+ * 5 MB. Sobrou exatamente uma pergunta em aberto, e é a que estes testes
+ * respondem: **o save aguenta o calendário SORTEADO do PR 8.1?**
+ *
+ * A resposta era "sim, por leitura" (`SaveCampeonato.calendario` é `string[]`
+ * persistido e `retomarCampeonato` re-hidrata a partir DELE, nunca recomputando
+ * da seed). Este arquivo troca a leitura por medição — a regra do projeto é que
+ * afirmação de estado só entra medida.
+ */
+describe('round-trip com calendário sorteado (PR 8.2)', () => {
+  it('preserva o calendário EMBARALHADO e o cursor, sem bump de VERSAO_FORMATO', () => {
+    const loadouts = loadoutsDeTeste(4);
+    const calendario = calendarioSorteado(dataset, 42, 'completa');
+    const storage = criarStorageFake();
+    let estado = iniciarCampeonato(dataset, loadouts, 42, calendario);
+    estado = avancarEtapa(avancarEtapa(estado));
+
+    expect(salvarCampeonato(storage, 42, draftDeTeste(loadouts), estado)).toBe(true);
+    const carga = carregarCampeonato(storage);
+    expect(carga.ok).toBe(true);
+    if (!carga.ok) throw new Error('esperado carregamento ok');
+
+    // NÃO asserimos `versaoFormato === VERSAO_FORMATO` nem
+    // `calcularImpressaoDigital(retomado.etapas) === save.impressaoDigital`
+    // (aviso A1 da revisão): as duas seriam INFALSIFICÁVEIS aqui.
+    // `carregarCampeonato` já devolve `versao-incompativel` pra qualquer outro
+    // valor, e `retomarCampeonato` LANÇA justamente quando a digital diverge —
+    // ter chegado até esta linha já implica as duas. Quem de fato garante que
+    // o sorteio não exigiu campo novo é a lista literal de chaves montada em
+    // `salvarCampeonato` (`persistencia.ts:248-255`), somada ao fato de o
+    // round-trip inteiro abaixo funcionar sem bump.
+
+    // Anti-tautologia: o calendário salvo é o SORTEADO, não o da ordem do
+    // dataset. Sem isto, o teste passaria com uma implementação que ignorasse
+    // `estado.calendario` e recomputasse `calendarioPadrao` na retomada.
+    expect(carga.save.calendario).toEqual(calendario);
+    expect(carga.save.calendario).not.toEqual(calendarioPadrao(dataset, 'completa'));
+
+    const retomado = retomarCampeonato(dataset, carga.save);
+    expect(retomado.calendario).toEqual(calendario);
+    expect(retomado.etapaAtual).toBe(2);
+    // A que carrega peso real: a retomada re-simulou as etapas NA ORDEM
+    // sorteada, não reconstruiu só o cursor.
+    expect(retomado.etapas.map((e) => e.pistaId)).toEqual(calendario);
+  });
+
+  it('REJEITA um save cujo calendário foi REORDENADO — a impressão digital cobre a ORDEM, não só o conjunto', () => {
+    // O caso discriminante. `calcularImpressaoDigital` é
+    // `etapas.map(resumoDaEtapa).join('||')`: junta na ORDEM do array. Se ela
+    // cobrisse só o CONJUNTO de resultados, um save adulterado (ou mangled por
+    // um bug de serialização) retomaria em silêncio com outra ordem de
+    // corridas — e o jogador veria um campeonato diferente do que salvou.
+    // Nada disso é hipotético pro 8.4: é a UI que vai gravar e reler o save.
+    const loadouts = loadoutsDeTeste(4);
+    const calendario = calendarioSorteado(dataset, 42, 'completa');
+    const storage = criarStorageFake();
+    const estado = avancarEtapa(iniciarCampeonato(dataset, loadouts, 42, calendario));
+    salvarCampeonato(storage, 42, draftDeTeste(loadouts), estado);
+
+    const carga = carregarCampeonato(storage);
+    expect(carga.ok).toBe(true);
+    if (!carga.ok) throw new Error('esperado carregamento ok');
+
+    // MESMOS 10 ids, ordem trocada (só as duas primeiras) — o conjunto de
+    // corridas é idêntico, então só a ordem pode reprovar.
+    const reordenado = [...carga.save.calendario];
+    [reordenado[0], reordenado[1]] = [reordenado[1], reordenado[0]];
+    expect([...reordenado].sort()).toEqual([...carga.save.calendario].sort());
+
+    expect(() => retomarCampeonato(dataset, { ...carga.save, calendario: reordenado })).toThrow(
+      /impressão digital divergente/,
+    );
+  });
+
+  it('temporada CURTA sorteada e CONCLUÍDA (etapaAtual === etapas.length) faz round-trip inteiro', () => {
+    // Fecha o caso de borda que o 8.4 vai gerar toda vez que alguém terminar
+    // um campeonato (aviso A3 da revisão): o guard de `persistencia.ts:368-376`
+    // rejeita `etapaAtual > length` e ACEITA `=== length`, mas os testes só
+    // exercitavam os valores fora de faixa (999, -1) — o limite VÁLIDO, que é
+    // exatamente o estado da tela de fim de temporada, nunca era exercido.
+    // Cobre também o formato curto sorteado, que os outros dois não tocam.
+    const loadouts = loadoutsDeTeste(4);
+    const calendario = calendarioSorteado(dataset, 7, 'curta');
+    const storage = criarStorageFake();
+    const estado = simularOResto(iniciarCampeonato(dataset, loadouts, 7, calendario));
+    expect(estado.etapaAtual).toBe(estado.etapas.length);
+    expect(campeonatoConcluido(estado)).toBe(true);
+
+    salvarCampeonato(storage, 7, draftDeTeste(loadouts), estado);
+    const carga = carregarCampeonato(storage);
+    expect(carga.ok).toBe(true);
+    if (!carga.ok) throw new Error('esperado carregamento ok');
+
+    // Igualdade PROFUNDA, no molde do teste de round-trip já existente acima —
+    // estritamente mais forte que comparar só a classificação, que era o que
+    // este teste fazia antes (e que a impressão digital já garantia de graça,
+    // deixando a asserção inerte; aviso A2 da revisão).
+    const retomado = retomarCampeonato(dataset, carga.save);
+    expect(retomado).toEqual(estado);
+    expect(retomado.calendario).toEqual(calendario);
   });
 });
 

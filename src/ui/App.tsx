@@ -12,11 +12,25 @@
 import { useCallback, useMemo, useState } from 'react';
 import './estilos.css';
 import type { Dificuldade, EscolhaDraft } from '../engine/types';
+import { BotaoTema } from './BotaoTema';
+import { dataset } from './dataset-app';
+import { FluxoCampeonato } from './FluxoCampeonato';
 import { FluxoCorrida } from './FluxoCorrida';
 import { PISTA_CORRIDA_ID } from './fluxo-corrida';
+import {
+  avancarEtapa,
+  calendarioSorteado,
+  ehCampeonato,
+  iniciarCampeonato,
+  resumoCampeonatoSalvo,
+  type EstadoCampeonato,
+  type FormatoPartida,
+} from './fluxo-campeonato';
 import type { HumanoConfig } from './fluxo-draft';
 import { decisaoLocal } from './fluxo-local';
 import { nomeJogador } from './loadout-view';
+import { carregarCampeonato, limparSave, salvarCampeonato } from './persistencia';
+import { storageDoNavegador } from './storage-app';
 import { TelaDraft } from './TelaDraft';
 import { TelaHandoff } from './TelaHandoff';
 import { TelaInicio } from './TelaInicio';
@@ -26,7 +40,7 @@ import { useDraft } from './useDraft';
 import type { Visibilidade } from './visibilidade';
 
 function App() {
-  const { state, humanos, erro, comecar, escolher, reiniciar } = useDraft();
+  const { state, humanos, erro, comecar, escolher, retomar, reiniciar } = useDraft();
   const [naCorrida, setNaCorrida] = useState(false);
   const [confirmadoId, setConfirmadoId] = useState<string | null>(null);
   // Visibilidade é opção da partida (§5), não conceito da engine — guardada
@@ -38,12 +52,41 @@ function App() {
   // `visibilidade` — default só serve pra tipar o estado inicial (nunca
   // renderizado antes de `comecarPartida`).
   const [pistaId, setPistaId] = useState(PISTA_CORRIDA_ID);
+  // Formato da partida (PR 8.4-mínimo): 'unica' preserva o fluxo de sempre.
+  const [formato, setFormato] = useState<FormatoPartida>('unica');
+  // Campeonato em andamento. `null` na corrida avulsa. Vem de
+  // `iniciarCampeonato`, que PRÉ-SIMULA todas as etapas — `etapaAtual` é só um
+  // cursor de apresentação, nunca dispara simulação nova.
+  const [campeonato, setCampeonato] = useState<EstadoCampeonato | null>(null);
+
+  const storage = useMemo(() => storageDoNavegador(), []);
+
+  // Save encontrado no carregamento da página, pro botão "Continuar
+  // campeonato". Lido UMA vez (o `useState` com inicializador), não a cada
+  // render: depois disso quem manda é o estado em memória.
+  const [saveInicial, setSaveInicial] = useState(() => {
+    if (!storage) return null;
+    const carga = carregarCampeonato(storage);
+    return carga.ok ? carga.save : null;
+  });
+
+  const resumoSalvo = useMemo(
+    () => (saveInicial ? resumoCampeonatoSalvo(saveInicial.calendario, saveInicial.etapaAtual) : null),
+    [saveInicial],
+  );
 
   const reiniciarTudo = useCallback(() => {
     setNaCorrida(false);
     setConfirmadoId(null);
+    setCampeonato(null);
+    setFormato('unica');
+    // O save só é apagado aqui, no "Novo draft" explícito — não ao começar a
+    // ler a página. Assim fechar a aba no meio de um campeonato nunca perde
+    // progresso, que é o ponto do "Continuar".
+    if (storage) limparSave(storage);
+    setSaveInicial(null);
     reiniciar();
-  }, [reiniciar]);
+  }, [reiniciar, storage]);
 
   const comecarPartida = useCallback(
     (
@@ -52,18 +95,91 @@ function App() {
       humanosConfig: HumanoConfig[],
       visibilidadeEscolhida: Visibilidade,
       pistaEscolhidaId: string,
+      formatoEscolhido: FormatoPartida,
     ) => {
       comecar(seedTexto, dificuldade, humanosConfig);
       setVisibilidade(visibilidadeEscolhida);
       setPistaId(pistaEscolhidaId);
+      setFormato(formatoEscolhido);
+      setCampeonato(null);
+      // Começar partida nova descarta o campeonato salvo: o aviso disso está
+      // na própria TelaInicio, ao lado do botão "Continuar".
+      if (storage) limparSave(storage);
+      setSaveInicial(null);
       // Single (1 humano): pula a TelaHandoff — comportamento do modo Single
       // preservado (nunca troca de mão). Local (2-4 humanos): começa sem
       // ninguém confirmado, então o primeiro render já pede handoff pro
       // humano-1.
       setConfirmadoId(humanosConfig.length === 1 ? humanosConfig[0].id : null);
     },
-    [comecar],
+    [comecar, storage],
   );
+
+  /**
+   * Loadouts do draft concluído, na MESMA ordem que `prepararCorrida` usa
+   * (por `jogadorId`). A ordem não muda o resultado — a engine sorteia por
+   * jogador —, mas manter uma só evita divergência boba entre as duas
+   * trilhas.
+   */
+  const loadoutsOrdenados = useCallback(
+    (draft: NonNullable<typeof state>) =>
+      Object.entries(draft.loadouts)
+        .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+        .map(([, loadout]) => loadout),
+    [],
+  );
+
+  /**
+   * "Ir pra corrida" na TelaResumo. Na corrida avulsa só troca de tela; no
+   * campeonato é aqui que o calendário é sorteado e as etapas são
+   * pré-simuladas, porque só agora existem loadouts.
+   */
+  const irParaCorrida = useCallback(() => {
+    if (state && state.fase === 'concluido' && ehCampeonato(formato)) {
+      const calendario = calendarioSorteado(dataset, state.seed, formato);
+      const novo = iniciarCampeonato(dataset, loadoutsOrdenados(state), state.seed, calendario);
+      setCampeonato(novo);
+      // Salva já na etapa 0: se o jogador fechar a aba antes de terminar a
+      // primeira corrida, o campeonato (e o calendário sorteado) sobrevive.
+      if (storage) salvarCampeonato(storage, state.seed, state, novo);
+    }
+    setNaCorrida(true);
+  }, [state, formato, loadoutsOrdenados, storage]);
+
+  /** Fim de uma etapa: avança o cursor e persiste. */
+  const proximaCorrida = useCallback(() => {
+    if (!state || !campeonato) return;
+    const avancado = avancarEtapa(campeonato);
+    setCampeonato(avancado);
+    if (storage) salvarCampeonato(storage, state.seed, state, avancado);
+  }, [state, campeonato, storage]);
+
+  /**
+   * "Continuar campeonato": re-hidrata o draft salvo e RE-SIMULA o campeonato
+   * a partir de seed + loadouts + calendário. Não usa `retomarCampeonato`
+   * porque este caminho precisa do `DraftState` no hook de draft de qualquer
+   * forma; a validação de integridade que interessa aqui já foi feita por
+   * `carregarCampeonato` (shape + versão) na leitura inicial.
+   */
+  const continuarCampeonato = useCallback(() => {
+    if (!saveInicial) return;
+    const draft = saveInicial.draft;
+    const estado = iniciarCampeonato(
+      dataset,
+      loadoutsOrdenados(draft),
+      saveInicial.seed,
+      saveInicial.calendario,
+    );
+    const formatoSalvo = resumoCampeonatoSalvo(saveInicial.calendario, saveInicial.etapaAtual);
+    if (!formatoSalvo) return;
+
+    retomar(draft);
+    setFormato(formatoSalvo.formato);
+    setCampeonato({ ...estado, etapaAtual: saveInicial.etapaAtual });
+    setVisibilidade('craque');
+    setConfirmadoId(draft.jogadores.find((j) => j.tipo === 'humano')?.id ?? null);
+    setNaCorrida(true);
+  }, [saveInicial, loadoutsOrdenados, retomar]);
 
   const idsHumanos = useMemo(() => humanos.map((h) => h.id), [humanos]);
 
@@ -87,7 +203,15 @@ function App() {
 
   return (
     <div className="app-shell">
-      {!state && <TelaInicio onComecar={comecarPartida} />}
+      <BotaoTema />
+
+      {!state && (
+        <TelaInicio
+          onComecar={comecarPartida}
+          campeonatoSalvo={resumoSalvo}
+          onContinuarCampeonato={continuarCampeonato}
+        />
+      )}
 
       {state && decisao?.tipo === 'handoff' && nomeDoAlvo !== null && (
         <TelaHandoff
@@ -122,11 +246,19 @@ function App() {
           state={state}
           visibilidade={visibilidade}
           onReiniciar={reiniciarTudo}
-          onIrParaCorrida={() => setNaCorrida(true)}
+          onIrParaCorrida={irParaCorrida}
         />
       )}
-      {state?.fase === 'concluido' && naCorrida && (
+      {state?.fase === 'concluido' && naCorrida && campeonato === null && (
         <FluxoCorrida state={state} pistaId={pistaId} onReiniciar={reiniciarTudo} />
+      )}
+      {state?.fase === 'concluido' && naCorrida && campeonato !== null && (
+        <FluxoCampeonato
+          state={state}
+          campeonato={campeonato}
+          onProximaCorrida={proximaCorrida}
+          onReiniciar={reiniciarTudo}
+        />
       )}
     </div>
   );

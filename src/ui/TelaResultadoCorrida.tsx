@@ -4,7 +4,7 @@
  * pra volta mais rápida.
  */
 
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import type { DraftState, ResultadoCorrida } from '../engine/types';
 import { dataset } from './dataset-app';
 import { nomeJogador } from './loadout-view';
@@ -16,6 +16,12 @@ interface TelaResultadoCorridaProps {
   state: DraftState;
   resultado: ResultadoCorrida;
   onReiniciar: () => void;
+  /**
+   * Conteúdo extra abaixo do resultado (PR 8.4-mínimo): no modo Campeonato é
+   * o `PainelCampeonato` com a tabela acumulada e o botão da próxima corrida.
+   * `undefined` na corrida avulsa — a tela fica exatamente como era.
+   */
+  extra?: ReactNode;
 }
 
 /** Nome de exibição via `nomeJogador` (PR 2.1a); cai no próprio id se o jogador não for encontrado. */
@@ -44,7 +50,12 @@ function formatarTempo(ms: number): string {
   return `${minutos}:${String(segundos).padStart(2, '0')}.${String(milissegundos).padStart(3, '0')}`;
 }
 
-export function TelaResultadoCorrida({ state, resultado, onReiniciar }: TelaResultadoCorridaProps) {
+export function TelaResultadoCorrida({
+  state,
+  resultado,
+  onReiniciar,
+  extra,
+}: TelaResultadoCorridaProps) {
   const resultadosHumanos = resultado.classificacao.filter((c) => ehHumanoId(state, c.jogadorId));
   const [seedCopiada, setSeedCopiada] = useState(false);
 
@@ -129,7 +140,9 @@ export function TelaResultadoCorrida({ state, resultado, onReiniciar }: TelaResu
         {(resultado.voltaMaisRapida.tempo / 1000).toFixed(3)}s)
       </p>
 
-      <button type="button" className="botao-primario" onClick={onReiniciar}>
+      {extra}
+
+      <button type="button" className="botao-secundario" onClick={onReiniciar}>
         Novo draft
       </button>
     </div>

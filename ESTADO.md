@@ -7,159 +7,347 @@
 
 ## Estado atual
 
-- **Branch `main`** · último PR **7.6.1** (previews de decisão + pendência 2) · **893 testes**
-  (33 arquivos) verdes · working tree limpa.
-- **Medido em 2026-08-01, não herdado:** `tsc --noEmit` **exit 0**, `npm run build` **exit 0**,
-  `eslint` limpo. `npm run balance` não se aplica (nada de nota/lógica de corrida foi tocado).
-- **`origin/main` está em `b39782d` (PR 7.4). A `main` local está ~20 commits à frente e NADA
-  disso foi pushado** — número exato: `git rev-list --count b39782d..HEAD` (escrever a contagem aqui
-  a desatualiza no commit seguinte, que é o próprio commit que a escreve).
-  **Push continua só com "ok" explícito do dev.**
+- **Branch `pr-8.1-calendario-sorteado`** · últimos PRs **8.1** (calendário sorteado, `63e3e82`),
+  **8.2** (round-trip do save, `6cb02cc`), **8.4-mínimo** (seletor de Formato + campeonato jogável,
+  `4ba4f50`) e a rodada de **narração rica + auto-avanço**: **A** (variedade/chuva, `1537ad6`),
+  **B** (causalidade contrafactual, `43fe420`), **C** (avanço automático, `fc7f20d`); e ainda
+  **8.2.1** (calendário na engine, `cfe1c47`) e **8.3** (telas do campeonato, `0da36fb`) ·
+  **1094 testes** (36 arquivos) verdes.
+- **Medido em 2026-08-07, não herdado:** `npm test` **1094/36**, `tsc --noEmit` **exit 0**,
+  `eslint src scripts` **exit 0**, `npm run build` **exit 0**. **`npm run balance` inalterado por
+  construção** — o harness importa só `src/engine/dataset`, `src/data/*.json` e `scripts/alavancas`,
+  e nenhum dos três foi tocado. `prettier --check` reprova `fluxo-campeonato.ts`/`.test.ts`, mas
+  **já reprovava no HEAD** (verificado com `git show HEAD:<arquivo>`) — pré-existente, não é gate.
+- 🎮 **COMO TESTAR O CAMPEONATO no app real** (o dev já testou single e local com 2 jogadores):
+  `npm run dev` → `http://localhost:5173/` → **Formato: "Campeonato curto"** → Começar draft →
+  jogar o draft → **Ir pra corrida**. No fim de cada corrida, a tabela acumulada e "Próxima
+  corrida". Recarregar a página no meio deve oferecer **"Continuar campeonato"** no topo.
+  **Narração:** o ticker de eventos durante o replay mostra a variedade (PR A) e, quando os dados
+  sustentam, "…e caiu atrás de X" (PR B). **Auto-avanço:** o toggle "Avançar automaticamente" no fim
+  da corrida — ele deve avançar **e largar sozinho**, e desmarcar durante a contagem deve cancelar.
+- **Working tree limpa.** `tmp-medir-save.ts` continua no disco, mas agora é **ignorado** pelo
+  `.gitignore` (regra `tmp-*`, adicionada em 2026-08-07) — é script descartável do dev e está
+  **quebrado** (`criarDraft` exige 22 jogadores + `atribuirPerfis` antes; o arquivo passa 4). A
+  medição que ele buscava já foi feita e está registrada abaixo.
+- ✅ **A `main` FOI PUSHADA em 2026-08-07, com autorização explícita do dev** (`git push origin
+  main:main --tags`, fast-forward `b39782d..49f3ca8`). **`main` local == `origin/main` == `49f3ca8`**
+  (verificado: `git rev-list --left-right --count main...origin/main` = `0 0`). Não existem mais
+  duas `main`s divergentes — `git checkout main` e o remoto apontam pro mesmo commit. A tag
+  **`v0.1.0-fase0`** também subiu (era a única local; o remoto não tinha nenhuma).
+- **Estado do remoto MEDIDO em 2026-08-07 pós-push** (`git ls-remote --heads --tags origin`):
+  branches `main` (`49f3ca8`) e `pr-7.7-dados-nurburgring` (`ccfc035`); tag `v0.1.0-fase0`.
+  **`pr-8.1-calendario-sorteado` NÃO existe no remoto** — a branch atual saiu da 7.7 e segue só
+  local. **Nem a `main` local nem a remota têm 7.7, 7.7.1, 7.8, 8.1, 8.2, 8.2.1 e 8.3** — esses só
+  existem nesta branch.
+- **O repositório é PRIVADO** (`https://github.com/Marcos-Felipe-dos-Santos/F1-fantasy`) e deve
+  continuar assim: o projeto usa nomes reais de pilotos e equipes e a questão jurídica do
+  **GDD §14.2** ainda está em aberto. Evidência da privacidade: a API do GitHub sem autenticação
+  devolve **404** para esse repo, enquanto `git ls-remote` autenticado funciona.
+  ✅ **Os dois portões visuais foram FECHADOS em 2026-08-07** (silhuetas 10/10, paleta aprovada), o
+  que remove o motivo que segurava o trabalho da 7.7+ fora da `main`.
+  **Merge da branch atual na `main` continua exigindo "ok" próprio** (e a tag, se houver, só DEPOIS
+  do merge) — é decisão de processo do dev, não mais espera de veredito visual.
 
-## 🛑 AGUARDANDO O DEV — dois previews gerados e MOSTRADOS, sem veredito ainda
+## ✅ OS DOIS PORTÕES VISUAIS ESTÃO FECHADOS (dev, 2026-08-07)
 
-    start "" "E:\projetos\F1 fantasy\preview\cego.html"
-    start "" "E:\projetos\F1 fantasy\preview\zebra-densidade.html"
+**Não há portão visual aberto neste projeto.** Os dois foram aprovados pelo dev na mesma sessão.
+Esta seção fica como registro do veredito — não reabrir sem ele.
 
-Regenerar: `npm run preview` (escreve os três: traçados, cego, zebra). `preview/` é gitignored.
+### 1. AS SILHUETAS (PR 7.7/7.7.1) — ✅ APROVADAS. **Teste cego: 10/10.**
 
-1. **`cego.html` — a LINHA DE BASE.** 10 silhuetas atuais sem nome, ordem por hash do id, com
-   placar. **O placar precisa ser anotado aqui embaixo** — é a régua da fatia 1 e o insumo do
-   gatilho de abandono. Placar baixo é o esperado (as silhuetas são as que o 7.4 reprovou).
-2. **`zebra-densidade.html` — a decisão 88/40%** (pendência 4). Ver o achado abaixo antes de decidir.
+O critério de aceite era do próprio dev: *o jogador vê a pista e pensa "poxa, Interlagos" sem ler o
+nome?* **Linha de base era 0/10; o placar final foi 10/10.** O redesenho a partir da geometria real
+dos circuitos resolveu — e o **gatilho de abandono** que estava armado (parar e reabrir a pergunta
+se o ponteiro não se movesse) **não foi acionado**.
+
+### 2. A PALETA (PR 7.8) — ✅ APROVADA, **com o light mode**.
+
+A troca do azul-noite pela paleta F1 (grafite + vermelho `#FF1801` + dourado `#FFB800` + verde
+`#00D26A`) **resolveu o problema que motivou o PR** — palavras do dev na abertura: a tela "parecia
+genérica e feita com IA". Aprovada como está, incluindo o light mode e a ilha escura do painel do
+traçado (que é necessidade matemática, ver as decisões travadas mais abaixo).
+
+> ✅ **Consequências práticas de os dois estarem fechados:**
+> - **`npm run preview` voltou a ser seguro.** O aviso que existia aqui — de que ele repintaria o
+>   `redesenho.html` com a paleta nova e misturaria as duas perguntas — **não vale mais**, porque
+>   não há duas perguntas pendentes pra misturar.
+> - **O diff da paleta deixou de ser candidato a reversão.** A instrução anterior ("se for
+>   reprovada, reverter `f736e6c`") está morta.
+> - Os previews seguem em `preview/` (gitignored):
+>   `E:\projetos\F1 fantasy\preview\redesenho.html` e `E:\projetos\F1 fantasy\preview\paleta.html`.
+
+## 🚩 FASE 8 — MODO CAMPEONATO: o plano aprovado NÃO bate com o código
+
+Plano aprovado pelo dev (sessão de 2026-08-07), 4 PRs: **8.1** engine · **8.2** persistência ·
+**8.3** telas · **8.4** integração. Dois submodos — **curta** (5 pistas sorteadas das 10, default) e
+**completa** (10 embaralhadas) — convivendo com "Corrida rápida" na `TelaInicio` (3 opções).
+Decisões travadas: **nenhuma alavanca** (sem lastro, sem pit de meio de temporada) — é jogo de
+draft, o campeonato é confirmação. Draft único por campeonato. Ordem embaralhada nas duas modalidades.
+
+**O achado do 8.1, que reordena o resto da fase:** o 8.1 e o 8.2 do plano descreviam trabalho que
+**a Fase 6 já tinha feito**. Já existiam e são testados: `src/engine/campeonato.ts` (etapas,
+pontuação FIA, desempate countback), `src/ui/fluxo-campeonato.ts` (curta/completa,
+`iniciarCampeonato`, `avancarEtapa`, `simularOResto`, `classificacaoApos`) e
+`src/ui/persistencia.ts` (save, impressão digital, `retomarCampeonato`). A "promoção da lógica do
+balance-harness pra engine" **já tinha acontecido**.
+
+**O que NUNCA tinha sido feito é o antigo PR 6.6 — as TELAS.** Era daí que vinha o desalinhamento
+inteiro: o modo existia, determinístico e testado, e era **inalcançável pelo jogador**.
+✅ **Resolvido no 8.4-mínimo** (`4ba4f50`): o campeonato ganhou seletor, encadeia corridas, salva e
+retoma. ✅ **E o 8.3** (`0da36fb`) substituiu as telas cruas pelas de verdade — calendário com
+silhuetas, classificação com variação de posição e fim de campeonato com pódio.
+**A Fase 8 está completa**; o que resta é o veredito do dev sobre o preview.
+
+### O 8.2 colapsou — FEITO, mas não é o PR que o plano descrevia
+
+- **compress+base64: MORTO pela medição.** Save real = **16,48 KB** (22 jogadores, completa;
+  16,39 KB na curta) = **0,32% de uma quota de 5 MB**. Método: draft REAL resolvido por bots, não
+  save sintético. Comprimir seria dependência nova sem problema pra resolver.
+- **Camada de abstração e impressão digital: já existiam** (PR 6.5 / 6.2).
+- **"Salvar após cada corrida" depende da UI**, que é o 8.4.
+- ✅ **O que sobrou virou os commits `6cb02cc` + `0f3e178` — diff SÓ DE TESTE, `persistencia.ts`
+  intacto.** Três testes provam que o save aguenta o calendário sorteado: round-trip preserva o
+  calendário embaralhado e o cursor **sem bump de `VERSAO_FORMATO`**; temporada curta **concluída**
+  (`etapaAtual === etapas.length`) faz round-trip inteiro; e o discriminante — **um save com o
+  calendário REORDENADO é REJEITADO**. `calcularImpressaoDigital` junta as etapas na **ORDEM** do
+  array, então a integridade cobre a ordem, não só o conjunto. Isso importa pro 8.3/8.4: é a UI que
+  vai gravar e reler esse save. **Duas mutações:** ordenar as etapas na impressão digital mata o
+  teste de reordenação; trocar o guard pra `>= length` mata o teste de borda.
+  **Revisão: sem bloqueante, 3 avisos aplicados** — o mais útil deles é que duas asserções que eu
+  tinha escrito eram **infalsificáveis** (implicadas por `carga.ok` e pelo próprio `throw` do
+  `retomar`). Asserção que não pode falhar se lê como cobertura e não é.
+- 🛑 **O dev pediu "pare ao final do 8.2 pra eu ver a mecânica rodando", mas depois do 8.2 não há
+  nada pra ver rodando** — não existe UI. **DECIDIDO pelo dev em 2026-08-07 (ver seção abaixo):
+  wiring mínimo do 8.4, não script de demo.**
+
+### ✅ PR 8.4-mínimo FEITO (commit `4ba4f50`) — o campeonato é JOGÁVEL
+
+O dev pediu o seletor de "Formato" e classificou como **baixo risco (UI)** — a classificação vale,
+porque **ele mesmo vai rodar o app**, o que é mais forte que preview. (A entrada anterior deste
+arquivo dizia "alto risco, portão visual"; foi superada pela classificação do dev.)
+
+**Entregue mais que o `<select>`, porque o `<select>` sozinho seria decorativo:** antes do commit
+nada em `App.tsx` importava campeonato e nada chamava `salvarCampeonato`. Agora: seletor Formato
+(única/curta/completa), Pista **e a linha de perfil** somem nos campeonatos, corridas encadeiam de
+verdade, save a cada corrida, e "Continuar campeonato" no topo da `TelaInicio`.
+
+🔑 **O BUG QUE QUASE ENTROU — a lição que sobrevive ao PR.** As duas trilhas de corrida usam seeds
+**diferentes de propósito** (decisão D6): a avulsa usa a seed **crua** do draft, a etapa de
+campeonato usa `seedDaEtapa(seed, pistaId)`. Como `iniciarCampeonato` **pré-simula** as etapas e a
+pontuação sai dali, ligar o campeonato no `FluxoCorrida` existente faria o jogador **assistir a uma
+corrida e ver OUTRA na tabela**. **`npm test` não pegaria** — cada lado, isolado, está certo; só a
+composição estava errada. `prepararCorrida` ganhou `seed` (default preserva a avulsa bit a bit) e há
+teste provando a reprodução bit a bit da etapa pré-simulada.
+
+### ✅ RODADA DE NARRAÇÃO RICA + AUTO-AVANÇO (PRs A, B, C) — FEITA
+
+Feedback de quem jogou, planejada pelo `fable-architect`, aprovada pelo dev com três correções ao
+pedido original. **Nada tocou `src/engine/`** — nem aditivamente.
+
+- **A (`1537ad6`)** — variedade de erro + vocabulário de chuva. `deriveSeed` usado como **HASH, nunca
+  como stream**: nenhum tempo muda, nenhum RNG novo é consumido, seeds de ouro e `balance` intactos
+  por construção. Pool de chuva **só pra `erro-piloto`**, porque `chuvaMultErro` só multiplica
+  `chanceErro` — vocabulário molhado numa quebra de motor sugeriria causalidade inexistente.
+- **B (`43fe420`)** — causalidade **contrafactual**: a linha causal só sai se, descontado o custo do
+  erro, X continuaria à frente. Mais restritivo que o pedido original, e aprovado pelo dev
+  exatamente por isso.
+  📏 **MEDIDO em 200 corridas reais: 3,19 linhas causais/corrida, 93% das corridas com pelo menos
+  uma, 42% de aproveitamento.** O dev cogitava cortar o PR se rendesse pouco — decidiu com o número.
+- **C (`fc7f20d`)** — auto-avanço com auto-largada (sem ela, empacaria na tela de grid).
+
+🔒 **Regras de honestidade da narração, travadas por TESTE, não por comentário:** nenhuma frase pode
+afirmar manobra, local da pista, disputa ou clima evoluindo — um regex reprova
+`ultrapass|disputa|começou a chover|pneu de chuva` em qualquer variante nova. **A engine simula cada
+carro isoladamente e o clima é uma flag global**; qualquer frase fora disso é falsa por construção.
+
+📌 **Regra registrada para código que ainda não existe (item d do dev):** quando houver narração de
+troca de posição, **pit não é ultrapassagem** — pit de qualquer um dos dois desqualifica a palavra.
+Hoje não existe narração de troca de posição (a única narração do jogo era `ROTULOS_EVENTO`), então
+a regra fica aqui aguardando o código que a consumirá.
+
+### ✅ PR 8.3 FEITO — as telas do campeonato (commits `0da36fb` + `499114c`)
+
+⬅️ **AGUARDANDO VEREDITO DO DEV — o único item aberto do projeto agora:**
+
+    start "" "E:\projetos\F1 fantasy\preview\campeonato.html"
+
+As três telas numa página só, a partir de um campeonato real (seed 2026, curta, 8 jogadores):
+**calendário** (silhuetas, vencedores, próxima destacada), **classificação com variação de posição**
+(▲/▼) e **fim de campeonato** (pódio + tabela final + calendário completo).
+
+⚠️ **Este preview NÃO é maquete** — diferente do `paleta.html`. Ele inlina `tokens.css` e
+`estilos.css` REAIS e renderiza os COMPONENTES REAIS; o que se vê é o que o app desenha, com o mesmo
+CSS. Falta só interação (nada clica, não há replay). Regerar:
+`npx vitest run --config vitest.preview.config.ts scripts/preview-campeonato.preview.test.ts`
+(ou `npm run preview`, que agora é seguro — os dois portões antigos estão fechados).
+
+🔒 **A decisão que sustenta a tela de calendário:** `iniciarCampeonato` **pré-simula todas as
+etapas**, então o resultado das próximas está em memória o tempo todo. `calendarioAnotado` só revela
+vencedor de etapa com `indice < etapaAtual` — vazar o vencedor de uma corrida que o jogador ainda
+vai assistir estragaria a corrida. **Tem teste dedicado, e é o mais importante do PR.**
+
+🔒 **A silhueta da miniatura reusa `pathDaVolta`**, a mesma geometria da tela de corrida. Foi ela que
+tirou 10/10 no teste cego; redesenhar à mão na miniatura jogaria isso fora.
+
+### ✅ PR 8.2.1 FEITO — calendário mora na engine (fecha a pendência 0)
+
+`FormatoTemporada`, `FORMATO_PADRAO`, `N_ETAPAS`, `calendarioPadrao`, `calendarioSorteado` e o
+helper `etapasDoFormato` foram pra `src/engine/campeonato.ts`. **`fluxo-campeonato.ts` re-exporta os
+cinco públicos, então NENHUM chamador mudou** — nem as ~90 referências de teste, nem a UI.
+
+**O que FICOU na UI, de propósito:** `FormatoPartida`, `ehCampeonato`, `mostraSeletorDePista`,
+`ROTULO_FORMATO`, `formatoDoCalendario`, `resumoCampeonatoSalvo`. Nenhum é regra de jogo — são
+decisões de TELA (qual seletor aparece, que texto o botão mostra). Movê-los levaria UI pra dentro da
+engine, que é a violação inversa.
+
+**Refactor sem mudança de comportamento: 1078 testes seguem passando, os mesmos, sem teste novo — e
+o ponto é esse.** `npm run balance` rodado (mexeu em `src/engine/`): **tabela idêntica**,
+`seedDaEtapa` e `simularCampeonato` só mudaram de vizinhança.
 
 ## Onde parei
 
 Concluído: Fases 0-2 (engine, Single, Local hotseat, Modo Cego), dataset 1950-2025 (PR 4.x),
-design system arcade (5.1a/b/c), Modo Campeonato (6.1-6.5), Fase 7 até o **7.6.1**.
+design system arcade (5.1a/b/c), Modo Campeonato (6.1-6.5), Fase 7 até o **7.8**, e a Fase 8 nos
+PRs **8.1** (calendário sorteado), **8.2** (round-trip do save) e **8.4-mínimo** (o campeonato
+deixou de ser inalcançável — tem seletor, encadeia corridas, salva e retoma).
 
-**PORTÃO DO 7.4 (2026-07-30): suavização APROVADA, objetivo NÃO atingido.** O dev viu o preview:
-*"o aspecto poligonal sumiu e o design está bom"*, **mas nenhuma das 10 pistas é reconhecível**.
-Não é falha do 7.4 — a causa são as **silhuetas de origem** do PR 2.8 (formas ilustrativas de 12-22
-pontos). Suavizar forma genérica dá forma genérica arredondada. Daí a trilha de redesenho abaixo.
+**PR 8.1, em uma linha:** `calendarioSorteado(dataset, seed, formato)` entrou como função IRMÃ de
+`calendarioPadrao`, que **não foi tocado** (é o calendário estável dos testes, goldens e harness, e
+um teste trava literalmente a ordem do dataset). Embaralha as 10 e **só então** corta em N — é isso
+que faz a curta ser prefixo da completa pra QUALQUER seed. Namespace próprio
+`deriveSeed(seed, 'calendario')`, sem colisão com `camp:<pistaId>`/`bots`/`draft:*`.
+**A classificação final não depende da ordem** porque o comparador de `acumularClassificacao`
+termina em `cmpJogadorId` (`campeonato.ts:204-209`) e portanto é ordem **total** — sem isso o teste
+de equivalência estaria passando por sorte do fixture. Revisão sem bloqueante.
 
-**Critério de aceite do dev (subjetivo e não automatizável, ele assume):** o jogador vê a pista e
-pensa *"poxa, Interlagos"* **sem ler o nome**. Portão visual dele, possivelmente em várias rodadas.
+O **7.8 trocou a paleta inteira** (azul-noite → grafite + vermelho `#FF1801` / dourado `#FFB800` /
+verde `#00D26A`) e adicionou light mode. O que esse PR ensinou, e que vale além dele: **a cor do
+carro do jogador governa a paleta da pista**. O teto de luminância do asfalto é derivado de
+`carro do jogador / asfalto >= 3`; trocar magenta (L 0,295) por vermelho (L 0,219) derrubou o teto
+de 0,0650 pra **0,0397** e obrigou a redesenhar a escada tonal inteira. Não foi decisão de gosto.
 
-## SEQUÊNCIA APROVADA — seguir nesta ordem
+## SEQUÊNCIA — o que sobrou
 
-1. ✅ **Chore docs + `permissions.deny`** · 2. ✅ **PR 7.5 — memoização da LUT** (`bfbbb98`) ·
-   3. ✅ **PR 7.6 — zebra invariante à densidade** (`f3653ab`; portão medido e PASSOU, 10 pistas
-   byte a byte iguais).
-2. ✅ **PR 7.6.1 — os dois previews + pendência 2.** Fatiamento decidido pelo dev em 2026-08-01:
-   **previews ANTES da infra** — o preview da zebra destrava a decisão 88/40% que precede a fatia 1,
-   é o item mais barato, e a infra merece sessão limpa. **Aguarda veredito do dev (ver acima).**
-3. ⬅️ **PRÓXIMO — PR de INFRA (ALTO RISCO, sessão própria)** — restrições declaradas como testes
-   vermelhos + allowlist `LEGADO` que só encolhe.
-4. **FATIA 1 — Monza + Interlagos.** Critério de fatiamento: **"estressa as restrições"**, não
-   "as mais icônicas". Mostrar ao dev.
-5. 🛑 **PARAR e ir pro pit (7.7, 7.8).** As fatias 2-5 (Mônaco+Spa+Silverstone · Imola+Montreal+RBR ·
-   Suzuka sozinha · Nordschleife sozinha · fechamento) só **depois** do pit.
-   **Gatilho de abandono aceito pelo dev: se a fatia 1 não mover o ponteiro contra a linha de base
-   cega, PARAR e reabrir a pergunta** em vez de fazer as outras 8 por inércia.
+**Os portões visuais saíram desta lista: os dois foram aprovados em 2026-08-07.**
 
-## Decisões travadas do redesenho (não reabrir sem o dev)
+1. ⬅️ **VEREDITO do dev sobre `preview/campeonato.html`** (as três telas do 8.3).
+2. **PR de INFRA — DESTRAVADO pela aprovação das silhuetas.** Era "pré-requisito caso as silhuetas
+   fossem aprovadas"; com o 10/10, **deixa de ser pré-requisito e vira consolidação**: restrições
+   geométricas como testes vermelhos + allowlist `LEGADO` que só encolhe. **Reavaliar o escopo com o
+   dev antes de fazer** — pode ter encolhido junto.
+3. **PR 8.3 — as telas de verdade do campeonato** (calendário, classificação navegável, fim de
+   temporada). O painel de hoje é cru de propósito.
+4. 🛑 **Depois, o pit (7.9).**
+5. **Decisão de arte ainda aberta:** o `88/40%` da zebra (seção própria abaixo) — não foi tocado
+   pela aprovação dos portões.
+
+## Decisões travadas da PALETA (7.8 — ✅ APROVADA pelo dev, não reabrir sem ele)
+
+- 🔒 **Os três acentos da marca são IDÊNTICOS nos dois modos onde são PREENCHIMENTO.** Onde a cor
+  vira TINTA (texto, ícone, linha de 1px) existe um token irmão `*Texto`, mode-scoped. Não é
+  preciosismo: `#FFB800` e `#00D26A` dão **1,53:1 e 1,78:1** sobre o branco quente — é teto da cor.
+- 🔒 **`primaria/fundo` é 3:1, não 4,5** (decisão do dev). O vermelho é botão/destaque/carro, não
+  corpo de texto, e `#FF1801` tem teto de 5,383 contra preto puro — exigir 4,5 significaria
+  abandonar o hex da marca. Vermelho em texto usa `primariaTexto`.
+- 🔒 **Todo token `pista*` é MODE-INVARIANTE** e o painel do replay é ilha escura nos dois temas.
+  A regra 1 da Fase 7 é impossível sobre base clara (teto do asfalto 0,0397 vs. base clara 0,877).
+  `fundo`/`fundoAfundado`/`fundoElevado` **saíram da união `CorDePista`** — a regressão nem compila.
+- 🔒 **`borda` continua DECORATIVA**, fora de `PARES_CONTRASTE`. Verificado, não assumido: a
+  separação card/base é fraca nos DOIS modos (1,213 escuro / 1,132 claro), então o claro não
+  introduziu problema novo.
+- **Zebra é vermelho + branco** (era amarelo + salmão) — o zebra real de F1.
+- **A cascata do tema tem três blocos e a ordem importa:** `:root` escuro → `@media` escopado com
+  **`:root:not([data-tema])`** → `[data-tema]` manual. Sem o `:not()`, o toggle não vence o SO.
+
+## Decisões travadas do redesenho (✅ silhuetas APROVADAS 10/10 — não reabrir sem o dev)
 
 - 🔒 **TODA guarda geométrica nova neste projeto MEDE EM ARCO, NUNCA EM ÍNDICE** (dev, 2026-08-01).
-  Medir "não adjacente" ou "alcance" contando pontos é dependente de densidade e vira falso positivo
-  assim que as curvas triplicam. **Palavras do dev: "já custou duas vezes"** — a mais recente foi o
-  bug que o 7.6 consertou na zebra. Vale pra `minNaoAdj`, `separacaoMinima`, raio, e para qualquer
-  guarda futura — em especial as que o PR de infra vai declarar.
-- **Era dos traçados: layout MODERNO/ATUAL**, Nordschleife como exceção. Monza sem oval banqueado,
-  Spa de 7 km, Imola pós-95. Vale pra qualquer redesenho futuro.
-- **Nordschleife perde ~40 das ~73 curvas.** Karussell ilegível a 360px é consequência aceita.
-- **`LARGURA_ASFALTO = 34` mantida.** Largura por pista foi rejeitada (colide com a guarda de raio
-  de carro). Separação ≥ 34 u e raio ≥ 20 u viram restrições de desenho testadas.
-- **`AMOSTRAS_POR_SEGMENTO` cai de 12 pra 4-6** (sagita escala com a corda). N adaptativo rejeitado.
-- **Nada de métrica automatizável de reconhecimento.** Hausdorff contra a pista real recusado —
-  aproximaria do mapa oficial (GDD §14.2).
-- **A allowlist `LEGADO` do PR de infra é CONTRATO DE PROGRESSO, não guarda de regressão** (dev,
-  2026-08-01). Ela nasce com as **10 pistas dentro**, ou seja, **sem poder de detecção nenhum** — e
-  isso é o desenho, não um defeito a corrigir. **Proibido calibrar limiar pra "morder" parte do
-  parque hoje:** limiar afrouxado pra dar verde esconderia exatamente o que o dev quer ver melhorar.
-  O valor está em ela ENCOLHER a cada fatia. Deixar isso explícito no código.
-- **A detecção de zebra continua rodando no traçado de CONTROLE**, não na curva suavizada — desde o
-  7.6 isso é **decisão de escopo** (preservar o desenho aprovado no 7.1), não impossibilidade
-  técnica: rodar na curva devolveria zebra sim (16,6-40,0% a 120 pontos).
+  **Palavras do dev: "já custou duas vezes".**
+- **Era dos traçados: layout MODERNO/ATUAL.** Nürburgring = GP-Strecke, não Nordschleife.
+- **`LARGURA_ASFALTO = 34` mantida.** Separação ≥ 34 u e raio ≥ 20 u; as 10 passam.
+- **Escala UNIFORME por pista** (nunca esticar x e y independentemente). Consequência aceita:
+  Interlagos não enche a moldura na horizontal.
+- **Moldura de desenho: x ∈ [56, 924], y ∈ [36, 564].**
+- **Nada de métrica automatizável de reconhecimento.** Hausdorff contra a pista real recusado.
+- **A detecção de zebra roda no traçado de CONTROLE**, não na curva suavizada.
 
-## 🎨 DECISÃO DE ARTE ABERTA — 88/40%, com o achado que o preview trouxe
+## 🎨 DECISÃO DE ARTE ABERTA — 88/40%, com o parque inteiro na mesa
 
-**A 120 pontos uniformes, o teto de 40% deixa de ser restrição geométrica e vira COTA DE CONTAGEM.**
-Cada trecho cobre ~1/120 do perímetro (alcance = `segmento/2` de cada lado), então o teto admite
-exatamente `0,40 × 120 = 48` trechos — e **7 das 10 pistas param em 48 trechos / ~39,8%**. Mônaco tem
-93 candidatos, o Nordschleife 102; as duas desenham a **mesma quantidade de zebra que Monza**, que
-tem 48. Quem escolhe QUAIS 48 é a **ordem gulosa**, não a geometria da pista.
-**Consequência a pesar: mantido o teto em 40%, o redesenho não muda a QUANTIDADE de zebra de pista
-nenhuma — só a posição dela.**
-
-Medido por pista a 120 pts (aceitos/candidatos · cobertura): o teto **CORTA em 6** — Mônaco 48/93 ·
-Nordschleife 48/102 · Imola 48/64 · Red Bull Ring 48/61 · Interlagos 48/63 · Silverstone 48/53 — e
-**SATURA em 7** (as 6 + Monza 48/48 · 39,8%). Folgadas: Spa 46/46 · 38,2%, Montreal 34/34 · 28,2%,
-Suzuka 20/20 · 16,6%. *(Reconcilia o "7 das 10" da revisão do 7.6: os dois números estavam certos sob
-definições diferentes — cortar candidatos vs. encher o teto.)*
+`JANELA_CURVATURA_ZEBRA = 88` foi calibrado contra a Monza de 16 pontos, que **não existe mais**.
+Reabrir é decisão de arte do dev. Medido no parque novo: o teto de 40% **morde em 8 das 10** — só
+Spa (33,4%) e Red Bull Ring (28,0%) não perdem candidato. Caso extremo, o Nürburgring: **29 trechos
+/ 50,0% sem teto contra 24 / 38,7% com ele** — é o teto que segue impedindo a faixa contínua que o
+dev reprovou.
 
 ## Pendências ATIVAS
 
-1. **Fusão de camadas.** Spa já está em **8,8** na curva suavizada (regressão herdada do 7.4,
-   limiar ≥ 17); o redesenho de Spa fecha. Monza/Nordschleife vão aproximar mais trechos.
-2. **Guardas O(n²) — ADIADA por decisão do dev (2026-08-01), não esquecida.** `minNaoAdj`,
-   `separacaoMinima` e `cruzamentos` sobre curvas 3-4x maiores vão desacelerar a suíte. **Custo
-   medido hoje: ~9 ms** (medição da sessão de 2026-07-31). Não é problema demonstrado, e bucketizar
-   código espacial é otimização preventiva sutil — o `CLAUDE.md` manda não escalar por precaução.
-   **Reavaliar quando a fatia 1 mostrar o custo real**, com o número novo em mãos.
-3. **O elo testado do 7.3 trava o componente, não o uso dele:** apagar `<CamadasDaPista/>` de dentro
+1. **Abertas pelo 7.8:** (a) o `BotaoTema` é um botão discreto no canto do `app-shell` — posição e
+   forma **não passaram por veredito de arte**; (b) `erro` (salmão `#FF7B85`) e `raridadeProibido`
+   (`#FF4757`) continuam sendo dois vermelhos ao lado do vermelho da marca — não foi mexido porque
+   é decisão de arte; (c) **flash de tema no carregamento**: o `data-tema` só é escrito quando o
+   React monta e o efeito do `BotaoTema` roda, então quem tem o SO no claro e escolheu escuro vê
+   um lampejo claro (e vice-versa). Conserto padrão é um script inline de duas linhas no
+   `index.html` — fora do que foi pedido neste PR, registrado como limitação conhecida.
+2. **`AMOSTRAS_POR_SEGMENTO` pode cair de 12 pra 4-6 — COM o número.** A justificativa de N=12 era
+   que N=8 estourava o teto de 0,7 u; com as silhuetas novas **N=8 desvia 0,539 u**. Baixar move
+   todos os goldens, então é execução própria.
+3. **Fusão de camadas — o ASFALTO está resolvido, o resto não.** As 10 passam a guarda do asfalto
+   (34), mas **as 10 fundem a camada de LIMITE** (42), de 8,5 (Red Bull Ring) a 21,1 (Suzuka).
+   Report-only.
+4. **Guardas O(n²) — ADIADA por decisão do dev (2026-08-01).** Não é problema demonstrado.
+5. **O elo testado do 7.3 trava o componente, não o uso dele:** apagar `<CamadasDaPista/>` de dentro
    do `<svg>` de `TelaCorrida` ainda passa. Limite conhecido.
-4. **Dívida de processo do 7.4.** A branch foi renomeada por cima da `main` (`git branch -M`), sem
-   merge commit. O chore `50f5fd9` também foi direto na `main` e está à frente do `origin/main`.
-   Decidir se vira branch antes de qualquer push. (Os merges desde 2026-07-31 já são `--no-ff`
-   com branch própria — a dívida é só do histórico anterior.)
+6. **Dívida de processo do 7.4 — RESOLVIDA na prática em 2026-08-06.** A branch tinha sido
+   renomeada por cima da `main` (`git branch -M`), sem merge commit, e a pendência era "decidir se
+   vira branch antes de qualquer push". **Virou branch:** o push criou
+   `origin/pr-7.7-dados-nurburgring` e deixou a `main` remota parada em `b39782d`. Em 2026-08-07 a
+   `main` local foi pushada e o remoto subiu pra `49f3ca8` (até o 7.6.1). O que sobra é decisão do
+   dev, não dívida: como a `main` recebe os commits de 7.7 em diante desta branch — PR no GitHub ou
+   fast-forward direto, possível porque o histórico é linear
+   (`git merge-base --is-ancestor origin/main HEAD` = 0).
+7. **A rede de segurança da memoização da LUT (7.5) acabou.** Recuperar exige capturar o golden
+   sobre uma polilinha SINTÉTICA fixa — registrado, não feito.
 
-> ✅ Fechadas: **pendência 0** (`build` quebrado, `030a5f4`) · **pendência 2** (`tracados.test.ts`
-> travava o viewBox `0 0 1000 600` de antes do 7.3, proibindo a faixa y 600-630 que o 7.4 abriu —
-> agora lê de `VIEWBOX_*`) · **pendência 4** (preview da densidade alvo gerado; falta o veredito).
-> Pelo 7.4: dívida do viewBox e exceção nomeada do Suzuka. O **espinho de ~180°** no vértice #0 de
-> Spa e Interlagos **não se corrige separado** — o redesenho resolve.
+> ✅ Fechadas no 7.7: pendência 1 antiga (Spa fundia asfalto) · espinho de ~180° no vértice #0 de
+> Spa · preview da densidade alvo. Fechada no 7.7.1: Monza sem imagem.
 >
-> ⚠️ **Lição permanente:** este arquivo já afirmou por um dia "`tsc`/`build` limpos" sendo falso, por
-> herança de reescrita em reescrita **sem nunca medir**. **Afirmação de estado só entra medida.**
+> ⚠️ **Lição permanente:** este arquivo já afirmou por um dia "`tsc`/`build` limpos" sendo falso,
+> por herança de reescrita em reescrita **sem nunca medir**. **Afirmação de estado só entra medida.**
 
 ## Regras invioláveis da Fase 7
 
-1. **Tabela de luminância.** Ordem travada: escape 0,005 < fundo 0,008 < terreno 0,011 <
-   escape-de-curva/paddock 0,017 < muro 0,029 < **asfalto 0,048** < carro 0,477. O asfalto é sempre a
-   superfície mais clara; toda superfície nova passa por aqui antes de entrar.
-2. **Regra dos 360px.** Elemento ilegível a 360px de largura não entra. Já eliminou os acessos de
-   serviço do paddock (7.1) e a linha central tracejada (7.3).
-3. **Zebra só em CURVA, nunca em reta.** **Virada ACUMULADA ≥ 28° numa janela de
-   `JANELA_CURVATURA_ZEBRA` = 88 u de arco** (PR 7.6 — antes era ângulo ≥ 28° *por vértice*, que
-   se diluía com a densidade), com teto de 40% do perímetro (sem o teto, Nürburgring dá 85% e vira
-   a faixa contínua que o dev reprovou). A regra é testada nas duas densidades: 16 pontos e
-   48/80/120.
+1. **Tabela de luminância — RECALCULADA no 7.8 pra paleta grafite.** Ordem travada:
+   escape 0,0060 < chão 0,0103 < terreno 0,0144 < serviço 0,0194 < muro 0,0273 <
+   **asfalto 0,0369** < carro do jogador 0,219. O asfalto é sempre a superfície mais clara; toda
+   superfície nova passa por aqui antes de entrar. **O teto do asfalto (0,0397) é DERIVADO** do par
+   `carro do jogador / asfalto >= 3` — mexer na cor do carro do jogador move a pista inteira.
+2. **Regra dos 360px.** Elemento ilegível a 360px de largura não entra. A ordem e o sentido das
+   curvas nunca se mexem por esse motivo.
+3. **Zebra só em CURVA, nunca em reta.** Virada ACUMULADA ≥ 28° numa janela de
+   `JANELA_CURVATURA_ZEBRA` = 88 u de arco, com teto de 40% do perímetro.
 
-Mais dois critérios permanentes: **entorno é moldura, pista e carros são conteúdo** (adição que
-prejudique a leitura dos carros está errada); e **decisão de arte vai ao dev** — a base visual da
-fase é um portão aprovado a olho (7.1), e mudar composição sozinho já custou 2 bloqueantes no 7.3.
+Mais dois critérios permanentes: **entorno é moldura, pista e carros são conteúdo**; e **decisão de
+arte vai ao dev** — mudar composição sozinho já custou 2 bloqueantes no 7.3.
 
 ## Processo (regra completa no `CLAUDE.md`)
 
-- **RIGOR PROPORCIONAL AO RISCO.** Alto risco (engine, `src/data/`, balanceamento, portão visual,
-  netcode) = fluxo completo com `senior-reviewer`. **Baixo risco (docs, chore, refactor sem
-  mudança de comportamento, fix de uma linha) = implementar → testes → commitar.** Classificar e
-  anunciar ANTES de começar; na dúvida, perguntar em vez de escalar.
+- **RIGOR PROPORCIONAL AO RISCO.** Classificar e anunciar ANTES de começar; na dúvida, perguntar em
+  vez de escalar.
 - **UM PR POR SESSÃO.** Ao concluir: commitar, atualizar os dois docs, **PARAR e avisar o dev.**
-- **`OpcoesZebra` é andaime de MEDIÇÃO, não configuração.** `trechosDeZebra` aceita sobrescrita dos
-  4 parâmetros, com default nas constantes; **nenhum caminho de produção passa o argumento.** Existe
-  pra o preview varrer valores com o algoritmo de produção em vez de uma cópia — preview que
-  reimplementa o critério para de refletir a tela e não decide nada.
+- **Ao mexer em silhueta, use o harness de `preview/`** (`preview/harness.test.ts` +
+  `preview/desenhos.ts`, gitignored). Rodar:
+  `npx vitest run --config preview/harness.config.ts --reporter=verbose --silent=false`.
+- **`OpcoesZebra` é andaime de MEDIÇÃO, não configuração.** Nenhum caminho de produção passa o
+  argumento.
 
 ## Convenções (as demais estão no `CLAUDE.md`)
 
 - **Ao concluir um PR, atualizar OS DOIS:** entrada detalhada no `HISTORICO.md` (acumula) e este
   `ESTADO.md` **reescrito** (substitui, não acumula).
-- Previews visuais em `preview/` (gitignored). **Gitignored significa que ninguém vê por acidente:
-  preview gerado só conta como entregue depois de MOSTRADO ao dev, com CAMINHO ABSOLUTO** — foi
-  exatamente o que falhou no 7.4.
+- Previews visuais em `preview/` (gitignored). **Preview gerado só conta como entregue depois de
+  MOSTRADO ao dev, com CAMINHO ABSOLUTO** — foi exatamente o que falhou no 7.4.
+- **`referencias/` é gitignored** (imagens de terceiros, GDD §14.2).
 - Harness: `npm run balance` já embute `--reporter=verbose --silent=false`. Ao chamar o vitest na
   mão, passar as flags, senão a tabela é engolida.
 - **Nunca ler `src/data/*.json` por completo** (`equipe-anos.json` ≈ 324 mil tokens). Formato:
-  `src/fixtures/dataset-semente/`. Consulta: `jq`/`grep` com filtro. Regra completa no `CLAUDE.md`.
+  `src/fixtures/dataset-semente/`. Consulta: `jq`/`grep` com filtro.

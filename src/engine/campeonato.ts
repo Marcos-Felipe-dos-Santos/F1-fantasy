@@ -11,7 +11,7 @@
  */
 
 import type { Dataset } from './dataset';
-import { deriveSeed } from './rng';
+import { createRng, deriveSeed } from './rng';
 import { simularQuali } from './quali';
 import { simularCorrida } from './corrida';
 import type {
@@ -37,6 +37,105 @@ import type {
  */
 export function seedDaEtapa(seedBase: number, pistaId: string): number {
   return deriveSeed(seedBase, `camp:${pistaId}`);
+}
+
+/* ------------------------------------------------------------------------ *
+ * CALENDÁRIO — movido de `src/ui/fluxo-campeonato.ts` no PR 8.2.1.
+ *
+ * Motivo do move (pendência 0, aviso da revisão do 8.1): `calendarioSorteado`
+ * era o ÚNICO consumidor de RNG semeado fora de `src/engine/`. O custo disso
+ * aparece na Fase 3 (online), cujo desenho natural é "servidor escolhe a
+ * seed, todo cliente deriva o mesmo calendário" — com o calendário morando na
+ * UI, `src/net/` teria que importar de `src/ui/`, invertendo a dependência.
+ * `fluxo-campeonato.ts` RE-EXPORTA tudo isto, então nenhum chamador mudou.
+ * ------------------------------------------------------------------------ */
+
+/** Os dois formatos de temporada do modo Campeonato (portão 6.3). */
+export type FormatoTemporada = 'curta' | 'completa';
+
+/** Default do modo Campeonato: temporada curta (5 etapas) — decisão do portão 6.3. */
+export const FORMATO_PADRAO: FormatoTemporada = 'curta';
+
+/** Número de etapas de cada formato de temporada. */
+export const N_ETAPAS: Record<FormatoTemporada, number> = { curta: 5, completa: 10 };
+
+/**
+ * Valida `formato` contra o dataset e devolve o número de etapas.
+ *
+ * Os dois guards existem porque `slice` NUNCA reclama: com um `formato` fora
+ * do union (string vinda de save/URL, onde o tipo não vale nada)
+ * `N_ETAPAS[formato]` é `undefined` e `slice(0, undefined)` devolveria o
+ * calendário INTEIRO; com um dataset menor que o formato, `slice` satura e o
+ * jogador disputaria 8 etapas achando que são 10. Os dois casos entregam uma
+ * temporada errada sem erro nenhum — falha silenciosa, que este projeto
+ * trata como inaceitável.
+ *
+ * `nomeFn` entra na mensagem pro erro apontar a função que o chamador
+ * realmente chamou (`calendarioPadrao` ou `calendarioSorteado`).
+ */
+function etapasDoFormato(
+  dataset: Dataset,
+  formato: FormatoTemporada,
+  nomeFn: 'calendarioPadrao' | 'calendarioSorteado',
+): number {
+  if (!Object.prototype.hasOwnProperty.call(N_ETAPAS, formato)) {
+    throw new Error(`${nomeFn}: formato inválido "${formato}"`);
+  }
+  const nEtapas = N_ETAPAS[formato];
+  if (dataset.pistas.length < nEtapas) {
+    throw new Error(
+      `${nomeFn}: dataset tem ${dataset.pistas.length} pistas, formato "${formato}" precisa de ${nEtapas}`,
+    );
+  }
+  return nEtapas;
+}
+
+/**
+ * Calendário padrão do modo Campeonato: os ids das pistas na ORDEM do
+ * `dataset.pistas`, cortado em `N_ETAPAS[formato]`. Default `FORMATO_PADRAO`
+ * ('curta'). A temporada curta é sempre um PREFIXO da completa (mesmos ids,
+ * mesma ordem) — invariante que garante que as 5 primeiras etapas saem bit a
+ * bit idênticas nos dois formatos (a seed de cada etapa depende só do id da
+ * pista, nunca do índice/tamanho do calendário — ver `seedDaEtapa`).
+ */
+export function calendarioPadrao(
+  dataset: Dataset,
+  formato: FormatoTemporada = FORMATO_PADRAO,
+): string[] {
+  const nEtapas = etapasDoFormato(dataset, formato, 'calendarioPadrao');
+  return dataset.pistas.slice(0, nEtapas).map((pista) => pista.id);
+}
+
+/**
+ * Calendário SORTEADO por seed (PR 8.1) — o que o modo Campeonato usa na Fase
+ * 8. Embaralha as pistas do dataset e corta em `N_ETAPAS[formato]`: a
+ * temporada curta são 5 pistas sorteadas das 10, a completa são as 10 em ordem
+ * embaralhada.
+ *
+ * `calendarioPadrao` (ordem fixa do dataset) continua existindo e NÃO muda:
+ * é o calendário estável dos testes, dos goldens e do harness de balanceamento.
+ *
+ * Três propriedades que o desenho garante de graça, e que os testes travam:
+ * 1. **Curta é PREFIXO da completa pra mesma seed** — porque embaralha as 10
+ *    ANTES de cortar, nunca sorteia 5 direto. Mesma invariante que
+ *    `calendarioPadrao` mantém, pelo mesmo motivo (as 5 primeiras etapas saem
+ *    bit a bit idênticas nos dois formatos).
+ * 2. **A classificação final não depende da ordem** — `seedDaEtapa` deriva a
+ *    seed só do id da pista e a soma de pontos é comutativa (ver doc de
+ *    `simularCampeonato`). Embaralhar muda a ordem das etapas, nunca o campeão.
+ * 3. **Namespace de seed próprio** (`deriveSeed(seed, 'calendario')`, nunca a
+ *    seed crua) — o sorteio do calendário fica isolado do sorteio das etapas
+ *    (`camp:<pistaId>`), do draft e dos bots. Dois consumidores da mesma seed
+ *    base não podem compartilhar stream.
+ */
+export function calendarioSorteado(
+  dataset: Dataset,
+  seed: number,
+  formato: FormatoTemporada = FORMATO_PADRAO,
+): string[] {
+  const nEtapas = etapasDoFormato(dataset, formato, 'calendarioSorteado');
+  const rng = createRng(deriveSeed(seed, 'calendario'));
+  return rng.shuffle(dataset.pistas.map((pista) => pista.id)).slice(0, nEtapas);
 }
 
 /**
