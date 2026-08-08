@@ -15,6 +15,7 @@
  * outra na tabela de pontos, porque a pontuação vem de `campeonato.etapas`.
  */
 
+import { useState } from 'react';
 import { seedDaEtapa } from '../engine/campeonato';
 import type { DraftState } from '../engine/types';
 import { dataset } from './dataset-app';
@@ -46,6 +47,12 @@ export function FluxoCampeonato({
   onReiniciar,
 }: FluxoCampeonatoProps) {
   const totalCorridas = campeonato.etapas.length;
+  // O toggle mora AQUI, não no `PainelCampeonato`: este componente não remonta
+  // entre etapas (o `key` está no `FluxoCorrida`, o filho), então a escolha
+  // sobrevive ao avanço. No painel, ela seria perdida a cada corrida.
+  // Deliberadamente NÃO persistido no save: o save tem impressão digital e
+  // `VERSAO_FORMATO`, e preferência de UI não é estado de campeonato.
+  const [auto, setAuto] = useState(false);
 
   // Fim de temporada: o cursor passou da última etapa.
   if (campeonatoConcluido(campeonato)) {
@@ -82,6 +89,9 @@ export function FluxoCampeonato({
       state={state}
       pistaId={pistaId}
       seed={seedDaEtapa(state.seed, pistaId)}
+      // No automático a corrida larga sozinha — sem isso o avanço pararia na
+      // tela de grid esperando um clique, e o modo pareceria quebrado.
+      autoLargar={auto}
       onReiniciar={onReiniciar}
       extraResultado={
         <PainelCampeonato
@@ -94,6 +104,8 @@ export function FluxoCampeonato({
           concluido={false}
           onProximaCorrida={onProximaCorrida}
           nomeProximaPista={ehUltima ? null : nomeDaPista(campeonato.calendario[indice + 1])}
+          auto={auto}
+          onAuto={setAuto}
         />
       }
     />

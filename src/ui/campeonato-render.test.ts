@@ -31,7 +31,7 @@ import {
   simularOResto,
 } from './fluxo-campeonato';
 import { FluxoCampeonato } from './FluxoCampeonato';
-import { PainelCampeonato } from './PainelCampeonato';
+import { PainelCampeonato, SEGUNDOS_AUTO_AVANCO } from './PainelCampeonato';
 import { TelaInicio } from './TelaInicio';
 
 const dataset = criarDataset(equipeAnos, pecas, pistas);
@@ -147,6 +147,58 @@ describe('PainelCampeonato monta', () => {
       }),
     );
     expect(html).toContain('Campeão');
+    expect(html).not.toContain('Próxima corrida');
+  });
+});
+
+describe('PainelCampeonato — modo automático (PR C)', () => {
+  const base = {
+    state: draft,
+    classificacao: classificacaoApos(campeonato, 1),
+    corridasFeitas: 1,
+    totalCorridas: 5,
+    concluido: false,
+    onProximaCorrida: () => {},
+    nomeProximaPista: 'Interlagos',
+  };
+
+  it('sem `onAuto` o toggle nem aparece — a corrida avulsa não ganha controle sem sentido', () => {
+    const html = renderToStaticMarkup(createElement(PainelCampeonato, base));
+    expect(html).not.toContain('Avançar automaticamente');
+  });
+
+  it('com `onAuto` e desligado: toggle presente, desmarcado, sem contagem', () => {
+    const html = renderToStaticMarkup(
+      createElement(PainelCampeonato, { ...base, auto: false, onAuto: () => {} }),
+    );
+    expect(html).toContain('Avançar automaticamente');
+    expect(html).not.toContain('checked');
+    expect(html).not.toContain('próxima em');
+  });
+
+  it('ligado: toggle marcado e contagem visível (o botão manual continua lá)', () => {
+    const html = renderToStaticMarkup(
+      createElement(PainelCampeonato, { ...base, auto: true, onAuto: () => {} }),
+    );
+    expect(html).toContain('checked');
+    expect(html).toContain(`próxima em ${SEGUNDOS_AUTO_AVANCO}s`);
+    expect(html).toContain('Próxima corrida');
+  });
+
+  it('no fim do campeonato o automático não conta nem oferece avanço', () => {
+    // `onProximaCorrida: null` ⇒ não há pra onde avançar; ligar o auto não
+    // pode produzir contagem eterna na tela de fim de temporada.
+    const html = renderToStaticMarkup(
+      createElement(PainelCampeonato, {
+        ...base,
+        concluido: true,
+        onProximaCorrida: null,
+        nomeProximaPista: null,
+        auto: true,
+        onAuto: () => {},
+      }),
+    );
+    expect(html).not.toContain('próxima em');
     expect(html).not.toContain('Próxima corrida');
   });
 });

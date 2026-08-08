@@ -957,3 +957,27 @@ button.card {
 .ticker-eventos__pit {
   color: var(--cor-texto-fraco);
 }
+
+/* Modo automático do campeonato (PR C): o toggle fica ao lado do botão e
+   segue clicável durante a contagem — é assim que se desliga no meio. */
+.painel-campeonato__acoes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--espaco-md);
+  margin-top: var(--espaco-lg);
+}
+
+.painel-campeonato__auto {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-xs);
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.painel-campeonato__contagem {
+  color: var(--cor-texto-fraco);
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+}

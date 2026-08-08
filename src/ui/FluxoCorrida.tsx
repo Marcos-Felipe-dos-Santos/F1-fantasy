@@ -22,6 +22,8 @@ interface FluxoCorridaProps {
   seed?: number;
   /** Conteúdo extra na tela de resultado — o `PainelCampeonato`, no modo Campeonato. */
   extraResultado?: ReactNode;
+  /** Larga sozinho ao montar (PR C, modo automático) — ver `useCorrida`. */
+  autoLargar?: boolean;
   onReiniciar: () => void;
 }
 
@@ -30,12 +32,14 @@ export function FluxoCorrida({
   pistaId,
   seed,
   extraResultado,
+  autoLargar,
   onReiniciar,
 }: FluxoCorridaProps) {
   const { fase, pista, grid, resultado, tempoSimMs, largar, acelerar, velocidade, setVelocidade } = useCorrida(
     state,
     pistaId,
     seed,
+    autoLargar,
   );
 
   if (fase === 'resultado') {

@@ -11,8 +11,17 @@
  * `classificacaoApos` (engine), já ordenada por pontos/countback/jogadorId.
  */
 
+import { useEffect, useState } from 'react';
 import type { DraftState, LinhaClassificacao } from '../engine/types';
 import { nomeJogador } from './loadout-view';
+
+/**
+ * Segundos que a classificação fica na tela antes de o modo automático seguir
+ * pra próxima corrida. Curto o bastante pra não entediar, longo o bastante pra
+ * dar tempo de ler a tabela e de DESLIGAR o automático (o toggle continua
+ * clicável durante a contagem — é assim que se sai do modo no meio).
+ */
+export const SEGUNDOS_AUTO_AVANCO = 5;
 
 interface PainelCampeonatoProps {
   state: DraftState;
@@ -25,6 +34,12 @@ interface PainelCampeonatoProps {
   onProximaCorrida: (() => void) | null;
   /** Nome da próxima pista, pra o botão dizer pra onde se está indo. */
   nomeProximaPista: string | null;
+  /**
+   * Modo automático ligado (PR C). `undefined` esconde o toggle — é o que
+   * mantém a corrida avulsa sem um controle que não faria sentido nela.
+   */
+  auto?: boolean;
+  onAuto?: (ligado: boolean) => void;
 }
 
 /** Nome de exibição do jogador; cai no id se não achar (mesmo padrão de `TelaResultadoCorrida`). */
@@ -45,8 +60,40 @@ export function PainelCampeonato({
   concluido,
   onProximaCorrida,
   nomeProximaPista,
+  auto,
+  onAuto,
 }: PainelCampeonatoProps) {
   const campeao = classificacao[0];
+  const autoAtivo = auto === true && onProximaCorrida !== null;
+  const [restantes, setRestantes] = useState(SEGUNDOS_AUTO_AVANCO);
+
+  /**
+   * Contagem regressiva do modo automático.
+   *
+   * Um `setInterval` de 1 s que decrementa e, ao chegar a zero, avança. Fica
+   * TUDO dentro deste efeito (nada de agendar timer em updater de `setState`)
+   * pelo mesmo motivo registrado em `useCorrida`: o StrictMode invoca updaters
+   * duas vezes em dev, e um updater que agenda timer dobraria os callbacks. O
+   * cleanup é o que faz "desligar no meio da contagem" funcionar — desmarcar o
+   * toggle muda `autoAtivo`, o efeito reroda e limpa o intervalo pendente.
+   */
+  useEffect(() => {
+    if (!autoAtivo) {
+      setRestantes(SEGUNDOS_AUTO_AVANCO);
+      return;
+    }
+    const id = setInterval(() => {
+      setRestantes((atual) => {
+        if (atual <= 1) {
+          clearInterval(id);
+          onProximaCorrida();
+          return 0;
+        }
+        return atual - 1;
+      });
+    }, 1000);
+    return () => clearInterval(id);
+  }, [autoAtivo, onProximaCorrida]);
 
   return (
     <section className="painel-campeonato">
@@ -98,9 +145,30 @@ export function PainelCampeonato({
       </div>
 
       {onProximaCorrida !== null && (
-        <button type="button" className="botao-primario" onClick={onProximaCorrida}>
-          Próxima corrida{nomeProximaPista !== null ? ` — ${nomeProximaPista}` : ''} →
-        </button>
+        <div className="painel-campeonato__acoes">
+          <button type="button" className="botao-primario" onClick={onProximaCorrida}>
+            Próxima corrida{nomeProximaPista !== null ? ` — ${nomeProximaPista}` : ''} →
+          </button>
+
+          {onAuto !== undefined && (
+            <label className="painel-campeonato__auto">
+              <input
+                type="checkbox"
+                checked={auto === true}
+                onChange={(evento) => onAuto(evento.target.checked)}
+              />
+              Avançar automaticamente
+            </label>
+          )}
+
+          {/* A contagem fica ao lado do toggle, que segue clicável — desmarcar
+              aqui cancela o avanço. É assim que se sai do modo no meio. */}
+          {autoAtivo && (
+            <span className="painel-campeonato__contagem" role="status">
+              próxima em {restantes}s
+            </span>
+          )}
+        </div>
       )}
     </section>
   );
