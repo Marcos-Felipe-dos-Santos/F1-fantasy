@@ -18,7 +18,7 @@
   construção** — o harness importa só `src/engine/dataset`, `src/data/*.json` e `scripts/alavancas`,
   e nenhum dos três foi tocado. `prettier --check` reprova `fluxo-campeonato.ts`/`.test.ts`, mas
   **já reprovava no HEAD** (verificado com `git show HEAD:<arquivo>`) — pré-existente, não é gate.
-- 🎮 **COMO TESTAR O CAMPEONATO** (é o que o dev pediu pra fazer antes do 8.3):
+- 🎮 **COMO TESTAR O CAMPEONATO no app real** (o dev já testou single e local com 2 jogadores):
   `npm run dev` → `http://localhost:5173/` → **Formato: "Campeonato curto"** → Começar draft →
   jogar o draft → **Ir pra corrida**. No fim de cada corrida, a tabela acumulada e "Próxima
   corrida". Recarregar a página no meio deve oferecer **"Continuar campeonato"** no topo.
@@ -86,9 +86,10 @@ balance-harness pra engine" **já tinha acontecido**.
 
 **O que NUNCA tinha sido feito é o antigo PR 6.6 — as TELAS.** Era daí que vinha o desalinhamento
 inteiro: o modo existia, determinístico e testado, e era **inalcançável pelo jogador**.
-✅ **Resolvido no 8.4-mínimo** (`4ba4f50`): o campeonato agora tem seletor, encadeia corridas, salva
-e retoma. O que falta é o **8.3** — as telas de verdade (calendário, classificação navegável, fim de
-temporada); o painel de hoje é cru de propósito.
+✅ **Resolvido no 8.4-mínimo** (`4ba4f50`): o campeonato ganhou seletor, encadeia corridas, salva e
+retoma. ✅ **E o 8.3** (`0da36fb`) substituiu as telas cruas pelas de verdade — calendário com
+silhuetas, classificação com variação de posição e fim de campeonato com pódio.
+**A Fase 8 está completa**; o que resta é o veredito do dev sobre o preview.
 
 ### O 8.2 colapsou — FEITO, mas não é o PR que o plano descrevia
 
