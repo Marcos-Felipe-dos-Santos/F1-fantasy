@@ -708,7 +708,7 @@
   - **Sai o motivo que segurava 7.7/7.8 fora da `main`.** O merge agora é decisão de processo do
     dev, não espera de veredito visual.
 
-- **PR 8.2.1 — CALENDÁRIO DO CAMPEONATO VAI PRA `src/engine/`** (commit `4d38aa7`). Fecha a
+- **PR 8.2.1 — CALENDÁRIO DO CAMPEONATO VAI PRA `src/engine/`** (commit `cfe1c47`). Fecha a
   **pendência 0**, aberta pela revisão do 8.1: `calendarioSorteado` era o ÚNICO consumidor de RNG
   semeado fora de `src/engine/` (os outros 13 usos de `deriveSeed` em `src/` já estavam na engine).
 
