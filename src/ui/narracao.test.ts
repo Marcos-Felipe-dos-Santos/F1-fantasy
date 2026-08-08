@@ -12,8 +12,8 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import type { EventoCorrida, TipoEvento } from '../engine/types';
-import { narrarEvento, VARIANTES_CHUVA, VARIANTES_SECO, variantesDe } from './narracao';
+import type { EventoCorrida, ResultadoCorrida, TipoEvento } from '../engine/types';
+import { narrarEvento, narrarEventos, VARIANTES_CHUVA, VARIANTES_SECO, variantesDe } from './narracao';
 
 const TIPOS: TipoEvento[] = [
   'erro-piloto',
@@ -146,5 +146,163 @@ describe('cobertura dos tipos', () => {
       ...Object.values(VARIANTES_CHUVA).flatMap((pool) => [...pool!]),
     ];
     for (const frase of todas) expect(frase).not.toMatch(proibidos);
+  });
+});
+
+/**
+ * PR B — causalidade CONTRAFACTUAL. Baseline vermelho: `narrarEventos` ainda
+ * não existe quando este bloco foi escrito.
+ *
+ * O critério NÃO é "erro e troca de posição na mesma volta" — isso ainda
+ * mentiria, porque Y podia vir 3s mais rápido e passar de qualquer jeito. Só
+ * há causalidade se, DESCONTADO o custo do erro, X continuaria à frente.
+ * Fixtures sintéticas, números escolhidos à mão, pra que cada caso isole uma
+ * condição.
+ */
+describe('narrarEventos — causalidade contrafactual (PR B)', () => {
+  /** Monta um `ResultadoCorrida` mínimo com o que a narração lê. */
+  function resultadoDe(
+    historicoVoltas: Record<string, number[]>,
+    eventos: EventoCorrida[],
+    voltasDePit: Record<string, number[]> = {},
+    chuva = false,
+  ): ResultadoCorrida {
+    return {
+      seed: 42,
+      classificacao: Object.keys(historicoVoltas).map((jogadorId, i) => ({
+        jogadorId,
+        posicao: i + 1,
+        pontos: 0,
+        tempoTotal: historicoVoltas[jogadorId].reduce((a, b) => a + b, 0),
+        paradas: (voltasDePit[jogadorId] ?? []).length,
+        status: 'terminou' as const,
+        voltasCompletadas: historicoVoltas[jogadorId].length,
+      })),
+      voltaMaisRapida: { jogadorId: Object.keys(historicoVoltas)[0], tempo: 90_000 },
+      eventos,
+      chuva,
+      historicoVoltas,
+      voltasDePit,
+    };
+  }
+
+  const erro = (jogadorId: string, volta: number, custoMs: number): EventoCorrida => ({
+    jogadorId,
+    volta,
+    tipo: 'erro-piloto',
+    custoMs,
+  });
+
+  it('CASO 1 — flip que passa no contrafactual vira linha causal', () => {
+    // V1: X 90.000, Y 91.000  → X à frente (90.000 < 91.000)
+    // V2: X 92.000 (inclui erro de 3.000), Y 90.000
+    //     cum X = 182.000, cum Y = 181.000 → Y à frente agora
+    //     sem o erro: X estaria em 179.000 < 181.000 → X seguiria à frente. CAUSAL.
+    const resultado = resultadoDe(
+      { X: [90_000, 92_000], Y: [91_000, 90_000] },
+      [erro('X', 2, 3_000)],
+    );
+    const narradas = narrarEventos(resultado);
+    expect(narradas).toHaveLength(1);
+    expect(narradas[0].caiuAtrasDe).toBe('Y');
+  });
+
+  it('CASO 2 (DISCRIMINANTE) — flip que NÃO passa no contrafactual narra só o erro', () => {
+    // Mesmo flip, mas Y veio MUITO mais rápido: sem o erro X ainda perderia.
+    // V1: X 90.000, Y 91.000 → X à frente
+    // V2: X 92.000 (erro de 1.000), Y 85.000
+    //     cum X = 182.000, cum Y = 176.000 → Y à frente
+    //     sem o erro: X em 181.000, ainda ATRÁS de 176.000 → não foi o erro.
+    const resultado = resultadoDe(
+      { X: [90_000, 92_000], Y: [91_000, 85_000] },
+      [erro('X', 2, 1_000)],
+    );
+    const narradas = narrarEventos(resultado);
+    expect(narradas).toHaveLength(1);
+    expect(narradas[0].caiuAtrasDe).toBeNull();
+  });
+
+  it('CASO 3 — erro sem flip nenhum narra só o erro', () => {
+    const resultado = resultadoDe(
+      { X: [90_000, 92_000], Y: [95_000, 95_000] },
+      [erro('X', 2, 3_000)],
+    );
+    expect(narrarEventos(resultado)[0].caiuAtrasDe).toBeNull();
+  });
+
+  it('CASO 4 — flip na volta do PIT do próprio carro não afirma causalidade, e marca os boxes', () => {
+    const resultado = resultadoDe(
+      { X: [90_000, 112_000], Y: [91_000, 90_000] },
+      [erro('X', 2, 3_000)],
+      { X: [2] },
+    );
+    const narrada = narrarEventos(resultado)[0];
+    expect(narrada.caiuAtrasDe).toBeNull();
+    expect(narrada.entrouNosBoxes).toBe(true);
+  });
+
+  it('CASO 5 — carro com menos voltas que V nunca é nomeado como Y', () => {
+    // Z abandonou na volta 1: não pode ser "quem passou" na volta 2.
+    const resultado = resultadoDe(
+      { X: [90_000, 92_000], Z: [80_000] },
+      [erro('X', 2, 3_000)],
+    );
+    expect(narrarEventos(resultado)[0].caiuAtrasDe).toBeNull();
+  });
+
+  it('CASO 6 — investigacao NUNCA produz linha causal (a penalidade não está no histórico)', () => {
+    const resultado = resultadoDe(
+      { X: [90_000, 92_000], Y: [91_000, 90_000] },
+      [{ jogadorId: 'X', volta: 2, tipo: 'investigacao', custoMs: 5_000 }],
+    );
+    expect(narrarEventos(resultado)[0].caiuAtrasDe).toBeNull();
+  });
+
+  it('CASO 7 — dois eventos do mesmo carro na mesma volta dão UMA linha causal, no de maior custo', () => {
+    const resultado = resultadoDe(
+      { X: [90_000, 92_000], Y: [91_000, 90_000] },
+      [erro('X', 2, 500), { jogadorId: 'X', volta: 2, tipo: 'problema-tecnico', custoMs: 2_500 }],
+    );
+    const narradas = narrarEventos(resultado);
+    expect(narradas).toHaveLength(2);
+    const comConsequencia = narradas.filter((n) => n.caiuAtrasDe !== null);
+    expect(comConsequencia).toHaveLength(1);
+    expect(comConsequencia[0].evento.tipo).toBe('problema-tecnico');
+  });
+
+  it('CASO 8 — volta 1 nunca tem causalidade (não há volta anterior pra comparar)', () => {
+    const resultado = resultadoDe({ X: [95_000], Y: [90_000] }, [erro('X', 1, 3_000)]);
+    expect(narrarEventos(resultado)[0].caiuAtrasDe).toBeNull();
+  });
+
+  it('CASO 8b — X que JÁ estava atrás de Y não "cai atrás" dele (não se perde o que não se tinha)', () => {
+    // Escolhido pra passar no contrafactual e ser barrado SÓ pela condição 1:
+    // V1: X 95.000, Y 90.000 → X já vinha ATRÁS.
+    // V2: X 92.000 (erro de 10.000), Y 96.000
+    //     cum X = 187.000, cum Y = 186.000 → Y à frente (como já estava).
+    //     sem o erro: X em 177.000 < 186.000 → o contrafactual PASSARIA.
+    // Sem a condição "X estava à frente", sairia a linha falsa "X caiu atrás
+    // de Y" — quando X nunca esteve na frente dele.
+    const resultado = resultadoDe(
+      { X: [95_000, 92_000], Y: [90_000, 96_000] },
+      [erro('X', 2, 10_000)],
+    );
+    expect(narrarEventos(resultado)[0].caiuAtrasDe).toBeNull();
+  });
+
+  it('CASO 9 — determinismo: mesma entrada, mesma saída', () => {
+    const resultado = resultadoDe(
+      { X: [90_000, 92_000], Y: [91_000, 90_000] },
+      [erro('X', 2, 3_000)],
+    );
+    expect(narrarEventos(resultado)).toEqual(narrarEventos(resultado));
+  });
+
+  it('a frase da variante continua vindo do pool (PR A segue valendo)', () => {
+    const resultado = resultadoDe(
+      { X: [90_000, 92_000], Y: [91_000, 90_000] },
+      [erro('X', 2, 3_000)],
+    );
+    expect(VARIANTES_SECO['erro-piloto']).toContain(narrarEventos(resultado)[0].frase);
   });
 });

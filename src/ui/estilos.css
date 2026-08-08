@@ -944,3 +944,16 @@ button.card {
   font-size: 0.8rem;
   color: var(--cor-texto-fraco);
 }
+
+/* Consequência causal no ticker (PR B da narração): só aparece quando o
+   critério contrafactual confirma que o incidente explica a troca de posição.
+   Fraseado relacional ("caiu atrás de Y"), nunca posição absoluta — o painel
+   ao lado ordena por progresso contínuo e um número aqui brigaria com ele. */
+.ticker-eventos__consequencia {
+  color: var(--primaria-texto); /* TEXTO -> tinta */
+  font-weight: 700;
+}
+
+.ticker-eventos__pit {
+  color: var(--cor-texto-fraco);
+}
