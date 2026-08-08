@@ -679,6 +679,35 @@
   timer disparando e o clique.** Isso é o teste do dev no app.
   **Medido:** `npm test` **1078/36** (era 1074), `tsc`, `eslint` e `build` **exit 0**.
 
+- **✅ OS DOIS PORTÕES VISUAIS — FECHADOS pelo dev em 2026-08-07.** Não é um PR: é o veredito que os
+  PRs 7.7/7.7.1 e 7.8 estavam esperando, alguns dias em aberto.
+
+  **1. SILHUETAS (7.7/7.7.1) — APROVADAS. Teste cego 10/10.** O critério de aceite era do próprio
+  dev: *o jogador vê a pista e pensa "poxa, Interlagos" sem ler o nome?* **A linha de base era
+  0/10** — o parque antigo não fazia ninguém reconhecer nada. O redesenho a partir da geometria real
+  dos circuitos levou o placar a **10/10**. Vale registrar o que isso encerra: havia um **gatilho de
+  abandono** combinado com o dev — se o ponteiro não se movesse, era pra parar e reabrir a pergunta
+  em vez de insistir. **Ele não foi acionado.** A aposta de redesenhar a partir da geometria real,
+  em vez de estilizar à mão, foi o que pagou.
+
+  **2. PALETA (7.8) — APROVADA, com o light mode.** A troca do azul-noite pelo grafite + vermelho
+  `#FF1801` + dourado `#FFB800` + verde `#00D26A` **resolveu o problema que motivou o PR** — nas
+  palavras do dev na abertura, a tela "parecia genérica e feita com IA, todo projeto que usa IA gera
+  esse mesmo azul-roxo". Aprovada incluindo o light mode e a ilha escura do painel do traçado, que é
+  necessidade matemática (o teto de luminância do asfalto, 0,0397, é derivado do par
+  `carro do jogador / asfalto >= 3` e é impossível sobre base clara).
+
+  **O que o fechamento destrava, e que estava parado sem necessidade:**
+  - **`npm run preview` voltou a ser seguro.** Havia um aviso permanente de que ele repintaria o
+    `redesenho.html` com a paleta nova e **misturaria as duas perguntas em aberto**; sem perguntas
+    pendentes, o aviso morreu.
+  - **O diff da paleta deixou de ser candidato a reversão** (a instrução era reverter `f736e6c` se
+    fosse reprovada).
+  - **O PR de INFRA deixa de ser pré-requisito e vira consolidação** — era condicionado a "se as
+    silhuetas forem aprovadas". Escopo a reavaliar com o dev: pode ter encolhido junto.
+  - **Sai o motivo que segurava 7.7/7.8 fora da `main`.** O merge agora é decisão de processo do
+    dev, não espera de veredito visual.
+
 **Testes na main: 893 passando (33 arquivos)** — medido em 2026-08-01 via `npm test`. Mais o harness, por config própria (`npm run balance`), e os **três** geradores de preview (`npm run preview`: traçados, cego, zebra), todos fora do `npm test`.
 > A linha anterior dizia **"521 passando (27 arquivos)"**, número da época do PR 6.2 — ficou parada enquanto a suíte crescia até 851. Corrigida no chore de 2026-07-30. Contagem de teste envelhece rápido: quem atualizar, **meça** (`npm test`), não some de cabeça.
 

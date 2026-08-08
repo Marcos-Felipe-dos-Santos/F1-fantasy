@@ -34,42 +34,39 @@
 - ⚠️ **EXISTEM DUAS `main`s e elas divergem** (medido em 2026-08-07, `git rev-parse main origin/main`):
   **`main` local = `49f3ca8`** (contém até o PR 7.6.1, com merge commits) está **21 commits à frente**
   de **`origin/main` = `b39782d`** (PR 7.4). Quem fizer `git checkout main` cai na LOCAL, não na do
-  remoto. **Nenhuma das duas tem 7.7, 7.7.1, 7.8, 8.1 e 8.2** — esses só existem nesta branch, que
-  está **34 commits à frente de `origin/main`**. Os dois portões visuais seguem abertos.
-  **Merge na `main` continua exigindo "ok" próprio** (e a tag, se houver, só DEPOIS do merge).
+  remoto. **Nenhuma das duas tem 7.7, 7.7.1, 7.8, 8.1 e 8.2** — esses só existem nesta branch.
+  ✅ **Os dois portões visuais foram FECHADOS em 2026-08-07** (silhuetas 10/10, paleta aprovada), o
+  que remove o motivo que segurava esse trabalho fora da `main`.
+  **Merge na `main` continua exigindo "ok" próprio** (e a tag, se houver, só DEPOIS do merge) —
+  agora é decisão de processo do dev, não mais espera de veredito visual.
 
-## 🛑 DOIS PORTÕES VISUAIS ABERTOS — não confundir um com o outro
+## ✅ OS DOIS PORTÕES VISUAIS ESTÃO FECHADOS (dev, 2026-08-07)
 
-### 1. A PALETA (novo, PR 7.8)
+**Não há portão visual aberto neste projeto.** Os dois foram aprovados pelo dev na mesma sessão.
+Esta seção fica como registro do veredito — não reabrir sem ele.
 
-    start "" "E:\projetos\F1 fantasy\preview\paleta.html"
+### 1. AS SILHUETAS (PR 7.7/7.7.1) — ✅ APROVADAS. **Teste cego: 10/10.**
 
-Draft + corrida (Interlagos), **dark e light lado a lado**, marcação idêntica nos dois painéis —
-a única variável é o conjunto de custom properties. Embaixo, as amostras de token com `*` marcando
-o que muda entre os modos.
+O critério de aceite era do próprio dev: *o jogador vê a pista e pensa "poxa, Interlagos" sem ler o
+nome?* **Linha de base era 0/10; o placar final foi 10/10.** O redesenho a partir da geometria real
+dos circuitos resolveu — e o **gatilho de abandono** que estava armado (parar e reabrir a pergunta
+se o ponteiro não se movesse) **não foi acionado**.
 
-**Perguntas do portão:** (a) a tela diz "F1" agora? (b) o light mode entra ou fica só o dark?
-(c) o painel do traçado **não clareia** no light (é ilha escura por necessidade matemática, ver
-abaixo) — isso incomoda?
+### 2. A PALETA (PR 7.8) — ✅ APROVADA, **com o light mode**.
 
-⚠️ **O preview é MAQUETE, não o app rodando.** Ele monta CSS próprio a partir dos tokens reais;
-não carrega o `estilos.css`. Serve pra julgar a COR (é o que o portão pergunta), não pra auditar
-se cada seletor de produção usa o token certo — isso é papel dos testes, e o pareamento
-"preenchimento de acento + tinta escura" ganhou guarda de CSS no commit `358ab6f`.
+A troca do azul-noite pela paleta F1 (grafite + vermelho `#FF1801` + dourado `#FFB800` + verde
+`#00D26A`) **resolveu o problema que motivou o PR** — palavras do dev na abertura: a tela "parecia
+genérica e feita com IA". Aprovada como está, incluindo o light mode e a ilha escura do painel do
+traçado (que é necessidade matemática, ver as decisões travadas mais abaixo).
 
-### 2. AS SILHUETAS (herdado do 7.7, AINDA SEM VEREDITO)
-
-    start "" "E:\projetos\F1 fantasy\preview\redesenho.html"
-
-**A pergunta é a do critério de aceite do dev:** *o jogador vê a pista e pensa "poxa, Interlagos"
-sem ler o nome?* **Linha de base: 0/10.** O placar do teste cego precisa ser anotado aqui embaixo.
-Se o ponteiro não se mover, vale o gatilho de abandono aceito pelo dev: parar e reabrir a pergunta.
-
-> ⚠️ **`npm run preview` regenera TODOS os previews e repintaria o `redesenho.html` com a paleta
-> nova** — o que misturaria as duas perguntas acima. Enquanto o veredito das silhuetas não sair,
-> regerar só o da paleta:
-> `npx vitest run --config vitest.preview.config.ts scripts/preview-paleta.preview.test.ts`
-> `preview/` é gitignored.
+> ✅ **Consequências práticas de os dois estarem fechados:**
+> - **`npm run preview` voltou a ser seguro.** O aviso que existia aqui — de que ele repintaria o
+>   `redesenho.html` com a paleta nova e misturaria as duas perguntas — **não vale mais**, porque
+>   não há duas perguntas pendentes pra misturar.
+> - **O diff da paleta deixou de ser candidato a reversão.** A instrução anterior ("se for
+>   reprovada, reverter `f736e6c`") está morta.
+> - Os previews seguem em `preview/` (gitignored):
+>   `E:\projetos\F1 fantasy\preview\redesenho.html` e `E:\projetos\F1 fantasy\preview\paleta.html`.
 
 ## 🚩 FASE 8 — MODO CAMPEONATO: o plano aprovado NÃO bate com o código
 
@@ -194,19 +191,20 @@ de 0,0650 pra **0,0397** e obrigou a redesenhar a escada tonal inteira. Não foi
 
 ## SEQUÊNCIA — o que sobrou
 
-0. ⬅️ **PR 8.2.1 (mover calendário pra engine) e depois o 8.4-mínimo (wiring)** — decididos pelo dev
-   em 2026-08-07, **nessa ordem**, ver a seção 🚩 acima. O 8.4-mínimo **abre um terceiro portão
-   visual**, somando-se aos dois abaixo que seguem sem veredito.
-1. ⬅️ **VEREDITO DO DEV sobre `paleta.html`** (portão novo) **e sobre `redesenho.html`** (portão
-   herdado). São perguntas independentes e podem ser respondidas em qualquer ordem.
-2. **Se a paleta for reprovada:** o diff é reversível num commit só (`f736e6c`) — `src/engine/` e
-   `src/data/` não aparecem nele.
-3. **Se as silhuetas forem aprovadas:** o PR de INFRA (restrições como testes vermelhos +
-   allowlist `LEGADO` que só encolhe) deixa de ser pré-requisito e vira consolidação. Reavaliar o
-   escopo com o dev antes de fazer.
-4. 🛑 **Depois, o pit (7.9).**
+**Os portões visuais saíram desta lista: os dois foram aprovados em 2026-08-07.**
 
-## Decisões travadas da PALETA (7.8 — não reabrir sem o dev)
+1. ⬅️ **PR 8.2.1 — mover o calendário pra `src/engine/`.** Baixo risco, mecânico. Fecha a pendência 0.
+2. **PR de INFRA — DESTRAVADO pela aprovação das silhuetas.** Era "pré-requisito caso as silhuetas
+   fossem aprovadas"; com o 10/10, **deixa de ser pré-requisito e vira consolidação**: restrições
+   geométricas como testes vermelhos + allowlist `LEGADO` que só encolhe. **Reavaliar o escopo com o
+   dev antes de fazer** — pode ter encolhido junto.
+3. **PR 8.3 — as telas de verdade do campeonato** (calendário, classificação navegável, fim de
+   temporada). O painel de hoje é cru de propósito.
+4. 🛑 **Depois, o pit (7.9).**
+5. **Decisão de arte ainda aberta:** o `88/40%` da zebra (seção própria abaixo) — não foi tocado
+   pela aprovação dos portões.
+
+## Decisões travadas da PALETA (7.8 — ✅ APROVADA pelo dev, não reabrir sem ele)
 
 - 🔒 **Os três acentos da marca são IDÊNTICOS nos dois modos onde são PREENCHIMENTO.** Onde a cor
   vira TINTA (texto, ícone, linha de 1px) existe um token irmão `*Texto`, mode-scoped. Não é
@@ -224,7 +222,7 @@ de 0,0650 pra **0,0397** e obrigou a redesenhar a escada tonal inteira. Não foi
 - **A cascata do tema tem três blocos e a ordem importa:** `:root` escuro → `@media` escopado com
   **`:root:not([data-tema])`** → `[data-tema]` manual. Sem o `:not()`, o toggle não vence o SO.
 
-## Decisões travadas do redesenho (não reabrir sem o dev)
+## Decisões travadas do redesenho (✅ silhuetas APROVADAS 10/10 — não reabrir sem o dev)
 
 - 🔒 **TODA guarda geométrica nova neste projeto MEDE EM ARCO, NUNCA EM ÍNDICE** (dev, 2026-08-01).
   **Palavras do dev: "já custou duas vezes".**
