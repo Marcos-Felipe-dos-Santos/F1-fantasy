@@ -7,7 +7,8 @@
 
 ## Estado atual
 
-- **Branch `pr-8.1-calendario-sorteado`** · últimos PRs **8.1** (calendário sorteado, `63e3e82`),
+- **Estamos na `main`** (a branch `pr-8.1-calendario-sorteado` foi mergeada nela em 2026-08-08 e
+  está encerrada) · últimos PRs **8.1** (calendário sorteado, `63e3e82`),
   **8.2** (round-trip do save, `6cb02cc`), **8.4-mínimo** (seletor de Formato + campeonato jogável,
   `4ba4f50`) e a rodada de **narração rica + auto-avanço**: **A** (variedade/chuva, `1537ad6`),
   **B** (causalidade contrafactual, `43fe420`), **C** (avanço automático, `fc7f20d`); e ainda
@@ -34,19 +35,29 @@
   (verificado: `git rev-list --left-right --count main...origin/main` = `0 0`). Não existem mais
   duas `main`s divergentes — `git checkout main` e o remoto apontam pro mesmo commit. A tag
   **`v0.1.0-fase0`** também subiu (era a única local; o remoto não tinha nenhuma).
-- **Estado do remoto MEDIDO em 2026-08-07 pós-push** (`git ls-remote --heads --tags origin`):
-  branches `main` (`49f3ca8`) e `pr-7.7-dados-nurburgring` (`ccfc035`); tag `v0.1.0-fase0`.
-  **`pr-8.1-calendario-sorteado` NÃO existe no remoto** — a branch atual saiu da 7.7 e segue só
-  local. **Nem a `main` local nem a remota têm 7.7, 7.7.1, 7.8, 8.1, 8.2, 8.2.1 e 8.3** — esses só
-  existem nesta branch.
+- ✅ **MERGE NA `main` FEITO em 2026-08-08, com "ok" explícito do dev** (`git merge --no-ff`,
+  commit `f1216d5`). A `main` agora **contém 7.7, 7.7.1, 7.8, 8.1, 8.2, 8.2.1, 8.3**, a rodada de
+  narração + auto-avanço, e o **README/LICENSE/`docs/img/`**. Medido na `main` pós-merge:
+  `npm test` **1094/36**, `tsc --noEmit` **exit 0**, `npm run build` **exit 0**.
+  **`pr-8.1-calendario-sorteado` continua só local e sem uso** — todo o conteúdo dela está na `main`.
+- 📄 **README, LICENSE e `docs/img/` existem desde 2026-08-08** (`10dd10a`). A licença é **MIT** —
+  cobre o código escrito aqui e **não** reivindica nada sobre nomes de pilotos, equipes ou
+  circuitos, o que preserva o aviso de projeto de fã não oficial. **`docs/img/` é VERSIONADA** (ao
+  contrário de `preview/` e `referencias/`, gitignored): guarda os três prints do dev
+  (`corrida.png`, `draft.png`, `campeonato.png`) e a grade `silhuetas.svg`, esta **gerada** por
+  `scripts/gerar-silhuetas-readme.preview.test.ts` via `npm run preview`, a partir do `pathDaVolta`
+  de produção. **Se um traçado mudar, regerar e commitar a grade.**
+  ⚠️ O badge "testes 1094 passando" do README é **estático** — não há CI neste repo (`.github/`
+  não existe). Ele não se atualiza sozinho e vai mentir se um teste quebrar.
 - **O repositório é PRIVADO** (`https://github.com/Marcos-Felipe-dos-Santos/F1-fantasy`) e deve
   continuar assim: o projeto usa nomes reais de pilotos e equipes e a questão jurídica do
   **GDD §14.2** ainda está em aberto. Evidência da privacidade: a API do GitHub sem autenticação
   devolve **404** para esse repo, enquanto `git ls-remote` autenticado funciona.
+  Com a MIT no repositório, abrir o código deixou de ter o problema do "todos os direitos
+  reservados" — mas **abrir segue sendo decisão do dev**, e o motivo do §14.2 não mudou.
   ✅ **Os dois portões visuais foram FECHADOS em 2026-08-07** (silhuetas 10/10, paleta aprovada), o
-  que remove o motivo que segurava o trabalho da 7.7+ fora da `main`.
-  **Merge da branch atual na `main` continua exigindo "ok" próprio** (e a tag, se houver, só DEPOIS
-  do merge) — é decisão de processo do dev, não mais espera de veredito visual.
+  que removeu o motivo que segurava o trabalho da 7.7+ fora da `main` — merge feito em 2026-08-08.
+  **Nenhuma tag foi criada para este merge.** Se for criar, só DEPOIS do merge na main (já é o caso).
 
 ## ✅ OS DOIS PORTÕES VISUAIS ESTÃO FECHADOS (dev, 2026-08-07)
 
