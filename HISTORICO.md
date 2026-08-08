@@ -601,6 +601,55 @@
   **Mutação:** trocar o hash por `Math.random` reprova no lint.
   **Medido em 2026-08-07:** `npm test` **1063/36** (era 1051), `tsc`, `eslint` e `build` **exit 0**.
 
+- **PR B (narração rica) — CAUSALIDADE CONTRAFACTUAL, COM GATE DE PIT** (commit `43fe420`). Liga
+  erro a consequência — **só quando os dados sustentam a ligação**.
+
+  🔑 **O critério NÃO é coincidência, e essa é a correção que o plano fez ao pedido do dev.**
+  "Errou na volta V e perdeu posição na volta V" ainda mentiria: o Y podia vir 3 s mais rápido e
+  passar de qualquer jeito. A linha causal só sai se as três valerem, estritas:
+  1. `cumX(V-1) < cumY(V-1)` — X estava à frente antes;
+  2. `cumY(V) < cumX(V)` — Y está à frente depois;
+  3. `cumY(V) > cumX(V) − custos` — **sem o incidente, X seguiria à frente**.
+
+  A (3) é a que separa causalidade de coincidência. O dev aprovou sabendo que é **mais restritivo**
+  que o pedido original — palavras dele: *"prefiro poucas linhas verdadeiras a muitas linhas
+  inventadas"*. A engine **não modela disputa carro a carro**; toda afirmação causal que não passe
+  por aqui é invenção.
+
+  📏 **MEDIDO em 200 corridas reais** (20 seeds × 10 pistas, draft resolvido por bots) — o dev pediu
+  o número ANTES de julgar o fraseado, porque cogitou cortar o PR se rendesse pouco:
+  - **3,19 linhas causais por corrida**;
+  - **93% das corridas** têm pelo menos uma;
+  - 42% dos eventos viram linha causal.
+  Muito acima do "1 a cada 3 corridas" que se temia. **Vale a complexidade** — decidido com o
+  número na mão, não por intuição.
+
+  **Portões adicionais:** volta 1 nunca tem causalidade (`cum(0)` = 0 pra todos); volta de pit de X
+  desqualifica a causalidade e vira "entrou nos boxes" (o tempo daquela volta está dominado pelo
+  pit), mas **o pit de Y não desqualifica nada** — se Y parou e ainda assim passou, o erro de X
+  segue explicando; candidatos a Y são só os que completaram a volta V, o que **exclui DNF por
+  construção**, sem caso especial; **`investigacao` nunca é causal** (penalidade pós-corrida, não
+  está em `historicoVoltas` — seria falso por construção, não impreciso); vários eventos do mesmo
+  carro na mesma volta usam a SOMA dos custos e uma só linha, no de maior `custoMs`.
+
+  **Fraseado RELACIONAL** ("caiu atrás de Y"), nunca posição absoluta: `classificacaoAoVivo` ordena
+  por progresso contínuo no instante do replay e isto compara na fronteira da volta — um número aqui
+  brigaria com o do painel ao lado.
+
+  **Baseline vermelho:** 10 falhas, todas `narrarEventos is not a function`. **Quatro mutações**,
+  cada uma matando o teste certo: remover o contrafactual mata o CASO 2 (discriminante); remover
+  "X estava à frente" mata o CASO 8b; ignorar o gate de pit mata o CASO 4; deixar `investigacao` ser
+  causal mata o CASO 6.
+
+  ⚠️ **O CASO 8b entrou DEPOIS, e é a lição de processo do PR:** a primeira rodada de mutação
+  mostrou que "X já estava atrás e continuou atrás" **não era coberto** — a mutação sobrevivia. Foi
+  o teste de mutação, não a revisão nem o tsc, que achou a lacuna. Junto veio a troca do acesso
+  indexado por checagem explícita de `undefined`: sem `noUncheckedIndexedAccess`, um índice ausente
+  não explodiria, ele **silenciaria** (toda comparação numérica com `undefined` é `false`) e a linha
+  sumiria sem erro.
+
+  **Medido:** `npm test` **1074/36** (era 1063), `tsc`, `eslint` e `build` **exit 0**.
+
 **Testes na main: 893 passando (33 arquivos)** — medido em 2026-08-01 via `npm test`. Mais o harness, por config própria (`npm run balance`), e os **três** geradores de preview (`npm run preview`: traçados, cego, zebra), todos fora do `npm test`.
 > A linha anterior dizia **"521 passando (27 arquivos)"**, número da época do PR 6.2 — ficou parada enquanto a suíte crescia até 851. Corrigida no chore de 2026-07-30. Contagem de teste envelhece rápido: quem atualizar, **meça** (`npm test`), não some de cabeça.
 
