@@ -981,3 +981,204 @@ button.card {
   font-size: 0.9rem;
   font-variant-numeric: tabular-nums;
 }
+
+/* ====================================================================
+   TELAS DO CAMPEONATO (PR 8.3) — com a paleta grafite/F1 aprovada.
+   Regra do 7.8 respeitada em todo este bloco: acento como PREENCHIMENTO
+   usa o token cheio; acento como TINTA (texto, ícone, linha de 1px) usa
+   o irmão `*Texto`. Por isso o dourado do campeão é `--acento-texto` e o
+   vermelho da próxima etapa é `--primaria` (é friso, não texto).
+   ==================================================================== */
+
+/* ---- Silhueta (miniatura do traçado) ---- */
+.silhueta-pista {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1000 / 660;
+  display: block;
+}
+
+/* Uma linha só, sem a pilha de camadas: no tamanho de miniatura o asfalto +
+   limite + zebra viram borrão, e o que precisa ser legível aqui é a FORMA. */
+.silhueta-pista__volta {
+  fill: none;
+  stroke-width: 26;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke: var(--carro-bot);
+}
+
+.silhueta-pista--disputada .silhueta-pista__volta {
+  stroke: var(--texto-suave);
+  opacity: 0.55;
+}
+
+.silhueta-pista--proxima .silhueta-pista__volta {
+  stroke: var(--primaria);
+}
+
+.silhueta-pista--futura .silhueta-pista__volta {
+  stroke: var(--borda-interativa);
+  opacity: 0.7;
+}
+
+/* ---- Calendário ---- */
+.painel-calendario {
+  margin: var(--espaco-xl) 0;
+}
+
+.painel-calendario h3 {
+  margin: 0 0 var(--espaco-md);
+  font-size: 1rem;
+}
+
+.painel-calendario__lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: var(--espaco-md);
+}
+
+.painel-calendario__etapa {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-areas:
+    'silhueta silhueta'
+    'numero nome'
+    'numero status';
+  gap: 0 var(--espaco-sm);
+  padding: var(--espaco-sm);
+  background: var(--cor-superficie);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-sm);
+}
+
+.painel-calendario__etapa .silhueta-pista {
+  grid-area: silhueta;
+}
+
+/* A próxima etapa é a única com friso da marca — é o destaque que o dev
+   pediu, e friso é PREENCHIMENTO, então usa `--primaria` cheio. */
+.painel-calendario__etapa--proxima {
+  border-color: var(--primaria);
+  border-left-width: 4px;
+}
+
+.painel-calendario__etapa--disputada {
+  opacity: 0.75;
+}
+
+.painel-calendario__numero {
+  grid-area: numero;
+  align-self: center;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--cor-texto-fraco);
+  font-variant-numeric: tabular-nums;
+}
+
+.painel-calendario__nome {
+  grid-area: nome;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.painel-calendario__status {
+  grid-area: status;
+  font-size: 0.8rem;
+  color: var(--cor-texto-fraco);
+}
+
+/* ---- Variação de posição na classificação ---- */
+.variacao {
+  font-variant-numeric: tabular-nums;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+/* Ambos são TEXTO, então tinta (`*Texto`), nunca o token cheio. */
+.variacao--subiu {
+  color: var(--sucesso-texto);
+}
+
+.variacao--caiu {
+  color: var(--primaria-texto);
+}
+
+.variacao--igual {
+  color: var(--cor-texto-fraco);
+}
+
+/* ---- Pódio (fim de campeonato) ---- */
+.tela-fim-campeonato h2 {
+  text-align: center;
+}
+
+.podio {
+  list-style: none;
+  margin: var(--espaco-xl) auto;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: var(--espaco-md);
+  max-width: 520px;
+}
+
+.podio__lugar {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--espaco-xs);
+  padding: var(--espaco-md) var(--espaco-sm);
+  background: var(--cor-superficie);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-sm);
+  text-align: center;
+}
+
+/* A altura é o que faz o pódio parecer um pódio. */
+.podio__lugar--1 {
+  padding-top: var(--espaco-xxl);
+  border-color: var(--acento);
+}
+
+.podio__lugar--2 {
+  padding-top: var(--espaco-xl);
+}
+
+.podio__medalha {
+  font-size: 1.6rem;
+}
+
+.podio__nome {
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+/* Pontos do campeão em dourado: é TEXTO ⇒ tinta (`--acento-texto`). */
+.podio__lugar--1 .podio__pontos {
+  color: var(--acento-texto);
+  font-weight: 700;
+}
+
+.podio__pontos {
+  font-size: 0.85rem;
+  color: var(--cor-texto-fraco);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 360px) {
+  /* Regra dos 360px: o pódio lado a lado fica ilegível, então empilha. */
+  .podio {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .podio__lugar--1,
+  .podio__lugar--2 {
+    padding-top: var(--espaco-md);
+  }
+}

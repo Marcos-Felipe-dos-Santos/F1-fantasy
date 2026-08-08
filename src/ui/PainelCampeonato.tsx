@@ -40,6 +40,29 @@ interface PainelCampeonatoProps {
    */
   auto?: boolean;
   onAuto?: (ligado: boolean) => void;
+  /**
+   * Variação de posição desde a corrida anterior (PR 8.3), de
+   * `variacaoDePosicao`. `null` num jogador = sem referência anterior (depois
+   * da 1ª corrida ninguém subiu nem caiu). Ausente = não mostrar a coluna.
+   */
+  variacao?: Map<string, number | null>;
+}
+
+/** Seta + rótulo acessível da variação de posição. `null`/0 não viram seta. */
+function Variacao({ valor }: { valor: number | null | undefined }) {
+  if (valor === null || valor === undefined || valor === 0) {
+    return <span className="variacao variacao--igual" aria-label="sem mudança">–</span>;
+  }
+  const subiu = valor > 0;
+  return (
+    <span
+      className={`variacao ${subiu ? 'variacao--subiu' : 'variacao--caiu'}`}
+      aria-label={`${subiu ? 'subiu' : 'caiu'} ${Math.abs(valor)} ${Math.abs(valor) === 1 ? 'posição' : 'posições'}`}
+    >
+      {subiu ? '▲' : '▼'}
+      {Math.abs(valor)}
+    </span>
+  );
 }
 
 /** Nome de exibição do jogador; cai no id se não achar (mesmo padrão de `TelaResultadoCorrida`). */
@@ -62,6 +85,7 @@ export function PainelCampeonato({
   nomeProximaPista,
   auto,
   onAuto,
+  variacao,
 }: PainelCampeonatoProps) {
   const campeao = classificacao[0];
   const autoAtivo = auto === true && onProximaCorrida !== null;
@@ -115,6 +139,7 @@ export function PainelCampeonato({
           <thead>
             <tr>
               <th>#</th>
+              {variacao !== undefined && <th aria-label="Variação de posição">±</th>}
               <th>Jogador</th>
               <th>Pontos</th>
               <th>Vit.</th>
@@ -130,6 +155,11 @@ export function PainelCampeonato({
                 className={ehHumanoId(state, linha.jogadorId) ? 'linha-humano' : undefined}
               >
                 <td>{indice + 1}</td>
+                {variacao !== undefined && (
+                  <td>
+                    <Variacao valor={variacao.get(linha.jogadorId)} />
+                  </td>
+                )}
                 <td>{nomeDoJogadorId(state, linha.jogadorId)}</td>
                 <td>
                   <strong>{linha.pontos}</strong>

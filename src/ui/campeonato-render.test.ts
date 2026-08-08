@@ -24,13 +24,17 @@ import pecas from '../data/pecas.json';
 import pistas from '../data/pistas.json';
 import type { DraftState, Loadout } from '../engine/types';
 import {
+  avancarEtapa,
+  calendarioAnotado,
   calendarioSorteado,
   classificacaoApos,
   iniciarCampeonato,
   resumoCampeonatoSalvo,
   simularOResto,
+  variacaoDePosicao,
 } from './fluxo-campeonato';
 import { FluxoCampeonato } from './FluxoCampeonato';
+import { PainelCalendario } from './PainelCalendario';
 import { PainelCampeonato, SEGUNDOS_AUTO_AVANCO } from './PainelCampeonato';
 import { TelaInicio } from './TelaInicio';
 
@@ -215,5 +219,130 @@ describe('FluxoCampeonato monta', () => {
     );
     expect(html).toContain('Fim do campeonato');
     expect(html).toContain('Campeão');
+  });
+});
+
+/**
+ * PR 8.3 — as telas novas montam. Sem jsdom, `renderToStaticMarkup` é o que
+ * pega prop faltando / `undefined.map` antes de virar tela branca na mão do dev.
+ */
+describe('PainelCalendario monta (PR 8.3)', () => {
+  it('lista todas as etapas com número, nome e silhueta', () => {
+    const estado = iniciarCampeonato(dataset, loadouts, 42, calendario);
+    const html = renderToStaticMarkup(
+      createElement(PainelCalendario, { state: draft, etapas: calendarioAnotado(estado) }),
+    );
+    expect(html).toContain('Calendário');
+    // 5 silhuetas (uma por etapa), desenhadas com a geometria real. Conta o
+    // `<svg>`, não a classe: o `<path>` interno também tem prefixo
+    // `silhueta-pista` (`__volta`) e dobraria a contagem.
+    expect(html.match(/<svg class="silhueta-pista /g) ?? []).toHaveLength(5);
+    // A primeira é a próxima; nenhuma foi disputada ainda.
+    expect(html).toContain('próxima');
+    expect(html).toContain('silhueta-pista--proxima');
+    expect(html).not.toContain('🏁');
+  });
+
+  it('depois de uma corrida, mostra o vencedor dela e NÃO o das seguintes', () => {
+    const estado = avancarEtapa(iniciarCampeonato(dataset, loadouts, 42, calendario));
+    const html = renderToStaticMarkup(
+      createElement(PainelCalendario, { state: draft, etapas: calendarioAnotado(estado) }),
+    );
+    // Exatamente um vencedor revelado — o vazamento do resultado das próximas
+    // seria o pior defeito possível nesta tela.
+    expect(html.match(/🏁/g) ?? []).toHaveLength(1);
+    expect(html).toContain('silhueta-pista--disputada');
+  });
+});
+
+describe('PainelCampeonato — variação de posição (PR 8.3)', () => {
+  const estado = iniciarCampeonato(dataset, loadouts, 42, calendario);
+
+  it('sem `variacao` a coluna não existe (corrida avulsa/1ª corrida)', () => {
+    const html = renderToStaticMarkup(
+      createElement(PainelCampeonato, {
+        state: draft,
+        classificacao: classificacaoApos(estado, 1),
+        corridasFeitas: 1,
+        totalCorridas: 5,
+        concluido: false,
+        onProximaCorrida: () => {},
+        nomeProximaPista: 'Interlagos',
+      }),
+    );
+    expect(html).not.toContain('class="variacao');
+  });
+
+  it('com `variacao` mostra a coluna, e depois da 1ª corrida é tudo "sem mudança"', () => {
+    const html = renderToStaticMarkup(
+      createElement(PainelCampeonato, {
+        state: draft,
+        classificacao: classificacaoApos(estado, 1),
+        variacao: variacaoDePosicao(estado, 1),
+        corridasFeitas: 1,
+        totalCorridas: 5,
+        concluido: false,
+        onProximaCorrida: () => {},
+        nomeProximaPista: 'Interlagos',
+      }),
+    );
+    expect(html).toContain('class="variacao');
+    // `null` (sem referência anterior) nunca vira seta — seria inventar passado.
+    expect(html).not.toContain('▲');
+    expect(html).not.toContain('▼');
+  });
+
+  it('renderiza subida, queda e "igual" com o símbolo e o rótulo acessível certos', () => {
+    // Variação montada À MÃO, não derivada do fixture: com estes loadouts a
+    // ordem não muda nas primeiras corridas (o jogador-0 vence tudo), então
+    // derivar daqui testaria o fixture, não a renderização. O cálculo em si
+    // já tem teste próprio em `fluxo-campeonato.test.ts`.
+    const classificacao = classificacaoApos(estado, 3);
+    const variacao = new Map<string, number | null>([
+      [classificacao[0].jogadorId, 2],
+      [classificacao[1].jogadorId, -1],
+      [classificacao[2].jogadorId, 0],
+      [classificacao[3].jogadorId, null],
+    ]);
+    const html = renderToStaticMarkup(
+      createElement(PainelCampeonato, {
+        state: draft,
+        classificacao,
+        variacao,
+        corridasFeitas: 3,
+        totalCorridas: 5,
+        concluido: false,
+        onProximaCorrida: () => {},
+        nomeProximaPista: 'Monza',
+      }),
+    );
+    expect(html).toContain('▲2');
+    expect(html).toContain('▼1');
+    expect(html).toContain('subiu 2 posições');
+    expect(html).toContain('caiu 1 posição'); // singular, não "1 posições"
+    // 0 e null são ambos "sem mudança" — nenhum vira seta.
+    expect(html.match(/variacao--igual/g) ?? []).toHaveLength(2);
+  });
+});
+
+describe('FluxoCampeonato — tela de fim (PR 8.3)', () => {
+  it('mostra pódio com as três medalhas, tabela final e calendário completo', () => {
+    const html = renderToStaticMarkup(
+      createElement(FluxoCampeonato, {
+        state: draft,
+        campeonato: simularOResto(campeonato),
+        onProximaCorrida: () => {},
+        onReiniciar: () => {},
+      }),
+    );
+    expect(html).toContain('Fim do campeonato');
+    expect(html).toContain('🥇');
+    expect(html).toContain('🥈');
+    expect(html).toContain('🥉');
+    expect(html).toContain('Campeão');
+    expect(html).toContain('Calendário');
+    // Campeonato encerrado: as 5 etapas disputadas, todas com vencedor.
+    expect(html.match(/🏁/g) ?? []).toHaveLength(5);
+    expect(html).not.toContain('próxima');
   });
 });

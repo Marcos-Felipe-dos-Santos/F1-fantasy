@@ -254,6 +254,81 @@ export function classificacaoApos(estado: EstadoCampeonato, nEtapas: number): Li
 }
 
 /**
+ * Variação de posição de cada jogador entre a classificação DEPOIS de
+ * `nEtapas` e a de antes da última delas (PR 8.3, tela de classificação).
+ *
+ * Positivo = **subiu** (ex.: `+2` saiu de 5º pra 3º); negativo = caiu; `0` =
+ * manteve. `null` quando não há referência anterior — depois da PRIMEIRA
+ * corrida ninguém "subiu" nem "caiu", porque não havia tabela antes; mostrar
+ * `+0` ali seria inventar um passado.
+ *
+ * `nEtapas` é uma CONTAGEM, no mesmo contrato de `classificacaoApos`, e herda
+ * a mesma validação alta (`NaN`/negativo/estouro falham em vez de devolver
+ * tabela errada em silêncio).
+ */
+export function variacaoDePosicao(
+  estado: EstadoCampeonato,
+  nEtapas: number,
+): Map<string, number | null> {
+  const atual = classificacaoApos(estado, nEtapas);
+  const variacoes = new Map<string, number | null>();
+
+  if (nEtapas <= 1) {
+    for (const linha of atual) variacoes.set(linha.jogadorId, null);
+    return variacoes;
+  }
+
+  const anterior = classificacaoApos(estado, nEtapas - 1);
+  const posicaoAntes = new Map(anterior.map((linha, indice) => [linha.jogadorId, indice]));
+  for (const [indice, linha] of atual.entries()) {
+    const antes = posicaoAntes.get(linha.jogadorId);
+    // Jogador ausente da tabela anterior não deveria acontecer (o universo é
+    // fixo em `jogadorIds`), mas `null` é a resposta honesta se acontecer —
+    // melhor que um número inventado a partir de `undefined`.
+    variacoes.set(linha.jogadorId, antes === undefined ? null : antes - indice);
+  }
+  return variacoes;
+}
+
+/** Uma linha do calendário, pronta pra tela (PR 8.3). */
+export interface EtapaDoCalendario {
+  pistaId: string;
+  /** 1-based, pra exibir ("etapa 3 de 5"). */
+  numero: number;
+  /** Já foi disputada e revelada ao jogador (`indice < etapaAtual`). */
+  disputada: boolean;
+  /** É a que o jogador vai correr agora. Falso quando o campeonato acabou. */
+  proxima: boolean;
+  /** Vencedor da etapa — só quando já disputada; `null` caso contrário. */
+  vencedorId: string | null;
+}
+
+/**
+ * O calendário do campeonato anotado pra tela (PR 8.3): o que já correu, com
+ * vencedor, e qual é a próxima.
+ *
+ * **Só revela resultado de etapa já disputada** (`indice < etapaAtual`), mesmo
+ * que TODAS estejam simuladas em memória desde o `iniciarCampeonato` — o
+ * cursor é justamente o que separa "simulado" de "revelado ao jogador", e
+ * vazar o vencedor da próxima corrida no calendário estragaria a corrida que
+ * o jogador ainda vai assistir.
+ */
+export function calendarioAnotado(estado: EstadoCampeonato): EtapaDoCalendario[] {
+  return estado.calendario.map((pistaId, indice) => {
+    const disputada = indice < estado.etapaAtual;
+    const etapa = estado.etapas[indice];
+    return {
+      pistaId,
+      numero: indice + 1,
+      disputada,
+      proxima: indice === estado.etapaAtual,
+      vencedorId:
+        disputada && etapa ? (etapa.resultado.classificacao[0]?.jogadorId ?? null) : null,
+    };
+  });
+}
+
+/**
  * Verdadeiro quando o cursor de apresentação chegou ao fim. Mede contra
  * `etapas.length` (o que foi de fato simulado), não contra `calendario.length`
  * (entrada do chamador) — ver aviso 3 da revisão do 6.4.

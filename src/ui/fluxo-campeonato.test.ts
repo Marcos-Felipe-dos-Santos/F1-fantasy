@@ -21,6 +21,7 @@ import type { Loadout } from '../engine/types';
 import {
   avancarEtapa,
   calendarioPadrao,
+  calendarioAnotado,
   calendarioSorteado,
   campeonatoConcluido,
   classificacaoApos,
@@ -35,6 +36,7 @@ import {
   resumoCampeonatoSalvo,
   ROTULO_FORMATO,
   simularOResto,
+  variacaoDePosicao,
 } from './fluxo-campeonato';
 
 const dataset = criarDataset(equipeAnos, pecas, pistas);
@@ -514,5 +516,98 @@ describe('sincronia entre calendario e etapas (aviso 3 da revisão do 6.4)', () 
     expect(cursor.etapaAtual).toBe(5);
     expect(campeonatoConcluido(cursor)).toBe(true);
     expect(simularOResto(estado).etapaAtual).toBe(5);
+  });
+});
+
+/**
+ * PR 8.3 — dados das telas de campeonato. Funções puras porque o projeto não
+ * tem jsdom: se a variação de posição ou o "já correu / é a próxima" morassem
+ * no `.tsx`, não haveria teste nenhum sobre eles.
+ */
+describe('variacaoDePosicao (tela de classificação, PR 8.3)', () => {
+  const loadouts = loadoutsDeTeste(6);
+  const estado = iniciarCampeonato(dataset, loadouts, 42, calendarioPadrao(dataset, 'completa'));
+
+  it('depois da PRIMEIRA corrida a variação é null pra todos — não havia tabela antes', () => {
+    const variacao = variacaoDePosicao(estado, 1);
+    expect(variacao.size).toBe(loadouts.length);
+    for (const valor of variacao.values()) expect(valor).toBeNull();
+  });
+
+  it('nEtapas 0 também é null pra todos (nem corrida houve)', () => {
+    for (const valor of variacaoDePosicao(estado, 0).values()) expect(valor).toBeNull();
+  });
+
+  it('positivo = SUBIU, negativo = caiu, e a soma das variações é ZERO', () => {
+    // A soma ser zero é a guarda de coerência: posição é permutação, então
+    // toda subida de alguém é a queda de outro. Um sinal trocado quebraria.
+    const variacao = variacaoDePosicao(estado, 3);
+    const valores = [...variacao.values()];
+    for (const valor of valores) expect(valor).not.toBeNull();
+    expect(valores.reduce((soma: number, v) => soma + (v ?? 0), 0)).toBe(0);
+  });
+
+  it('bate com a diferença real de índices entre as duas tabelas', () => {
+    const antes = classificacaoApos(estado, 4);
+    const depois = classificacaoApos(estado, 5);
+    const variacao = variacaoDePosicao(estado, 5);
+    for (const [indice, linha] of depois.entries()) {
+      const indiceAntes = antes.findIndex((l) => l.jogadorId === linha.jogadorId);
+      expect(variacao.get(linha.jogadorId)).toBe(indiceAntes - indice);
+    }
+  });
+
+  it('herda a validação alta de classificacaoApos (NaN não vira tabela vazia)', () => {
+    expect(() => variacaoDePosicao(estado, Number.NaN)).toThrow(/nEtapas inválido/);
+    expect(() => variacaoDePosicao(estado, 999)).toThrow(/nEtapas inválido/);
+    expect(() => variacaoDePosicao(estado, -1)).toThrow(/nEtapas inválido/);
+  });
+});
+
+describe('calendarioAnotado (tela de calendário, PR 8.3)', () => {
+  const loadouts = loadoutsDeTeste(4);
+  const calendario = calendarioSorteado(dataset, 42, 'curta');
+
+  it('no começo: nada disputado, a primeira é a próxima, nenhum vencedor revelado', () => {
+    const anotado = calendarioAnotado(iniciarCampeonato(dataset, loadouts, 42, calendario));
+    expect(anotado).toHaveLength(5);
+    expect(anotado.map((e) => e.numero)).toEqual([1, 2, 3, 4, 5]);
+    expect(anotado.filter((e) => e.disputada)).toHaveLength(0);
+    expect(anotado.filter((e) => e.proxima).map((e) => e.numero)).toEqual([1]);
+    for (const etapa of anotado) expect(etapa.vencedorId).toBeNull();
+  });
+
+  it('NÃO vaza o vencedor da próxima corrida, mesmo com tudo já simulado em memória', () => {
+    // O ponto do teste: `iniciarCampeonato` pré-simula TODAS as etapas. Se o
+    // calendário lesse `etapas[i].resultado` sem checar o cursor, a tela
+    // entregaria o vencedor da corrida que o jogador ainda vai assistir.
+    const estado = avancarEtapa(iniciarCampeonato(dataset, loadouts, 42, calendario));
+    const anotado = calendarioAnotado(estado);
+    expect(anotado[0].disputada).toBe(true);
+    expect(anotado[0].vencedorId).not.toBeNull();
+    for (const etapa of anotado.slice(1)) {
+      expect(etapa.disputada).toBe(false);
+      expect(etapa.vencedorId).toBeNull();
+    }
+  });
+
+  it('o vencedor revelado é o 1º da classificação daquela etapa', () => {
+    const estado = avancarEtapa(iniciarCampeonato(dataset, loadouts, 42, calendario));
+    expect(calendarioAnotado(estado)[0].vencedorId).toBe(
+      estado.etapas[0].resultado.classificacao[0].jogadorId,
+    );
+  });
+
+  it('a ordem do calendário anotado é a do calendário SORTEADO, não a do dataset', () => {
+    const estado = iniciarCampeonato(dataset, loadouts, 42, calendario);
+    expect(calendarioAnotado(estado).map((e) => e.pistaId)).toEqual(calendario);
+  });
+
+  it('campeonato concluído: tudo disputado e NENHUMA marcada como próxima', () => {
+    const estado = simularOResto(iniciarCampeonato(dataset, loadouts, 42, calendario));
+    const anotado = calendarioAnotado(estado);
+    expect(anotado.every((e) => e.disputada)).toBe(true);
+    expect(anotado.filter((e) => e.proxima)).toHaveLength(0);
+    for (const etapa of anotado) expect(etapa.vencedorId).not.toBeNull();
   });
 });

@@ -20,11 +20,15 @@ import { seedDaEtapa } from '../engine/campeonato';
 import type { DraftState } from '../engine/types';
 import { dataset } from './dataset-app';
 import {
+  calendarioAnotado,
   campeonatoConcluido,
   classificacaoApos,
+  variacaoDePosicao,
   type EstadoCampeonato,
 } from './fluxo-campeonato';
 import { FluxoCorrida } from './FluxoCorrida';
+import { nomeJogador } from './loadout-view';
+import { PainelCalendario } from './PainelCalendario';
 import { PainelCampeonato } from './PainelCampeonato';
 
 interface FluxoCampeonatoProps {
@@ -32,6 +36,12 @@ interface FluxoCampeonatoProps {
   campeonato: EstadoCampeonato;
   onProximaCorrida: () => void;
   onReiniciar: () => void;
+}
+
+/** Nome de exibição do jogador; cai no id se não achar (mesmo padrão das outras telas). */
+function nomeDoJogador(state: DraftState, jogadorId: string): string {
+  const jogador = state.jogadores.find((j) => j.id === jogadorId);
+  return jogador ? nomeJogador(jogador) : jogadorId;
 }
 
 /** Nome da pista pra exibição; cai no id se o dataset não a tiver (save de outro dataset). */
@@ -56,18 +66,42 @@ export function FluxoCampeonato({
 
   // Fim de temporada: o cursor passou da última etapa.
   if (campeonatoConcluido(campeonato)) {
+    const finais = classificacaoApos(campeonato, totalCorridas);
+    const podio = finais.slice(0, 3);
     return (
-      <div className="tela-resultado-corrida">
-        <h2>Fim do campeonato</h2>
+      <div className="tela-fim-campeonato">
+        <h2>🏆 Fim do campeonato</h2>
+
+        {/* Pódio antes da tabela: é o desfecho, e o que o jogador quer ver
+            primeiro. A ordem 2º-1º-3º é a do pódio real, com o campeão ao
+            centro e mais alto — a classe governa a altura no CSS. */}
+        <ol className="podio">
+          {[podio[1], podio[0], podio[2]].map((linha, posicaoVisual) =>
+            linha === undefined ? null : (
+              <li
+                key={linha.jogadorId}
+                className={`podio__lugar podio__lugar--${[2, 1, 3][posicaoVisual]}`}
+              >
+                <span className="podio__medalha">{['🥈', '🥇', '🥉'][posicaoVisual]}</span>
+                <span className="podio__nome">{nomeDoJogador(state, linha.jogadorId)}</span>
+                <span className="podio__pontos">{linha.pontos} pts</span>
+              </li>
+            ),
+          )}
+        </ol>
+
         <PainelCampeonato
           state={state}
-          classificacao={classificacaoApos(campeonato, totalCorridas)}
+          classificacao={finais}
           corridasFeitas={totalCorridas}
           totalCorridas={totalCorridas}
           concluido
           onProximaCorrida={null}
           nomeProximaPista={null}
         />
+
+        <PainelCalendario state={state} etapas={calendarioAnotado(campeonato)} />
+
         <button type="button" className="botao-primario" onClick={onReiniciar}>
           Novo draft
         </button>
@@ -94,19 +128,29 @@ export function FluxoCampeonato({
       autoLargar={auto}
       onReiniciar={onReiniciar}
       extraResultado={
-        <PainelCampeonato
-          state={state}
-          // `indice + 1`: a tabela mostrada no fim da corrida INCLUI a corrida
-          // que o jogador acabou de ver.
-          classificacao={classificacaoApos(campeonato, indice + 1)}
-          corridasFeitas={indice + 1}
-          totalCorridas={totalCorridas}
-          concluido={false}
-          onProximaCorrida={onProximaCorrida}
-          nomeProximaPista={ehUltima ? null : nomeDaPista(campeonato.calendario[indice + 1])}
-          auto={auto}
-          onAuto={setAuto}
-        />
+        <>
+          <PainelCampeonato
+            state={state}
+            // `indice + 1`: a tabela mostrada no fim da corrida INCLUI a corrida
+            // que o jogador acabou de ver.
+            classificacao={classificacaoApos(campeonato, indice + 1)}
+            variacao={variacaoDePosicao(campeonato, indice + 1)}
+            corridasFeitas={indice + 1}
+            totalCorridas={totalCorridas}
+            concluido={false}
+            onProximaCorrida={onProximaCorrida}
+            nomeProximaPista={ehUltima ? null : nomeDaPista(campeonato.calendario[indice + 1])}
+            auto={auto}
+            onAuto={setAuto}
+          />
+          {/* O calendário usa o estado com o cursor JÁ avançado pela corrida
+              que acabou de ser assistida — senão a etapa recém-corrida
+              apareceria como "próxima" na tela do próprio resultado dela. */}
+          <PainelCalendario
+            state={state}
+            etapas={calendarioAnotado({ ...campeonato, etapaAtual: indice + 1 })}
+          />
+        </>
       }
     />
   );
