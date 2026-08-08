@@ -563,6 +563,44 @@
   de runtime na primeira tela passaria por `tsc`, por `eslint` e pela suíte inteira** e só apareceria
   como tela branca na mão do dev.
 
+- **PR A (narração rica) — VARIEDADE E CONTEXTO DE CHUVA NOS EVENTOS** (branch
+  `pr-8.1-calendario-sorteado`, commit `1537ad6`). Feedback de quem jogou: a narração dizia sempre
+  "Erro de pilotagem". Agora cada evento tem variante, e a chuva troca o vocabulário.
+
+  **Plano feito pelo `fable-architect`** (3 PRs: A variedade, B causalidade, C auto-avanço),
+  aprovado pelo dev com as três correções que o plano propôs ao pedido original — ver a entrada do
+  PR B para a mais importante delas.
+
+  🔑 **`deriveSeed` como HASH, nunca como stream.** A escolha da variante é
+  `deriveSeed(seed, 'narracao:<jogador>:<volta>:<tipo>') % pool.length`. Não há `createRng` no
+  módulo, não há estado mutável, não se consome sequência. **Nenhum tempo de volta muda e nenhum RNG
+  novo é consumido** — as seeds de ouro e o `balance-harness` ficam intactos *por construção*, que
+  era a restrição nomeada pelo dev. E a mesma corrida narra igual sempre: reabrir um save não
+  reescreve o que foi dito. O `tipo` entra na label porque um carro pode ter dois eventos na mesma
+  volta; sem ele, os dois cairiam no mesmo índice.
+
+  **Resposta ao "isso exige tocar a engine?": NÃO, nem aditivamente.** Tudo sai do que
+  `ResultadoCorrida` já carrega (`custoMs`, `historicoVoltas`, `voltasDePit`, flag `chuva`).
+
+  **Duas decisões de HONESTIDADE, que limitam de propósito o que se pode escrever:**
+  1. **Pool de chuva só pra `erro-piloto`.** Verificado no código, não suposto: a chuva tem UM
+     efeito sobre incidentes — dobra a chance de erro do piloto (`chuvaMultErro: 2.0`, aplicado só
+     sobre `chanceErro`, `corrida.ts:151/271`). Quebra de motor/chassi rola contra CONF, que a chuva
+     não toca. Vocabulário molhado numa quebra sugeriria causalidade inexistente.
+  2. **Nenhuma frase afirma manobra, local da pista, disputa ou clima evoluindo** — a engine simula
+     cada carro **isoladamente** e o clima é global. Isso virou **teste**, não comentário: um regex
+     reprova `ultrapass|disputa|começou a chover|pneu de chuva` em qualquer variante nova.
+
+  **Sem golden de texto, e a decisão está registrada no próprio teste:** o índice sai de
+  `hash % pool.length`, então acrescentar UMA variante remexe todos os textos — um golden reprovaria
+  "escrevi uma frase nova", que não é regressão. Os testes travam o CONTRATO: determinismo, pool
+  certo por condição, todo `TipoEvento` com texto, e que o pool **inteiro** é alcançável (a guarda
+  contra "tem 8 variantes mas o hash só cai em 3").
+
+  `narracao.ts` entrou na lista de arquivos críticos de determinismo do `eslint.config.js`.
+  **Mutação:** trocar o hash por `Math.random` reprova no lint.
+  **Medido em 2026-08-07:** `npm test` **1063/36** (era 1051), `tsc`, `eslint` e `build` **exit 0**.
+
 **Testes na main: 893 passando (33 arquivos)** — medido em 2026-08-01 via `npm test`. Mais o harness, por config própria (`npm run balance`), e os **três** geradores de preview (`npm run preview`: traçados, cego, zebra), todos fora do `npm test`.
 > A linha anterior dizia **"521 passando (27 arquivos)"**, número da época do PR 6.2 — ficou parada enquanto a suíte crescia até 851. Corrigida no chore de 2026-07-30. Contagem de teste envelhece rápido: quem atualizar, **meça** (`npm test`), não some de cabeça.
 
