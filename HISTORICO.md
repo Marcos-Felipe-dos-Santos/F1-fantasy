@@ -650,6 +650,35 @@
 
   **Medido:** `npm test` **1074/36** (era 1063), `tsc`, `eslint` e `build` **exit 0**.
 
+- **PR C — AVANÇO AUTOMÁTICO ENTRE CORRIDAS DO CAMPEONATO** (commit `fc7f20d`). Toggle "Avançar
+  automaticamente": ao terminar uma corrida, mostra a classificação por 5 s e segue pra próxima.
+
+  🔑 **O furo que faria a feature parecer quebrada:** avançar o cursor leva à fase `'grid'`, que só
+  sai no botão "Largar" — o automático **empacaria ali, corrida após corrida**. Por isso auto também
+  **auto-larga** (`useCorrida` ganhou `autoLargar`, default `false`, então a corrida avulsa não
+  muda). Foi o `fable-architect` que apontou isso no plano, antes de existir código.
+
+  **Onde cada estado mora, e por quê:**
+  - **O toggle vive no `FluxoCampeonato`, não no `PainelCampeonato`** — o Fluxo **não remonta** entre
+    etapas (a `key` está no `FluxoCorrida`, o filho), então a escolha sobrevive ao avanço. No
+    painel, seria perdida a cada corrida.
+  - A contagem vive no painel, que monta exatamente na tela de resultado.
+  - **O toggle segue clicável durante a contagem, e desmarcar cancela o timer** — é assim que se
+    desliga no meio, requisito do dev. O cleanup do efeito é o que faz isso funcionar.
+  - **Não persiste no save:** o save tem impressão digital e `VERSAO_FORMATO`, e preferência de UI
+    não é estado de campeonato. Se um dia for pra lembrar, é chave própria no localStorage.
+
+  Timer inteiro dentro do `useEffect`, nada de agendar em updater de `setState` — mesmo motivo já
+  registrado em `useCorrida`: o StrictMode invoca updaters duas vezes em dev e dobraria os callbacks.
+
+  **Escopo delimitado de propósito:** `simularOResto` **já existe** pra quem quer pular tudo. Este
+  toggle é pra **assistir sem clicar**, não é um segundo "pular".
+
+  4 testes de render novos, incluindo o do fim de campeonato (auto ligado não pode produzir contagem
+  eterna quando não há próxima). **O que estes testes NÃO cobrem, e não há como cobrir sem jsdom: o
+  timer disparando e o clique.** Isso é o teste do dev no app.
+  **Medido:** `npm test` **1078/36** (era 1074), `tsc`, `eslint` e `build` **exit 0**.
+
 **Testes na main: 893 passando (33 arquivos)** — medido em 2026-08-01 via `npm test`. Mais o harness, por config própria (`npm run balance`), e os **três** geradores de preview (`npm run preview`: traçados, cego, zebra), todos fora do `npm test`.
 > A linha anterior dizia **"521 passando (27 arquivos)"**, número da época do PR 6.2 — ficou parada enquanto a suíte crescia até 851. Corrigida no chore de 2026-07-30. Contagem de teste envelhece rápido: quem atualizar, **meça** (`npm test`), não some de cabeça.
 

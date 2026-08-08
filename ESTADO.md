@@ -8,9 +8,11 @@
 ## Estado atual
 
 - **Branch `pr-8.1-calendario-sorteado`** · últimos PRs **8.1** (calendário sorteado, `63e3e82`),
-  **8.2** (round-trip do save, `6cb02cc`) e **8.4-mínimo** (seletor de Formato + campeonato jogável,
-  `4ba4f50`) · **1051 testes** (35 arquivos) verdes.
-- **Medido em 2026-08-07, não herdado:** `npm test` **1051/35**, `tsc --noEmit` **exit 0**,
+  **8.2** (round-trip do save, `6cb02cc`), **8.4-mínimo** (seletor de Formato + campeonato jogável,
+  `4ba4f50`) e a rodada de **narração rica + auto-avanço**: **A** (variedade/chuva, `1537ad6`),
+  **B** (causalidade contrafactual, `43fe420`), **C** (avanço automático, `fc7f20d`) ·
+  **1078 testes** (36 arquivos) verdes.
+- **Medido em 2026-08-07, não herdado:** `npm test` **1078/36**, `tsc --noEmit` **exit 0**,
   `eslint src scripts` **exit 0**, `npm run build` **exit 0**. **`npm run balance` inalterado por
   construção** — o harness importa só `src/engine/dataset`, `src/data/*.json` e `scripts/alavancas`,
   e nenhum dos três foi tocado. `prettier --check` reprova `fluxo-campeonato.ts`/`.test.ts`, mas
@@ -19,6 +21,9 @@
   `npm run dev` → `http://localhost:5173/` → **Formato: "Campeonato curto"** → Começar draft →
   jogar o draft → **Ir pra corrida**. No fim de cada corrida, a tabela acumulada e "Próxima
   corrida". Recarregar a página no meio deve oferecer **"Continuar campeonato"** no topo.
+  **Narração:** o ticker de eventos durante o replay mostra a variedade (PR A) e, quando os dados
+  sustentam, "…e caiu atrás de X" (PR B). **Auto-avanço:** o toggle "Avançar automaticamente" no fim
+  da corrida — ele deve avançar **e largar sozinho**, e desmarcar durante a contagem deve cancelar.
 - **Working tree:** só `tmp-medir-save.ts` untracked — script descartável do dev, **quebrado**
   (`criarDraft` exige 22 jogadores + `atribuirPerfis` antes; o arquivo passa 4). Não commitar. A
   medição que ele buscava já foi feita e está registrada abaixo.
@@ -127,6 +132,32 @@ pontuação sai dali, ligar o campeonato no `FluxoCorrida` existente faria o jog
 corrida e ver OUTRA na tabela**. **`npm test` não pegaria** — cada lado, isolado, está certo; só a
 composição estava errada. `prepararCorrida` ganhou `seed` (default preserva a avulsa bit a bit) e há
 teste provando a reprodução bit a bit da etapa pré-simulada.
+
+### ✅ RODADA DE NARRAÇÃO RICA + AUTO-AVANÇO (PRs A, B, C) — FEITA
+
+Feedback de quem jogou, planejada pelo `fable-architect`, aprovada pelo dev com três correções ao
+pedido original. **Nada tocou `src/engine/`** — nem aditivamente.
+
+- **A (`1537ad6`)** — variedade de erro + vocabulário de chuva. `deriveSeed` usado como **HASH, nunca
+  como stream**: nenhum tempo muda, nenhum RNG novo é consumido, seeds de ouro e `balance` intactos
+  por construção. Pool de chuva **só pra `erro-piloto`**, porque `chuvaMultErro` só multiplica
+  `chanceErro` — vocabulário molhado numa quebra de motor sugeriria causalidade inexistente.
+- **B (`43fe420`)** — causalidade **contrafactual**: a linha causal só sai se, descontado o custo do
+  erro, X continuaria à frente. Mais restritivo que o pedido original, e aprovado pelo dev
+  exatamente por isso.
+  📏 **MEDIDO em 200 corridas reais: 3,19 linhas causais/corrida, 93% das corridas com pelo menos
+  uma, 42% de aproveitamento.** O dev cogitava cortar o PR se rendesse pouco — decidiu com o número.
+- **C (`fc7f20d`)** — auto-avanço com auto-largada (sem ela, empacaria na tela de grid).
+
+🔒 **Regras de honestidade da narração, travadas por TESTE, não por comentário:** nenhuma frase pode
+afirmar manobra, local da pista, disputa ou clima evoluindo — um regex reprova
+`ultrapass|disputa|começou a chover|pneu de chuva` em qualquer variante nova. **A engine simula cada
+carro isoladamente e o clima é uma flag global**; qualquer frase fora disso é falsa por construção.
+
+📌 **Regra registrada para código que ainda não existe (item d do dev):** quando houver narração de
+troca de posição, **pit não é ultrapassagem** — pit de qualquer um dos dois desqualifica a palavra.
+Hoje não existe narração de troca de posição (a única narração do jogo era `ROTULOS_EVENTO`), então
+a regra fica aqui aguardando o código que a consumirá.
 
 ### ⬅️ PRÓXIMO — PR 8.2.1: mover o calendário pra `src/engine/`
 
