@@ -730,6 +730,53 @@
   `src/engine/`: **tabela idêntica, mesmos números por cenário** — `seedDaEtapa` e
   `simularCampeonato` não foram tocados, só mudaram de vizinhança.
 
+- **PR 8.3 — TELAS DO CAMPEONATO: calendário, variação de posição e pódio** (commit `0da36fb`;
+  gerador de preview em `499114c`). Substitui as telas cruas do 8.4-mínimo pelas de verdade, com a
+  paleta grafite/F1 já aprovada. **A mecânica não foi tocada** — o dev testou single e local com 2
+  jogadores e confirmou que o wiring funciona; este PR é apresentação.
+
+  **CALENDÁRIO** (`PainelCalendario` + `SilhuetaPista`): as 5 ou 10 etapas com a silhueta de cada
+  pista, o que já correu com vencedor, e a próxima destacada com friso da marca.
+
+  🔑 **A silhueta reusa `pathDaVolta` — a MESMA geometria da tela de corrida, não um desenho
+  paralelo.** Deliberado: as silhuetas passaram no teste cego **10/10** justamente por virem da
+  geometria real dos circuitos, e redesenhar à mão na miniatura jogaria fora o que o 7.7 conquistou.
+  Uma linha só, sem a pilha de `CAMADAS_PISTA`: no tamanho de miniatura asfalto + limite + zebra
+  viram borrão, e o que precisa ser legível nessa escala é a FORMA.
+
+  🔑 **O CUIDADO QUE DECIDE ESTA TELA, e o teste mais importante do PR:** `iniciarCampeonato`
+  **pré-simula todas as etapas**, então o resultado das próximas corridas está em memória o tempo
+  todo. `calendarioAnotado` só revela vencedor de etapa com `indice < etapaAtual` — **vazar o
+  vencedor de uma corrida que o jogador ainda vai assistir estragaria a corrida**. O cursor é o que
+  separa "simulado" de "revelado", e há teste dedicado a isso.
+
+  **CLASSIFICAÇÃO:** coluna de variação desde a corrida anterior (▲/▼). `null` quando não há
+  referência — depois da 1ª corrida ninguém subiu nem caiu, e mostrar `+0` ali **seria inventar um
+  passado**. A soma das variações é **zero por construção** (posição é permutação), e isso virou
+  teste: um sinal trocado quebraria.
+
+  **FIM DE CAMPEONATO:** pódio 2º-1º-3º (campeão ao centro e mais alto, como pódio real), tabela
+  final e calendário completo.
+
+  **CSS segue a regra do 7.8:** acento como PREENCHIMENTO usa o token cheio (friso da próxima etapa
+  = `--primaria`); acento como TINTA usa o irmão `*Texto` (pontos do campeão = `--acento-texto`,
+  setas = `--sucesso-texto`/`--primaria-texto`). **Regra dos 360px:** o pódio empilha abaixo disso.
+
+  Funções puras novas (`variacaoDePosicao`, `calendarioAnotado`) em `fluxo-campeonato.ts` porque o
+  projeto não tem jsdom — dentro do `.tsx` não haveria teste nenhum sobre elas.
+
+  ⚠️ **Dois testes meus falharam antes de passar, e os dois eram erro do TESTE, não do código:** o
+  regex contava o `<path>` interno junto do `<svg>` (10 em vez de 5), e o fixture não troca posições
+  nas 3 primeiras corridas (o jogador-0 vence tudo), então a variação virou `Map` montado à mão —
+  derivar do fixture testaria o fixture, não a renderização.
+
+  **Preview** (`preview/campeonato.html`, gitignored): as três telas numa página só, a partir de um
+  campeonato real. **NÃO é maquete** — inlina `tokens.css` e `estilos.css` REAIS e renderiza os
+  componentes REAIS; falta só interação. A distinção importa porque confundir maquete com app
+  rodando já custou uma leitura errada de portão no 7.8.
+
+  **Medido em 2026-08-07:** `npm test` **1094/36** (era 1088), `tsc`, `eslint` e `build` **exit 0**.
+
 **Testes na main: 893 passando (33 arquivos)** — medido em 2026-08-01 via `npm test`. Mais o harness, por config própria (`npm run balance`), e os **três** geradores de preview (`npm run preview`: traçados, cego, zebra), todos fora do `npm test`.
 > A linha anterior dizia **"521 passando (27 arquivos)"**, número da época do PR 6.2 — ficou parada enquanto a suíte crescia até 851. Corrigida no chore de 2026-07-30. Contagem de teste envelhece rápido: quem atualizar, **meça** (`npm test`), não some de cabeça.
 

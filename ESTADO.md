@@ -10,9 +10,10 @@
 - **Branch `pr-8.1-calendario-sorteado`** · últimos PRs **8.1** (calendário sorteado, `63e3e82`),
   **8.2** (round-trip do save, `6cb02cc`), **8.4-mínimo** (seletor de Formato + campeonato jogável,
   `4ba4f50`) e a rodada de **narração rica + auto-avanço**: **A** (variedade/chuva, `1537ad6`),
-  **B** (causalidade contrafactual, `43fe420`), **C** (avanço automático, `fc7f20d`) ·
-  **1078 testes** (36 arquivos) verdes.
-- **Medido em 2026-08-07, não herdado:** `npm test` **1078/36**, `tsc --noEmit` **exit 0**,
+  **B** (causalidade contrafactual, `43fe420`), **C** (avanço automático, `fc7f20d`); e ainda
+  **8.2.1** (calendário na engine, `cfe1c47`) e **8.3** (telas do campeonato, `0da36fb`) ·
+  **1094 testes** (36 arquivos) verdes.
+- **Medido em 2026-08-07, não herdado:** `npm test` **1094/36**, `tsc --noEmit` **exit 0**,
   `eslint src scripts` **exit 0**, `npm run build` **exit 0**. **`npm run balance` inalterado por
   construção** — o harness importa só `src/engine/dataset`, `src/data/*.json` e `scripts/alavancas`,
   e nenhum dos três foi tocado. `prettier --check` reprova `fluxo-campeonato.ts`/`.test.ts`, mas
@@ -156,6 +157,30 @@ troca de posição, **pit não é ultrapassagem** — pit de qualquer um dos doi
 Hoje não existe narração de troca de posição (a única narração do jogo era `ROTULOS_EVENTO`), então
 a regra fica aqui aguardando o código que a consumirá.
 
+### ✅ PR 8.3 FEITO — as telas do campeonato (commits `0da36fb` + `499114c`)
+
+⬅️ **AGUARDANDO VEREDITO DO DEV — o único item aberto do projeto agora:**
+
+    start "" "E:\projetos\F1 fantasy\preview\campeonato.html"
+
+As três telas numa página só, a partir de um campeonato real (seed 2026, curta, 8 jogadores):
+**calendário** (silhuetas, vencedores, próxima destacada), **classificação com variação de posição**
+(▲/▼) e **fim de campeonato** (pódio + tabela final + calendário completo).
+
+⚠️ **Este preview NÃO é maquete** — diferente do `paleta.html`. Ele inlina `tokens.css` e
+`estilos.css` REAIS e renderiza os COMPONENTES REAIS; o que se vê é o que o app desenha, com o mesmo
+CSS. Falta só interação (nada clica, não há replay). Regerar:
+`npx vitest run --config vitest.preview.config.ts scripts/preview-campeonato.preview.test.ts`
+(ou `npm run preview`, que agora é seguro — os dois portões antigos estão fechados).
+
+🔒 **A decisão que sustenta a tela de calendário:** `iniciarCampeonato` **pré-simula todas as
+etapas**, então o resultado das próximas está em memória o tempo todo. `calendarioAnotado` só revela
+vencedor de etapa com `indice < etapaAtual` — vazar o vencedor de uma corrida que o jogador ainda
+vai assistir estragaria a corrida. **Tem teste dedicado, e é o mais importante do PR.**
+
+🔒 **A silhueta da miniatura reusa `pathDaVolta`**, a mesma geometria da tela de corrida. Foi ela que
+tirou 10/10 no teste cego; redesenhar à mão na miniatura jogaria isso fora.
+
 ### ✅ PR 8.2.1 FEITO — calendário mora na engine (fecha a pendência 0)
 
 `FormatoTemporada`, `FORMATO_PADRAO`, `N_ETAPAS`, `calendarioPadrao`, `calendarioSorteado` e o
@@ -197,9 +222,7 @@ de 0,0650 pra **0,0397** e obrigou a redesenhar a escada tonal inteira. Não foi
 
 **Os portões visuais saíram desta lista: os dois foram aprovados em 2026-08-07.**
 
-1. ⬅️ **PR 8.3 — as telas do campeonato** (calendário com as silhuetas, classificação entre corridas
-   com variação de posição, fim de campeonato). **A mecânica NÃO se refaz** — o dev testou single e
-   local com 2 jogadores e o wiring funciona; o 8.3 substitui as telas cruas pelas bonitas.
+1. ⬅️ **VEREDITO do dev sobre `preview/campeonato.html`** (as três telas do 8.3).
 2. **PR de INFRA — DESTRAVADO pela aprovação das silhuetas.** Era "pré-requisito caso as silhuetas
    fossem aprovadas"; com o 10/10, **deixa de ser pré-requisito e vira consolidação**: restrições
    geométricas como testes vermelhos + allowlist `LEGADO` que só encolhe. **Reavaliar o escopo com o
