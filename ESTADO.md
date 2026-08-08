@@ -25,21 +25,28 @@
   **Narração:** o ticker de eventos durante o replay mostra a variedade (PR A) e, quando os dados
   sustentam, "…e caiu atrás de X" (PR B). **Auto-avanço:** o toggle "Avançar automaticamente" no fim
   da corrida — ele deve avançar **e largar sozinho**, e desmarcar durante a contagem deve cancelar.
-- **Working tree:** só `tmp-medir-save.ts` untracked — script descartável do dev, **quebrado**
-  (`criarDraft` exige 22 jogadores + `atribuirPerfis` antes; o arquivo passa 4). Não commitar. A
+- **Working tree limpa.** `tmp-medir-save.ts` continua no disco, mas agora é **ignorado** pelo
+  `.gitignore` (regra `tmp-*`, adicionada em 2026-08-07) — é script descartável do dev e está
+  **quebrado** (`criarDraft` exige 22 jogadores + `atribuirPerfis` antes; o arquivo passa 4). A
   medição que ele buscava já foi feita e está registrada abaixo.
-- **Estado do remoto MEDIDO em 2026-08-07** (`git ls-remote --heads origin`): existem exatamente
-  duas branches lá — `main` em `b39782d` e `pr-7.7-dados-nurburgring` em `ccfc035`.
-  **`pr-8.1-calendario-sorteado` NÃO existe no remoto**; a branch atual saiu da 7.7 e nunca foi
-  pushada — o dev pediu explicitamente **sem push**.
-- ⚠️ **EXISTEM DUAS `main`s e elas divergem** (medido em 2026-08-07, `git rev-parse main origin/main`):
-  **`main` local = `49f3ca8`** (contém até o PR 7.6.1, com merge commits) está **21 commits à frente**
-  de **`origin/main` = `b39782d`** (PR 7.4). Quem fizer `git checkout main` cai na LOCAL, não na do
-  remoto. **Nenhuma das duas tem 7.7, 7.7.1, 7.8, 8.1 e 8.2** — esses só existem nesta branch.
+- ✅ **A `main` FOI PUSHADA em 2026-08-07, com autorização explícita do dev** (`git push origin
+  main:main --tags`, fast-forward `b39782d..49f3ca8`). **`main` local == `origin/main` == `49f3ca8`**
+  (verificado: `git rev-list --left-right --count main...origin/main` = `0 0`). Não existem mais
+  duas `main`s divergentes — `git checkout main` e o remoto apontam pro mesmo commit. A tag
+  **`v0.1.0-fase0`** também subiu (era a única local; o remoto não tinha nenhuma).
+- **Estado do remoto MEDIDO em 2026-08-07 pós-push** (`git ls-remote --heads --tags origin`):
+  branches `main` (`49f3ca8`) e `pr-7.7-dados-nurburgring` (`ccfc035`); tag `v0.1.0-fase0`.
+  **`pr-8.1-calendario-sorteado` NÃO existe no remoto** — a branch atual saiu da 7.7 e segue só
+  local. **Nem a `main` local nem a remota têm 7.7, 7.7.1, 7.8, 8.1, 8.2, 8.2.1 e 8.3** — esses só
+  existem nesta branch.
+- **O repositório é PRIVADO** (`https://github.com/Marcos-Felipe-dos-Santos/F1-fantasy`) e deve
+  continuar assim: o projeto usa nomes reais de pilotos e equipes e a questão jurídica do
+  **GDD §14.2** ainda está em aberto. Evidência da privacidade: a API do GitHub sem autenticação
+  devolve **404** para esse repo, enquanto `git ls-remote` autenticado funciona.
   ✅ **Os dois portões visuais foram FECHADOS em 2026-08-07** (silhuetas 10/10, paleta aprovada), o
-  que remove o motivo que segurava esse trabalho fora da `main`.
-  **Merge na `main` continua exigindo "ok" próprio** (e a tag, se houver, só DEPOIS do merge) —
-  agora é decisão de processo do dev, não mais espera de veredito visual.
+  que remove o motivo que segurava o trabalho da 7.7+ fora da `main`.
+  **Merge da branch atual na `main` continua exigindo "ok" próprio** (e a tag, se houver, só DEPOIS
+  do merge) — é decisão de processo do dev, não mais espera de veredito visual.
 
 ## ✅ OS DOIS PORTÕES VISUAIS ESTÃO FECHADOS (dev, 2026-08-07)
 
@@ -293,10 +300,11 @@ dev reprovou.
 6. **Dívida de processo do 7.4 — RESOLVIDA na prática em 2026-08-06.** A branch tinha sido
    renomeada por cima da `main` (`git branch -M`), sem merge commit, e a pendência era "decidir se
    vira branch antes de qualquer push". **Virou branch:** o push criou
-   `origin/pr-7.7-dados-nurburgring` e deixou a `main` remota parada em `b39782d`. O que sobra é o
-   passo seguinte, e ele é uma decisão do dev, não uma dívida: como a `main` recebe esses 29
-   commits — PR no GitHub (o remoto já ofereceu o link no push) ou fast-forward direto, que é
-   possível porque o histórico é linear (`git merge-base --is-ancestor origin/main HEAD` = 0).
+   `origin/pr-7.7-dados-nurburgring` e deixou a `main` remota parada em `b39782d`. Em 2026-08-07 a
+   `main` local foi pushada e o remoto subiu pra `49f3ca8` (até o 7.6.1). O que sobra é decisão do
+   dev, não dívida: como a `main` recebe os commits de 7.7 em diante desta branch — PR no GitHub ou
+   fast-forward direto, possível porque o histórico é linear
+   (`git merge-base --is-ancestor origin/main HEAD` = 0).
 7. **A rede de segurança da memoização da LUT (7.5) acabou.** Recuperar exige capturar o golden
    sobre uma polilinha SINTÉTICA fixa — registrado, não feito.
 

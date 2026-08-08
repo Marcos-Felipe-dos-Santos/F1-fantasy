@@ -18,3 +18,8 @@ referencias/
 # aprovar). Mesmo tratamento de `referencias/`: são artefatos de trabalho,
 # regeneráveis, e não têm por que entrar no histórico do repositório.
 preview/
+
+# Scripts descartáveis de medição/depuração do dev (ex.: `tmp-medir-save.ts`).
+# São rascunhos de uma sessão só — o resultado que interessa vai pro ESTADO.md,
+# o script não precisa de histórico.
+tmp-*
