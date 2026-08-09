@@ -7,11 +7,21 @@
 
 ## Estado atual
 
-- ✅ **PR 3.1a FEITO em 2026-08-09** (`246d937`) — sala + roster congelado. Quatro arquivos novos em
-  `src/net/` + um bloco no `eslint.config.js`; **zero dependência nova**, `src/engine/` e `src/data/`
-  intocados. **Medido:** `npm test` **1130/37**, `tsc --noEmit` **0**, `eslint src scripts` **0**,
-  `npm run build` **0**, **16/16 mutações mortas**. `npm run balance` **inalterado por construção**
-  (não tocou engine, dados nem `scripts/alavancas`). Detalhe no `HISTORICO.md` (entrada "PR 3.1a").
+- 🛑 **PORTÃO Nº 2 FECHADO — os dois testes da Fase 3 PASSARAM. AGUARDANDO VEREDITO DO DEV.**
+  **PR 3.1b FEITO em 2026-08-09** (`2efb145`), depois do **3.1a** (`246d937`). Os números que o
+  portão pedia:
+  - **CONFORMIDADE — 20 seeds, verde.** `deQuemEhAVez`/`ordemPeca`/`indicePeca` batendo com a engine
+    **a cada passo**, mais rosters de 2/4/22 humanos e variante com **abandono nas duas fases**.
+  - **COMMUTATIVIDADE — 20 seeds, verde**, com controle negativo e fluxo misto escolha+ausência.
+  - **Medido:** `npm test` **1256/40** (era 1094/36 antes da fase), `tsc` **0**, `eslint` **0**,
+    `build` **0**; **16/16 + 20/20 mutações mortas**; `npm run balance` **idêntico ao baseline**
+    (ρ 0,952 · desvio 61,32 · P(campeão top-3) 99,0% · P(pódio fora top-5) 7,5%).
+  - ⚠️ **UMA DIFERENÇA DE FORMA QUE O DEV PRECISA CHANCELAR** (detalhe no `HISTORICO.md`):
+    `alvoHumano` devolve **um** id na fase sorteios; `deQuemEhAVez` devolve um **CONJUNTO**, porque
+    online a fase é genuinamente concorrente. Espelhar `alvoHumano` serializaria 22 jogadores atrás
+    uns dos outros — passaria a conformidade e o jogo estaria errado. A asserção usada é **igualdade
+    de conjunto contra o `progresso` da engine**, mais forte que "`alvoHumano` ∈ conjunto".
+  Detalhe completo no `HISTORICO.md` (entradas "PR 3.1a" e "PR 3.1b").
 - 🟢 **SPIKE 3.0 RODADO em 2026-08-09 — veredito: GO** — e o **portão do dev foi CONFIRMADO na
   bancada dele: as duas abas funcionaram, digitou numa e apareceu na outra.** A paridade bit a bit
   do RNG entre workerd e Node, que era a premissa da fase inteira, passou. Detalhe
@@ -25,7 +35,8 @@
   `4ba4f50`) e a rodada de **narração rica + auto-avanço**: **A** (variedade/chuva, `1537ad6`),
   **B** (causalidade contrafactual, `43fe420`), **C** (avanço automático, `fc7f20d`); e ainda
   **8.2.1** (calendário na engine, `cfe1c47`) e **8.3** (telas do campeonato, `0da36fb`) ·
-  **1130 testes** (37 arquivos) verdes — medido em 2026-08-09, depois do 3.1a; eram 1094/36.
+  **1256 testes** (40 arquivos) verdes — medido em 2026-08-09, depois do 3.1b; eram 1094/36 antes
+  da Fase 3. ⚠️ O badge do README ainda diz **1094** e é estático — está desatualizado.
 - **Medido em 2026-08-07, não herdado:** `npm test` **1094/36**, `tsc --noEmit` **exit 0**,
   `eslint src scripts` **exit 0**, `npm run build` **exit 0**. **`npm run balance` inalterado por
   construção** — o harness importa só `src/engine/dataset`, `src/data/*.json` e `scripts/alavancas`,
@@ -267,10 +278,19 @@ duplicada entre engine e redutor, derivando em silêncio.
     assere reordenação/duplicação.
   - **eslint trava a fronteira** de `src/net/**`: nada de `src/data/`, `src/ui/`, React,
     `Math.random`/`Date.now`/`localeCompare`. Testes ficam de fora da trava de propósito.
-- ⬅️ **3.1b Turnos no redutor (o coração)** — log append-only, sequência, token de turno,
-  `deQuemEhAVez`, `ordemPeca`, abandono, cronômetro. **O servidor NUNCA carrega o dataset** — só
-  seed + roster + hashes.
-- **3.2 Transporte** — casca fina de I/O sobre o redutor (`party/sala.ts`, `src/net/cliente.ts`,
+- ✅ **3.1b Turnos no redutor (o coração)** — **FEITO** (`2efb145`). O que o 3.2/3.3 herdam:
+  - 🔒 **O CONTRATO DO AUSENTE, obrigatório pro 3.3** (está no docblock de `marcarAusente`): o
+    cliente completa os sorteios do ausente **no mesmo evento** em que vê a ausência no log; e na
+    fase peça **joga por ele**, com escolha **determinística e idêntica nos 22** (`escolherBot`,
+    semeado — nunca decisão de UI). O pool de peças é compartilhado: dois clientes escolhendo peças
+    diferentes pelo mesmo ausente **furam o pool em silêncio**.
+  - **`turnoEsperado` em `ComandoDraft`** dá idempotência sob duplicação e reordenação — é isso que
+    o harness do 3.2 vai atacar.
+  - **`expirarJogador` é comando do SERVIDOR**, fora de `ComandoDraft`: se cliente pudesse expirar
+    turno, expiraria o dos outros. `agora` é sempre injetado (`Date.now` é erro de lint em `net/`).
+  - **`marcarAusente` sobrescreve `rodada` destrutivamente** — trazer alguém de volta (reconexão,
+    3.2) exige reconstruir a rodada dele contando os eventos `escolha` no log.
+- ⬅️ **3.2 Transporte** — casca fina de I/O sobre o redutor (`party/sala.ts`, `src/net/cliente.ts`,
   `wrangler.jsonc`) + harness headless. É aqui que `partyserver`/`wrangler` entram no `package.json`.
 - **3.3 Lobby + draft online na UI** (`TelaLobby.tsx`, `FluxoOnline.tsx`).
 - **3.4 Handshake de versão + detector de divergência** (hash da corrida comparado entre os 22).
@@ -328,9 +348,12 @@ de 0,0650 pra **0,0397** e obrigou a redesenhar a escada tonal inteira. Não foi
 
 **Os portões visuais saíram desta lista: os dois foram aprovados em 2026-08-07.**
 
-0. ⬅️ **PRÓXIMO PR: 3.1b — Turnos no redutor** (o 3.1a fechou). É o **portão nº 2 do dev**: parar ao
-   final dele com o resultado dos DOIS testes (conformidade em ≥20 seeds; commutatividade). Ver a
-   seção **FASE 3** acima.
+0. 🛑 **VEREDITO DO DEV sobre o PORTÃO Nº 2** (3.1b): os dois testes passaram — ver o bloco no topo.
+   Nada segue pro 3.2 sem esse "ok". A chancela inclui a **diferença de forma** do `deQuemEhAVez`
+   (conjunto, não id único).
+1. **Depois do "ok": PR 3.2 — Transporte.** É onde `partyserver`/`wrangler` entram no
+   `package.json` (par testado: `partyserver@0.5.10` + `wrangler@4.120.0`, Node v24.16.0) e onde
+   o **harness headless não é opcional**. Ver a seção **FASE 3** acima.
 1. ⬅️ **VEREDITO do dev sobre `preview/campeonato.html`** (as três telas do 8.3) — segue aberto.
 2. **PR de INFRA — DESTRAVADO pela aprovação das silhuetas.** Era "pré-requisito caso as silhuetas
    fossem aprovadas"; com o 10/10, **deixa de ser pré-requisito e vira consolidação**: restrições
@@ -390,14 +413,19 @@ dev reprovou.
    refactor pequeno e separado, candidato a rodar antes do 3.1b. ⚠️ Limite conhecido: a
    conformidade **não** trava o `sort` de `congelarRoster` (o array offline já chega ordenado);
    quem trava é o teste de ordem embaralhada.
-   (b) **`src/engine/namespaces-seed.ts` não existe ainda** — adiado pro 3.1b, quando houver vários
-   rótulos `online:` pra registrar (com um só, o teste de duplicata é vazio). O único rótulo hoje é
-   `ROTULO_SEED_DRAFT = 'online:draft'`, em `src/net/tipos.ts`.
-   (c) **Não há reconexão.** Depois de `iniciar`, TODO comando é recusado — um WebSocket que cai é
-   um jogador que não volta. O mesmo `tokenJogador` emitido no `entrar` resolveria rejoin **e**
-   personificação. É do transporte (3.2), não do redutor.
+   (b) ✅ **`src/engine/namespaces-seed.ts` FEITO no 3.1b** — registro + varredura do código-fonte
+   que reprova rótulo não registrado, com guarda anti-vacuidade. Fecha o risco aprovado da fase.
+   (c) **Não há reconexão.** Depois de `iniciar`, os comandos de LOBBY são recusados — um WebSocket
+   que cai é um jogador que não volta. O mesmo `tokenJogador` emitido no `entrar` resolveria rejoin
+   **e** personificação. É do transporte (3.2), não do redutor. ⚠️ Detalhe descoberto no 3.1b:
+   `marcarAusente` **sobrescreve `rodada` destrutivamente**, então trazer alguém de volta exige
+   reconstruir a rodada dele contando os eventos `escolha` no log.
    (d) **`MensagemServidor` não correlaciona erro com comando** — com duplicação/reordenação no
-   harness, um `{tipo:'erro'}` é inatribuível. Também do 3.2.
+   harness, um `{tipo:'erro'}` é inatribuível. Também do 3.2. Relacionado: `publicarSala` publica o
+   `draft` sob um `seq` que **só `reduzirSala` incrementa**, e os comandos de draft não passam por
+   ali — o contrato "o cliente descarta broadcast atrasado pelo `seq`" **precisa de dono no 3.2**.
+   (e) **Prazo do turno não tem UI nem disparo automático.** `expirados`/`expirarJogador` existem e
+   são puros, mas quem os chama periodicamente é o servidor (3.2) — hoje ninguém chama.
 1. **Abertas pelo 7.8:** (a) o `BotaoTema` é um botão discreto no canto do `app-shell` — posição e
    forma **não passaram por veredito de arte**; (b) `erro` (salmão `#FF7B85`) e `raridadeProibido`
    (`#FF4757`) continuam sendo dois vermelhos ao lado do vermelho da marca — não foi mexido porque
