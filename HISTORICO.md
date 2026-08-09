@@ -831,6 +831,85 @@ entrega do 3.2.
 **Testes na main: 893 passando (33 arquivos)** — medido em 2026-08-01 via `npm test`. Mais o harness, por config própria (`npm run balance`), e os **três** geradores de preview (`npm run preview`: traçados, cego, zebra), todos fora do `npm test`.
 > A linha anterior dizia **"521 passando (27 arquivos)"**, número da época do PR 6.2 — ficou parada enquanto a suíte crescia até 851. Corrigida no chore de 2026-07-30. Contagem de teste envelhece rápido: quem atualizar, **meça** (`npm test`), não some de cabeça.
 
+### PR 3.1a — sala + roster congelado (2026-08-09, commit `246d937`) — ALTO RISCO
+
+Primeiro código da Fase 3. Quatro arquivos novos em `src/net/` (`tipos.ts`, `protocolo.ts`,
+`sala.ts`, `sala.test.ts`) + um bloco no `eslint.config.js`. **Zero dependência nova** —
+`partyserver`/`wrangler` continuam fora do `package.json` (isso é o 3.2). `src/engine/` e
+`src/data/` **intocados**, então `npm run balance` está inalterado **por construção**.
+
+🔑 **O FATO QUE GOVERNA O PR.** `criarDraft` embaralha `ordemPeca` a partir de
+`jogadores.map(j => j.id)` (`draft.ts:73`) — depende da **ORDEM DO ARRAY**, não do conjunto. Logo
+"roster congelado" **não é um conjunto de 22 ids**: é um `Jogador[]` explícito e ordenado que os 22
+clientes reproduzem igual. Dois clientes com o mesmo conjunto em ordens diferentes jogariam a
+rodada 6 em ordens diferentes, **em silêncio**. Defesa: **ordem canônica crescente por id**
+(`humano-01`, padding de 2 dígitos pra que a ordem lexicográfica seja a numérica), mantida no array
+da sala **e aplicada de novo** dentro de `congelarRoster` — defesa em profundidade contra
+round-trip de JSON, merge de estado ou bug futuro no redutor.
+
+🐤 **A canária inversa, que é o teste mais fácil de esquecer:** um teste afirma que
+`criarDraft([...roster].reverse()).ordemPeca` **DIFERE** do canônico. Sem ela, se a engine um dia
+deixasse de depender da ordem, a suíte ficaria verde, o `sort` viraria peso morto e os três
+docblocks que o justificam virariam mentira sem ninguém notar. Foi achado da revisão.
+
+**Conformidade com o caminho offline.** `congelarRoster` duplica de propósito a composição de
+`montarJogadores` (privado em `fluxo-draft.ts:117`), porque `src/net/` não deve importar da UI. A
+trava contra divergência é um `it.each` que compara o roster online com
+`iniciarDraft(...).jogadores` em **`facil` × `dificil` × {2, 3, 5, 22} humanos** — 22 é a borda em
+que `qtdBots === 0`. **Limite conhecido, registrado pra não gerar ilusão:** essa comparação **não**
+trava o `sort` (o array offline já chega ordenado); quem trava o `sort` é o teste de ordem
+embaralhada. O caminho definitivo seria extrair `montarJogadores` + `QTD_JOGADORES` pra
+`src/engine/` e ter **uma** função só — ficou como refactor separado (ver ESTADO, pendências).
+
+**As seis correções que a revisão exigiu antes do merge** (todas de forma; nada quebrava hoje
+porque não existe transporte — é justamente por isso que era barato agora):
+
+1. 🔴 **Personificação por construção.** `ComandoSala` carregava `jogadorId`. Qualquer cliente
+   mandaria `{tipo:'sair', jogadorId:'humano-01'}` e expulsaria outro, ou iniciaria a partida se
+   passando pelo anfitrião — e o **token de turno do 3.1b nasceria sobre um remetente forjável**.
+   Agora nenhum comando diz de quem é: `reduzirSala(estado, comando, remetenteId)`, com o id
+   injetado pelo **transporte** a partir da conexão.
+2. 🔴 **`seedMestre` ia no broadcast.** Contradizia a decisão (b) da fase, cuja justificativa é
+   literalmente que com a seed base na mão qualquer jogador computa as corridas futuras no console.
+   Agora `EstadoSala` (interno do DO) e `EstadoSalaPublico` (o que vai no fio) são tipos
+   **diferentes**, `MensagemServidor` usa o público, e `publicarSala` devolve
+   `seedDraft = deriveSeed(seedMestre, 'online:draft')`. **Esquecer de filtrar não compila.**
+   `publicarSala` copia **campo a campo** de propósito: com `{...resto}`, um segredo novo em
+   `EstadoSala` passaria a vazar sozinho por ter sido acrescentado.
+3. 🟡 **Anfitrião roubado.** `anfitriaoId` era recalculado como `jogadores[0].id` a cada entrada;
+   como o id livre é reusado, quem entrasse depois da saída do anfitrião pegava o `humano-01` e
+   **virava anfitrião na hora**. Agora é **pegajoso**: só muda em `sair`, e só se quem saiu era ele.
+   Inverter a regra não matava nenhum teste — buraco de cobertura real, agora coberto.
+4. 🟡 **Guarda de fase global** virou guarda **por handler**. O 3.1b acrescenta comandos que só
+   valem com a sala **iniciada** (turno, abandono, cronômetro) e *abandono é literalmente `sair`
+   depois do início*: a guarda global obrigaria a **reescrever** o ponto de entrada em vez de
+   estendê-lo.
+5. 🟡 **`default` no switch + checagem de tipo do payload.** O contrato "toda recusa deixa o estado
+   INTOCADO" estava escrito no `protocolo.ts` mas não valia: `{tipo:'entrar', nome:null}` **lançava**
+   no `.trim()`, e `{tipo:'xpto'}` devolvia `undefined`. O cliente é JSON não confiável, não TS.
+6. 🟡 **`seq` monotônico** (recusa não incrementa) e **`seedMestre` normalizada pra uint32** — a
+   mesma convenção de `seedDeTexto` (`>>> 0`). O `seq` é o que permite ao cliente descartar
+   broadcast atrasado/duplicado, e é contra ele que o **harness headless do 3.2** vai asserir.
+
+🔒 **A fronteira "o servidor NUNCA carrega o dataset" deixou de depender de disciplina.** Bloco novo
+no `eslint.config.js` para `src/net/**`: proibido importar `src/data/`, `**/*.json`, `src/ui/` e
+React, e proibido `Math.random`/`Date.now`/`performance.now`/`localeCompare`. **Verificado com um
+arquivo descartável que viola as cinco regras: 5 erros, um por regra.** O arquivo de **teste** está
+fora da trava de propósito — a conformidade só vale se comparar com o caminho offline de verdade.
+
+**Medido:** `npm test` **1130/37** (era 1094/36), `tsc --noEmit` **0**, `eslint src scripts` **0**,
+`npm run build` **0**. **16 mutações isoladas, 16 mortas** — entre elas: `congelarRoster` sem o
+`sort` (1 falha), roster congelado com a seed **mestra** em vez da derivada (2), `publicarSala`
+vazando a `seedMestre` (2), anfitrião não pegajoso (1), `seq` que não avança (1), `sair` aceitando
+remetente qualquer (1), id sem padding (21).
+
+**Decisões adiadas, com o porquê:** `src/engine/namespaces-seed.ts` (registro de rótulos `online:`
+com teste de duplicata) **fica pro 3.1b** — com um rótulo só, o teste de duplicata é vazio; a
+constante `ROTULO_SEED_DRAFT` já centraliza o valor. **Token de reconexão** fica pro 3.2: hoje um
+WebSocket que cai é um jogador que não volta (depois de `iniciar`, todo comando é recusado), e o
+mesmo token resolve rejoin e personificação — mas quem gerencia conexão é o transporte.
+**Correlação comando↔erro** também é do transporte.
+
 ## Acompanhamentos registrados pela revisão do PR 1.6 (não são defeitos; candidatos a PR futuro)
 
 - `medirParadasExtras` usa equipes históricas inteiras — o CALL do estrategista desloca a 1ª parada e vira confound secundário do bucket de PNEU (o bucket <60 é na prática 1 piloto). Sinal mais limpo: fixar chassi/motor/estrategista/pit e variar só o piloto.

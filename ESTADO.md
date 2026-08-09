@@ -7,7 +7,14 @@
 
 ## Estado atual
 
-- 🟢 **SPIKE 3.0 RODADO em 2026-08-09 — veredito: GO.** A dependência de rede está provada. Detalhe
+- ✅ **PR 3.1a FEITO em 2026-08-09** (`246d937`) — sala + roster congelado. Quatro arquivos novos em
+  `src/net/` + um bloco no `eslint.config.js`; **zero dependência nova**, `src/engine/` e `src/data/`
+  intocados. **Medido:** `npm test` **1130/37**, `tsc --noEmit` **0**, `eslint src scripts` **0**,
+  `npm run build` **0**, **16/16 mutações mortas**. `npm run balance` **inalterado por construção**
+  (não tocou engine, dados nem `scripts/alavancas`). Detalhe no `HISTORICO.md` (entrada "PR 3.1a").
+- 🟢 **SPIKE 3.0 RODADO em 2026-08-09 — veredito: GO** — e o **portão do dev foi CONFIRMADO na
+  bancada dele: as duas abas funcionaram, digitou numa e apareceu na outra.** A paridade bit a bit
+  do RNG entre workerd e Node, que era a premissa da fase inteira, passou. Detalhe
   completo no `HISTORICO.md` (entrada "SPIKE 3.0"); o resumo operacional está na seção **FASE 3**
   logo abaixo. **O spike vive FORA do repositório** (`E:\projetos\spike-partyserver\`) e a `main`
   ficou intocada — medido, não assumido: `git status` limpo e nenhum pacote de rede no
@@ -18,7 +25,7 @@
   `4ba4f50`) e a rodada de **narração rica + auto-avanço**: **A** (variedade/chuva, `1537ad6`),
   **B** (causalidade contrafactual, `43fe420`), **C** (avanço automático, `fc7f20d`); e ainda
   **8.2.1** (calendário na engine, `cfe1c47`) e **8.3** (telas do campeonato, `0da36fb`) ·
-  **1094 testes** (36 arquivos) verdes.
+  **1130 testes** (37 arquivos) verdes — medido em 2026-08-09, depois do 3.1a; eram 1094/36.
 - **Medido em 2026-08-07, não herdado:** `npm test` **1094/36**, `tsc --noEmit` **exit 0**,
   `eslint src scripts` **exit 0**, `npm run build` **exit 0**. **`npm run balance` inalterado por
   construção** — o harness importa só `src/engine/dataset`, `src/data/*.json` e `scripts/alavancas`,
@@ -244,10 +251,23 @@ duplicada entre engine e redutor, derivando em silêncio.
 
 **Sequência de PRs — TODOS ALTO RISCO** (o `CLAUDE.md` lista netcode):
 
-- ✅ **3.0 SPIKE** — go/no-go da dependência. **FEITO, GO.**
-- **3.1a Sala + roster congelado** — `EstadoSala` + redutor (entrar/sair, ids `humano-01..22`, pronto,
-  bots, início congelado). Novos `src/net/protocolo.ts` e `tipos.ts`. **Zero dependência nova.**
-- **3.1b Turnos no redutor (o coração)** — log append-only, sequência, token de turno,
+- ✅ **3.0 SPIKE** — go/no-go da dependência. **FEITO, GO** (portão do dev confirmado nas duas abas).
+- ✅ **3.1a Sala + roster congelado** — **FEITO** (`246d937`). O que ficou travado e o 3.1b herda:
+  - 🔑 **Roster congelado é um `Jogador[]` ORDENADO, não um conjunto.** `criarDraft` embaralha
+    `ordemPeca` a partir de `jogadores.map(j => j.id)` (`draft.ts:73`) — ordem do array, não conjunto.
+    Ordem canônica: crescente por id, `humano-01` com padding de 2 dígitos.
+  - 🔒 **Nenhum comando carrega `jogadorId`.** `reduzirSala(estado, comando, remetenteId)`; o id vem
+    do **transporte**, a partir da conexão. Sem isso, o token de turno do 3.1b nasceria sobre um
+    remetente forjável.
+  - 🔒 **`seedMestre` não sai do DO.** `EstadoSala` (interno) ≠ `EstadoSalaPublico` (fio); o broadcast
+    leva `seedDraft = deriveSeed(seedMestre, 'online:draft')`. Esquecer de filtrar não compila.
+  - **Guarda de fase é POR HANDLER**, de propósito: os comandos do 3.1b valem com a sala já
+    iniciada, e *abandono é `sair` depois do início*. Estender, não reescrever.
+  - **`seq` monotônico já existe** (recusa não incrementa) — é contra ele que o harness do 3.2
+    assere reordenação/duplicação.
+  - **eslint trava a fronteira** de `src/net/**`: nada de `src/data/`, `src/ui/`, React,
+    `Math.random`/`Date.now`/`localeCompare`. Testes ficam de fora da trava de propósito.
+- ⬅️ **3.1b Turnos no redutor (o coração)** — log append-only, sequência, token de turno,
   `deQuemEhAVez`, `ordemPeca`, abandono, cronômetro. **O servidor NUNCA carrega o dataset** — só
   seed + roster + hashes.
 - **3.2 Transporte** — casca fina de I/O sobre o redutor (`party/sala.ts`, `src/net/cliente.ts`,
@@ -308,8 +328,9 @@ de 0,0650 pra **0,0397** e obrigou a redesenhar a escada tonal inteira. Não foi
 
 **Os portões visuais saíram desta lista: os dois foram aprovados em 2026-08-07.**
 
-0. ⬅️ **PRÓXIMO PR: 3.1a — Sala + roster congelado** (o 3.0 fechou com GO). Zero dependência nova:
-   é só `src/net/protocolo.ts` + `tipos.ts` + redutor puro e testes. Ver a seção **FASE 3** acima.
+0. ⬅️ **PRÓXIMO PR: 3.1b — Turnos no redutor** (o 3.1a fechou). É o **portão nº 2 do dev**: parar ao
+   final dele com o resultado dos DOIS testes (conformidade em ≥20 seeds; commutatividade). Ver a
+   seção **FASE 3** acima.
 1. ⬅️ **VEREDITO do dev sobre `preview/campeonato.html`** (as três telas do 8.3) — segue aberto.
 2. **PR de INFRA — DESTRAVADO pela aprovação das silhuetas.** Era "pré-requisito caso as silhuetas
    fossem aprovadas"; com o 10/10, **deixa de ser pré-requisito e vira consolidação**: restrições
@@ -361,6 +382,22 @@ dev reprovou.
 
 ## Pendências ATIVAS
 
+0. **Abertas pelo 3.1a (Fase 3):**
+   (a) **`montarJogadores` está duplicado** entre `fluxo-draft.ts:117` (UI) e `congelarRoster`
+   (`src/net/sala.ts`), assim como `QTD_JOGADORES = 22`. Hoje a divergência é **vigiada** por um
+   `it.each` de conformidade (`facil`×`dificil` × {2,3,5,22} humanos) contra
+   `iniciarDraft(...).jogadores`; o certo é **extrair pra `src/engine/` e ter uma função só** —
+   refactor pequeno e separado, candidato a rodar antes do 3.1b. ⚠️ Limite conhecido: a
+   conformidade **não** trava o `sort` de `congelarRoster` (o array offline já chega ordenado);
+   quem trava é o teste de ordem embaralhada.
+   (b) **`src/engine/namespaces-seed.ts` não existe ainda** — adiado pro 3.1b, quando houver vários
+   rótulos `online:` pra registrar (com um só, o teste de duplicata é vazio). O único rótulo hoje é
+   `ROTULO_SEED_DRAFT = 'online:draft'`, em `src/net/tipos.ts`.
+   (c) **Não há reconexão.** Depois de `iniciar`, TODO comando é recusado — um WebSocket que cai é
+   um jogador que não volta. O mesmo `tokenJogador` emitido no `entrar` resolveria rejoin **e**
+   personificação. É do transporte (3.2), não do redutor.
+   (d) **`MensagemServidor` não correlaciona erro com comando** — com duplicação/reordenação no
+   harness, um `{tipo:'erro'}` é inatribuível. Também do 3.2.
 1. **Abertas pelo 7.8:** (a) o `BotaoTema` é um botão discreto no canto do `app-shell` — posição e
    forma **não passaram por veredito de arte**; (b) `erro` (salmão `#FF7B85`) e `raridadeProibido`
    (`#FF4757`) continuam sendo dois vermelhos ao lado do vermelho da marca — não foi mexido porque
