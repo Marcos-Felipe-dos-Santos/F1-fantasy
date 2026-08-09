@@ -14,7 +14,7 @@
     **a cada passo**, mais rosters de 2/4/22 humanos e variante com **abandono nas duas fases**.
   - **COMMUTATIVIDADE — 20 seeds, verde**, com controle negativo e fluxo misto escolha+ausência.
   - **Medido:** `npm test` **1256/40** (era 1094/36 antes da fase), `tsc` **0**, `eslint` **0**,
-    `build` **0**; **16/16 + 20/20 mutações mortas**; `npm run balance` **idêntico ao baseline**
+    `build` **0**; **16/16 + 22/22 mutações mortas**; `npm run balance` **idêntico ao baseline**
     (ρ 0,952 · desvio 61,32 · P(campeão top-3) 99,0% · P(pódio fora top-5) 7,5%).
   - ⚠️ **UMA DIFERENÇA DE FORMA QUE O DEV PRECISA CHANCELAR** (detalhe no `HISTORICO.md`):
     `alvoHumano` devolve **um** id na fase sorteios; `deQuemEhAVez` devolve um **CONJUNTO**, porque

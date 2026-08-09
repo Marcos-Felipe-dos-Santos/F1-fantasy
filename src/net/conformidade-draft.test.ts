@@ -87,16 +87,26 @@ function escolhaValida(state: DraftState, jogadorId: string, ds: Dataset): Escol
   throw new Error(`escolhaValida: nada a escolher pra "${jogadorId}" (fase ${revelacao.fase})`);
 }
 
-/** Quem a ENGINE considera apto a jogar agora — o espelho do `deQuemEhAVez`. */
-function aptosNaEngine(state: DraftState, ausentes: Set<string>): string[] {
+/**
+ * Quem a ENGINE considera apto a jogar agora — o espelho do `deQuemEhAVez`.
+ *
+ * 🔑 **NÃO conhece o conceito de ausência**, e isso é deliberado. Uma versão
+ * anterior subtraía os ausentes aqui; medido, a subtração era peso morto (84/84
+ * passam sem ela, inclusive nas 10 seeds com abandono), porque `resolverAusentes`
+ * já leva o ausente além do limiar e além da casa dele em `ordemPeca`. Mantê-la
+ * seria pior do que inútil: mandaria o lado da engine ignorar exatamente os
+ * jogadores em que os dois modelos diferem, ou seja, espelharia no teste a
+ * premissa da implementação. Sem ela, a expectativa é independente de verdade.
+ */
+function aptosNaEngine(state: DraftState): string[] {
   if (state.fase === 'concluido') return [];
   if (state.fase === 'sorteios') {
     return state.jogadores
-      .filter((j) => state.progresso[j.id].rodada <= RODADAS_SORTEIO && !ausentes.has(j.id))
+      .filter((j) => state.progresso[j.id].rodada <= RODADAS_SORTEIO)
       .map((j) => j.id);
   }
   const vez = state.ordemPeca[state.indicePeca];
-  return vez === undefined || ausentes.has(vez) ? [] : [vez];
+  return vez === undefined ? [] : [vez];
 }
 
 /**
@@ -175,7 +185,7 @@ function rodarConformidade(
 
     // (b) Igualdade de CONJUNTO, nos dois sentidos.
     expect(ordenado(deQuemEhAVez(rede)), `seed ${seed}, passo ${passos}`).toEqual(
-      ordenado(aptosNaEngine(engine, ausentes)),
+      ordenado(aptosNaEngine(engine)),
     );
 
     // (c) As duas fases têm que andar juntas.
@@ -349,7 +359,7 @@ describe('COMMUTATIVIDADE — mesmos sorteios, ordens diferentes, mesmo resultad
 
     while (engine.fase !== 'concluido') {
       const eraSorteios = engine.fase === 'sorteios';
-      const jogadorId = aptosNaEngine(engine, new Set())[0];
+      const jogadorId = aptosNaEngine(engine)[0];
       const escolha = escolhaValida(engine, jogadorId, dataset);
       (eraSorteios ? sorteios : pecas).push({ jogadorId, escolha });
       engine = resolverBots(aplicarEscolha(engine, dataset, jogadorId, escolha), dataset);

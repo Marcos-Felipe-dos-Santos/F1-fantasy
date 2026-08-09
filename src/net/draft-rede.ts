@@ -30,7 +30,7 @@
  * asserção própria no teste de conformidade — não é raciocínio, é medição.
  */
 
-import { calcularOrdemPeca } from '../engine/draft-utils';
+import { calcularOrdemPeca, RODADAS_SORTEIO } from '../engine/draft-utils';
 import type { Jogador } from '../engine/types';
 import type { ComandoDraft, ErroDraft } from './protocolo';
 import {
@@ -67,7 +67,7 @@ function normalizar(estado: EstadoDraftRede, agora: number): EstadoDraftRede {
   let atual = estado;
 
   if (atual.fase === 'sorteios') {
-    if (atual.jogadorIds.some((id) => atual.rodada[id] <= 5)) return atual;
+    if (atual.jogadorIds.some((id) => atual.rodada[id] <= RODADAS_SORTEIO)) return atual;
     atual = { ...atual, fase: 'peca', indicePeca: 0 };
   }
 
@@ -142,7 +142,7 @@ export function criarDraftRede(
 export function deQuemEhAVez(estado: EstadoDraftRede): string[] {
   if (estado.fase === 'concluido') return [];
   if (estado.fase === 'sorteios') {
-    return estado.jogadorIds.filter((id) => estado.rodada[id] <= 5 && ativo(estado, id));
+    return estado.jogadorIds.filter((id) => estado.rodada[id] <= RODADAS_SORTEIO && ativo(estado, id));
   }
   const vez = estado.ordemPeca[estado.indicePeca];
   return vez === undefined || !ativo(estado, vez) ? [] : [vez];

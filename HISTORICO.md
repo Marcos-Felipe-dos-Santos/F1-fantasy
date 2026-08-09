@@ -935,6 +935,12 @@ redutor, derivando em silêncio"): `calcularOrdemPeca` foi **extraída** de `cri
 levou `RODADAS_SORTEIO` pra engine, com `RODADA_COMPLETA = RODADAS_SORTEIO + 1` — achado da revisão:
 o PR tinha eliminado a fórmula duplicada da `ordemPeca` e deixado o **limiar de rodada** duplicado
 cinco vezes, que também é regra de turno.
+⚠️ **E a primeira correção disso ficou pela metade**, o que só apareceu numa releitura: `draft.ts` e
+`tipos.ts` passaram a usar a constante, mas o `draft-rede.ts` — **o arquivo que carrega a tese
+anti-duplicação** — manteve dois `<= 5` literais (em `normalizar` e em `deQuemEhAVez`). Corrigido no
+commit seguinte, com duas mutações novas do limiar (frouxo em cada um dos dois sítios): **65 e 74
+testes mortos**. A lição é a de sempre neste projeto: *afirmação de estado só entra medida* — o
+texto já dizia "resolvido" quando ainda não estava.
 
 ### 🛑 OS DOIS TESTES DO PORTÃO — resultado
 
@@ -979,6 +985,13 @@ qualquer um com o tratamento de ausente errado.**
 Agora há uma variante com abandono nas **duas fases** (10 seeds), e ela **mede em qual fase cada
 abandono caiu** (`expect(fasesDosAbandonos).toEqual(['sorteios','peca'])`) — sem isso, um número de
 passo mal escolhido faria os dois caírem na fase sorteios e o teste passaria sem exercitar nada.
+
+📏 **E o lado da engine NÃO conhece ausência** — deliberadamente. A primeira versão subtraía os
+ausentes também na expectativa da engine; **medido, a subtração era peso morto** (84/84 passam sem
+ela, inclusive nas 10 seeds com abandono), porque o contrato do cliente já leva o ausente além do
+limiar e além da casa dele em `ordemPeca`. Mantê-la seria **pior que inútil**: mandaria o lado da
+engine ignorar exatamente os jogadores em que os dois modelos diferem — espelharia no teste a
+premissa da implementação, que é justamente o que um portão não pode fazer.
 
 🔒 **O CONTRATO que o 3.3 é obrigado a cumprir**, descoberto ao escrever esse teste e registrado no
 código (`draft-rede.ts`, docblock de `marcarAusente`): (1) o cliente completa os sorteios do ausente
