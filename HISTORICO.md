@@ -777,6 +777,55 @@
 
   **Medido em 2026-08-07:** `npm test` **1094/36** (era 1088), `tsc`, `eslint` e `build` **exit 0**.
 
+### SPIKE 3.0 — go/no-go da dependência de rede (2026-08-09) — ✅ **GO**
+
+Spike descartável, **fora do repositório**: `E:\projetos\spike-partyserver\`, com `package.json`
+próprio. Não é branch — branch ainda escreveria no `node_modules/` compartilhado, e a suíte de 1094
+testes deixaria de rodar contra a mesma árvore que a produziu. **Medido depois do spike:
+`git status` limpo, `HEAD` em `87c82c0`, e nenhum pacote de rede no `node_modules/` do projeto.**
+
+**A decisão (a), com os números que a sustentam.** O alvo deixou de ser o pacote `partykit`:
+`0.0.115`, último `time.modified` em **2025-09-11** (11 meses). O desenvolvimento está em
+`partyserver`: `0.5.10`, **2026-08-03** (6 dias antes do spike). Mesmo monorepo
+(`git://github.com/cloudflare/partykit.git`, autor Sunil Pai), mesmo princípio — **sala = Durable
+Object isolado**. O que muda é só o CLI: `partykit dev` → `wrangler dev`.
+
+🔑 **O PAR DE VERSÕES TESTADO — anotar, porque os dois são móveis:** `partyserver@0.5.10` +
+`wrangler@4.120.0` + `@cloudflare/workers-types@5.20260809.1`, Node **v24.16.0**, npm 11.13.0.
+`partyserver` é pré-1.0 e `wrangler` 4.120.0 saiu 2 dias antes do spike: **era o pareamento sem
+tempo de maturação, e portanto o gate que de fato podia matar a fase.** Passou. Uma dependência
+pré-1.0 que "funcionou uma vez" sem a versão registrada é armadilha pro 3.2.
+
+**Os quatro cheques pedidos pelo dev, todos rodados no PowerShell:**
+
+1. **`wrangler dev` sobe no PowerShell** — sim, `--port 8787 --ip 127.0.0.1`, e o **hot reload**
+   funcionou (a página de abas foi adicionada com o servidor no ar e os testes repassaram sem
+   restart). `tsc --noEmit` exit 0; `wrangler deploy --dry-run` exit 0 — este último é o que valida
+   o **shape da config**: `durable_objects.bindings` + bloco `migrations` com `new_sqlite_classes`
+   foram aceitos pelo wrangler 4.120.0, e o binding apareceu resolvido na saída.
+2. **Dois clientes ecoam** — feito **headless** (`scripts/dois-clientes.mjs`, WebSocket global do
+   Node ≥ 22, zero dependência nova), o que é mais forte e reprodutível que abas. 10 cheques verdes:
+   conexão, `this.name` chegando como `sala-teste`, A notificado da entrada de B (**prova que os
+   dois caem no MESMO DO**), eco pro remetente, broadcast nos dois sentidos, e A notificado da
+   saída de B. Rota: `/parties/sala-spike/<sala>` — `routePartykitRequest` kebab-caseia o nome do
+   binding (`SalaSpike` → `sala-spike`).
+3. **`rng.ts` no servidor** — passou, e **o cheque foi ampliado de propósito: compilar não era a
+   pergunta, rodar era.** `rng.ts` foi copiado bit a bit (mesmo md5) e um módulo compartilhado
+   (`impressao-rng.ts`) é importado pelos DOIS lados, workerd e Node. 🔑 **PARIDADE BIT A BIT
+   CONFIRMADA: 35 linhas idênticas, 4 seeds (1, 2026, 123456789, 4294967295)**, cobrindo 10 `next()`,
+   `int`, `pick`, `shuffle`, `seedFromString` e `deriveSeed` — e **comparando os bits IEEE-754 crus
+   dos doubles**, não a formatação. É a medição mais valiosa do spike: a arquitetura inteira
+   ("corrida roda no cliente, servidor só coordena") repousa nela. Esperado, já que a engine só usa
+   `Math.imul`/`>>>`/divisão — mas o spike existe pra virar "deve passar" em "medido".
+4. **Bundle** — **40,34 KiB, gzip 11,93 KiB** (37,92 / 10,91 antes da página de abas). Contra o teto
+   de 3 MB gzip do plano Free, é **~0,4%**. O número importa como orçamento, não como pass/fail: o
+   3.1b vai carregar seed + roster + hashes, e agora existe linha de base pra comparar.
+
+**Escopo mantido curto de propósito:** o spike NÃO criou `protocolo.ts`, `tipos.ts`,
+`namespaces-seed.ts` nem qualquer forma de redutor — isso é 3.1a/3.1b, e o dev travou um portão
+antes deles. `partyserver`/`wrangler` **não entraram no `package.json` do projeto** — isso é
+entrega do 3.2.
+
 **Testes na main: 893 passando (33 arquivos)** — medido em 2026-08-01 via `npm test`. Mais o harness, por config própria (`npm run balance`), e os **três** geradores de preview (`npm run preview`: traçados, cego, zebra), todos fora do `npm test`.
 > A linha anterior dizia **"521 passando (27 arquivos)"**, número da época do PR 6.2 — ficou parada enquanto a suíte crescia até 851. Corrigida no chore de 2026-07-30. Contagem de teste envelhece rápido: quem atualizar, **meça** (`npm test`), não some de cabeça.
 

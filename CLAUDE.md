@@ -30,14 +30,14 @@ sessão começa com informação errada.
 - **Engine de simulação:** TypeScript puro, sem dependência de UI. Determinística por seed.
 - **Front-end:** React + Vite + SVG (traçado da pista e carros).
 - **Testes:** Vitest.
-- **Online (fase 3):** PartyKit (Durable Objects na borda da Cloudflare). Corrida roda no cliente; servidor só coordena.
+- **Online (fase 3):** **`partyserver` + `wrangler`** (Durable Objects na borda da Cloudflare) — **não mais o pacote `partykit`**, parado desde 2025-09 (decisão do dev, 2026-08-09; ver `ESTADO.md` §FASE 3). Sala = DO isolado. Corrida roda no cliente; servidor só coordena.
 - **Ambiente do dev:** Windows 11 + PowerShell + Node LTS. Comandos e scripts devem funcionar no PowerShell.
 
 ## Arquitetura (não violar)
 - `src/engine/` — lógica pura (draft, notas, simulação). **Nunca importa React nem nada de UI.**
 - `src/ui/` — componentes React. Consome a engine, nunca reimplementa regra de jogo.
 - `src/data/` — dados (JSON): pilotos, equipes, motores, pistas, peças. Sem lógica.
-- `src/net/` — camada PartyKit (fase 3). Isola rede do resto.
+- `src/net/` — camada de rede (fase 3, `partyserver`). Isola rede do resto.
 
 ## Leitura de `src/data/` (regra inviolável — vale pra sessão principal, subagentes e `senior-reviewer`)
 

@@ -7,6 +7,11 @@
 
 ## Estado atual
 
+- 🟢 **SPIKE 3.0 RODADO em 2026-08-09 — veredito: GO.** A dependência de rede está provada. Detalhe
+  completo no `HISTORICO.md` (entrada "SPIKE 3.0"); o resumo operacional está na seção **FASE 3**
+  logo abaixo. **O spike vive FORA do repositório** (`E:\projetos\spike-partyserver\`) e a `main`
+  ficou intocada — medido, não assumido: `git status` limpo e nenhum pacote de rede no
+  `node_modules/` do projeto.
 - **Estamos na `main`** (a branch `pr-8.1-calendario-sorteado` foi mergeada nela em 2026-08-08 e
   está encerrada) · últimos PRs **8.1** (calendário sorteado, `63e3e82`),
   **8.2** (round-trip do save, `6cb02cc`), **8.4-mínimo** (seletor de Formato + campeonato jogável,
@@ -215,6 +220,63 @@ engine, que é a violação inversa.
 o ponto é esse.** `npm run balance` rodado (mexeu em `src/engine/`): **tabela idêntica**,
 `seedDaEtapa` e `simularCampeonato` só mudaram de vizinhança.
 
+## 🌐 FASE 3 — ONLINE: o plano aprovado (registrado em 2026-08-09)
+
+> ⚠️ **Este plano foi aprovado numa sessão anterior e NÃO estava neste arquivo** — o dev teve que
+> recolá-lo inteiro na mão depois de reiniciar o PC. Fica aqui pra que isso não se repita.
+
+**Decisão (a) — o alvo NÃO é mais PartyKit.** É **`partyserver` + `wrangler`**, rodando como Durable
+Object comum num projeto Workers. O princípio do dia 1 fica intacto (**sala = DO isolado**); só o CLI
+muda (`partykit dev` → `wrangler dev`). Motivo medido: `partykit@0.0.115` sem release há ~11 meses;
+`partyserver@0.5.10` publicado dias atrás, no mesmo monorepo `cloudflare/partykit`.
+🔑 **Par de versões testado no spike: `partyserver@0.5.10` + `wrangler@4.120.0` + Node v24.16.0.**
+Os dois são pré-1.0/móveis — se algo quebrar no 3.2, **suspeitar da versão antes do código.**
+
+**Decisão (b) — D-E: SEED POR ETAPA (opção B), o DO guarda a `seedMestre`.** Com a seed base completa
+na mão, qualquer jogador computa as corridas futuras no console — não é hack, é chamar uma função, e
+num jogo casual alguém faz e conta no grupo. **Custos aceitos pelo dev:** fork do `iniciarCampeonato`;
+`campeonatoConcluido` precisa ser revisto (`fluxo-campeonato.ts:337` mede contra `etapas.length` e,
+com estado incremental, devolveria `true` depois da etapa 1); e **o save do 8.2 sai de cena no
+online.**
+
+**Decisão (c) — divisão 3.1a / 3.1b aprovada.** O **3.1b é onde mora o risco**: regra de turno
+duplicada entre engine e redutor, derivando em silêncio.
+
+**Sequência de PRs — TODOS ALTO RISCO** (o `CLAUDE.md` lista netcode):
+
+- ✅ **3.0 SPIKE** — go/no-go da dependência. **FEITO, GO.**
+- **3.1a Sala + roster congelado** — `EstadoSala` + redutor (entrar/sair, ids `humano-01..22`, pronto,
+  bots, início congelado). Novos `src/net/protocolo.ts` e `tipos.ts`. **Zero dependência nova.**
+- **3.1b Turnos no redutor (o coração)** — log append-only, sequência, token de turno,
+  `deQuemEhAVez`, `ordemPeca`, abandono, cronômetro. **O servidor NUNCA carrega o dataset** — só
+  seed + roster + hashes.
+- **3.2 Transporte** — casca fina de I/O sobre o redutor (`party/sala.ts`, `src/net/cliente.ts`,
+  `wrangler.jsonc`) + harness headless. É aqui que `partyserver`/`wrangler` entram no `package.json`.
+- **3.3 Lobby + draft online na UI** (`TelaLobby.tsx`, `FluxoOnline.tsx`).
+- **3.4 Handshake de versão + detector de divergência** (hash da corrida comparado entre os 22).
+- **3.5 Campeonato online (seed por etapa)** — **CORTE Nº 1** se a fase ficar grande.
+
+🛑 **PORTÕES OBRIGATÓRIOS (do dev):**
+1. **Parar ao final do 3.0** com o go/no-go. ✅ cumprido.
+2. **Parar ao final do 3.1b** com o resultado dos DOIS testes que valem a fase:
+   (1) **conformidade** — `deQuemEhAVez` bate com `alvoHumano`/`ordemPeca` da engine em **≥20 seeds**;
+   (2) **commutatividade** — mesmos sorteios ⇒ `DraftState` idêntico.
+   **Se a conformidade não fechar, PARAR — não contornar.**
+
+**Riscos aprovados como propostos:**
+- **Float/determinismo:** defesa por **handshake de versão, não por detector** — a engine só usa
+  `Math.imul`/`max`/`round`/`min`/`floor`/`abs`, **zero transcendental**. ✅ O spike já mediu a
+  paridade bit a bit workerd↔Node (4 seeds, bits IEEE-754 comparados), o que sustenta a escolha.
+- **Colisão de namespace do `deriveSeed`:** todo rótulo novo com prefixo **`"online:"`**, registro em
+  `src/engine/namespaces-seed.ts` **com teste que falha em duplicata**.
+- **Hash de corrida sobre `ResultadoCorrida`.**
+
+📌 **O harness headless NÃO é opcional** (palavras do dev): simular 22 clientes com injeção de
+latência, reordenação, duplicação e desconexão. O dev precisa testar **sem depender de amigos
+disponíveis**. **Abas no navegador só pro portão visual.** O spike já deixou o embrião disso em
+`E:\projetos\spike-partyserver\scripts\dois-clientes.mjs` (WebSocket global do Node ≥ 22, sem
+dependência).
+
 ## Onde parei
 
 Concluído: Fases 0-2 (engine, Single, Local hotseat, Modo Cego), dataset 1950-2025 (PR 4.x),
@@ -241,7 +303,9 @@ de 0,0650 pra **0,0397** e obrigou a redesenhar a escada tonal inteira. Não foi
 
 **Os portões visuais saíram desta lista: os dois foram aprovados em 2026-08-07.**
 
-1. ⬅️ **VEREDITO do dev sobre `preview/campeonato.html`** (as três telas do 8.3).
+0. ⬅️ **PRÓXIMO PR: 3.1a — Sala + roster congelado** (o 3.0 fechou com GO). Zero dependência nova:
+   é só `src/net/protocolo.ts` + `tipos.ts` + redutor puro e testes. Ver a seção **FASE 3** acima.
+1. ⬅️ **VEREDITO do dev sobre `preview/campeonato.html`** (as três telas do 8.3) — segue aberto.
 2. **PR de INFRA — DESTRAVADO pela aprovação das silhuetas.** Era "pré-requisito caso as silhuetas
    fossem aprovadas"; com o 10/10, **deixa de ser pré-requisito e vira consolidação**: restrições
    geométricas como testes vermelhos + allowlist `LEGADO` que só encolhe. **Reavaliar o escopo com o
