@@ -263,6 +263,11 @@ duplicada entre engine e redutor, derivando em silêncio.
    (2) **commutatividade** — mesmos sorteios ⇒ `DraftState` idêntico.
    **Se a conformidade não fechar, PARAR — não contornar.**
 
+⚙️ **Herança de config do spike que o 3.2 precisa DECIDIR, não copiar:** o `wrangler.jsonc` do spike
+usa `compatibility_date: "2026-08-01"` e `compatibility_flags: ["nodejs_compat"]`. **A flag foi posta
+defensivamente e não sustenta nada** — `rng.ts` tem zero imports e o cliente de teste roda fora do
+worker. Entrar no 3.2 sem exame seria diferença de ambiente que ninguém escolheu.
+
 **Riscos aprovados como propostos:**
 - **Float/determinismo:** defesa por **handshake de versão, não por detector** — a engine só usa
   `Math.imul`/`max`/`round`/`min`/`floor`/`abs`, **zero transcendental**. ✅ O spike já mediu a

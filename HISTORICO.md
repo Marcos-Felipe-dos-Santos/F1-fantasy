@@ -817,9 +817,11 @@ pré-1.0 que "funcionou uma vez" sem a versão registrada é armadilha pro 3.2.
    dos doubles**, não a formatação. É a medição mais valiosa do spike: a arquitetura inteira
    ("corrida roda no cliente, servidor só coordena") repousa nela. Esperado, já que a engine só usa
    `Math.imul`/`>>>`/divisão — mas o spike existe pra virar "deve passar" em "medido".
-4. **Bundle** — **40,34 KiB, gzip 11,93 KiB** (37,92 / 10,91 antes da página de abas). Contra o teto
-   de 3 MB gzip do plano Free, é **~0,4%**. O número importa como orçamento, não como pass/fail: o
-   3.1b vai carregar seed + roster + hashes, e agora existe linha de base pra comparar.
+4. **Bundle** — **40,34 KiB, gzip 11,93 KiB** (37,92 / 10,91 antes da página de abas). Esses dois são
+   os números **medidos**; o teto do plano Free (da ordem de alguns MB gzip) **não foi verificado
+   nesta sessão** e fica pra confirmar no 3.2 — a folga é evidentemente enorme, mas *afirmação de
+   estado só entra medida*. O valor importa como **orçamento**, não como pass/fail: o 3.1b vai
+   carregar seed + roster + hashes, e agora existe linha de base pra comparar.
 
 **Escopo mantido curto de propósito:** o spike NÃO criou `protocolo.ts`, `tipos.ts`,
 `namespaces-seed.ts` nem qualquer forma de redutor — isso é 3.1a/3.1b, e o dev travou um portão
