@@ -12,6 +12,7 @@
 import { atribuirPerfis } from '../engine/bots';
 import { deriveSeed } from '../engine/rng';
 import type { Dificuldade, Jogador } from '../engine/types';
+import { criarDraftRede } from './draft-rede';
 import { MAX_TAMANHO_NOME, type ComandoSala, type ErroSala } from './protocolo';
 import {
   MIN_HUMANOS,
@@ -60,6 +61,7 @@ export function criarSala(
     anfitriaoId: null,
     jogadores: [],
     roster: null,
+    draft: null,
     seq: 0,
   };
 }
@@ -85,6 +87,7 @@ export function publicarSala(estado: EstadoSala): EstadoSalaPublico {
     anfitriaoId: estado.anfitriaoId,
     jogadores: estado.jogadores,
     roster: estado.roster,
+    draft: estado.draft,
     seq: estado.seq,
   };
 }
@@ -181,7 +184,7 @@ function definirPronto(
   return aceitar(estado, { jogadores });
 }
 
-function iniciar(estado: EstadoSala, remetenteId: string | null): ResultadoSala {
+function iniciar(estado: EstadoSala, remetenteId: string | null, agora: number): ResultadoSala {
   if (estado.fase !== 'aberta') return recusar(estado, 'sala-iniciada');
   if (remetenteId === null || estado.anfitriaoId !== remetenteId) {
     return recusar(estado, 'nao-e-anfitriao');
@@ -189,9 +192,14 @@ function iniciar(estado: EstadoSala, remetenteId: string | null): ResultadoSala 
   if (estado.jogadores.length < MIN_HUMANOS) return recusar(estado, 'jogadores-insuficientes');
   if (!estado.jogadores.every((j) => j.pronto)) return recusar(estado, 'nem-todos-prontos');
 
+  // Congelar o roster e abrir o draft são o MESMO evento: um roster congelado
+  // sem turno aberto seria um estado em que ninguém pode jogar.
+  const seedDraft = seedDoDraft(estado);
+  const roster = congelarRoster(estado.jogadores, seedDraft, estado.dificuldade);
   return aceitar(estado, {
     fase: 'iniciada',
-    roster: congelarRoster(estado.jogadores, seedDoDraft(estado), estado.dificuldade),
+    roster,
+    draft: criarDraftRede(roster, seedDraft, agora),
   });
 }
 
@@ -200,14 +208,20 @@ function iniciar(estado: EstadoSala, remetenteId: string | null): ResultadoSala 
  * associou à conexão, nunca um campo do fio. `null` = conexão que ainda não
  * entrou na sala (só `entrar` faz sentido aí).
  *
- * A guarda de fase é POR HANDLER, não global: o 3.1b acrescenta comandos que
- * só valem com a sala já iniciada (turno, abandono, cronômetro), e uma guarda
- * global obrigaria a reescrever este ponto de entrada em vez de estendê-lo.
+ * A guarda de fase é POR HANDLER, não global: os comandos do draft (3.1b) só
+ * valem com a sala já iniciada, e uma guarda global obrigaria a reescrever este
+ * ponto de entrada em vez de estendê-lo. Comandos de DRAFT não passam por aqui
+ * — vão direto pra `reduzirDraft`, sobre `estado.draft`.
+ *
+ * `agora` (ms) é injetado, nunca lido de relógio: é ele que arma o cronômetro
+ * de turno no `iniciar`. Parâmetro obrigatório de propósito — esquecê-lo faria
+ * todo turno nascer expirado.
  */
 export function reduzirSala(
   estado: EstadoSala,
   comando: ComandoSala,
-  remetenteId: string | null = null,
+  remetenteId: string | null,
+  agora: number,
 ): ResultadoSala {
   switch (comando?.tipo) {
     case 'entrar':
@@ -217,7 +231,7 @@ export function reduzirSala(
     case 'pronto':
       return definirPronto(estado, comando.pronto, remetenteId);
     case 'iniciar':
-      return iniciar(estado, remetenteId);
+      return iniciar(estado, remetenteId, agora);
     default:
       // Alcançável em runtime: o cliente manda JSON não confiável, não TS.
       return recusar(estado, 'comando-invalido');

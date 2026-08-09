@@ -13,6 +13,7 @@
  */
 
 import type { Dificuldade, Jogador } from '../engine/types';
+import { RODADAS_SORTEIO } from '../engine/draft-utils';
 
 /** Total de jogadores de uma partida (§3): humanos da sala + bots até completar. */
 export const QTD_JOGADORES = 22;
@@ -77,6 +78,8 @@ export interface EstadoSalaPublico {
   jogadores: JogadorSala[];
   /** Os 22 jogadores congelados no início da partida; `null` enquanto a sala está aberta. */
   roster: Jogador[] | null;
+  /** Estado de turno do draft, criado junto com o roster no início; `null` antes disso. */
+  draft: EstadoDraftRede | null;
   /**
    * Contador monotônico, incrementado a cada comando ACEITO (recusa não
    * incrementa). O cliente descarta broadcast atrasado ou duplicado por ele —
@@ -84,6 +87,82 @@ export interface EstadoSalaPublico {
    * duplicação) vai asserir.
    */
   seq: number;
+}
+
+/**
+ * Rodada em que um jogador terminou os sorteios (§3: rodada 6 = completos).
+ * **Derivada de `RODADAS_SORTEIO`**, não escrita como `6`: o limiar de rodada é
+ * regra de turno, igual à `ordemPeca`, e dois números mantidos em paralelo
+ * entre engine e rede divergiriam em silêncio.
+ */
+export const RODADA_COMPLETA = RODADAS_SORTEIO + 1;
+
+/**
+ * Teto de bytes do payload opaco de uma escolha. O servidor não valida o
+ * CONTEÚDO (não tem dataset), mas valida a FORMA — e tamanho é forma. Sem isso,
+ * um cliente enfia megabytes no log, que é persistido no Durable Object e
+ * rebroadcast aos 22. O lobby já limita o nome; o draft não pode ser a única
+ * porta sem limite.
+ */
+export const MAX_BYTES_ESCOLHA = 2048;
+
+/** Versão do formato de `EstadoDraftRede` persistido pelo Durable Object. */
+export const VERSAO_ESTADO_DRAFT = 1;
+
+/**
+ * Prazo de um turno, em ms. O redutor é PURO: nunca lê relógio — quem chama
+ * injeta `agora`. É por isso que `Date.now` é erro de lint em `src/net/**`.
+ */
+export const PRAZO_TURNO_MS = 90_000;
+
+/** Fase do draft do ponto de vista da REDE. Espelha `FaseDraft` da engine. */
+export type FaseDraftRede = 'sorteios' | 'peca' | 'concluido';
+
+/**
+ * Entrada do log append-only. `escolha` é OPACA pro servidor: sem dataset, ele
+ * não tem como validar *o que* foi escolhido — só *de quem* é a vez. Quem
+ * valida o conteúdo é o cliente, que tem a engine e o dataset.
+ */
+export interface EventoDraft {
+  /** Posição no log, 1-based. Nada derivado do estado pode depender dela. */
+  seq: number;
+  jogadorId: string;
+  tipo: 'escolha' | 'ausencia';
+  escolha?: unknown;
+}
+
+/**
+ * Estado de TURNO do draft no servidor. Não é o `DraftState` da engine e nem
+ * tenta ser: aqui não há sorteios, notas, peças reveladas nem loadouts —
+ * **nada que exija dataset**. Só quem pode jogar agora.
+ *
+ * 🔑 Nada aqui deriva de POSIÇÃO no log. Só ids de jogador, contadores por
+ * jogador (`rodada`) e um ponteiro legítimo (`indicePeca`). É essa disciplina
+ * que faz a commutatividade valer: o log guarda a ordem de chegada, e a ordem
+ * de chegada não decide nada.
+ */
+export interface EstadoDraftRede {
+  /**
+   * Versão do formato. O DO PERSISTE este objeto: sem tag de versão, mudar o
+   * formato mais tarde desserializa sala antiga em código novo com campo
+   * faltando. Um campo agora é uma linha; migração depois, não.
+   */
+  versao: number;
+  /** Todos os 22, na ordem canônica do roster — `Record` não preserva ordem. */
+  jogadorIds: string[];
+  /** Só os humanos, mesma ordem. O redutor precisa saber quem NÃO manda comando. */
+  humanos: string[];
+  fase: FaseDraftRede;
+  /** Rodada corrente de cada jogador, 1..6. Bots já nascem em `RODADA_COMPLETA`. */
+  rodada: Record<string, number>;
+  /** Ordem da rodada 6 — calculada por `calcularOrdemPeca`, a MESMA função da engine. */
+  ordemPeca: string[];
+  indicePeca: number;
+  /** Quem abandonou ou estourou o prazo, em ordem canônica. Tratados como bot pelo turno. */
+  ausentes: string[];
+  log: EventoDraft[];
+  /** Quando o relógio de cada jogador começou a correr (ms, injetado). */
+  iniciadoEm: Record<string, number>;
 }
 
 /**

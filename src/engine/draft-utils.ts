@@ -9,6 +9,39 @@
 
 import type { EquipeAno, EquipeAnoRef, ProgressoJogador, SlotComponente } from './types';
 import type { Dataset } from './dataset';
+import { createRng, deriveSeed } from './rng';
+
+/**
+ * Ordem de escolha da rodada 6 (§3), embaralhada por seed.
+ *
+ * Mora aqui, e não dentro de `criarDraft`, porque o redutor de turnos do modo
+ * online (`src/net/`) precisa da MESMA ordem e **não pode chamar `criarDraft`**:
+ * o servidor não carrega o dataset. Duplicar a fórmula nos dois lados era o
+ * risco número um da Fase 3 — regra de turno derivando em silêncio. Com uma
+ * função só, não há o que divergir. Note que ela **não toca o dataset**: entram
+ * ids e seed, sai a ordem.
+ *
+ * ⚠️ Depende da ORDEM do array de ids, não do conjunto (`shuffle` consome o
+ * stream posição a posição). Quem chama é responsável por passar sempre a mesma
+ * ordem — ver `congelarRoster` em `src/net/sala.ts`.
+ */
+export function calcularOrdemPeca(jogadorIds: string[], seed: number): string[] {
+  return createRng(deriveSeed(seed, 'draft:ordem-peca')).shuffle(jogadorIds);
+}
+
+/**
+ * Quantas rodadas de sorteio de equipe/ano cada jogador joga (§3). A rodada
+ * `RODADAS_SORTEIO + 1` é a da peça icônica; quem chega nela terminou os
+ * sorteios.
+ *
+ * Constante, e não `5` solto, porque o limiar é **regra de turno** — a mesma
+ * classe de coisa que a `ordemPeca`. O modo online precisa dele para decidir de
+ * quem é a vez sem carregar o dataset (`src/net/tipos.ts` deriva
+ * `RODADA_COMPLETA` daqui), e dois números `5` mantidos em paralelo entre
+ * engine e rede é exatamente o tipo de divergência silenciosa que a Fase 3
+ * existe para evitar.
+ */
+export const RODADAS_SORTEIO = 5;
 
 /** Os 5 slots de um sorteio de equipe/ano, na ordem canônica (§3). */
 export const TODOS_SLOTS: readonly SlotComponente[] = [

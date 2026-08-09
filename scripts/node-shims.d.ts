@@ -22,6 +22,8 @@ declare module 'node:fs' {
   export function rmSync(path: string, options?: { recursive?: boolean; force?: boolean }): void;
   /** Adicionado no PR 4.2 (agregar-fatos.ts) pra listar arquivos de cache por temporada. */
   export function readdirSync(path: string): string[];
+  /** Adicionado no PR 3.1b (namespaces-seed.test.ts) pra andar na árvore de fontes. */
+  export function statSync(path: string): { isDirectory(): boolean };
 }
 
 declare module 'node:path' {

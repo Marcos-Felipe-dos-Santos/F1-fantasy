@@ -23,6 +23,11 @@ import pecasReal from '../fixtures/dataset-semente/pecas.json';
 import pistasReal from '../fixtures/dataset-semente/pistas.json';
 import { criarDraft } from '../engine/draft';
 import { deriveSeed } from '../engine/rng';
+import {
+  NAMESPACES_SEED,
+  PREFIXO_ONLINE,
+  namespaceDoRotulo,
+} from '../engine/namespaces-seed';
 import type { Dificuldade } from '../engine/types';
 import { iniciarDraft, seedDeTexto } from '../ui/fluxo-draft';
 import { congelarRoster, criarSala, publicarSala, reduzirSala, seedDoDraft } from './sala';
@@ -33,13 +38,20 @@ const dataset = criarDataset(equipeAnosReal, pecasReal, pistasReal);
 
 const SEED_MESTRE = seedDeTexto('sala-3.1a');
 
+/** Instante fixo injetado no redutor — ele nunca lê relógio (regra de `src/net/`). */
+const T0 = 1_000_000;
+
+/** `reduzirSala` com o `agora` fixo deste arquivo, pra não repetir `T0` 24 vezes. */
+const reduzir = (estado: EstadoSala, comando: ComandoSala, remetenteId: string | null) =>
+  reduzirSala(estado, comando, remetenteId, T0);
+
 function salaVazia(dificuldade: Dificuldade = 'dificil'): EstadoSala {
   return criarSala('sala-teste', SEED_MESTRE, dificuldade);
 }
 
 /** Aplica um comando, falhando o teste se for recusado. */
 function ok(estado: EstadoSala, comando: ComandoSala, remetenteId: string | null): EstadoSala {
-  const r = reduzirSala(estado, comando, remetenteId);
+  const r = reduzir(estado, comando, remetenteId);
   expect(r.erro, `comando ${comando.tipo} recusado: ${r.erro}`).toBeNull();
   return r.estado;
 }
@@ -82,7 +94,7 @@ describe('entrada e saída (sala aberta)', () => {
   });
 
   it('devolve o id alocado no resultado do comando entrar', () => {
-    const r = reduzirSala(salaVazia(), { tipo: 'entrar', nome: 'Ana' }, null);
+    const r = reduzir(salaVazia(), { tipo: 'entrar', nome: 'Ana' }, null);
     expect(r.erro).toBeNull();
     expect(r.jogadorId).toBe('humano-01');
   });
@@ -106,7 +118,7 @@ describe('entrada e saída (sala aberta)', () => {
 
   it('sair libera o id, e o próximo a entrar reusa o MENOR id livre', () => {
     const sala = ok(comHumanos(salaVazia(), ['Ana', 'Beto', 'Caio']), { tipo: 'sair' }, 'humano-02');
-    const r = reduzirSala(sala, { tipo: 'entrar', nome: 'Dani' }, null);
+    const r = reduzir(sala, { tipo: 'entrar', nome: 'Dani' }, null);
     expect(r.jogadorId).toBe('humano-02');
     // E a lista continua em ordem canônica crescente de id.
     expect(r.estado.jogadores.map((j) => j.id)).toEqual(['humano-01', 'humano-02', 'humano-03']);
@@ -118,47 +130,47 @@ describe('entrada e saída (sala aberta)', () => {
     // e recebe o `humano-01` vago — mas o posto continua sendo do Beto.
     const semAna = ok(comHumanos(salaVazia(), ['Ana', 'Beto', 'Caio']), { tipo: 'sair' }, 'humano-01');
     expect(semAna.anfitriaoId).toBe('humano-02');
-    const r = reduzirSala(semAna, { tipo: 'entrar', nome: 'Dani' }, null);
+    const r = reduzir(semAna, { tipo: 'entrar', nome: 'Dani' }, null);
     expect(r.jogadorId).toBe('humano-01');
     expect(r.estado.anfitriaoId).toBe('humano-02');
     // E a Dani não consegue iniciar a partida pelos outros.
     const prontos = todosProntos(r.estado);
-    expect(reduzirSala(prontos, { tipo: 'iniciar' }, 'humano-01').erro).toBe('nao-e-anfitriao');
+    expect(reduzir(prontos, { tipo: 'iniciar' }, 'humano-01').erro).toBe('nao-e-anfitriao');
   });
 
   it('recusa a 23ª entrada (sala cheia)', () => {
     const cheia = comHumanos(salaVazia(), nomesDe(QTD_JOGADORES));
     expect(cheia.jogadores).toHaveLength(QTD_JOGADORES);
     expect(cheia.jogadores[QTD_JOGADORES - 1].id).toBe('humano-22');
-    const r = reduzirSala(cheia, { tipo: 'entrar', nome: 'Tarde demais' }, null);
+    const r = reduzir(cheia, { tipo: 'entrar', nome: 'Tarde demais' }, null);
     expect(r.erro).toBe('sala-cheia');
     expect(r.estado).toBe(cheia);
   });
 
   it('recusa nome vazio ou só de espaços, e apara o nome aceito', () => {
-    expect(reduzirSala(salaVazia(), { tipo: 'entrar', nome: '   ' }, null).erro).toBe(
+    expect(reduzir(salaVazia(), { tipo: 'entrar', nome: '   ' }, null).erro).toBe(
       'nome-invalido',
     );
-    const r = reduzirSala(salaVazia(), { tipo: 'entrar', nome: '  Ana  ' }, null);
+    const r = reduzir(salaVazia(), { tipo: 'entrar', nome: '  Ana  ' }, null);
     expect(r.erro).toBeNull();
     expect(r.estado.jogadores[0].nome).toBe('Ana');
   });
 
   it('recusa quem já está na sala tentando entrar de novo', () => {
     const sala = comHumanos(salaVazia(), ['Ana']);
-    expect(reduzirSala(sala, { tipo: 'entrar', nome: 'Ana de novo' }, 'humano-01').erro).toBe(
+    expect(reduzir(sala, { tipo: 'entrar', nome: 'Ana de novo' }, 'humano-01').erro).toBe(
       'ja-na-sala',
     );
   });
 
   it('recusa sair/pronto de quem não está na sala — inclusive de remetente nulo', () => {
     const sala = salaPronta(2);
-    expect(reduzirSala(sala, { tipo: 'sair' }, 'humano-09').erro).toBe('jogador-desconhecido');
-    expect(reduzirSala(sala, { tipo: 'pronto', pronto: true }, 'humano-09').erro).toBe(
+    expect(reduzir(sala, { tipo: 'sair' }, 'humano-09').erro).toBe('jogador-desconhecido');
+    expect(reduzir(sala, { tipo: 'pronto', pronto: true }, 'humano-09').erro).toBe(
       'jogador-desconhecido',
     );
-    expect(reduzirSala(sala, { tipo: 'sair' }, null).erro).toBe('jogador-desconhecido');
-    expect(reduzirSala(sala, { tipo: 'iniciar' }, null).erro).toBe('nao-e-anfitriao');
+    expect(reduzir(sala, { tipo: 'sair' }, null).erro).toBe('jogador-desconhecido');
+    expect(reduzir(sala, { tipo: 'iniciar' }, null).erro).toBe('nao-e-anfitriao');
   });
 
   it('pronto liga e desliga, e só mexe em quem mandou o comando', () => {
@@ -179,7 +191,7 @@ describe('entrada e saída (sala aberta)', () => {
       { tipo: 'pronto', pronto: 'sim' },
     ] as unknown as ComandoSala[];
     for (const comando of lixo) {
-      const r = reduzirSala(sala, comando, 'humano-01');
+      const r = reduzir(sala, comando, 'humano-01');
       expect(r.erro, `esperado recusar ${JSON.stringify(comando)}`).not.toBeNull();
       expect(r.estado).toBe(sala);
     }
@@ -188,10 +200,10 @@ describe('entrada e saída (sala aberta)', () => {
   it('o redutor nunca muta o estado recebido', () => {
     const sala = salaPronta(2);
     const copia = structuredClone(sala);
-    reduzirSala(sala, { tipo: 'entrar', nome: 'Caio' }, null);
-    reduzirSala(sala, { tipo: 'sair' }, 'humano-01');
-    reduzirSala(sala, { tipo: 'pronto', pronto: false }, 'humano-02');
-    reduzirSala(sala, { tipo: 'iniciar' }, 'humano-01');
+    reduzir(sala, { tipo: 'entrar', nome: 'Caio' }, null);
+    reduzir(sala, { tipo: 'sair' }, 'humano-01');
+    reduzir(sala, { tipo: 'pronto', pronto: false }, 'humano-02');
+    reduzir(sala, { tipo: 'iniciar' }, 'humano-01');
     expect(sala).toEqual(copia);
   });
 });
@@ -202,7 +214,7 @@ describe('seq (sequência monotônica)', () => {
     expect(sala.seq).toBe(2);
     const aceito = ok(sala, { tipo: 'pronto', pronto: true }, 'humano-01');
     expect(aceito.seq).toBe(3);
-    const recusado = reduzirSala(aceito, { tipo: 'iniciar' }, 'humano-02');
+    const recusado = reduzir(aceito, { tipo: 'iniciar' }, 'humano-02');
     expect(recusado.erro).toBe('nao-e-anfitriao');
     expect(recusado.estado.seq).toBe(3);
   });
@@ -211,20 +223,20 @@ describe('seq (sequência monotônica)', () => {
 describe('início da partida (congelamento)', () => {
   it('só o anfitrião inicia', () => {
     const sala = salaPronta(3);
-    expect(reduzirSala(sala, { tipo: 'iniciar' }, 'humano-02').erro).toBe('nao-e-anfitriao');
-    expect(reduzirSala(sala, { tipo: 'iniciar' }, 'humano-01').erro).toBeNull();
+    expect(reduzir(sala, { tipo: 'iniciar' }, 'humano-02').erro).toBe('nao-e-anfitriao');
+    expect(reduzir(sala, { tipo: 'iniciar' }, 'humano-01').erro).toBeNull();
   });
 
   it(`exige ao menos ${MIN_HUMANOS} humanos`, () => {
     const sala = salaPronta(MIN_HUMANOS - 1);
-    expect(reduzirSala(sala, { tipo: 'iniciar' }, 'humano-01').erro).toBe(
+    expect(reduzir(sala, { tipo: 'iniciar' }, 'humano-01').erro).toBe(
       'jogadores-insuficientes',
     );
   });
 
   it('exige todos prontos', () => {
     const sala = ok(salaPronta(3), { tipo: 'pronto', pronto: false }, 'humano-03');
-    expect(reduzirSala(sala, { tipo: 'iniciar' }, 'humano-01').erro).toBe('nem-todos-prontos');
+    expect(reduzir(sala, { tipo: 'iniciar' }, 'humano-01').erro).toBe('nem-todos-prontos');
   });
 
   it('iniciar congela o roster e muda a fase', () => {
@@ -242,7 +254,7 @@ describe('início da partida (congelamento)', () => {
       { tipo: 'iniciar' },
     ];
     for (const comando of comandos) {
-      const r = reduzirSala(sala, comando, 'humano-01');
+      const r = reduzir(sala, comando, 'humano-01');
       expect(r.erro, `esperado recusar ${comando.tipo} com a sala iniciada`).toBe('sala-iniciada');
       expect(r.estado).toBe(sala);
     }
@@ -253,6 +265,15 @@ describe('seed: a mestra fica no servidor', () => {
   it('criarSala normaliza a seed pra uint32', () => {
     expect(criarSala('s', -1, 'dificil').seedMestre).toBe(4294967295);
     expect(criarSala('s', 2 ** 32 + 7, 'dificil').seedMestre).toBe(7);
+  });
+
+  it('o rótulo de seed do online usa o prefixo reservado `online:`', () => {
+    // A guarda contra colisão de namespace do `deriveSeed` (risco aprovado da
+    // Fase 3). O registro central mora em `src/engine/namespaces-seed.ts`; a
+    // varredura de lá não enxerga este rótulo porque ele vem de constante, e é
+    // por isso que a asserção sobre o VALOR está aqui.
+    expect(namespaceDoRotulo(ROTULO_SEED_DRAFT)).toBe(PREFIXO_ONLINE);
+    expect(NAMESPACES_SEED.map((n) => n.prefixo)).toContain(PREFIXO_ONLINE);
   });
 
   it('publicarSala NÃO expõe a seedMestre e publica a seed derivada do draft', () => {

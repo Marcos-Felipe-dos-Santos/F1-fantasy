@@ -16,6 +16,8 @@ import type {
   SlotComponente,
 } from './types';
 import {
+  calcularOrdemPeca,
+  RODADAS_SORTEIO,
   encontrarEquipeAno,
   idComponenteDoSlot,
   SLOT_PARA_CAMPO,
@@ -69,8 +71,10 @@ export function criarDraft(dataset: Dataset, jogadores: Jogador[], seed: number)
     progresso[jogador.id] = { rodada: 1, slots: {} };
   }
 
-  const rngOrdem = createRng(deriveSeed(seed, 'draft:ordem-peca'));
-  const ordemPeca = rngOrdem.shuffle(jogadores.map((j) => j.id));
+  const ordemPeca = calcularOrdemPeca(
+    jogadores.map((j) => j.id),
+    seed,
+  );
 
   const copiasRestantes: Record<string, number> = {};
   for (const peca of dataset.pecas) {
@@ -114,7 +118,7 @@ function aplicarEscolhaSorteio(
   const progresso = state.progresso[jogadorId];
   assert(progresso !== undefined, `aplicarEscolha: jogador "${jogadorId}" sem progresso no draft`);
   assert(
-    progresso.rodada <= 5,
+    progresso.rodada <= RODADAS_SORTEIO,
     `aplicarEscolha: jogador "${jogadorId}" já completou os 5 sorteios de equipe/ano`,
   );
   assert(
@@ -157,7 +161,7 @@ function aplicarEscolhaSorteio(
   };
   const novosProgressos = { ...state.progresso, [jogadorId]: novoProgresso };
 
-  const todosCompletaram = state.jogadores.every((j) => novosProgressos[j.id].rodada > 5);
+  const todosCompletaram = state.jogadores.every((j) => novosProgressos[j.id].rodada > RODADAS_SORTEIO);
   if (!todosCompletaram) {
     return { ...state, progresso: novosProgressos };
   }
@@ -284,7 +288,7 @@ export function revelarRodada(state: DraftState, jogadorId: string): Revelacao {
 
   if (state.fase === 'sorteios') {
     const progresso = state.progresso[jogadorId];
-    if (!progresso || progresso.rodada > 5) return { fase: 'sorteios-aguardando' };
+    if (!progresso || progresso.rodada > RODADAS_SORTEIO) return { fase: 'sorteios-aguardando' };
     const equipeAno = state.sorteios[jogadorId][progresso.rodada - 1];
     return {
       fase: 'sorteios',
@@ -310,7 +314,7 @@ export function resolverBots(state: DraftState, dataset: Dataset): DraftState {
   while (atual.fase !== 'concluido') {
     if (atual.fase === 'sorteios') {
       const jogadorBot = atual.jogadores.find(
-        (j) => j.tipo === 'bot' && atual.progresso[j.id].rodada <= 5,
+        (j) => j.tipo === 'bot' && atual.progresso[j.id].rodada <= RODADAS_SORTEIO,
       );
       if (!jogadorBot) return atual;
       const escolha = escolherBot(atual, dataset, jogadorBot.id);

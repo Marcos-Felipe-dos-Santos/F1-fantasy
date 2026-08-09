@@ -32,6 +32,43 @@ export type ComandoSala =
   | { tipo: 'pronto'; pronto: boolean }
   | { tipo: 'iniciar' };
 
+/**
+ * Comandos do draft (PR 3.1b). Como os de lobby, nenhum diz de quem é.
+ *
+ * `escolha` é `unknown` DE PROPÓSITO: o servidor não carrega o dataset, então
+ * não tem como validar o conteúdo — ele decide de quem é a vez e repassa o
+ * payload aos clientes, que validam com a engine. Não há `expirar` aqui: quem
+ * expira turno é o SERVIDOR (`expirarJogador`), nunca um cliente.
+ */
+export type ComandoDraft =
+  | {
+      tipo: 'escolher';
+      escolha: unknown;
+      /**
+       * 🔑 COORDENADA DE TURNO — o que torna o comando IDEMPOTENTE.
+       *
+       * Na fase sorteios é a rodada do próprio jogador (1..5); na fase peça é o
+       * `indicePeca` esperado. O redutor compara com o valor corrente e recusa
+       * se divergir. Sem isso, uma mensagem DUPLICADA pela rede é aceita como
+       * segunda jogada — na fase peça, `indicePeca` andaria duas casas e alguém
+       * perderia a vez. O harness do 3.2 injeta duplicação e reordenação por
+       * planejamento, e o 3.4 congela o protocolo: é uma linha agora e uma
+       * mudança de protocolo versionado depois.
+       */
+      turnoEsperado: number;
+    }
+  | { tipo: 'abandonar' };
+
+/** Recusas do redutor de draft. Como no lobby, toda recusa deixa o estado INTOCADO. */
+export type ErroDraft =
+  | 'nao-e-sua-vez'
+  | 'draft-concluido'
+  | 'jogador-desconhecido'
+  | 'jogador-ausente'
+  | 'turno-divergente'
+  | 'escolha-grande-demais'
+  | 'comando-invalido';
+
 /** Recusas possíveis do redutor. Toda recusa deixa o estado INTOCADO. */
 export type ErroSala =
   | 'sala-cheia'

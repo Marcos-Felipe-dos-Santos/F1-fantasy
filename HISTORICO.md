@@ -910,6 +910,124 @@ WebSocket que cai é um jogador que não volta (depois de `iniciar`, todo comand
 mesmo token resolve rejoin e personificação — mas quem gerencia conexão é o transporte.
 **Correlação comando↔erro** também é do transporte.
 
+### PR 3.1b — turnos no redutor, o coração da Fase 3 (2026-08-09) — ALTO RISCO · 🛑 PORTÃO Nº 2
+
+O PR que o dev marcou como portão. Novos: `src/net/draft-rede.ts` + dois testes
+(`draft-rede.test.ts`, `conformidade-draft.test.ts`), `src/engine/namespaces-seed.ts` + teste.
+Modificados: `draft.ts`, `draft-utils.ts`, `tipos.ts`, `protocolo.ts`, `sala.ts`, `sala.test.ts`,
+`node-shims.d.ts`. **Zero dependência nova.**
+
+**A ideia central.** O servidor não carrega o dataset, então **não pode chamar `aplicarEscolha`**.
+Ele não sabe *o que* foi escolhido — guarda a escolha como **payload opaco** e decide só **de quem
+é a vez**. Isso basta porque a engine é determinística: com a mesma seed e o mesmo roster, cada
+cliente computa o mesmo draft sozinho.
+
+🔒 **As duas regras de turno são deliberadamente DIFERENTES:**
+- **Sorteios: CONCORRENTE.** `deQuemEhAVez` devolve um **CONJUNTO**. Os sorteios de cada jogador são
+  sub-streams independentes (`draft:sorteios:<id>`), a ordem entre jogadores não muda nada, e 22
+  pessoas não podem esperar umas às outras.
+- **Peça: ESTRITA.** Só `ordemPeca[indicePeca]`. O pool de peças é compartilhado e as cópias acabam,
+  então aqui a ordem **é** regra de jogo.
+
+🔑 **A defesa nº 1 contra o risco que o dev nomeou** ("regra de turno duplicada entre engine e
+redutor, derivando em silêncio"): `calcularOrdemPeca` foi **extraída** de `criarDraft` pra
+`draft-utils.ts`, e engine e rede chamam **a mesma função**. Não há fórmula copiada. Mesmo motivo
+levou `RODADAS_SORTEIO` pra engine, com `RODADA_COMPLETA = RODADAS_SORTEIO + 1` — achado da revisão:
+o PR tinha eliminado a fórmula duplicada da `ordemPeca` e deixado o **limiar de rodada** duplicado
+cinco vezes, que também é regra de turno.
+
+### 🛑 OS DOIS TESTES DO PORTÃO — resultado
+
+**1. CONFORMIDADE — 20 seeds, VERDE.** Compara os dois modelos **a cada passo**, não nas bordas:
+- **igualdade de CONJUNTO nos DOIS sentidos** entre `deQuemEhAVez` e o `progresso` da engine;
+- `rede.fase === engine.fase`; `rede.ordemPeca === engine.ordemPeca`;
+- `rede.indicePeca === engine.indicePeca` **a cada evento** da fase peça — um off-by-one no pulo de
+  bots se realinha no fim e passaria numa comparação só de extremidades;
+- **todo** humano fora da vez é recusado (não só um: um redutor com `ordemPeca` diferente **mas
+  fixa** recusaria o jogador do controle negativo em 21 de 22 casos por acaso);
+- a **premissa dos bots** ("nascem completos") tem asserção própria: nenhum bot pendente quando o
+  controle está com humano;
+- rosters de **2, 4 e 22 humanos** — 22 é a borda em que não há bot nenhum e a premissa fica vazia.
+
+🔎 **A DIFERENÇA DE FORMA, DECLARADA (não é desvio do portão, é o portão levado a sério):**
+`alvoHumano` devolve **um** id na fase sorteios — o primeiro humano em ordem de cadastro. É
+convenção de UI do hotseat (D1), documentada no próprio `fluxo-local.ts` como **não sendo regra de
+engine**. Espelhar isso serializaria 22 jogadores atrás uns dos outros: conformidade passaria e o
+jogo estaria errado. Por isso a asserção é **igualdade de conjunto contra o `progresso` da engine**,
+que é **estritamente mais forte** que "`alvoHumano` ∈ conjunto" — esta última um redutor devolvendo
+os 22 humanos passaria.
+
+**2. COMMUTATIVIDADE — 20 seeds, VERDE**, com controle negativo (permutar a fase **peça** ⇒
+`nao-e-sua-vez`) e um fluxo **misto** (escolha + ausência) que também comuta.
+
+📏 **A medição que corrigiu o enunciado do teste:** a primeira versão permutava os eventos
+**totalmente** e `aplicarEscolha` **lançou em 20 de 20 seeds** ("piloto não pertence à equipe/ano
+sorteada"). O erro era meu, e informativo: **a ordem INTERNA de um jogador é causal** — a rodada 3
+dele só existe depois da 2, porque a equipe/ano sorteada muda a cada rodada. O que a rede reordena é
+o **intercalamento entre conexões** (o WebSocket entrega em ordem por conexão). Commutatividade
+aqui é **intercalamento**, não permutação livre — e a asserção verifica que a permutação usada é
+real, não a identidade.
+
+### O buraco do portão que a revisão achou — e que virou teste
+
+O portão só mandava `escolher` válido, então **nunca tocava o caminho de ausência** — que é
+exatamente onde os dois modelos são estruturalmente diferentes: a rede zera o ausente
+(`RODADA_COMPLETA`) e **pula a casa dele** em `ordemPeca`; a engine não sabe o que é ausência e
+ficaria esperando. Resposta da revisão à pergunta "existe redutor errado que passaria?": **sim —
+qualquer um com o tratamento de ausente errado.**
+
+Agora há uma variante com abandono nas **duas fases** (10 seeds), e ela **mede em qual fase cada
+abandono caiu** (`expect(fasesDosAbandonos).toEqual(['sorteios','peca'])`) — sem isso, um número de
+passo mal escolhido faria os dois caírem na fase sorteios e o teste passaria sem exercitar nada.
+
+🔒 **O CONTRATO que o 3.3 é obrigado a cumprir**, descoberto ao escrever esse teste e registrado no
+código (`draft-rede.ts`, docblock de `marcarAusente`): (1) o cliente completa os sorteios do ausente
+**no mesmo evento** em que vê o `ausencia` no log — atrasar deixa os dois lados em fases diferentes;
+(2) na fase peça o cliente **tem que jogar por ele**, com escolha **determinística e idêntica nos
+22** (`escolherBot`, semeado, nunca decisão de UI). O pool de peças é compartilhado: dois clientes
+escolhendo peças diferentes pelo mesmo ausente furam o pool **em silêncio**.
+
+### As quatro correções da revisão
+
+1. 🐞 **Bug real de cronômetro (o único defeito de runtime do PR).** `normalizar` reescrevia
+   `iniciadoEm[daVez]` em **toda** passagem pela fase peça — quem estava travando a partida ganhava
+   90 s novos toda vez que **outro** jogador abandonasse, e o prazo nunca disparava contra ele.
+   Medido pela revisão: relógio pulou de `1000000` pra `1080000` após abandono de terceiro.
+   **Sobreviveu às 15 mutações da primeira rodada porque o portão passava `T0` em todo evento** —
+   o relógio era invisível ali. Corrigido, com teste de regressão dedicado, e agora o portão e a
+   commutatividade rodam com **`agora` andando** a cada evento.
+2. 🔁 **Idempotência.** Comando duplicado era aceito como segunda jogada (na fase peça, `indicePeca`
+   andava duas casas e alguém perdia a vez). `ComandoDraft` ganhou `turnoEsperado` — a rodada do
+   jogador na fase sorteios, o `indicePeca` na peça. Fica idempotente sob duplicação **e** sob
+   reordenação. Uma linha agora; depois do 3.4 seria mudança de protocolo versionado.
+3. 📦 **Teto de bytes no payload opaco.** Era o único ponto em que o PR falhava o próprio critério:
+   o lobby limita o nome, o draft não limitava nada — e o payload é **persistido no DO e
+   rebroadcast aos 22**. O servidor **consegue** limitar tamanho sem dataset: é validação de FORMA.
+4. 🏷️ **`versao` em `EstadoDraftRede`.** O DO persiste esse objeto; sem tag de versão, mudar o
+   formato desserializa sala antiga em código novo com campo faltando.
+
+### `namespaces-seed.ts` — o risco aprovado, agora com guarda
+
+Registro dos namespaces de `deriveSeed` do projeto inteiro (`bots`, `draft`, `calendario`, `camp`,
+`corrida`, `quali`, `narracao`, `pit`, `grid`, `paradas`, `online`, `teste`) + **varredura do
+código-fonte** que reprova rótulo com namespace não registrado. Tem **guarda anti-vacuidade** (a
+varredura precisa achar > 10 rótulos, e rótulos `draft:` e `corrida:` especificamente) — senão
+passaria por não achar nada. A asserção sobre o prefixo `online:` mora em `sala.test.ts`, contra o
+valor de `ROTULO_SEED_DRAFT`: a varredura textual não enxerga constante, e `src/engine/` não pode
+importar de `src/net/` (fronteira travada no eslint).
+
+⚠️ **A primeira versão da varredura era FLAKY** e só falhava na suíte completa: `fetch-f1-data.test.ts`
+cria e apaga arquivos temporários em `scripts/cache/` **em paralelo**, e o `statSync` batia em
+arquivo que já tinha sumido (ENOENT). Corrigido ignorando `cache/` e tolerando o sumiço. Confirmado
+com **3 execuções seguidas** da suíte inteira.
+
+**Medido:** `npm test` **1256/40** (era 1130/37 no 3.1a e 1094/36 antes da fase), `tsc --noEmit`
+**0**, `eslint src scripts` **0**, `npm run build` **0**. **`npm run balance` rodado** (o PR toca
+`src/engine/`): tabela **idêntica** ao baseline — ρ médio **0,952**, desvio **0,028**,
+[0,766, 0,989], desvio-padrão dos pontos **61,32**, P(campeão top-3) **99,0%**, P(pódio fora do
+top-5) **7,5%**. A extração de `calcularOrdemPeca`/`RODADAS_SORTEIO` é refactor sem mudança de
+comportamento, **medido e não presumido**.
+
 ## Acompanhamentos registrados pela revisão do PR 1.6 (não são defeitos; candidatos a PR futuro)
 
 - `medirParadasExtras` usa equipes históricas inteiras — o CALL do estrategista desloca a 1ª parada e vira confound secundário do bucket de PNEU (o bucket <60 é na prática 1 piloto). Sinal mais limpo: fixar chassi/motor/estrategista/pit e variar só o piloto.
