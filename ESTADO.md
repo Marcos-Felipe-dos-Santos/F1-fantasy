@@ -7,21 +7,25 @@
 
 ## Estado atual
 
-- 🛑 **PORTÃO Nº 2 FECHADO — os dois testes da Fase 3 PASSARAM. AGUARDANDO VEREDITO DO DEV.**
-  **PR 3.1b FEITO em 2026-08-09** (`2efb145`), depois do **3.1a** (`246d937`). Os números que o
-  portão pedia:
-  - **CONFORMIDADE — 20 seeds, verde.** `deQuemEhAVez`/`ordemPeca`/`indicePeca` batendo com a engine
-    **a cada passo**, mais rosters de 2/4/22 humanos e variante com **abandono nas duas fases**.
-  - **COMMUTATIVIDADE — 20 seeds, verde**, com controle negativo e fluxo misto escolha+ausência.
-  - **Medido:** `npm test` **1256/40** (era 1094/36 antes da fase), `tsc` **0**, `eslint` **0**,
-    `build` **0**; **16/16 + 22/22 mutações mortas**; `npm run balance` **idêntico ao baseline**
-    (ρ 0,952 · desvio 61,32 · P(campeão top-3) 99,0% · P(pódio fora top-5) 7,5%).
-  - ⚠️ **UMA DIFERENÇA DE FORMA QUE O DEV PRECISA CHANCELAR** (detalhe no `HISTORICO.md`):
-    `alvoHumano` devolve **um** id na fase sorteios; `deQuemEhAVez` devolve um **CONJUNTO**, porque
-    online a fase é genuinamente concorrente. Espelhar `alvoHumano` serializaria 22 jogadores atrás
-    uns dos outros — passaria a conformidade e o jogo estaria errado. A asserção usada é **igualdade
-    de conjunto contra o `progresso` da engine**, mais forte que "`alvoHumano` ∈ conjunto".
-  Detalhe completo no `HISTORICO.md` (entradas "PR 3.1a" e "PR 3.1b").
+- ⬅️ **PR 3.2 FEITO em 2026-08-10** (`30e2556`) — transporte (Durable Object) + **harness headless**.
+  **É o item aberto: aguarda o veredito do dev sobre o teste dos 22 clientes.**
+  - 🎯 **O NÚMERO QUE O DEV PEDIU: 22/22 clientes headless produzem o MESMO `DraftState`**, com
+    latência, reordenação, duplicação, perda e desconexão injetadas **nos dois sentidos**. Em 3
+    seeds: ~1.100 atrasos, ~630 duplicatas, ~580 perdas, ~1.560 descartes por `seq` — **cada
+    patologia asserida como > 0**, senão o verde não diria nada.
+  - 📏 **E o contador que dá sentido ao resto: 22/22 turnos de peça jogados por HUMANO, 0 por
+    expiração.** Antes do comando `sincronizar`, eram 6 a 12 resolvidos por expiração — "os 22
+    concordam" era verdadeiro e **praticamente oco**. Achado da revisão.
+  - **Medido:** `npm test` **1276/42**, `npm run typecheck` **0** (inclui `party/`),
+    `eslint src scripts party` **0**, `build` **0**, **smoke contra `wrangler dev` real 13/13**.
+    `npm run balance` **inalterado por construção** (`src/engine/`/`src/data/` intocados).
+  - ⚙️ **`nodejs_compat` removido e MEDIDO** — o worker sobe e passa o smoke sem a flag.
+- ✅ **PORTÃO Nº 2 APROVADO PELO DEV em 2026-08-09.** O 3.1b (`2efb145`) fechou com os dois testes
+  verdes (conformidade e commutatividade, 20 seeds cada) e o dev **chancelou as duas coisas que
+  precisavam de decisão**: (a) `deQuemEhAVez` devolver um **CONJUNTO** e não um id — a fase sorteios
+  é concorrente no online, e espelhar `alvoHumano` serializaria 22 jogadores; (b) o **contrato do
+  ausente** como obrigação herdada, registrado como **RISCO ATIVO** (seção própria abaixo).
+  Detalhe completo no `HISTORICO.md` (entradas "PR 3.1a", "PR 3.1b" e "PR 3.2").
 - 🟢 **SPIKE 3.0 RODADO em 2026-08-09 — veredito: GO** — e o **portão do dev foi CONFIRMADO na
   bancada dele: as duas abas funcionaram, digitou numa e apareceu na outra.** A paridade bit a bit
   do RNG entre workerd e Node, que era a premissa da fase inteira, passou. Detalhe
@@ -35,7 +39,7 @@
   `4ba4f50`) e a rodada de **narração rica + auto-avanço**: **A** (variedade/chuva, `1537ad6`),
   **B** (causalidade contrafactual, `43fe420`), **C** (avanço automático, `fc7f20d`); e ainda
   **8.2.1** (calendário na engine, `cfe1c47`) e **8.3** (telas do campeonato, `0da36fb`) ·
-  **1256 testes** (40 arquivos) verdes — medido em 2026-08-09, depois do 3.1b; eram 1094/36 antes
+  **1276 testes** (42 arquivos) verdes — medido em 2026-08-10, depois do 3.2; eram 1094/36 antes
   da Fase 3. ⚠️ O badge do README ainda diz **1094** e é estático — está desatualizado.
 - **Medido em 2026-08-07, não herdado:** `npm test` **1094/36**, `tsc --noEmit` **exit 0**,
   `eslint src scripts` **exit 0**, `npm run build` **exit 0**. **`npm run balance` inalterado por
@@ -290,8 +294,22 @@ duplicada entre engine e redutor, derivando em silêncio.
     turno, expiraria o dos outros. `agora` é sempre injetado (`Date.now` é erro de lint em `net/`).
   - **`marcarAusente` sobrescreve `rodada` destrutivamente** — trazer alguém de volta (reconexão,
     3.2) exige reconstruir a rodada dele contando os eventos `escolha` no log.
-- ⬅️ **3.2 Transporte** — casca fina de I/O sobre o redutor (`party/sala.ts`, `src/net/cliente.ts`,
-  `wrangler.jsonc`) + harness headless. É aqui que `partyserver`/`wrangler` entram no `package.json`.
+- ✅ **3.2 Transporte + harness** — **FEITO** (`30e2556`). O que o 3.3 herda:
+  - **Três camadas com fronteira dura:** `src/net/servidor-sala.ts` (servidor SEM I/O) ·
+    `party/sala.ts` (casca: socket, relógio, storage) · `src/net/cliente.ts` (estado local +
+    reconstrução incremental). O que não é testável sem rede tende a não ser testado — por isso a
+    casca é fina.
+  - **Broadcast é SNAPSHOT, não delta.** Perda se corrige sozinha; fora de ordem cai pelo `seq`;
+    quem entra no meio não precisa de caminho separado.
+  - **`quem-sou` e `sincronizar` existem porque mensagem direcionada perdida MATA o jogador.** Sem
+    o primeiro, quem perde o `voce-e` nunca sabe quem é; sem o segundo, quem perde o snapshot de
+    "é a sua vez" espera o cronômetro. Os dois foram descobertos medindo, não projetando.
+  - 🔒 **Uma escolha ILEGAL no log não mata mais a sala** (bloqueante C2 da revisão): o cliente cai
+    no substituto determinístico em vez de lançar, e o servidor valida a FORMA da escolha. O
+    servidor **não pode** validar conteúdo — não tem dataset.
+  - **`nodejs_compat` fora, medido.** Se voltar, tem que vir com o import que a exigiu.
+  - ⚠️ **Ainda não há reconexão** (pendência (c)): o mapa conexão→jogador é apagado ao cair e
+    `entrar` é recusado com a sala iniciada. Falta o token de rejoin.
 - **3.3 Lobby + draft online na UI** (`TelaLobby.tsx`, `FluxoOnline.tsx`).
 - **3.4 Handshake de versão + detector de divergência** (hash da corrida comparado entre os 22).
 - **3.5 Campeonato online (seed por etapa)** — **CORTE Nº 1** se a fase ficar grande.
@@ -348,12 +366,11 @@ de 0,0650 pra **0,0397** e obrigou a redesenhar a escada tonal inteira. Não foi
 
 **Os portões visuais saíram desta lista: os dois foram aprovados em 2026-08-07.**
 
-0. 🛑 **VEREDITO DO DEV sobre o PORTÃO Nº 2** (3.1b): os dois testes passaram — ver o bloco no topo.
-   Nada segue pro 3.2 sem esse "ok". A chancela inclui a **diferença de forma** do `deQuemEhAVez`
-   (conjunto, não id único).
-1. **Depois do "ok": PR 3.2 — Transporte.** É onde `partyserver`/`wrangler` entram no
-   `package.json` (par testado: `partyserver@0.5.10` + `wrangler@4.120.0`, Node v24.16.0) e onde
-   o **harness headless não é opcional**. Ver a seção **FASE 3** acima.
+0. ⬅️ **VEREDITO DO DEV sobre o HARNESS do 3.2**: 22/22 clientes headless produzem o mesmo
+   `DraftState` com rede ruim, e 22/22 turnos jogados por humano. Ver o bloco no topo.
+1. **Depois do "ok": PR 3.3 — Lobby + draft online na UI** (`TelaLobby.tsx`, `FluxoOnline.tsx`).
+   ⚠️ A UI tem de respeitar o **contrato do ausente** (já implementado em `src/net/cliente.ts`) e
+   **não** recalcular escolha de ausente por conta própria — ver o RISCO ATIVO.
 1. ⬅️ **VEREDITO do dev sobre `preview/campeonato.html`** (as três telas do 8.3) — segue aberto.
 2. **PR de INFRA — DESTRAVADO pela aprovação das silhuetas.** Era "pré-requisito caso as silhuetas
    fossem aprovadas"; com o 10/10, **deixa de ser pré-requisito e vira consolidação**: restrições
@@ -418,20 +435,26 @@ divergem, os loadouts divergem, e a corrida que cada um assiste é outra. **Nada
 exceção, não há tela de erro — o jogo simplesmente deixa de ser o mesmo jogo em cada máquina.
 Palavras do dev: *"é o tipo de bug que só aparece com gente real e é infernal de reproduzir depois."*
 
-**A obrigação, que o 3.3 tem de cumprir** (está também no docblock de `marcarAusente`,
-`src/net/draft-rede.ts`):
+**A obrigação — ✅ JÁ IMPLEMENTADA no 3.2**, em `src/net/cliente.ts` (`escolhaDoAusente` +
+`sincronizarDraft`), e não mais "a fazer no 3.3" como esta seção dizia quando foi escrita. O que
+resta pro 3.3 é a UI respeitá-la; o cálculo já está no cliente:
 1. O cliente completa os sorteios do ausente **no mesmo evento** em que vê o `ausencia` no log —
    atrasar deixa os dois lados em fases diferentes durante a janela.
 2. Na fase peça o cliente **joga por ele**, com escolha **determinística e idêntica nos 22**:
    `escolherBot` semeado, **nunca** decisão de UI, nunca nada que dependa de estado local.
 
 **Como fechar o risco (não feito):** o detector de divergência do **3.4** (hash comparado entre os
-22) é o que transforma "diverge em silêncio" em "diverge com alarme". Enquanto o 3.4 não existir,
-**a única defesa é a disciplina do 3.3** — e disciplina não é defesa medida.
+22) é o que transforma "diverge em silêncio" em "diverge com alarme". Enquanto o 3.4 não existir, a
+defesa é a implementação única em `cliente.ts` — todo mundo chama a mesma função.
 
-**Já coberto hoje:** o portão do 3.1b abandona jogadores nas duas fases em 10 seeds e assere a
-reconvergência passo a passo, **com o teste cumprindo o contrato acima**. Ou seja: está provado que
-o contrato FUNCIONA, não que o cliente vá cumpri-lo.
+**Já coberto hoje, e é bastante:**
+- o portão do 3.1b abandona jogadores nas duas fases em 10 seeds e assere a reconvergência passo a
+  passo;
+- o **harness do 3.2 mede isso empiricamente**: o CONTROLE NEGATIVO faz um cliente escolher
+  diferente pelo ausente e **exige que a comparação FALHE**. Foi ali que se descobriu que sabotar a
+  escolha *própria* não diverge nada (ela vai pro log, que é a verdade compartilhada) — **a
+  substituição do ausente é literalmente a única decisão que cada cliente toma sozinho.**
+- 🔴 **O que ainda NÃO existe:** alarme. Se divergirem, ninguém é avisado. Isso é o 3.4.
 
 ## Pendências ATIVAS
 
@@ -445,17 +468,22 @@ o contrato FUNCIONA, não que o cliente vá cumpri-lo.
    quem trava é o teste de ordem embaralhada.
    (b) ✅ **`src/engine/namespaces-seed.ts` FEITO no 3.1b** — registro + varredura do código-fonte
    que reprova rótulo não registrado, com guarda anti-vacuidade. Fecha o risco aprovado da fase.
-   (c) **Não há reconexão.** Depois de `iniciar`, os comandos de LOBBY são recusados — um WebSocket
-   que cai é um jogador que não volta. O mesmo `tokenJogador` emitido no `entrar` resolveria rejoin
-   **e** personificação. É do transporte (3.2), não do redutor. ⚠️ Detalhe descoberto no 3.1b:
-   `marcarAusente` **sobrescreve `rodada` destrutivamente**, então trazer alguém de volta exige
-   reconstruir a rodada dele contando os eventos `escolha` no log.
-   (d) **`MensagemServidor` não correlaciona erro com comando** — com duplicação/reordenação no
-   harness, um `{tipo:'erro'}` é inatribuível. Também do 3.2. Relacionado: `publicarSala` publica o
-   `draft` sob um `seq` que **só `reduzirSala` incrementa**, e os comandos de draft não passam por
-   ali — o contrato "o cliente descarta broadcast atrasado pelo `seq`" **precisa de dono no 3.2**.
-   (e) **Prazo do turno não tem UI nem disparo automático.** `expirados`/`expirarJogador` existem e
-   são puros, mas quem os chama periodicamente é o servidor (3.2) — hoje ninguém chama.
+   (c) 🔴 **NÃO HÁ RECONEXÃO — segue aberta e agora é a maior pendência da fase.** Ao cair, o mapa
+   conexão→jogador é apagado e `entrar` é recusado com a sala iniciada: o jogador continua no roster
+   e continua ocupando turno, mas **não tem por onde mandar comando** até o cronômetro expirá-lo. O
+   `tokenJogador` emitido no `entrar` resolveria rejoin **e** personificação de uma vez.
+   ⚠️ Detalhe que a reconexão vai precisar desfazer: `marcarAusente` **sobrescreve `rodada`
+   destrutivamente**, então trazer alguém de volta exige reconstruir a rodada dele contando os
+   eventos `escolha` no log.
+   (d) ✅ **`seq` resolvido no 3.2** — `reduzirDraftDaSala`/`expirarNaSala` incrementam o contador,
+   então o `draft` não muda mais sob um `seq` congelado. **Falta ainda** correlacionar erro↔comando:
+   com duplicação e reordenação, um `{tipo:'erro'}` continua inatribuível.
+   (e) ✅ **Prazo do turno tem dono no 3.2**: o `alarm()` do Durable Object chama `aoPassarOTempo` a
+   cada 5 s (e para de se reagendar com a sala concluída ou vazia). **Falta a UI** mostrar o
+   cronômetro ao jogador — isso é 3.3.
+   (f) **15% de perda com conexão intacta não é modo de falha real de WebSocket** (nota da revisão
+   do 3.2): TCP entrega ou a conexão cai. O stress do harness continua válido como stress; só não
+   deve ser lido como "a rede real perde 15%".
 1. **Abertas pelo 7.8:** (a) o `BotaoTema` é um botão discreto no canto do `app-shell` — posição e
    forma **não passaram por veredito de arte**; (b) `erro` (salmão `#FF7B85`) e `raridadeProibido`
    (`#FF4757`) continuam sendo dois vermelhos ao lado do vermelho da marca — não foi mexido porque

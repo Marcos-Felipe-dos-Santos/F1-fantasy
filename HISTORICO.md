@@ -1041,6 +1041,92 @@ com **3 execuções seguidas** da suíte inteira.
 top-5) **7,5%**. A extração de `calcularOrdemPeca`/`RODADAS_SORTEIO` é refactor sem mudança de
 comportamento, **medido e não presumido**.
 
+### PR 3.2 — transporte + harness headless (2026-08-10, commit `30e2556`) — ALTO RISCO
+
+`partyserver@0.5.10` + `wrangler@4.120.0` entram no `package.json` (par validado no SPIKE 3.0;
+`partyserver` foi pra **devDependencies** — o bundle do worker é montado pelo wrangler, não pelo
+vite). Novos: `party/sala.ts`, `party/tsconfig.json`, `wrangler.jsonc`, `src/net/servidor-sala.ts`,
+`src/net/cliente.ts`, `src/net/harness.ts` + 2 testes, `src/net/cerca-lint.test.ts`,
+`scripts/smoke-online.mjs`.
+
+**Três camadas, e a fronteira entre elas é a tese do PR:**
+- `servidor-sala.ts` — o servidor **sem I/O**. Parseia, resolve o remetente pelo mapa
+  conexão→jogador, chama o redutor, devolve `{estado, envios}`.
+- `party/sala.ts` — a **casca**: socket, relógio, storage, bytes. Fina de propósito, porque o que
+  não é testável sem rede tende a não ser testado.
+- `cliente.ts` — estado local e reconstrução **incremental** do `DraftState` a partir do log.
+
+📡 **BROADCAST É SNAPSHOT, NÃO DELTA.** Custa bytes e compra as três coisas que a rede quebra:
+perda se corrige sozinha no próximo, fora de ordem cai pelo `seq`, e quem entra no meio não precisa
+de caminho de recuperação separado.
+
+### Os dois bloqueantes que a revisão achou
+
+🔴 **C1 — este PR tinha APAGADO a cerca de lint de `src/net/**`.** No flat config do ESLint, um
+bloco posterior que redefine a mesma regra **substitui as opções por inteiro** — não faz merge de
+arrays. Ao separar `Date.now` num bloco próprio de `src/net/**`, as proibições de `Math.random` e
+`performance.now`, que existiam desde o 3.1a, **sumiram em silêncio da camada replicada**. Num PR
+cuja tese é determinismo.
+⚠️ **Por que a minha verificação manual não pegou:** testei `src/data/`, `src/ui/`, React e
+`Date.now`. Os três primeiros vivem em `no-restricted-imports` — outra regra, não sobrescrita — e o
+quarto era justamente a regra nova. **A proibição que sumiu não estava na lista que conferi.**
+Correção: listas duplicadas de propósito nos dois blocos, com o aviso escrito no arquivo, mais
+`src/net/cerca-lint.test.ts`, que roda o ESLint **de verdade** sobre código que viola cada regra —
+inclusive um teste anti-vacuidade. *Cerca que ninguém testa não é cerca.*
+
+🔴 **C2 — uma escolha ilegal no log matava a sala PARA SEMPRE.** O servidor não tem dataset e não
+pode julgar conteúdo. Um cliente, **na própria vez legítima** e passando por todas as guardas
+(remetente certo, turno certo, tamanho certo), gravava `{tipo:'piloto', pilotoId:'NAO-EXISTE'}` no
+log append-only — que é **persistido no Durable Object e nunca encolhe**. A partir dali, nenhum dos
+22 conseguia reconstruir a sala. **Uma mensagem, DoS permanente, sem recuperação.**
+E **não depende de malícia**: um cliente com build de dataset diferente escolhendo um id que os
+outros não têm produz o mesmo efeito — e o hash de dataset só chega no 3.4.
+Corrigido em três camadas: (1) o cliente **não lança mais** — cai no substituto determinístico, o
+mesmo do ausente, de modo que os 22 caem no mesmo lugar; (2) o servidor valida a **FORMA** da
+escolha (o que dá pra fazer sem dataset), barrando `null`/`42`/`{tipo:'xpto'}` antes do log; (3) o
+harness ganhou modo `clienteHostil`, e há teste provando que a sala conclui com 22/22.
+
+### 📏 O achado que mudou o VALOR do harness
+
+A revisão mediu o que eu não tinha medido: com rede ruim, **6 a 12 dos 22 turnos de peça estavam
+sendo resolvidos por EXPIRAÇÃO, não por jogador**. "Os 22 concordam" era verdadeiro e praticamente
+oco — uma regressão em que *todos* expirassem passaria verde.
+
+**Causa raiz:** o servidor só difunde quando aceita um comando. Se o snapshot que anuncia "chegou a
+sua vez" se perde, o jogador não sabe que é a vez dele, não joga, e a sala espera o cronômetro.
+**Não havia como re-pedir estado.** É o mesmo padrão que já tinha mordido uma vez neste PR: o
+`voce-e` é direcionado e enviado uma vez, e com 15% de perda 3 ou 4 dos 22 nunca descobriam a
+própria identidade — daí `quem-sou`.
+
+**Correção:** comando `sincronizar` (re-pedido de snapshot, idempotente, não altera estado).
+**Medido antes → depois:** 18-22/22 clientes → **22/22 nas três seeds**; 6-12 turnos por expiração →
+**0**; turnos jogados por humano → **22/22**. O contador `pecasPorHumano` virou **asserção com
+piso** — sem ele, o verde media menos do que aparentava.
+
+### Outras correções da revisão
+
+`party/tsconfig.json` entrou em `npm run typecheck` e `npm run build` (portão que roda só quando
+alguém lembra não é portão) · o alarme do DO **para de se reagendar** com a sala concluída ou vazia,
+em vez de tiquetaquear a cada 5 s para sempre · o storage grava **só quando o estado mudou**
+(`quem-sou`/`sincronizar`/erros devolvem o mesmo objeto, por projeto do 3.1a) · teto de bytes da
+mensagem **antes** do `JSON.parse` · `aoDesconectar` recebe `agora` em vez de mentir `0` pro redutor.
+
+⚙️ **`nodejs_compat` REMOVIDO — decisão medida, não cópia do spike.** O registro do spike dizia que
+a flag tinha sido posta defensivamente e não sustentava nada. Aqui ela foi **retirada** e o worker
+subiu, serviu e passou o smoke inteiro sem ela. `deploy --dry-run` exit 0. Se um dia precisar
+voltar, tem que vir acompanhada do import que a exigiu.
+
+**Medido:** `npm test` **1276/42** (era 1256/40), `npm run typecheck` **0** (agora inclui o
+`party/`), `eslint src scripts party` **0**, `npm run build` **0**. `npm run balance` **inalterado
+por construção** (`src/engine/` e `src/data/` intocados). **Smoke contra `wrangler dev` real:
+13/13**, incluindo "a `seedMestre` não aparece no broadcast" e "comando duplicado é recusado".
+Bundle **53,25 KiB / gzip 14,38 KiB** (o spike media 40,34 / 11,93 — a linha de base existia
+justamente pra esta comparação).
+
+**Fica registrado como limite conhecido** (nota da revisão): 15% de perda com a conexão intacta não
+é modo de falha real de WebSocket — TCP entrega ou a conexão cai. O stress continua válido como
+stress; só não deve ser lido como "a rede real perde 15%".
+
 ## Acompanhamentos registrados pela revisão do PR 1.6 (não são defeitos; candidatos a PR futuro)
 
 - `medirParadasExtras` usa equipes históricas inteiras — o CALL do estrategista desloca a 1ª parada e vira confound secundário do bucket de PNEU (o bucket <60 é na prática 1 piloto). Sinal mais limpo: fixar chassi/motor/estrategista/pit e variar só o piloto.
