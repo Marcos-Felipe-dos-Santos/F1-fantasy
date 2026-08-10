@@ -51,19 +51,31 @@ export function urlDaSala(base: string, sala: string): string {
 }
 
 /**
- * Base padrão a partir da página aberta. Em `npm run dev` o Vite serve na 5173
- * e o worker na 8787, então o default aponta pra 8787 — é o par de portas do
- * fluxo de desenvolvimento descrito no ESTADO.
+ * Base do WebSocket: **o MESMO host e a MESMA porta da página aberta**.
+ *
+ * 🔑 Isto é o que faz o jogo funcionar em rede, e a razão é concreta. A versão
+ * anterior devolvia `ws://<host>:8787` — porta fixa — e isso quebrava de duas
+ * formas ao mesmo tempo: `wrangler dev` sobe em `127.0.0.1` (só localhost), e
+ * **cada visitante chega por um IP diferente** (LAN `192.168.x`, ZeroTier
+ * `10.x`, Radmin `26.x`, celular pelo Wi-Fi). Não há URL fixa que sirva todos.
+ *
+ * Derivando de `location.host`, a resposta é sempre certa: quem abriu
+ * `http://192.168.0.13:5173` conecta em `ws://192.168.0.13:5173`, e o Vite
+ * repassa `/parties/*` para o worker (ver `server.proxy` em `vite.config.ts`).
+ * Uma porta só, qualquer interface, sem configurar nada por cliente.
+ *
+ * `location.host` inclui a porta quando ela existe — é por isso que ele é o
+ * campo certo aqui, e não `hostname`.
  */
 export function baseParaEstaPagina(
-  local: { protocol: string; hostname: string },
+  local: { protocol: string; host: string },
   configurada?: string,
 ): string {
-  // `configurada` vem de `VITE_WS_BASE`, para publicar em qualquer domínio: sem
-  // isso, `https://meudominio` viraria `wss://meudominio:8787`, que não existe.
+  // `VITE_WS_BASE` é o escape para quando o worker NÃO está atrás da mesma
+  // origem (ex.: publicado em `wss://sala.exemplo.com` com o app noutro host).
   if (configurada !== undefined && configurada.length > 0) return configurada;
   const esquema = local.protocol === 'https:' ? 'wss:' : 'ws:';
-  return `${esquema}//${local.hostname}:8787`;
+  return `${esquema}//${local.host}`;
 }
 
 export function abrirConexao(opcoes: OpcoesConexao): Conexao {

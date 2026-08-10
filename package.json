@@ -6,6 +6,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:rede": "vite --host",
+    "sala": "wrangler dev",
     "build": "tsc --noEmit && tsc --noEmit -p party/tsconfig.json && vite build",
     "test": "vitest run",
     "test:watch": "vitest",
