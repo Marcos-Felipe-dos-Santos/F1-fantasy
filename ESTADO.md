@@ -11,22 +11,32 @@
   **3.2.1** (reconexão, `205505b` + `3ab9658`) e do **3.2** (`30e2556`).
   **É o item aberto: aguarda o dev testar no navegador.**
 
-  🎮 **COMO TESTAR O ONLINE — dois terminais, porque precisa do servidor:**
+  🎮 **COMO TESTAR O ONLINE — dois terminais, no PowerShell:**
 
-      Terminal 1:  npx wrangler dev      (worker na 8787)
-      Terminal 2:  npm run dev           (app na 5173)
+      Terminal 1:   npm run sala        (worker/DO — fica em 127.0.0.1:8787)
+      Terminal 2:   npm run dev         (app em localhost:5173)
 
-  `http://localhost:5173/` → **Modo: "Online (sala compartilhada)"** → nome da sala (default
-  `sala-1`) → **Entrar na sala**. **Abrir a MESMA URL em duas abas**, entrar com nomes diferentes,
-  marcar "Estou pronto" nas duas, e o anfitrião 👑 clica em "Começar o draft". As vagas restantes
-  viram bots. Dois testes que valem de propósito: **F5 no meio do draft** (deve voltar como o mesmo
-  jogador, pelo token) — F5 *no lobby* é diferente, lá cair é sair e entra-se de novo; e **deixar
-  uma aba parada** até o cronômetro expirar (a outra segue jogando, e a parada passa a mostrar
-  "você perdeu a vez por inatividade").
+  `http://localhost:5173/` → **Modo "Online (sala compartilhada)"** → nome da sala → **Entrar**.
+  **Abrir a MESMA URL em duas abas**, entrar com nomes diferentes, "Estou pronto" nas duas, e o
+  anfitrião 👑 começa. As vagas restantes viram bots. Dois testes que valem de propósito: **F5 no
+  meio do draft** (volta como o mesmo jogador, pelo token) — F5 *no lobby* é diferente, lá cair é
+  sair; e **deixar uma aba parada** até o cronômetro expirar.
 
-  - **Medido:** `npm test` **1318/45**, `npm run typecheck` **0** (app + `party/`),
-    `eslint src scripts party` **0**, `npm run build` **0**. App e worker sobem juntos e servem;
-    smoke contra o worker real **17/17**. `npm run balance` **inalterado por construção**.
+  📱 **PRA JOGAR DO CELULAR / EM REDE — trocar o terminal 2 por `npm run dev:rede`** e abrir no
+  celular o endereço `Network` da LAN que ele imprime (hoje `http://192.168.0.13:5173/`).
+  **Guia completo: `docs/jogar-em-rede.md`** (firewall, túnel, diagnóstico).
+
+  - **Medido:** `npm test` **1325/46**, `npm run typecheck` **0** (app + `party/`),
+    `eslint src scripts party` **0**, `npm run build` **0**. `npm run balance` **inalterado por
+    construção**.
+  - 🔌 **PR 3.3.1 (`23d1cce`) — o worker passa pela PORTA DO VITE.** `wrangler dev` sobe em
+    `127.0.0.1` (só localhost), então de fora o app carregava e o WebSocket morria; e abrir o worker
+    na rede **não bastaria**, porque a URL do WS era fixa (`:8787`) e **cada visitante chega por um
+    IP diferente**. Agora o Vite repassa `/parties/*` (proxy com `ws: true`) e a URL do socket vem
+    do **host da página**. Uma porta só (5173), qualquer interface.
+    **Medido:** o smoke de 17 cheques passou pelas **quatro** rotas — `localhost`, `192.168.0.13`
+    (LAN), `10.241.222.232` (ZeroTier) e `26.156.17.128` (Radmin) — todas na 5173, com o worker
+    ainda fechado em `127.0.0.1`.
   - 🔴 **O CONTRATO DO AUSENTE tem teste explícito agora** (`src/ui/contrato-ausente.test.ts`) —
     pedido do dev. Ver o RISCO ATIVO abaixo.
 - ✅ **PORTÃO Nº 2 APROVADO PELO DEV em 2026-08-09.** O 3.1b (`2efb145`) fechou com os dois testes
@@ -48,7 +58,7 @@
   `4ba4f50`) e a rodada de **narração rica + auto-avanço**: **A** (variedade/chuva, `1537ad6`),
   **B** (causalidade contrafactual, `43fe420`), **C** (avanço automático, `fc7f20d`); e ainda
   **8.2.1** (calendário na engine, `cfe1c47`) e **8.3** (telas do campeonato, `0da36fb`) ·
-  **1318 testes** (45 arquivos) verdes — medido em 2026-08-10, depois do 3.3; eram 1094/36 antes
+  **1325 testes** (46 arquivos) verdes — medido em 2026-08-10, depois do 3.3.1; eram 1094/36 antes
   da Fase 3. ⚠️ O badge do README ainda diz **1094** e é estático — está desatualizado.
 - **Medido em 2026-08-07, não herdado:** `npm test` **1094/36**, `tsc --noEmit` **exit 0**,
   `eslint src scripts` **exit 0**, `npm run build` **exit 0**. **`npm run balance` inalterado por
@@ -327,6 +337,10 @@ duplicada entre engine e redutor, derivando em silêncio.
   `useSalaOnline.ts`, `src/net/conexao.ts`). Reusa `TelaDraft`/`TelaPeca`/`TelaResumo` do offline.
   ⚠️ **A corrida online ainda NÃO existe**: o draft online termina no resumo. É o próximo passo
   natural depois do 3.4.
+- ✅ **3.3.1 Jogar em rede** — FEITO (`23d1cce`). O worker é servido **pela porta do Vite**
+  (proxy de `/parties/*` com `ws: true`), e a URL do WebSocket vem do **host da página** — nunca
+  fixa, porque cada visitante chega por um IP diferente. `npm run dev:rede` expõe na rede;
+  `docs/jogar-em-rede.md` tem firewall, túnel e diagnóstico.
 - **3.4 Handshake de versão + detector de divergência** (hash da corrida comparado entre os 22).
 - **3.5 Campeonato online (seed por etapa)** — **CORTE Nº 1** se a fase ficar grande.
 

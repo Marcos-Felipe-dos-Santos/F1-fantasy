@@ -1239,6 +1239,43 @@ não em `tokens.css`, e o sed global não sabia disso. Revertido antes do commit
 como o próprio projeto já aprendeu com a cerca de lint — **a verificação tem que ser o diff, não a
 intenção.**
 
+### PR 3.3.1 — jogar em rede: o worker pela porta do Vite (2026-08-10, `23d1cce`)
+
+**O diagnóstico, com os dados reais que o dev mediu:** `wrangler dev` sobe em **`127.0.0.1:8787`**
+— só localhost. `vite --host` expõe em três interfaces (`192.168.0.13` LAN, `10.241.222.232`
+ZeroTier, `26.156.17.128` Radmin). Resultado: de outra máquina o app **carregava** e o WebSocket
+**morria**.
+
+🔑 **E abrir o worker na rede não teria resolvido.** A URL do WS era fixa (`ws://<host>:8787`), e
+**cada visitante chega por um IP diferente**. Não existe endereço fixo que sirva LAN, VPN e celular
+ao mesmo tempo — a porta era só metade do problema.
+
+**A correção (opção 1 do dev, e ela era viável):** o Vite serve o worker. `vite.config.ts` repassa
+`/parties/*` para `127.0.0.1:8787` com **`ws: true`** (é o que faz o `Upgrade: websocket` passar), e
+`baseParaEstaPagina` deriva de **`location.host`** — que inclui a porta — em vez da porta fixa. Some
+a classe inteira: **uma porta só** exposta (a 8787 continua fechada), **qualquer interface**, e
+segue funcionando em cenário futuro sem tocar em código.
+
+📏 **MEDIDO, e sem segunda máquina:** o smoke completo (17 cheques, WebSocket real) passou pelas
+**quatro** rotas — `localhost`, `192.168.0.13`, `10.241.222.232`, `26.156.17.128` — todas na **5173**,
+com o worker ainda em `127.0.0.1`. O truque de validação: **abrir por `192.168.0.13:5173` na própria
+máquina já reproduz o problema**, porque o host muda. Também confirmado que `npm run dev` (sem
+`--host`) continua funcionando.
+
+`conexao.test.ts` trava as duas pontas — a base derivada (com os quatro IPs reais) e a rota
+`/parties/sala/<nome>` que o `routePartykitRequest` espera. Se ela e o prefixo do proxy divergirem, o
+WebSocket some **sem erro claro**. Tem asserção explícita de que `8787` **não** aparece na URL.
+
+📄 **`docs/jogar-em-rede.md`** — comando (`npm run sala` + `npm run dev:rede`), firewall (só
+**5173/TCP**, com o `New-NetFirewallRule` pronto), o `[t] start tunnel` do wrangler como alternativa
+ao ZeroTier (com a ressalva de que ele expõe **só o worker**, e aí `VITE_WS_BASE` entra), e um
+diagnóstico em ordem.
+⚠️ **Achado que vale o registro:** as **três** interfaces desta máquina estão no perfil `Public` do
+firewall (verificado com `Get-NetConnectionProfile`) — o mais restritivo, inclusive a Ethernet da
+LAN. É o primeiro suspeito se o celular não conectar.
+
+**Medido:** `npm test` **1325/46**, `typecheck`/`eslint`/`build` **0**.
+
 ## Acompanhamentos registrados pela revisão do PR 1.6 (não são defeitos; candidatos a PR futuro)
 
 - `medirParadasExtras` usa equipes históricas inteiras — o CALL do estrategista desloca a 1ª parada e vira confound secundário do bucket de PNEU (o bucket <60 é na prática 1 piloto). Sinal mais limpo: fixar chassi/motor/estrategista/pit e variar só o piloto.
