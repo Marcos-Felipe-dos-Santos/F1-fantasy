@@ -23,3 +23,7 @@ preview/
 # São rascunhos de uma sessão só — o resultado que interessa vai pro ESTADO.md,
 # o script não precisa de histórico.
 tmp-*
+
+# Estado local do `wrangler dev` (cache do workerd, storage do Durable Object).
+# Regenerado a cada execucao; nada aqui deve ser versionado.
+.wrangler/

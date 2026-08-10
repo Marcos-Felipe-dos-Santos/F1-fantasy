@@ -403,6 +403,36 @@ Spa (33,4%) e Red Bull Ring (28,0%) não perdem candidato. Caso extremo, o Nürb
 / 50,0% sem teto contra 24 / 38,7% com ele** — é o teto que segue impedindo a faixa contínua que o
 dev reprovou.
 
+## 🔴 RISCO ATIVO — a escolha automática do ausente pode FURAR O POOL DE PEÇAS EM SILÊNCIO
+
+**Registrado como risco pelo dev em 2026-08-09, ao aprovar o portão do 3.1b.** Não é comentário de
+código: é o item que precisa estar resolvido antes de qualquer partida com gente de verdade.
+
+**O que é.** Quando um jogador abandona ou estoura o prazo, o redutor do servidor o marca ausente e
+**pula a casa dele** — o servidor não pode escolher por ele, porque escolher é regra de jogo e regra
+de jogo precisa do dataset. Quem escolhe pelo ausente é **cada cliente, localmente**.
+
+**Por que é perigoso.** A rodada 6 tem **pool compartilhado, 2 cópias por peça**. Se dois clientes
+escolherem peças **diferentes** pelo mesmo ausente, cada um debita uma cópia diferente: os estados
+divergem, os loadouts divergem, e a corrida que cada um assiste é outra. **Nada acusa.** Não há
+exceção, não há tela de erro — o jogo simplesmente deixa de ser o mesmo jogo em cada máquina.
+Palavras do dev: *"é o tipo de bug que só aparece com gente real e é infernal de reproduzir depois."*
+
+**A obrigação, que o 3.3 tem de cumprir** (está também no docblock de `marcarAusente`,
+`src/net/draft-rede.ts`):
+1. O cliente completa os sorteios do ausente **no mesmo evento** em que vê o `ausencia` no log —
+   atrasar deixa os dois lados em fases diferentes durante a janela.
+2. Na fase peça o cliente **joga por ele**, com escolha **determinística e idêntica nos 22**:
+   `escolherBot` semeado, **nunca** decisão de UI, nunca nada que dependa de estado local.
+
+**Como fechar o risco (não feito):** o detector de divergência do **3.4** (hash comparado entre os
+22) é o que transforma "diverge em silêncio" em "diverge com alarme". Enquanto o 3.4 não existir,
+**a única defesa é a disciplina do 3.3** — e disciplina não é defesa medida.
+
+**Já coberto hoje:** o portão do 3.1b abandona jogadores nas duas fases em 10 seeds e assere a
+reconvergência passo a passo, **com o teste cumprindo o contrato acima**. Ou seja: está provado que
+o contrato FUNCIONA, não que o cliente vá cumpri-lo.
+
 ## Pendências ATIVAS
 
 0. **Abertas pelo 3.1a (Fase 3):**

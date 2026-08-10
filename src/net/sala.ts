@@ -12,8 +12,14 @@
 import { atribuirPerfis } from '../engine/bots';
 import { deriveSeed } from '../engine/rng';
 import type { Dificuldade, Jogador } from '../engine/types';
-import { criarDraftRede } from './draft-rede';
-import { MAX_TAMANHO_NOME, type ComandoSala, type ErroSala } from './protocolo';
+import { criarDraftRede, expirarJogador, reduzirDraft } from './draft-rede';
+import {
+  MAX_TAMANHO_NOME,
+  type ComandoDraft,
+  type ComandoSala,
+  type ErroDraft,
+  type ErroSala,
+} from './protocolo';
 import {
   MIN_HUMANOS,
   QTD_JOGADORES,
@@ -29,6 +35,12 @@ export interface ResultadoSala {
   erro: ErroSala | null;
   /** Id alocado — só no `entrar` aceito. */
   jogadorId?: string;
+}
+
+/** Resultado de um comando de draft aplicado sobre a sala. */
+export interface ResultadoSalaOuDraft {
+  estado: EstadoSala;
+  erro: ErroSala | ErroDraft | null;
 }
 
 /** `humano-01` .. `humano-22`. Padding de 2 dígitos pra que a ordem lexicográfica seja a numérica. */
@@ -201,6 +213,47 @@ function iniciar(estado: EstadoSala, remetenteId: string | null, agora: number):
     roster,
     draft: criarDraftRede(roster, seedDraft, agora),
   });
+}
+
+/**
+ * Aplica um comando de DRAFT sobre o estado da sala.
+ *
+ * 🔑 Existe por causa do `seq`. `reduzirDraft` sozinho não sabe da sala, e os
+ * comandos de draft não passam por `reduzirSala` — então, sem esta função, o
+ * `draft` mudaria por baixo de um `seq` CONGELADO, e o cliente que descarta
+ * broadcast atrasado por `seq` (que é a razão de o campo existir) jogaria fora
+ * atualizações legítimas ou aceitaria as velhas. Aqui, todo comando aceito
+ * avança o contador — lobby ou draft, uma regra só.
+ */
+export function reduzirDraftDaSala(
+  estado: EstadoSala,
+  comando: ComandoDraft,
+  remetenteId: string | null,
+  agora: number,
+): ResultadoSalaOuDraft {
+  if (estado.fase !== 'iniciada' || estado.draft === null) {
+    return { estado, erro: 'sala-nao-iniciada' };
+  }
+  const r = reduzirDraft(estado.draft, comando, remetenteId, agora);
+  if (r.erro !== null) return { estado, erro: r.erro };
+  return { estado: { ...estado, draft: r.estado, seq: estado.seq + 1 }, erro: null };
+}
+
+/**
+ * Expira o turno de um jogador. É ação do SERVIDOR (ver `expirarJogador`), então
+ * não vem de `ComandoDraft` — mas passa pelo mesmo contador.
+ */
+export function expirarNaSala(
+  estado: EstadoSala,
+  jogadorId: string,
+  agora: number,
+): ResultadoSalaOuDraft {
+  if (estado.fase !== 'iniciada' || estado.draft === null) {
+    return { estado, erro: 'sala-nao-iniciada' };
+  }
+  const r = expirarJogador(estado.draft, jogadorId, agora);
+  if (r.erro !== null) return { estado, erro: r.erro };
+  return { estado: { ...estado, draft: r.estado, seq: estado.seq + 1 }, erro: null };
 }
 
 /**

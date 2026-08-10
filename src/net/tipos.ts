@@ -106,6 +106,14 @@ export const RODADA_COMPLETA = RODADAS_SORTEIO + 1;
  */
 export const MAX_BYTES_ESCOLHA = 2048;
 
+/**
+ * Teto de bytes de uma MENSAGEM inteira, aplicado pela casca ANTES do
+ * `JSON.parse`. `MAX_BYTES_ESCOLHA` só age depois de parsear e só sobre o campo
+ * `escolha`; sem este teto, um payload de megabytes seria desserializado antes
+ * de qualquer defesa.
+ */
+export const MAX_BYTES_MENSAGEM = 8192;
+
 /** Versão do formato de `EstadoDraftRede` persistido pelo Durable Object. */
 export const VERSAO_ESTADO_DRAFT = 1;
 

@@ -1,0 +1,33 @@
+{
+  // Fase 3 — sala online como Durable Object (PR 3.2).
+  //
+  // Par de versões validado no SPIKE 3.0 e fixado aqui de propósito:
+  // partyserver@0.5.10 + wrangler@4.120.0 + @cloudflare/workers-types, Node
+  // v24.16.0. Os dois primeiros são pré-1.0/móveis — se algo quebrar, suspeitar
+  // da versão antes do código.
+  //
+  // ⚠️ `compatibility_flags: ["nodejs_compat"]` NÃO está aqui, e isso é decisão,
+  // não esquecimento. O spike a tinha, posta defensivamente, e o registro do
+  // próprio spike diz que ela não sustentava nada. Medido neste PR: o worker
+  // sobe, serve e passa o smoke SEM ela — o grafo de imports do DO
+  // (`src/net/*` + `src/engine/rng` + `src/engine/draft-utils`) não toca módulo
+  // `node:*` nenhum. Se um dia precisar voltar, registrar QUAL import exigiu.
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "f1-fantasy-sala",
+  "main": "party/sala.ts",
+  "compatibility_date": "2026-08-01",
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "Sala",
+        "class_name": "Sala"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["Sala"]
+    }
+  ]
+}

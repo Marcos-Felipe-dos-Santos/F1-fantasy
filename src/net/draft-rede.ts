@@ -208,6 +208,35 @@ function bytesDaEscolha(escolha: unknown): number | undefined {
   }
 }
 
+const SLOTS_VALIDOS = new Set(['chassi', 'motor', 'estrategista', 'pit']);
+
+/**
+ * A escolha tem a FORMA de uma `EscolhaDraft`? É o máximo que o servidor pode
+ * checar sem dataset — e vale a pena checar, porque barra o lixo trivial
+ * (`null`, `42`, `{tipo:'xpto'}`) antes de ele entrar no log append-only, que é
+ * persistido e nunca encolhe.
+ *
+ * ⚠️ **Não é a defesa principal, e não pode ser confundida com uma.** Um
+ * `{tipo:'piloto', pilotoId:'NAO-EXISTE'}` tem forma perfeita e só a engine, com
+ * o dataset, sabe que é inválido. Quem impede que isso mate a sala é o
+ * `try`/`catch` do cliente (`aplicarEscolhaDoLog`, em `cliente.ts`). Esta função
+ * só encurta a superfície.
+ */
+function temFormaDeEscolha(escolha: unknown): boolean {
+  if (typeof escolha !== 'object' || escolha === null) return false;
+  const e = escolha as Record<string, unknown>;
+  switch (e.tipo) {
+    case 'componente':
+      return typeof e.slot === 'string' && SLOTS_VALIDOS.has(e.slot);
+    case 'piloto':
+      return typeof e.pilotoId === 'string' && e.pilotoId.length > 0;
+    case 'peca':
+      return typeof e.pecaId === 'string' && e.pecaId.length > 0;
+    default:
+      return false;
+  }
+}
+
 function escolher(
   estado: EstadoDraftRede,
   escolha: unknown,
@@ -227,6 +256,7 @@ function escolher(
   const bytes = bytesDaEscolha(escolha);
   if (bytes === undefined) return recusar(estado, 'comando-invalido');
   if (bytes > MAX_BYTES_ESCOLHA) return recusar(estado, 'escolha-grande-demais');
+  if (!temFormaDeEscolha(escolha)) return recusar(estado, 'comando-invalido');
 
   // Idempotência: mensagem duplicada ou fora de ordem traz a coordenada de um
   // turno que já passou, e é recusada em vez de contar como segunda jogada.

@@ -40,6 +40,8 @@ declare const process: {
   argv: string[];
   exitCode?: number;
   env: Record<string, string | undefined>;
+  /** Adicionado no PR 3.2 (cerca-lint.test.ts) pra rodar o ESLint na pasta do projeto. */
+  cwd(): string;
 };
 
 interface ImportMeta {

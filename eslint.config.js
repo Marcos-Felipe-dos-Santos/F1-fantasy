@@ -79,8 +79,13 @@ export default tseslint.config(
     // replicado, e um relógio ou `Math.random` ali divergiria entre os 22.
     // O arquivo de TESTE fica de fora de propósito: a conformidade do roster
     // só vale se comparar com o caminho offline de verdade (`src/ui/fluxo-draft`).
-    files: ['src/net/**'],
-    ignores: ['src/net/**/*.test.ts'],
+    //
+    // `party/**` entra na MESMA cerca a partir do PR 3.2: é o Durable Object em
+    // si, o código que de fato roda no workerd. Ele é um diretório de topo, fora
+    // do `include` do tsconfig e fora do glob `src/net/**` — sem esta linha, um
+    // `party/sala.ts` importando `src/data/` passaria no lint sem reclamação.
+    files: ['src/net/**', 'party/**'],
+    ignores: ['src/net/**/*.test.ts', 'party/**/*.test.ts'],
     rules: {
       'no-restricted-imports': [
         'error',
@@ -108,6 +113,16 @@ export default tseslint.config(
           ],
         },
       ],
+      // ⚠️ ESTA LISTA É COMPLETA DE PROPÓSITO, e o bloco de `party/**` abaixo
+      // repete os dois primeiros itens em vez de "herdar" daqui.
+      //
+      // No flat config do ESLint, um bloco posterior que redefine a MESMA regra
+      // SUBSTITUI as opções por inteiro — não faz merge de arrays. A primeira
+      // versão deste PR separava `Date.now` num bloco só de `src/net/**` e, com
+      // isso, apagou em silêncio a proibição de `Math.random`/`performance.now`
+      // que existia desde o 3.1a. Num PR cuja tese é determinismo. Achado da
+      // revisão, e o teste de cerca em `cerca-lint.test.ts` existe para que não
+      // se repita: ele verifica as três propriedades nos dois diretórios.
       'no-restricted-properties': [
         'error',
         {
@@ -116,14 +131,15 @@ export default tseslint.config(
           message: 'Proibido em net/: use o RNG semeado de engine/rng.ts.',
         },
         {
-          object: 'Date',
+          object: 'performance',
           property: 'now',
           message: 'Proibido em net/: determinismo — o redutor não pode depender de relógio.',
         },
         {
-          object: 'performance',
+          object: 'Date',
           property: 'now',
-          message: 'Proibido em net/: determinismo — o redutor não pode depender de relógio.',
+          message:
+            'Proibido no núcleo (src/net/): o redutor recebe `agora` injetado. Ler relógio é papel da casca, party/sala.ts.',
         },
       ],
       'no-restricted-syntax': [
@@ -132,6 +148,34 @@ export default tseslint.config(
           selector: "CallExpression > MemberExpression[property.name='localeCompare']",
           message:
             'Proibido: `localeCompare` consulta a collation ICU do host e quebra determinismo entre workerd/Node. Use comparador de code unit (`<`/`>`).',
+        },
+      ],
+    },
+  },
+  {
+    // 🔒 `Date.now` é proibido no NÚCLEO (`src/net/**`) e permitido só na CASCA
+    // (`party/**`). A distinção é a tese do PR 3.2: o redutor é puro e recebe
+    // `agora` injetado — se ele lesse relógio, o mesmo log produziria estados
+    // diferentes e o harness deixaria de ser determinístico. Já o Durable
+    // Object É o lugar legítimo de ler o relógio: alguém tem que dizer que
+    // horas são, e é ele.
+    //
+    // A lista abaixo REPETE `Math.random` e `performance.now` de propósito —
+    // ver o aviso no bloco anterior sobre substituição de regra no flat config.
+    files: ['party/**'],
+    ignores: ['party/**/*.test.ts'],
+    rules: {
+      'no-restricted-properties': [
+        'error',
+        {
+          object: 'Math',
+          property: 'random',
+          message: 'Proibido em party/: use o RNG semeado de engine/rng.ts.',
+        },
+        {
+          object: 'performance',
+          property: 'now',
+          message: 'Proibido em party/: use `Date.now()`, que é o relógio legítimo da casca.',
         },
       ],
     },

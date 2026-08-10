@@ -28,6 +28,25 @@ export const MAX_TAMANHO_NOME = 20;
 /** Comandos que o cliente manda pro servidor. Nenhum diz de quem é: ver o cabeçalho. */
 export type ComandoSala =
   | { tipo: 'entrar'; nome: string }
+  /**
+   * "Quem sou eu nesta sala?" — recuperação, não cortesia. O `voce-e` é
+   * direcionado e enviado UMA vez; se ele se perde, o cliente fica sem saber a
+   * própria identidade e não consegue mais jogar, para sempre. Medido no
+   * harness: com 15% de perda, isso acontecia com 3 ou 4 dos 22 em toda
+   * execução. É idempotente e não altera estado.
+   */
+  | { tipo: 'quem-sou' }
+  /**
+   * "Me manda o estado de novo." Recuperação, como o `quem-sou`.
+   *
+   * O servidor só difunde quando ACEITA um comando. Se o snapshot que anuncia
+   * "chegou a sua vez" se perde, o jogador não sabe que é a vez dele, não joga,
+   * e a sala inteira espera até o cronômetro expirá-lo. Medido no harness antes
+   * deste comando existir: com 15% de perda, **6 a 12 dos 22 turnos de peça
+   * eram resolvidos por expiração em vez de por gente**. É idempotente e não
+   * altera estado.
+   */
+  | { tipo: 'sincronizar' }
   | { tipo: 'sair' }
   | { tipo: 'pronto'; pronto: boolean }
   | { tipo: 'iniciar' };
@@ -79,6 +98,7 @@ export type ErroSala =
   | 'jogadores-insuficientes'
   | 'nem-todos-prontos'
   | 'nome-invalido'
+  | 'sala-nao-iniciada'
   | 'comando-invalido';
 
 /**
@@ -91,4 +111,4 @@ export type ErroSala =
 export type MensagemServidor =
   | { tipo: 'estado'; versaoProtocolo: number; estado: EstadoSalaPublico }
   | { tipo: 'voce-e'; jogadorId: string }
-  | { tipo: 'erro'; erro: ErroSala };
+  | { tipo: 'erro'; erro: ErroSala | ErroDraft };

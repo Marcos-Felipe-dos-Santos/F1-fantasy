@@ -252,10 +252,33 @@ describe('tamanho do payload', () => {
     expect(r.estado).toBe(estado);
   });
 
-  it('aceita escolha dentro do teto', () => {
+  it('aceita escolha dentro do teto (com FORMA válida)', () => {
     const estado = novo(3);
-    const cabe = { lixo: 'x'.repeat(MAX_BYTES_ESCOLHA - 50) };
+    // Forma de `EscolhaDraft` e id longo: o teto é sobre bytes, não sobre forma.
+    const cabe = { tipo: 'peca', pecaId: 'x'.repeat(MAX_BYTES_ESCOLHA - 50) };
     expect(reduzirDraft(estado, cmd(estado, 'humano-01', cabe), 'humano-01', T0).erro).toBeNull();
+  });
+
+  it('recusa payload com forma que NÃO é EscolhaDraft', () => {
+    // Validação de FORMA — o máximo que o servidor pode fazer sem dataset.
+    // Não pega `pilotoId` inexistente (só a engine sabe), mas barra o lixo
+    // trivial antes de ele entrar no log append-only, que nunca encolhe.
+    const estado = novo(3);
+    const forasteiros = [
+      { lixo: 1 },
+      { tipo: 'xpto' },
+      { tipo: 'componente', slot: 'piloto' },
+      { tipo: 'componente', slot: 'inexistente' },
+      { tipo: 'piloto' },
+      { tipo: 'piloto', pilotoId: '' },
+      { tipo: 'peca', pecaId: 42 },
+      [],
+    ];
+    for (const escolha of forasteiros) {
+      const r = reduzirDraft(estado, cmd(estado, 'humano-01', escolha), 'humano-01', T0);
+      expect(r.erro, `deveria recusar ${JSON.stringify(escolha)}`).toBe('comando-invalido');
+      expect(r.estado).toBe(estado);
+    }
   });
 
   it('recusa payload que nem serializa (ciclo)', () => {
@@ -275,7 +298,11 @@ describe('tamanho do payload', () => {
 describe('log append-only', () => {
   it('só cresce, com seq 1-based contíguo, e guarda a escolha opaca', () => {
     let estado = novo(3);
-    const escolhas = [{ a: 1 }, { b: 2 }, { c: 3 }];
+    const escolhas = [
+      { tipo: 'componente', slot: 'chassi' },
+      { tipo: 'componente', slot: 'motor' },
+      { tipo: 'piloto', pilotoId: 'algum-piloto' },
+    ];
     estado = jogar(estado, 'humano-01', escolhas[0]);
     estado = jogar(estado, 'humano-03', escolhas[1]);
     estado = jogar(estado, 'humano-02', escolhas[2]);
