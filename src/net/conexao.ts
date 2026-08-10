@@ -55,7 +55,13 @@ export function urlDaSala(base: string, sala: string): string {
  * e o worker na 8787, então o default aponta pra 8787 — é o par de portas do
  * fluxo de desenvolvimento descrito no ESTADO.
  */
-export function baseParaEstaPagina(local: { protocol: string; hostname: string }): string {
+export function baseParaEstaPagina(
+  local: { protocol: string; hostname: string },
+  configurada?: string,
+): string {
+  // `configurada` vem de `VITE_WS_BASE`, para publicar em qualquer domínio: sem
+  // isso, `https://meudominio` viraria `wss://meudominio:8787`, que não existe.
+  if (configurada !== undefined && configurada.length > 0) return configurada;
   const esquema = local.protocol === 'https:' ? 'wss:' : 'ws:';
   return `${esquema}//${local.hostname}:8787`;
 }
@@ -137,6 +143,16 @@ export function abrirConexao(opcoes: OpcoesConexao): Conexao {
       }
       // Sem socket: guarda pra mandar quando voltar. É isso que faz um clique
       // durante uma queda breve não se perder.
+      //
+      // Só o ÚLTIMO `escolher` fica: N cliques durante a queda virariam N
+      // comandos drenados de uma vez, e o jogador levaria uma enxurrada de
+      // `turno-divergente` por algo que não fez de errado. (Jogada fantasma não
+      // acontece — `turnoEsperado` cobre isso, porque `rodada` e `indicePeca`
+      // são monotônicos e uma coordenada velha nunca volta a valer.)
+      if (comando.tipo === 'escolher') {
+        const i = pendentes.findIndex((c) => c.tipo === 'escolher');
+        if (i !== -1) pendentes.splice(i, 1);
+      }
       pendentes.push(comando);
     },
     fechar() {

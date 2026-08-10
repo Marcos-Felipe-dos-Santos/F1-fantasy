@@ -46,4 +46,12 @@ declare const process: {
 
 interface ImportMeta {
   url: string;
+  /**
+   * Variáveis do Vite (PR 3.3). Só o que o projeto usa: `VITE_WS_BASE`, pra
+   * apontar o WebSocket pra outro host quando o jogo não estiver em
+   * `localhost`. Declarado à mão pelo mesmo motivo do resto deste arquivo — o
+   * projeto não instala `@types/node` nem puxa `vite/client`, que traria um
+   * monte de global que ninguém usa.
+   */
+  env?: { VITE_WS_BASE?: string };
 }

@@ -51,16 +51,62 @@ function semComentarios(fonte: string): string {
     .replace(/(^|[^:])\/\/[^\r\n]*/g, '$1');
 }
 
-function arquivosDaUi(): string[] {
-  return readdirSync(AQUI).flatMap((nome) => {
-    const caminho = join(AQUI, nome);
-    if (statSync(caminho).isDirectory()) return [];
-    // O próprio teste cita os nomes proibidos; e os testes em geral podem
-    // importar o que precisarem — a cerca é sobre código de PRODUÇÃO da UI.
-    if (!/\.tsx?$/.test(nome) || /\.test\.tsx?$/.test(nome)) return [];
+/** Anda na árvore inteira, não só no primeiro nível. */
+function tsRecursivo(dir: string, incluirTestes: boolean): string[] {
+  return readdirSync(dir).flatMap((nome) => {
+    const caminho = join(dir, nome);
+    // RECURSIVO de propósito: a primeira versão parava no primeiro nível e
+    // degradaria em silêncio no dia em que alguém criasse `src/ui/online/`.
+    if (statSync(caminho).isDirectory()) return tsRecursivo(caminho, incluirTestes);
+    if (!/\.tsx?$/.test(nome)) return [];
+    if (!incluirTestes && /\.test\.tsx?$/.test(nome)) return [];
     return [caminho];
   });
 }
+
+function arquivosDaUi(): string[] {
+  return tsRecursivo(AQUI, false);
+}
+
+/** Todo `.ts`/`.tsx` do projeto — produção e teste. */
+function arquivosDoProjeto(): string[] {
+  const raiz = join(AQUI, '..');
+  return ['engine', 'net', 'ui'].flatMap((pasta) => tsRecursivo(join(raiz, pasta), true));
+}
+
+/**
+ * Quantos argumentos cada chamada de `nomeFn` recebe.
+ *
+ * ⚠️ Conta parênteses BALANCEADOS, e isso não é preciosismo: a primeira versão
+ * usava `/nomeFn\s*\([^)]*,[^)]*,/` e era **falso-negativo** — o `[^)]*` parava
+ * no primeiro `)`, então a chamada real
+ * `sincronizarDraft(aplicarMensagem(a, b), dataset, sabotagem)` passava limpo.
+ * Medido: com a sabotagem aplicada, o teste continuava verde. Um teste de cerca
+ * que não pega o contorno é pior que nenhum, porque dá confiança falsa.
+ */
+function aridadesDe(fonte: string, nomeFn: string): number[] {
+  const aridades: number[] = [];
+  const marca = new RegExp(`\\b${nomeFn}\\s*\\(`, 'g');
+  for (let m = marca.exec(fonte); m !== null; m = marca.exec(fonte)) {
+    let profundidade = 1;
+    let argumentos = 1;
+    let i = m.index + m[0].length;
+    for (; i < fonte.length && profundidade > 0; i += 1) {
+      const c = fonte[i];
+      if (c === '(' || c === '[' || c === '{') profundidade += 1;
+      else if (c === ')' || c === ']' || c === '}') profundidade -= 1;
+      else if (c === ',' && profundidade === 1) argumentos += 1;
+    }
+    // Chamada sem argumento nenhum: `fn()`.
+    if (fonte.slice(m.index + m[0].length, i - 1).trim().length === 0) argumentos = 0;
+    aridades.push(argumentos);
+  }
+  return aridades;
+}
+
+/** `E:\...\src\net\cliente.ts` → `src/net/cliente.ts`, pra asserção legível. */
+const relativo = (caminho: string): string =>
+  caminho.slice(caminho.indexOf('src')).split('\\').join('/');
 
 describe('a UI não pode ter um SEGUNDO caminho de escolha do ausente', () => {
   it('a varredura enxerga os arquivos de produção da UI (não passa vazia)', () => {
@@ -68,6 +114,21 @@ describe('a UI não pode ter um SEGUNDO caminho de escolha do ausente', () => {
     expect(arquivos.length).toBeGreaterThan(20);
     expect(arquivos.some((a) => a.endsWith('FluxoOnline.tsx'))).toBe(true);
     expect(arquivos.some((a) => a.endsWith('useSalaOnline.ts'))).toBe(true);
+  });
+
+  it('`aridadesDe` conta argumentos com parênteses aninhados (anti-falso-negativo)', () => {
+    // O caso exato que a versão anterior deixava passar.
+    expect(aridadesDe('sincronizarDraft(aplicarMensagem(a, b), dataset)', 'sincronizarDraft')).toEqual([
+      2,
+    ]);
+    expect(
+      aridadesDe('sincronizarDraft(aplicarMensagem(a, b), dataset, sabota)', 'sincronizarDraft'),
+    ).toEqual([3]);
+    expect(aridadesDe('sincronizarDraft(x, y, (e, d, j) => f(e, d, j))', 'sincronizarDraft')).toEqual(
+      [3],
+    );
+    expect(aridadesDe('fn()', 'fn')).toEqual([0]);
+    expect(aridadesDe('outraCoisa(a, b, c)', 'sincronizarDraft')).toEqual([]);
   });
 
   it('o removedor de comentários não come CÓDIGO (anti-vacuidade)', () => {
@@ -105,6 +166,52 @@ describe('a UI não pode ter um SEGUNDO caminho de escolha do ausente', () => {
       /\bescolhaDoAusente\b/.test(semComentarios(readFileSync(arquivo, 'utf8'))),
     );
     expect(culpados, `só o cliente resolve ausente:\n${culpados.join('\n')}`).toEqual([]);
+  });
+
+  it('ALLOWLIST repo-wide: só estes arquivos podem tocar `escolherBot`', () => {
+    // Asserir AUSÊNCIA num diretório é contornável por indireção: um helper novo
+    // em `src/net/qualquer-coisa.ts` chamado de um componente passaria limpo
+    // (achado da revisão). Asserir IGUALDADE contra uma lista fechada não é —
+    // qualquer arquivo novo que toque `escolherBot` reprova até ser discutido.
+    const permitidos = [
+      'src/engine/bots.ts',
+      'src/engine/bots.test.ts',
+      'src/engine/draft.ts',
+      'src/engine/draft.test.ts',
+      'src/engine/draft-utils.ts',
+      'src/net/cliente.ts',
+      'src/net/draft-rede.ts',
+      'src/net/conformidade-draft.test.ts',
+      'src/ui/contrato-ausente.test.ts',
+    ].sort();
+    const usam = arquivosDoProjeto()
+      .filter((a) => /\bescolherBot\b/.test(readFileSync(a, 'utf8')))
+      .map(relativo)
+      .sort();
+    expect(usam).toEqual(permitidos);
+  });
+
+  it('a UI não chama `escolhaPadrao` — o docstring dela CONVIDA a isso', () => {
+    // `escolhaPadrao` se anuncia como "o que a UI vai substituir por cliques".
+    // Chamá-la com o id de um AUSENTE seria um segundo caminho de decisão sem
+    // citar nenhum nome proibido. A UI escolhe por CLIQUE; nada mais.
+    const culpados = arquivosDaUi().filter((arquivo) =>
+      /\bescolhaPadrao\b/.test(semComentarios(readFileSync(arquivo, 'utf8'))),
+    );
+    expect(culpados.map(relativo), 'a UI decide por clique, não por heurística').toEqual([]);
+  });
+
+  it('ninguém na UI passa o 3º argumento de `sincronizarDraft`', () => {
+    // O terceiro parâmetro (`EscolherPeloAusente`) existe para o HARNESS
+    // sabotar clientes de propósito. Passá-lo na UI reabriria exatamente a
+    // divergência que este arquivo existe para impedir — e não dispararia
+    // nenhum dos outros testes, porque não cita nome proibido nenhum.
+    const culpados = arquivosDaUi().filter((arquivo) =>
+      aridadesDe(semComentarios(readFileSync(arquivo, 'utf8')), 'sincronizarDraft').some(
+        (n) => n > 2,
+      ),
+    );
+    expect(culpados.map(relativo), 'só o harness injeta escolha de ausente').toEqual([]);
   });
 
   it('nenhum arquivo de UI usa Math.random (nem para desempate visual)', () => {

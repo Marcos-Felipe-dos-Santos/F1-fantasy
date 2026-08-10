@@ -30,6 +30,7 @@ import {
   type EstadoCliente,
 } from '../net/cliente';
 import type { ComandoDraft, ComandoSala } from '../net/protocolo';
+import { RODADA_COMPLETA } from '../net/tipos';
 import type { EscolhaDraft } from '../engine/types';
 import { dataset } from './dataset-app';
 import { storageDoNavegador } from './storage-app';
@@ -74,15 +75,19 @@ export function useSalaOnline(sala: string): UseSalaOnline {
 
   useEffect(() => {
     const conexao = abrirConexao({
-      base: baseParaEstaPagina(window.location),
+      base: baseParaEstaPagina(window.location, import.meta.env?.VITE_WS_BASE),
       sala,
       aoMudarEstado: setEstadoConexao,
       aoAbrir: () => {
         // Se tenho token, tento voltar como quem eu era. Se ele não valer mais
         // (lobby: cair é sair), o servidor responde `token-invalido` e a tela
         // de entrada aparece — que é o comportamento certo.
+        // `conexaoRef.current`, e não a `const conexao` local: aquela ainda
+        // está sendo inicializada quando este callback é criado. Só funciona
+        // hoje porque o evento `open` é assíncrono — um socket que abrisse
+        // sincronamente (mock, polyfill) daria `ReferenceError`.
         if (tokenRef.current !== null) {
-          conexao.enviar({ tipo: 'reentrar', token: tokenRef.current });
+          conexaoRef.current?.enviar({ tipo: 'reentrar', token: tokenRef.current });
         }
       },
       aoReceber: (mensagem) => {
@@ -144,7 +149,7 @@ export function useSalaOnline(sala: string): UseSalaOnline {
     draftRede !== null &&
     !souAusente &&
     (draftRede.fase === 'sorteios'
-      ? (draftRede.rodada[euSou] ?? Infinity) <= 5
+      ? (draftRede.rodada[euSou] ?? Infinity) < RODADA_COMPLETA
       : draftRede.fase === 'peca' && draftRede.ordemPeca[draftRede.indicePeca] === euSou);
 
   const escolher = useCallback(

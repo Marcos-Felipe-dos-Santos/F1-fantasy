@@ -211,7 +211,8 @@ function App() {
       <BotaoTema />
 
       {salaOnline !== null && (
-        <FluxoOnline sala={salaOnline} onVoltar={() => setSalaOnline(null)} />
+        // `key`: trocar de sala remonta o fluxo, zerando token e estado local.
+        <FluxoOnline key={salaOnline} sala={salaOnline} onVoltar={() => setSalaOnline(null)} />
       )}
 
       {salaOnline === null && !state && (

@@ -17,9 +17,24 @@ interface TelaResumoProps {
   visibilidade: Visibilidade;
   onReiniciar: () => void;
   onIrParaCorrida: () => void;
+  /**
+   * Esconde "Ir pra corrida" (default: mostra). O modo Online usa `false`
+   * porque a corrida online ainda não existe — e um botão que promete a
+   * corrida e devolve à tela inicial é pior que botão nenhum.
+   */
+  mostrarIrParaCorrida?: boolean;
+  /** Rótulo do botão de reinício, para quem usa esta tela fora do fluxo Single. */
+  rotuloReiniciar?: string;
 }
 
-export function TelaResumo({ state, visibilidade, onReiniciar, onIrParaCorrida }: TelaResumoProps) {
+export function TelaResumo({
+  state,
+  visibilidade,
+  onReiniciar,
+  onIrParaCorrida,
+  mostrarIrParaCorrida = true,
+  rotuloReiniciar,
+}: TelaResumoProps) {
   const humanos = state.jogadores.filter((j) => j.tipo === 'humano');
 
   return (
@@ -43,11 +58,13 @@ export function TelaResumo({ state, visibilidade, onReiniciar, onIrParaCorrida }
       <TabelaGrid state={state} />
 
       <div className="tela-resumo__acoes">
-        <button type="button" className="botao-primario" onClick={onIrParaCorrida}>
-          Ir pra corrida →
-        </button>
+        {mostrarIrParaCorrida && (
+          <button type="button" className="botao-primario" onClick={onIrParaCorrida}>
+            Ir pra corrida →
+          </button>
+        )}
         <button type="button" className="botao-primario" onClick={onReiniciar}>
-          Novo draft
+          {rotuloReiniciar ?? 'Novo draft'}
         </button>
       </div>
     </div>

@@ -78,6 +78,11 @@ export function TelaInicio({
   // sorteadas por seed, então o seletor de pista SOME (não fica desabilitado).
   // A decisão mora em `fluxo-campeonato.ts` pra ser testável sem jsdom.
   const pistaVisivel = mostraSeletorDePista(formato);
+  // No online quem decide seed, dificuldade e formato é o SERVIDOR da sala (ele
+  // é o dono da `seedMestre`). Some, em vez de desabilitar — é o padrão que
+  // esta tela já usa pro seletor de pista nos campeonatos, e é mais difícil de
+  // ignorar que um parágrafo dizendo "isto aqui não vale".
+  const ehOnline = modo === 'online';
 
   // Perfil da pista escolhida (§9), informação pública — não depende de
   // `visibilidade` (Modo Cego só esconde nota de componente, não pista).
@@ -139,6 +144,7 @@ export function TelaInicio({
       )}
 
       <form className="form-inicio" onSubmit={handleSubmit}>
+        {!ehOnline && (
         <details
           className="form-inicio__seed-especifica"
           open={seedEspecificaAberta}
@@ -159,6 +165,8 @@ export function TelaInicio({
             reproduzir uma partida específica.
           </p>
         </details>
+        )}
+        {!ehOnline && (
         <label className="form-inicio__campo">
           Dificuldade
           <select
@@ -169,6 +177,7 @@ export function TelaInicio({
             <option value="dificil">Difícil</option>
           </select>
         </label>
+        )}
         <label className="form-inicio__campo">
           Modo
           <select value={modo} onChange={(evento) => setModo(evento.target.value as ModoJogo)}>
@@ -187,24 +196,26 @@ export function TelaInicio({
             <option value="cego">Modo Cego 🎲 (sem notas, sem dicas)</option>
           </select>
         </label>
-        <label className="form-inicio__campo">
-          Formato
-          <select
-            value={formato}
-            onChange={(evento) => setFormato(evento.target.value as FormatoPartida)}
-          >
-            {FORMATOS.map((valor) => (
-              <option key={valor} value={valor}>
-                {ROTULO_FORMATO[valor]}
-              </option>
-            ))}
-          </select>
-        </label>
+        {!ehOnline && (
+          <label className="form-inicio__campo">
+            Formato
+            <select
+              value={formato}
+              onChange={(evento) => setFormato(evento.target.value as FormatoPartida)}
+            >
+              {FORMATOS.map((valor) => (
+                <option key={valor} value={valor}>
+                  {ROTULO_FORMATO[valor]}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
 
         {/* Pista e perfil somem JUNTOS nos campeonatos: deixar o perfil no ar
             mostraria os dados de Monza pra um calendário de 5 pistas
             sorteadas — exatamente a confusão que o "sumir mesmo" evita. */}
-        {pistaVisivel ? (
+        {pistaVisivel && !ehOnline ? (
           <>
             <label className="form-inicio__campo">
               Pista
@@ -275,9 +286,9 @@ export function TelaInicio({
               />
             </label>
             <p className="form-inicio__seed-dica">
-              Quem digitar o mesmo nome de sala cai na mesma partida. As opções acima (seed,
-              dificuldade, formato) <b>não valem no online</b> — quem decide é o servidor da sala,
-              que é o dono da seed. As vagas que sobrarem viram bots.
+              Quem digitar o mesmo nome de sala cai na mesma partida. Seed, dificuldade e formato
+              não aparecem aqui porque <b>quem decide é o servidor da sala</b>, dono da seed. As
+              vagas que sobrarem viram bots.
             </p>
           </fieldset>
         )}

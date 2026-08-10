@@ -14,7 +14,7 @@
  * `ESTADO.md`; `contrato-ausente.test.ts` varre `src/ui/**` pra impedir isso.
  */
 
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import type { EscolhaDraft } from '../engine/types';
 import { TelaDraft } from './TelaDraft';
 import { TelaLobby } from './TelaLobby';
@@ -53,30 +53,55 @@ export function FluxoOnline({ sala, onVoltar }: FluxoOnlineProps) {
           onVoltar();
         }}
         onVoltar={onVoltar}
-        urlDaSala={urlDaSala(baseParaEstaPagina(window.location), sala)}
+        urlDaSala={urlDaSala(
+          baseParaEstaPagina(window.location, import.meta.env?.VITE_WS_BASE),
+          sala,
+        )}
       />
     );
   }
 
-  // Sala iniciada mas o draft local ainda não foi reconstruído (primeiro
-  // snapshot chegando, ou dataset carregando).
+  // Sala iniciada mas eu não sou jogador dela, ou o draft ainda não foi
+  // reconstruído.
+  //
+  // 🔴 ESTE RAMO ERA UM BECO SEM SAÍDA (achado da revisão). Basta digitar o
+  // nome de uma sala JÁ INICIADA — erro de digitação, amigo mandando o nome
+  // depois do começo, token perdido em outro navegador — para o servidor nunca
+  // mandar `voce-e`: `euSou` fica `null` para sempre e a tela virava um
+  // parágrafo sem botão nenhum. Pior, o erro que explicava tudo
+  // (`sala-iniciada`) não era mostrado. Agora todo ramo tem saída e motivo.
   if (draft === null || euSou === null) {
+    const souEspectador = publica.fase === 'iniciada' && euSou === null;
     return (
-      <div className="fluxo-online__espera">
-        <p>Preparando o draft…</p>
-      </div>
+      <Espera
+        titulo={souEspectador ? 'Esta sala já começou' : 'Preparando o draft…'}
+        erro={online.ultimoErro}
+        onVoltar={onVoltar}
+      >
+        {souEspectador && (
+          <p>
+            O draft desta sala já está em andamento e o grupo está fechado. Volte e entre numa sala
+            com outro nome.
+          </p>
+        )}
+      </Espera>
     );
   }
 
   const escolher = (escolha: EscolhaDraft) => online.escolher(escolha);
 
   if (draft.fase === 'concluido') {
+    // `mostrarIrParaCorrida={false}`: a corrida online é PR posterior, e um
+    // botão "Ir pra corrida →" que devolve o jogador à tela inicial sem
+    // explicação é pior que botão nenhum (achado da revisão).
     return (
       <TelaResumo
         state={draft}
         visibilidade="craque"
         onReiniciar={onVoltar}
         onIrParaCorrida={onVoltar}
+        mostrarIrParaCorrida={false}
+        rotuloReiniciar="← Voltar ao início"
       />
     );
   }
@@ -86,23 +111,21 @@ export function FluxoOnline({ sala, onVoltar }: FluxoOnlineProps) {
   // sem explicação — exigência registrada na revisão do 3.2.1.
   if (souAusente) {
     return (
-      <div className="fluxo-online__espera">
-        <h2>Você perdeu a vez por inatividade</h2>
+      <Espera titulo="Você perdeu a vez por inatividade" erro={null} onVoltar={onVoltar}>
         <p>
           O draft seguiu sem você e suas escolhas estão sendo feitas automaticamente. Dá pra
           acompanhar até o fim.
         </p>
         <PainelDeEspera fase={draft.fase} />
-      </div>
+      </Espera>
     );
   }
 
   if (!minhaVez) {
     return (
-      <div className="fluxo-online__espera">
-        <h2>Esperando os outros</h2>
+      <Espera titulo="Esperando os outros" erro={online.ultimoErro} onVoltar={onVoltar}>
         <PainelDeEspera fase={draft.fase} />
-      </div>
+      </Espera>
     );
   }
 
@@ -126,6 +149,34 @@ export function FluxoOnline({ sala, onVoltar }: FluxoOnlineProps) {
       erro={online.ultimoErro}
       onEscolher={escolher}
     />
+  );
+}
+
+/**
+ * Tela de espera com SAÍDA. Toda tela do online precisa de uma: o jogador pode
+ * cair num estado que não escolheu (sala já iniciada, vez de outro, ausência),
+ * e sem botão a única saída é F5 — que ninguém adivinha.
+ */
+function Espera({
+  titulo,
+  erro,
+  onVoltar,
+  children,
+}: {
+  titulo: string;
+  erro: string | null;
+  onVoltar: () => void;
+  children?: ReactNode;
+}) {
+  return (
+    <div className="fluxo-online__espera">
+      <h2>{titulo}</h2>
+      {children}
+      {erro !== null && <p className="tela-lobby__erro">⚠️ {erro}</p>}
+      <button type="button" onClick={onVoltar}>
+        ← Voltar ao início
+      </button>
+    </div>
   );
 }
 
