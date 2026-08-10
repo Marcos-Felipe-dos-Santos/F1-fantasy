@@ -16,6 +16,7 @@ import { BotaoTema } from './BotaoTema';
 import { dataset } from './dataset-app';
 import { FluxoCampeonato } from './FluxoCampeonato';
 import { FluxoCorrida } from './FluxoCorrida';
+import { FluxoOnline } from './FluxoOnline';
 import { PISTA_CORRIDA_ID } from './fluxo-corrida';
 import {
   avancarEtapa,
@@ -58,6 +59,10 @@ function App() {
   // `iniciarCampeonato`, que PRÉ-SIMULA todas as etapas — `etapaAtual` é só um
   // cursor de apresentação, nunca dispara simulação nova.
   const [campeonato, setCampeonato] = useState<EstadoCampeonato | null>(null);
+  // Sala online em que estamos, ou `null` no offline (PR 3.3). É um roteamento
+  // à parte de propósito: no online o `DraftState` não vem de `useDraft` — vem
+  // reconstruído do log da sala, e quem manda na seed é o servidor.
+  const [salaOnline, setSalaOnline] = useState<string | null>(null);
 
   const storage = useMemo(() => storageDoNavegador(), []);
 
@@ -205,11 +210,16 @@ function App() {
     <div className="app-shell">
       <BotaoTema />
 
-      {!state && (
+      {salaOnline !== null && (
+        <FluxoOnline sala={salaOnline} onVoltar={() => setSalaOnline(null)} />
+      )}
+
+      {salaOnline === null && !state && (
         <TelaInicio
           onComecar={comecarPartida}
           campeonatoSalvo={resumoSalvo}
           onContinuarCampeonato={continuarCampeonato}
+          onEntrarOnline={setSalaOnline}
         />
       )}
 

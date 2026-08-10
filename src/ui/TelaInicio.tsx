@@ -18,7 +18,7 @@ import {
 import type { Visibilidade } from './visibilidade';
 
 /** Modo de jogo escolhido na tela de início (não é conceito da engine — só organiza esta tela). */
-type ModoJogo = 'single' | 'local';
+type ModoJogo = 'single' | 'local' | 'online';
 
 const MIN_HUMANOS_LOCAL = 2;
 const MAX_HUMANOS_LOCAL = 4;
@@ -39,6 +39,13 @@ interface TelaInicioProps {
    */
   campeonatoSalvo: ResumoCampeonatoSalvo | null;
   onContinuarCampeonato: () => void;
+  /**
+   * Entra numa sala online (PR 3.3). Separado de `onComecar` porque o online
+   * NÃO decide seed, dificuldade nem formato aqui: quem manda nisso é o
+   * servidor da sala, que é dono da `seedMestre`. Misturar os dois caminhos
+   * daria a impressão de que a seed digitada vale online — e ela não vale.
+   */
+  onEntrarOnline: (sala: string) => void;
 }
 
 /** Pistas do dataset, ordenadas por nome (ordem de exibição do select — não é a ordem do JSON). */
@@ -51,6 +58,7 @@ export function TelaInicio({
   onComecar,
   campeonatoSalvo,
   onContinuarCampeonato,
+  onEntrarOnline,
 }: TelaInicioProps) {
   const [seedTexto, setSeedTexto] = useState('');
   // Seção "Usar seed específica" recolhida por default (PR 2.4): sem seed
@@ -64,6 +72,7 @@ export function TelaInicio({
   const [nomes, setNomes] = useState<string[]>(['', '', '', '']);
   const [pistaId, setPistaId] = useState(PISTA_CORRIDA_ID);
   const [formato, setFormato] = useState<FormatoPartida>('unica');
+  const [salaOnline, setSalaOnline] = useState('sala-1');
 
   // Regra condicional pedida pelo dev: nos campeonatos as pistas são
   // sorteadas por seed, então o seletor de pista SOME (não fica desabilitado).
@@ -88,6 +97,10 @@ export function TelaInicio({
       seedTexto,
       () => crypto.getRandomValues(new Uint32Array(1))[0],
     );
+    if (modo === 'online') {
+      onEntrarOnline(salaOnline.trim() || 'sala-1');
+      return;
+    }
     if (modo === 'single') {
       onComecar(seed, dificuldade, [{ id: ID_HUMANO, nome: 'Você' }], visibilidade, pistaId, formato);
       return;
@@ -161,6 +174,7 @@ export function TelaInicio({
           <select value={modo} onChange={(evento) => setModo(evento.target.value as ModoJogo)}>
             <option value="single">Single (você + 21 bots)</option>
             <option value="local">Local (2-4 jogadores + bots)</option>
+            <option value="online">Online (sala compartilhada)</option>
           </select>
         </label>
         <label className="form-inicio__campo">
@@ -247,8 +261,29 @@ export function TelaInicio({
           </fieldset>
         )}
 
+        {modo === 'online' && (
+          <fieldset className="form-inicio__online">
+            <legend>Sala online</legend>
+            <label className="form-inicio__campo">
+              Nome da sala
+              <input
+                type="text"
+                value={salaOnline}
+                maxLength={40}
+                onChange={(evento) => setSalaOnline(evento.target.value)}
+                placeholder="ex.: sala-1"
+              />
+            </label>
+            <p className="form-inicio__seed-dica">
+              Quem digitar o mesmo nome de sala cai na mesma partida. As opções acima (seed,
+              dificuldade, formato) <b>não valem no online</b> — quem decide é o servidor da sala,
+              que é o dono da seed. As vagas que sobrarem viram bots.
+            </p>
+          </fieldset>
+        )}
+
         <button type="submit" className="botao-primario">
-          Começar draft
+          {modo === 'online' ? 'Entrar na sala' : 'Começar draft'}
         </button>
       </form>
     </div>

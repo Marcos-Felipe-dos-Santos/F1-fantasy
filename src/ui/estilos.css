@@ -1182,3 +1182,114 @@ button.card {
     padding-top: var(--espaco-md);
   }
 }
+
+/* --- Modo Online: lobby e espera (PR 3.3) ------------------------------- */
+
+.tela-lobby {
+  max-width: min(520px, 100%);
+  margin: 0 auto;
+  padding-top: var(--espaco-xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaco-lg);
+}
+
+.tela-lobby__topo {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--espaco-md);
+}
+
+/* O estado da conexão fica sempre visível: no online, saber se o jogo está
+   tentando voltar sozinho é a diferença entre "esperando" e "quebrou". */
+.tela-lobby__conexao {
+  font-size: 0.85rem;
+  color: var(--cor-texto-fraco);
+  white-space: nowrap;
+}
+
+.tela-lobby__link code {
+  background: var(--cor-superficie);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-sm);
+  padding: 2px 6px;
+  font-size: 0.85rem;
+  word-break: break-all;
+}
+
+.tela-lobby__erro {
+  color: var(--cor-erro);
+  background: var(--cor-superficie);
+  border-left: 3px solid var(--cor-erro);
+  padding: var(--espaco-sm) var(--espaco-md);
+  border-radius: var(--raio-sm);
+}
+
+.tela-lobby__jogadores {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaco-xs);
+}
+
+.tela-lobby__jogadores li {
+  background: var(--cor-superficie);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-sm);
+  padding: var(--espaco-sm) var(--espaco-md);
+}
+
+.tela-lobby__jogador--eu {
+  border-color: var(--cor-destaque);
+}
+
+.tela-lobby__contagem,
+.tela-lobby__motivo {
+  color: var(--cor-texto-fraco);
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.tela-lobby__acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espaco-sm);
+}
+
+.tela-lobby__voltar {
+  align-self: flex-start;
+  background: none;
+  border: 0;
+  color: var(--cor-texto-fraco);
+  cursor: pointer;
+  padding: 0;
+}
+
+.tela-lobby__entrada {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaco-md);
+}
+
+.fluxo-online__espera {
+  text-align: center;
+  padding-top: calc(var(--espaco-xl) * 2);
+  max-width: min(480px, 100%);
+  margin: 0 auto;
+}
+
+.fluxo-online__fase {
+  color: var(--cor-texto-fraco);
+}
+
+.form-inicio__online {
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-sm);
+  padding: var(--espaco-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaco-sm);
+}

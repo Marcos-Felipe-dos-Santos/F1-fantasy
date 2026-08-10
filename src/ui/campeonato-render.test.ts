@@ -91,6 +91,7 @@ describe('TelaInicio monta', () => {
         onComecar: () => {},
         campeonatoSalvo: null,
         onContinuarCampeonato: () => {},
+        onEntrarOnline: () => {},
       }),
     );
     expect(html).toContain('Formato');
@@ -107,6 +108,7 @@ describe('TelaInicio monta', () => {
         onComecar: () => {},
         campeonatoSalvo: resumo,
         onContinuarCampeonato: () => {},
+        onEntrarOnline: () => {},
       }),
     );
     expect(html).toContain('Continuar campeonato');
