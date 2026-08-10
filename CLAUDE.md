@@ -70,6 +70,24 @@ documentação do projeto somada. **Uma única leitura dele estoura a sessão in
 - Antes de mexer em **lógica de simulação ou de balanceamento**, escrever primeiro um **teste que falha** capturando o comportamento novo pretendido (baseline vermelho). Só então implementar até passar.
 - Mudança de balanceamento sempre acompanhada de rodada do `balance-harness` (ver skill) antes de considerar pronta.
 
+## Cerca de lint: separar regra APAGA a regra (lição do PR 3.2, inviolável)
+
+**No flat config do ESLint, um bloco posterior que redefine a MESMA regra substitui as opções por
+inteiro — não faz merge de arrays.** Ao separar uma regra em blocos por diretório, é obrigatório
+**repetir TODAS as opções que estavam no bloco original**, mesmo as que não têm nada a ver com a
+mudança.
+
+Aconteceu assim no 3.2: separar `Date.now` num bloco só de `src/net/**` apagou em silêncio as
+proibições de `Math.random` e `performance.now` naquele diretório — na camada replicada, num PR
+cuja tese era determinismo.
+
+🔒 **A verificação tem que ser POR TESTE, nunca manual.** A conferência manual da época testou
+`src/data/`, `src/ui/`, React e `Date.now`, e passou: os três primeiros vivem em
+`no-restricted-imports` (outra regra, não sobrescrita) e o quarto era justamente a regra nova. **A
+proibição que sumiu não estava na lista conferida** — e não estaria, porque quem separa a regra não
+suspeita das outras. O teste é `src/net/cerca-lint.test.ts`: ele roda o ESLint de verdade sobre
+código que viola cada regra, inclusive um caso anti-vacuidade. **Cerca nova entra com teste junto.**
+
 ## Fluxo de trabalho preferido
 - **Metodologia e crítica ANTES de implementar.** O dev quer revisar o plano/abordagem antes de escrever código. Não sair codando de primeira.
 - Roteamento de modelos (economia de token é restrição de design):
