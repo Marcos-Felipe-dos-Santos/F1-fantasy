@@ -114,6 +114,7 @@ export type ErroSala =
   | 'nem-todos-prontos'
   | 'nome-invalido'
   | 'sala-nao-iniciada'
+  | 'sala-inexistente'
   | 'token-invalido'
   | 'comando-invalido';
 
@@ -131,4 +132,10 @@ export type MensagemServidor =
    * esta conexão**, nunca em broadcast.
    */
   | { tipo: 'voce-e'; jogadorId: string; token?: string }
-  | { tipo: 'erro'; erro: ErroSala | ErroDraft };
+  | { tipo: 'erro'; erro: ErroSala | ErroDraft }
+  /**
+   * A sala acabou de ser encerrada e o estado foi descartado. Vem antes de o
+   * servidor fechar as conexões, pra que a tela diga o que houve em vez de
+   * virar "reconectando…" para sempre.
+   */
+  | { tipo: 'sala-encerrada' };

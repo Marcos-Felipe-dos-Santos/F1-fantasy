@@ -87,6 +87,8 @@ export interface EstadoSalaPublico {
    * duplicação) vai asserir.
    */
   seq: number;
+  /** Quando a partida terminou (ms). `null` = ainda em andamento. */
+  concluidaEm: number | null;
 }
 
 /**
@@ -113,6 +115,25 @@ export const MAX_BYTES_ESCOLHA = 2048;
  * de qualquer defesa.
  */
 export const MAX_BYTES_MENSAGEM = 8192;
+
+/**
+ * Janela de graça: quanto tempo a sala continua viva DEPOIS da partida acabar,
+ * pra quem quiser olhar o resultado, anotar, printar. Passada a janela, os que
+ * restaram são desconectados e a sala é RESETADA — estado descartado, log
+ * limpo, código liberado.
+ *
+ * 10 minutos, e não 5: quem levanta da mesa pra buscar água não pode perder o
+ * resultado. O custo é um alarme de 5 s que já existe para o cronômetro de
+ * turno — segurar a sala mais tempo não custa praticamente nada.
+ */
+export const JANELA_DE_GRACA_MS = 10 * 60_000;
+
+/**
+ * A partir de quanto tempo restante a tela avisa que a sala vai fechar.
+ * Decisão do dev: **só no último minuto** — durante os 9 primeiros a tela de
+ * resultado fica limpa, sem pressão de relógio enquanto o pessoal comenta.
+ */
+export const AVISAR_FECHAMENTO_MS = 60_000;
 
 /** Versão do formato de `EstadoDraftRede` persistido pelo Durable Object. */
 export const VERSAO_ESTADO_DRAFT = 1;
@@ -186,6 +207,14 @@ export interface EstadoDraftRede {
 export interface EstadoSala extends Omit<EstadoSalaPublico, 'seedDraft'> {
   /** Seed mestre da partida, fixada na criação da sala (uint32). */
   seedMestre: number;
+  /**
+   * Quando a partida terminou (ms, injetado). `null` enquanto não terminou.
+   *
+   * É o que arma a **janela de graça**: passada `JANELA_DE_GRACA_MS` daqui, a
+   * sala é resetada. Também é o que dá ponto de descarte ao log append-only —
+   * antes disso ele crescia para sempre, que era metade do problema C2 do 3.2.
+   */
+  concluidaEm: number | null;
   /**
    * jogadorId → token de reentrada. **É O SEGUNDO SEGREDO DO ESTADO**, junto com
    * a `seedMestre`, e pelo mesmo motivo: quem tem o token de alguém joga como

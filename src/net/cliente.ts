@@ -53,6 +53,8 @@ export interface EstadoCliente {
   erros: string[];
   /** Snapshots descartados por virem atrasados ou repetidos. */
   descartados: number;
+  /** A sala foi encerrada pelo servidor (janela de graça vencida ou esvaziou). */
+  encerrada: boolean;
 }
 
 export function criarCliente(): EstadoCliente {
@@ -66,6 +68,7 @@ export function criarCliente(): EstadoCliente {
     ausentes: [],
     erros: [],
     descartados: 0,
+    encerrada: false,
   };
 }
 
@@ -85,6 +88,10 @@ export function aplicarMensagem(estado: EstadoCliente, mensagem: MensagemServido
       };
     case 'erro':
       return { ...estado, erros: [...estado.erros, mensagem.erro] };
+    case 'sala-encerrada':
+      // O estado do servidor foi descartado. Marcar aqui é o que permite a UI
+      // dizer "esta sala foi encerrada" em vez de ficar em "reconectando…".
+      return { ...estado, encerrada: true };
     case 'estado':
       if (mensagem.estado.seq <= estado.seqVisto) {
         return { ...estado, descartados: estado.descartados + 1 };

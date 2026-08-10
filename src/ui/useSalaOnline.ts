@@ -54,6 +54,10 @@ export interface UseSalaOnline {
   sair: () => void;
   /** Último erro recebido do servidor, para a UI mostrar. */
   ultimoErro: string | null;
+  /** A sala foi encerrada pelo servidor (janela vencida ou esvaziou). */
+  encerrada: boolean;
+  /** O código não existe (nunca criado, ou já encerrado). */
+  inexistente: boolean;
 }
 
 export function useSalaOnline(sala: string): UseSalaOnline {
@@ -99,7 +103,13 @@ export function useSalaOnline(sala: string): UseSalaOnline {
             // Sem persistência o jogo continua; só não sobrevive a um F5.
           }
         }
-        if (mensagem.tipo === 'erro' && mensagem.erro === 'token-invalido') {
+        // `sala-inexistente` também invalida o token guardado: ele pertencia a
+        // uma sala que não existe mais, e insistir com ele só geraria erro a
+        // cada reconexão.
+        if (
+          mensagem.tipo === 'erro' &&
+          (mensagem.erro === 'token-invalido' || mensagem.erro === 'sala-inexistente')
+        ) {
           tokenRef.current = null;
           try {
             storage?.removeItem(chaveToken(sala));
@@ -177,5 +187,7 @@ export function useSalaOnline(sala: string): UseSalaOnline {
     escolher,
     sair,
     ultimoErro: cliente.erros.at(-1) ?? null,
+    encerrada: cliente.encerrada,
+    inexistente: cliente.erros.includes('sala-inexistente'),
   };
 }

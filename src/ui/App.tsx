@@ -17,6 +17,8 @@ import { dataset } from './dataset-app';
 import { FluxoCampeonato } from './FluxoCampeonato';
 import { FluxoCorrida } from './FluxoCorrida';
 import { FluxoOnline } from './FluxoOnline';
+import { TelaSalaOnline } from './TelaSalaOnline';
+import { criarSalaNoServidor, linkDaSala, salaDaUrl } from './sala-online';
 import { PISTA_CORRIDA_ID } from './fluxo-corrida';
 import {
   avancarEtapa,
@@ -62,7 +64,35 @@ function App() {
   // Sala online em que estamos, ou `null` no offline (PR 3.3). É um roteamento
   // à parte de propósito: no online o `DraftState` não vem de `useDraft` — vem
   // reconstruído do log da sala, e quem manda na seed é o servidor.
-  const [salaOnline, setSalaOnline] = useState<string | null>(null);
+  // `?sala=A3F9C2` no link entra direto na sala — é o caminho principal no
+  // celular, onde ditar código é chato. Lido UMA vez, na montagem.
+  const [salaOnline, setSalaOnline] = useState<string | null>(() => salaDaUrl(window.location));
+  // `true` = está na tela de criar/entrar. O link pula direto pra sala.
+  const [escolhendoSala, setEscolhendoSala] = useState(false);
+  const [codigoCriado, setCodigoCriado] = useState<string | null>(null);
+  const [criandoSala, setCriandoSala] = useState(false);
+  const [erroSala, setErroSala] = useState<string | null>(null);
+
+  const criarSala = useCallback(async () => {
+    setCriandoSala(true);
+    setErroSala(null);
+    const codigo = await criarSalaNoServidor();
+    setCriandoSala(false);
+    if (codigo === null) {
+      setErroSala('Não deu pra criar a sala. O servidor está rodando? (`npm run sala`)');
+      return;
+    }
+    setCodigoCriado(codigo);
+  }, []);
+
+  const sairDaSala = useCallback(() => {
+    setSalaOnline(null);
+    setEscolhendoSala(false);
+    setCodigoCriado(null);
+    // Tira o `?sala=` da barra: sem isso, um F5 depois de sair voltaria pra
+    // sala que o jogador acabou de deixar.
+    window.history.replaceState(null, '', window.location.pathname);
+  }, []);
 
   const storage = useMemo(() => storageDoNavegador(), []);
 
@@ -212,15 +242,30 @@ function App() {
 
       {salaOnline !== null && (
         // `key`: trocar de sala remonta o fluxo, zerando token e estado local.
-        <FluxoOnline key={salaOnline} sala={salaOnline} onVoltar={() => setSalaOnline(null)} />
+        <FluxoOnline key={salaOnline} sala={salaOnline} onVoltar={sairDaSala} />
       )}
 
-      {salaOnline === null && !state && (
+      {salaOnline === null && escolhendoSala && (
+        <TelaSalaOnline
+          onCriar={criarSala}
+          onEntrar={(codigo) => {
+            setSalaOnline(codigo);
+            setEscolhendoSala(false);
+          }}
+          onVoltar={sairDaSala}
+          codigoCriado={codigoCriado}
+          criando={criandoSala}
+          erro={erroSala}
+          linkDaSala={linkDaSala}
+        />
+      )}
+
+      {salaOnline === null && !escolhendoSala && !state && (
         <TelaInicio
           onComecar={comecarPartida}
           campeonatoSalvo={resumoSalvo}
           onContinuarCampeonato={continuarCampeonato}
-          onEntrarOnline={setSalaOnline}
+          onEntrarOnline={() => setEscolhendoSala(true)}
         />
       )}
 

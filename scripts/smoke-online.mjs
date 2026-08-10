@@ -16,8 +16,9 @@
  */
 
 const BASE = process.env.SALA_BASE ?? '127.0.0.1:8787';
-const SALA = process.env.SALA_NOME ?? `smoke-${Date.now()}`;
-const URL_WS = `ws://${BASE}/parties/sala/${SALA}`;
+/** A sala agora precisa ser CRIADA pelo servidor (PR 3.3.2) — não basta um nome. */
+let SALA = null;
+let URL_WS = null;
 
 const falhas = [];
 const ok = (r) => console.log(`  [OK]    ${r}`);
@@ -71,7 +72,36 @@ function conectar(nome) {
 const pausa = (ms) => new Promise((r) => setTimeout(r, ms));
 
 async function main() {
-  console.log(`\nSMOKE do online -- ${URL_WS}\n`);
+  console.log(`\nSMOKE do online -- ${BASE}\n`);
+
+  // --- 0. Criar a sala (PR 3.3.2). Conectar não cria mais nada. ---
+  const criada = await fetch(`http://${BASE}/criar-sala`, { method: 'POST' });
+  if (!criada.ok) throw new Error(`criar-sala respondeu ${criada.status}`);
+  SALA = (await criada.json()).codigo;
+  if (typeof SALA === 'string' && /^[0-9A-F]{6}$/.test(SALA)) {
+    ok(`sala criada pelo servidor: código ${SALA}`);
+  } else {
+    falha('código de sala', JSON.stringify(SALA));
+  }
+  URL_WS = `ws://${BASE}/parties/sala/${SALA}`;
+
+  // Código que ninguém criou tem de ser recusado com mensagem CLARA.
+  const inexistente = new WebSocket(`ws://${BASE}/parties/sala/FFFFFF`);
+  const recusaSala = await new Promise((res) => {
+    inexistente.addEventListener('message', (ev) => res(JSON.parse(ev.data)));
+    inexistente.addEventListener('close', () => res(null));
+    setTimeout(() => res(null), 4000);
+  });
+  if (recusaSala?.erro === 'sala-inexistente') {
+    ok('código inexistente é recusado com `sala-inexistente`');
+  } else {
+    falha('código inexistente', JSON.stringify(recusaSala));
+  }
+  try {
+    inexistente.close();
+  } catch {
+    /* já fechada */
+  }
 
   const a = await conectar('A');
   const b = await conectar('B');
@@ -193,9 +223,28 @@ async function main() {
   if (snapshotC.estado.draft?.log.length >= 1) ok('conexão nova recebe o estado já em andamento');
   else falha('snapshot pra conexão nova', JSON.stringify(snapshotC.estado.draft?.log.length));
 
+  // --- CICLO DE VIDA (PR 3.3.2): todos saem ⇒ a sala reseta na hora ---
   a2.fechar();
   b.fechar();
   c.fechar();
+  await pausa(1200);
+
+  const zumbi = new WebSocket(URL_WS);
+  const aposReset = await new Promise((res) => {
+    zumbi.addEventListener('message', (ev) => res(JSON.parse(ev.data)));
+    zumbi.addEventListener('close', () => res(null));
+    setTimeout(() => res(null), 4000);
+  });
+  if (aposReset?.erro === 'sala-inexistente') {
+    ok('todos saíram ⇒ sala RESETADA e o código liberado');
+  } else {
+    falha('reset ao esvaziar', JSON.stringify(aposReset));
+  }
+  try {
+    zumbi.close();
+  } catch {
+    /* já fechada */
+  }
   await pausa(200);
 
   console.log('');

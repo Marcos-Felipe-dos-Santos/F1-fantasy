@@ -34,7 +34,7 @@ import {
   reduzirSala,
 } from './sala';
 import { expirados } from './draft-rede';
-import { PRAZO_TURNO_MS, type EstadoSala } from './tipos';
+import { JANELA_DE_GRACA_MS, PRAZO_TURNO_MS, type EstadoSala } from './tipos';
 import type { Dificuldade } from '../engine/types';
 
 /** Uma mensagem endereçada: `para === null` significa broadcast pra todos. */
@@ -66,15 +66,68 @@ export function criarServidor(
   return { sala: criarSala(salaId, seedMestre, dificuldade), jogadorPorConexao: {} };
 }
 
+/** O que o servidor deve fazer com a sala neste instante. */
+export type DecisaoDeVida =
+  | { tipo: 'seguir' }
+  /** Reset: descartar estado, log e código. */
+  | { tipo: 'encerrar'; motivo: 'vazia' | 'janela-vencida' };
+
+/**
+ * Decide o ciclo de vida da sala. **Pura**: recebe `agora` e quantas conexões
+ * existem, não lê relógio nem sockets — quem sabe disso é a casca.
+ *
+ * As duas regras, e por que cada uma:
+ * - **Sem ninguém conectado ⇒ encerra na hora.** Não faz sentido segurar
+ *   estado sem ninguém, e é isso que impede a "sala zumbi com draft de dias
+ *   atrás".
+ * - **Partida concluída + janela vencida ⇒ encerra.** A janela existe pra
+ *   olhar o resultado, anotar, printar (`JANELA_DE_GRACA_MS`). Passada ela, o
+ *   log append-only finalmente tem ponto de descarte — antes crescia pra
+ *   sempre, que era metade do problema C2 do PR 3.2.
+ */
+export function decidirVida(
+  estado: EstadoServidor,
+  conexoesAbertas: number,
+  agora: number,
+  janelaMs: number = JANELA_DE_GRACA_MS,
+): DecisaoDeVida {
+  if (conexoesAbertas === 0) return { tipo: 'encerrar', motivo: 'vazia' };
+  const { concluidaEm } = estado.sala;
+  if (concluidaEm !== null && agora - concluidaEm >= janelaMs) {
+    return { tipo: 'encerrar', motivo: 'janela-vencida' };
+  }
+  return { tipo: 'seguir' };
+}
+
+/**
+ * Marca o instante em que a partida terminou, se acabou de terminar. É o que
+ * arma a janela de graça — e é idempotente: uma vez marcado, não se mexe mais.
+ */
+export function marcarConclusao(estado: EstadoServidor, agora: number): EstadoServidor {
+  if (estado.sala.concluidaEm !== null) return estado;
+  if (estado.sala.draft?.fase !== 'concluido') return estado;
+  return { ...estado, sala: { ...estado.sala, concluidaEm: agora } };
+}
+
 const estadoPara = (estado: EstadoServidor): MensagemServidor => ({
   tipo: 'estado',
   versaoProtocolo: VERSAO_PROTOCOLO,
   estado: publicarSala(estado.sala),
 });
 
-/** Broadcast do snapshot + o que mais vier junto. */
-function difundir(estado: EstadoServidor, extras: Envio[] = []): ResultadoServidor {
-  return { estado, envios: [...extras, { para: null, mensagem: estadoPara(estado) }] };
+/**
+ * Broadcast do snapshot + o que mais vier junto.
+ *
+ * `agora` entra aqui só para marcar o fim da partida no MESMO evento que a
+ * concluiu — se ficasse para o próximo tique, o snapshot que anuncia o fim iria
+ * sem `concluidaEm`, e a tela não teria como contar a janela.
+ */
+function difundir(estado: EstadoServidor, agora: number, extras: Envio[] = []): ResultadoServidor {
+  const comConclusao = marcarConclusao(estado, agora);
+  return {
+    estado: comConclusao,
+    envios: [...extras, { para: null, mensagem: estadoPara(comConclusao) }],
+  };
 }
 
 /** Nada mudou: responde só a quem perguntou. */
@@ -109,9 +162,9 @@ export function aoDesconectar(
 
   if (estado.sala.fase === 'aberta') {
     const r = reduzirSala(estado.sala, { tipo: 'sair' }, jogadorId, agora);
-    return difundir({ sala: r.estado, jogadorPorConexao });
+    return difundir({ sala: r.estado, jogadorPorConexao }, agora);
   }
-  return difundir({ ...estado, jogadorPorConexao });
+  return difundir({ ...estado, jogadorPorConexao }, agora);
 }
 
 /**
@@ -217,7 +270,7 @@ export function aoReceber(
     if (r.erro !== null) {
       return soPara(estado, conexaoId, { tipo: 'erro', erro: r.erro });
     }
-    return difundir({ ...estado, sala: r.estado });
+    return difundir({ ...estado, sala: r.estado }, agora);
   }
 
   // Um `entrar` sem token gerado gravaria `tokens[id] = ''`: o jogador ficaria
@@ -255,7 +308,7 @@ export function aoReceber(
         ]
       : [];
 
-  return difundir({ sala: r.estado, jogadorPorConexao }, extras);
+  return difundir({ sala: r.estado, jogadorPorConexao }, agora, extras);
 }
 
 /**
@@ -277,5 +330,5 @@ export function aoPassarOTempo(
     const r = expirarNaSala(sala, jogadorId, agora);
     if (r.erro === null) sala = r.estado;
   }
-  return difundir({ ...estado, sala });
+  return difundir({ ...estado, sala }, agora);
 }

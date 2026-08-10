@@ -75,6 +75,7 @@ export function criarSala(
     roster: null,
     draft: null,
     tokens: {},
+    concluidaEm: null,
     seq: 0,
   };
 }
@@ -106,6 +107,7 @@ export function publicarSala(estado: EstadoSala): EstadoSalaPublico {
     roster: estado.roster,
     draft: estado.draft,
     seq: estado.seq,
+    concluidaEm: estado.concluidaEm,
   };
 }
 
