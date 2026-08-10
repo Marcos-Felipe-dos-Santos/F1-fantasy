@@ -1127,6 +1127,118 @@ justamente pra esta comparação).
 é modo de falha real de WebSocket — TCP entrega ou a conexão cai. O stress continua válido como
 stress; só não deve ser lido como "a rede real perde 15%".
 
+### PR 3.2.1 — reconexão com token de rejoin (2026-08-10, `205505b` + `3ab9658`) — ALTO RISCO
+
+Feito **antes do 3.3** a pedido do dev, e o motivo é bom: a UI do lobby ia ser construída em cima do
+fluxo de entrada, então a reconexão nascendo depois obrigaria a refazer `TelaLobby` e `FluxoOnline`.
+
+Resolve duas coisas de uma vez: (1) quem cai deixa de ficar preso no roster ocupando turno sem ter
+por onde jogar; (2) o token é **a prova de identidade que faltava** — antes, `entrar` alocava um id e
+nada impedia outra conexão de reivindicar aquele jogador.
+
+**O token é gerado pela CASCA** (`crypto.randomUUID`, 128 bits), não pelo redutor, que é puro e não
+sorteia. Derivar de `deriveSeed(seedMestre, …)` foi **recusado**: daria 32 bits para um segredo que
+vale a identidade do jogador. `tokens` virou o **segundo segredo** do estado, ao lado da
+`seedMestre` — e `publicarSala` copiar campo a campo (decisão do 3.1a) foi o que impediu que ele
+vazasse sozinho por ter sido acrescentado.
+
+### Os três bloqueantes da revisão, todos com baseline vermelho
+
+🔴 **1. JOGADOR FANTASMA → personificação.** `jogadorDoToken` só perguntava "existe esse token?",
+nunca "esse jogador ainda está no roster?" — e `sair` deixava o token vivo. Cadeia medida pela
+revisão: **B sai** (o roster perde `humano-02`) → **B reentra** como `humano-02`, que não existe mais
+→ **C entra e RECEBE `humano-02`** (é o menor id livre) → **B manda comando como C**, sem nunca ter
+tido o token dela. Se a vaga fantasma fosse a do anfitrião, seria `iniciar` pelos outros. Correção
+dupla: o token morre no `sair`, e `jogadorDoToken` exige o dono no roster.
+
+🔴 **2. `entrar` não evictava e `sair` por comando não limpava o mapa.** A evicção que o 3.2.1
+introduziu cobria só o `reentrar` — **o caminho que já estava certo**. Duas conexões podiam mandar
+pelo mesmo jogador sem token nenhum. Agora existe `mapearConexao`, usada nos dois.
+
+🔴 **3. Estado persistido ANTES do 3.2.1 fazia `aoReceber` LANÇAR**, contra o docblock que promete
+que ele nunca lança: o DO devolve o objeto gravado cru, sem migração de schema, e
+`Object.entries(undefined)` explode.
+
+📌 **Consequência de design que virou teste: NO LOBBY, cair É sair, e o token morre junto.** Um F5 no
+lobby exige `entrar` de novo, não `reentrar`. Depois de iniciada, cair preserva tudo. A UI do 3.3
+depende disso.
+
+⚠️ **E o harness dava falsa confiança:** a reconexão reusava o MESMO `conexaoId`, e como
+`aoDesconectar` já apagara a chave, **a evicção nunca era exercitada** — `tokensRecusados = 0` era
+tautologia. Agora cada volta usa socket novo (`<id>-r<n>`) e o teste assere que nenhum jogador ficou
+com duas conexões.
+
+**Medido:** `npm test` **1298/43**, `typecheck`/`eslint`/`build` 0, smoke real **17/17**.
+
+---
+
+### PR 3.3 — lobby e draft online na tela (2026-08-10, `fa5d3d1` + `b80dd63`) — ALTO RISCO
+
+O modo Online virou jogável. Novos: `src/net/conexao.ts` (WebSocket com reconexão automática),
+`src/ui/useSalaOnline.ts`, `TelaLobby.tsx`, `FluxoOnline.tsx`, mais dois arquivos de teste.
+
+🔑 **REUSA AS TELAS DO OFFLINE.** `TelaDraft`, `TelaPeca` e `TelaResumo` já recebiam
+`DraftState` + `jogadorId` desde o modo Local (2.1b), e o cliente online reconstrói exatamente um
+`DraftState` — então **não há tela de draft nova**. Duas telas desenhando a mesma coisa acabariam
+divergindo.
+
+### 🔴 O CONTRATO DO AUSENTE, testado explicitamente (pedido do dev)
+
+O dev pediu **teste**, não só implementação: *"se dois clientes divergirem na escolha automática de
+quem abandonou, o pool de peças fura em silêncio."* O harness já cobria o **mecanismo**; o que o 3.3
+acrescenta é outro risco — **a UI criar um SEGUNDO caminho de decisão**.
+
+`contrato-ausente.test.ts` tem duas metades: varredura de `src/ui/**` e verificação de determinismo
+(a substituição é idêntica entre execuções independentes, depende de *quem* é o jogador —
+anti-vacuidade — e não muta o estado). A varredura **ignora comentários** de propósito: os arquivos
+que mais citam os nomes proibidos são os que explicam a regra, e reprovar a documentação da regra
+empurraria todo mundo a apagá-la.
+
+⚠️ **A primeira versão da cerca era contornável, e um dos testes era FALSO-NEGATIVO** — achados da
+revisão, e o segundo só apareceu porque foi **medido**:
+- **Indireção:** asserir *ausência* num diretório não pega um helper novo em `src/net/` chamado de um
+  componente. Virou **allowlist repo-wide** (igualdade contra lista fechada). Verificado criando um
+  arquivo que viola: acusou.
+- **`escolhaPadrao`** se anuncia no docstring como "o que a UI vai substituir por cliques" —
+  chamá-la com o id de um ausente seria um segundo caminho sem citar nome proibido. Banida na UI.
+- **O 3º argumento de `sincronizarDraft`** (que existe para o harness sabotar clientes): o teste que
+  o proibia usava `/sincronizarDraft\s*\([^)]*,[^)]*,/` e **não pegava** — o `[^)]*` para no primeiro
+  `)`, e a chamada real tem `aplicarMensagem(a, b)` aninhado. **Medido com a sabotagem aplicada: o
+  teste continuava verde.** Trocado por contagem de parênteses balanceados, com teste do próprio
+  contador. Re-medido: agora pega, inclusive com arrow anônima que não cita nome nenhum.
+- Varredura passou a ser **recursiva** (parava no primeiro nível).
+
+*Teste de cerca que não pega o contorno é pior que nenhum — dá confiança falsa.*
+
+### O bloqueante: beco sem saída
+
+`FluxoOnline` tinha um ramo **sem saída**: bastava digitar o nome de uma sala **já iniciada** (erro de
+digitação, amigo mandando o nome depois do começo, token perdido em outro navegador) para o servidor
+nunca mandar `voce-e` — `euSou` ficava `null` para sempre e a tela era um parágrafo sem botão. Pior,
+o erro que explicava tudo (`sala-iniciada`) não era mostrado nesse ramo. Agora **todo ramo de espera
+tem saída e motivo**.
+
+**Outras correções da revisão:** o limiar `<= 5` virou `< RODADA_COMPLETA` — era **o mesmo limiar
+duplicado que o commit `7e7d018` tinha fechado, e que voltou aqui** · TDZ latente no `aoAbrir` (usava
+a `const conexao` ainda em inicialização; só funciona porque `open` é assíncrono) · "Ir pra corrida"
+escondido no online, porque prometia a corrida e devolvia à tela inicial · **seed, dificuldade e
+formato SOMEM no modo online** em vez de ficarem editáveis com um parágrafo dizendo que não valem —
+"sumir, não desabilitar" já era o padrão desta tela para o seletor de pista · `VITE_WS_BASE` para
+publicar fora de `localhost` · a fila da conexão guarda só o **último** `escolher` (N cliques durante
+a queda viravam N `turno-divergente` na volta) · `key={salaOnline}`.
+
+**Medido:** `npm test` **1318/45** (era 1298/43), `npm run typecheck` **0**, `eslint src scripts
+party` **0**, `npm run build` **0**. App (Vite 5173) e worker (wrangler 8787) sobem juntos e servem
+(HTTP 200 em `/`, `/src/main.tsx`, `/src/ui/FluxoOnline.tsx`); smoke real **17/17**.
+`src/engine/`/`src/data/` intocados ⇒ balance inalterado por construção.
+
+⚠️ **Erro de processo registrado:** um `sed` de correção de tokens CSS chegou a alterar **13 linhas
+pré-existentes** do `estilos.css` que estavam certas — os aliases `--cor-*` existem em `estilos.css`,
+não em `tokens.css`, e o sed global não sabia disso. Revertido antes do commit; o diff final tem
+**zero linhas removidas**, verificado. Lição: `sed` global em arquivo grande sem conferir o diff é
+como o próprio projeto já aprendeu com a cerca de lint — **a verificação tem que ser o diff, não a
+intenção.**
+
 ## Acompanhamentos registrados pela revisão do PR 1.6 (não são defeitos; candidatos a PR futuro)
 
 - `medirParadasExtras` usa equipes históricas inteiras — o CALL do estrategista desloca a 1ª parada e vira confound secundário do bucket de PNEU (o bucket <60 é na prática 1 piloto). Sinal mais limpo: fixar chassi/motor/estrategista/pit e variar só o piloto.

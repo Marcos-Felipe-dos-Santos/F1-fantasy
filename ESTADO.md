@@ -7,19 +7,28 @@
 
 ## Estado atual
 
-- ⬅️ **PR 3.2 FEITO em 2026-08-10** (`30e2556`) — transporte (Durable Object) + **harness headless**.
-  **É o item aberto: aguarda o veredito do dev sobre o teste dos 22 clientes.**
-  - 🎯 **O NÚMERO QUE O DEV PEDIU: 22/22 clientes headless produzem o MESMO `DraftState`**, com
-    latência, reordenação, duplicação, perda e desconexão injetadas **nos dois sentidos**. Em 3
-    seeds: ~1.100 atrasos, ~630 duplicatas, ~580 perdas, ~1.560 descartes por `seq` — **cada
-    patologia asserida como > 0**, senão o verde não diria nada.
-  - 📏 **E o contador que dá sentido ao resto: 22/22 turnos de peça jogados por HUMANO, 0 por
-    expiração.** Antes do comando `sincronizar`, eram 6 a 12 resolvidos por expiração — "os 22
-    concordam" era verdadeiro e **praticamente oco**. Achado da revisão.
-  - **Medido:** `npm test` **1276/42**, `npm run typecheck` **0** (inclui `party/`),
-    `eslint src scripts party` **0**, `build` **0**, **smoke contra `wrangler dev` real 13/13**.
-    `npm run balance` **inalterado por construção** (`src/engine/`/`src/data/` intocados).
-  - ⚙️ **`nodejs_compat` removido e MEDIDO** — o worker sobe e passa o smoke sem a flag.
+- ⬅️ **O MODO ONLINE ESTÁ JOGÁVEL — PR 3.3 FEITO em 2026-08-10** (`fa5d3d1` + `b80dd63`), depois do
+  **3.2.1** (reconexão, `205505b` + `3ab9658`) e do **3.2** (`30e2556`).
+  **É o item aberto: aguarda o dev testar no navegador.**
+
+  🎮 **COMO TESTAR O ONLINE — dois terminais, porque precisa do servidor:**
+
+      Terminal 1:  npx wrangler dev      (worker na 8787)
+      Terminal 2:  npm run dev           (app na 5173)
+
+  `http://localhost:5173/` → **Modo: "Online (sala compartilhada)"** → nome da sala (default
+  `sala-1`) → **Entrar na sala**. **Abrir a MESMA URL em duas abas**, entrar com nomes diferentes,
+  marcar "Estou pronto" nas duas, e o anfitrião 👑 clica em "Começar o draft". As vagas restantes
+  viram bots. Dois testes que valem de propósito: **F5 no meio do draft** (deve voltar como o mesmo
+  jogador, pelo token) — F5 *no lobby* é diferente, lá cair é sair e entra-se de novo; e **deixar
+  uma aba parada** até o cronômetro expirar (a outra segue jogando, e a parada passa a mostrar
+  "você perdeu a vez por inatividade").
+
+  - **Medido:** `npm test` **1318/45**, `npm run typecheck` **0** (app + `party/`),
+    `eslint src scripts party` **0**, `npm run build` **0**. App e worker sobem juntos e servem;
+    smoke contra o worker real **17/17**. `npm run balance` **inalterado por construção**.
+  - 🔴 **O CONTRATO DO AUSENTE tem teste explícito agora** (`src/ui/contrato-ausente.test.ts`) —
+    pedido do dev. Ver o RISCO ATIVO abaixo.
 - ✅ **PORTÃO Nº 2 APROVADO PELO DEV em 2026-08-09.** O 3.1b (`2efb145`) fechou com os dois testes
   verdes (conformidade e commutatividade, 20 seeds cada) e o dev **chancelou as duas coisas que
   precisavam de decisão**: (a) `deQuemEhAVez` devolver um **CONJUNTO** e não um id — a fase sorteios
@@ -39,7 +48,7 @@
   `4ba4f50`) e a rodada de **narração rica + auto-avanço**: **A** (variedade/chuva, `1537ad6`),
   **B** (causalidade contrafactual, `43fe420`), **C** (avanço automático, `fc7f20d`); e ainda
   **8.2.1** (calendário na engine, `cfe1c47`) e **8.3** (telas do campeonato, `0da36fb`) ·
-  **1276 testes** (42 arquivos) verdes — medido em 2026-08-10, depois do 3.2; eram 1094/36 antes
+  **1318 testes** (45 arquivos) verdes — medido em 2026-08-10, depois do 3.3; eram 1094/36 antes
   da Fase 3. ⚠️ O badge do README ainda diz **1094** e é estático — está desatualizado.
 - **Medido em 2026-08-07, não herdado:** `npm test` **1094/36**, `tsc --noEmit` **exit 0**,
   `eslint src scripts` **exit 0**, `npm run build` **exit 0**. **`npm run balance` inalterado por
@@ -310,7 +319,14 @@ duplicada entre engine e redutor, derivando em silêncio.
   - **`nodejs_compat` fora, medido.** Se voltar, tem que vir com o import que a exigiu.
   - ⚠️ **Ainda não há reconexão** (pendência (c)): o mapa conexão→jogador é apagado ao cair e
     `entrar` é recusado com a sala iniciada. Falta o token de rejoin.
-- **3.3 Lobby + draft online na UI** (`TelaLobby.tsx`, `FluxoOnline.tsx`).
+- ✅ **3.2.1 Reconexão + token de rejoin** — FEITO. O token nasce na CASCA
+  (`crypto.randomUUID`), é o **segundo segredo** do estado (com a `seedMestre`) e nunca vai em
+  broadcast. **No LOBBY cair é sair e o token morre**; com a sala iniciada, o `reentrar` devolve
+  identidade e estado. Quem volta depois de já ter expirado volta como **espectador**.
+- ✅ **3.3 Lobby + draft online na UI** — FEITO (`TelaLobby.tsx`, `FluxoOnline.tsx`,
+  `useSalaOnline.ts`, `src/net/conexao.ts`). Reusa `TelaDraft`/`TelaPeca`/`TelaResumo` do offline.
+  ⚠️ **A corrida online ainda NÃO existe**: o draft online termina no resumo. É o próximo passo
+  natural depois do 3.4.
 - **3.4 Handshake de versão + detector de divergência** (hash da corrida comparado entre os 22).
 - **3.5 Campeonato online (seed por etapa)** — **CORTE Nº 1** se a fase ficar grande.
 
@@ -366,11 +382,12 @@ de 0,0650 pra **0,0397** e obrigou a redesenhar a escada tonal inteira. Não foi
 
 **Os portões visuais saíram desta lista: os dois foram aprovados em 2026-08-07.**
 
-0. ⬅️ **VEREDITO DO DEV sobre o HARNESS do 3.2**: 22/22 clientes headless produzem o mesmo
-   `DraftState` com rede ruim, e 22/22 turnos jogados por humano. Ver o bloco no topo.
-1. **Depois do "ok": PR 3.3 — Lobby + draft online na UI** (`TelaLobby.tsx`, `FluxoOnline.tsx`).
-   ⚠️ A UI tem de respeitar o **contrato do ausente** (já implementado em `src/net/cliente.ts`) e
-   **não** recalcular escolha de ausente por conta própria — ver o RISCO ATIVO.
+0. ⬅️ **O DEV TESTAR O ONLINE NO NAVEGADOR** — o caminho está no topo deste arquivo.
+1. **PR 3.4 — Handshake de versão + detector de divergência** (hash da corrida comparado entre os
+   22). É o que transforma o RISCO ATIVO de "diverge em silêncio" em "diverge com alarme", e por
+   isso é o próximo natural.
+2. **A corrida online** (o draft online termina no resumo hoje) e o **3.5 campeonato online**
+   (CORTE Nº 1 se a fase ficar grande).
 1. ⬅️ **VEREDITO do dev sobre `preview/campeonato.html`** (as três telas do 8.3) — segue aberto.
 2. **PR de INFRA — DESTRAVADO pela aprovação das silhuetas.** Era "pré-requisito caso as silhuetas
    fossem aprovadas"; com o 10/10, **deixa de ser pré-requisito e vira consolidação**: restrições
@@ -447,6 +464,13 @@ resta pro 3.3 é a UI respeitá-la; o cálculo já está no cliente:
 22) é o que transforma "diverge em silêncio" em "diverge com alarme". Enquanto o 3.4 não existir, a
 defesa é a implementação única em `cliente.ts` — todo mundo chama a mesma função.
 
+**✅ E AGORA TEM TESTE EXPLÍCITO (pedido do dev no 3.3):**
+`src/ui/contrato-ausente.test.ts` — **allowlist repo-wide** de quem pode tocar `escolherBot`
+(asserir *ausência* num diretório era contornável por indireção), `escolhaPadrao` banida na UI,
+proibição do 3º argumento de `sincronizarDraft` **por contagem de parênteses balanceados** (a versão
+por regex era falso-negativo: com a sabotagem aplicada, continuava verde), varredura recursiva, e
+testes de que a substituição é determinística entre execuções independentes.
+
 **Já coberto hoje, e é bastante:**
 - o portão do 3.1b abandona jogadores nas duas fases em 10 seeds e assere a reconvergência passo a
   passo;
@@ -468,20 +492,21 @@ defesa é a implementação única em `cliente.ts` — todo mundo chama a mesma 
    quem trava é o teste de ordem embaralhada.
    (b) ✅ **`src/engine/namespaces-seed.ts` FEITO no 3.1b** — registro + varredura do código-fonte
    que reprova rótulo não registrado, com guarda anti-vacuidade. Fecha o risco aprovado da fase.
-   (c) 🔴 **NÃO HÁ RECONEXÃO — segue aberta e agora é a maior pendência da fase.** Ao cair, o mapa
-   conexão→jogador é apagado e `entrar` é recusado com a sala iniciada: o jogador continua no roster
-   e continua ocupando turno, mas **não tem por onde mandar comando** até o cronômetro expirá-lo. O
-   `tokenJogador` emitido no `entrar` resolveria rejoin **e** personificação de uma vez.
-   ⚠️ Detalhe que a reconexão vai precisar desfazer: `marcarAusente` **sobrescreve `rodada`
-   destrutivamente**, então trazer alguém de volta exige reconstruir a rodada dele contando os
-   eventos `escolha` no log.
+   (c) ✅ **RECONEXÃO FEITA no 3.2.1.** O token nasce na casca (`crypto.randomUUID`), `reentrar` é o
+   único comando de lobby que vale com a sala iniciada, e há evicção (uma conexão por jogador).
+   **O que ficou de fora, de propósito:** quem volta DEPOIS de já ter expirado volta como
+   espectador — desfazer a ausência exigiria reconstruir `rodada` a partir do log, porque
+   `marcarAusente` a sobrescreve, e isso é complexidade que o jogo não precisa.
    (d) ✅ **`seq` resolvido no 3.2** — `reduzirDraftDaSala`/`expirarNaSala` incrementam o contador,
    então o `draft` não muda mais sob um `seq` congelado. **Falta ainda** correlacionar erro↔comando:
    com duplicação e reordenação, um `{tipo:'erro'}` continua inatribuível.
    (e) ✅ **Prazo do turno tem dono no 3.2**: o `alarm()` do Durable Object chama `aoPassarOTempo` a
    cada 5 s (e para de se reagendar com a sala concluída ou vazia). **Falta a UI** mostrar o
    cronômetro ao jogador — isso é 3.3.
-   (f) **15% de perda com conexão intacta não é modo de falha real de WebSocket** (nota da revisão
+   (f) **A CORRIDA ONLINE não existe.** O draft online termina no `TelaResumo`, com o botão
+   "Ir pra corrida" escondido de propósito — prometer a corrida e devolver à tela inicial é pior que
+   botão nenhum. É o passo natural depois do 3.4.
+   (g) **15% de perda com conexão intacta não é modo de falha real de WebSocket** (nota da revisão
    do 3.2): TCP entrega ou a conexão cai. O stress do harness continua válido como stress; só não
    deve ser lido como "a rede real perde 15%".
 1. **Abertas pelo 7.8:** (a) o `BotaoTema` é um botão discreto no canto do `app-shell` — posição e
