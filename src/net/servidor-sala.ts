@@ -93,10 +93,8 @@ export function aoConectar(estado: EstadoServidor, conexaoId: string): Resultado
  * pode voltar. Quem decide que ele não volta é o CRONÔMETRO (`aoPassarOTempo`),
  * que é o mesmo critério para quem está com a aba aberta e não joga.
  *
- * ⚠️ O mapa conexão→jogador é limpo, então uma reconexão precisa de `entrar` de
- * novo — e hoje `entrar` é recusado com a sala iniciada (pendência (c) do
- * ESTADO: falta o token de rejoin). O jogador continua no roster e continua
- * ocupando turno; só não tem por onde mandar comando até o token existir.
+ * O mapa conexão→jogador é limpo; a volta é pelo `reentrar` com o token
+ * (PR 3.2.1), que é o único comando de lobby que funciona com a sala iniciada.
  */
 export function aoDesconectar(
   estado: EstadoServidor,
@@ -114,6 +112,28 @@ export function aoDesconectar(
     return difundir({ sala: r.estado, jogadorPorConexao });
   }
   return difundir({ ...estado, jogadorPorConexao });
+}
+
+/**
+ * Mapa conexao->jogador com `conexaoId` apontando para `jogadorId`, e **sem
+ * nenhuma outra conexao apontando para esse mesmo jogador**.
+ *
+ * UMA CONEXAO POR JOGADOR, SEMPRE. Duas chaves vivas para o mesmo jogador
+ * significam duas pessoas podendo jogar por ele -- a personificacao que o 3.1a
+ * fechou, reaberta pelo lado do mapa. Vale para `entrar` E para `reentrar`: a
+ * primeira versao do 3.2.1 so evictava no segundo, e o furo estava no primeiro.
+ */
+function mapearConexao(
+  jogadorPorConexao: Record<string, string>,
+  conexaoId: string,
+  jogadorId: string,
+): Record<string, string> {
+  const novo: Record<string, string> = {};
+  for (const [conexao, jogador] of Object.entries(jogadorPorConexao)) {
+    if (jogador !== jogadorId && conexao !== conexaoId) novo[conexao] = jogador;
+  }
+  novo[conexaoId] = jogadorId;
+  return novo;
 }
 
 /** Comandos de lobby e de draft chegam pelo mesmo socket; o tipo separa. */
@@ -152,18 +172,24 @@ export function aoReceber(
   // sem ter por onde jogar, até o cronômetro o expulsar.
   if (tipo === 'reentrar') {
     const dono = jogadorDoToken(estado.sala, (comando as { token?: unknown }).token);
-    if (dono === null) {
+    // Uma conexao que JA tem identidade nao troca de identidade: so confunde o
+    // estado (o jogador anterior ficaria no roster sem conexao ate expirar) e
+    // nao serve a caso legitimo nenhum -- reconectar e sempre de socket novo.
+    if (dono === null || (remetenteId !== null && remetenteId !== dono)) {
       return soPara(estado, conexaoId, { tipo: 'erro', erro: 'token-invalido' });
     }
-    // EVICÇÃO: um cliente instável que reconecta três vezes deixaria três
-    // conexões vivas mapeadas para o mesmo jogador — e todas poderiam mandar
-    // comando em nome dele. É a mesma superfície de personificação que o 3.1a
-    // fechou, reaberta por outro lado. Uma conexão por jogador, sempre.
-    const jogadorPorConexao: Record<string, string> = {};
-    for (const [conexao, jogador] of Object.entries(estado.jogadorPorConexao)) {
-      if (jogador !== dono) jogadorPorConexao[conexao] = jogador;
+    // Reentrada repetida da MESMA conexao nao muda nada: devolver o MESMO
+    // objeto evita que o Durable Object grave a toa (ver `aplicar` em party/).
+    if (estado.jogadorPorConexao[conexaoId] === dono) {
+      return {
+        estado,
+        envios: [
+          { para: conexaoId, mensagem: { tipo: 'voce-e', jogadorId: dono } },
+          { para: conexaoId, mensagem: estadoPara(estado) },
+        ],
+      };
     }
-    jogadorPorConexao[conexaoId] = dono;
+    const jogadorPorConexao = mapearConexao(estado.jogadorPorConexao, conexaoId, dono);
 
     const reconectado = { ...estado, jogadorPorConexao };
     return {
@@ -194,16 +220,29 @@ export function aoReceber(
     return difundir({ ...estado, sala: r.estado });
   }
 
+  // Um `entrar` sem token gerado gravaria `tokens[id] = ''`: o jogador ficaria
+  // sem poder reconectar e so descobriria muito depois. Erro alto no ponto do
+  // bug e melhor que falha silenciosa.
+  if (tipo === 'entrar' && tokenNovo === '') {
+    return soPara(estado, conexaoId, { tipo: 'erro', erro: 'comando-invalido' });
+  }
+
   const r = reduzirSala(estado.sala, comando as ComandoSala, remetenteId, agora, tokenNovo);
   if (r.erro !== null) {
     return soPara(estado, conexaoId, { tipo: 'erro', erro: r.erro });
   }
 
-  // `entrar` aceito é o único ponto em que uma conexão vira jogador.
-  const jogadorPorConexao =
-    r.jogadorId !== undefined
-      ? { ...estado.jogadorPorConexao, [conexaoId]: r.jogadorId }
-      : estado.jogadorPorConexao;
+  // `entrar` aceito e o unico ponto em que uma conexao vira jogador -- e passa
+  // pela MESMA eviccao do `reentrar`. `sair` aceito faz o inverso: a conexao
+  // deixa de ser jogador, senao continuaria mandando comando por um id que
+  // voltou pro bolo e que o proximo a entrar vai receber.
+  let jogadorPorConexao = estado.jogadorPorConexao;
+  if (r.jogadorId !== undefined) {
+    jogadorPorConexao = mapearConexao(jogadorPorConexao, conexaoId, r.jogadorId);
+  } else if (tipo === 'sair') {
+    jogadorPorConexao = { ...jogadorPorConexao };
+    delete jogadorPorConexao[conexaoId];
+  }
 
   const extras: Envio[] =
     r.jogadorId !== undefined

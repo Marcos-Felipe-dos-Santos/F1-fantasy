@@ -93,15 +93,19 @@ describe('identidade da conexão', () => {
 });
 
 describe('reconexão por token (PR 3.2.1)', () => {
-  it('quem cai volta com o token e recupera a identidade', () => {
+  it('quem cai COM A SALA INICIADA volta com o token e recupera a identidade', () => {
     let estado = criar();
     const e1 = entrar(estado, 'c1', 'Ana', 'tk-ana');
     estado = e1.estado;
     estado = entrar(estado, 'c2', 'Beto', 'tk-beto').estado;
+    estado = mandar(estado, 'c1', { tipo: 'pronto', pronto: true }).estado;
+    estado = mandar(estado, 'c2', { tipo: 'pronto', pronto: true }).estado;
+    estado = mandar(estado, 'c1', { tipo: 'iniciar' }).estado;
 
-    // Ana cai: a conexão some do mapa, mas ela continua na sala.
+    // Ana cai: a conexão some do mapa, mas ela continua na partida.
     estado = aoDesconectar(estado, 'c1', T0).estado;
     expect(estado.jogadorPorConexao.c1).toBeUndefined();
+    expect(estado.sala.jogadores.map((j) => j.id)).toContain('humano-01');
 
     // E volta, por outra conexão, apresentando o token.
     const r = mandar(estado, 'c9', { tipo: 'reentrar', token: e1.token });
@@ -110,6 +114,21 @@ describe('reconexão por token (PR 3.2.1)', () => {
     // E recebe de volta identidade e estado, só para ela.
     expect(r.envios.map((e) => e.mensagem.tipo).sort()).toEqual(['estado', 'voce-e']);
     expect(r.envios.every((e) => e.para === 'c9')).toBe(true);
+  });
+
+  it('no LOBBY, cair é sair — e o token morre junto (não vira fantasma)', () => {
+    // Consequência direta da correção do fantasma, e é o comportamento certo:
+    // com a sala aberta o roster ainda é móvel, então `aoDesconectar` remove o
+    // jogador de verdade. Um F5 no lobby, portanto, exige `entrar` de novo —
+    // não `reentrar`. É o que a UI do 3.3 precisa saber.
+    let estado = criar();
+    const ana = entrar(estado, 'c1', 'Ana', 'tk-ana');
+    estado = aoDesconectar(ana.estado, 'c1', T0).estado;
+    expect(estado.sala.jogadores).toEqual([]);
+    expect(mandar(estado, 'c9', { tipo: 'reentrar', token: ana.token }).envios[0].mensagem).toEqual({
+      tipo: 'erro',
+      erro: 'token-invalido',
+    });
   });
 
   it('EVICÇÃO: reconectar não deixa duas conexões mandando pelo mesmo jogador', () => {
@@ -156,6 +175,90 @@ describe('reconexão por token (PR 3.2.1)', () => {
       });
       expect(r.estado).toBe(estado);
     }
+  });
+
+  it('🔴 token de quem SAIU não vale mais — senão vira jogador FANTASMA', () => {
+    // Cadeia medida pela revisão: B sai (o roster perde `humano-02`, mas o
+    // token continuava vivo) → B reentra e é mapeado para `humano-02`, que não
+    // existe mais → C entra e RECEBE `humano-02` (menor id livre) → agora B
+    // manda comando como C, sem nunca ter tido o token de C.
+    let estado = criar();
+    estado = entrar(estado, 'c1', 'Ana', 'tk-ana').estado;
+    const beto = entrar(estado, 'c2', 'Beto', 'tk-beto');
+    estado = beto.estado;
+
+    estado = mandar(estado, 'c2', { tipo: 'sair' }).estado;
+    expect(estado.sala.jogadores.map((j) => j.id)).toEqual(['humano-01']);
+
+    const fantasma = mandar(estado, 'c9', { tipo: 'reentrar', token: beto.token });
+    expect(fantasma.envios[0].mensagem, 'reentrou como jogador que saiu').toEqual({
+      tipo: 'erro',
+      erro: 'token-invalido',
+    });
+    expect(fantasma.estado.jogadorPorConexao.c9).toBeUndefined();
+  });
+
+  it('🔴 sair por COMANDO limpa o mapa — senão duas conexões viram o mesmo jogador', () => {
+    // `aoDesconectar` apagava a chave, mas o comando `sair` com o socket aberto
+    // não: a conexão continuava mapeada para um id que voltou pro bolo, e o
+    // próximo a entrar recebia esse id com DOIS donos.
+    let estado = criar();
+    estado = entrar(estado, 'c1', 'Ana', 'tk-ana').estado;
+    estado = mandar(estado, 'c1', { tipo: 'sair' }).estado;
+    expect(estado.jogadorPorConexao.c1, 'c1 continuou mapeada depois de sair').toBeUndefined();
+
+    estado = entrar(estado, 'c2', 'Caio', 'tk-caio').estado;
+    expect(conexoesDe(estado, 'humano-01')).toEqual(['c2']);
+    // E a conexão velha não consegue mais mexer no jogador que herdou o id.
+    const r = mandar(estado, 'c1', { tipo: 'pronto', pronto: true });
+    expect(r.envios[0].mensagem).toEqual({ tipo: 'erro', erro: 'jogador-desconhecido' });
+  });
+
+  it('🔴 entrar DUAS vezes pela mesma conexão não deixa dois mapeamentos', () => {
+    // A evicção do 3.2.1 cobria só o `reentrar`; o `entrar` apenas ADICIONAVA.
+    let estado = criar();
+    estado = entrar(estado, 'c1', 'Ana', 'tk-ana').estado;
+    estado = mandar(estado, 'c1', { tipo: 'sair' }).estado;
+    estado = entrar(estado, 'c1', 'Ana de novo', 'tk-ana-2').estado;
+    expect(Object.entries(estado.jogadorPorConexao)).toHaveLength(1);
+  });
+
+  it('🔴 estado persistido ANTES do 3.2.1 (sem `tokens`) não faz o servidor lançar', () => {
+    // O Durable Object devolve o objeto gravado cru, sem migração de schema.
+    // Uma sala criada antes deste PR não tem `tokens`, e o docblock de
+    // `aoReceber` promete que ele NUNCA lança.
+    const { estado } = entrar(criar(), 'c1', 'Ana', 'tk-ana');
+    const antigo = structuredClone(estado) as unknown as {
+      sala: { tokens?: Record<string, string> };
+    } & EstadoServidor;
+    delete (antigo.sala as { tokens?: Record<string, string> }).tokens;
+    expect(() => mandar(antigo, 'c9', { tipo: 'reentrar', token: 'qualquer' })).not.toThrow();
+    expect(mandar(antigo, 'c9', { tipo: 'reentrar', token: 'qualquer' }).envios[0].mensagem).toEqual(
+      { tipo: 'erro', erro: 'token-invalido' },
+    );
+  });
+
+  it('reentrar de uma conexão que JÁ É outro jogador é recusado', () => {
+    let estado = criar();
+    const ana = entrar(estado, 'c1', 'Ana', 'tk-ana');
+    estado = ana.estado;
+    estado = entrar(estado, 'c2', 'Beto', 'tk-beto').estado;
+    // c2 é o Beto e tenta virar a Ana. Só conseguiria com o token dela, mas
+    // ainda assim: uma conexão que já tem identidade não troca de identidade.
+    const r = mandar(estado, 'c2', { tipo: 'reentrar', token: ana.token });
+    expect(r.envios[0].mensagem).toEqual({ tipo: 'erro', erro: 'token-invalido' });
+    expect(r.estado.jogadorPorConexao.c2).toBe('humano-02');
+  });
+
+  it('entrar sem token gerado é recusado alto, em vez de gravar token vazio', () => {
+    const r = aoReceber(criar(), 'c1', JSON.stringify({ tipo: 'entrar', nome: 'Ana' }), T0, '');
+    expect(r.envios[0].mensagem).toEqual({ tipo: 'erro', erro: 'comando-invalido' });
+  });
+
+  it('reentrar repetido da MESMA conexão não muda o estado (nem faz o DO gravar)', () => {
+    const { estado, token } = entrar(criar(), 'c1', 'Ana', 'tk-ana');
+    const r = mandar(estado, 'c1', { tipo: 'reentrar', token });
+    expect(r.estado, 'mapa idêntico deveria devolver o MESMO objeto').toBe(estado);
   });
 
   it('reentrar não avança o seq (não muda o estado da SALA)', () => {

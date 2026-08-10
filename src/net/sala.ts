@@ -192,7 +192,14 @@ function sair(estado: EstadoSala, remetenteId: string | null): ResultadoSala {
   const jogadores = estado.jogadores.filter((j) => j.id !== remetenteId);
   const anfitriaoId =
     estado.anfitriaoId === remetenteId ? (jogadores[0]?.id ?? null) : estado.anfitriaoId;
-  return aceitar(estado, { jogadores, anfitriaoId });
+  // O TOKEN MORRE COM A SAIDA. Se sobrevivesse, o dono poderia reentrar como um
+  // id que ja nao existe no roster -- e, como `entrar` reusa o MENOR id livre, o
+  // proximo a entrar receberia exatamente esse id. Resultado medido pela
+  // revisao: duas conexoes mandando comando pelo mesmo jogador, uma delas sem
+  // nunca ter tido o token da outra.
+  const tokens = { ...estado.tokens };
+  delete tokens[remetenteId];
+  return aceitar(estado, { jogadores, anfitriaoId, tokens });
 }
 
 function definirPronto(
@@ -238,8 +245,13 @@ function iniciar(estado: EstadoSala, remetenteId: string | null, agora: number):
  */
 export function jogadorDoToken(estado: EstadoSala, token: unknown): string | null {
   if (typeof token !== 'string' || token.length === 0) return null;
-  for (const [jogadorId, t] of Object.entries(estado.tokens)) {
-    if (t === token) return jogadorId;
+  // `?? {}`: o Durable Object devolve o objeto persistido CRU, sem migracao de
+  // schema. Uma sala gravada antes do 3.2.1 nao tem `tokens`, e `Object.entries`
+  // de `undefined` lanca -- quebrando a promessa de `aoReceber` de nunca lancar.
+  for (const [jogadorId, t] of Object.entries(estado.tokens ?? {})) {
+    if (t !== token) continue;
+    // O token so vale enquanto o dono ESTA na sala. Ver o comentario em `sair`.
+    return estado.jogadores.some((j) => j.id === jogadorId) ? jogadorId : null;
   }
   return null;
 }

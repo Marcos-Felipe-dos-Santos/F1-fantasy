@@ -181,6 +181,16 @@ describe('harness headless — 22 clientes', () => {
       0,
     );
 
+    // 🔒 E o que a revisão mostrou que faltava: cada volta usa um socket NOVO,
+    // então o mapa conexão→jogador tem de continuar com UMA conexão por
+    // jogador. Antes, o harness reusava o id e a evicção nunca era exercitada.
+    const porJogador = new Map<string, number>();
+    for (const jogador of Object.values(r.servidor.jogadorPorConexao)) {
+      porJogador.set(jogador, (porJogador.get(jogador) ?? 0) + 1);
+    }
+    const duplicados = [...porJogador].filter(([, n]) => n > 1).map(([j]) => j);
+    expect(duplicados, `jogadores com mais de uma conexão: ${duplicados.join(', ')}`).toEqual([]);
+
     expect(r.servidor.sala.draft?.fase, relatorio(r.contadores)).toBe('concluido');
     const { quantos, diferentes } = todosIguais(r);
     expect(diferentes, `divergiram: ${diferentes.join(', ')}`).toEqual([]);

@@ -125,6 +125,8 @@ interface Participante {
   conectado: boolean;
   /** Último passo em que este cliente aceitou um snapshot — base do re-pedido. */
   ultimoSnapshotEm?: number;
+  /** Quantas vezes já voltou; entra no `conexaoId` para que cada volta seja socket novo. */
+  reconexoes?: number;
 }
 
 export interface ResultadoHarness {
@@ -333,15 +335,24 @@ export function rodarHarness(opcoes: OpcoesHarness): ResultadoHarness {
     for (const p of participantes.values()) {
       if (p.conectado || p.cliente.token === null) continue;
       if (rngRede.next() >= (patologias.reconexao ?? 0)) continue;
+      // 🔑 A volta usa um `conexaoId` NOVO — socket novo é conexão nova. A
+      // primeira versão reusava o mesmo id, e como `aoDesconectar` já tinha
+      // apagado aquela chave, o laço de evicção nunca tinha o que evictar: o
+      // teste passava sem exercitar nada (achado da revisão). Com id novo, um
+      // mapeamento duplicado apareceria no `conexoesPorJogador` abaixo.
+      p.reconexoes = (p.reconexoes ?? 0) + 1;
+      const idAntigo = p.conexaoId;
+      p.conexaoId = `${idAntigo}-r${p.reconexoes}`;
+      participantes.delete(idAntigo);
+      participantes.set(p.conexaoId, p);
       p.conectado = true;
       const rc = aoConectar(servidor, p.conexaoId);
       servidor = rc.estado;
       despachar(rc.envios);
-      const antes = servidor.jogadorPorConexao[p.conexaoId];
       enviar(p.conexaoId, { tipo: 'reentrar', token: p.cliente.token });
-      if (servidor.jogadorPorConexao[p.conexaoId] !== undefined && antes === undefined) {
+      if (servidor.jogadorPorConexao[p.conexaoId] !== undefined) {
         contadores.reconexoes += 1;
-      } else if (servidor.jogadorPorConexao[p.conexaoId] === undefined) {
+      } else {
         contadores.tokensRecusados += 1;
       }
     }
