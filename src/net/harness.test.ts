@@ -52,6 +52,7 @@ function relatorio(c: Contadores): string {
     `pecasPorHumano=${c.pecasPorHumano}`,
     `pecasPorAusencia=${c.pecasPorAusencia}`,
     `comandos=${c.comandosEnviados}`,
+    `reconexoes=${c.reconexoes}`,
     `recusas=${JSON.stringify(c.recusas)}`,
   ].join(' ');
 }
@@ -158,6 +159,32 @@ describe('harness headless — 22 clientes', () => {
     );
     expect(quantos, relatorio(r.contadores)).toBeGreaterThan(QTD_JOGADORES / 2);
     expect(diferentes, `divergiram: ${diferentes.join(', ')}`).toEqual([]);
+  });
+
+  it('RECONEXÃO: quem cai volta com o token e converge com os demais (PR 3.2.1)', () => {
+    // A razão de ser do 3.2.1. Sem o token, quem cai fica preso no roster
+    // ocupando turno sem ter por onde jogar, até o cronômetro o expulsar — e a
+    // sala inteira espera por ele.
+    const r = rodarHarness({
+      seed: 777,
+      qtdClientes: QTD_JOGADORES,
+      dataset,
+      patologias: { ...REDE_RUIM, desconexao: 0.004, reconexao: 0.5 },
+    });
+
+    // A patologia TEM que ter ocorrido — a regra dos contadores vale aqui também.
+    expect(r.contadores.desconexoes, relatorio(r.contadores)).toBeGreaterThan(0);
+    expect(r.contadores.reconexoes, `ninguém reconectou — ${relatorio(r.contadores)}`).toBeGreaterThan(
+      0,
+    );
+    expect(r.contadores.tokensRecusados, `token legítimo recusado — ${relatorio(r.contadores)}`).toBe(
+      0,
+    );
+
+    expect(r.servidor.sala.draft?.fase, relatorio(r.contadores)).toBe('concluido');
+    const { quantos, diferentes } = todosIguais(r);
+    expect(diferentes, `divergiram: ${diferentes.join(', ')}`).toEqual([]);
+    expect(quantos, relatorio(r.contadores)).toBeGreaterThan(QTD_JOGADORES / 2);
   });
 
   it('CONTROLE NEGATIVO: um cliente escolhendo diferente pelo AUSENTE é detectado', () => {

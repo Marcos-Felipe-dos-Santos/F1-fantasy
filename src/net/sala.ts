@@ -74,6 +74,7 @@ export function criarSala(
     jogadores: [],
     roster: null,
     draft: null,
+    tokens: {},
     seq: 0,
   };
 }
@@ -84,10 +85,14 @@ export function seedDoDraft(estado: EstadoSala): number {
 }
 
 /**
- * O que vai no fio: tudo do estado menos a `seedMestre`, com a seed do draft
- * no lugar. Campo a campo DE PROPÓSITO, em vez de `{...resto}` com rest
- * destructuring: assim um campo novo em `EstadoSala` — outro segredo, por
- * exemplo — não passa a vazar sozinho por ter sido acrescentado. O teste
+ * O que vai no fio: tudo do estado menos os SEGREDOS (`seedMestre` e `tokens`),
+ * com a seed do draft derivada no lugar.
+ *
+ * 🔒 Campo a campo DE PROPÓSITO, em vez de `{...resto}` com rest destructuring:
+ * assim um segredo novo em `EstadoSala` não passa a vazar sozinho por ter sido
+ * acrescentado. Isso não é hipotético — foi exatamente o que aconteceu no
+ * 3.2.1, quando `tokens` entrou no estado: com spread, o token de cada jogador
+ * teria ido no broadcast para os outros 21. O teste
  * "publicarSala preserva todo o resto do estado" pega o esquecimento inverso.
  */
 export function publicarSala(estado: EstadoSala): EstadoSalaPublico {
@@ -146,7 +151,12 @@ function aceitar(
   return { estado: { ...estado, ...mudanca, seq: estado.seq + 1 }, erro: null, jogadorId };
 }
 
-function entrar(estado: EstadoSala, nome: unknown, remetenteId: string | null): ResultadoSala {
+function entrar(
+  estado: EstadoSala,
+  nome: unknown,
+  remetenteId: string | null,
+  tokenNovo: string,
+): ResultadoSala {
   if (estado.fase !== 'aberta') return recusar(estado, 'sala-iniciada');
   if (typeof nome !== 'string') return recusar(estado, 'nome-invalido');
   if (remetenteId !== null && estado.jogadores.some((j) => j.id === remetenteId)) {
@@ -168,7 +178,10 @@ function entrar(estado: EstadoSala, nome: unknown, remetenteId: string | null): 
   // isso, quem reusasse o `humano-01` de um anfitrião que saiu viraria
   // anfitrião ao entrar — e poderia iniciar a partida pelos outros.
   const anfitriaoId = estado.anfitriaoId ?? id;
-  return aceitar(estado, { jogadores, anfitriaoId }, id);
+  // O token nasce aqui e vai SÓ para quem entrou. É a prova de identidade que
+  // permite voltar depois de cair — inclusive depois de um F5.
+  const tokens = { ...estado.tokens, [id]: tokenNovo };
+  return aceitar(estado, { jogadores, anfitriaoId, tokens }, id);
 }
 
 function sair(estado: EstadoSala, remetenteId: string | null): ResultadoSala {
@@ -213,6 +226,22 @@ function iniciar(estado: EstadoSala, remetenteId: string | null, agora: number):
     roster,
     draft: criarDraftRede(roster, seedDraft, agora),
   });
+}
+
+/**
+ * Qual jogador tem este token? `null` se nenhum.
+ *
+ * Comparação direta de string: o token tem 128 bits de `crypto.randomUUID` e
+ * não é adivinhável por tentativa; blindagem contra ataque de tempo seria
+ * teatro num jogo de navegador onde a latência de rede domina qualquer
+ * diferença mensurável. Registrado como decisão, não como descuido.
+ */
+export function jogadorDoToken(estado: EstadoSala, token: unknown): string | null {
+  if (typeof token !== 'string' || token.length === 0) return null;
+  for (const [jogadorId, t] of Object.entries(estado.tokens)) {
+    if (t === token) return jogadorId;
+  }
+  return null;
 }
 
 /**
@@ -275,16 +304,23 @@ export function reduzirSala(
   comando: ComandoSala,
   remetenteId: string | null,
   agora: number,
+  tokenNovo = '',
 ): ResultadoSala {
   switch (comando?.tipo) {
     case 'entrar':
-      return entrar(estado, comando.nome, remetenteId);
+      return entrar(estado, comando.nome, remetenteId, tokenNovo);
     case 'sair':
       return sair(estado, remetenteId);
     case 'pronto':
       return definirPronto(estado, comando.pronto, remetenteId);
     case 'iniciar':
       return iniciar(estado, remetenteId, agora);
+    case 'quem-sou':
+    case 'sincronizar':
+    case 'reentrar':
+      // Comandos de RECUPERAÇÃO: não mudam o estado da sala, são resolvidos
+      // pelo servidor (`servidor-sala.ts`), que é quem conhece as conexões.
+      return recusar(estado, 'comando-invalido');
     default:
       // Alcançável em runtime: o cliente manda JSON não confiável, não TS.
       return recusar(estado, 'comando-invalido');

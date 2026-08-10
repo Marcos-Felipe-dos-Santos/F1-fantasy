@@ -33,6 +33,12 @@ import type { EstadoSalaPublico } from './tipos';
 export interface EstadoCliente {
   /** Quem eu sou nesta sala; `null` até o `voce-e` chegar. */
   euSou: string | null;
+  /**
+   * Token de reentrada, recebido no `entrar`. É segredo: identifica o jogador
+   * para o servidor. Em navegador precisa sobreviver a um F5 — quem persiste é
+   * a UI (3.3), aqui ele só é guardado.
+   */
+  token: string | null;
   /** Último snapshot aceito, ou `null` antes do primeiro. */
   sala: EstadoSalaPublico | null;
   /** `seq` do último snapshot aceito — o filtro contra broadcast atrasado. */
@@ -52,6 +58,7 @@ export interface EstadoCliente {
 export function criarCliente(): EstadoCliente {
   return {
     euSou: null,
+    token: null,
     sala: null,
     seqVisto: -1,
     draft: null,
@@ -69,7 +76,13 @@ export function criarCliente(): EstadoCliente {
 export function aplicarMensagem(estado: EstadoCliente, mensagem: MensagemServidor): EstadoCliente {
   switch (mensagem.tipo) {
     case 'voce-e':
-      return { ...estado, euSou: mensagem.jogadorId };
+      // O token só vem no `entrar`; num `reentrar` a mensagem não o repete, e o
+      // que já está guardado não pode ser apagado.
+      return {
+        ...estado,
+        euSou: mensagem.jogadorId,
+        token: mensagem.token ?? estado.token,
+      };
     case 'erro':
       return { ...estado, erros: [...estado.erros, mensagem.erro] };
     case 'estado':

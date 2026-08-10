@@ -30,7 +30,14 @@ import {
 } from '../engine/namespaces-seed';
 import type { Dificuldade } from '../engine/types';
 import { iniciarDraft, seedDeTexto } from '../ui/fluxo-draft';
-import { congelarRoster, criarSala, publicarSala, reduzirSala, seedDoDraft } from './sala';
+import {
+  congelarRoster,
+  criarSala,
+  jogadorDoToken,
+  publicarSala,
+  reduzirSala,
+  seedDoDraft,
+} from './sala';
 import { MIN_HUMANOS, QTD_JOGADORES, ROTULO_SEED_DRAFT, type EstadoSala } from './tipos';
 import type { ComandoSala } from './protocolo';
 
@@ -42,8 +49,9 @@ const SEED_MESTRE = seedDeTexto('sala-3.1a');
 const T0 = 1_000_000;
 
 /** `reduzirSala` com o `agora` fixo deste arquivo, pra não repetir `T0` 24 vezes. */
+let contadorToken = 0;
 const reduzir = (estado: EstadoSala, comando: ComandoSala, remetenteId: string | null) =>
-  reduzirSala(estado, comando, remetenteId, T0);
+  reduzirSala(estado, comando, remetenteId, T0, `token-${(contadorToken += 1)}`);
 
 function salaVazia(dificuldade: Dificuldade = 'dificil'): EstadoSala {
   return criarSala('sala-teste', SEED_MESTRE, dificuldade);
@@ -276,6 +284,34 @@ describe('seed: a mestra fica no servidor', () => {
     expect(NAMESPACES_SEED.map((n) => n.prefixo)).toContain(PREFIXO_ONLINE);
   });
 
+  it('publicarSala NÃO expõe os TOKENS dos jogadores', () => {
+    // O segundo segredo do estado, e o mais perigoso de vazar: quem tem o token
+    // de alguém joga como essa pessoa. Se `publicarSala` usasse spread em vez de
+    // copiar campo a campo, o token de cada um iria no broadcast para os 21.
+    const sala = salaIniciada(3);
+    const publico = publicarSala(sala);
+    expect(Object.keys(publico)).not.toContain('tokens');
+    for (const token of Object.values(sala.tokens)) {
+      expect(token.length).toBeGreaterThan(0);
+      expect(JSON.stringify(publico), `vazou o token ${token}`).not.toContain(token);
+    }
+  });
+
+  it('cada jogador recebe um token próprio ao entrar', () => {
+    const sala = salaPronta(3);
+    const tokens = Object.values(sala.tokens);
+    expect(Object.keys(sala.tokens).sort()).toEqual(['humano-01', 'humano-02', 'humano-03']);
+    expect(new Set(tokens).size, 'tokens repetidos entre jogadores').toBe(3);
+  });
+
+  it('jogadorDoToken acha o dono e rejeita lixo', () => {
+    const sala = salaPronta(2);
+    expect(jogadorDoToken(sala, sala.tokens['humano-02'])).toBe('humano-02');
+    for (const lixo of ['', 'inventado', undefined, null, 42, {}]) {
+      expect(jogadorDoToken(sala, lixo), `aceitou ${JSON.stringify(lixo)}`).toBeNull();
+    }
+  });
+
   it('publicarSala NÃO expõe a seedMestre e publica a seed derivada do draft', () => {
     const sala = salaIniciada(2);
     const publico = publicarSala(sala);
@@ -287,9 +323,10 @@ describe('seed: a mestra fica no servidor', () => {
 
   it('publicarSala preserva todo o resto do estado', () => {
     const sala = salaIniciada(3);
-    const semSeed: Partial<EstadoSala> = structuredClone(sala);
-    delete semSeed.seedMestre;
-    expect(publicarSala(sala)).toEqual({ ...semSeed, seedDraft: seedDoDraft(sala) });
+    const semSegredos: Partial<EstadoSala> = structuredClone(sala);
+    delete semSegredos.seedMestre;
+    delete semSegredos.tokens;
+    expect(publicarSala(sala)).toEqual({ ...semSegredos, seedDraft: seedDoDraft(sala) });
   });
 
   it('o roster é congelado com a seed DERIVADA, não com a mestra', () => {

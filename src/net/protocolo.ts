@@ -47,6 +47,21 @@ export type ComandoSala =
    * altera estado.
    */
   | { tipo: 'sincronizar' }
+  /**
+   * "Sou eu de novo, aqui está meu token." Reassocia esta conexão ao jogador
+   * que recebeu o token no `entrar` — e é o ÚNICO comando de lobby que funciona
+   * com a sala já iniciada.
+   *
+   * Resolve duas coisas de uma vez, que era a razão de fazê-lo antes do 3.3:
+   * (1) quem cai deixa de ficar preso no roster ocupando turno sem ter por onde
+   * jogar; (2) o token é a prova de identidade que faltava — o `entrar` alocava
+   * um id e nada impedia que outra conexão reivindicasse aquele jogador.
+   *
+   * ⚠️ Em navegador, a "reconexão" comum não é queda de socket: é **F5**. Por
+   * isso o token tem que sobreviver ao recarregamento — o cliente o guarda, e
+   * nada na forma dele supõe que viva só na memória de um socket.
+   */
+  | { tipo: 'reentrar'; token: string }
   | { tipo: 'sair' }
   | { tipo: 'pronto'; pronto: boolean }
   | { tipo: 'iniciar' };
@@ -99,6 +114,7 @@ export type ErroSala =
   | 'nem-todos-prontos'
   | 'nome-invalido'
   | 'sala-nao-iniciada'
+  | 'token-invalido'
   | 'comando-invalido';
 
 /**
@@ -110,5 +126,9 @@ export type ErroSala =
  */
 export type MensagemServidor =
   | { tipo: 'estado'; versaoProtocolo: number; estado: EstadoSalaPublico }
-  | { tipo: 'voce-e'; jogadorId: string }
+  /**
+   * Quem você é — e, no `entrar`, o token para voltar. O token vai **só para
+   * esta conexão**, nunca em broadcast.
+   */
+  | { tipo: 'voce-e'; jogadorId: string; token?: string }
   | { tipo: 'erro'; erro: ErroSala | ErroDraft };

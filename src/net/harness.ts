@@ -57,6 +57,8 @@ export interface Patologias {
   perda: number;
   /** Chance de uma conexão cair, por passo do laço. */
   desconexao: number;
+  /** Chance de um caído voltar, por passo — apresentando o token (PR 3.2.1). */
+  reconexao?: number;
 }
 
 export const SEM_PATOLOGIA: Patologias = { atraso: 0, duplicacao: 0, perda: 0, desconexao: 0 };
@@ -92,6 +94,10 @@ export interface Contadores {
   /** Snapshots que os clientes jogaram fora por `seq` atrasado/repetido. */
   descartadosPorSeq: number;
   comandosEnviados: number;
+  /** Quantos caídos voltaram apresentando o token (PR 3.2.1). */
+  reconexoes: number;
+  /** Tentativas de reentrada recusadas por token inválido. */
+  tokensRecusados: number;
   /**
    * Escolhas de peça feitas por um HUMANO de verdade, e escolhas que a rede teve
    * de cobrir porque o jogador virou ausente.
@@ -178,6 +184,8 @@ export function rodarHarness(opcoes: OpcoesHarness): ResultadoHarness {
     comandosEnviados: 0,
     pecasPorHumano: 0,
     pecasPorAusencia: 0,
+    reconexoes: 0,
+    tokensRecusados: 0,
   };
 
   let servidor = criarServidor('sala-harness', seed, 'dificil');
@@ -250,11 +258,24 @@ export function rodarHarness(opcoes: OpcoesHarness): ResultadoHarness {
     }
   }
 
+  /**
+   * Token determinístico — o harness não pode usar `crypto.randomUUID` sem
+   * perder a reprodutibilidade por seed. Em produção quem gera é a casca, com
+   * 128 bits de verdade; aqui só precisa ser único e estável.
+   */
+  let proximoToken = 0;
   function enviar(conexaoId: string, comando: ComandoSala | ComandoDraft): void {
     contadores.comandosEnviados += 1;
     const faseAntes = servidor.sala.draft?.fase;
     const logAntes = servidor.sala.draft?.log.length ?? 0;
-    const r = aoReceber(servidor, conexaoId, JSON.stringify(comando), passo);
+    proximoToken += 1;
+    const r = aoReceber(
+      servidor,
+      conexaoId,
+      JSON.stringify(comando),
+      passo,
+      `token-${seed}-${proximoToken}`,
+    );
     servidor = r.estado;
     // Um turno de peça de fato jogado por gente: o log cresceu na fase peça.
     if (
@@ -304,6 +325,25 @@ export function rodarHarness(opcoes: OpcoesHarness): ResultadoHarness {
         (p) => p.conectado && p.cliente.euSou !== null,
       );
       if (vitima !== undefined) enviar(vitima.conexaoId, { tipo: 'abandonar' });
+    }
+
+    // Quem caiu tenta VOLTAR, apresentando o token. É a razão de ser do 3.2.1:
+    // sem isso, quem cai fica preso no roster ocupando turno sem ter por onde
+    // jogar, até o cronômetro o expulsar.
+    for (const p of participantes.values()) {
+      if (p.conectado || p.cliente.token === null) continue;
+      if (rngRede.next() >= (patologias.reconexao ?? 0)) continue;
+      p.conectado = true;
+      const rc = aoConectar(servidor, p.conexaoId);
+      servidor = rc.estado;
+      despachar(rc.envios);
+      const antes = servidor.jogadorPorConexao[p.conexaoId];
+      enviar(p.conexaoId, { tipo: 'reentrar', token: p.cliente.token });
+      if (servidor.jogadorPorConexao[p.conexaoId] !== undefined && antes === undefined) {
+        contadores.reconexoes += 1;
+      } else if (servidor.jogadorPorConexao[p.conexaoId] === undefined) {
+        contadores.tokensRecusados += 1;
+      }
     }
 
     for (const p of participantes.values()) {

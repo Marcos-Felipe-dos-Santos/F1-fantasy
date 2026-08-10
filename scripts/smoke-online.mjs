@@ -79,6 +79,11 @@ async function main() {
 
   a.enviar({ tipo: 'entrar', nome: 'Ana' });
   const souA = await a.esperar((m) => m.tipo === 'voce-e');
+  if (typeof souA.token === 'string' && souA.token.length >= 16) {
+    ok('token de reentrada emitido no entrar');
+  } else {
+    falha('token de reentrada', JSON.stringify(souA.token));
+  }
   b.enviar({ tipo: 'entrar', nome: 'Beto' });
   const souB = await b.esperar((m) => m.tipo === 'voce-e');
 
@@ -154,13 +159,41 @@ async function main() {
   const dinovo = await b.esperar((m) => m.tipo === 'voce-e' && m.jogadorId === souB.jogadorId);
   if (dinovo) ok('quem-sou devolve a identidade');
 
+  // RECONEXÃO (PR 3.2.1): A cai e volta por outra conexão, com o token.
+  a.fechar();
+  await pausa(300);
+  const a2 = await conectar('A2');
+  a2.enviar({ tipo: 'reentrar', token: souA.token });
+  const voltou = await a2.esperar((m) => m.tipo === 'voce-e');
+  if (voltou.jogadorId === souA.jogadorId) ok(`reconexão pelo token: voltou como ${voltou.jogadorId}`);
+  else falha('reconexão pelo token', JSON.stringify(voltou));
+
+  // E consegue JOGAR de novo — é isso que a reconexão precisa devolver.
+  const estadoA2 = await a2.esperar((m) => m.tipo === 'estado' && m.estado.draft !== null);
+  a2.enviar({
+    tipo: 'escolher',
+    escolha: { tipo: 'componente', slot: 'motor' },
+    turnoEsperado: estadoA2.estado.draft.rodada[souA.jogadorId],
+  });
+  const jogouDeNovo = await a2.esperar(
+    (m) => m.tipo === 'estado' && m.estado.draft.rodada[souA.jogadorId] === 3,
+  );
+  if (jogouDeNovo) ok('jogador reconectado volta a JOGAR');
+
+  // Token inválido é recusado.
+  const c0 = await conectar('C0');
+  c0.enviar({ tipo: 'reentrar', token: 'token-inventado' });
+  const recusaToken = await c0.esperar((m) => m.tipo === 'erro' && m.erro === 'token-invalido');
+  if (recusaToken) ok('token inválido é recusado');
+  c0.fechar();
+
   // Persistência: uma conexão nova recebe o estado corrente.
   const c = await conectar('C');
   const snapshotC = await c.esperar((m) => m.tipo === 'estado');
   if (snapshotC.estado.draft?.log.length >= 1) ok('conexão nova recebe o estado já em andamento');
   else falha('snapshot pra conexão nova', JSON.stringify(snapshotC.estado.draft?.log.length));
 
-  a.fechar();
+  a2.fechar();
   b.fechar();
   c.fechar();
   await pausa(200);

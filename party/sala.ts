@@ -97,7 +97,13 @@ export class Sala extends Server<Env> {
       return;
     }
     const estado = await this.carregar();
-    await this.aplicar(aoReceber(estado, connection.id, message, Date.now()));
+    // O token de reentrada é gerado AQUI, na casca: o redutor é puro e não
+    // sorteia. 128 bits de `crypto.randomUUID` — derivar de
+    // `deriveSeed(seedMestre, …)` daria 32 bits, pouco para um segredo que vale
+    // a identidade do jogador. Só é consumido num `entrar` aceito.
+    await this.aplicar(
+      aoReceber(estado, connection.id, message, Date.now(), crypto.randomUUID()),
+    );
   }
 
   async onClose(connection: Connection): Promise<void> {

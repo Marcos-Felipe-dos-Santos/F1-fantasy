@@ -28,6 +28,7 @@ import {
 import {
   criarSala,
   expirarNaSala,
+  jogadorDoToken,
   publicarSala,
   reduzirDraftDaSala,
   reduzirSala,
@@ -128,6 +129,7 @@ export function aoReceber(
   conexaoId: string,
   bruto: string,
   agora: number,
+  tokenNovo = '',
 ): ResultadoServidor {
   let comando: unknown;
   try {
@@ -145,6 +147,34 @@ export function aoReceber(
 
   // Recuperação de identidade: não muda estado, então não difunde nem avança
   // `seq`. Responde `voce-e` se a conexão for jogador, e erro se não for.
+  // 🔑 RECONEXÃO. É o único comando de lobby que vale com a sala já iniciada —
+  // e o motivo de existir: sem ele, quem cai continua no roster ocupando turno
+  // sem ter por onde jogar, até o cronômetro o expulsar.
+  if (tipo === 'reentrar') {
+    const dono = jogadorDoToken(estado.sala, (comando as { token?: unknown }).token);
+    if (dono === null) {
+      return soPara(estado, conexaoId, { tipo: 'erro', erro: 'token-invalido' });
+    }
+    // EVICÇÃO: um cliente instável que reconecta três vezes deixaria três
+    // conexões vivas mapeadas para o mesmo jogador — e todas poderiam mandar
+    // comando em nome dele. É a mesma superfície de personificação que o 3.1a
+    // fechou, reaberta por outro lado. Uma conexão por jogador, sempre.
+    const jogadorPorConexao: Record<string, string> = {};
+    for (const [conexao, jogador] of Object.entries(estado.jogadorPorConexao)) {
+      if (jogador !== dono) jogadorPorConexao[conexao] = jogador;
+    }
+    jogadorPorConexao[conexaoId] = dono;
+
+    const reconectado = { ...estado, jogadorPorConexao };
+    return {
+      estado: reconectado,
+      envios: [
+        { para: conexaoId, mensagem: { tipo: 'voce-e', jogadorId: dono } },
+        { para: conexaoId, mensagem: estadoPara(reconectado) },
+      ],
+    };
+  }
+
   // Re-pedido de snapshot: não muda estado, então responde só a quem pediu.
   if (tipo === 'sincronizar') {
     return soPara(estado, conexaoId, estadoPara(estado));
@@ -164,7 +194,7 @@ export function aoReceber(
     return difundir({ ...estado, sala: r.estado });
   }
 
-  const r = reduzirSala(estado.sala, comando as ComandoSala, remetenteId, agora);
+  const r = reduzirSala(estado.sala, comando as ComandoSala, remetenteId, agora, tokenNovo);
   if (r.erro !== null) {
     return soPara(estado, conexaoId, { tipo: 'erro', erro: r.erro });
   }
@@ -177,7 +207,13 @@ export function aoReceber(
 
   const extras: Envio[] =
     r.jogadorId !== undefined
-      ? [{ para: conexaoId, mensagem: { tipo: 'voce-e', jogadorId: r.jogadorId } }]
+      ? [
+          {
+            para: conexaoId,
+            // O token vai SÓ para quem entrou — nunca em broadcast.
+            mensagem: { tipo: 'voce-e', jogadorId: r.jogadorId, token: tokenNovo },
+          },
+        ]
       : [];
 
   return difundir({ sala: r.estado, jogadorPorConexao }, extras);

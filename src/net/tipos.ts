@@ -186,4 +186,17 @@ export interface EstadoDraftRede {
 export interface EstadoSala extends Omit<EstadoSalaPublico, 'seedDraft'> {
   /** Seed mestre da partida, fixada na criação da sala (uint32). */
   seedMestre: number;
+  /**
+   * jogadorId → token de reentrada. **É O SEGUNDO SEGREDO DO ESTADO**, junto com
+   * a `seedMestre`, e pelo mesmo motivo: quem tem o token de alguém joga como
+   * essa pessoa. Nunca sai do Durable Object — `publicarSala` copia campo a
+   * campo justamente para que um segredo novo não vaze por ter sido
+   * acrescentado, e há teste que verifica isso.
+   *
+   * O token é gerado pela CASCA (`party/sala.ts`, com `crypto.randomUUID`), não
+   * pelo redutor: o redutor é puro e não sorteia. Derivar de
+   * `deriveSeed(seedMestre, …)` foi recusado — daria 32 bits de entropia, pouco
+   * para um segredo que vale a identidade do jogador.
+   */
+  tokens: Record<string, string>;
 }
