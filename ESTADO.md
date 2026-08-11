@@ -16,13 +16,21 @@
       Terminal 1:   npm run sala        (worker/DO — fica em 127.0.0.1:8787)
       Terminal 2:   npm run dev         (app em localhost:5173)
 
-  `http://localhost:5173/` → **Modo "Online"** → **"Criar sala"** (o botão gera um código).
-  **Copiar o link compartilhável** ou anotar o código; em outra aba (ou celular), colar o link ou entrar com o código.
-  **Abrir a MESMA URL em duas abas**, entrar com nomes diferentes, "Estou pronto" nas duas, e o
-  anfitrião 👑 começa. As vagas restantes viram bots. Dois testes que valem de propósito: **F5 no
-  meio do draft** (volta como o mesmo jogador, pelo token) — F5 *no lobby* é diferente, lá cair é
-  sair; e **deixar uma aba parada** até o cronômetro expirar. **Terceiro teste (novo):** sair da aba
-  e voltar depois de alguns segundos — a reconexão traz o estado do draft, o token segue válido.
+  1. `http://localhost:5173/` → **Modo "Online"** → **"Criar sala"**. O servidor sorteia o código
+     (`A3 F9 C2`) e mostra com **"Copiar link"**.
+  2. **Cole o link numa segunda aba** (é o caminho principal: o link já leva o código). Ou use
+     "Entrar na sala de um amigo" e digite os 6 dígitos.
+  3. Nomes diferentes nas duas, **"Estou pronto"** nas duas, e o anfitrião 👑 clica em **"Começar o
+     draft"**. As 20 vagas restantes viram bots.
+
+  **Quatro coisas que valem testar de propósito:**
+  - **F5 no meio do draft** — volta como o mesmo jogador, pelo token. F5 *no lobby* é diferente: lá
+    cair é sair, e entra-se de novo.
+  - **Fechar a aba e voltar** em menos de 2 minutos — a sala sobrevive (é a carência que conserta o
+    defeito de ela morrer sozinha) e a reconexão traz o estado do draft.
+  - **Deixar uma aba parada** até o cronômetro expirar — a outra segue, e a parada passa a mostrar
+    "você perdeu a vez por inatividade".
+  - **Um código inventado** (ex.: `FFFFFF`) — tem que dizer "Sala não encontrada", não travar.
 
   📱 **PRA JOGAR DO CELULAR / EM REDE — trocar o terminal 2 por `npm run dev:rede`** e abrir no
   celular o endereço `Network` da LAN que ele imprime (hoje `http://192.168.0.13:5173/`).
