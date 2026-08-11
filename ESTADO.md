@@ -7,26 +7,28 @@
 
 ## Estado atual
 
-- ⬅️ **O MODO ONLINE ESTÁ JOGÁVEL — PR 3.3 FEITO em 2026-08-10** (`fa5d3d1` + `b80dd63`), depois do
-  **3.2.1** (reconexão, `205505b` + `3ab9658`) e do **3.2** (`30e2556`).
-  **É o item aberto: aguarda o dev testar no navegador.**
+- ✅ **CÓDIGO DE SALA E CICLO DE VIDA FEITOS — PR 3.3.2 em 2026-08-10** (`02ff6ee` + `b882d9b`).
+  **O modo online agora tem sala privada por padrão** (código hexadecimal de 6 dígitos, não 4, sorteado
+  pelo servidor; enumeração impossível em tempo casual). **Aguarda o dev testar.**
 
   🎮 **COMO TESTAR O ONLINE — dois terminais, no PowerShell:**
 
       Terminal 1:   npm run sala        (worker/DO — fica em 127.0.0.1:8787)
       Terminal 2:   npm run dev         (app em localhost:5173)
 
-  `http://localhost:5173/` → **Modo "Online (sala compartilhada)"** → nome da sala → **Entrar**.
+  `http://localhost:5173/` → **Modo "Online"** → **"Criar sala"** (o botão gera um código).
+  **Copiar o link compartilhável** ou anotar o código; em outra aba (ou celular), colar o link ou entrar com o código.
   **Abrir a MESMA URL em duas abas**, entrar com nomes diferentes, "Estou pronto" nas duas, e o
   anfitrião 👑 começa. As vagas restantes viram bots. Dois testes que valem de propósito: **F5 no
   meio do draft** (volta como o mesmo jogador, pelo token) — F5 *no lobby* é diferente, lá cair é
-  sair; e **deixar uma aba parada** até o cronômetro expirar.
+  sair; e **deixar uma aba parada** até o cronômetro expirar. **Terceiro teste (novo):** sair da aba
+  e voltar depois de alguns segundos — a reconexão traz o estado do draft, o token segue válido.
 
   📱 **PRA JOGAR DO CELULAR / EM REDE — trocar o terminal 2 por `npm run dev:rede`** e abrir no
   celular o endereço `Network` da LAN que ele imprime (hoje `http://192.168.0.13:5173/`).
   **Guia completo: `docs/jogar-em-rede.md`** (firewall, túnel, diagnóstico).
 
-  - **Medido:** `npm test` **1325/46**, `npm run typecheck` **0** (app + `party/`),
+  - **Medido:** `npm test` **1355/49**, `npm run typecheck` **0** (app + `party/`),
     `eslint src scripts party` **0**, `npm run build` **0**. `npm run balance` **inalterado por
     construção**.
   - 🔌 **PR 3.3.1 (`23d1cce`) — o worker passa pela PORTA DO VITE.** `wrangler dev` sobe em
@@ -58,8 +60,8 @@
   `4ba4f50`) e a rodada de **narração rica + auto-avanço**: **A** (variedade/chuva, `1537ad6`),
   **B** (causalidade contrafactual, `43fe420`), **C** (avanço automático, `fc7f20d`); e ainda
   **8.2.1** (calendário na engine, `cfe1c47`) e **8.3** (telas do campeonato, `0da36fb`) ·
-  **1325 testes** (46 arquivos) verdes — medido em 2026-08-10, depois do 3.3.1; eram 1094/36 antes
-  da Fase 3. ⚠️ O badge do README ainda diz **1094** e é estático — está desatualizado.
+  **1355 testes** (49 arquivos) verdes — medido em 2026-08-10, depois do 3.3.2; eram 1094/36 antes
+  da Fase 3. ⚠️ O badge do README ainda diz **1094** e é estático — está desatualizado (deveria ser 1355).
 - **Medido em 2026-08-07, não herdado:** `npm test` **1094/36**, `tsc --noEmit` **exit 0**,
   `eslint src scripts` **exit 0**, `npm run build` **exit 0**. **`npm run balance` inalterado por
   construção** — o harness importa só `src/engine/dataset`, `src/data/*.json` e `scripts/alavancas`,
@@ -341,6 +343,13 @@ duplicada entre engine e redutor, derivando em silêncio.
   (proxy de `/parties/*` com `ws: true`), e a URL do WebSocket vem do **host da página** — nunca
   fixa, porque cada visitante chega por um IP diferente. `npm run dev:rede` expõe na rede;
   `docs/jogar-em-rede.md` tem firewall, túnel e diagnóstico.
+- ✅ **3.3.2 Código de sala e ciclo de vida** — FEITO (`02ff6ee` + `b882d9b`). **Sala privada por
+  padrão:** código hexadecimal de 6 dígitos (256× mais caro que 4 na enumeração), sorteado pelo
+  servidor, link compartilhável. Ciclo: vive enquanto houver gente; após a partida, janela de
+  10 min pra olhar resultado; depois reseta (ou se ficar vazia por 2 min). Fechou os três críticos
+  da revisão (C1: sala morria em 5s antes de alguém entrar; C2: `onClose` encerrava na hora; C3:
+  `onRequest` deixava atacante criar sala com código escolhido). Medido: 20/20 smoke, incluindo
+  "sala esvaziou e sobreviveu à carência".
 - **3.4 Handshake de versão + detector de divergência** (hash da corrida comparado entre os 22).
 - **3.5 Campeonato online (seed por etapa)** — **CORTE Nº 1** se a fase ficar grande.
 

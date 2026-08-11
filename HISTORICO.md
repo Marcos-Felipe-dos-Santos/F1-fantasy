@@ -1276,6 +1276,47 @@ LAN. É o primeiro suspeito se o celular não conectar.
 
 **Medido:** `npm test` **1325/46**, `typecheck`/`eslint`/`build` **0**.
 
+### PR 3.3.2 — código de sala e ciclo de vida (2026-08-10, `02ff6ee` + `b882d9b`) — ALTO RISCO
+
+**CÓDIGO DE SALA.** Acabou o `sala-1` que qualquer um adivinhava. A tela do online agora oferece "Criar sala" e "Entrar na sala de um amigo"; ao criar, o **SERVIDOR sorteia um código hexadecimal de 6 dígitos** (nunca de 4) e mostra com botão de copiar.
+
+🔑 **Seis dígitos por enumeração, não por colisão.** Com 4 dígitos são 65.536 combinações, que um script varre em minutos; com 6 são 16.777.216 — **256× mais caro**, impraticável pra jogo casual em grupo. Hex ainda evita o par ambíguo `0`/`O` e `1`/`I`, que não existem em `0-9A-F`. As decisões do dev: (1) **link compartilhável** `?sala=A3F9C2`, porque ditar código e redigitar no WhatsApp é o caminho mais sujeito a erro; (2) **aviso de fechamento só no último minuto**, pra que a tela de resultado fique limpa enquanto o pessoal comenta (implementado via `JANELA_DE_GRACA_MS = 10 min`).
+
+**CICLO DE VIDA.** A sala vive enquanto houver alguém conectado. Terminada a partida, ela fica **viva por uma janela de graça de 10 minutos** pra quem quiser olhar o resultado, anotar, printar. Vencida a janela, qualquer pessoa que reste é desconectada e a sala é **RESETADA**: estado descartado, log limpo, código liberado. Se **TODOS saem antes**, reseta na hora (não espera 10 minutos). Além disso, se a sala **fica vazia por mais de 2 minutos** (`CARENCIA_VAZIO_MS`), reseta também — mata as salas zumbis de drafts antigos e economiza storage. (O teto de 10 min em vez de 5 é porque quem levanta da mesa não pode perder o resultado; o alarme de 5 s já existia pro cronômetro de turno e seria confuso usar novamente.)
+
+**O que isso resolve, registrado pelo dev:** colisão de nome (código é privado por padrão), o log append-only que crescia PARA SEMPRE (metade do bloqueante C2 do PR 3.2 — agora tem ponto de descarte), e a sala zumbi com draft de dias atrás.
+
+**🔴 OS TRÊS CRÍTICOS DESCOBERTOS PELA REVISÃO — todos bloqueantes de funcionalidade:**
+
+**C1 — O fluxo principal não funcionava.** `criar()` armava o alarme com **zero conexões**; o alarme disparava em 5s; `decidirVida` via 0 conexões e encerrava. Como a sala nasce vazia e o caso de uso é "criar → copiar link → mandar no WhatsApp → o amigo abrir", **ela morria ANTES de alguém entrar**, e o criador via "sala não encontrada" — 404 falso. **E o meu próprio teste CODIFICAVA O BUG como comportamento desejado** — "sala VAZIA encerra na hora" ficava verde porque afirmava a regra errada. Corrigido com **baseline vermelho:** `await pausa(7000)` no smoke entre `POST /criar-sala` e a primeira conexão — ficou vermelho ("A: timeout"), como precisava.
+
+**Fixo:** `vazioDesde` no estado + `CARENCIA_VAZIO_MS = 2 min`. O alarme só encerra a sala se `agora - vazioDesde >= CARENCIA`. A janela de 2 minutos é confortável — quem trocou pro WhatsApp volta em menos de 2 minutos na maioria das vezes.
+
+**C2 — mesma raiz.** `onClose` encerrava a sala **na hora quando a última conexão caia**. Quem estava sozinho esperando o amigo e trocava pro WhatsApp pra colar o link perdia a sala; um F5 (reconexão de aba) tinha o mesmo efeito **destruindo a reconexão do 3.2.1** exatamente no caso em que ela mais importa. **Raiz:** a decisão de vida estava duplicada entre `servidor-sala.ts` (correto) e `party/sala.ts` (casca; errado) — o cabeçalho de `party/sala.ts` afirmava "toda a decisão mora em `servidor-sala.ts`" e estava violando.
+
+**Fixo:** `onClose` **só registra que esvaziou** (`vazioDesde = agora`); quem encerra é o alarme via `decidirVida`. A lógica de vida centraliza em **um só lugar testável** (`servidor-sala.ts`), que é onde ela deve viver.
+
+**C3 — `onRequest` era alcançável de fora (QUEBRA DE PRIVACIDADE).** O roteador do partyserver casa qualquer caminho sob `/parties/<ns>/<nome>/…` (usa `>=`, não igualdade), então `POST /parties/sala/000000/criar` criava a sala **com o código que o atacante quisesse** — derrubando "é o servidor que sorteia", a validação de formato e a privacidade por enumeração inteira. Trocado por **RPC** (`stub.criarSeNova(codigo, agora)`), que só é alcançável de **dentro do worker**, com o código por **ARGUMENTO** em vez de `this.name`. Medido depois: a rota devolve 404 e a sala `000000` não existe — validado.
+
+**Mais avisos da revisão, todos aplicados:**
+- `this.estado = null` virou a **PRIMEIRA linha de `encerrar()`** (antes ficava depois de dois `await`, deixando a sala viva e sem alarme por um instante — um comando em voo podia regravar o estado **depois** do `deleteAll`, ressuscitando o código recem-liberado); agora há flag `encerrada` também pra redundância.
+- O alarme para de chamar `aoPassarOTempo` quando a partida acabou — durante os 10 min da janela isso seriam ~120 escritas em storage e 120 broadcasts de snapshot completo por sala, sem nada mudar.
+- `/criar-sala` ganhou **CORS**, porque com `VITE_WS_BASE` o `fetch` é cross-origin (o WebSocket ignora CORS; esse `fetch` não — quebrava em silêncio).
+
+**Respostas às perguntas técnicas do dev (registradas por pedido dele):**
+1. ✅ O alarme do DO serve e foi usado — o mesmo tique do cronômetro de turno (5s) decide o ciclo de vida.
+2. ✅ Código de sala resetada devolve `sala-inexistente` com mensagem clara ("Esta sala não existe ou já encerrou"), não erro genérico.
+3. ✅ Entrar no meio de um draft segue recusado com `sala-iniciada` (a tela do 3.3 já explica com saída). Agora só alcançável com código válido, que é estritamente melhor.
+4. ✅ A reconexão do 3.2.1 continua valendo dentro da janela; depois do reset o token é limpo junto (`sala-inexistente` dispara o mesmo caminho de `token-invalido`).
+
+**Decisão travada:** `agora` virou **OBRIGATÓRIO** em `criarSala`/`criarServidor` — com default `0`, a sala nasceria "vazia desde 1970" e morreria no primeiro tique do alarme, capturando a armadilha exata que a carência conserta. Sem default, falha alto.
+
+**Medido (real, não estimado):**
+- `npm test` **1352/49** (02ff6ee) → **1355/49** (b882d9b), `typecheck` **0**, `eslint` **0**, `build` **0**.
+- Smoke contra `wrangler dev` real: **20/20 passando**, incluindo (1) "sala criada pelo servidor com código CE472E", (2) "código inexistente é recusado", (3) **"sala esvaziou e SOBREVIVEU à carência — dá pra voltar depois de um F5"** — o terceiro prova que a fix de C1+C2 funciona.
+
+**Risco original do 3.3 não tocado:** a corrida online ainda NÃO existe. O draft online termina no resumo.
+
 ## Acompanhamentos registrados pela revisão do PR 1.6 (não são defeitos; candidatos a PR futuro)
 
 - `medirParadasExtras` usa equipes históricas inteiras — o CALL do estrategista desloca a 1ª parada e vira confound secundário do bucket de PNEU (o bucket <60 é na prática 1 piloto). Sinal mais limpo: fixar chassi/motor/estrategista/pit e variar só o piloto.
