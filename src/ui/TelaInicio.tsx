@@ -40,12 +40,17 @@ interface TelaInicioProps {
   campeonatoSalvo: ResumoCampeonatoSalvo | null;
   onContinuarCampeonato: () => void;
   /**
-   * Entra numa sala online (PR 3.3). Separado de `onComecar` porque o online
-   * NÃO decide seed, dificuldade nem formato aqui: quem manda nisso é o
-   * servidor da sala, que é dono da `seedMestre`. Misturar os dois caminhos
-   * daria a impressão de que a seed digitada vale online — e ela não vale.
+   * Vai pra tela de criar/entrar em sala (PR 3.3). Separado de `onComecar`
+   * porque o online NÃO decide seed, dificuldade nem formato aqui: quem manda
+   * nisso é o servidor da sala, que é dono da `seedMestre`. Misturar os dois
+   * caminhos daria a impressão de que a seed digitada vale online — e ela não
+   * vale.
+   *
+   * **Sem argumento, e isso é o modelo novo (3.3.2):** o código da sala é
+   * sorteado pelo SERVIDOR, não digitado aqui. Esta tela só encaminha pra
+   * `TelaSalaOnline`, que é quem cria ou pede o código de 6 dígitos.
    */
-  onEntrarOnline: (sala: string) => void;
+  onEntrarOnline: () => void;
 }
 
 /** Pistas do dataset, ordenadas por nome (ordem de exibição do select — não é a ordem do JSON). */
@@ -72,7 +77,6 @@ export function TelaInicio({
   const [nomes, setNomes] = useState<string[]>(['', '', '', '']);
   const [pistaId, setPistaId] = useState(PISTA_CORRIDA_ID);
   const [formato, setFormato] = useState<FormatoPartida>('unica');
-  const [salaOnline, setSalaOnline] = useState('sala-1');
 
   // Regra condicional pedida pelo dev: nos campeonatos as pistas são
   // sorteadas por seed, então o seletor de pista SOME (não fica desabilitado).
@@ -103,7 +107,7 @@ export function TelaInicio({
       () => crypto.getRandomValues(new Uint32Array(1))[0],
     );
     if (modo === 'online') {
-      onEntrarOnline(salaOnline.trim() || 'sala-1');
+      onEntrarOnline();
       return;
     }
     if (modo === 'single') {
@@ -214,30 +218,38 @@ export function TelaInicio({
 
         {/* Pista e perfil somem JUNTOS nos campeonatos: deixar o perfil no ar
             mostraria os dados de Monza pra um calendário de 5 pistas
-            sorteadas — exatamente a confusão que o "sumir mesmo" evita. */}
-        {pistaVisivel && !ehOnline ? (
-          <>
-            <label className="form-inicio__campo">
-              Pista
-              <select value={pistaId} onChange={(evento) => setPistaId(evento.target.value)}>
-                {PISTAS_ORDENADAS.map((pista) => (
-                  <option key={pista.id} value={pista.id}>
-                    {pista.nome}
-                  </option>
-                ))}
-              </select>
-            </label>
+            sorteadas — exatamente a confusão que o "sumir mesmo" evita.
+
+            No ONLINE não sai NENHUM dos dois — nem o seletor, nem a explicação
+            do calendário sorteado. A explicação falava de campeonato, e o
+            online não tem campeonato (o 3.5 não existe; o draft online termina
+            no resumo): era o mesmo tipo de texto órfão que o campo "nome da
+            sala" foi, contando ao jogador uma regra de outra tela. */}
+        {!ehOnline &&
+          (pistaVisivel ? (
+            <>
+              <label className="form-inicio__campo">
+                Pista
+                <select value={pistaId} onChange={(evento) => setPistaId(evento.target.value)}>
+                  {PISTAS_ORDENADAS.map((pista) => (
+                    <option key={pista.id} value={pista.id}>
+                      {pista.nome}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <p className="form-inicio__perfil-pista">
+                Ultrapassagem: {perfil.ultrapassagem.emoji} {perfil.ultrapassagem.rotulo} ·
+                Desgaste: {perfil.desgaste} · Chuva: {perfil.chuvaPercentual}% · {perfil.voltas}{' '}
+                voltas
+              </p>
+            </>
+          ) : (
             <p className="form-inicio__perfil-pista">
-              Ultrapassagem: {perfil.ultrapassagem.emoji} {perfil.ultrapassagem.rotulo} · Desgaste:{' '}
-              {perfil.desgaste} · Chuva: {perfil.chuvaPercentual}% · {perfil.voltas} voltas
+              🎲 As pistas do campeonato são sorteadas pela seed — a mesma seed dá sempre o mesmo
+              calendário.
             </p>
-          </>
-        ) : (
-          <p className="form-inicio__perfil-pista">
-            🎲 As pistas do campeonato são sorteadas pela seed — a mesma seed dá sempre o mesmo
-            calendário.
-          </p>
-        )}
+          ))}
 
         {modo === 'local' && (
           <fieldset className="form-inicio__local">
@@ -272,29 +284,24 @@ export function TelaInicio({
           </fieldset>
         )}
 
+        {/* Sem campo de nome de sala: o código é sorteado pelo SERVIDOR (3.3.2)
+            e quem cria ou pede o código é a `TelaSalaOnline`, um passo adiante.
+            O campo livre que existia aqui era da interface anterior — ele dizia
+            "quem digitar o mesmo nome cai na mesma partida", que é justamente o
+            modelo que o código hexadecimal substituiu. */}
         {modo === 'online' && (
           <fieldset className="form-inicio__online">
             <legend>Sala online</legend>
-            <label className="form-inicio__campo">
-              Nome da sala
-              <input
-                type="text"
-                value={salaOnline}
-                maxLength={40}
-                onChange={(evento) => setSalaOnline(evento.target.value)}
-                placeholder="ex.: sala-1"
-              />
-            </label>
             <p className="form-inicio__seed-dica">
-              Quem digitar o mesmo nome de sala cai na mesma partida. Seed, dificuldade e formato
-              não aparecem aqui porque <b>quem decide é o servidor da sala</b>, dono da seed. As
-              vagas que sobrarem viram bots.
+              Seed, dificuldade e formato não aparecem aqui porque{' '}
+              <b>quem decide é o servidor da sala</b>, dono da seed. As vagas que sobrarem viram
+              bots.
             </p>
           </fieldset>
         )}
 
         <button type="submit" className="botao-primario">
-          {modo === 'online' ? 'Entrar na sala' : 'Começar draft'}
+          {modo === 'online' ? 'Criar ou entrar numa sala' : 'Começar draft'}
         </button>
       </form>
     </div>

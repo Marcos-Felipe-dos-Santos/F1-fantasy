@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite';
 import { configDefaults } from 'vitest/config';
 import react from '@vitejs/plugin-react';
+import { proxyDoWorker } from './src/net/rotas';
 
 export default defineConfig({
   plugins: [react()],
@@ -23,14 +24,18 @@ export default defineConfig({
      *
      * `ws: true` é o que faz o `Upgrade: websocket` ser repassado — sem ele o
      * proxy só encaminharia HTTP e a conexão cairia no handshake.
+     *
+     * ⚠️ **A LISTA NÃO MORA AQUI (PR 3.3.3).** O que não estiver no proxy NÃO
+     * CHEGA no worker: o Vite responde 404 sozinho e o terminal do `wrangler`
+     * fica em silêncio, então a falha se disfarça de "servidor fora do ar".
+     * Foi o que aconteceu com `/criar-sala`, criado no 3.3.2 quando este bloco
+     * já existia e listava só `/parties`. Como o problema era haver duas listas
+     * que precisavam concordar, a correção não foi acrescentar a chave que
+     * faltava e sim **derivar o bloco inteiro** de `src/net/rotas.ts`, que é
+     * onde as rotas do worker são declaradas. Rota nova lá atravessa o proxy
+     * sozinha.
      */
-    proxy: {
-      '/parties': {
-        target: 'http://127.0.0.1:8787',
-        ws: true,
-        changeOrigin: true,
-      },
-    },
+    proxy: proxyDoWorker(),
   },
   test: {
     environment: 'node',

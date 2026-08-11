@@ -33,6 +33,7 @@ import {
   type ResultadoServidor,
 } from '../src/net/servidor-sala';
 import { codigoDeBytes, TAMANHO_CODIGO } from '../src/net/codigo-sala';
+import { ROTA_CRIAR_SALA } from '../src/net/rotas';
 import { MAX_BYTES_MENSAGEM, PRAZO_TURNO_MS } from '../src/net/tipos';
 
 interface Env {
@@ -268,11 +269,11 @@ export default {
     // aponta o worker pra fora (o WebSocket ignora CORS, mas este `fetch` não —
     // sem isto o escape do 3.3 quebrava em silêncio, e o jogador via só "o
     // servidor está rodando?").
-    if (url.pathname === '/criar-sala' && request.method === 'OPTIONS') {
+    if (url.pathname === ROTA_CRIAR_SALA && request.method === 'OPTIONS') {
       return new Response(null, { status: 204, headers: CABECALHOS_CORS });
     }
 
-    if (url.pathname === '/criar-sala' && request.method === 'POST') {
+    if (url.pathname === ROTA_CRIAR_SALA && request.method === 'POST') {
       const agora = Date.now();
       for (let tentativa = 0; tentativa < TENTATIVAS_CODIGO; tentativa += 1) {
         const codigo = sortearCodigo();

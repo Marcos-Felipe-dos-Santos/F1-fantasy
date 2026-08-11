@@ -65,8 +65,11 @@ describe('base do WebSocket', () => {
 
 describe('rota da sala', () => {
   it('bate com o que `routePartykitRequest` espera (`Sala` → `sala`, kebab-case)', () => {
-    // O prefixo `/parties/sala/` é o mesmo do `proxy` no `vite.config.ts`: se
-    // um mudar sem o outro, o WebSocket some sem erro claro.
+    // O prefixo `/parties/sala/` precisa casar com o `proxy` do
+    // `vite.config.ts` — mas quem VERIFICA isso é `proxy-vite.test.ts`, que lê
+    // a config de verdade. Este comentário já afirmou a conferência sem
+    // ninguém fazê-la, e foi assim que `/criar-sala` ficou de fora do proxy
+    // sem nenhum teste notar (PR 3.3.3).
     expect(urlDaSala('ws://192.168.0.13:5173', 'sala-1')).toBe(
       'ws://192.168.0.13:5173/parties/sala/sala-1',
     );
