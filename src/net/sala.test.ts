@@ -54,7 +54,7 @@ const reduzir = (estado: EstadoSala, comando: ComandoSala, remetenteId: string |
   reduzirSala(estado, comando, remetenteId, T0, `token-${(contadorToken += 1)}`);
 
 function salaVazia(dificuldade: Dificuldade = 'dificil'): EstadoSala {
-  return criarSala('sala-teste', SEED_MESTRE, dificuldade);
+  return criarSala('sala-teste', SEED_MESTRE, dificuldade, T0);
 }
 
 /** Aplica um comando, falhando o teste se for recusado. */
@@ -271,8 +271,8 @@ describe('início da partida (congelamento)', () => {
 
 describe('seed: a mestra fica no servidor', () => {
   it('criarSala normaliza a seed pra uint32', () => {
-    expect(criarSala('s', -1, 'dificil').seedMestre).toBe(4294967295);
-    expect(criarSala('s', 2 ** 32 + 7, 'dificil').seedMestre).toBe(7);
+    expect(criarSala('s', -1, 'dificil', T0).seedMestre).toBe(4294967295);
+    expect(criarSala('s', 2 ** 32 + 7, 'dificil', T0).seedMestre).toBe(7);
   });
 
   it('o rótulo de seed do online usa o prefixo reservado `online:`', () => {
@@ -326,6 +326,9 @@ describe('seed: a mestra fica no servidor', () => {
     const semSegredos: Partial<EstadoSala> = structuredClone(sala);
     delete semSegredos.seedMestre;
     delete semSegredos.tokens;
+    // `vazioDesde` é bookkeeping interno do ciclo de vida — a tela não precisa
+    // saber há quanto tempo a sala está vazia, e publicá-lo só daria ruído.
+    delete semSegredos.vazioDesde;
     expect(publicarSala(sala)).toEqual({ ...semSegredos, seedDraft: seedDoDraft(sala) });
   });
 

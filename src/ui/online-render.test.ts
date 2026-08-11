@@ -26,7 +26,7 @@ const aplicar = (estado: EstadoSala, comando: ComandoSala, remetente: string | n
   reduzirSala(estado, comando, remetente, T0, `tk-${(n += 1)}`).estado;
 
 function salaCom(nomes: string[], prontos: boolean[] = []): EstadoSala {
-  let sala = criarSala('sala-render', 2026, 'dificil');
+  let sala = criarSala('sala-render', 2026, 'dificil', T0);
   for (const nome of nomes) sala = aplicar(sala, { tipo: 'entrar', nome }, null);
   sala.jogadores.forEach((j, i) => {
     if (prontos[i]) sala = aplicar(sala, { tipo: 'pronto', pronto: true }, j.id);

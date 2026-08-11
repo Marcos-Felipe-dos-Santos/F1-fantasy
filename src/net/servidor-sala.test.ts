@@ -20,7 +20,7 @@ import type { MensagemServidor } from './protocolo';
 
 const T0 = 1_000_000;
 
-const criar = () => criarServidor('sala-teste', 2026, 'dificil');
+const criar = () => criarServidor('sala-teste', 2026, 'dificil', T0);
 
 /** Manda um comando cru, como o transporte faria. */
 function mandar(

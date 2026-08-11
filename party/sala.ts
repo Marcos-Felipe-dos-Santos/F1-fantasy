@@ -28,6 +28,7 @@ import {
   aoReceber,
   criarServidor,
   decidirVida,
+  registrarConexoes,
   type EstadoServidor,
   type ResultadoServidor,
 } from '../src/net/servidor-sala';
@@ -48,6 +49,8 @@ export class Sala extends Server<Env> {
   static options = { hibernate: true };
 
   private estado: EstadoServidor | null = null;
+  /** Cinto e suspensório do `encerrar`: uma vez encerrada, não ressuscita nesta instância. */
+  private encerrada = false;
 
   /**
    * Carrega o estado persistido. **Devolve `null` se a sala não existe** — e
@@ -56,6 +59,7 @@ export class Sala extends Server<Env> {
    * um reset continua viva por um instante.
    */
   private async carregar(): Promise<EstadoServidor | null> {
+    if (this.encerrada) return null;
     if (this.estado !== null) return this.estado;
     const salvo = await this.ctx.storage.get<EstadoServidor>('estado');
     this.estado = salvo ?? null;
@@ -70,13 +74,13 @@ export class Sala extends Server<Env> {
    * trocaria a partida no meio. Ela nunca sai daqui (o broadcast leva só a
    * `seedDraft` derivada).
    */
-  private async criar(): Promise<boolean> {
+  private async criar(codigo: string, agora: number): Promise<boolean> {
     if ((await this.carregar()) !== null) return false;
     const semente = new Uint32Array(1);
     crypto.getRandomValues(semente);
-    this.estado = criarServidor(this.name, semente[0], 'dificil');
+    this.estado = criarServidor(codigo, semente[0], 'dificil', agora);
     await this.ctx.storage.put('estado', this.estado);
-    await this.ctx.storage.setAlarm(Date.now() + INTERVALO_TIQUE_MS);
+    await this.ctx.storage.setAlarm(agora + INTERVALO_TIQUE_MS);
     return true;
   }
 
@@ -91,6 +95,13 @@ export class Sala extends Server<Env> {
    * vivo depois do `deleteAll`.
    */
   private async encerrar(): Promise<void> {
+    // 🔒 PRIMEIRA linha, antes de qualquer `await`: se um comando em voo
+    // pegasse `this.estado` ainda em cache, `aplicar()` regravaria o estado
+    // DEPOIS do `deleteAll` — e como o alarme já foi apagado e `aplicar` nunca
+    // reagenda, sobraria uma sala viva, com estado velho e sem relógio nenhum
+    // para matá-la nem para expirar turno.
+    this.estado = null;
+    this.encerrada = true;
     for (const conexao of this.getConnections()) {
       try {
         conexao.send(JSON.stringify({ tipo: 'sala-encerrada' }));
@@ -101,7 +112,6 @@ export class Sala extends Server<Env> {
     }
     await this.ctx.storage.deleteAlarm();
     await this.ctx.storage.deleteAll();
-    this.estado = null;
   }
 
   private async aplicar(resultado: ResultadoServidor): Promise<void> {
@@ -125,12 +135,22 @@ export class Sala extends Server<Env> {
     connection.close(1000, 'sala inexistente');
   }
 
-  /** Criação da sala, chamada pelo worker com o código já sorteado. */
-  async onRequest(request: Request): Promise<Response> {
-    if (new URL(request.url).pathname.endsWith('/criar')) {
-      return new Response(null, { status: (await this.criar()) ? 201 : 409 });
-    }
-    return new Response('Não encontrado', { status: 404 });
+  /**
+   * Cria a sala. **Método RPC, não rota HTTP** — e a diferença é de segurança,
+   * não de estilo.
+   *
+   * 🔴 A primeira versão usava `onRequest`, e o roteador do `partyserver` casa
+   * QUALQUER caminho sob `/parties/<ns>/<nome>/…` (ele exige `>=`, não
+   * igualdade). Ou seja, `POST /parties/sala/000000/criar` chegava aqui e
+   * criava a sala com o código que o atacante quisesse — derrubando de uma vez
+   * "é o servidor que sorteia", a validação de formato e a privacidade do
+   * código por enumeração. RPC só é alcançável de dentro do worker.
+   *
+   * O código vem por ARGUMENTO em vez de `this.name`: não depende de o
+   * `partyserver` ter inicializado o nome numa entrada RPC.
+   */
+  async criarSeNova(codigo: string, agora: number): Promise<boolean> {
+    return this.criar(codigo, agora);
   }
 
   async onConnect(connection: Connection): Promise<void> {
@@ -139,8 +159,16 @@ export class Sala extends Server<Env> {
       this.recusar(connection);
       return;
     }
-    await this.aplicar(aoConectar(estado, connection.id));
-    await this.ctx.storage.setAlarm(Date.now() + INTERVALO_TIQUE_MS);
+    const agora = Date.now();
+    await this.aplicar(
+      aoConectar(registrarConexoes(estado, this.quantasConexoes(), agora), connection.id),
+    );
+    await this.ctx.storage.setAlarm(agora + INTERVALO_TIQUE_MS);
+  }
+
+  /** Conexões abertas agora — o dado que a carência de vazio consome. */
+  private quantasConexoes(): number {
+    return [...this.getConnections()].length;
   }
 
   async onMessage(connection: Connection, message: string | ArrayBuffer): Promise<void> {
@@ -170,9 +198,16 @@ export class Sala extends Server<Env> {
   async onClose(connection: Connection): Promise<void> {
     const estado = await this.carregar();
     if (estado === null) return;
-    await this.aplicar(aoDesconectar(estado, connection.id, Date.now()));
-    // Saiu o último? A sala não fica de pé sem ninguém.
-    if ([...this.getConnections()].length === 0) await this.encerrar();
+    const agora = Date.now();
+    const r = aoDesconectar(estado, connection.id, agora);
+    // Só REGISTRA que ficou vazia; quem decide encerrar é o alarme, com a
+    // carência. Decidir aqui foi o defeito: um F5 ou trocar de app no celular
+    // estando sozinho matava a sala na hora, e a reconexão do 3.2.1 virava
+    // letra morta justo no caso em que ela mais importa.
+    await this.aplicar({
+      ...r,
+      estado: registrarConexoes(r.estado, this.quantasConexoes(), agora),
+    });
   }
 
   /**
@@ -184,16 +219,30 @@ export class Sala extends Server<Env> {
     if (estado === null) return;
 
     const agora = Date.now();
-    const conexoes = [...this.getConnections()].length;
-    if (decidirVida(estado, conexoes, agora).tipo === 'encerrar') {
+    const atualizado = registrarConexoes(estado, this.quantasConexoes(), agora);
+    if (decidirVida(atualizado, agora).tipo === 'encerrar') {
       await this.encerrar();
       return;
     }
 
-    await this.aplicar(aoPassarOTempo(estado, agora, PRAZO_TURNO_MS));
+    // Com a partida concluída não há mais turno pra expirar: durante os 10
+    // minutos da janela isso seriam ~120 escritas em storage e 120 broadcasts
+    // de snapshot completo, por sala, sem nada mudar.
+    const proximo =
+      atualizado.sala.concluidaEm === null
+        ? aoPassarOTempo(atualizado, agora, PRAZO_TURNO_MS)
+        : { estado: atualizado, envios: [] };
+    await this.aplicar(proximo);
     await this.ctx.storage.setAlarm(agora + INTERVALO_TIQUE_MS);
   }
 }
+
+/** O `POST /criar-sala` pode vir de outra origem — ver `VITE_WS_BASE`. */
+const CABECALHOS_CORS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'content-type',
+};
 
 /** `A3F9C2` — sorteado aqui, na casca, porque `src/net/` não sorteia nada. */
 function sortearCodigo(): string {
@@ -215,14 +264,26 @@ export default {
      * três tentativas falharem não é azar, é sinal de que algo está quebrado —
      * e um laço infinito esconderia isso.
      */
+    // Pré-voo do CORS: o app pode estar noutra origem quando `VITE_WS_BASE`
+    // aponta o worker pra fora (o WebSocket ignora CORS, mas este `fetch` não —
+    // sem isto o escape do 3.3 quebrava em silêncio, e o jogador via só "o
+    // servidor está rodando?").
+    if (url.pathname === '/criar-sala' && request.method === 'OPTIONS') {
+      return new Response(null, { status: 204, headers: CABECALHOS_CORS });
+    }
+
     if (url.pathname === '/criar-sala' && request.method === 'POST') {
+      const agora = Date.now();
       for (let tentativa = 0; tentativa < TENTATIVAS_CODIGO; tentativa += 1) {
         const codigo = sortearCodigo();
         const stub = env.Sala.get(env.Sala.idFromName(codigo));
-        const resposta = await stub.fetch(new Request('https://sala/criar', { method: 'POST' }));
-        if (resposta.status === 201) return Response.json({ codigo });
+        // RPC, não `fetch`: ver o docblock de `criarSeNova`. Uma rota HTTP no
+        // DO seria alcançável de fora e deixaria qualquer um escolher o código.
+        if (await stub.criarSeNova(codigo, agora)) {
+          return Response.json({ codigo }, { headers: CABECALHOS_CORS });
+        }
       }
-      return Response.json({ erro: 'sem-codigo-livre' }, { status: 503 });
+      return Response.json({ erro: 'sem-codigo-livre' }, { status: 503, headers: CABECALHOS_CORS });
     }
 
     return (

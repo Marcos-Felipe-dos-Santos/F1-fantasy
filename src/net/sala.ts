@@ -64,6 +64,10 @@ export function criarSala(
   salaId: string,
   seedMestre: number,
   dificuldade: Dificuldade,
+  /** Instante da criação. OBRIGATÓRIO: com default, a sala nasceria "vazia
+   * desde 1970" e morreria no primeiro tique — a armadilha exata do defeito
+   * que a carência conserta. */
+  agora: number,
 ): EstadoSala {
   return {
     salaId,
@@ -75,6 +79,8 @@ export function criarSala(
     roster: null,
     draft: null,
     tokens: {},
+    // Nasce vazia: a carência é o que dá tempo de compartilhar o código.
+    vazioDesde: agora,
     concluidaEm: null,
     seq: 0,
   };

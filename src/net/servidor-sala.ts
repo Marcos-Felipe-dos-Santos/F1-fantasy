@@ -34,7 +34,12 @@ import {
   reduzirSala,
 } from './sala';
 import { expirados } from './draft-rede';
-import { JANELA_DE_GRACA_MS, PRAZO_TURNO_MS, type EstadoSala } from './tipos';
+import {
+  CARENCIA_VAZIO_MS,
+  JANELA_DE_GRACA_MS,
+  PRAZO_TURNO_MS,
+  type EstadoSala,
+} from './tipos';
 import type { Dificuldade } from '../engine/types';
 
 /** Uma mensagem endereçada: `para === null` significa broadcast pra todos. */
@@ -62,8 +67,9 @@ export function criarServidor(
   salaId: string,
   seedMestre: number,
   dificuldade: Dificuldade,
+  agora: number,
 ): EstadoServidor {
-  return { sala: criarSala(salaId, seedMestre, dificuldade), jogadorPorConexao: {} };
+  return { sala: criarSala(salaId, seedMestre, dificuldade, agora), jogadorPorConexao: {} };
 }
 
 /** O que o servidor deve fazer com a sala neste instante. */
@@ -77,9 +83,10 @@ export type DecisaoDeVida =
  * existem, não lê relógio nem sockets — quem sabe disso é a casca.
  *
  * As duas regras, e por que cada uma:
- * - **Sem ninguém conectado ⇒ encerra na hora.** Não faz sentido segurar
+ * - **Sem ninguém há mais que a carência ⇒ encerra.** Não faz sentido segurar
  *   estado sem ninguém, e é isso que impede a "sala zumbi com draft de dias
- *   atrás".
+ *   atrás" — mas com folga para o criador compartilhar o código e para uma
+ *   queda de conexão momentânea (ver `CARENCIA_VAZIO_MS`).
  * - **Partida concluída + janela vencida ⇒ encerra.** A janela existe pra
  *   olhar o resultado, anotar, printar (`JANELA_DE_GRACA_MS`). Passada ela, o
  *   log append-only finalmente tem ponto de descarte — antes crescia pra
@@ -87,16 +94,39 @@ export type DecisaoDeVida =
  */
 export function decidirVida(
   estado: EstadoServidor,
-  conexoesAbertas: number,
   agora: number,
   janelaMs: number = JANELA_DE_GRACA_MS,
+  carenciaMs: number = CARENCIA_VAZIO_MS,
 ): DecisaoDeVida {
-  if (conexoesAbertas === 0) return { tipo: 'encerrar', motivo: 'vazia' };
-  const { concluidaEm } = estado.sala;
+  const { vazioDesde, concluidaEm } = estado.sala;
+  // 🔴 VAZIA COM CARÊNCIA, não vazia na hora. A primeira versão encerrava no
+  // primeiro tique com zero conexões — e como a sala nasce vazia, ela morria
+  // em 5 s, antes de o criador conseguir mandar o código pra alguém. O mesmo
+  // matava quem trocasse de app no celular estando sozinho.
+  if (vazioDesde !== null && agora - vazioDesde >= carenciaMs) {
+    return { tipo: 'encerrar', motivo: 'vazia' };
+  }
   if (concluidaEm !== null && agora - concluidaEm >= janelaMs) {
     return { tipo: 'encerrar', motivo: 'janela-vencida' };
   }
   return { tipo: 'seguir' };
+}
+
+/**
+ * Registra quantas conexões existem agora. É o que alimenta a carência de
+ * vazio — e mora aqui, e não na casca, porque **decidir é do núcleo**: a
+ * primeira versão tomava essa decisão dentro do `onClose` do Durable Object,
+ * duplicando `decidirVida` num lugar que nenhum teste alcança.
+ */
+export function registrarConexoes(
+  estado: EstadoServidor,
+  conexoesAbertas: number,
+  agora: number,
+): EstadoServidor {
+  const vazio = conexoesAbertas === 0;
+  const jaVazio = estado.sala.vazioDesde !== null;
+  if (vazio === jaVazio) return estado; // nada mudou: preserva a identidade
+  return { ...estado, sala: { ...estado.sala, vazioDesde: vazio ? agora : null } };
 }
 
 /**

@@ -85,6 +85,13 @@ async function main() {
   }
   URL_WS = `ws://${BASE}/parties/sala/${SALA}`;
 
+  // 🔴 A ESPERA É O TESTE. O fluxo real é: criar → copiar o link → mandar no
+  // WhatsApp → o amigo abrir. Isso leva MUITO mais que 5 segundos, e a primeira
+  // versão do ciclo de vida matava a sala vazia no primeiro tique do alarme —
+  // ou seja, o caso de uso central do PR não funcionava. Sem esta pausa, o
+  // smoke passava com a sala inalcançável na prática.
+  await pausa(7000);
+
   // Código que ninguém criou tem de ser recusado com mensagem CLARA.
   const inexistente = new WebSocket(`ws://${BASE}/parties/sala/FFFFFF`);
   const recusaSala = await new Promise((res) => {
@@ -223,25 +230,31 @@ async function main() {
   if (snapshotC.estado.draft?.log.length >= 1) ok('conexão nova recebe o estado já em andamento');
   else falha('snapshot pra conexão nova', JSON.stringify(snapshotC.estado.draft?.log.length));
 
-  // --- CICLO DE VIDA (PR 3.3.2): todos saem ⇒ a sala reseta na hora ---
+  // --- CICLO DE VIDA (PR 3.3.2): todos saem, e a sala SOBREVIVE à carência ---
+  //
+  // Esta asserção já foi o contrário ("reseta na hora") e estava errada: era
+  // exatamente o defeito que matava a sala de quem dava F5 ou trocava de app no
+  // celular estando sozinho. A morte DEPOIS da carência é coberta pelo teste
+  // unitário de `decidirVida`, que é determinístico e não precisa esperar
+  // 2 minutos de verdade.
   a2.fechar();
   b.fechar();
   c.fechar();
-  await pausa(1200);
+  await pausa(1500);
 
-  const zumbi = new WebSocket(URL_WS);
-  const aposReset = await new Promise((res) => {
-    zumbi.addEventListener('message', (ev) => res(JSON.parse(ev.data)));
-    zumbi.addEventListener('close', () => res(null));
-    setTimeout(() => res(null), 4000);
+  const voltando = new WebSocket(URL_WS);
+  const aindaViva = await new Promise((res) => {
+    voltando.addEventListener('message', (ev) => res(JSON.parse(ev.data)));
+    voltando.addEventListener('close', () => res(null));
+    setTimeout(() => res(null), 5000);
   });
-  if (aposReset?.erro === 'sala-inexistente') {
-    ok('todos saíram ⇒ sala RESETADA e o código liberado');
+  if (aindaViva?.tipo === 'estado') {
+    ok('sala esvaziou e SOBREVIVEU à carência — dá pra voltar depois de um F5');
   } else {
-    falha('reset ao esvaziar', JSON.stringify(aposReset));
+    falha('sala morreu ao esvaziar (a carência não funcionou)', JSON.stringify(aindaViva));
   }
   try {
-    zumbi.close();
+    voltando.close();
   } catch {
     /* já fechada */
   }

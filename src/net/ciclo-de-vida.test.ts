@@ -11,11 +11,17 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { criarServidor, decidirVida, marcarConclusao, type EstadoServidor } from './servidor-sala';
-import { JANELA_DE_GRACA_MS } from './tipos';
+import {
+  criarServidor,
+  decidirVida,
+  marcarConclusao,
+  registrarConexoes,
+  type EstadoServidor,
+} from './servidor-sala';
+import { CARENCIA_VAZIO_MS, JANELA_DE_GRACA_MS } from './tipos';
 
 const T0 = 1_000_000;
-const criar = (): EstadoServidor => criarServidor('A3F9C2', 2026, 'dificil');
+const criar = (): EstadoServidor => criarServidor('A3F9C2', 2026, 'dificil', T0);
 
 /** Estado com a partida terminada em `T0`. */
 function concluida(): EstadoServidor {
@@ -39,7 +45,8 @@ function concluida(): EstadoServidor {
       },
     },
   };
-  return marcarConclusao(comDraft, T0);
+  // Com gente dentro: senão a carência de vazio venceria antes da janela.
+  return marcarConclusao(registrarConexoes(comDraft, 3, T0), T0);
 }
 
 describe('marcarConclusao', () => {
@@ -60,31 +67,62 @@ describe('marcarConclusao', () => {
 });
 
 describe('decidirVida', () => {
-  it('sala VAZIA encerra na hora, mesmo com partida em andamento', () => {
-    // Não faz sentido segurar estado sem ninguém — é o que impede a sala zumbi.
-    expect(decidirVida(criar(), 0, T0)).toEqual({ tipo: 'encerrar', motivo: 'vazia' });
-    expect(decidirVida(concluida(), 0, T0)).toEqual({ tipo: 'encerrar', motivo: 'vazia' });
+  it('🔴 sala VAZIA tem CARÊNCIA — não morre no primeiro tique', () => {
+    // Este teste afirmava o contrário ("encerra na hora") e por isso ficava
+    // verde com o defeito dentro: a sala nasce vazia, o alarme dispara em 5 s,
+    // e ela morria ANTES de o criador conseguir mandar o código pra alguém. O
+    // caso de uso central do PR não funcionava, e o teste dizia que sim.
+    const nova = criar(); // `vazioDesde = T0` — nasce vazia, de propósito
+    expect(decidirVida(nova, T0)).toEqual({ tipo: 'seguir' });
+    expect(decidirVida(nova, T0 + 5_000), 'morreu no primeiro tique').toEqual({ tipo: 'seguir' });
+    expect(decidirVida(nova, T0 + CARENCIA_VAZIO_MS - 1)).toEqual({ tipo: 'seguir' });
   });
 
-  it('partida em andamento com gente dentro NUNCA encerra por tempo', () => {
+  it('vencida a carência sem ninguém, encerra — a sala zumbi continua impedida', () => {
+    expect(decidirVida(criar(), T0 + CARENCIA_VAZIO_MS)).toEqual({
+      tipo: 'encerrar',
+      motivo: 'vazia',
+    });
+  });
+
+  it('a carência é de 2 minutos — cobre copiar o link e trocar de app no celular', () => {
+    expect(CARENCIA_VAZIO_MS).toBe(120_000);
+  });
+
+  it('partida em andamento COM GENTE DENTRO nunca encerra por tempo', () => {
     // Um draft longo não pode ser interrompido pela janela — ela só conta
-    // depois do fim.
-    expect(decidirVida(criar(), 2, T0 + 10 * JANELA_DE_GRACA_MS)).toEqual({ tipo: 'seguir' });
+    // depois do fim. `vazioDesde: null` é o que diz "tem gente".
+    const comGente = registrarConexoes(criar(), 2, T0);
+    expect(comGente.sala.vazioDesde).toBeNull();
+    expect(decidirVida(comGente, T0 + 10 * JANELA_DE_GRACA_MS)).toEqual({ tipo: 'seguir' });
+  });
+
+  it('registrarConexoes marca e desmarca o vazio, e preserva identidade se nada muda', () => {
+    const vazia = criar();
+    const comGente = registrarConexoes(vazia, 3, T0 + 1000);
+    expect(comGente.sala.vazioDesde).toBeNull();
+    // Chamar de novo com o mesmo cenário não cria objeto novo — é o que evita
+    // escrita em storage a cada tique.
+    expect(registrarConexoes(comGente, 3, T0 + 2000)).toBe(comGente);
+
+    const esvaziou = registrarConexoes(comGente, 0, T0 + 3000);
+    expect(esvaziou.sala.vazioDesde).toBe(T0 + 3000);
+    expect(registrarConexoes(esvaziou, 0, T0 + 9000), 'remarcou o vazio').toBe(esvaziou);
   });
 
   it('dentro da janela de graça, segue viva', () => {
     const estado = concluida();
-    expect(decidirVida(estado, 3, T0)).toEqual({ tipo: 'seguir' });
-    expect(decidirVida(estado, 3, T0 + JANELA_DE_GRACA_MS - 1)).toEqual({ tipo: 'seguir' });
+    expect(decidirVida(estado, T0)).toEqual({ tipo: 'seguir' });
+    expect(decidirVida(estado, T0 + JANELA_DE_GRACA_MS - 1)).toEqual({ tipo: 'seguir' });
   });
 
   it('vencida a janela, encerra — exatamente no limite', () => {
     const estado = concluida();
-    expect(decidirVida(estado, 3, T0 + JANELA_DE_GRACA_MS)).toEqual({
+    expect(decidirVida(estado, T0 + JANELA_DE_GRACA_MS)).toEqual({
       tipo: 'encerrar',
       motivo: 'janela-vencida',
     });
-    expect(decidirVida(estado, 3, T0 + JANELA_DE_GRACA_MS + 60_000)).toEqual({
+    expect(decidirVida(estado, T0 + JANELA_DE_GRACA_MS + 60_000)).toEqual({
       tipo: 'encerrar',
       motivo: 'janela-vencida',
     });
@@ -92,8 +130,8 @@ describe('decidirVida', () => {
 
   it('a janela é parametrizável (o teste não espera 10 minutos de verdade)', () => {
     const estado = concluida();
-    expect(decidirVida(estado, 1, T0 + 50, 100)).toEqual({ tipo: 'seguir' });
-    expect(decidirVida(estado, 1, T0 + 100, 100)).toEqual({
+    expect(decidirVida(estado, T0 + 50, 100)).toEqual({ tipo: 'seguir' });
+    expect(decidirVida(estado, T0 + 100, 100)).toEqual({
       tipo: 'encerrar',
       motivo: 'janela-vencida',
     });

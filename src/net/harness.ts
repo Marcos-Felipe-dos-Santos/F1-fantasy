@@ -190,7 +190,7 @@ export function rodarHarness(opcoes: OpcoesHarness): ResultadoHarness {
     tokensRecusados: 0,
   };
 
-  let servidor = criarServidor('sala-harness', seed, 'dificil');
+  let servidor = criarServidor('sala-harness', seed, 'dificil', 0);
   const participantes = new Map<string, Participante>();
   const emTransito: EmTransito[] = [];
   let ordem = 0;

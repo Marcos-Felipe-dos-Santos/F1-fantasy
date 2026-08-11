@@ -129,6 +129,21 @@ export const MAX_BYTES_MENSAGEM = 8192;
 export const JANELA_DE_GRACA_MS = 10 * 60_000;
 
 /**
+ * Quanto tempo uma sala SEM NINGUÉM continua de pé antes de ser descartada.
+ *
+ * 🔴 Existe por causa de um defeito real: a primeira versão encerrava a sala
+ * vazia **no primeiro tique** (5 s), e com isso o caso de uso central do PR
+ * simplesmente não funcionava — criar a sala, copiar o link, mandar no
+ * WhatsApp e o amigo abrir leva muito mais que 5 segundos, e o criador voltava
+ * para "sala não encontrada". O mesmo matava quem trocasse de app no celular
+ * ou desse F5 estando sozinho: o WebSocket fecha, a sala some, e a reconexão
+ * do 3.2.1 vira letra morta justo quando mais importa.
+ *
+ * 2 minutos cobre os dois casos com folga e continua matando a sala zumbi.
+ */
+export const CARENCIA_VAZIO_MS = 2 * 60_000;
+
+/**
  * A partir de quanto tempo restante a tela avisa que a sala vai fechar.
  * Decisão do dev: **só no último minuto** — durante os 9 primeiros a tela de
  * resultado fica limpa, sem pressão de relógio enquanto o pessoal comenta.
@@ -215,6 +230,15 @@ export interface EstadoSala extends Omit<EstadoSalaPublico, 'seedDraft'> {
    * antes disso ele crescia para sempre, que era metade do problema C2 do 3.2.
    */
   concluidaEm: number | null;
+  /**
+   * Desde quando a sala está SEM NINGUÉM conectado (ms, injetado). `null` = tem
+   * gente dentro.
+   *
+   * Nasce preenchido: a sala é criada vazia, e é a `CARENCIA_VAZIO_MS` que dá
+   * tempo de o criador copiar o código e chamar os amigos. Encerrar no primeiro
+   * tique — como a primeira versão fazia — quebrava o caso de uso central.
+   */
+  vazioDesde: number | null;
   /**
    * jogadorId → token de reentrada. **É O SEGUNDO SEGREDO DO ESTADO**, junto com
    * a `seedMestre`, e pelo mesmo motivo: quem tem o token de alguém joga como
