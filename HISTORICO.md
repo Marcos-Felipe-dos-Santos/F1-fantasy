@@ -1317,6 +1317,28 @@ LAN. É o primeiro suspeito se o celular não conectar.
 
 **Risco original do 3.3 não tocado:** a corrida online ainda NÃO existe. O draft online termina no resumo.
 
+### PR 3.3.3 — criar sala não passava pelo proxy do Vite (2026-08-11, `a6010ef`) — BAIXO RISCO
+
+**PROBLEMA: `/criar-sala` não funcionava.** O 3.3.2 trocou a criação de sala de rota do Durable Object para `POST /criar-sala` no worker, mas o `proxy` do `vite.config.ts` (escrito no 3.3.1) repassava SÓ `/parties/*`. O fetch morria DENTRO do Vite com **404**, sem uma linha no terminal do wrangler. Diagnóstico medido: `curl -X POST http://localhost:5173/criar-sala` → **404**; a mesma requisição direto em `127.0.0.1:8787` → **200 `{"codigo":"531004"}`**. A UI concluía "o servidor está rodando?" apontando pro lugar errado.
+
+**SOLUÇÃO: fonte única de verdade.**  O problema era haver DUAS listas de rotas (`src/net/` e `vite.config.ts`) que precisavam concordar e nenhuma saber da outra — fácil esquecer uma chave. Agora `src/net/rotas.ts` é a fonte única (`ROTA_CRIAR_SALA`, `PREFIXO_PARTIES`, `ROTAS_DO_WORKER`, `proxyDoWorker()`), e `vite.config.ts` **DERIVA** o bloco `proxy` chamando `proxyDoWorker()`. Rota nova atravessa o proxy sozinha. `sala-online.ts` e `party/sala.ts` passaram a usar `ROTA_CRIAR_SALA` em vez do literal.
+
+**Detalhe de implementação:** a primeira tentativa foi o teste IMPORTAR o `vite.config.ts` de verdade, mas isso reprova com **TS6305** — o arquivo pertence ao projeto composite `tsconfig.node.json` e o `tsc` exige o `.d.ts` compilado, que este projeto (`--noEmit` em tudo) nunca produz. Nem `disableSourceOfProjectReferenceRedirect` nem pôr o arquivo no `include` resolveram. Daí a inversão: o config importa do teste-testável (`rotas.ts`), não o contrário.
+
+**Teste novo: `src/net/proxy-vite.test.ts`** (baseline vermelho de verdade — falhou nos dois cheques importantes antes da correção, com os outros três passando). Cobre: (1) `/criar-sala` atravessa o proxy; (2) WebSocket (`/parties/*`) segue com `ws: true`; (3) toda rota declarada é atendida; (4) **anti-vacuidade** (`/`, `/index.html`, `/src/ui/App.tsx`, `/rota-inexistente` não casam); (5) **o elo fechador** — o `vite.config.ts` USA `proxyDoWorker()` e não tem `target:` escrito à mão (verificação por texto do arquivo, com limite conhecido no docblock: prova que a **chamada** está escrita, não que o Vite a executou — runtime medido com curl).
+
+🔒 **Lição de processo (IMPORTANTE, vale destacar — mapeada ao `CLAUDE.md` § "Cerca de lint"):** `conexao.test.ts` tinha um COMENTÁRIO afirmando que o prefixo "é o mesmo do `proxy` no `vite.config.ts`" — e **nada lia o `vite.config.ts`**. **Comentário não é asserção; é a mesma armadilha da "asserção infalsificável" do PR 8.2.** Os 1355 testes passavam com o botão quebrado porque a conferência era MANUAL, nunca testada. O comentário foi corrigido pra apontar pro teste que de fato confere (procurar "vite config" em `conexao.test.ts` agora lê `proxy-vite.test.ts`).
+
+🔒 **C3 continua fechado, VERIFICADO DEPOIS DA MUDANÇA:** `POST /parties/sala/000000/criar` → **404** (medido). A criação segue por RPC (`criarSeNova`), fora de `/parties/`. Não foi movida pra dentro de `/parties/` apesar de isso simplificar o proxy **porque** C3 precisa ficar fechado — registrado por quê aqui pra que nenhum PR futuro "simplifique".
+
+**PROBLEMA 2 — tela órfã na TelaInicio.** O modo Online ainda mostrava um campo "Nome da sala" com placeholder `sala-1` e o texto "quem digitar o mesmo nome cai na mesma partida" — a interface **ANTERIOR ao código gerado pelo servidor**, contradizendo o modelo do 3.3.2. O argumento já era morto (`App.tsx` fazia `onEntrarOnline={() => setEscolhendoSala(true)}`, ignorando o parâmetro). Removidos o campo, o estado `salaOnline`, a phrase; a prop virou `() => void`. Removida também, no online, a frase sobre calendário sorteado de campeonato — órfã da mesma família, já que no online não há campeonato (o 3.5 não existe; o draft online termina no resumo). A frase que sobreviveu é verdadeira e foi mantida ("Seed, dificuldade e formato não aparecem aqui porque quem decide é o servidor da sala…").
+
+**VALIDAÇÃO NO NAVEGADOR — fluxo real, ponta a ponta:** modo Online → "Criar ou entrar numa sala" → "Criar sala" → código **C4 22 04** com link `http://localhost:5173/?sala=C42204` → link aberto em segunda aba → nomes "Anfitrião"/"Convidado", cada aba vendo a outra, anfitrião com 👑 → "Estou pronto" nas duas → "Começar o draft" → **"Rodada 1 de 5" nas duas abas**, cada uma com seu sorteio (Sauber 2018 / Osella 1984) · sem erros no console · worker registrou `POST /criar-sala 200 OK` e dois `GET /parties/sala/C42204 101 Switching Protocols`.
+
+**Medido:**
+- `npm test` **1362/50** (era 1355/49), `typecheck` **0** (app + party), `eslint src scripts party vite.config.ts` **0**, `build` **0**.
+- `npm run balance` **não rodado** — nada em `src/engine/`, `src/data/` ou `scripts/alavancas` foi tocado.
+
 ## Acompanhamentos registrados pela revisão do PR 1.6 (não são defeitos; candidatos a PR futuro)
 
 - `medirParadasExtras` usa equipes históricas inteiras — o CALL do estrategista desloca a 1ª parada e vira confound secundário do bucket de PNEU (o bucket <60 é na prática 1 piloto). Sinal mais limpo: fixar chassi/motor/estrategista/pit e variar só o piloto.

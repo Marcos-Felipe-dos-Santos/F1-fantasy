@@ -9,36 +9,39 @@
 
 - ✅ **CÓDIGO DE SALA E CICLO DE VIDA FEITOS — PR 3.3.2 em 2026-08-10** (`02ff6ee` + `b882d9b`).
   **O modo online agora tem sala privada por padrão** (código hexadecimal de 6 dígitos, não 4, sorteado
-  pelo servidor; enumeração impossível em tempo casual). **Aguarda o dev testar.**
+  pelo servidor; enumeração impossível em tempo casual).
+- ✅ **ROTA `/CRIAR-SALA` FUNCIONANDO — PR 3.3.3 em 2026-08-11** (`a6010ef`). O 3.3.2 trocou a criação para
+  `POST /criar-sala` no worker, mas o proxy do Vite repassava só `/parties/*`. Corrigido centralizando rotas
+  em `src/net/rotas.ts` — fonte única que o `vite.config.ts` consome. Tela órfã do modo Online removida
+  (campo "Nome da sala" e estado morto). **Caminho principal testado e funcionando** (criar sala → link em segunda aba →
+  nomes → prontos → "Começar o draft" → rodada 1 de 5 nas duas).
 
   🎮 **COMO TESTAR O ONLINE — dois terminais, no PowerShell:**
 
       Terminal 1:   npm run sala        (worker/DO — fica em 127.0.0.1:8787)
       Terminal 2:   npm run dev         (app em localhost:5173)
 
-  1. `http://localhost:5173/` → **Modo "Online"** → **"Criar sala"**. O servidor sorteia o código
-     (`A3 F9 C2`) e mostra com **"Copiar link"**.
-  2. **Cole o link numa segunda aba** (é o caminho principal: o link já leva o código). Ou use
-     "Entrar na sala de um amigo" e digite os 6 dígitos.
-  3. Nomes diferentes nas duas, **"Estou pronto"** nas duas, e o anfitrião 👑 clica em **"Começar o
-     draft"**. As 20 vagas restantes viram bots.
+  **Caminho principal (✅ rodado em 2026-08-11, funciona):** `http://localhost:5173/` → Modo "Online"
+  → "Criar sala" → servidor sorteia código → "Copiar link" → cole numa segunda aba → nomes diferentes
+  → "Estou pronto" nas duas → anfitrião 👑 clica "Começar o draft" → rodada 1 de 5 aparece nas duas
+  abas com sorteios independentes. (Alternativa: "Entrar na sala de um amigo" e digitar os 6 dígitos.)
 
-  **Quatro coisas que valem testar de propósito:**
+  **Quatro casos de propósito que restam testar:**
   - **F5 no meio do draft** — volta como o mesmo jogador, pelo token. F5 *no lobby* é diferente: lá
     cair é sair, e entra-se de novo.
-  - **Fechar a aba e voltar** em menos de 2 minutos — a sala sobrevive (é a carência que conserta o
-    defeito de ela morrer sozinha) e a reconexão traz o estado do draft.
-  - **Deixar uma aba parada** até o cronômetro expirar — a outra segue, e a parada passa a mostrar
-    "você perdeu a vez por inatividade".
+  - **Fechar a aba e voltar** em menos de 2 minutos — a sala sobrevive e a reconexão traz o estado do
+    draft (a carência de 2 min protege contra zumbi de draft antigo).
+  - **Deixar uma aba parada** até o cronômetro de turno expirar — a outra segue, e a parada passa a
+    mostrar "você perdeu a vez por inatividade" (expiraTurno).
   - **Um código inventado** (ex.: `FFFFFF`) — tem que dizer "Sala não encontrada", não travar.
 
   📱 **PRA JOGAR DO CELULAR / EM REDE — trocar o terminal 2 por `npm run dev:rede`** e abrir no
   celular o endereço `Network` da LAN que ele imprime (hoje `http://192.168.0.13:5173/`).
   **Guia completo: `docs/jogar-em-rede.md`** (firewall, túnel, diagnóstico).
 
-  - **Medido:** `npm test` **1355/49**, `npm run typecheck` **0** (app + `party/`),
-    `eslint src scripts party` **0**, `npm run build` **0**. `npm run balance` **inalterado por
-    construção**.
+  - **Medido (3.3.3):** `npm test` **1362/50** (era 1355/49), `npm run typecheck` **0** (app + `party/`),
+    `eslint src scripts party vite.config.ts` **0**, `npm run build` **0**. `npm run balance` **não rodado**
+    — nada em `src/engine/`, `src/data/` ou `scripts/alavancas` foi tocado.
   - 🔌 **PR 3.3.1 (`23d1cce`) — o worker passa pela PORTA DO VITE.** `wrangler dev` sobe em
     `127.0.0.1` (só localhost), então de fora o app carregava e o WebSocket morria; e abrir o worker
     na rede **não bastaria**, porque a URL do WS era fixa (`:8787`) e **cada visitante chega por um
@@ -68,8 +71,8 @@
   `4ba4f50`) e a rodada de **narração rica + auto-avanço**: **A** (variedade/chuva, `1537ad6`),
   **B** (causalidade contrafactual, `43fe420`), **C** (avanço automático, `fc7f20d`); e ainda
   **8.2.1** (calendário na engine, `cfe1c47`) e **8.3** (telas do campeonato, `0da36fb`) ·
-  **1355 testes** (49 arquivos) verdes — medido em 2026-08-10, depois do 3.3.2; eram 1094/36 antes
-  da Fase 3. ⚠️ O badge do README ainda diz **1094** e é estático — está desatualizado (deveria ser 1355).
+  **1362 testes** (50 arquivos) verdes — medido em 2026-08-11 (PR 3.3.3); eram 1094/36 antes da Fase 3.
+  ⚠️ O badge do README ainda diz **1094** e é estático — está desatualizado (deveria ser 1362).
 - **Medido em 2026-08-07, não herdado:** `npm test` **1094/36**, `tsc --noEmit` **exit 0**,
   `eslint src scripts` **exit 0**, `npm run build` **exit 0**. **`npm run balance` inalterado por
   construção** — o harness importa só `src/engine/dataset`, `src/data/*.json` e `scripts/alavancas`,
@@ -357,7 +360,8 @@ duplicada entre engine e redutor, derivando em silêncio.
   10 min pra olhar resultado; depois reseta (ou se ficar vazia por 2 min). Fechou os três críticos
   da revisão (C1: sala morria em 5s antes de alguém entrar; C2: `onClose` encerrava na hora; C3:
   `onRequest` deixava atacante criar sala com código escolhido). Medido: 20/20 smoke, incluindo
-  "sala esvaziou e sobreviveu à carência".
+  "sala esvaziou e sobreviveu à carência". 🔒 **C3 continua fechado em 3.3.3** (`POST /parties/sala/000000/criar` → **404**, medido depois da mudança). A rota não foi movida pra dentro de `/parties/` apesar de isso simplificar o proxy, porque esse acesso aberto é o risco que C3 precisava bloquear — registrado pra que nenhum PR futuro "simplifique" a rota de volta.
+- ✅ **3.3.3 Criar sala não passava pelo proxy** — FEITO (`a6010ef`). Rota `/criar-sala` centralizada em `src/net/rotas.ts`, que o `vite.config.ts` consome; rota nova atravessa proxy sozinha. Tela órfã removida (campo "Nome da sala" morto desde o 3.3.2, UI contradizia server).
 - **3.4 Handshake de versão + detector de divergência** (hash da corrida comparado entre os 22).
 - **3.5 Campeonato online (seed por etapa)** — **CORTE Nº 1** se a fase ficar grande.
 
@@ -413,21 +417,21 @@ de 0,0650 pra **0,0397** e obrigou a redesenhar a escada tonal inteira. Não foi
 
 **Os portões visuais saíram desta lista: os dois foram aprovados em 2026-08-07.**
 
-0. ⬅️ **O DEV TESTAR O ONLINE NO NAVEGADOR** — o caminho está no topo deste arquivo.
+0. ⬅️ **TESTE DO ONLINE — caminho principal FEITO em 2026-08-11** (criar sala → link em segunda aba →
+   nomes → prontos → "Começar o draft" → rodada 1 de 5 nas duas). **Restam os quatro casos de propósito:**
+   F5 no meio do draft, fechar e voltar em <2min, deixar parada até cronômetro, código inventado.
 1. **PR 3.4 — Handshake de versão + detector de divergência** (hash da corrida comparado entre os
    22). É o que transforma o RISCO ATIVO de "diverge em silêncio" em "diverge com alarme", e por
    isso é o próximo natural.
 2. **A corrida online** (o draft online termina no resumo hoje) e o **3.5 campeonato online**
    (CORTE Nº 1 se a fase ficar grande).
-1. ⬅️ **VEREDITO do dev sobre `preview/campeonato.html`** (as três telas do 8.3) — segue aberto.
-2. **PR de INFRA — DESTRAVADO pela aprovação das silhuetas.** Era "pré-requisito caso as silhuetas
+3. ⬅️ **VEREDITO do dev sobre `preview/campeonato.html`** (as três telas do 8.3) — segue aberto.
+4. **PR de INFRA — DESTRAVADO pela aprovação das silhuetas.** Era "pré-requisito caso as silhuetas
    fossem aprovadas"; com o 10/10, **deixa de ser pré-requisito e vira consolidação**: restrições
    geométricas como testes vermelhos + allowlist `LEGADO` que só encolhe. **Reavaliar o escopo com o
    dev antes de fazer** — pode ter encolhido junto.
-3. **PR 8.3 — as telas de verdade do campeonato** (calendário, classificação navegável, fim de
-   temporada). O painel de hoje é cru de propósito.
-4. 🛑 **Depois, o pit (7.9).**
-5. **Decisão de arte ainda aberta:** o `88/40%` da zebra (seção própria abaixo) — não foi tocado
+5. 🛑 **Depois, o pit (7.9).**
+6. **Decisão de arte ainda aberta:** o `88/40%` da zebra (seção própria abaixo) — não foi tocado
    pela aprovação dos portões.
 
 ## Decisões travadas da PALETA (7.8 — ✅ APROVADA pelo dev, não reabrir sem ele)
