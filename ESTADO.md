@@ -9,9 +9,7 @@
 
 - ✅ **TESTE DO ONLINE FECHADO — PR 3.3.4 em 2026-08-11** (F5 perdia sala; porta 8787 ocupada falha
   silencioso). **Os quatro casos de propósito rodados e validados pelo dev.**
-- 🟡 **RISCO ATIVO REBAIXADO, não fechado — PR 3.4 em 2026-08-11** (handshake de versão + detector de
-  divergência). **Deixou de divergir em silêncio; agora diverge com alarme que ninguém vê ainda**
-  (fica em `EstadoCliente.divergencia`). **Próximo PR: surfacing do alarme + corrida online.**
+- ✅ **SURFACING DO ALARME CONCLUÍDO — PR 3.4.1 em 2026-08-11** (BannerDivergencia em FluxoOnline). **Detector (3.4) agora visível ao jogador — alarme aparece em todas as telas do online.** Veredito do dev: "legível, destacado sem ser gritante, texto correto". **Próximo PR: corrida online (autorizada pelo dev; 3.5 de campeonato online fecha a Fase 3).**
 - ✅ **CÓDIGO DE SALA E CICLO DE VIDA FEITOS — PR 3.3.2 em 2026-08-10** (`02ff6ee` + `b882d9b`).
   **O modo online agora tem sala privada por padrão** (código hexadecimal de 6 dígitos, não 4, sorteado
   pelo servidor; enumeração impossível em tempo casual).
@@ -51,6 +49,9 @@
     `scripts/alavancas` foi tocado.
   - **Medido (3.4):** `npm test` **1394/54** (era 1368/51), `npm run typecheck` **0**, `eslint` **0**,
     `npm run build` **0**. `npm run balance` **rodado** (tocou `src/engine/versao.ts`): **inalterado**.
+  - **Medido (3.4.1):** `npm test` **1398/55** (era 1394/54), `npm run typecheck` **0**, `eslint` **0**,
+    `npm run build` **0**. `npm run balance` **não se aplica** — nada em `src/engine/`, `src/data/` ou
+    `scripts/alavancas` foi tocado.
   - 🔌 **PR 3.3.1 (`23d1cce`) — o worker passa pela PORTA DO VITE.** `wrangler dev` sobe em
     `127.0.0.1` (só localhost), então de fora o app carregava e o WebSocket morria; e abrir o worker
     na rede **não bastaria**, porque a URL do WS era fixa (`:8787`) e **cada visitante chega por um
@@ -80,8 +81,8 @@
   `4ba4f50`) e a rodada de **narração rica + auto-avanço**: **A** (variedade/chuva, `1537ad6`),
   **B** (causalidade contrafactual, `43fe420`), **C** (avanço automático, `fc7f20d`); e ainda
   **8.2.1** (calendário na engine, `cfe1c47`) e **8.3** (telas do campeonato, `0da36fb`) ·
-  **1394 testes** (54 arquivos) verdes — medido em 2026-08-11 (PR 3.4); eram 1094/36 antes da Fase 3.
-  ⚠️ O badge do README ainda diz **1094** e é estático — está desatualizado (deveria ser 1394).
+  **1398 testes** (55 arquivos) verdes — medido em 2026-08-11 (PR 3.4.1); eram 1094/36 antes da Fase 3.
+  ⚠️ O badge do README ainda diz **1094** e é estático — está desatualizado (deveria ser 1398).
 - **Medido em 2026-08-07, não herdado:** `npm test` **1094/36**, `tsc --noEmit` **exit 0**,
   `eslint src scripts` **exit 0**, `npm run build` **exit 0**. **`npm run balance` inalterado por
   construção** — o harness importa só `src/engine/dataset`, `src/data/*.json` e `scripts/alavancas`,
@@ -373,7 +374,8 @@ duplicada entre engine e redutor, derivando em silêncio.
 - ✅ **3.3.3 Criar sala não passava pelo proxy** — FEITO (`a6010ef`). Rota `/criar-sala` centralizada em `src/net/rotas.ts`, que o `vite.config.ts` consome; rota nova atravessa proxy sozinha. Tela órfã removida (campo "Nome da sala" morto desde o 3.3.2, UI contradizia server).
 - ✅ **3.3.4 F5 no draft perdia a sala; porta 8787 ocupada falha silencioso** — FEITO (`6b9fb3a`). Duas correções baixo risco: (a) `fixarSalaNaBarra` em `sala-online.ts` + funil único `entrarNaSala` no App — a sala agora aparece na URL (`?sala=CÓDIGO`) e não é perdida no F5; teste novo `sala-na-url.test.ts` com baseline vermelho (1 falhou / 5 passaram). (b) pré-voo `scripts/checar-porta-sala.ts` no `npm run sala` que tenta escutar na porta e falha com `exit 1` se ocupada. **Fecha os quatro casos de propósito do online**, todos rodados e validados pelo dev. **Pendência registrada:** duas abas do mesmo navegador compartilham o token e reentram como o anfitrião (não afeta jogo real, corrompe teste na própria máquina; documentado em `docs/jogar-em-rede.md` com contorno).
 - ✅ **3.4 Handshake de versão + detector de divergência** — FEITO (`75ccfbe`). Escolha do ausente era a única decisão local; divergência furava o pool em silêncio. Agora acusa. O que o 3.5 / corrida online herda: âncora = `eventosAplicados`, teto = tamanho do log, atrasado ignorado em silêncio; servidor compara strings opacas (fronteira "sem dataset" do 3.2 intacta); alarme vive em `EstadoCliente.divergencia`, não na tela. 🔑 **Tripwire: `versao.test.ts` hasheia `src/engine/`, `src/data/`, `cliente.ts` e `hash-draft.ts`, reprova sem bump de `VERSAO_APP` — próximo PR tocando engine tem teste vermelho com contexto.**
-- **3.5 Campeonato online (seed por etapa)** — **CORTE Nº 1** se a fase ficar grande.
+- ✅ **3.4.1 Surfacing do alarme de divergência** — FEITO (`615e94f`). `BannerDivergencia` em `FluxoOnline` renderiza o detector (3.4) ao jogador em todas as telas. Veredito do dev: aprovado. Preview em `E:\projetos\F1 fantasy\preview\divergencia.html` (regenerável por `npm run preview`). **Lição registrada em `CLAUDE.md` § item 5:** preview de componente real com CSS real; defeito (`data-tema` em `<div>` vs cascata `:root`) só pegável abrindo; corrigido com iframe por tema.
+- **3.5 Campeonato online (seed por etapa)** — **CORTE Nº 1** se a fase ficar grande. Autorizado pelo dev em 2026-08-11; em planejamento pelo `fable-architect`.
 
 🛑 **PORTÕES OBRIGATÓRIOS (do dev):**
 1. **Parar ao final do 3.0** com o go/no-go. ✅ cumprido.
@@ -428,12 +430,10 @@ de 0,0650 pra **0,0397** e obrigou a redesenhar a escada tonal inteira. Não foi
 
 **Os portões visuais saíram desta lista: os dois foram aprovados em 2026-08-07.**
 **O teste do online foi FECHADO no PR 3.3.4 com todos os quatro casos validados pelo dev.**
-**O risco ativo foi DOWNGRADE para SURFACING — detector funciona, alarme não está visual ainda.**
+**O alarme de divergência foi MOSTRADO ao jogador no PR 3.4.1 — SURFACING CONCLUÍDO.**
 
-0. **Surfacing do alarme de divergência** (sem número — o dev decide). O detector já existe (`EstadoCliente.divergencia`);
-   falta mostrar na tela. É mudança visual, precisa preview MOSTRADO ao dev.
 1. **A corrida online** (o draft online termina no resumo hoje) e o **3.5 campeonato online**
-   (CORTE Nº 1 se a fase ficar grande).
+   (CORTE Nº 1 se a fase ficar grande). Autorizado pelo dev e em planejamento.
 2. ⬅️ **VEREDITO do dev sobre `preview/campeonato.html`** (as três telas do 8.3) — segue aberto.
 4. **PR de INFRA — DESTRAVADO pela aprovação das silhuetas.** Era "pré-requisito caso as silhuetas
    fossem aprovadas"; com o 10/10, **deixa de ser pré-requisito e vira consolidação**: restrições
@@ -481,11 +481,10 @@ Spa (33,4%) e Red Bull Ring (28,0%) não perdem candidato. Caso extremo, o Nürb
 / 50,0% sem teto contra 24 / 38,7% com ele** — é o teto que segue impedindo a faixa contínua que o
 dev reprovou.
 
-## 🟡 RISCO ATIVO DOWNGRADED — divergência do ausente agora ACUSA
+## ✅ RISCO ATIVO FECHADO — divergência do ausente DETECTADA E VISÍVEL
 
 **Registrado como risco pelo dev em 2026-08-09, ao aprovar o portão do 3.1b.** Deixou de ser "diverge
-em silêncio" (🔴) e passou a ser "diverge com alarme" (🟡) no **PR 3.4**. Leia as ressalvas abaixo antes
-de declarar "fechado".
+em silêncio" (🔴) para "diverge com alarme que ninguém vê" (🟡) no **PR 3.4**, e foi CONCLUÍDO no **PR 3.4.1** quando o alarme subiu à tela. Ressalvas abaixo registram as limitações que permanecerão.
 
 **O que é.** Quando um jogador abandona ou estoura o prazo, o redutor do servidor o marca ausente e
 **pula a casa dele** — o servidor não pode escolher por ele, porque escolher é regra de jogo e regra
@@ -518,15 +517,13 @@ testes de que a substituição é determinística entre execuções independente
   escolha *própria* não diverge nada (ela vai pro log, que é a verdade compartilhada) — **a
   substituição do ausente é literalmente a única decisão que cada cliente toma sozinho.**
 
-**RESSALVAS — não é "fechado" sem qualificação:**
+**RESSALVAS — garantias que o alarme NÃO oferece:**
 
-1. **O alarme NÃO aparece na tela.** Fica em `EstadoCliente.divergencia` (campo novo). Surfacing é
-   mudança visual e precisa de veredito do dev — é o item 0 novo da SEQUÊNCIA.
-2. **A garantia é "na âncora terminal", NÃO "no primeiro divergente".** Appends rápidos e sucessivos
+1. **A garantia é "na âncora terminal", NÃO "no primeiro divergente".** Appends rápidos e sucessivos
    derrubam atestados de âncora intermediária dos retardatários, porque o balde só guarda a maior.
    Vale no fim, quando todos convergem. Não é "detecção instantânea em tempo real", é "certificação
    pós-convergência".
-3. **Cliente com bundle em cache fica fixo em versão `''` e tranca os atuais com `versao-divergente`.**
+2. **Cliente com bundle em cache fica fixo em versão `''` e tranca os atuais com `versao-divergente`.**
    O erro não carrega qual versão a sala espera — jogador não sabe que precisa de F5 forçado.
    Limitação conhecida.
 
@@ -553,8 +550,8 @@ testes de que a substituição é determinística entre execuções independente
    (e) ✅ **Prazo do turno tem dono no 3.2**: o `alarm()` do Durable Object chama `aoPassarOTempo` a
    cada 5 s (e para de se reagendar com a sala concluída ou vazia). **Falta a UI** mostrar o
    cronômetro ao jogador — isso é 3.3.
-   (f) ✅ **O 3.4 foi FEITO (detector + handshake).** **Corrida online é item 1 da SEQUÊNCIA**
-   (próximo passo natural depois do surfacing). O draft online termina no `TelaResumo`, com o botão
+   (f) ✅ **O 3.4 foi FEITO (detector + handshake). O 3.4.1 foi FEITO (surfacing visual).** **Corrida online é item 1 da SEQUÊNCIA**
+   (próximo passo natural, autorizado pelo dev em 2026-08-11, em planejamento pelo `fable-architect`). O draft online termina no `TelaResumo`, com o botão
    "Ir pra corrida" escondido de propósito — prometer a corrida e devolver à tela inicial é pior que botão nenhum.
    (g) **15% de perda com conexão intacta não é modo de falha real de WebSocket** (nota da revisão
    do 3.2): TCP entrega ou a conexão cai. O stress do harness continua válido como stress; só não

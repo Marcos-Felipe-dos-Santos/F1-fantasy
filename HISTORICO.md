@@ -1434,6 +1434,53 @@ Importantes:
 - ✅ **Fechada:** "O DEV TESTAR O ONLINE NO NAVEGADOR" (item 0 da SEQUÊNCIA do ESTADO.md). Os quatro casos rodados e validados em 2026-08-11.
 - ✅ **Aberta:** token por origem, não por aba (item 0.(h) de "Pendências ATIVAS").
 
+### PR 3.4.1 — surfacing do alarme de divergência (2026-08-11, commit `615e94f`) — BAIXO RISCO
+
+**O 3.4 construiu o detector inteiro — hash, comparação no servidor, broadcast, registro no cliente — e o jogador não via nada.** Do ponto de vista de quem joga, alarme que ninguém vê é o mesmo silêncio que a fase gastou um PR pra acabar. Este é o último metro.
+
+**DECISÕES:**
+
+- **Não fecha sozinho.** O estado já divergiu e nada no jogo o reconcilia; sumir sugeriria que passou.
+- **Não acusa ninguém nominalmente.** O servidor não tem dataset e não sabe quem está certo — `jogadores` é a minoria que atestou diferente, uma pista, não um veredito. Há teste exigindo que o id não apareça na tela.
+- **Sem componente novo e sem cor nova**: usa `--cor-erro`/`--cor-superficie`, os mesmos aliases da tela de erro do lobby. `--cor-erro` é `--erro-texto` (TINTA, não preenchimento), pela regra travada da paleta no 7.8.
+
+**ARQUITETURA:**
+
+`BannerDivergencia` fica em `FluxoOnline`, FORA do conteúdo por tela — a divergência pode acontecer em qualquer ponto (sorteios, peça, espera, resumo) e o jogador precisa vê-la em todos. Pôr em cada tela seria repetir a regra em seis lugares e esquecer num deles. O `FluxoOnline` virou um invólucro fino retornando `<> <BannerDivergencia /> <ConteudoOnline /> </>`, e o corpo antigo virou `ConteudoOnline`.
+
+**TESTE (`src/ui/banner-divergencia.test.ts`):**
+
+- Aparece com divergência; **NÃO** aparece sem (anti-vacuidade — alarme permanente é ruído que se aprende a ignorar, que é o mesmo que não ter alarme).
+- Aparece em TODAS AS CINCO telas do online (sorteios, peça, espera, resumo, sala encerrada).
+- Não vaza id de jogador.
+
+**Mutação rodada:** o banner nunca aparecer **mata 2 dos 4** testes (anti-vacuidade + não-vaza); os outros dois (aparição em cada tela) passam vacuamente sem o render. É uma limitação real — teste cego não pega composição (testes de UI só pegam o que asserem), e a cobertura depende da guarda de anti-vacuidade pra não ficar ilusória.
+
+**PREVIEW — a LIÇÃO que sobrevive ao PR (registrada no `CLAUDE.md` §"Definição de pronto" item 5):**
+
+O preview (`scripts/preview-divergencia.preview.test.ts`) renderiza componente REAL com o CSS REAL de produção. **Um defeito foi pego ABRINDO o preview antes de mostrar ao dev**, não por asserção nenhuma:
+
+- **Primeira versão:** punha `data-tema` numa `<div>`, mas a cascata da paleta é `:root[data-tema='light']` (bloco 3 do `tokens.css`).
+- **Resultado:** a seção rotulada "tema claro" renderizava **ESCURA** — um preview que mentia sobre o que mostrava.
+- **Por que o teste passou:** arquivo existia, teste rodava sem erro, nenhuma asserção pegaria (o test node não lê CSS do SO).
+- **Corrigido:** um `<iframe>` por tema, cada um com seu próprio `:root` via `srcdoc`. A guarda agora confere a forma ESCAPADA (`data-tema=&quot;light&quot;`), o que também prova que o caminho do iframe está sendo exercido.
+
+Isso é a **quinta instância** da mesma família de "afirmado ≠ conferido" que a Fase 3 encontrou no netcode — comentário lendo o proxy sem medir, regex furada na cerca, "sala vazia encerra na hora", testes de lag com estados idênticos, digest sem `src/net/`. Agora do lado visual. O dev pediu que virasse regra e virou — cite o `CLAUDE.md` §"Definição de pronto" item 5 ao mencionar preview.
+
+Path do preview (regenerável por `npm run preview`, gitignored): `E:\projetos\F1 fantasy\preview\divergencia.html`.
+
+**VEREDITO DO DEV:** "Banner aprovado nos dois temas — legível, destacado sem ser gritante, e o texto está certo ao não acusar ninguém nominalmente." O portão visual do 3.4.1 está fechado.
+
+**MEDIDO (real, não estimado):**
+- `npm test` **1398/55** (era 1394/54), `npm run typecheck` **0**, `eslint src scripts party vite.config.ts` **0**, `npm run build` **0**.
+- `npm run balance` **não se aplica** — nada em `src/engine/`, `src/data/` ou `scripts/alavancas` foi tocado (stat mostra `scripts/` e `src/ui/` apenas).
+
+**Revisão:** nenhuma — **baixo risco** (UI pura, portão visual puro). Fluxo curto: testes → commitar, conforme regra em `CLAUDE.md` §RIGOR PROPORCIONAL AO RISCO.
+
+**Pendências:**
+- ✅ **Fechada:** "alarme não está visual ainda". Agora está — veredito do dev em 2026-08-11.
+- 🟡 **Próximo passo aprovado:** a CORRIDA ONLINE, autorizada pelo dev nesta sessão e em planejamento pelo `fable-architect`. Depois dela, o 3.5 (campeonato online com seed por etapa) fecha a Fase 3.
+
 ## Acompanhamentos registrados pela revisão do PR 1.6 (não são defeitos; candidatos a PR futuro)
 
 - `medirParadasExtras` usa equipes históricas inteiras — o CALL do estrategista desloca a 1ª parada e vira confound secundário do bucket de PNEU (o bucket <60 é na prática 1 piloto). Sinal mais limpo: fixar chassi/motor/estrategista/pit e variar só o piloto.
