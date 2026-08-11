@@ -23,6 +23,7 @@ import {
   VERSAO_PROTOCOLO,
   type ComandoDraft,
   type ComandoSala,
+  type EscopoHash,
   type MensagemServidor,
 } from './protocolo';
 import {
@@ -56,6 +57,37 @@ export interface EstadoServidor {
   sala: EstadoSala;
   /** conexaoId → jogadorId. Só o `entrar` escreve aqui. */
   jogadorPorConexao: Record<string, string>;
+  /**
+   * Atestados de hash por escopo (PR 3.4). Ver `Atestados` — e note que só
+   * existe UM balde por escopo, o da âncora mais alta vista. Isso é o que
+   * mantém o estado limitado num log append-only.
+   */
+  atestados?: Partial<Record<EscopoHash, Atestados>>;
+  /**
+   * A `VERSAO_APP` desta sala (PR 3.4), fixada por quem entrou primeiro.
+   * `undefined` enquanto ninguém entrou; `''` quando quem abriu a sala é um
+   * cliente que não manda versão — e aí quem manda também é recusado, porque
+   * "não sei a sua versão" não é o mesmo que "a sua versão serve".
+   *
+   * Mora aqui e não em `EstadoSala` de propósito: é política de ADMISSÃO, não
+   * regra de jogo, e `reduzirSala` continua puro e sem saber que versão existe.
+   */
+  versaoApp?: string;
+}
+
+/**
+ * Os hashes de UMA âncora, por jogador.
+ *
+ * 🔒 O servidor não sabe o que estas strings significam — ele não tem o dataset
+ * (fronteira do 3.2). Ele só verifica se são todas iguais.
+ */
+export interface Atestados {
+  /** A âncora deste balde: `eventosAplicados`. Só a mais alta é guardada. */
+  ancora: number;
+  /** jogadorId → hash atestado nesta âncora. */
+  porJogador: Record<string, string>;
+  /** O alarme já saiu para esta âncora? Evita enxurrada. */
+  alarmado: boolean;
 }
 
 export interface ResultadoServidor {
@@ -223,6 +255,141 @@ function mapearConexao(
 const EH_DRAFT = new Set(['escolher', 'abandonar']);
 
 /**
+ * Um atestado bem-formado? O cliente é hostil por hipótese.
+ *
+ * 🔴 **`tetoAncora` NÃO é preciosismo — sem ele o detector se desliga sozinho.**
+ * O balde guarda só a âncora mais alta vista, e atestado com âncora menor é
+ * ignorado em silêncio (é assim que lag não vira alarme falso). Logo, UMA
+ * mensagem com `ancora: 2**40` de qualquer jogador sentado faz todo atestado
+ * honesto seguinte cair no ramo do silêncio **pelo resto da partida** — sem
+ * derrubar nada, sem inflar nada, apenas apagando a defesa que este PR existe
+ * pra criar.
+ *
+ * O servidor pode barrar isso SEM dataset: a âncora é um índice do log, e o log
+ * é dele. Comparar contadores não é entender conteúdo.
+ */
+function atestadoValido(
+  c: unknown,
+  tetoAncora: number,
+): c is { escopo: EscopoHash; ancora: number; hash: string } {
+  const o = c as { escopo?: unknown; ancora?: unknown; hash?: unknown };
+  return (
+    o.escopo === 'draft' &&
+    typeof o.ancora === 'number' &&
+    Number.isInteger(o.ancora) &&
+    o.ancora >= 0 &&
+    o.ancora <= tetoAncora &&
+    typeof o.hash === 'string' &&
+    // Teto de tamanho: o hash tem 16 hex; aceitar string livre deixaria um
+    // cliente hostil inflar o estado persistido do Durable Object de graça.
+    /^[0-9a-f]{16}$/.test(o.hash)
+  );
+}
+
+/**
+ * Registra um atestado e decide se o alarme sai (PR 3.4).
+ *
+ * As três situações, e por que cada uma é tratada assim:
+ *
+ * - **Âncora MAIOR que a do balde** ⇒ balde novo. O jogo andou; os hashes
+ *   antigos não interessam mais e guardar todos faria o estado crescer sem
+ *   limite, no mesmo log append-only que já custou o crítico C2 do 3.2.
+ * - **Âncora MENOR** ⇒ **IGNORA, em silêncio.** É um cliente legitimamente
+ *   atrasado — ele ainda não aplicou os últimos eventos. Alarmar aqui seria o
+ *   erro fatal do detector: um alarme que dispara com lag de rede é desligado
+ *   pelo dev na primeira semana, e aí a divergência real volta a ser silenciosa.
+ * - **Âncora IGUAL** ⇒ compara. Diferente do que já havia ⇒ alarme, uma vez só.
+ */
+function registrarAtestado(
+  estado: EstadoServidor,
+  jogadorId: string,
+  atestado: { escopo: EscopoHash; ancora: number; hash: string },
+): ResultadoServidor {
+  const baldes = estado.atestados ?? {};
+  const balde = baldes[atestado.escopo];
+
+  if (balde !== undefined && atestado.ancora < balde.ancora) {
+    return { estado, envios: [] };
+  }
+
+  const base: Atestados =
+    balde === undefined || atestado.ancora > balde.ancora
+      ? { ancora: atestado.ancora, porJogador: {}, alarmado: false }
+      : balde;
+
+  // 🔒 NADA MUDOU ⇒ MESMO OBJETO. O Durable Object grava quando o estado muda
+  // de identidade (ver `aplicar` em `party/sala.ts`), então reconstruir o balde
+  // a cada atestado daria ~22 escritas por evento de draft — e reenviar o mesmo
+  // payload válido seria amplificação de escrita de graça, que é justamente a
+  // ameaça que aquele arquivo nomeia como "barata de explorar".
+  if (
+    balde !== undefined &&
+    balde.ancora === atestado.ancora &&
+    balde.porJogador[jogadorId] === atestado.hash
+  ) {
+    return { estado, envios: [] };
+  }
+
+  const porJogador = { ...base.porJogador, [jogadorId]: atestado.hash };
+
+  // A referência é o hash MAJORITÁRIO, não o do menor id.
+  //
+  // 🔑 A diferença é de diagnóstico, e importa: com o menor id como eixo, se
+  // quem diverge for justamente o primeiro na ordem, `jogadores` acusaria os 21
+  // HONESTOS e inocentaria o divergente. A moda nomeia quem está fora do grupo.
+  // Continua sendo pista e não veredito — o servidor não tem dataset e não sabe
+  // quem está certo —, mas é uma pista que aponta pro lado certo.
+  //
+  // Empate (metade e metade) resolve pelo hash menor: arbitrário, porém estável
+  // e independente de ordem de chegada, que é o que a comparação exige.
+  const ids = Object.keys(porJogador).sort();
+  const votos = new Map<string, number>();
+  for (const id of ids) {
+    const h = porJogador[id];
+    votos.set(h, (votos.get(h) ?? 0) + 1);
+  }
+  let referencia = '';
+  let melhor = -1;
+  for (const h of [...votos.keys()].sort()) {
+    const n = votos.get(h)!;
+    if (n > melhor) {
+      melhor = n;
+      referencia = h;
+    }
+  }
+  const divergentes = ids.filter((id) => porJogador[id] !== referencia);
+
+  const deveAlarmar = divergentes.length > 0 && !base.alarmado;
+  const atualizado: Atestados = {
+    ancora: atestado.ancora,
+    porJogador,
+    alarmado: base.alarmado || divergentes.length > 0,
+  };
+
+  const novoEstado: EstadoServidor = {
+    ...estado,
+    atestados: { ...baldes, [atestado.escopo]: atualizado },
+  };
+
+  return {
+    estado: novoEstado,
+    envios: deveAlarmar
+      ? [
+          {
+            para: null,
+            mensagem: {
+              tipo: 'divergencia',
+              escopo: atestado.escopo,
+              ancora: atestado.ancora,
+              jogadores: divergentes,
+            },
+          },
+        ]
+      : [],
+  };
+}
+
+/**
  * Processa uma mensagem crua vinda de uma conexão. **Nunca lança**: JSON
  * inválido, tipo desconhecido e payload malformado viram `erro`, porque o
  * cliente é hostil por hipótese.
@@ -248,12 +415,36 @@ export function aoReceber(
 
   const remetenteId = estado.jogadorPorConexao[conexaoId] ?? null;
 
+  // A versão declarada por este comando, normalizada. `''` = cliente que não
+  // manda versão — tratado como divergente, porque "não sei a sua versão" não é
+  // o mesmo que "a sua versão serve".
+  const versaoDoCliente = (() => {
+    const v = (comando as { versaoApp?: unknown }).versaoApp;
+    return typeof v === 'string' ? v : '';
+  })();
+  const versaoDaSala = estado.versaoApp;
+
+  /**
+   * 🔒 HANDSHAKE (PR 3.4). Vale para `entrar` E para `reentrar`.
+   *
+   * 🔴 O `reentrar` é o caminho que mais importa, e a primeira versão deste PR
+   * o deixou passar: entra-se numa sala uma vez, mas reconecta-se a cada F5, e
+   * a UI dispara `reentrar` sozinha em todo `open` de socket enquanto houver
+   * token no `localStorage`. Um deploy no meio da partida faria o jogador
+   * voltar com engine nova numa sala de engine velha — sem passar por
+   * verificação nenhuma. Achado da revisão.
+   */
+  const versaoConfere = versaoDaSala === undefined || versaoDoCliente === versaoDaSala;
+
   // Recuperação de identidade: não muda estado, então não difunde nem avança
   // `seq`. Responde `voce-e` se a conexão for jogador, e erro se não for.
   // 🔑 RECONEXÃO. É o único comando de lobby que vale com a sala já iniciada —
   // e o motivo de existir: sem ele, quem cai continua no roster ocupando turno
   // sem ter por onde jogar, até o cronômetro o expulsar.
   if (tipo === 'reentrar') {
+    if (!versaoConfere) {
+      return soPara(estado, conexaoId, { tipo: 'erro', erro: 'versao-divergente' });
+    }
     const dono = jogadorDoToken(estado.sala, (comando as { token?: unknown }).token);
     // Uma conexao que JA tem identidade nao troca de identidade: so confunde o
     // estado (o jogador anterior ficaria no roster sem conexao ate expirar) e
@@ -289,6 +480,19 @@ export function aoReceber(
     return soPara(estado, conexaoId, estadoPara(estado));
   }
 
+  // Atestado de hash (PR 3.4). Não difunde snapshot: não muda o jogo, e um
+  // broadcast por atestado multiplicaria o tráfego por 22 sem nada mudar.
+  if (tipo === 'hash') {
+    if (remetenteId === null) {
+      return soPara(estado, conexaoId, { tipo: 'erro', erro: 'jogador-desconhecido' });
+    }
+    // O teto é o tamanho do log: a âncora é um índice dele. Ver `atestadoValido`.
+    if (!atestadoValido(comando, estado.sala.draft?.log.length ?? 0)) {
+      return soPara(estado, conexaoId, { tipo: 'erro', erro: 'comando-invalido' });
+    }
+    return registrarAtestado(estado, remetenteId, comando);
+  }
+
   if (tipo === 'quem-sou') {
     return remetenteId === null
       ? soPara(estado, conexaoId, { tipo: 'erro', erro: 'jogador-desconhecido' })
@@ -308,6 +512,13 @@ export function aoReceber(
   // bug e melhor que falha silenciosa.
   if (tipo === 'entrar' && tokenNovo === '') {
     return soPara(estado, conexaoId, { tipo: 'erro', erro: 'comando-invalido' });
+  }
+
+  // Handshake no `entrar` — a metade preventiva. Deixar entrar um build
+  // diferente criaria a divergência que o detector então acusaria, e o jogador
+  // perderia a partida por algo que dava pra barrar na porta.
+  if (tipo === 'entrar' && !versaoConfere) {
+    return soPara(estado, conexaoId, { tipo: 'erro', erro: 'versao-divergente' });
   }
 
   const r = reduzirSala(estado.sala, comando as ComandoSala, remetenteId, agora, tokenNovo);
@@ -338,7 +549,19 @@ export function aoReceber(
         ]
       : [];
 
-  return difundir({ sala: r.estado, jogadorPorConexao }, agora, extras);
+  // A versão da sala é fixada pelo PRIMEIRO `entrar` ACEITO — nunca por um
+  // recusado, senão um cliente hostil fixaria a versão da sala sem entrar nela
+  // e trancaria todo mundo do lado de fora.
+  // `...estado` nos DOIS ramos, nunca enumerando campos: um campo novo em
+  // `EstadoServidor` sumiria em silêncio no caminho do primeiro `entrar`. É a
+  // mesma classe da lição da cerca de ESLint no `CLAUDE.md` — bloco posterior
+  // que apaga o que não repetiu. Achado da revisão.
+  const comVersao: EstadoServidor =
+    tipo === 'entrar' && r.jogadorId !== undefined && versaoDaSala === undefined
+      ? { ...estado, sala: r.estado, jogadorPorConexao, versaoApp: versaoDoCliente }
+      : { ...estado, sala: r.estado, jogadorPorConexao };
+
+  return difundir(comVersao, agora, extras);
 }
 
 /**

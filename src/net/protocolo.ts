@@ -27,7 +27,13 @@ export const MAX_TAMANHO_NOME = 20;
 
 /** Comandos que o cliente manda pro servidor. Nenhum diz de quem é: ver o cabeçalho. */
 export type ComandoSala =
-  | { tipo: 'entrar'; nome: string }
+  /**
+   * `versaoApp` é o HANDSHAKE do PR 3.4, e é **opcional no tipo de propósito**:
+   * um cliente velho, que não a manda, não pode ser silenciosamente aceito —
+   * quem decide o que fazer com a ausência é `reduzirSala`, não o tipo. Ver
+   * `VERSAO_APP` em `src/engine/versao.ts` pro que ela representa.
+   */
+  | { tipo: 'entrar'; nome: string; versaoApp?: string }
   /**
    * "Quem sou eu nesta sala?" — recuperação, não cortesia. O `voce-e` é
    * direcionado e enviado UMA vez; se ele se perde, o cliente fica sem saber a
@@ -61,10 +67,41 @@ export type ComandoSala =
    * isso o token tem que sobreviver ao recarregamento — o cliente o guarda, e
    * nada na forma dele supõe que viva só na memória de um socket.
    */
-  | { tipo: 'reentrar'; token: string }
+  /**
+   * `versaoApp` é obrigatória aqui pelo mesmo motivo do `entrar` — e este é o
+   * caminho que MAIS importa na prática: entra-se uma vez, mas reconecta-se a
+   * cada F5. Um deploy no meio da partida troca a engine debaixo do jogador, e
+   * sem esta checagem ele voltaria com build novo numa sala de build velho.
+   */
+  | { tipo: 'reentrar'; token: string; versaoApp?: string }
   | { tipo: 'sair' }
   | { tipo: 'pronto'; pronto: boolean }
-  | { tipo: 'iniciar' };
+  | { tipo: 'iniciar' }
+  /**
+   * "Esta é a minha impressão digital do estado" (PR 3.4) — o detector de
+   * divergência.
+   *
+   * 🔒 **O servidor NÃO sabe o que este hash significa, e não pode saber**: ele
+   * não tem o dataset (fronteira travada no 3.2). Ele compara STRINGS OPACAS de
+   * jogadores diferentes na MESMA âncora e alarma quando não batem. Todo o
+   * significado mora em `hash-draft.ts`, no cliente.
+   *
+   * `escopo` existe para que a corrida online (que ainda não existe — pendência
+   * (f)) entre depois **sem mudar o protocolo**: `escopo: 'corrida'` com o mesmo
+   * comparador. Um comando `hash-draft` teria que ser alargado.
+   *
+   * `ancora` é `eventosAplicados` do cliente — quantos eventos do log ele já
+   * aplicou. É o que torna a comparação justa: dois clientes CORRETOS em pontos
+   * diferentes do log têm hashes diferentes, e comparar isso seria alarme falso.
+   * `seq` não serviria — ele avança também com evento de lobby.
+   */
+  | { tipo: 'hash'; escopo: EscopoHash; ancora: number; hash: string };
+
+/**
+ * O que está sendo atestado. Só `draft` por enquanto: a corrida online não
+ * existe, e o RISCO ATIVO que o 3.4 fecha é o pool de peças do draft.
+ */
+export type EscopoHash = 'draft';
 
 /**
  * Comandos do draft (PR 3.1b). Como os de lobby, nenhum diz de quem é.
@@ -116,6 +153,13 @@ export type ErroSala =
   | 'sala-nao-iniciada'
   | 'sala-inexistente'
   | 'token-invalido'
+  /**
+   * Handshake do 3.4: este cliente roda uma versão de engine/dataset diferente
+   * da sala. **Recusa a ENTRADA, não avisa depois** — dois builds diferentes
+   * produzem loadouts diferentes do mesmo log, e deixar entrar seria criar a
+   * divergência que o detector então acusaria. Barato prevenir, caro detectar.
+   */
+  | 'versao-divergente'
   | 'comando-invalido';
 
 /**
@@ -133,6 +177,19 @@ export type MensagemServidor =
    */
   | { tipo: 'voce-e'; jogadorId: string; token?: string }
   | { tipo: 'erro'; erro: ErroSala | ErroDraft }
+  /**
+   * 🔴 **O ALARME** (PR 3.4). Dois ou mais jogadores atestaram hashes
+   * diferentes na mesma âncora: as máquinas deixaram de jogar o mesmo jogo.
+   *
+   * Vai em BROADCAST porque o problema não é de quem divergiu — é da partida.
+   * Quem está certo e quem está errado o servidor não tem como saber (ele não
+   * tem o dataset); `jogadores` lista quem atestou algo diferente da primeira
+   * versão vista, que é uma pista, não um veredito.
+   *
+   * Sai UMA vez por âncora: sem isso, cada atestado seguinte redisparia o
+   * alarme e a tela viraria enxurrada.
+   */
+  | { tipo: 'divergencia'; escopo: EscopoHash; ancora: number; jogadores: string[] }
   /**
    * A sala acabou de ser encerrada e o estado foi descartado. Vem antes de o
    * servidor fechar as conexões, pra que a tela diga o que houve em vez de

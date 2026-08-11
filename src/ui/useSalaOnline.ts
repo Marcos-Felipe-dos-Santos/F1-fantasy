@@ -30,7 +30,9 @@ import {
   type EstadoCliente,
 } from '../net/cliente';
 import type { ComandoDraft, ComandoSala } from '../net/protocolo';
+import { hashDoDraft } from '../net/hash-draft';
 import { RODADA_COMPLETA } from '../net/tipos';
+import { VERSAO_APP } from '../engine/versao';
 import type { EscolhaDraft } from '../engine/types';
 import { dataset } from './dataset-app';
 import { storageDoNavegador } from './storage-app';
@@ -91,7 +93,14 @@ export function useSalaOnline(sala: string): UseSalaOnline {
         // hoje porque o evento `open` é assíncrono — um socket que abrisse
         // sincronamente (mock, polyfill) daria `ReferenceError`.
         if (tokenRef.current !== null) {
-          conexaoRef.current?.enviar({ tipo: 'reentrar', token: tokenRef.current });
+          // `versaoApp` também aqui: reconectar é o caminho MAIS comum (todo
+          // F5 passa por ele), e um deploy no meio da partida traria o jogador
+          // de volta com engine nova numa sala de engine velha.
+          conexaoRef.current?.enviar({
+            tipo: 'reentrar',
+            token: tokenRef.current,
+            versaoApp: VERSAO_APP,
+          });
         }
       },
       aoReceber: (mensagem) => {
@@ -133,7 +142,39 @@ export function useSalaOnline(sala: string): UseSalaOnline {
     conexaoRef.current?.enviar(comando);
   }, []);
 
-  const entrar = useCallback((nome: string) => enviar({ tipo: 'entrar', nome }), [enviar]);
+  /**
+   * 🔴 ATESTADO DE HASH (PR 3.4) — o detector de divergência.
+   *
+   * Sai a cada avanço REAL do draft (`eventosAplicados` mudou), não a cada
+   * mensagem: snapshot repetido e `voce-e` não movem o estado, e reatestar só
+   * geraria tráfego e escrita no Durable Object.
+   *
+   * ⚠️ Mora num efeito, e **não dentro do updater do `setCliente`** — foi onde
+   * a primeira versão o pôs (achado da revisão). Updater tem que ser puro: o
+   * StrictMode o invoca duas vezes, e o envio saía duplicado. Idempotente pra
+   * detecção, mas somava amplificação de escrita no DO de graça.
+   */
+  useEffect(() => {
+    if (cliente.draft === null || cliente.euSou === null) return;
+    conexaoRef.current?.enviar({
+      tipo: 'hash',
+      escopo: 'draft',
+      ancora: cliente.eventosAplicados,
+      hash: hashDoDraft(cliente.draft),
+    });
+    // `draft` fora das dependências de propósito: ele é reconstruído a cada
+    // sincronização e mudaria de IDENTIDADE sem mudar de CONTEÚDO, reatestando
+    // à toa (e gravando no Durable Object à toa junto). `eventosAplicados` é o
+    // contador que marca avanço de verdade — é ele que define quando reatestar.
+  }, [cliente.eventosAplicados, cliente.euSou]);
+
+  // `versaoApp` é o handshake do 3.4: dois builds diferentes produzem loadouts
+  // diferentes do mesmo log, e o servidor recusa a entrada em vez de deixar a
+  // partida nascer dividida.
+  const entrar = useCallback(
+    (nome: string) => enviar({ tipo: 'entrar', nome, versaoApp: VERSAO_APP }),
+    [enviar],
+  );
   const definirPronto = useCallback(
     (pronto: boolean) => enviar({ tipo: 'pronto', pronto }),
     [enviar],

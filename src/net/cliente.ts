@@ -55,6 +55,15 @@ export interface EstadoCliente {
   descartados: number;
   /** A sala foi encerrada pelo servidor (janela de graça vencida ou esvaziou). */
   encerrada: boolean;
+  /**
+   * 🔴 O ALARME do 3.4: o servidor comparou os atestados e as máquinas NÃO
+   * estão jogando o mesmo jogo. `null` enquanto tudo bate.
+   *
+   * Guardado, e não só logado, porque é o único aviso que o jogador vai ter de
+   * que o resultado que ele está vendo não é o dos outros. Perder isso num
+   * `console.log` seria voltar ao silêncio que o PR existe pra acabar.
+   */
+  divergencia: { escopo: string; ancora: number; jogadores: string[] } | null;
 }
 
 export function criarCliente(): EstadoCliente {
@@ -69,6 +78,7 @@ export function criarCliente(): EstadoCliente {
     erros: [],
     descartados: 0,
     encerrada: false,
+    divergencia: null,
   };
 }
 
@@ -88,6 +98,19 @@ export function aplicarMensagem(estado: EstadoCliente, mensagem: MensagemServido
       };
     case 'erro':
       return { ...estado, erros: [...estado.erros, mensagem.erro] };
+    case 'divergencia':
+      // Não sobrescreve um alarme já registrado: o PRIMEIRO ponto de
+      // divergência é o diagnóstico útil. Os seguintes são consequência dele.
+      return estado.divergencia !== null
+        ? estado
+        : {
+            ...estado,
+            divergencia: {
+              escopo: mensagem.escopo,
+              ancora: mensagem.ancora,
+              jogadores: mensagem.jogadores,
+            },
+          };
     case 'sala-encerrada':
       // O estado do servidor foi descartado. Marcar aqui é o que permite a UI
       // dizer "esta sala foi encerrada" em vez de ficar em "reconectando…".
