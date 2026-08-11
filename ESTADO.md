@@ -548,8 +548,13 @@ testes de que a substituição é determinística entre execuções independente
    então o `draft` não muda mais sob um `seq` congelado. **Falta ainda** correlacionar erro↔comando:
    com duplicação e reordenação, um `{tipo:'erro'}` continua inatribuível.
    (e) ✅ **Prazo do turno tem dono no 3.2**: o `alarm()` do Durable Object chama `aoPassarOTempo` a
-   cada 5 s (e para de se reagendar com a sala concluída ou vazia). **Falta a UI** mostrar o
-   cronômetro ao jogador — isso é 3.3.
+   cada 5 s. ⚠️ **CORRIGIDO em 2026-08-11 — esta linha afirmava que ele "para de se reagendar com a
+   sala concluída ou vazia", e o código não faz isso** (achado do `fable-architect` ao planejar a
+   corrida online). `party/sala.ts:237` reagenda SEMPRE; quem para o tique é o `encerrar()`, que
+   apaga o alarme. Com a sala concluída o que fica de fora é só a chamada a `aoPassarOTempo` — o
+   tique continua. Importa pro plano da corrida online: adiar `concluidaEm` para o fim da corrida
+   faz o tique voltar a rodar durante o replay. **Afirmação de estado só entra medida.**
+   **Falta a UI** mostrar o cronômetro ao jogador — isso é 3.3.
    (f) ✅ **O 3.4 foi FEITO (detector + handshake). O 3.4.1 foi FEITO (surfacing visual).** **Corrida online é item 1 da SEQUÊNCIA**
    (próximo passo natural, autorizado pelo dev em 2026-08-11, em planejamento pelo `fable-architect`). O draft online termina no `TelaResumo`, com o botão
    "Ir pra corrida" escondido de propósito — prometer a corrida e devolver à tela inicial é pior que botão nenhum.
