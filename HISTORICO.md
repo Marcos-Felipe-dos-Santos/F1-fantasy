@@ -1339,6 +1339,40 @@ LAN. É o primeiro suspeito se o celular não conectar.
 - `npm test` **1362/50** (era 1355/49), `typecheck` **0** (app + party), `eslint src scripts party vite.config.ts` **0**, `build` **0**.
 - `npm run balance` **não rodado** — nada em `src/engine/`, `src/data/` ou `scripts/alavancas` foi tocado.
 
+### PR 3.3.4 — F5 no draft perdia a sala; porta 8787 ocupada falha silencioso (2026-08-11, `6b9fb3a`) — BAIXO RISCO
+
+**PROBLEMA 1 — F5 no meio do draft voltava pra tela inicial.** O dev relatou; `ESTADO.md` §FASE 3 prometia que F5 devolvia o jogador ao draft pelo token do 3.2.1. Duas hipóteses levantadas foram **REFUTADAS POR MEDIÇÃO**:
+- Hipótese (falsa): "o token não está sendo salvo/lido". **Medido:** `localStorage` com a sala montada tinha `f1f:token-sala:<código>` presente, e `useSalaOnline.ts` o lê no boot e envia no `aoAbrir`.
+- Hipótese (falsa): "a rota de reconexão não passa pelo proxy". **Medido:** `reentrar` **não é rota HTTP** — é mensagem dentro do WebSocket de `/parties/sala/<código>`, que já passa pelo proxy.
+
+**A causa raiz é outra:** `App.tsx` descobre em que sala está de UMA fonte — a query string, lida uma vez no boot (`useState(() => salaDaUrl(window.location))`) — mas entrar numa sala só mexia em estado React e **nunca tocava a barra de endereço**. **Medido no navegador:** depois de "Ir para a sala", URL do anfitrião continuava `http://localhost:5173/`, sem `?sala=`. No F5 o app não sabia de qual sala voltar; caía na `TelaInicio`; token ficava no `localStorage` intacto e inútil — ninguém sabia de que sala ele era. **Assimetria crucial:** quem entra pelo LINK nunca viu o defeito; quem **CRIA** a sala (o anfitrião) via sempre.
+
+**SOLUÇÃO: `fixarSalaNaBarra` em `sala-online.ts` + funil único `entrarNaSala` no `App.tsx`.** Usa `replaceState`, não `pushState` — entrar numa sala não é navegação, e um item novo no histórico faria o "voltar" devolver a uma tela inicial que não existe mais. A URL agora fica `?sala=CÓDIGO` e sobrevive ao F5. Novo arquivo `src/ui/sala-na-url.test.ts` trava as duas metades do contrato: (a) **round-trip puro** — o que o escritor grava (`fixarSalaNaBarra`) o leitor do boot recupera (`salaDaUrl`); (b) **varredura de fonte única** — percorre `App.tsx` exigindo que só exista UM caminho de entrada e que ele chame `fixarSalaNaBarra`. A varredura existe porque o projeto é `environment: 'node'` sem jsdom (mesmo recurso do `contrato-ausente.test.ts`).
+
+**Baseline vermelho REAL, honestamente:** 1 falhou, 5 passaram — as asserções puras do round-trip já passavam sozinhas; o que faltava era a **fiação** do App.
+
+**PROBLEMA 2 — porta 8787 ocupada falhava em silêncio.** Com a porta ocupada, `wrangler dev` sobe na 8788 sem reclamar, mas o proxy do Vite aponta pra 8787 FIXA (`ALVO_WORKER_DEV`). Sintoma depende do que sobrou na 8787: se nada, proxy dá 500; se um `workerd` meio-morto (aceita conexão, nunca responde), o botão fica em **"Criando…" pra sempre, sem erro, sem log**. **Reproduzido de verdade nesta bancada.**
+
+**SOLUÇÃO: pré-voo `scripts/checar-porta-sala.ts` no `npm run sala`** — tenta ESCUTAR na porta e falha com `exit 1` e instrução acionável; `wrangler dev` passou a receber `--port 8787` explícito. **Medido nos dois estados:** porta ocupada → `exit 1` + mensagem clara; porta livre → sobe em 8787 e proxy responde 200. `scripts/node-shims.d.ts` ganhou tipos para `node:net` e `process.stderr`/`process.exit` — o projeto não usa `@types/node` (decisão do PR 4.1).
+
+**REGISTRADO, NÃO CORRIGIDO (decisão explícita do dev):** duas abas do MESMO navegador compartilham o `localStorage` e portanto o token de reentrada. **Medido:** com o anfitrião já dentro, abrir o link numa aba nova faz ela **reentrar COMO o anfitrião** — as duas abas mostrando o mesmo jogador e a sala contando 1, não 2. **Não afeta jogo real** (cada pessoa no seu navegador); **corrompe o teste na própria máquina**. Documentado em `docs/jogar-em-rede.md` com o contorno (segundo navegador ou janela anônima). Fica como pendência ativa, item 0.(h).
+
+**VALIDAÇÃO — o DEV testou o fluxo completo e fechou OS QUATRO CASOS DE PROPÓSITO (todos rodados com sucesso):**
+- ✅ **F5 no meio do draft** — volta no mesmo ponto como o mesmo jogador.
+- ✅ **Fechar a aba e voltar em menos de 2 min** — a sala sobrevive e a reconexão traz o estado do draft.
+- ✅ **Cronômetro de inatividade** — "você perdeu a vez por inatividade" quando o prazo expira.
+- ✅ **Código inventado (FFFFFF)** — "Sala não encontrada", sem travar.
+
+**Medido:**
+- `npm test` **1368/51** (era 1362/50), `npm run typecheck` **0**, `eslint src scripts party vite.config.ts` **0**, `npm run build` **0**.
+- `npm run balance` **não se aplica** — nada em `src/engine/`, `src/data/` ou `scripts/alavancas` foi tocado.
+
+**Revisão:** nenhuma — **baixo risco** (UI pura, zero toques em logic/dados/rede profunda). Fluxo curto: implementação → testes verdes → commitar, conforme regra da Fase 3 em `CLAUDE.md` §RIGOR PROPORCIONAL AO RISCO.
+
+**Pendências:** 
+- ✅ **Fechada:** "O DEV TESTAR O ONLINE NO NAVEGADOR" (item 0 da SEQUÊNCIA do ESTADO.md). Os quatro casos rodados e validados em 2026-08-11.
+- ✅ **Aberta:** token por origem, não por aba (item 0.(h) de "Pendências ATIVAS").
+
 ## Acompanhamentos registrados pela revisão do PR 1.6 (não são defeitos; candidatos a PR futuro)
 
 - `medirParadasExtras` usa equipes históricas inteiras — o CALL do estrategista desloca a 1ª parada e vira confound secundário do bucket de PNEU (o bucket <60 é na prática 1 piloto). Sinal mais limpo: fixar chassi/motor/estrategista/pit e variar só o piloto.

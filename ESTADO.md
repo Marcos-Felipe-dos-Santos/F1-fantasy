@@ -7,6 +7,9 @@
 
 ## Estado atual
 
+- ✅ **TESTE DO ONLINE FECHADO — PR 3.3.4 em 2026-08-11** (F5 perdia sala; porta 8787 ocupada falha
+  silencioso). **Os quatro casos de propósito rodados e validados pelo dev.** **Próximo PR: 3.4**
+  (handshake de versão + detector de divergência), autorizado nesta sessão.
 - ✅ **CÓDIGO DE SALA E CICLO DE VIDA FEITOS — PR 3.3.2 em 2026-08-10** (`02ff6ee` + `b882d9b`).
   **O modo online agora tem sala privada por padrão** (código hexadecimal de 6 dígitos, não 4, sorteado
   pelo servidor; enumeração impossível em tempo casual).
@@ -26,14 +29,13 @@
   → "Estou pronto" nas duas → anfitrião 👑 clica "Começar o draft" → rodada 1 de 5 aparece nas duas
   abas com sorteios independentes. (Alternativa: "Entrar na sala de um amigo" e digitar os 6 dígitos.)
 
-  **Quatro casos de propósito que restam testar:**
-  - **F5 no meio do draft** — volta como o mesmo jogador, pelo token. F5 *no lobby* é diferente: lá
-    cair é sair, e entra-se de novo.
-  - **Fechar a aba e voltar** em menos de 2 minutos — a sala sobrevive e a reconexão traz o estado do
+  ✅ **QUATRO CASOS DE PROPÓSITO TESTADOS PELO DEV em 2026-08-11 (PR 3.3.4):**
+  - ✅ **F5 no meio do draft** — volta como o mesmo jogador, pelo token. A URL agora fica `?sala=`.
+  - ✅ **Fechar a aba e voltar** em menos de 2 minutos — a sala sobrevive e a reconexão traz o estado do
     draft (a carência de 2 min protege contra zumbi de draft antigo).
-  - **Deixar uma aba parada** até o cronômetro de turno expirar — a outra segue, e a parada passa a
+  - ✅ **Deixar uma aba parada** até o cronômetro de turno expirar — a outra segue, e a parada passa a
     mostrar "você perdeu a vez por inatividade" (expiraTurno).
-  - **Um código inventado** (ex.: `FFFFFF`) — tem que dizer "Sala não encontrada", não travar.
+  - ✅ **Um código inventado** (ex.: `FFFFFF`) — diz "Sala não encontrada", não trava.
 
   📱 **PRA JOGAR DO CELULAR / EM REDE — trocar o terminal 2 por `npm run dev:rede`** e abrir no
   celular o endereço `Network` da LAN que ele imprime (hoje `http://192.168.0.13:5173/`).
@@ -42,6 +44,9 @@
   - **Medido (3.3.3):** `npm test` **1362/50** (era 1355/49), `npm run typecheck` **0** (app + `party/`),
     `eslint src scripts party vite.config.ts` **0**, `npm run build` **0**. `npm run balance` **não rodado**
     — nada em `src/engine/`, `src/data/` ou `scripts/alavancas` foi tocado.
+  - **Medido (3.3.4):** `npm test` **1368/51** (era 1362/50), `npm run typecheck` **0**, `eslint` **0**,
+    `npm run build` **0**. `npm run balance` **não se aplica** — nada em `src/engine/`, `src/data/` ou
+    `scripts/alavancas` foi tocado.
   - 🔌 **PR 3.3.1 (`23d1cce`) — o worker passa pela PORTA DO VITE.** `wrangler dev` sobe em
     `127.0.0.1` (só localhost), então de fora o app carregava e o WebSocket morria; e abrir o worker
     na rede **não bastaria**, porque a URL do WS era fixa (`:8787`) e **cada visitante chega por um
@@ -71,14 +76,14 @@
   `4ba4f50`) e a rodada de **narração rica + auto-avanço**: **A** (variedade/chuva, `1537ad6`),
   **B** (causalidade contrafactual, `43fe420`), **C** (avanço automático, `fc7f20d`); e ainda
   **8.2.1** (calendário na engine, `cfe1c47`) e **8.3** (telas do campeonato, `0da36fb`) ·
-  **1362 testes** (50 arquivos) verdes — medido em 2026-08-11 (PR 3.3.3); eram 1094/36 antes da Fase 3.
-  ⚠️ O badge do README ainda diz **1094** e é estático — está desatualizado (deveria ser 1362).
+  **1368 testes** (51 arquivos) verdes — medido em 2026-08-11 (PR 3.3.4); eram 1094/36 antes da Fase 3.
+  ⚠️ O badge do README ainda diz **1094** e é estático — está desatualizado (deveria ser 1368).
 - **Medido em 2026-08-07, não herdado:** `npm test` **1094/36**, `tsc --noEmit` **exit 0**,
   `eslint src scripts` **exit 0**, `npm run build` **exit 0**. **`npm run balance` inalterado por
   construção** — o harness importa só `src/engine/dataset`, `src/data/*.json` e `scripts/alavancas`,
   e nenhum dos três foi tocado. `prettier --check` reprova `fluxo-campeonato.ts`/`.test.ts`, mas
   **já reprovava no HEAD** (verificado com `git show HEAD:<arquivo>`) — pré-existente, não é gate.
-- 🎮 **COMO TESTAR O CAMPEONATO no app real** (o dev já testou single e local com 2 jogadores):
+- 🎮 **COMO TESTAR O CAMPEONATO no app real** (o dev já testou single e local com 2 jogadores, e online foi fechado no 3.3.4):
   `npm run dev` → `http://localhost:5173/` → **Formato: "Campeonato curto"** → Começar draft →
   jogar o draft → **Ir pra corrida**. No fim de cada corrida, a tabela acumulada e "Próxima
   corrida". Recarregar a página no meio deve oferecer **"Continuar campeonato"** no topo.
@@ -362,7 +367,8 @@ duplicada entre engine e redutor, derivando em silêncio.
   `onRequest` deixava atacante criar sala com código escolhido). Medido: 20/20 smoke, incluindo
   "sala esvaziou e sobreviveu à carência". 🔒 **C3 continua fechado em 3.3.3** (`POST /parties/sala/000000/criar` → **404**, medido depois da mudança). A rota não foi movida pra dentro de `/parties/` apesar de isso simplificar o proxy, porque esse acesso aberto é o risco que C3 precisava bloquear — registrado pra que nenhum PR futuro "simplifique" a rota de volta.
 - ✅ **3.3.3 Criar sala não passava pelo proxy** — FEITO (`a6010ef`). Rota `/criar-sala` centralizada em `src/net/rotas.ts`, que o `vite.config.ts` consome; rota nova atravessa proxy sozinha. Tela órfã removida (campo "Nome da sala" morto desde o 3.3.2, UI contradizia server).
-- **3.4 Handshake de versão + detector de divergência** (hash da corrida comparado entre os 22).
+- ✅ **3.3.4 F5 no draft perdia a sala; porta 8787 ocupada falha silencioso** — FEITO (`6b9fb3a`). Duas correções baixo risco: (a) `fixarSalaNaBarra` em `sala-online.ts` + funil único `entrarNaSala` no App — a sala agora aparece na URL (`?sala=CÓDIGO`) e não é perdida no F5; teste novo `sala-na-url.test.ts` com baseline vermelho (1 falhou / 5 passaram). (b) pré-voo `scripts/checar-porta-sala.ts` no `npm run sala` que tenta escutar na porta e falha com `exit 1` se ocupada. **Fecha os quatro casos de propósito do online**, todos rodados e validados pelo dev. **Pendência registrada:** duas abas do mesmo navegador compartilham o token e reentram como o anfitrião (não afeta jogo real, corrompe teste na própria máquina; documentado em `docs/jogar-em-rede.md` com contorno).
+- **3.4 Handshake de versão + detector de divergência** (hash da corrida comparado entre os 22) — **o PRÓXIMO, autorizado pelo dev nesta sessão**.
 - **3.5 Campeonato online (seed por etapa)** — **CORTE Nº 1** se a fase ficar grande.
 
 🛑 **PORTÕES OBRIGATÓRIOS (do dev):**
@@ -416,16 +422,14 @@ de 0,0650 pra **0,0397** e obrigou a redesenhar a escada tonal inteira. Não foi
 ## SEQUÊNCIA — o que sobrou
 
 **Os portões visuais saíram desta lista: os dois foram aprovados em 2026-08-07.**
+**O teste do online foi FECHADO no PR 3.3.4 com todos os quatro casos validados pelo dev.**
 
-0. ⬅️ **TESTE DO ONLINE — caminho principal FEITO em 2026-08-11** (criar sala → link em segunda aba →
-   nomes → prontos → "Começar o draft" → rodada 1 de 5 nas duas). **Restam os quatro casos de propósito:**
-   F5 no meio do draft, fechar e voltar em <2min, deixar parada até cronômetro, código inventado.
-1. **PR 3.4 — Handshake de versão + detector de divergência** (hash da corrida comparado entre os
+0. **PR 3.4 — Handshake de versão + detector de divergência** (hash da corrida comparado entre os
    22). É o que transforma o RISCO ATIVO de "diverge em silêncio" em "diverge com alarme", e por
-   isso é o próximo natural.
-2. **A corrida online** (o draft online termina no resumo hoje) e o **3.5 campeonato online**
+   isso é o próximo natural. **AUTORIZADO PELO DEV NESTA SESSÃO.**
+1. **A corrida online** (o draft online termina no resumo hoje) e o **3.5 campeonato online**
    (CORTE Nº 1 se a fase ficar grande).
-3. ⬅️ **VEREDITO do dev sobre `preview/campeonato.html`** (as três telas do 8.3) — segue aberto.
+2. ⬅️ **VEREDITO do dev sobre `preview/campeonato.html`** (as três telas do 8.3) — segue aberto.
 4. **PR de INFRA — DESTRAVADO pela aprovação das silhuetas.** Era "pré-requisito caso as silhuetas
    fossem aprovadas"; com o 10/10, **deixa de ser pré-requisito e vira consolidação**: restrições
    geométricas como testes vermelhos + allowlist `LEGADO` que só encolhe. **Reavaliar o escopo com o
@@ -517,7 +521,7 @@ testes de que a substituição é determinística entre execuções independente
 
 ## Pendências ATIVAS
 
-0. **Abertas pelo 3.1a (Fase 3):**
+0. **Abertas na Fase 3:**
    (a) **`montarJogadores` está duplicado** entre `fluxo-draft.ts:117` (UI) e `congelarRoster`
    (`src/net/sala.ts`), assim como `QTD_JOGADORES = 22`. Hoje a divergência é **vigiada** por um
    `it.each` de conformidade (`facil`×`dificil` × {2,3,5,22} humanos) contra
@@ -544,6 +548,11 @@ testes de que a substituição é determinística entre execuções independente
    (g) **15% de perda com conexão intacta não é modo de falha real de WebSocket** (nota da revisão
    do 3.2): TCP entrega ou a conexão cai. O stress do harness continua válido como stress; só não
    deve ser lido como "a rede real perde 15%".
+   (h) **Token por origem, não por aba** (medido no 3.3.4): duas abas do mesmo navegador compartilham
+   o `localStorage` e portanto o token `f1f:token-sala:<código>`. Com o anfitrião já dentro, abrir o
+   link numa aba nova faz ela reentrar **como o anfitrião**, e a sala conta 1 jogador não 2. **Não
+   afeta jogo real** (cada pessoa está em seu navegador); **corrompe o teste na própria máquina**.
+   Contorno documentado em `docs/jogar-em-rede.md` (segundo navegador ou janela anônima).
 1. **Abertas pelo 7.8:** (a) o `BotaoTema` é um botão discreto no canto do `app-shell` — posição e
    forma **não passaram por veredito de arte**; (b) `erro` (salmão `#FF7B85`) e `raridadeProibido`
    (`#FF4757`) continuam sendo dois vermelhos ao lado do vermelho da marca — não foi mexido porque
@@ -597,6 +606,11 @@ arte vai ao dev** — mudar composição sozinho já custou 2 bloqueantes no 7.3
 - **RIGOR PROPORCIONAL AO RISCO.** Classificar e anunciar ANTES de começar; na dúvida, perguntar em
   vez de escalar.
 - **UM PR POR SESSÃO.** Ao concluir: commitar, atualizar os dois docs, **PARAR e avisar o dev.**
+- 🔒 **LIÇÃO ACUMULADA DA FASE 3:** três bugs (F5 perdia sala, porta ocupada falha silencioso, duas
+  abas compartilham token) passaram por suíte verde porque o teste afirmava a coisa errada ou não lia
+  o que dizia ler. **Baseline vermelho real + guarda anti-vacuidade são obrigatórios**, especialmente
+  no **3.4, que é literalmente sobre detectar divergência silenciosa**. Ver `CLAUDE.md` §"Cerca de
+  lint: separar regra APAGA a regra" e §"Regra de mudança de lógica".
 - **Ao mexer em silhueta, use o harness de `preview/`** (`preview/harness.test.ts` +
   `preview/desenhos.ts`, gitignored). Rodar:
   `npx vitest run --config preview/harness.config.ts --reporter=verbose --silent=false`.
