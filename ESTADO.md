@@ -8,8 +8,10 @@
 ## Estado atual
 
 - ✅ **TESTE DO ONLINE FECHADO — PR 3.3.4 em 2026-08-11** (F5 perdia sala; porta 8787 ocupada falha
-  silencioso). **Os quatro casos de propósito rodados e validados pelo dev.** **Próximo PR: 3.4**
-  (handshake de versão + detector de divergência), autorizado nesta sessão.
+  silencioso). **Os quatro casos de propósito rodados e validados pelo dev.**
+- 🟡 **RISCO ATIVO REBAIXADO, não fechado — PR 3.4 em 2026-08-11** (handshake de versão + detector de
+  divergência). **Deixou de divergir em silêncio; agora diverge com alarme que ninguém vê ainda**
+  (fica em `EstadoCliente.divergencia`). **Próximo PR: surfacing do alarme + corrida online.**
 - ✅ **CÓDIGO DE SALA E CICLO DE VIDA FEITOS — PR 3.3.2 em 2026-08-10** (`02ff6ee` + `b882d9b`).
   **O modo online agora tem sala privada por padrão** (código hexadecimal de 6 dígitos, não 4, sorteado
   pelo servidor; enumeração impossível em tempo casual).
@@ -47,6 +49,8 @@
   - **Medido (3.3.4):** `npm test` **1368/51** (era 1362/50), `npm run typecheck` **0**, `eslint` **0**,
     `npm run build` **0**. `npm run balance` **não se aplica** — nada em `src/engine/`, `src/data/` ou
     `scripts/alavancas` foi tocado.
+  - **Medido (3.4):** `npm test` **1394/54** (era 1368/51), `npm run typecheck` **0**, `eslint` **0**,
+    `npm run build` **0**. `npm run balance` **rodado** (tocou `src/engine/versao.ts`): **inalterado**.
   - 🔌 **PR 3.3.1 (`23d1cce`) — o worker passa pela PORTA DO VITE.** `wrangler dev` sobe em
     `127.0.0.1` (só localhost), então de fora o app carregava e o WebSocket morria; e abrir o worker
     na rede **não bastaria**, porque a URL do WS era fixa (`:8787`) e **cada visitante chega por um
@@ -76,8 +80,8 @@
   `4ba4f50`) e a rodada de **narração rica + auto-avanço**: **A** (variedade/chuva, `1537ad6`),
   **B** (causalidade contrafactual, `43fe420`), **C** (avanço automático, `fc7f20d`); e ainda
   **8.2.1** (calendário na engine, `cfe1c47`) e **8.3** (telas do campeonato, `0da36fb`) ·
-  **1368 testes** (51 arquivos) verdes — medido em 2026-08-11 (PR 3.3.4); eram 1094/36 antes da Fase 3.
-  ⚠️ O badge do README ainda diz **1094** e é estático — está desatualizado (deveria ser 1368).
+  **1394 testes** (54 arquivos) verdes — medido em 2026-08-11 (PR 3.4); eram 1094/36 antes da Fase 3.
+  ⚠️ O badge do README ainda diz **1094** e é estático — está desatualizado (deveria ser 1394).
 - **Medido em 2026-08-07, não herdado:** `npm test` **1094/36**, `tsc --noEmit` **exit 0**,
   `eslint src scripts` **exit 0**, `npm run build` **exit 0**. **`npm run balance` inalterado por
   construção** — o harness importa só `src/engine/dataset`, `src/data/*.json` e `scripts/alavancas`,
@@ -368,7 +372,7 @@ duplicada entre engine e redutor, derivando em silêncio.
   "sala esvaziou e sobreviveu à carência". 🔒 **C3 continua fechado em 3.3.3** (`POST /parties/sala/000000/criar` → **404**, medido depois da mudança). A rota não foi movida pra dentro de `/parties/` apesar de isso simplificar o proxy, porque esse acesso aberto é o risco que C3 precisava bloquear — registrado pra que nenhum PR futuro "simplifique" a rota de volta.
 - ✅ **3.3.3 Criar sala não passava pelo proxy** — FEITO (`a6010ef`). Rota `/criar-sala` centralizada em `src/net/rotas.ts`, que o `vite.config.ts` consome; rota nova atravessa proxy sozinha. Tela órfã removida (campo "Nome da sala" morto desde o 3.3.2, UI contradizia server).
 - ✅ **3.3.4 F5 no draft perdia a sala; porta 8787 ocupada falha silencioso** — FEITO (`6b9fb3a`). Duas correções baixo risco: (a) `fixarSalaNaBarra` em `sala-online.ts` + funil único `entrarNaSala` no App — a sala agora aparece na URL (`?sala=CÓDIGO`) e não é perdida no F5; teste novo `sala-na-url.test.ts` com baseline vermelho (1 falhou / 5 passaram). (b) pré-voo `scripts/checar-porta-sala.ts` no `npm run sala` que tenta escutar na porta e falha com `exit 1` se ocupada. **Fecha os quatro casos de propósito do online**, todos rodados e validados pelo dev. **Pendência registrada:** duas abas do mesmo navegador compartilham o token e reentram como o anfitrião (não afeta jogo real, corrompe teste na própria máquina; documentado em `docs/jogar-em-rede.md` com contorno).
-- **3.4 Handshake de versão + detector de divergência** (hash da corrida comparado entre os 22) — **o PRÓXIMO, autorizado pelo dev nesta sessão**.
+- ✅ **3.4 Handshake de versão + detector de divergência** — FEITO (`75ccfbe`). Escolha do ausente era a única decisão local; divergência furava o pool em silêncio. Agora acusa. O que o 3.5 / corrida online herda: âncora = `eventosAplicados`, teto = tamanho do log, atrasado ignorado em silêncio; servidor compara strings opacas (fronteira "sem dataset" do 3.2 intacta); alarme vive em `EstadoCliente.divergencia`, não na tela. 🔑 **Tripwire: `versao.test.ts` hasheia `src/engine/`, `src/data/`, `cliente.ts` e `hash-draft.ts`, reprova sem bump de `VERSAO_APP` — próximo PR tocando engine tem teste vermelho com contexto.**
 - **3.5 Campeonato online (seed por etapa)** — **CORTE Nº 1** se a fase ficar grande.
 
 🛑 **PORTÕES OBRIGATÓRIOS (do dev):**
@@ -389,7 +393,8 @@ worker. Entrar no 3.2 sem exame seria diferença de ambiente que ninguém escolh
   paridade bit a bit workerd↔Node (4 seeds, bits IEEE-754 comparados), o que sustenta a escolha.
 - **Colisão de namespace do `deriveSeed`:** todo rótulo novo com prefixo **`"online:"`**, registro em
   `src/engine/namespaces-seed.ts` **com teste que falha em duplicata**.
-- **Hash de corrida sobre `ResultadoCorrida`.**
+- **Hash de corrida sobre `ResultadoCorrida`.** (Plano original; implementação pousou em hash de
+  DRAFT: é lá que o risco do ausente vive. `ResultadoCorrida` hashing fica pra quando a corrida online existir.)
 
 📌 **O harness headless NÃO é opcional** (palavras do dev): simular 22 clientes com injeção de
 latência, reordenação, duplicação e desconexão. O dev precisa testar **sem depender de amigos
@@ -423,10 +428,10 @@ de 0,0650 pra **0,0397** e obrigou a redesenhar a escada tonal inteira. Não foi
 
 **Os portões visuais saíram desta lista: os dois foram aprovados em 2026-08-07.**
 **O teste do online foi FECHADO no PR 3.3.4 com todos os quatro casos validados pelo dev.**
+**O risco ativo foi DOWNGRADE para SURFACING — detector funciona, alarme não está visual ainda.**
 
-0. **PR 3.4 — Handshake de versão + detector de divergência** (hash da corrida comparado entre os
-   22). É o que transforma o RISCO ATIVO de "diverge em silêncio" em "diverge com alarme", e por
-   isso é o próximo natural. **AUTORIZADO PELO DEV NESTA SESSÃO.**
+0. **Surfacing do alarme de divergência** (sem número — o dev decide). O detector já existe (`EstadoCliente.divergencia`);
+   falta mostrar na tela. É mudança visual, precisa preview MOSTRADO ao dev.
 1. **A corrida online** (o draft online termina no resumo hoje) e o **3.5 campeonato online**
    (CORTE Nº 1 se a fase ficar grande).
 2. ⬅️ **VEREDITO do dev sobre `preview/campeonato.html`** (as três telas do 8.3) — segue aberto.
@@ -476,48 +481,54 @@ Spa (33,4%) e Red Bull Ring (28,0%) não perdem candidato. Caso extremo, o Nürb
 / 50,0% sem teto contra 24 / 38,7% com ele** — é o teto que segue impedindo a faixa contínua que o
 dev reprovou.
 
-## 🔴 RISCO ATIVO — a escolha automática do ausente pode FURAR O POOL DE PEÇAS EM SILÊNCIO
+## 🟡 RISCO ATIVO DOWNGRADED — divergência do ausente agora ACUSA
 
-**Registrado como risco pelo dev em 2026-08-09, ao aprovar o portão do 3.1b.** Não é comentário de
-código: é o item que precisa estar resolvido antes de qualquer partida com gente de verdade.
+**Registrado como risco pelo dev em 2026-08-09, ao aprovar o portão do 3.1b.** Deixou de ser "diverge
+em silêncio" (🔴) e passou a ser "diverge com alarme" (🟡) no **PR 3.4**. Leia as ressalvas abaixo antes
+de declarar "fechado".
 
 **O que é.** Quando um jogador abandona ou estoura o prazo, o redutor do servidor o marca ausente e
 **pula a casa dele** — o servidor não pode escolher por ele, porque escolher é regra de jogo e regra
-de jogo precisa do dataset. Quem escolhe pelo ausente é **cada cliente, localmente**.
+de jogo precisa do dataset. Quem escolhe pelo ausente é **cada cliente, localmente**. A rodada 6 tem
+**pool compartilhado, 2 cópias por peça**. Se dois clientes escolherem peças **diferentes** pelo mesmo
+ausente, cada um debita uma cópia diferente: os estados divergem, os loadouts divergem, corrida que
+cada um assiste é outra. **Antes:** nada acusava. **Agora:** o detector compara hashes do draft entre
+os 22 e acusa em `EstadoCliente.divergencia`.
 
-**Por que é perigoso.** A rodada 6 tem **pool compartilhado, 2 cópias por peça**. Se dois clientes
-escolherem peças **diferentes** pelo mesmo ausente, cada um debita uma cópia diferente: os estados
-divergem, os loadouts divergem, e a corrida que cada um assiste é outra. **Nada acusa.** Não há
-exceção, não há tela de erro — o jogo simplesmente deixa de ser o mesmo jogo em cada máquina.
-Palavras do dev: *"é o tipo de bug que só aparece com gente real e é infernal de reproduzir depois."*
+**✅ DETECTOR FUNCIONA (PR 3.4):**
+- `src/net/hash-draft.ts` (novo): hash determinístico do estado do draft, campos enumerados, chaves
+  ordenadas.
+- `src/engine/versao.ts` (novo): handshake de versão recusa entrada se build diferente.
+- `registrarAtestado` em `src/net/servidor-sala.ts`: servidor compara strings opacas, sem dataset.
+- Resultado: divergência do ausente → detectada · 20 seeds sem sabotagem → nenhum alarme falso · cliente
+  atrasado com estado diferente → silencioso (regra de âncora) · atestado malformado → recusado.
 
-**A obrigação — ✅ JÁ IMPLEMENTADA no 3.2**, em `src/net/cliente.ts` (`escolhaDoAusente` +
-`sincronizarDraft`), e não mais "a fazer no 3.3" como esta seção dizia quando foi escrita. O que
-resta pro 3.3 é a UI respeitá-la; o cálculo já está no cliente:
-1. O cliente completa os sorteios do ausente **no mesmo evento** em que vê o `ausencia` no log —
-   atrasar deixa os dois lados em fases diferentes durante a janela.
-2. Na fase peça o cliente **joga por ele**, com escolha **determinística e idêntica nos 22**:
-   `escolherBot` semeado, **nunca** decisão de UI, nunca nada que dependa de estado local.
-
-**Como fechar o risco (não feito):** o detector de divergência do **3.4** (hash comparado entre os
-22) é o que transforma "diverge em silêncio" em "diverge com alarme". Enquanto o 3.4 não existir, a
-defesa é a implementação única em `cliente.ts` — todo mundo chama a mesma função.
-
-**✅ E AGORA TEM TESTE EXPLÍCITO (pedido do dev no 3.3):**
+**✅ TESTE EXPLÍCITO (pedido do dev no 3.3):**
 `src/ui/contrato-ausente.test.ts` — **allowlist repo-wide** de quem pode tocar `escolherBot`
 (asserir *ausência* num diretório era contornável por indireção), `escolhaPadrao` banida na UI,
 proibição do 3º argumento de `sincronizarDraft` **por contagem de parênteses balanceados** (a versão
 por regex era falso-negativo: com a sabotagem aplicada, continuava verde), varredura recursiva, e
 testes de que a substituição é determinística entre execuções independentes.
 
-**Já coberto hoje, e é bastante:**
+**Já coberto:**
 - o portão do 3.1b abandona jogadores nas duas fases em 10 seeds e assere a reconvergência passo a
   passo;
 - o **harness do 3.2 mede isso empiricamente**: o CONTROLE NEGATIVO faz um cliente escolher
   diferente pelo ausente e **exige que a comparação FALHE**. Foi ali que se descobriu que sabotar a
   escolha *própria* não diverge nada (ela vai pro log, que é a verdade compartilhada) — **a
   substituição do ausente é literalmente a única decisão que cada cliente toma sozinho.**
-- 🔴 **O que ainda NÃO existe:** alarme. Se divergirem, ninguém é avisado. Isso é o 3.4.
+
+**RESSALVAS — não é "fechado" sem qualificação:**
+
+1. **O alarme NÃO aparece na tela.** Fica em `EstadoCliente.divergencia` (campo novo). Surfacing é
+   mudança visual e precisa de veredito do dev — é o item 0 novo da SEQUÊNCIA.
+2. **A garantia é "na âncora terminal", NÃO "no primeiro divergente".** Appends rápidos e sucessivos
+   derrubam atestados de âncora intermediária dos retardatários, porque o balde só guarda a maior.
+   Vale no fim, quando todos convergem. Não é "detecção instantânea em tempo real", é "certificação
+   pós-convergência".
+3. **Cliente com bundle em cache fica fixo em versão `''` e tranca os atuais com `versao-divergente`.**
+   O erro não carrega qual versão a sala espera — jogador não sabe que precisa de F5 forçado.
+   Limitação conhecida.
 
 ## Pendências ATIVAS
 
@@ -542,9 +553,9 @@ testes de que a substituição é determinística entre execuções independente
    (e) ✅ **Prazo do turno tem dono no 3.2**: o `alarm()` do Durable Object chama `aoPassarOTempo` a
    cada 5 s (e para de se reagendar com a sala concluída ou vazia). **Falta a UI** mostrar o
    cronômetro ao jogador — isso é 3.3.
-   (f) **A CORRIDA ONLINE não existe.** O draft online termina no `TelaResumo`, com o botão
-   "Ir pra corrida" escondido de propósito — prometer a corrida e devolver à tela inicial é pior que
-   botão nenhum. É o passo natural depois do 3.4.
+   (f) ✅ **O 3.4 foi FEITO (detector + handshake).** **Corrida online é item 1 da SEQUÊNCIA**
+   (próximo passo natural depois do surfacing). O draft online termina no `TelaResumo`, com o botão
+   "Ir pra corrida" escondido de propósito — prometer a corrida e devolver à tela inicial é pior que botão nenhum.
    (g) **15% de perda com conexão intacta não é modo de falha real de WebSocket** (nota da revisão
    do 3.2): TCP entrega ou a conexão cai. O stress do harness continua válido como stress; só não
    deve ser lido como "a rede real perde 15%".
@@ -611,6 +622,9 @@ arte vai ao dev** — mudar composição sozinho já custou 2 bloqueantes no 7.3
   o que dizia ler. **Baseline vermelho real + guarda anti-vacuidade são obrigatórios**, especialmente
   no **3.4, que é literalmente sobre detectar divergência silenciosa**. Ver `CLAUDE.md` §"Cerca de
   lint: separar regra APAGA a regra" e §"Regra de mudança de lógica".
+  **Quarta instância (3.4):** um dos dois testes de lag comparava estados IDÊNTICOS, então permanecia
+  verde mesmo sem a regra de âncora — era cobertura ilusória. Reescrito com atraso real. Registrado
+  como padrão a observar: teste que parece cobrir uma guarda mas testa o caminho feliz.
 - **Ao mexer em silhueta, use o harness de `preview/`** (`preview/harness.test.ts` +
   `preview/desenhos.ts`, gitignored). Rodar:
   `npx vitest run --config preview/harness.config.ts --reporter=verbose --silent=false`.

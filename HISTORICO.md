@@ -1339,6 +1339,67 @@ LAN. É o primeiro suspeito se o celular não conectar.
 - `npm test` **1362/50** (era 1355/49), `typecheck` **0** (app + party), `eslint src scripts party vite.config.ts` **0**, `build` **0**.
 - `npm run balance` **não rodado** — nada em `src/engine/`, `src/data/` ou `scripts/alavancas` foi tocado.
 
+### PR 3.4 — handshake de versão + detector de divergência (2026-08-11, commit `75ccfbe`) — ALTO RISCO
+
+**RISCO ATIVO REBAIXADO — deixou de divergir em silêncio, agora diverge com alarme (ver ressalvas abaixo).** Quando um jogador abandona, o servidor marca-o ausente e **pula a vez dele**. Quem escolhe por ele é **cada cliente, localmente** — escolher é regra de jogo e regra de jogo é engine, servidor não tem dataset. Problema: a rodada 6 tem pool compartilhado (2 cópias por peça). Se dois clientes escolherem peças **diferentes** pelo ausente, cada um debita uma cópia diferente e os estados divergem. `copiasRestantes` divergem, `loadouts` divergem, corrida que cada um assiste é outra. **Antes:** nada acusava. **Agora:** detector compara e acusa em `EstadoCliente.divergencia`.
+
+**DETECTOR — `src/net/hash-draft.ts` (novo) + `registrarAtestado` em `src/net/servidor-sala.ts`**
+
+Campos **ENUMERADOS e chaves ORDENADAS**, nunca `JSON.stringify(draft)`: `Record` em JavaScript emitem na ordem de INSERÇÃO e cada cliente monta os mapas na ordem em que o log chega, então dois estados idênticos hasheavam diferente sem essa guarda. `pecasReveladas` fica de fora — é `null` fora do turno por projeto e acusaria 21 dos 22 sempre. `deriveSeed` usado como **HASH, nunca como stream** (precedente `narracao` no PR A): nenhum tempo muda, nenhum RNG novo é consumido, seeds de ouro intactas por construção.
+
+O servidor compara **STRINGS OPACAS** e nada mais — ele não tem dataset, e essa fronteira do 3.2 continua intacta. A âncora é `eventosAplicados`: atestado com âncora menor é ignorado **EM SILÊNCIO**, porque cliente atrasado é normal e um alarme que dispara com lag é desligado pelo dev na primeira semana de operação.
+
+**HANDSHAKE — `src/engine/versao.ts` (novo) + `versao.test.ts`**
+
+`VERSAO_APP = '3.4.0'` é manual, e valor manual apodrece. Então `versao.test.ts` hasheia o conteúdo de `src/engine/`, `src/data/` e os dois arquivos de `src/net/` que decidem resultado (`cliente.ts` + `hash-draft.ts`), e reprova quando muda sem a versão mudar junto. Versão diferente **recusa a entrada** na porta: vale para `entrar` E `reentrar`. Deixar entrar criaria a divergência que o detector acusaria — é a primeira linha de defesa.
+
+**REVISÃO — 3 bloqueantes + 4 importantes, todos corrigidos**
+
+- **B1 — âncora sem teto.** Uma mensagem com `ancora: 2**40` de qualquer jogador sentado fazia todo atestado honesto seguinte cair no ramo do silêncio **pelo resto da partida**, desligando a defesa sem derrubar nada. Corrigido: teto = tamanho do log (servidor compara contadores sem entender conteúdo).
+- **B2 — `reentrar` passava por fora do handshake.** É o caminho que MAIS importa: entra-se uma vez, reconecta-se a cada F5. Deploy no meio da partida trazia o jogador de volta com engine nova numa sala de engine velha. Corrigido: ambos os comandos de lobby checam versão.
+- **B3 — o digest excluía `src/net/`.** Onde o risco ativo mora: `cliente.ts` tem `escolhaDoAusente`, `hash-draft.ts` decide o FORMATO do atestado. Mexer só em `hash-draft.ts` faria clientes corretos hashearem estados idênticos de formas diferentes — alarme falso que não era lag. Corrigido: ambos os arquivos entram no hash.
+
+Importantes:
+- **I1 — identidade preservada em atestado repetido.** Amplificação de escrita no Durable Object: idempotência testada.
+- **I2 — referência = hash MAJORITÁRIO, não o do menor id.** Com o menor id, se quem divergisse fosse o primeiro na ordem, o alarme acusaria os 21 honestos. Corrigido para votação (maioria simples).
+- **I3 — `...estado` nos dois ramos.** Campo novo sumiria em silêncio sem spread.
+- **I4 — atestado saiu do updater do `setCliente` pra um efeito.** StrictMode da dev rodava o efeito duas vezes.
+- **`sorteios` entrou no hash:** pega dataset divergente já no 1º atestado, não só na hora da escolha.
+
+**MUTAÇÕES — o dev exigiu vermelho real**
+
+(Implementação veio antes do teste; testes reescritos com a implementação pronta.)
+
+- Hash sem `copiasRestantes` → mata os testes do hash-draft, **NÃO** o detector (divergência também aparece em `loadouts` — defesa em profundidade, não falha única).
+- Alarme desligado → mata a detecção.
+- Âncora sem separar atrasados → matou **só UM dos dois testes de lag.** O outro comparava estados **IDÊNTICOS** — atrasado com estado igual produz o mesmo hash e ficaria calado mesmo sem a regra de âncora. Reescrito com atraso real, agora mata aquele teste também.
+- Teto da âncora removido → mata o teste de B1.
+
+**RESULTADO DO DETECTOR (o que o dev pediu)**
+
+- Divergência do ausente com harness sabotado: **detectada**
+- 20 seeds sem sabotagem: **nenhum alarme falso**
+- Cliente atrasado com estado genuinamente diferente: **silencioso** (pela regra de âncora)
+- Atestado de não-jogador / malformado / âncora absurda: **recusado, sala intacta**
+- Build diferente: **recusado na porta**
+
+**Medido:**
+- `npm test` **1394/54** (era 1368/51 do PR 3.3.4), `npm run typecheck` **0**, `eslint src scripts party vite.config.ts` **0**, `npm run build` **0**.
+- `npm run balance` **rodado** (tocou `src/engine/versao.ts`): **inalterado**.
+
+**Revisão:** nenhuma bloqueante — foi ela que guiou todas as correções. **Fluxo alto risco**, conforme `CLAUDE.md`: baseline vermelho real, mutações que matam casos, medição do resultado solicitado.
+
+**RESSALVAS — ler antes de declarar "risco fechado"**
+
+1. **O alarme NÃO aparece na tela.** Fica em `EstadoCliente.divergencia` (campo novo). Surfacing é mudança visual e precisa de veredito do dev — é o próximo passo natural do 3.4 e muda o que se VÊ, portanto entra na sequência com preview MOSTRADO.
+2. **A garantia do detector é "na âncora terminal", não "no primeiro evento divergente".** Appends rápidos e sucessivos derrubam atestados de âncora intermediária dos retardatários, porque o balde só guarda a maior. Vale no fim, quando todos convergem. Não superdimensione: não é "detecção instantânea em tempo real", é "certificação pós-convergência".
+3. **Cliente com bundle em cache que abre a sala fica fixo em versão `''` e tranca os atuais com `versao-divergente`.** O erro não carrega qual versão a sala espera — jogador não sabe que precisa de F5 forçado. Limitação conhecida.
+
+**Pendências:**
+- ✅ **Fechada:** "risco ativo divergir em silêncio" → agora diverge com alarme (não visual ainda).
+- 🟡 **Surfacing do alarme** — item 0 novo da SEQUÊNCIA (é mudança visual, precisa preview + veredito).
+- 🟡 **Limitação do cache + versão `''`** — pode valer um FAQ em `docs/jogar-em-rede.md` ou deixar pra quando o dev reportar problema real.
+
 ### PR 3.3.4 — F5 no draft perdia a sala; porta 8787 ocupada falha silencioso (2026-08-11, `6b9fb3a`) — BAIXO RISCO
 
 **PROBLEMA 1 — F5 no meio do draft voltava pra tela inicial.** O dev relatou; `ESTADO.md` §FASE 3 prometia que F5 devolvia o jogador ao draft pelo token do 3.2.1. Duas hipóteses levantadas foram **REFUTADAS POR MEDIÇÃO**:
