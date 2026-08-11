@@ -153,10 +153,21 @@ explicitamente vários itens numa sessão só — e mesmo aí, parar ao fim do l
 2. `balance-harness` rodado, se tocou em nota/lógica de corrida.
 3. **Alto risco:** revisado pelo `senior-reviewer`. **Baixo risco: pular** (ver regra acima).
 4. Diff pequeno e reversível.
-5. **Se o PR muda o que se VÊ na tela: preview MOSTRADO ao dev, não apenas gerado.** São coisas
-   diferentes e confundi-las já custou um PR — no 7.4 o preview foi gerado dois minutos antes do
-   commit e o dev nunca o viu, porque `preview/` é gitignored e não aparece em diff nenhum.
-   Concretamente: a mensagem final **tem que conter o comando e o CAMINHO ABSOLUTO** do arquivo, e
-   o PR não fecha sem o veredito do dev. Preview gerado não é preview aprovado.
+5. **Se o PR muda o que se VÊ na tela: preview ABERTO por mim, e MOSTRADO ao dev.** São três coisas
+   diferentes — gerar, conferir, apresentar — e confundir duas delas já custou um PR cada vez.
+   - **Gerado ≠ apresentado** (lição do 7.4): o preview foi gerado dois minutos antes do commit e o
+     dev nunca o viu, porque `preview/` é gitignored e não aparece em diff nenhum. Concretamente: a
+     mensagem final **tem que conter o comando e o CAMINHO ABSOLUTO** do arquivo, e o PR não fecha
+     sem o veredito do dev.
+   - 🔒 **Gerado ≠ conferido** (lição do 3.4.1, e é obrigação minha): **abrir o preview e OLHAR
+     antes de apresentar.** No 3.4.1 o preview punha `data-tema` numa `<div>`, mas a cascata da
+     paleta é `:root[data-tema='light']` — a seção rotulada "tema claro" renderizava ESCURA. O
+     arquivo existia, o teste passava, e o preview mentia sobre o que estava mostrando. Nenhuma
+     asserção pegaria: só pega quem abre. **Preview não olhado não vai pro dev.**
+
+   Esta é a mesma família de "o teste afirmava o que não conferia" que a Fase 3 encontrou cinco
+   vezes no código (comentário dizendo checar o proxy sem ler nada, regex furado na cerca, "sala
+   vazia encerra na hora", teste de lag com estados idênticos, digest sem `src/net/`) — agora do
+   lado visual. **Artefato que não foi verificado não conta como verificado, em nenhuma camada.**
 6. **`doc-writer` atualizou `ESTADO.md` + `HISTORICO.md`.**
 7. Aprovação explícita do dev antes de qualquer push.
