@@ -29,9 +29,76 @@ interface FluxoOnlineProps {
   onVoltar: () => void;
 }
 
+/**
+ * O fluxo, com o ALARME por cima de tudo (PR 3.4.1).
+ *
+ * 🔴 O banner fica AQUI, fora do conteúdo, e não dentro de cada tela — porque a
+ * divergência pode acontecer em qualquer ponto (sorteios, peça, espera,
+ * resumo) e o jogador precisa vê-la em todos. Pôr em cada tela seria repetir a
+ * regra em seis lugares e esquecer num deles.
+ */
 export function FluxoOnline({ sala, onVoltar }: FluxoOnlineProps) {
   const online = useSalaOnline(sala);
   const [nome, setNome] = useState('');
+  return (
+    <>
+      <BannerDivergencia divergencia={online.cliente.divergencia} />
+      <ConteudoOnline
+        online={online}
+        nome={nome}
+        setNome={setNome}
+        sala={sala}
+        onVoltar={onVoltar}
+      />
+    </>
+  );
+}
+
+/**
+ * 🔴 O ALARME que o 3.4 passou a levantar (PR 3.4.1).
+ *
+ * Sem esta tela o detector é código morto do ponto de vista de quem joga: o
+ * servidor acusa, o cliente registra, e o jogador segue vendo um resultado que
+ * pode não ser o dos outros — que é exatamente o silêncio que a Fase 3 gastou
+ * um PR inteiro pra acabar.
+ *
+ * **Não some.** Uma vez levantado, o alarme fica: o estado já divergiu e nada
+ * no jogo o reconcilia. Fechar sozinho sugeriria que passou.
+ *
+ * O texto evita acusar alguém. O servidor não tem dataset e **não sabe quem
+ * está certo** — `jogadores` é a minoria que atestou diferente, uma pista, não
+ * um veredito. Dizer "fulano está errado" seria afirmar mais do que se sabe.
+ */
+function BannerDivergencia({
+  divergencia,
+}: {
+  divergencia: { escopo: string; ancora: number; jogadores: string[] } | null;
+}) {
+  if (divergencia === null) return null;
+  return (
+    <div className="fluxo-online__divergencia" role="alert">
+      <strong>⚠️ As máquinas divergiram.</strong>{' '}
+      <span>
+        O resultado que você está vendo pode não ser o mesmo que os outros jogadores estão vendo. A
+        partida continua, mas não dá mais pra confiar que o draft é o mesmo em todas as telas.
+      </span>
+    </div>
+  );
+}
+
+function ConteudoOnline({
+  online,
+  nome,
+  setNome,
+  sala,
+  onVoltar,
+}: {
+  online: ReturnType<typeof useSalaOnline>;
+  nome: string;
+  setNome: (nome: string) => void;
+  sala: string;
+  onVoltar: () => void;
+}) {
   const { cliente, euSou, minhaVez, souAusente } = online;
   const publica = cliente.sala;
   const draft = cliente.draft;

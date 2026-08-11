@@ -1285,6 +1285,27 @@ button.card {
   color: var(--cor-texto-fraco);
 }
 
+/* 🔴 O ALARME de divergência (PR 3.4.1) — o detector do 3.4 só vira aviso de
+   verdade aqui. Fica no topo de TODAS as telas do online e não fecha sozinho:
+   o estado já divergiu e nada no jogo o reconcilia, então sumir sugeriria que
+   passou. Usa os aliases que a tela de erro do lobby já usa (`--cor-erro`, que
+   é `--erro-texto` — TINTA, não preenchimento, pela regra travada da paleta no
+   7.8), sem introduzir cor nova. */
+.fluxo-online__divergencia {
+  color: var(--cor-erro);
+  background: var(--cor-superficie);
+  border: 1px solid var(--cor-erro);
+  border-left: 4px solid var(--cor-erro);
+  border-radius: var(--raio-sm);
+  padding: var(--espaco-sm) var(--espaco-md);
+  margin-bottom: var(--espaco-md);
+  line-height: 1.45;
+}
+
+.fluxo-online__divergencia span {
+  color: var(--cor-texto);
+}
+
 .form-inicio__online {
   border: 1px solid var(--cor-borda);
   border-radius: var(--raio-sm);
