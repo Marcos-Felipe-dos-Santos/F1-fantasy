@@ -18,7 +18,7 @@ import { FluxoCampeonato } from './FluxoCampeonato';
 import { FluxoCorrida } from './FluxoCorrida';
 import { FluxoOnline } from './FluxoOnline';
 import { TelaSalaOnline } from './TelaSalaOnline';
-import { criarSalaNoServidor, linkDaSala, salaDaUrl } from './sala-online';
+import { criarSalaNoServidor, fixarSalaNaBarra, linkDaSala, salaDaUrl } from './sala-online';
 import { PISTA_CORRIDA_ID } from './fluxo-corrida';
 import {
   avancarEtapa,
@@ -83,6 +83,23 @@ function App() {
       return;
     }
     setCodigoCriado(codigo);
+  }, []);
+
+  /**
+   * 🔑 O ÚNICO caminho de entrada numa sala — e ele grava `?sala=` na URL.
+   *
+   * O funil existe porque a sala vive em DOIS lugares que precisam concordar:
+   * o estado React (que a tela usa agora) e a URL (que é a ÚNICA fonte no
+   * boot, `salaDaUrl` logo acima). Enquanto entrar era só `setSalaOnline`,
+   * quem criava a sala ficava com a URL limpa e perdia a sala no F5 — com o
+   * token de reentrada guardado e inútil, porque nada dizia de que sala ele
+   * era. `sala-na-url.test.ts` trava que não volte a existir uma segunda
+   * entrada que esqueça a URL.
+   */
+  const entrarNaSala = useCallback((codigo: string) => {
+    setSalaOnline(codigo);
+    setEscolhendoSala(false);
+    fixarSalaNaBarra(codigo);
   }, []);
 
   const sairDaSala = useCallback(() => {
@@ -248,10 +265,7 @@ function App() {
       {salaOnline === null && escolhendoSala && (
         <TelaSalaOnline
           onCriar={criarSala}
-          onEntrar={(codigo) => {
-            setSalaOnline(codigo);
-            setEscolhendoSala(false);
-          }}
+          onEntrar={entrarNaSala}
           onVoltar={sairDaSala}
           codigoCriado={codigoCriado}
           criando={criandoSala}

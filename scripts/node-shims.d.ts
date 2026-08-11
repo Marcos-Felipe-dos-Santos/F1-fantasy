@@ -36,12 +36,29 @@ declare module 'node:url' {
   export function pathToFileURL(path: string): URL;
 }
 
+/**
+ * Adicionado no PR 3.3.4 (`checar-porta-sala.ts`): só o necessário pra
+ * TENTAR ESCUTAR numa porta e descobrir se ela está livre. Não é um shim de
+ * `net` — é o mínimo do mínimo, na linha do resto deste arquivo.
+ */
+declare module 'node:net' {
+  export interface Servidor {
+    once(evento: 'error' | 'listening', ouvinte: () => void): Servidor;
+    listen(opcoes: { host?: string; port: number; exclusive?: boolean }): Servidor;
+    close(aoFechar?: () => void): Servidor;
+  }
+  export function createServer(): Servidor;
+}
+
 declare const process: {
   argv: string[];
   exitCode?: number;
   env: Record<string, string | undefined>;
   /** Adicionado no PR 3.2 (cerca-lint.test.ts) pra rodar o ESLint na pasta do projeto. */
   cwd(): string;
+  /** Adicionados no PR 3.3.4 (`checar-porta-sala.ts`) pra falhar ALTO e sair com código ≠ 0. */
+  stderr: { write(texto: string): boolean };
+  exit(codigo?: number): never;
 };
 
 interface ImportMeta {

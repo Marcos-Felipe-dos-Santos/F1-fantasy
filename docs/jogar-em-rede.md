@@ -107,3 +107,56 @@ privado — **abrir isso pra internet é decisão do dev**, pelos mesmos motivos
    ```
 
    17 cheques; ele fala qual falhou.
+
+## 🔴 "Criar sala" fica em "Criando…" pra sempre — a porta 8787 ocupada
+
+O modo de falha mais caro de diagnosticar desta camada, porque **não produz erro nenhum**.
+
+**O que acontece.** Se a 8787 já estiver ocupada, o `wrangler dev` não reclama: ele sobe na 8788
+e imprime `Ready on http://127.0.0.1:8788` no meio de vinte linhas de banner. Mas o proxy do Vite
+aponta pra **8787, fixa** (`ALVO_WORKER_DEV` em `src/net/rotas.ts`). O app passa a conversar com
+uma porta vazia.
+
+O sintoma depende do que sobrou na 8787:
+
+| o que está na 8787 | o que o jogador vê |
+|---|---|
+| nada | o proxy devolve 500 → "Não deu pra criar a sala. O servidor está rodando?" |
+| um `workerd` meio-morto (aceita a conexão, nunca responde) | **"Criando…" pra sempre** — sem erro, sem log, sem pista |
+
+A segunda linha é a ruim, e é comum: um `wrangler dev` anterior que não morreu por inteiro deixa
+um `workerd.exe` órfão em `LISTENING` que não responde a `curl`.
+
+**Como está resolvido (PR 3.3.4).** O `npm run sala` agora tem um pré-voo
+(`scripts/checar-porta-sala.ts`) que tenta ESCUTAR na 8787 antes de chamar o wrangler. Se a porta
+não estiver livre, ele falha com `exit 1` e explica o que fazer, em vez de deixar o wrangler
+escorregar de porta em silêncio. O `wrangler dev` também passou a receber `--port 8787` explícito.
+
+**Se o pré-voo acusar**, no PowerShell:
+
+```
+netstat -ano | findstr :8787
+taskkill /IM workerd.exe /F
+```
+
+E confirme que voltou:
+
+```
+curl -Method POST http://localhost:5173/criar-sala     # deve devolver {"codigo":"XXXXXX"}
+```
+
+## ⚠️ Duas abas no MESMO navegador não são dois jogadores
+
+Limitação conhecida, registrada no PR 3.3.4 e **ainda não corrigida**.
+
+O token de reentrada mora no `localStorage`, com chave por sala (`f1f:token-sala:<código>`). O
+`localStorage` é por ORIGEM, não por aba — então duas abas do mesmo Chrome dividem o mesmo token.
+Medido: com o anfitrião já dentro, abrir o link numa aba nova faz ela achar o token dele e
+**reentrar como o anfitrião** — as duas abas mostrando o mesmo jogador e a sala contando 1, não 2.
+
+Não afeta jogo real (cada pessoa está no seu navegador). Afeta o TESTE na própria máquina.
+
+**Para testar dois jogadores sozinho:** use dois navegadores diferentes, ou uma janela anônima
+para o segundo jogador. Abrir as duas abas na tela de nome **antes** de qualquer um entrar também
+funciona, mas é frágil — quem entra por último sobrescreve o token guardado, e é esse que o F5
+vai usar.

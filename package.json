@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "vite",
     "dev:rede": "vite --host",
-    "sala": "wrangler dev",
+    "sala": "node scripts/checar-porta-sala.ts && wrangler dev --port 8787",
     "build": "tsc --noEmit && tsc --noEmit -p party/tsconfig.json && vite build",
     "test": "vitest run",
     "test:watch": "vitest",

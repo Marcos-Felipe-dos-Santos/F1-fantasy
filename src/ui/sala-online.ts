@@ -37,6 +37,26 @@ export function linkDaSala(codigo: string): string {
 }
 
 /**
+ * Grava `?sala=<código>` na barra de endereço — **é isto que faz o F5
+ * funcionar** (PR 3.3.4).
+ *
+ * 🔴 O `App` lê a sala de uma fonte só, `salaDaUrl(window.location)`, e só no
+ * boot. Entrar numa sala mexia apenas em estado React, então quem CRIAVA a
+ * sala ficava com a URL limpa: no F5 o app não sabia de qual sala voltar,
+ * caía na tela inicial, e o token de reentrada do 3.2.1 ficava no
+ * `localStorage` intacto e inútil — ninguém sabia de que sala ele era. Quem
+ * entrava pelo link nunca via o defeito, porque o link já traz o parâmetro.
+ *
+ * `replaceState` e não `pushState`: entrar numa sala não é navegação, e um
+ * item novo no histórico faria o "voltar" do navegador devolver o jogador pra
+ * uma tela inicial que não existe mais. É simétrico ao que `sairDaSala` já
+ * fazia pra LIMPAR o parâmetro.
+ */
+export function fixarSalaNaBarra(codigo: string): void {
+  window.history.replaceState(null, '', linkDaSala(codigo));
+}
+
+/**
  * Pede um código novo ao servidor. `null` se não deu (servidor fora do ar, ou
  * as três tentativas de sortear código livre falharam).
  *
