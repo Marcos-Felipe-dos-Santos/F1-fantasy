@@ -33,7 +33,7 @@ const RAIZ_SRC = join(AQUI, '..');
  * O digest registrado. **Atualize junto com `VERSAO_APP`** — a mensagem de
  * falha traz o valor novo pronto pra colar.
  */
-const DIGEST_REGISTRADO = 'e53ab7df';
+const DIGEST_REGISTRADO = '9dccd150';
 
 /** Hash de string estilo xmur3, igual ao da engine — sem dependência nova. */
 function hashTexto(texto: string): number {

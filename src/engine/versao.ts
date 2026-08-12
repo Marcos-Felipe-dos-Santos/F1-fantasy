@@ -19,4 +19,4 @@
  * Formato: `<marco>.<n>`. O marco acompanha a fase; `n` sobe a cada mudança de
  * engine ou dataset que altere resultado.
  */
-export const VERSAO_APP = '3.4.0';
+export const VERSAO_APP = '3.4.2';

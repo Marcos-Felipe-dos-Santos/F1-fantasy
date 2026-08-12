@@ -17,6 +17,9 @@ import {
   type EstadoServidor,
 } from './servidor-sala';
 import type { MensagemServidor } from './protocolo';
+import { RODADAS_SORTEIO } from '../engine/draft-utils';
+import { deriveSeed } from '../engine/rng';
+import { ROTULO_SEED_CORRIDA } from './tipos';
 
 const T0 = 1_000_000;
 
@@ -283,5 +286,134 @@ describe('reconexão por token (PR 3.2.1)', () => {
     const apos = aoDesconectar(iniciada, 'c1', T0).estado;
     expect(apos.sala.jogadores).toHaveLength(2);
     expect(apos.sala.draft?.ausentes, 'cair não é abandonar').toEqual([]);
+  });
+});
+
+/**
+ * PR 1/4 da corrida online, item 2 da revisão do `senior-reviewer`: os 9
+ * testes de `sala.test.ts` chamam `publicarSala` direto e FORJAM `fase`
+ * (`comFaseDraft`). Isso não passa pelo funil de verdade — uma mutação que
+ * reescrevesse `estadoPara` (`servidor-sala.ts`) pra montar o payload à mão em
+ * vez de delegar a `publicarSala` vazaria a `seedMestre` no fio e os 9 testes
+ * continuariam verdes.
+ *
+ * Este bloco atravessa o funil real: `entrar` → `pronto` → `iniciar` →
+ * `escolher` (sorteios e peça) via `aoReceber`, com o draft levado a
+ * 'concluido' DE VERDADE — nenhuma `fase` forjada — e inspeciona a MENSAGEM
+ * que `aoReceber`/`aoConectar` efetivamente devolveriam pro transporte
+ * mandar no fio.
+ */
+describe('seedCorrida no fio, através do funil real (PR 1/4, item 2 da revisão)', () => {
+  const SEED_MESTRE = 555111;
+  const CONEXAO_DO_HUMANO: Record<string, string> = { 'humano-01': 'c1', 'humano-02': 'c2' };
+
+  /** Sala com 2 humanos prontos e o draft REALMENTE iniciado (via aoReceber). */
+  function salaComDraftIniciado(): EstadoServidor {
+    let estado = criarServidor('sala-integ-seedcorrida', SEED_MESTRE, 'dificil', T0);
+    estado = entrar(estado, 'c1', 'Ana', 'tk-ana').estado;
+    estado = entrar(estado, 'c2', 'Beto', 'tk-beto').estado;
+    estado = mandar(estado, 'c1', { tipo: 'pronto', pronto: true }).estado;
+    estado = mandar(estado, 'c2', { tipo: 'pronto', pronto: true }).estado;
+    estado = mandar(estado, 'c1', { tipo: 'iniciar' }).estado;
+    return estado;
+  }
+
+  /**
+   * Avança UM passo real do draft: descobre de quem é a vez (o servidor já
+   * pulou os bots — `normalizar` garante que `vez` é sempre humano) e manda,
+   * em nome dela, a escolha mínima com FORMA válida — o conteúdo não importa
+   * pro servidor, que não tem dataset (`temFormaDeEscolha`).
+   */
+  function passoDoDraft(estado: EstadoServidor) {
+    const draft = estado.sala.draft!;
+    if (draft.fase === 'sorteios') {
+      const vez = draft.humanos.find((id) => draft.rodada[id] <= RODADAS_SORTEIO)!;
+      return mandar(estado, CONEXAO_DO_HUMANO[vez], {
+        tipo: 'escolher',
+        escolha: { tipo: 'componente', slot: 'chassi' },
+        turnoEsperado: draft.rodada[vez],
+      });
+    }
+    const vez = draft.ordemPeca[draft.indicePeca];
+    return mandar(estado, CONEXAO_DO_HUMANO[vez], {
+      tipo: 'escolher',
+      escolha: { tipo: 'peca', pecaId: 'peca-qualquer' },
+      turnoEsperado: draft.indicePeca,
+    });
+  }
+
+  /** `seedCorrida` de todo envio do tipo `estado` num lote de envios. */
+  function seedsCorridaDosEnvios(
+    envios: { para: string | null; mensagem: MensagemServidor }[],
+  ): (number | null)[] {
+    return envios
+      .filter((e) => e.mensagem.tipo === 'estado')
+      .map((e) => (e.mensagem as { estado: { seedCorrida: number | null } }).estado.seedCorrida);
+  }
+
+  /**
+   * A `seedMestre` NÃO pode aparecer na mensagem de verdade, em texto nenhum
+   * dela. Sem esta checagem, um `estadoPara` reescrito pra montar o payload à
+   * mão (`{ ...estado.sala, seedDraft: ..., seedCorrida: <portão mantido> }`
+   * em vez de delegar a `publicarSala`) vazaria a `seedMestre` E os `tokens`
+   * no fio — e passaria pelas duas asserções de `seedCorrida` acima sem ser
+   * pego, porque o portão da `seedCorrida` continuaria intacto. É exatamente
+   * a classe de defeito nomeada pelo `senior-reviewer` no item 2 da revisão.
+   */
+  function assertSeedMestreNaoVaza(envios: { mensagem: MensagemServidor }[]): void {
+    for (const envio of envios) {
+      expect(JSON.stringify(envio.mensagem), 'a seedMestre vazou na mensagem').not.toContain(
+        String(SEED_MESTRE),
+      );
+    }
+  }
+
+  it('no MEIO do draft (fase sorteios), a mensagem enviada tem seedCorrida null — broadcast e snapshot direcionado', () => {
+    const estado = salaComDraftIniciado();
+    expect(estado.sala.draft?.fase).toBe('sorteios');
+
+    const r = passoDoDraft(estado);
+    const broadcast = r.envios.filter((e) => e.para === null);
+    expect(broadcast.length, 'o passo do draft deveria difundir um snapshot').toBeGreaterThan(0);
+    for (const seedCorrida of seedsCorridaDosEnvios(broadcast)) {
+      expect(seedCorrida).toBeNull();
+    }
+    assertSeedMestreNaoVaza(broadcast);
+
+    // Um observador que conecta NO MEIO do draft recebe o mesmo: null.
+    const conectar = aoConectar(r.estado, 'c-observador');
+    expect(seedsCorridaDosEnvios(conectar.envios)).toEqual([null]);
+    assertSeedMestreNaoVaza(conectar.envios);
+  });
+
+  it('depois da ÚLTIMA peça — draft REALMENTE concluído, sem fase forjada — a mensagem enviada tem a seedCorrida certa', () => {
+    let estado = salaComDraftIniciado();
+    let ultimo = passoDoDraft(estado);
+    estado = ultimo.estado;
+    let passos = 1;
+    while (estado.sala.draft?.fase !== 'concluido') {
+      ultimo = passoDoDraft(estado);
+      estado = ultimo.estado;
+      passos += 1;
+      // Guarda contra loop infinito se o driver do teste tiver um bug: o
+      // draft real termina bem antes disso (poucas dezenas de passos).
+      if (passos > 500) {
+        throw new Error('draft não concluiu em 500 passos — bug no driver do teste, não no PR');
+      }
+    }
+    expect(estado.sala.draft?.fase).toBe('concluido');
+
+    const seedEsperada = deriveSeed(SEED_MESTRE, ROTULO_SEED_CORRIDA);
+    const broadcast = ultimo.envios.filter((e) => e.para === null);
+    expect(broadcast.length, 'a conclusão deveria difundir um snapshot').toBeGreaterThan(0);
+    for (const seedCorrida of seedsCorridaDosEnvios(broadcast)) {
+      expect(seedCorrida).toBe(seedEsperada);
+    }
+    assertSeedMestreNaoVaza(broadcast);
+
+    // E quem conecta DEPOIS da conclusão recebe a mesma seed, não null.
+    const conectar = aoConectar(estado, 'c-tarde');
+    expect(seedsCorridaDosEnvios(conectar.envios)).toEqual([seedEsperada]);
+    assertSeedMestreNaoVaza(conectar.envios);
   });
 });

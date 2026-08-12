@@ -34,6 +34,12 @@ export const MIN_HUMANOS = 2;
 export const ROTULO_SEED_DRAFT = 'online:draft';
 
 /**
+ * Rótulo do sub-stream de RNG da CORRIDA online (PR 1/4 de "corrida online").
+ * Mesma regra de namespace do `ROTULO_SEED_DRAFT` acima.
+ */
+export const ROTULO_SEED_CORRIDA = 'online:corrida';
+
+/**
  * Fase da sala. `aberta`: entra e sai gente, o roster ainda não existe.
  * `iniciada`: roster CONGELADO — a composição da partida não muda mais.
  * (Abandono depois do início é turno, não roster: fica pro 3.1b.)
@@ -67,10 +73,46 @@ export interface EstadoSalaPublico {
   salaId: string;
   /**
    * Seed do DRAFT desta partida, derivada da `seedMestre` (`ROTULO_SEED_DRAFT`).
-   * É o que o cliente precisa pra rodar `criarDraft` — e é uma via só: com ela
-   * não se recompõe a `seedMestre`, logo não se pré-computa o campeonato.
+   * É o que o cliente precisa pra rodar `criarDraft`.
+   *
+   * ⚠️ **Não é uma via só, e é bom não fingir que é.** `deriveSeed` usa
+   * `xmur3`, hash NÃO-criptográfico de 32 bits — não uma função unidirecional
+   * de verdade. `seedDraft` não expõe a `seedMestre` diretamente, mas a
+   * mestra também é um único uint32 (`party/sala.ts`, `crypto.getRandomValues`
+   * sobre 1 slot), então um atacante disposto a testar as 2^32 sementes,
+   * aplicando `xmur3(`${s}:online:draft`)` a cada uma e comparando com a
+   * `seedDraft` publicada, encontra a mestra (sobra ~1-2 candidatos; nada no
+   * draft observado desempata mais que isso, porque tudo nele deriva da
+   * mesma seed). Isso pré-computa o campeonato inteiro, `seedCorrida`
+   * incluída — é limitação CONHECIDA e registrada, não descuido, e o
+   * portão que existe (não publicar antes da hora, ver `seedCorrida` abaixo)
+   * não fecha essa porta, só a trivial. Alargar a entropia da `seedMestre`
+   * resolveria de fato; é mudança de fundo, fora do escopo deste PR.
    */
   seedDraft: number;
+  /**
+   * Seed da CORRIDA desta partida, derivada da `seedMestre`
+   * (`ROTULO_SEED_CORRIDA`) — só quando o draft CONCLUI (`fase === 'concluido'`).
+   * Antes disso, `null`.
+   *
+   * 🔒 **Veredito do dev, não reabrir — mas escopo do que este portão compra é
+   * limitado, e é bom não inflar.** Publicar a seed durante o draft daria a
+   * quem a tem uma vantagem computável **no console, sem esforço**: pegar o
+   * valor pronto e simular loadouts candidatos contra a pista e a corrida
+   * antes de escolher — "não é hack, é chamar uma função" foi a régua do dev
+   * pra rejeitar a `seedMestre` completa (decisão (b) da Fase 3), e este
+   * portão fecha exatamente esse caminho trivial. Consequência aceita: a
+   * PISTA também só aparece no fim do draft, já que `pistaSorteada`
+   * (`src/engine/pista-sorteada.ts`) deriva dela. Sem paridade com o offline
+   * aqui — decisão explícita, não descuido.
+   *
+   * ⚠️ **O que este portão NÃO compra:** resistência a um atacante disposto a
+   * rodar um brute-force de 2^32 sobre a `seedMestre` a partir da `seedDraft`
+   * pública desde o lobby (ver docblock de `seedDraft` acima) — esse caminho
+   * recompõe `seedCorrida` mesmo antes do draft concluir, sem nunca precisar
+   * do valor publicado aqui. Limitação conhecida, não corrigida neste PR.
+   */
+  seedCorrida: number | null;
   dificuldade: Dificuldade;
   fase: FaseSala;
   /** Menor id presente na sala, ou `null` se a sala está vazia. */
@@ -219,7 +261,7 @@ export interface EstadoDraftRede {
  * `publicarSala`, e o tipo do broadcast (`MensagemServidor`) é
  * `EstadoSalaPublico` — então esquecer de filtrar não compila.
  */
-export interface EstadoSala extends Omit<EstadoSalaPublico, 'seedDraft'> {
+export interface EstadoSala extends Omit<EstadoSalaPublico, 'seedDraft' | 'seedCorrida'> {
   /** Seed mestre da partida, fixada na criação da sala (uint32). */
   seedMestre: number;
   /**

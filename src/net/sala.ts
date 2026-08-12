@@ -23,6 +23,7 @@ import {
 import {
   MIN_HUMANOS,
   QTD_JOGADORES,
+  ROTULO_SEED_CORRIDA,
   ROTULO_SEED_DRAFT,
   type EstadoSala,
   type EstadoSalaPublico,
@@ -106,6 +107,13 @@ export function publicarSala(estado: EstadoSala): EstadoSalaPublico {
   return {
     salaId: estado.salaId,
     seedDraft: seedDoDraft(estado),
+    // Só publica quando o draft CONCLUI — antes disso seria vantagem
+    // competitiva computável no console (ver docblock de `seedCorrida` em
+    // `tipos.ts`, e a pista deriva dela em `pistaSorteada`).
+    seedCorrida:
+      estado.draft?.fase === 'concluido'
+        ? deriveSeed(estado.seedMestre, ROTULO_SEED_CORRIDA)
+        : null,
     dificuldade: estado.dificuldade,
     fase: estado.fase,
     anfitriaoId: estado.anfitriaoId,

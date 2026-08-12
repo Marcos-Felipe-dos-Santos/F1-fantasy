@@ -38,7 +38,14 @@ import {
   reduzirSala,
   seedDoDraft,
 } from './sala';
-import { MIN_HUMANOS, QTD_JOGADORES, ROTULO_SEED_DRAFT, type EstadoSala } from './tipos';
+import {
+  MIN_HUMANOS,
+  QTD_JOGADORES,
+  ROTULO_SEED_CORRIDA,
+  ROTULO_SEED_DRAFT,
+  type EstadoSala,
+  type FaseDraftRede,
+} from './tipos';
 import type { ComandoSala } from './protocolo';
 
 const dataset = criarDataset(equipeAnosReal, pecasReal, pistasReal);
@@ -93,6 +100,16 @@ function salaIniciada(n: number, dificuldade: Dificuldade = 'dificil'): EstadoSa
 }
 
 const idHumano = (i: number): string => `humano-${String(i).padStart(2, '0')}`;
+
+/**
+ * Mesmo estado de sala, mas com o `draft` forçado pra outra fase. Só o campo
+ * `fase` importa pra `publicarSala` — os demais campos do draft seguem os de
+ * um draft real e congelado, então não há necessidade de fabricar um
+ * `EstadoDraftRede` do zero.
+ */
+function comFaseDraft(sala: EstadoSala, fase: FaseDraftRede): EstadoSala {
+  return { ...sala, draft: { ...sala.draft!, fase } };
+}
 
 describe('entrada e saída (sala aberta)', () => {
   it('aloca ids humano-01.. em sequência, com padding de 2 dígitos', () => {
@@ -329,7 +346,38 @@ describe('seed: a mestra fica no servidor', () => {
     // `vazioDesde` é bookkeeping interno do ciclo de vida — a tela não precisa
     // saber há quanto tempo a sala está vazia, e publicá-lo só daria ruído.
     delete semSegredos.vazioDesde;
-    expect(publicarSala(sala)).toEqual({ ...semSegredos, seedDraft: seedDoDraft(sala) });
+    // `salaIniciada` deixa o draft em 'sorteios' — antes de concluir, então
+    // `seedCorrida` é `null` (ver bloco "seedCorrida" abaixo).
+    expect(publicarSala(sala)).toEqual({
+      ...semSegredos,
+      seedDraft: seedDoDraft(sala),
+      seedCorrida: null,
+    });
+  });
+
+  // 🔒 Item 4 da revisão do PR 1/4: os dois testes acima só rodam com o draft
+  // em 'sorteios' — quando `seedCorrida` ainda é `null`. Repete as MESMAS duas
+  // asserções com o draft em 'concluido', que é justamente o estado em que
+  // `seedCorrida` passa a existir e onde vazar a `seedMestre` no fio importaria.
+  it('publicarSala NÃO expõe a seedMestre — MESMO com o draft concluído e seedCorrida presente', () => {
+    const sala = comFaseDraft(salaIniciada(2), 'concluido');
+    const publico = publicarSala(sala);
+    expect(publico.seedCorrida).not.toBeNull(); // pré-condição: a seed existe aqui.
+    expect(Object.keys(publico)).not.toContain('seedMestre');
+    expect(JSON.stringify(publico)).not.toContain(String(sala.seedMestre));
+  });
+
+  it('publicarSala preserva todo o resto do estado — MESMO com o draft concluído', () => {
+    const sala = comFaseDraft(salaIniciada(3), 'concluido');
+    const semSegredos: Partial<EstadoSala> = structuredClone(sala);
+    delete semSegredos.seedMestre;
+    delete semSegredos.tokens;
+    delete semSegredos.vazioDesde;
+    expect(publicarSala(sala)).toEqual({
+      ...semSegredos,
+      seedDraft: seedDoDraft(sala),
+      seedCorrida: deriveSeed(sala.seedMestre, ROTULO_SEED_CORRIDA),
+    });
   });
 
   it('o roster é congelado com a seed DERIVADA, não com a mestra', () => {
@@ -340,6 +388,55 @@ describe('seed: a mestra fica no servidor', () => {
     expect(sala.roster).not.toEqual(
       congelarRoster(sala.jogadores, sala.seedMestre, sala.dificuldade),
     );
+  });
+});
+
+describe('seedCorrida (PR 1/4 — corrida online: "seed e pista")', () => {
+  /**
+   * Sala iniciada com uma `seedMestre` escolhida por quem chama, em vez da
+   * `SEED_MESTRE` fixa do módulo — necessário pro teste anti-vazamento, que
+   * precisa variar a seed mestre e olhar `seedCorrida` em cada uma.
+   */
+  function salaIniciadaComSeed(seedMestre: number, n: number, dificuldade: Dificuldade = 'dificil'): EstadoSala {
+    const vazia = criarSala('sala-seed-corrida', seedMestre, dificuldade, T0);
+    const pronta = todosProntos(comHumanos(vazia, nomesDe(n)));
+    return ok(pronta, { tipo: 'iniciar' }, pronta.anfitriaoId);
+  }
+
+  it('lobby (draft === null) ⇒ seedCorrida === null', () => {
+    const sala = salaVazia();
+    expect(sala.draft).toBeNull();
+    expect(publicarSala(sala).seedCorrida).toBeNull();
+  });
+
+  it('draft em "sorteios" ⇒ seedCorrida === null', () => {
+    const sala = salaIniciada(3);
+    expect(sala.draft?.fase).toBe('sorteios');
+    expect(publicarSala(sala).seedCorrida).toBeNull();
+  });
+
+  it('draft em "peca" ⇒ seedCorrida === null', () => {
+    const sala = comFaseDraft(salaIniciada(3), 'peca');
+    expect(publicarSala(sala).seedCorrida).toBeNull();
+  });
+
+  it('draft "concluido" ⇒ seedCorrida é deriveSeed(seedMestre, ROTULO_SEED_CORRIDA)', () => {
+    const sala = comFaseDraft(salaIniciada(3), 'concluido');
+    const publico = publicarSala(sala);
+    expect(publico.seedCorrida).toBe(deriveSeed(sala.seedMestre, ROTULO_SEED_CORRIDA));
+    expect(publico.seedCorrida).not.toBeNull();
+  });
+
+  it('🔒 não vaza segredo: seedCorrida difere de seedMestre e de seedDraft, em 5 seedMestres diferentes', () => {
+    const seedsMestre = ['sc-1', 'sc-2', 'sc-3', 'sc-4', 'sc-5'].map(seedDeTexto);
+    expect(new Set(seedsMestre).size, 'seeds de teste coincidiram por acidente').toBe(5);
+    for (const seedMestre of seedsMestre) {
+      const sala = comFaseDraft(salaIniciadaComSeed(seedMestre, 3), 'concluido');
+      const publico = publicarSala(sala);
+      expect(publico.seedCorrida).not.toBeNull();
+      expect(publico.seedCorrida).not.toBe(seedMestre);
+      expect(publico.seedCorrida).not.toBe(publico.seedDraft);
+    }
   });
 });
 
