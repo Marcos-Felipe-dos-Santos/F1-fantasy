@@ -1598,3 +1598,69 @@ pendente, ordem pós-dataset a escolher entre Fase 3 e Fase 5. **Cumprida:** o d
   "linhas grossas e cores vibrantes", que é justamente a direção rejeitada no PR 7.0. A rodada 7.x
   entrega pista com largura em camadas, pit lane visual, ambiente tonal e marcador de carro. A nota
   jurídica do GDD §14.2 seguiu valendo e virou seção permanente do PLANO.
+
+## CORRIDA ONLINE — PR 1/4 (seed e pista) — 2026-08-12
+
+**Commit:** `b67ec2b`. **Mudanças:** `src/engine/pista-sorteada.ts` + `.test.ts` (58 linhas), `src/net/sala.ts` + `tipos.ts` + `.test.ts` (148 linhas novas), `src/engine/versao.ts` bump. **56 testes, 1 arquivo; +14 linhas** (teste novo dirige draft real até `concluidaEm`).
+
+### Objetivo e design
+
+**Registrar a seed de corrida online (`seedCorrida`) em `EstadoSalaPublico` e derivar a pista dela.**
+
+**VEREDITO DO DEV — publicar seed DEPOIS do draft (decisão contra recomendação do arquiteto):**
+- Publicar durante o draft permitiria simular loadouts candidatos e escolher com vantagem — buraco idêntico à decisão (b) da fase (b: "seed base completa permite enumerar corridas futuras no console; não é hack, é chamar uma função").
+- **Contra-argumento da paridade offline recusado explicitamente:** lá pista antes é inofensivo porque não há adversário humano. Online tem 22 humanos.
+- **Preço aceito:** `seedCorrida: number | null` em vez de `number`, ramo no cliente pra lidar com `null`.
+
+**`pistaSorteada` (função pura, `src/engine/pista-sorteada.ts`):**
+- Rótulo **`'online:pista'`** em vez de reusar `'calendario'`.
+- Motivo: reusar faria a pista da corrida avulsa online ser **sempre** etapa 1 do futuro campeonato (porque a seed avulsa pré-existe e `deriveSeed(seed, 'calendario')` sairia sempre igual). Há teste discriminante.
+- Teste novo: dois `pistaSorteada` com seeds diferentes retornam pistas diferentes.
+
+**Publicação (`src/net/sala.ts`):**
+- `estadoPara` publica `seedCorrida` quando `estado.draft.fase === 'concluido'` — mesmo predicado que `marcarConclusao` já usava.
+- Campo omitido de `EstadoSala` (interno) para `EstadoSalaPublico` até esse ponto.
+
+### Achados da revisão (não eram bugs, eram afirmações falsas)
+
+**Docblock pré-existente (desde PR 3.1a, `tipos.ts`) afirmava:** "da `seedDraft` não se recompõe a `seedMestre`".
+
+**Por que é falso:**
+- `xmur3` é hash de 32 bits, **não função unidirecional**.
+- `seedMestre` é um `Uint32`.
+- Quem enumerar as **2³² sementes** contra `seedDraft` (publicada desde lobby, visível a todos) consegue recompor a `seedMestre` e portanto a `seedCorrida` — **sem depender deste portão**.
+- **O portão fecha o caminho trivial** (regra do dev: "não é hack, é chamar uma função") — **não fecha o caminho com script.**
+
+**Correção:** docblocks agora dizem que o portão é defesa contra decisão impulsiva do cliente, não contra análise séria. **Alargar a entropia da `seedMestre`** resolveria de fato (aumentar de 32 bits), fica como pendência: **mexe na semeadura do online inteiro e no estado persistido do Durable Object** — decisão do dev, registrada em `ESTADO.md` 0(i).
+
+### Lição de teste — a sexta instância da classe "afirmado ≠ conferido"
+
+Nove testes novos na `sala.test.ts` (rodada de publicação da seed). **Nenhum via o portão disparar por caminho REAL:**
+- Todos chamavam `publicarSala(estado)` direto.
+- Forjavam a fase com `marcarConclusao` ou mock.
+
+**Por que importa:** reescrever `estadoPara` para montar o payload à mão (em vez de chamar as funções internas) **vazaria a `seedMestre` no fio** com todos os nove testes verdes — mesma classe de defeito que a Fase 3 já achou 5× (comentário falso de proxy, regex furada, "sala vazia encerra", lag com estados idênticos, digest sem `src/net/`).
+
+**Solução:** teste novo em `servidor-sala.test.ts` — **dirige um draft REAL até `concluidaEm`**, atravessando o funil de broadcast de verdade. Aplicadas **duas mutações**:
+1. Remover a guarda `draft.fase === 'concluido'` — tenta publicar antes.
+2. Reescrever `estadoPara` pra montar o payload manualmente.
+
+**Resultado:** teste fica vermelho em AMBAS. Agora está verde. Guarda de anti-vacuidade presente.
+
+### Medições
+
+- `npm test` **1412/56** (era 1398/55) — +14 testes, +1 arquivo.
+- `npm run typecheck` **0**, `eslint src scripts party vite.config.ts` **0**, `npm run build` **0**.
+- `npm run balance` **inalterado** — detecta o tripwire de `versao.test.ts` e reprova. Bump automático `VERSAO_APP` 3.4.0 → 3.4.2 (protocolo do teste).
+
+### Status
+
+- ✅ **Alto risco (netcode)** — o portão visual é PR 4/4. Até lá, estrutura e defesas travadas.
+- ✅ **Revisão:** sem bloqueante. Achado de segurança falsa é pré-existente, não bug deste PR.
+- ✅ **Próximo:** PR 2/4 (coração — corrida no DO). PR 3/4 é **CORTE Nº 1 se a fase inflar** (derruba e mantém `concluidaEm`).
+
+### Pendências e notas
+
+- **Novo (0(i)):** `seedMestre` com 32 bits é enumerável. Defesa por portão fecha trivial, não script. Alargar entropia pendente — mexe em online inteiro. Decisão do dev.
+- **Pré-existente mas corrigido (docs):** afirmação de segurança só entra medida. Docblocks atualizados.
+- **Processo:** lição 6ª "teste real vs. forjado" agora registrada em `CLAUDE.md` §"Regra de mudança de lógica".
