@@ -1748,3 +1748,100 @@ Baseline vermelho visto **nas duas primeiras rodadas: 2 falharam / 8 passaram**.
 - **Novo (limitação conhecida sem guarda de teste):** o atestado de hash da corrida sai UMA VEZ se `cliente.draft` tiver REFERÊNCIA estável entre re-sincronizações sem evento novo — rastreada manualmente em `sincronizarDraft`, sem asserção própria porque o projeto não tem jsdom/@testing-library pra renderizar o hook. Se `sincronizarDraft` mudar, o efeito volta a reatestar cada snapshot, silenciosamente. Registrado em `ESTADO.md` pendências 0(j).
 - **Padrão do projeto:** 7ª lição de "teste afirmava ≠ conferiu" (5 na Fase 3 código, 6ª no PR 1/4, agora 7ª). Baseline vermelho não basta — tem que ser atribuidor a UM campo, medido por mutação.
 - **Padrão:** guarda estrutural com allowlist de QUEM (não QUANTIDADE), varredura recursiva, pega alias/indireção via token (não só chamada direta).
+
+## CORRIDA ONLINE — PR 3/4 (barreira no fim + `concluidaEm` marca a corrida) — 2026-08-16
+
+**Commit:** `50906af`. **Mudanças:** 9 arquivos (7 existentes, 2 novos: `barreira-corrida.test.ts`, `useCorrida.test.ts`). **Testes:** +18 (1472/61, era 1454/60).
+
+**Veredito do dev:** "os dois, mas o (A) na versão FRACA" — adiar `concluidaEm` para o fim da corrida com a barreira que não bloqueia ninguém, não é barreira de largada.
+
+### Objetivo — duas coisas, uma só PR
+
+**(A) BARREIRA NO FIM DA CORRIDA (versão FRACA):**
+
+A `seedCorrida` já vai no snapshot quando o draft conclui (PR 1/4), então cada cliente roda a corrida localmente — quem chegou, corre sozinho. A sala **só decide QUANDO encerrar a partida**: por atestado (todos os elegíveis confirmaram `concluidaEm`) ou por timeout (`TIMEOUT_FIM_DE_CORRIDA_MS = 5 min`).
+
+**Por que fraca:** a barreira não bloqueia entrada de corredores novos — é porta de saída, não de entrada. Um jogador parado no resumo não prende os outros pelo timeout inteiro. **Se bloqueasse:** entrada futura seria impossível (todos tiveram que terminar antes de começar), riqueza do online perdida.
+
+**Timeout dimensionado medido:** 15 voltas × 9 s (velocidade lenta) ≈ 2 min 15 s no pior caso, com folga 2× = 5 min — bem abaixo de `JANELA_DE_GRACA_MS` (10 min).
+
+**(B) `concluidaEm` MARCA O FIM DA CORRIDA, NÃO DO DRAFT:**
+
+O defeito: `difundir` chamava `marcarConclusao` a cada broadcast (e há vários no replay — cada frame envia estado), então a **janela de graça de 10 min corria DURANTE o replay**. A sala podia fechar com gente ainda assistindo.
+
+**Solução:** 
+- `difundir` só marca `corridaAbertaEm` (âncora do timeout).
+- `avaliarBarreiraDaCorrida` marca `concluidaEm` quando alguém atesta ou o timeout vira.
+- A barreira é **condição de término**, não de início — avaliada a cada `aoPassarOTempo` (tique de 5 s).
+
+**Ausentes não contam como elegíveis:** se contassem, toda sala com abandono cairia no timeout e a barreira seria só decoração. Limite conhecido: o conjunto **congela quando o draft conclui**, então dropout DURANTE o replay ainda custa timeout cheio — não há reconexão da corrida.
+
+### O defeito que bloqueou a revisão — reidratação de storage
+
+**Ocorrência:** 1 de 4 sítios defendia contra sala gravada PRÉ-PR (sem `concluidaEm` / `atestados`). Comentário afirmava ser completa — era falsa.
+
+**Consequências:**
+1. **`marcarCorridaAberta`** retornava cedo PARA SEMPRE (undefined ≠ null → `concluidaEm` null eterno, log append-only sem ponto de descarte — desfazendo a proteção C2 do PR 3.2).
+2. **`undefined.includes`** lançava `TypeError` dentro do `onMessage`, quebrando a promessa de `aoReceber` de **nunca lançar**.
+
+**Solução:** leitura centralizada em **`abertaEmDe`** / **`atestadosDe`** — mesmo precedente do `tokens ?? {}` do PR 3.2.1. Teste reproduce o `TypeError` exato sob mutação.
+
+### Teste vacuoso — oitava ocorrência de "afirmado ≠ conferiu"
+
+Um teste usava `{tipo: 'sincronizar'}`, que é o **ÚNICO comando que NÃO difunde** (cai em `soPara`, devolve a mesma ref). Comparava um campo consigo mesmo e passava mesmo com a guarda de idempotência removida.
+
+Trocado por comando que realmente difunde. O guarda `elegiveis.length > 0` também não tinha cobertura — mutação sobrevivia intacta.
+
+**Colateral:** `party/sala.ts` comentário errado que estimava "~120 escritas em storage e 120 broadcasts" foi **corrigido**, porque a medição do custo real é zero (ver seção abaixo).
+
+### 🔑 O CORTE Nº 1 DA CORRIDA ONLINE PERDEU A RAZÃO DE SER — MEDIDO
+
+**Situação anterior:** `ESTADO.md` dizia que adiar `concluidaEm` para o fim da corrida faria o tique de 5 s voltar a rodar durante o replay. Estimativa: ~120 escritas de storage e 120 broadcasts (comentário em `party/sala.ts`).
+
+**Medição real:** com o draft concluído:
+- `deQuemEhAVez()` devolve `[]` (ninguém aguardando).
+- `aoPassarOTempo()` devolve a **MESMA referência** sem envios (`Array.is` interno conserva identidade).
+- `aplicar()` só grava quando **a identidade muda** — nenhuma mudança, zero gravações.
+
+**Resultado: custo = zero.** Travado por teste com par anti-vacuidade (baseline vermelho confirmado).
+
+**Consequência:** o corte "**derruba este PR se a fase inflar, mantendo `concluidaEm` no fim do draft**" perdia a justificativa. **Portanto: PR 3/4 entra sem ser corte.**
+
+### Mudanças estruturais no `party/sala.ts`
+
+- Removido: `if (concluidaEm === null)` do `alarm(): decidir` — o tique **sempre roda** agora (para quem o encerra quando sobra algo a fazer).
+- Adicionado: guarda de barreira em `aoPassarOTempo` — é ali que se valida a condição de término.
+
+### Exposição de API no `useSalaOnline`
+
+Novo export: `atestarFimDaCorrida` — **ninguém chama ainda**. O wiring é do PR 4/4 (UI), porque o momento certo é ao fim do **replay** (não do draft, não ao entrar na corrida, após os frames rodarem).
+
+Até lá, a barreira resolve por timeout: **degradação segura, não caminho quebrado** — a corrida fecha de qualquer forma, só demora mais.
+
+### Medições
+
+- `npm test` **1472/61** (era 1454/60) — +18 testes, +1 arquivo.
+- `npm run typecheck` **0**, `eslint src scripts party vite.config.ts` **0**, `npm run build` **0**.
+- `npm run balance` **não se aplica** — nada em `src/engine/`, `src/data/`, `scripts/alavancas` foi tocado.
+- **Sem bump de `VERSAO_APP`:** digest do `versao.test.ts` cobre os três, nenhum foi tocado — continue em 3.4.2.
+
+### Mutações rodadas (quatro, cada uma pega por teste distinto)
+
+1. **Repor `concluidaEm` no `difundir`** — 7 testes.
+2. **Ausentes voltarem a contar como elegíveis** — 1 teste.
+3. **Tique deixar de avaliar a barreira** — 1 teste.
+4. **Reidratação (dois sítios crus)** — 2 testes (`TypeError` direto, e a marcação eterna null).
+
+### Status
+
+- ✅ **Alto risco (netcode)** — bloqueante da revisão foi reidratação, corrigido com leitura centralizada.
+- ✅ **A razão do corte foi medida e desapareceu** — registrado com evidência.
+- ✅ **Próximo:** PR 4/4 (UI + wiring de `atestarFimDaCorrida` no fim do replay, com **portão visual obrigatório**). Depois, **3.5 campeonato online** fecha a Fase 3.
+- ⚠️ **PARADA SOLICITADA PELO DEV:** após este PR.
+
+### Pendências e notas
+
+- **Novo (0(e) — corrigir medição):** adiar `concluidaEm` faz custo zero (medido: identidade preservada ⇒ `aplicar` não grava; envios vazios ⇒ nenhum broadcast). Atualizar `ESTADO.md` pendências 0(e).
+- **Novo limite conhecido (0 item novo):** o conjunto de elegíveis **congela quando o draft conclui** — ninguém vira ausente depois, então dropout durante replay ainda custa o timeout cheio. Sem reconexão de corrida.
+- **Oitava ocorrência:** teste vacuoso (`sincronizar` é o único que não difunde), registrado em série com as anteriores (5 código/net, 6 PR 1/4, 7 PR 2/4, 8 PR 3/4).
+- **Colateral:** comentário errado de estimativa em `party/sala.ts` foi corrigido no código.

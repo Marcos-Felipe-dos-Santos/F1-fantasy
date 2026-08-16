@@ -419,9 +419,7 @@ Isso não é descuido nem regressão de UX — é a decisão.
   trilhas, cada lado certo isoladamente, composição errada, **`npm test` não pega**. Determinado: uma
   função só (`corridaDaSala`, `src/ui/corrida-online.ts`), mesma referência pro hash e pro replay.
   Guarda estrutural travada em `contrato-corrida-online.test.ts` (allowlist de QUEM chama, contagem exata por arquivo).
-- **PR 3/4 — barreira.** ✂️ **CORTE Nº 1 DA CORRIDA ONLINE:** se a fase inflar, **derruba este PR** e
-  mantém `concluidaEm` no fim do draft. Ver pendência 0(e) — adiar `concluidaEm` para o fim da
-  corrida faz o tique de 5 s do `alarm()` voltar a rodar durante o replay.
+- ✅ **PR 3/4 — barreira no fim + `concluidaEm` marca a corrida** — FEITO (`50906af`). 🔒 **O CORTE Nº 1 PERDEU A RAZÃO DE SER — MEDIDO.** O custo do tique durante o replay é **zero** (com o draft concluído, `deQuemEhAVez()` devolve `[]`, `aoPassarOTempo()` devolve a **mesma referência** sem envios, `aplicar()` só grava quando muda). Ver item 0(e) de "Pendências ATIVAS" — medição registrada, comentário errado em `party/sala.ts` corrigido. **Bloqueante da revisão (reidratação de storage) foi corrigido.**
 - **PR 4/4 — UI, com PORTÃO VISUAL.** Preview **ABERTO e conferido** por quem apresenta, antes de ir
   ao dev (regra do `CLAUDE.md` §"Definição de pronto", item 5).
 
@@ -454,10 +452,11 @@ dependência).
 
 ## Onde parei
 
-**🏁 CORRIDA ONLINE — PR 1/4 e PR 2/4 FEITOS (em 2026-08-12 e 2026-08-16).**
+**🏁 CORRIDA ONLINE — PR 1/4, PR 2/4 e PR 3/4 FEITOS (em 2026-08-12, 2026-08-16 e 2026-08-16).**
 - PR 1/4 (`b67ec2b`) — seed e pista sorteadas ao fim do draft online. **Medido:** 1412/56.
 - PR 2/4 (`8a8088a`) — uma função só computa a corrida online; mesma referência pra hash e tela (defesa contra bug do 8.4). **Medido:** 1454/60.
-- **Faltam:** PR 3/4 (barreira — adiar `concluidaEm`, **CORTE Nº 1 se fase inflar**) e PR 4/4 (UI, com **portão visual obrigatório**). Depois, **3.5 campeonato online** fecha a Fase 3.
+- PR 3/4 (`50906af`) — barreira no fim (versão fraca, não bloqueia ninguém) + `concluidaEm` marca a corrida. **Medido:** 1472/61. **Bloqueante da revisão (reidratação) foi corrigido.** ✅ **PARADA SOLICITADA PELO DEV — ver SEQUÊNCIA item 1.**
+- **Falta:** PR 4/4 (UI + wiring de `atestarFimDaCorrida`, com **portão visual obrigatório**). Depois, **3.5 campeonato online** fecha a Fase 3.
 
 Concluído antes: Fases 0-2 (engine, Single, Local hotseat, Modo Cego), dataset 1950-2025 (PR 4.x),
 design system arcade (5.1a/b/c), Modo Campeonato (6.1-6.5), Fase 7 até o **7.8**, e a Fase 8 nos
@@ -470,8 +469,9 @@ deixou de ser inalcançável — tem seletor, encadeia corridas, salva e retoma)
 **O teste do online foi FECHADO no PR 3.3.4 com todos os quatro casos validados pelo dev.**
 **O alarme de divergência foi MOSTRADO ao jogador no PR 3.4.1 — SURFACING CONCLUÍDO.**
 
-1. 🏁 **A CORRIDA ONLINE — EM ANDAMENTO.** Plano dos 4 PRs registrado na §FASE 3.
-   **PR 1/4 e 2/4 feitos** (`b67ec2b`, `8a8088a`); faltam 3/4 (barreira, **CORTE Nº 1 da corrida se a fase inflar**) e 4/4 (UI, **com portão visual**). Depois dela, o **3.5 campeonato online** fecha a fase.
+1. 🏁 **A CORRIDA ONLINE — 3/4 FEITOS, PARADA SOLICITADA PELO DEV.** Plano dos 4 PRs registrado na §FASE 3.
+   **PR 1/4, 2/4 e 3/4 feitos** (`b67ec2b`, `8a8088a`, `50906af`); falta 4/4 (UI com wiring de `atestarFimDaCorrida`, **com portão visual obrigatório**). Depois dela, o **3.5 campeonato online** fecha a fase.
+   **Próxima sessão:** retomar com o PR 4/4 — autorização para continuar vem do dev.
 2. ⬅️ **VEREDITO do dev sobre `preview/campeonato.html`** (as três telas do 8.3) — segue aberto.
 4. **PR de INFRA — DESTRAVADO pela aprovação das silhuetas.** Era "pré-requisito caso as silhuetas
    fossem aprovadas"; com o 10/10, **deixa de ser pré-requisito e vira consolidação**: restrições
@@ -590,9 +590,7 @@ testes de que a substituição é determinística entre execuções independente
    sala concluída ou vazia", e o código não faz isso** (achado do `fable-architect` ao planejar a
    corrida online). `party/sala.ts:237` reagenda SEMPRE; quem para o tique é o `encerrar()`, que
    apaga o alarme. Com a sala concluída o que fica de fora é só a chamada a `aoPassarOTempo` — o
-   tique continua. Importa pro plano da corrida online: adiar `concluidaEm` para o fim da corrida
-   faz o tique voltar a rodar durante o replay. **Afirmação de estado só entra medida.**
-   **Falta a UI** mostrar o cronômetro ao jogador — isso é 3.3.
+   tique continua. **✅ MEDIÇÃO DO PR 3/4 (2026-08-16):** adiar `concluidaEm` para o fim da corrida **faz custo ZERO** — com o draft concluído, `deQuemEhAVez()` devolve `[]`, `aoPassarOTempo()` devolve a **mesma referência** sem envios, `aplicar()` só grava quando a identidade muda. Medido com par anti-vacuidade (baseline vermelho confirmado). Isso **fecha a razão do "CORTE Nº 1"** que o ESTADO anterior registrava. **Falta a UI** mostrar o cronômetro ao jogador — isso é 3.3.
    (f) ✅ **O 3.4 foi FEITO (detector + handshake). O 3.4.1 foi FEITO (surfacing visual).**
    🏁 **A CORRIDA ONLINE COMEÇOU** — plano dos 4 PRs na §FASE 3, PR 1/4 feito em 2026-08-12
    (`b67ec2b`). **Até o PR 4/4 o draft online continua terminando no `TelaResumo`**, com o botão
@@ -622,6 +620,7 @@ testes de que a substituição é determinística entre execuções independente
    vê seeds derivadas —, mas mexe na semeadura do online inteiro e no estado persistido do Durable
    Object. **PR próprio, e é decisão do dev, não minha.**
    (j) **NOVA (PR 2/4 da corrida online) — o atestado de hash da corrida ATIVA UMA VEZ.** `useSalaOnline` chama `corridaDaSala` em `useMemo` e a ref fica estável entre renders; `registrarAtestado` ativa sobre mudança de `corrida`. **Limitação:** a estabilidade depende de `cliente.draft` ter REFERÊNCIA estável entre re-sincronizações sem evento novo — rastreada manualmente em `sincronizarDraft`, **sem asserção própria** porque o projeto não tem jsdom/@testing-library pra renderizar o hook. **Se `sincronizarDraft` mudar** (ex.: reconstruir de forma diferente, remover memoização), o efeito volta a reatestar cada snapshot, **silenciosamente**. Nenhum teste vai falhar — é a mesma classe de regressão invisível que (d) lista. Registrado para que ninguém apague o `useMemo` achando que está ocioso.
+   (k) **LIMITE CONHECIDO (PR 3/4 da corrida online) — congelamento de elegíveis.** O conjunto de elegíveis para a barreira **congela quando o draft conclui**. Ninguém vira ausente **depois** — qualquer dropout durante o replay ainda custa o timeout cheio (`TIMEOUT_FIM_DE_CORRIDA_MS = 5 min`). Sem reconexão de corrida implementada. Documentado e testado.
 1. **Abertas pelo 7.8:** (a) o `BotaoTema` é um botão discreto no canto do `app-shell` — posição e
    forma **não passaram por veredito de arte**; (b) `erro` (salmão `#FF7B85`) e `raridadeProibido`
    (`#FF4757`) continuam sendo dois vermelhos ao lado do vermelho da marca — não foi mexido porque
