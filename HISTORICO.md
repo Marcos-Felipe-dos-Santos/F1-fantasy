@@ -1664,3 +1664,87 @@ Nove testes novos na `sala.test.ts` (rodada de publicação da seed). **Nenhum v
 - **Novo (0(i)):** `seedMestre` com 32 bits é enumerável. Defesa por portão fecha trivial, não script. Alargar entropia pendente — mexe em online inteiro. Decisão do dev.
 - **Pré-existente mas corrigido (docs):** afirmação de segurança só entra medida. Docblocks atualizados.
 - **Processo:** lição 6ª "teste real vs. forjado" agora registrada em `CLAUDE.md` §"Regra de mudança de lógica".
+
+## CORRIDA ONLINE — PR 2/4 (fonte única + hash da corrida) — 2026-08-16
+
+**Commit:** `8a8088a`. **Mudanças:** 6 arquivos novos (`corrida-online.ts` + `.test.ts`, `hash-corrida.ts` + `.test.ts`, `contrato-corrida-online.test.ts`, `useCorrida.test.ts`), 8 modificados. **Testes:** +8 (1454/60, era 1446/60).
+
+### Objetivo e design — defesa contra a classe de bug do PR 8.4
+
+**A tese:** UMA FUNÇÃO SÓ computa a corrida online (`corridaDaSala`), e a MESMA referência alimenta tanto o hash de divergência (`hashDaCorrida`) quanto a tela (`FluxoCorrida`). É a defesa contra o bug do **PR 8.4**: duas trilhas de corrida, cada lado correto isoladamente, composição errada, `npm test` não pega porque hoje (determinístico) as duas trilhas dão o mesmo resultado — o jogador assistiria uma corrida e veria outra na tabela.
+
+**`corridaDaSala` (novo arquivo `src/ui/corrida-online.ts`):**
+- Assinatura: `(dataset, draft, seedCorrida) → {pistaId, pista, grid, resultado}` (pura, determinística).
+- Rótulo `'online:pista'` já existe (PR 1/4) e não muda.
+- Mora em `src/ui/`, não em `src/net/`, por força da cerca do ESLint: `prepararCorrida` vive em `src/ui/fluxo-corrida.ts` e `src/net/**` não pode importar `src/ui/**`. O ponto onde pista sorteada (engine pura) encontra preparação da corrida (UI) vive do lado que pode importar os dois.
+
+**`FonteDaCorrida` em `useCorrida.ts`:**
+- Novo tipo: `{modo:'preparar'} | {modo:'pronta', corrida: CorridaPreparada}`.
+- Offline (avulsa e campeonato): `{modo:'preparar'}` → `FluxoCorrida` chama `prepararCorrida` internamente.
+- Online (sala): `{modo:'pronta', corrida}` → `FluxoCorrida` recebe a corrida já computada, pula preparação.
+- `corridaInicial` (nova função pura) gera o estado inicial do replay — **testável sem jsdom**, porque é função pura (o projeto não tem ambiente de renderização de hook).
+- Responsabilidade: `useSalaOnline` chama `corridaDaSala` **UMA VEZ** (em `useMemo`) e passa a referência pra `FonteDaCorrida`, que a tela consome. Ninguém mais computa a corrida na trilha online — é o que `contrato-corrida-online.test.ts` varre.
+
+**`hashDaCorrida` (novo arquivo `src/net/hash-corrida.ts`):**
+- Cumpre a promessa que `EscopoHash` já fazia no protocolo desde PR 3.4 — novo escopo `'corrida'` entra sem mexer no protocolo.
+- Tipo local `CorridaParaHash` (não importa de `src/ui/`) declara forma mínima de `CorridaPreparada.resultado` que precisa ler — evita puxar `src/ui/**` (proibido em `src/net/**` por lint).
+- **`ESCOPOS_VALIDOS ... satisfies Record<EscopoHash,true>` em `protocolo.ts`:** escopo novo sem validação no servidor não compila — travado por typecheck.
+
+### O furo que a revisão achou (confirmado pelo dev)
+
+**Versão original do hash deixava `voltaMaisRapida` DE FORA** afirmando que `pontos` "deriva de `posicao`/`status`".
+
+**Não deriva:** `corrida.ts:468` soma `pontoVoltaMaisRapida` **ao AUTOR**, escolhido por `melhorVolta` (o MENOR tempo do histórico, `corrida.ts:455-464`), não a soma. Dois clientes podiam mostrar **25 vs. 26 pontos** pra o mesmo jogador com hash **IDÊNTICO** — furo na própria tese do detector.
+
+**Solução:** entraram dois campos:
+1. **`voltaMaisRapida.jogadorId`** (o autor, não o tempo) — pega divergência de lógica de seleção (se `melhorVolta` ou desempate). Tempo fica de fora porque é função pura de (histórico + status).
+2. **`historicoVoltas` COM CHAVES ORDENADAS** — `Record` preserva ordem de inserção; sem canonizar, dois clientes corretos que montaram em ordens diferentes alarmariam um ao outro (**falso alarme é pior que o furo que fecha**). Mesmo cuidado que `hash-draft.ts` já tomava.
+
+**Separador `~` em vez de `.`:** tempos de volta são float nunca arredondados; `.` seria separador E ponto decimal ao mesmo tempo — `[1.2, 3]` e `[1, 2.3]` colidiriam. Custa um caractere, falha sem ruído se errado.
+
+**Por que OS DOIS e não só histórico:** histórico sozinho fecha 25 vs. 26 (ambos deriváveis do insumo). O que `voltaMaisRapida.jogadorId` acrescenta é quando a **lógica de seleção em si** divergiu de verdade — ramo diferente de `melhorVolta` pra mesmo histórico.
+
+### Lição de teste — sétima instância de "afirmado ≠ conferido"
+
+Baseline vermelho visto **nas duas primeiras rodadas: 2 falharam / 8 passaram**. Parecia atribuidor até a revisão medir com mutação.
+
+**O problema:** fixture variava `historicoVoltas` E o autor ao mesmo tempo — remover só `voltaMaisRapida=` da carga canônica deixava a **suíte INTEIRA verde (1453 passando)**. Teste real mas não-atribuidor.
+
+**Solução:** teste novo que isola o campo — **medido vermelho sob a mutação, e SÓ ele** (não dispara falso positivo nos outros 1453). Essa é a rigor que evita chamar "baseline vermelho" de "pronto pra implementar" sem contar se o vermelho é do campo esperado ou da fixture que muda duas coisas juntas.
+
+### Guarda estrutural — `contrato-corrida-online.test.ts`
+
+**Primeira versão bloqueou duas vezes, achados 4 de revisão aplicados:**
+
+1. **Lista negra → allowlist:** versão original só checava `modo:'preparar'` em dois arquivos. Um terceiro arquivo (`CorridaOnline.tsx` do PR 4) escapava. Agora varre TODO `src/ui/**` e exige conjunto **exatamente** `{App.tsx, FluxoCampeonato.tsx}` — os únicos caladores offline legítimos.
+
+2. **Allowlist de QUEM, não de QUANTIDADE:** `useSalaOnline.ts` podia chamar `corridaDaSala` duas vezes (uma pro useMemo da tela, outra dentro de efeito pro hash), mesma função duas referências, telas recebiam de uma, hash de outra. Agora há **contagem EXATA: `corridaDaSala` uma vez em `useSalaOnline.ts`, `prepararCorrida` uma vez em `corrida-online.ts`**.
+
+3. **Pega alias e indireção:** `chamadasDe` exige `nomeFn(` — não pega `const prep = prepararCorrida; prep()`, `import {x as prep}`, `obj['prepararCorrida']()`. Novo helper `referenciaDe` não exige parêntese — pega o **identificador em QUALQUER posição** (import, alias, valor de objeto, string de acesso computado), porque todas as formas preservam o TOKEN original.
+
+4. **Comentários engolindo código real:** `/\*` num literal pode engolir trecho real se a strip de comentários falhar. Contagens exatas usam **máximo entre fonte crua e sem-comentários** — se uma engolir, a outra ainda enxerga a chamada verdadeira.
+
+5. **Achado colateral:** `npm run typecheck` **vermelho pré-existente** — `sep` importado de `node:path` num projeto sem `@types/node`; vitest não typecheca, suite passava. Corrigido: `sep` é só um caractere e não precisa de import. (Não são dados da revisão, é medição que o PR descobriu.)
+
+**Terceiro furo fechado:** `useCorrida.ts` estava na allowlist sem teto de contagem — bloqueante achado da revisão.
+
+**Sabotagem de contagem:** roda em MEMÓRIA, nunca grava em arquivo de produção (vitest paralelo, outro teste varre a árvore, processo morto deixa arquivo sabotado).
+
+### Medições
+
+- `npm test` **1454/60** (era 1446/60) — +8 testes, mesmo número de arquivos.
+- `npm run typecheck` **0**, `eslint` **0**, `npm run build` **0**.
+- `npm run balance` **não se aplica** — nada em `src/engine/`, `src/data/`, `scripts/alavancas` foi tocado.
+- **Sem bump de `VERSAO_APP`:** digest do `versao.test.ts` cobre `src/engine/`, `src/data/`, `cliente.ts` e `hash-draft.ts`, nenhum foi tocado — continue em 3.4.2.
+
+### Status
+
+- ✅ **Alto risco (netcode)** — revisão com dois bloqueantes e quatro achados, todos aplicados.
+- ✅ **A defesa estrutural está travada:** uma função só computa, dois testes verificam (ator real, isolamento de campo), allowlist de referência (sem alias/indireção passa batido), contagem exata por arquivo.
+- ✅ **Próximo:** PR 3/4 (barreira — adiar `concluidaEm` pra fim da corrida, **CORTE Nº 1 se a fase inflar**). PR 4/4 é UI com **portão visual obrigatório**.
+
+### Pendências e notas
+
+- **Novo (limitação conhecida sem guarda de teste):** o atestado de hash da corrida sai UMA VEZ se `cliente.draft` tiver REFERÊNCIA estável entre re-sincronizações sem evento novo — rastreada manualmente em `sincronizarDraft`, sem asserção própria porque o projeto não tem jsdom/@testing-library pra renderizar o hook. Se `sincronizarDraft` mudar, o efeito volta a reatestar cada snapshot, silenciosamente. Registrado em `ESTADO.md` pendências 0(j).
+- **Padrão do projeto:** 7ª lição de "teste afirmava ≠ conferiu" (5 na Fase 3 código, 6ª no PR 1/4, agora 7ª). Baseline vermelho não basta — tem que ser atribuidor a UM campo, medido por mutação.
+- **Padrão:** guarda estrutural com allowlist de QUEM (não QUANTIDADE), varredura recursiva, pega alias/indireção via token (não só chamada direta).

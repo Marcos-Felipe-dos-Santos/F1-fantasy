@@ -414,12 +414,11 @@ Isso não é descuido nem regressão de UX — é a decisão.
 **Fatiamento aprovado:**
 
 - ✅ **PR 1/4 — seed e pista** — FEITO (`b67ec2b`).
-- **PR 2/4 — o coração.** 🔒 **A defesa estrutural é UMA FUNÇÃO SÓ alimentando o hash e o
+- ✅ **PR 2/4 — o coração.** FEITO (`8a8088a`). 🔒 **A defesa estrutural é UMA FUNÇÃO SÓ alimentando o hash e o
   `FluxoCorrida`, e não se abre exceção nisso** (palavras do dev). É a classe de bug do **8.4**: duas
-  trilhas, cada lado certo isoladamente, composição errada, **`npm test` não pega**. Concretamente:
-  `useCorrida.ts:53` era o único chamador de produção de `prepararCorrida`, então um segundo chamador
-  para o hash criaria as duas trilhas — determinísticas hoje, divergentes no dia em que alguém mexer
-  num dos lados.
+  trilhas, cada lado certo isoladamente, composição errada, **`npm test` não pega**. Determinado: uma
+  função só (`corridaDaSala`, `src/ui/corrida-online.ts`), mesma referência pro hash e pro replay.
+  Guarda estrutural travada em `contrato-corrida-online.test.ts` (allowlist de QUEM chama, contagem exata por arquivo).
 - **PR 3/4 — barreira.** ✂️ **CORTE Nº 1 DA CORRIDA ONLINE:** se a fase inflar, **derruba este PR** e
   mantém `concluidaEm` no fim do draft. Ver pendência 0(e) — adiar `concluidaEm` para o fim da
   corrida faz o tique de 5 s do `alarm()` voltar a rodar durante o replay.
@@ -455,25 +454,15 @@ dependência).
 
 ## Onde parei
 
-Concluído: Fases 0-2 (engine, Single, Local hotseat, Modo Cego), dataset 1950-2025 (PR 4.x),
+**🏁 CORRIDA ONLINE — PR 1/4 e PR 2/4 FEITOS (em 2026-08-12 e 2026-08-16).**
+- PR 1/4 (`b67ec2b`) — seed e pista sorteadas ao fim do draft online. **Medido:** 1412/56.
+- PR 2/4 (`8a8088a`) — uma função só computa a corrida online; mesma referência pra hash e tela (defesa contra bug do 8.4). **Medido:** 1454/60.
+- **Faltam:** PR 3/4 (barreira — adiar `concluidaEm`, **CORTE Nº 1 se fase inflar**) e PR 4/4 (UI, com **portão visual obrigatório**). Depois, **3.5 campeonato online** fecha a Fase 3.
+
+Concluído antes: Fases 0-2 (engine, Single, Local hotseat, Modo Cego), dataset 1950-2025 (PR 4.x),
 design system arcade (5.1a/b/c), Modo Campeonato (6.1-6.5), Fase 7 até o **7.8**, e a Fase 8 nos
 PRs **8.1** (calendário sorteado), **8.2** (round-trip do save) e **8.4-mínimo** (o campeonato
 deixou de ser inalcançável — tem seletor, encadeia corridas, salva e retoma).
-
-**PR 8.1, em uma linha:** `calendarioSorteado(dataset, seed, formato)` entrou como função IRMÃ de
-`calendarioPadrao`, que **não foi tocado** (é o calendário estável dos testes, goldens e harness, e
-um teste trava literalmente a ordem do dataset). Embaralha as 10 e **só então** corta em N — é isso
-que faz a curta ser prefixo da completa pra QUALQUER seed. Namespace próprio
-`deriveSeed(seed, 'calendario')`, sem colisão com `camp:<pistaId>`/`bots`/`draft:*`.
-**A classificação final não depende da ordem** porque o comparador de `acumularClassificacao`
-termina em `cmpJogadorId` (`campeonato.ts:204-209`) e portanto é ordem **total** — sem isso o teste
-de equivalência estaria passando por sorte do fixture. Revisão sem bloqueante.
-
-O **7.8 trocou a paleta inteira** (azul-noite → grafite + vermelho `#FF1801` / dourado `#FFB800` /
-verde `#00D26A`) e adicionou light mode. O que esse PR ensinou, e que vale além dele: **a cor do
-carro do jogador governa a paleta da pista**. O teto de luminância do asfalto é derivado de
-`carro do jogador / asfalto >= 3`; trocar magenta (L 0,295) por vermelho (L 0,219) derrubou o teto
-de 0,0650 pra **0,0397** e obrigou a redesenhar a escada tonal inteira. Não foi decisão de gosto.
 
 ## SEQUÊNCIA — o que sobrou
 
@@ -482,8 +471,7 @@ de 0,0650 pra **0,0397** e obrigou a redesenhar a escada tonal inteira. Não foi
 **O alarme de divergência foi MOSTRADO ao jogador no PR 3.4.1 — SURFACING CONCLUÍDO.**
 
 1. 🏁 **A CORRIDA ONLINE — EM ANDAMENTO.** Plano dos 4 PRs registrado na §FASE 3.
-   **PR 1/4 feito** (`b67ec2b`); faltam 2/4 (o coração), 3/4 (barreira, é o corte nº 1 da corrida
-   online) e 4/4 (UI, **com portão visual**). Depois dela, o **3.5 campeonato online** fecha a fase.
+   **PR 1/4 e 2/4 feitos** (`b67ec2b`, `8a8088a`); faltam 3/4 (barreira, **CORTE Nº 1 da corrida se a fase inflar**) e 4/4 (UI, **com portão visual**). Depois dela, o **3.5 campeonato online** fecha a fase.
 2. ⬅️ **VEREDITO do dev sobre `preview/campeonato.html`** (as três telas do 8.3) — segue aberto.
 4. **PR de INFRA — DESTRAVADO pela aprovação das silhuetas.** Era "pré-requisito caso as silhuetas
    fossem aprovadas"; com o 10/10, **deixa de ser pré-requisito e vira consolidação**: restrições
@@ -633,6 +621,7 @@ testes de que a substituição é determinística entre execuções independente
    larga, a `seedDraft` de 32 bits não permite mais enumerar), **não** exige mexer na engine — ela só
    vê seeds derivadas —, mas mexe na semeadura do online inteiro e no estado persistido do Durable
    Object. **PR próprio, e é decisão do dev, não minha.**
+   (j) **NOVA (PR 2/4 da corrida online) — o atestado de hash da corrida ATIVA UMA VEZ.** `useSalaOnline` chama `corridaDaSala` em `useMemo` e a ref fica estável entre renders; `registrarAtestado` ativa sobre mudança de `corrida`. **Limitação:** a estabilidade depende de `cliente.draft` ter REFERÊNCIA estável entre re-sincronizações sem evento novo — rastreada manualmente em `sincronizarDraft`, **sem asserção própria** porque o projeto não tem jsdom/@testing-library pra renderizar o hook. **Se `sincronizarDraft` mudar** (ex.: reconstruir de forma diferente, remover memoização), o efeito volta a reatestar cada snapshot, **silenciosamente**. Nenhum teste vai falhar — é a mesma classe de regressão invisível que (d) lista. Registrado para que ninguém apague o `useMemo` achando que está ocioso.
 1. **Abertas pelo 7.8:** (a) o `BotaoTema` é um botão discreto no canto do `app-shell` — posição e
    forma **não passaram por veredito de arte**; (b) `erro` (salmão `#FF7B85`) e `raridadeProibido`
    (`#FF4757`) continuam sendo dois vermelhos ao lado do vermelho da marca — não foi mexido porque
