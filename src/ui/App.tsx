@@ -320,7 +320,11 @@ function App() {
         />
       )}
       {state?.fase === 'concluido' && naCorrida && campeonato === null && (
-        <FluxoCorrida state={state} pistaId={pistaId} onReiniciar={reiniciarTudo} />
+        <FluxoCorrida
+          state={state}
+          fonte={{ modo: 'preparar', pistaId }}
+          onReiniciar={reiniciarTudo}
+        />
       )}
       {state?.fase === 'concluido' && naCorrida && campeonato !== null && (
         <FluxoCampeonato

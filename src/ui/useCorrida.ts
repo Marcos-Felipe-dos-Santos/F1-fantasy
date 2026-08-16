@@ -7,11 +7,52 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import type { Dataset } from '../engine/dataset';
 import type { DraftState, Pista, ResultadoCorrida, ResultadoQuali } from '../engine/types';
+import type { CorridaPreparada } from './corrida-online';
 import { dataset } from './dataset-app';
 import { escalaReplay, MS_REPLAY_POR_VOLTA, prepararCorrida, type VelocidadeReplay } from './fluxo-corrida';
 
 export type FaseCorrida = 'grid' | 'replay' | 'resultado';
+
+/**
+ * De onde `useCorrida` tira a corrida a exibir (PR 2/4 de "corrida online") —
+ * a costura que evita a classe de bug do PR 8.4 (duas trilhas de corrida,
+ * cada lado correto isoladamente, a composição errada, e nada acusa porque
+ * hoje as duas trilhas dão o mesmo resultado por serem determinísticas).
+ *
+ * - `'preparar'` — caminho OFFLINE (corrida avulsa e etapa de campeonato):
+ *   `useCorrida` chama `prepararCorrida` ele mesmo. `pistaId` explícito,
+ *   `seed` opcional (default é a seed do draft — mesma semântica de sempre).
+ * - `'pronta'` — caminho ONLINE: a corrida já foi computada UMA vez por
+ *   `corridaDaSala` dentro de `useSalaOnline`, e é essa MESMA REFERÊNCIA que
+ *   chega aqui. `prepararCorrida` NÃO é chamada neste modo — é o que garante
+ *   que a tela mostra exatamente o que o hash de divergência atestou.
+ */
+export type FonteDaCorrida =
+  | { modo: 'preparar'; pistaId: string; seed?: number }
+  | { modo: 'pronta'; corrida: CorridaPreparada };
+
+/**
+ * Decide a corrida inicial de `useCorrida`, a partir da `FonteDaCorrida`.
+ * Função PURA, extraída do `useState` pra ser testável sem renderizar hook
+ * (o projeto não tem ambiente jsdom — `useCorrida.test.ts` testa esta função
+ * diretamente).
+ *
+ * 🔒 Modo `'pronta'`: devolve `fonte.corrida` POR REFERÊNCIA, sem tocar em
+ * `prepararCorrida`. Qualquer transformação aqui (mesmo que dê o mesmo
+ * resultado, por ser determinístico) reabriria a segunda trilha que este PR
+ * existe pra fechar.
+ */
+export function corridaInicial(
+  dataset: Dataset,
+  state: DraftState,
+  fonte: FonteDaCorrida,
+): CorridaPreparada {
+  if (fonte.modo === 'pronta') return fonte.corrida;
+  const preparo = prepararCorrida(dataset, state, fonte.pistaId, fonte.seed);
+  return { pistaId: fonte.pistaId, ...preparo };
+}
 
 /** Tempo de relógio (ms) que o replay espera parado no resultado final antes de trocar de fase sozinho. */
 const PAUSA_FINAL_MS = 1000;
@@ -35,9 +76,8 @@ export interface UseCorridaResultado {
 
 export function useCorrida(
   state: DraftState,
-  pistaId: string,
-  /** Seed da corrida; `undefined` mantém a da partida (corrida avulsa). Ver `prepararCorrida`. */
-  seed?: number,
+  /** De onde vem a corrida — 'preparar' (offline) ou 'pronta' (online, já computada). Ver `FonteDaCorrida`. */
+  fonte: FonteDaCorrida,
   /**
    * Larga sozinho ao montar, sem esperar clique (PR C, modo automático do
    * campeonato). Sem isto o auto-avanço empacaria na tela de grid: avançar o
@@ -48,10 +88,10 @@ export function useCorrida(
   // O inicializador do `useState` roda uma vez por MONTAGEM do hook. No
   // campeonato, cada etapa monta um `FluxoCorrida` novo (o `key` no `App`
   // garante isso) — sem essa remontagem, trocar de etapa não re-prepararia a
-  // corrida e o jogador correria a primeira pista o campeonato inteiro.
-  const [{ pista, grid, resultado }] = useState(() =>
-    prepararCorrida(dataset, state, pistaId, seed),
-  );
+  // corrida e o jogador correria a primeira pista o campeonato inteiro. No
+  // modo 'pronta' (online), o mesmo raciocínio vale ao contrário: não há
+  // recomputação nenhuma, só a REFERÊNCIA recebida — ver `corridaInicial`.
+  const [{ pista, grid, resultado }] = useState(() => corridaInicial(dataset, state, fonte));
   const [fase, setFase] = useState<FaseCorrida>('grid');
   const [tempoSimMs, setTempoSimMs] = useState(0);
   const [velocidade, setVelocidadeState] = useState<VelocidadeReplay>('media');

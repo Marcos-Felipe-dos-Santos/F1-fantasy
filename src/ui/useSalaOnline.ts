@@ -31,9 +31,11 @@ import {
 } from '../net/cliente';
 import type { ComandoDraft, ComandoSala } from '../net/protocolo';
 import { hashDoDraft } from '../net/hash-draft';
+import { hashDaCorrida } from '../net/hash-corrida';
 import { RODADA_COMPLETA } from '../net/tipos';
 import { VERSAO_APP } from '../engine/versao';
 import type { EscolhaDraft } from '../engine/types';
+import { corridaDaSala, type CorridaPreparada } from './corrida-online';
 import { dataset } from './dataset-app';
 import { storageDoNavegador } from './storage-app';
 
@@ -60,6 +62,16 @@ export interface UseSalaOnline {
   encerrada: boolean;
   /** O código não existe (nunca criado, ou já encerrado). */
   inexistente: boolean;
+  /**
+   * A corrida da sala, já computada — `null` até o draft concluir E a
+   * `seedCorrida` ser publicada (PR 2/4 de "corrida online").
+   *
+   * 🔒 **A ÚNICA referência.** Computada uma vez aqui, por `corridaDaSala`; é
+   * esta MESMA referência que alimenta tanto o atestado de hash abaixo quanto
+   * a tela (`FluxoCorrida`, via `{ modo: 'pronta', corrida }` no PR 4). Ver o
+   * docblock de `corrida-online.ts` pra tese completa.
+   */
+  corrida: CorridaPreparada | null;
 }
 
 export function useSalaOnline(sala: string): UseSalaOnline {
@@ -168,6 +180,70 @@ export function useSalaOnline(sala: string): UseSalaOnline {
     // contador que marca avanço de verdade — é ele que define quando reatestar.
   }, [cliente.eventosAplicados, cliente.euSou]);
 
+  /**
+   * 🔴 A ÚNICA COMPUTAÇÃO DA CORRIDA ONLINE (PR 2/4 de "corrida online") — a
+   * defesa contra a classe de bug do PR 8.4 (duas trilhas de corrida, cada
+   * lado correto isoladamente, composição errada, e nada acusa). `corrida`
+   * nasce aqui, UMA vez, e é a MESMA REFERÊNCIA que o atestado de hash abaixo
+   * usa e que o PR 4 vai passar pra `FluxoCorrida` como `{ modo: 'pronta',
+   * corrida }`. Ninguém mais chama `corridaDaSala`.
+   *
+   * Condição: só quando o draft concluiu E a `seedCorrida` já foi publicada
+   * (`seedCorrida` só sai do servidor com o draft concluído — ver
+   * `EstadoSalaPublico.seedCorrida`). Fora disso, `null`.
+   *
+   * `cliente.draft` ENTRA nas dependências aqui — ao contrário do atestado de
+   * hash do draft acima — porque `sincronizarDraft` (`src/net/cliente.ts`)
+   * só troca a IDENTIDADE de `estado.draft` quando o log realmente cresce
+   * (`aplicados` avança); sem evento novo, a variável local `draft` não é
+   * reatribuída e a referência anterior é devolvida. Depois que o draft
+   * conclui, o log para de crescer, então `cliente.draft` fica estável e
+   * `corrida` é computada uma única vez.
+   */
+  const corrida = useMemo<CorridaPreparada | null>(() => {
+    if (cliente.draft === null || cliente.draft.fase !== 'concluido') return null;
+    const seedCorrida = cliente.sala?.seedCorrida;
+    if (seedCorrida === null || seedCorrida === undefined) return null;
+    return corridaDaSala(dataset, cliente.draft, seedCorrida);
+  }, [cliente.draft, cliente.sala?.seedCorrida]);
+
+  /**
+   * 🔴 ATESTADO DE HASH DA CORRIDA (PR 2/4) — mesmo detector do draft, agora
+   * sobre `corrida`. Mesmo molde do efeito acima: mora num efeito separado
+   * (não dentro de um updater de `setState`, pelo mesmo motivo do StrictMode
+   * duplicando envio), e dispara só quando `corrida` muda de REFERÊNCIA — que,
+   * por construção do `useMemo` acima, só acontece na primeira vez que a
+   * corrida fica disponível (a partir daí `cliente.draft` e `seedCorrida`
+   * ficam estáveis, então `corrida` também fica).
+   *
+   * ⚠️ **LIMITAÇÃO CONHECIDA, registrada e não coberta por teste**: "o
+   * atestado sai uma vez" se apoia na estabilidade de REFERÊNCIA de
+   * `cliente.draft` entre re-sincronizações sem evento novo — rastreada
+   * manualmente em `sincronizarDraft` (`src/net/cliente.ts:195-224`: quando
+   * `sala.draft.log.slice(aplicados)` vem vazio, o `for` não executa, a
+   * variável local `draft` nunca é reatribuída, e o objeto devolvido carrega
+   * a MESMA referência de `estado.draft`). Isso NÃO tem asserção própria: o
+   * projeto não tem `jsdom`/`@testing-library` pra renderizar este hook e
+   * observar quantas vezes o efeito dispara, e instalar essa dependência só
+   * por causa de um efeito é escopo fora deste PR. Se `sincronizarDraft`
+   * mudar a ponto de `estado.draft` passar a trocar de identidade mesmo sem
+   * evento novo, este efeito volta a reatestar a cada snapshot — silenciosamente.
+   */
+  useEffect(() => {
+    if (corrida === null || cliente.euSou === null) return;
+    conexaoRef.current?.enviar({
+      tipo: 'hash',
+      escopo: 'corrida',
+      ancora: cliente.eventosAplicados,
+      hash: hashDaCorrida(corrida),
+    });
+    // `eventosAplicados` fora das dependências de propósito, mesmo raciocínio
+    // do efeito do draft: quando `corrida` já está disponível, o log parou de
+    // crescer (draft concluído), então `eventosAplicados` já está no valor
+    // final. Disparar por `corrida` (a referência) é suficiente e evita
+    // qualquer reatestado supérfluo.
+  }, [corrida, cliente.euSou]);
+
   // `versaoApp` é o handshake do 3.4: dois builds diferentes produzem loadouts
   // diferentes do mesmo log, e o servidor recusa a entrada em vez de deixar a
   // partida nascer dividida.
@@ -230,5 +306,6 @@ export function useSalaOnline(sala: string): UseSalaOnline {
     ultimoErro: cliente.erros.at(-1) ?? null,
     encerrada: cliente.encerrada,
     inexistente: cliente.erros.includes('sala-inexistente'),
+    corrida,
   };
 }

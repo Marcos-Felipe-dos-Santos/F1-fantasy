@@ -8,18 +8,18 @@ import type { ReactNode } from 'react';
 import type { DraftState } from '../engine/types';
 import { TelaCorrida } from './TelaCorrida';
 import { TelaResultadoCorrida } from './TelaResultadoCorrida';
-import { useCorrida } from './useCorrida';
+import { useCorrida, type FonteDaCorrida } from './useCorrida';
 
 interface FluxoCorridaProps {
   state: DraftState;
-  /** Pista escolhida na TelaInicio (PR 2.5) — repassada direto pra `useCorrida`/`prepararCorrida`. */
-  pistaId: string;
   /**
-   * Seed da corrida (PR 8.4-mínimo). Omitida na corrida avulsa (usa a do
-   * draft); no campeonato é `seedDaEtapa(seed, pistaId)`, que é o que faz o
-   * replay bater bit a bit com a etapa pré-simulada e pontuada.
+   * De onde vem a corrida (PR 2/4 de "corrida online"). Modo `'preparar'`
+   * (offline: avulsa e etapa de campeonato) — `pistaId` explícito e `seed`
+   * opcional, repassados direto pra `useCorrida`/`prepararCorrida`, mesma
+   * semântica de sempre. Modo `'pronta'` (online) — a corrida já computada
+   * por `corridaDaSala` em `useSalaOnline`; ver `FonteDaCorrida`.
    */
-  seed?: number;
+  fonte: FonteDaCorrida;
   /** Conteúdo extra na tela de resultado — o `PainelCampeonato`, no modo Campeonato. */
   extraResultado?: ReactNode;
   /** Larga sozinho ao montar (PR C, modo automático) — ver `useCorrida`. */
@@ -29,16 +29,14 @@ interface FluxoCorridaProps {
 
 export function FluxoCorrida({
   state,
-  pistaId,
-  seed,
+  fonte,
   extraResultado,
   autoLargar,
   onReiniciar,
 }: FluxoCorridaProps) {
   const { fase, pista, grid, resultado, tempoSimMs, largar, acelerar, velocidade, setVelocidade } = useCorrida(
     state,
-    pistaId,
-    seed,
+    fonte,
     autoLargar,
   );
 

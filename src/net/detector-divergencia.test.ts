@@ -330,8 +330,25 @@ describe('o servidor continua SEM dataset — ele só compara strings', () => {
       'tok',
     ).estado;
 
+    // 🔑 `escopo: 'corrida'` SAIU desta lista (PR 2/4 de "corrida online"): é
+    // um `EscopoHash` válido desde então, não é malformado. Os exemplos de
+    // `escopo` ruim abaixo são valores que NUNCA foram (nem serão) membros de
+    // `EscopoHash` por acidente de digitação — é isso que continua provando
+    // que `escopoValido` recusa o que deve recusar, e não só "tudo que não é
+    // a string 'draft'".
     const ruins: unknown[] = [
-      { tipo: 'hash', escopo: 'corrida', ancora: 1, hash: 'a'.repeat(16) },
+      { tipo: 'hash', escopo: 'banana', ancora: 1, hash: 'a'.repeat(16) },
+      { tipo: 'hash', escopo: '', ancora: 1, hash: 'a'.repeat(16) },
+      { tipo: 'hash', escopo: 123, ancora: 1, hash: 'a'.repeat(16) },
+      { tipo: 'hash', escopo: null, ancora: 1, hash: 'a'.repeat(16) },
+      { tipo: 'hash', escopo: {}, ancora: 1, hash: 'a'.repeat(16) },
+      { tipo: 'hash', ancora: 1, hash: 'a'.repeat(16) }, // escopo AUSENTE
+      // `escopoValido` usa `Object.hasOwn`, não `in`: `'constructor'` está na
+      // cadeia de protótipo de QUALQUER objeto, mas não é chave PRÓPRIA de
+      // `ESCOPOS_VALIDOS`. Se alguém trocar por `escopo in ESCOPOS_VALIDOS`
+      // no futuro, esta linha passa a aceitar `'constructor'` e este teste
+      // reprova.
+      { tipo: 'hash', escopo: 'constructor', ancora: 1, hash: 'a'.repeat(16) },
       { tipo: 'hash', escopo: 'draft', ancora: -1, hash: 'a'.repeat(16) },
       { tipo: 'hash', escopo: 'draft', ancora: 1.5, hash: 'a'.repeat(16) },
       { tipo: 'hash', escopo: 'draft', ancora: 1, hash: 'NAO-E-HEX------' },
@@ -346,6 +363,125 @@ describe('o servidor continua SEM dataset — ele só compara strings', () => {
         erro: 'comando-invalido',
       });
       expect(r.estado.atestados?.draft, 'atestado inválido não pode entrar no estado').toBeUndefined();
+      expect(r.estado.atestados?.corrida, 'atestado inválido não pode entrar no estado').toBeUndefined();
     }
+  });
+
+  it('🔴 escopo "corrida" bem-formado é ACEITO — o par positivo do teste acima (PR 2/4)', () => {
+    // O docblock do `escopo` em `protocolo.ts` promete, desde o 3.4, que a
+    // corrida entraria "sem mudar o protocolo": o TIPO já era a união
+    // `'draft' | 'corrida'`, mas a validação em `atestadoValido` travava na
+    // string literal `'draft'`. Sem este teste, um atestado de corrida
+    // legítimo continuaria batendo em `comando-invalido` pra sempre — código
+    // morto que nenhum teste flagraria, porque "recusa atestado malformado"
+    // tratava exatamente este caso como malformado.
+    let servidor = criarServidor('sala-corrida-ok', 1, 'dificil', T0);
+    servidor = aoReceber(
+      servidor,
+      'c0',
+      JSON.stringify({ tipo: 'entrar', nome: 'A', versaoApp: 'v' }),
+      T0,
+      'tok',
+    ).estado;
+
+    const r = aoReceber(
+      servidor,
+      'c0',
+      JSON.stringify({ tipo: 'hash', escopo: 'corrida', ancora: 0, hash: 'a'.repeat(16) }),
+      T0,
+    );
+
+    expect(r.envios.some((e) => e.mensagem.tipo === 'erro')).toBe(false);
+    expect(r.estado.atestados?.corrida?.porJogador['humano-01']).toBe('a'.repeat(16));
+  });
+});
+
+describe('atestados por escopo NÃO se misturam (PR 2/4 de "corrida online")', () => {
+  /** Dois jogadores conectados, cada um com sua conexão — mesmo padrão dos testes acima. */
+  function duasConexoes(): EstadoServidor {
+    let s = criarServidor('s-dois-escopos', 1, 'dificil', T0);
+    s = aoReceber(s, 'c0', JSON.stringify({ tipo: 'entrar', nome: 'A', versaoApp: 'v' }), T0, 'tk0')
+      .estado;
+    s = aoReceber(s, 'c1', JSON.stringify({ tipo: 'entrar', nome: 'B', versaoApp: 'v' }), T0, 'tk1')
+      .estado;
+    return s;
+  }
+
+  function enviar(
+    servidor: EstadoServidor,
+    conexaoId: string,
+    comando: unknown,
+  ): { estado: EstadoServidor; divergencias: Extract<MensagemServidor, { tipo: 'divergencia' }>[] } {
+    const r = aoReceber(servidor, conexaoId, JSON.stringify(comando), T0);
+    return {
+      estado: r.estado,
+      divergencias: r.envios
+        .map((e) => e.mensagem)
+        .filter((m): m is Extract<MensagemServidor, { tipo: 'divergencia' }> => m.tipo === 'divergencia'),
+    };
+  }
+
+  it('🔴 concordam no DRAFT, DIVERGEM na CORRIDA ⇒ alarme só em "corrida", nunca em "draft"', () => {
+    let s = duasConexoes();
+    const alarmes: Extract<MensagemServidor, { tipo: 'divergencia' }>[] = [];
+
+    // Draft: os dois atestam o MESMO hash — não diverge.
+    ({ estado: s } = enviar(s, 'c0', { tipo: 'hash', escopo: 'draft', ancora: 0, hash: 'd'.repeat(16) }));
+    let r = enviar(s, 'c1', { tipo: 'hash', escopo: 'draft', ancora: 0, hash: 'd'.repeat(16) });
+    s = r.estado;
+    alarmes.push(...r.divergencias);
+
+    // Corrida: os dois atestam hashes DIFERENTES — diverge.
+    ({ estado: s } = enviar(s, 'c0', {
+      tipo: 'hash',
+      escopo: 'corrida',
+      ancora: 0,
+      hash: 'e'.repeat(16),
+    }));
+    r = enviar(s, 'c1', { tipo: 'hash', escopo: 'corrida', ancora: 0, hash: 'f'.repeat(16) });
+    s = r.estado;
+    alarmes.push(...r.divergencias);
+
+    expect(alarmes.length, 'a divergência na corrida tem que acusar').toBeGreaterThan(0);
+    expect(
+      alarmes.every((a) => a.escopo === 'corrida'),
+      'nenhum alarme pode sair em "draft" — os dois concordaram lá',
+    ).toBe(true);
+    expect(s.atestados?.draft?.alarmado ?? false, 'o balde do draft não pode ter sido tocado').toBe(
+      false,
+    );
+    expect(s.atestados?.corrida?.alarmado).toBe(true);
+  });
+
+  it('🔴 inverso: DIVERGEM no DRAFT, concordam na CORRIDA ⇒ alarme só em "draft", nunca em "corrida"', () => {
+    let s = duasConexoes();
+    const alarmes: Extract<MensagemServidor, { tipo: 'divergencia' }>[] = [];
+
+    // Draft: hashes DIFERENTES — diverge.
+    ({ estado: s } = enviar(s, 'c0', { tipo: 'hash', escopo: 'draft', ancora: 0, hash: 'a'.repeat(16) }));
+    let r = enviar(s, 'c1', { tipo: 'hash', escopo: 'draft', ancora: 0, hash: 'b'.repeat(16) });
+    s = r.estado;
+    alarmes.push(...r.divergencias);
+
+    // Corrida: MESMO hash — não diverge.
+    ({ estado: s } = enviar(s, 'c0', {
+      tipo: 'hash',
+      escopo: 'corrida',
+      ancora: 0,
+      hash: 'c'.repeat(16),
+    }));
+    r = enviar(s, 'c1', { tipo: 'hash', escopo: 'corrida', ancora: 0, hash: 'c'.repeat(16) });
+    s = r.estado;
+    alarmes.push(...r.divergencias);
+
+    expect(alarmes.length, 'a divergência no draft tem que acusar').toBeGreaterThan(0);
+    expect(
+      alarmes.every((a) => a.escopo === 'draft'),
+      'nenhum alarme pode sair em "corrida" — os dois concordaram lá',
+    ).toBe(true);
+    expect(s.atestados?.corrida?.alarmado ?? false, 'o balde da corrida não pode ter sido tocado').toBe(
+      false,
+    );
+    expect(s.atestados?.draft?.alarmado).toBe(true);
   });
 });

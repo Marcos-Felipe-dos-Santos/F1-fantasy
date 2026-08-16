@@ -255,6 +255,30 @@ function mapearConexao(
 const EH_DRAFT = new Set(['escolher', 'abandonar']);
 
 /**
+ * Os valores de `EscopoHash` aceitos pelo servidor, numa forma que o
+ * TypeScript FORÇA a manter em sincronia com o tipo (PR 2/4 de "corrida
+ * online").
+ *
+ * 🔒 `satisfies Record<EscopoHash, true>` é a trava: se `EscopoHash` ganhar
+ * um membro novo e este objeto não for atualizado, a linha abaixo **para de
+ * compilar** (falta a chave obrigatória) — `npm run typecheck`/`build`
+ * reprovam antes de qualquer teste rodar. É a mesma disciplina do `Omit` em
+ * `EstadoSala` e da união `CorDePista`: o tipo, não a memória de quem edita,
+ * é quem garante a sincronia.
+ *
+ * (Verificado manualmente durante a implementação: acrescentar um escopo
+ * fictício a `EscopoHash` sem atualizar este objeto faz `tsc --noEmit`
+ * reprovar com "Property '<novo>' is missing in type '{ draft: true;
+ * corrida: true; }'ˮ — exatamente o efeito pretendido.)
+ */
+const ESCOPOS_VALIDOS = { draft: true, corrida: true } satisfies Record<EscopoHash, true>;
+
+/** `escopo` é um dos valores de `EscopoHash`? Deriva de `ESCOPOS_VALIDOS`, nunca duplica a lista. */
+function escopoValido(escopo: unknown): escopo is EscopoHash {
+  return typeof escopo === 'string' && Object.hasOwn(ESCOPOS_VALIDOS, escopo);
+}
+
+/**
  * Um atestado bem-formado? O cliente é hostil por hipótese.
  *
  * 🔴 **`tetoAncora` NÃO é preciosismo — sem ele o detector se desliga sozinho.**
@@ -267,6 +291,12 @@ const EH_DRAFT = new Set(['escolher', 'abandonar']);
  *
  * O servidor pode barrar isso SEM dataset: a âncora é um índice do log, e o log
  * é dele. Comparar contadores não é entender conteúdo.
+ *
+ * `escopo` aceita qualquer `EscopoHash` (via `escopoValido`), não só
+ * `'draft'` — desde o PR 2/4 de "corrida online". O docblock do `escopo` em
+ * `protocolo.ts` já prometia isso "sem mudar o protocolo": o tipo já era a
+ * união desde o 3.4/2-de-4; o que faltava era esta validação parar de travar
+ * na string literal antiga.
  */
 function atestadoValido(
   c: unknown,
@@ -274,7 +304,7 @@ function atestadoValido(
 ): c is { escopo: EscopoHash; ancora: number; hash: string } {
   const o = c as { escopo?: unknown; ancora?: unknown; hash?: unknown };
   return (
-    o.escopo === 'draft' &&
+    escopoValido(o.escopo) &&
     typeof o.ancora === 'number' &&
     Number.isInteger(o.ancora) &&
     o.ancora >= 0 &&

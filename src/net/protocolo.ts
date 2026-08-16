@@ -86,9 +86,10 @@ export type ComandoSala =
    * jogadores diferentes na MESMA âncora e alarma quando não batem. Todo o
    * significado mora em `hash-draft.ts`, no cliente.
    *
-   * `escopo` existe para que a corrida online (que ainda não existe — pendência
-   * (f)) entre depois **sem mudar o protocolo**: `escopo: 'corrida'` com o mesmo
-   * comparador. Um comando `hash-draft` teria que ser alargado.
+   * `escopo` existe para que a corrida online entre depois **sem mudar o
+   * protocolo**: `escopo: 'corrida'` com o mesmo comparador (PR 2/4 de
+   * "corrida online" — `hashDaCorrida` em `src/net/hash-corrida.ts`). Um
+   * comando `hash-draft` separado teria que ser alargado a cada escopo novo.
    *
    * `ancora` é `eventosAplicados` do cliente — quantos eventos do log ele já
    * aplicou. É o que torna a comparação justa: dois clientes CORRETOS em pontos
@@ -98,10 +99,12 @@ export type ComandoSala =
   | { tipo: 'hash'; escopo: EscopoHash; ancora: number; hash: string };
 
 /**
- * O que está sendo atestado. Só `draft` por enquanto: a corrida online não
- * existe, e o RISCO ATIVO que o 3.4 fecha é o pool de peças do draft.
+ * O que está sendo atestado. `draft` é o RISCO ATIVO que o 3.4 fechou (o pool
+ * de peças do draft); `corrida` entra no PR 2/4 de "corrida online" — mesma
+ * ideia, sobre `CorridaPreparada` em vez de `DraftState` (ver
+ * `src/net/hash-corrida.ts`).
  */
-export type EscopoHash = 'draft';
+export type EscopoHash = 'draft' | 'corrida';
 
 /**
  * Comandos do draft (PR 3.1b). Como os de lobby, nenhum diz de quem é.

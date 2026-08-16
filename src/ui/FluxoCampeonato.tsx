@@ -121,8 +121,7 @@ export function FluxoCampeonato({
       // pista do calendário até o fim do campeonato.
       key={`etapa-${indice}`}
       state={state}
-      pistaId={pistaId}
-      seed={seedDaEtapa(state.seed, pistaId)}
+      fonte={{ modo: 'preparar', pistaId, seed: seedDaEtapa(state.seed, pistaId) }}
       // No automático a corrida larga sozinha — sem isso o avanço pararia na
       // tela de grid esperando um clique, e o modo pareceria quebrado.
       autoLargar={auto}
