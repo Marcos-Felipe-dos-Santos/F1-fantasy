@@ -703,7 +703,13 @@ arte vai ao dev** — mudar composição sozinho já custou 2 bloqueantes no 7.3
 ## Convenções (as demais estão no `CLAUDE.md`)
 
 - **Ao concluir um PR, atualizar OS DOIS:** entrada detalhada no `HISTORICO.md` (acumula) e este
-  `ESTADO.md` **reescrito** (substitui, não acumula).
+  `ESTADO.md` **atualizado**.
+- 🔒 **Neste arquivo, SÓ a seção `## Onde parei` é reescrita.** Todo o resto — decisões travadas,
+  regras invioláveis da Fase 7, portões, riscos ativos, pendências, planos de fase — é **acrescido
+  ou editado pontualmente, NUNCA apagado em massa**. A redação anterior desta linha dizia
+  "reescrito (substitui, não acumula)" e foi o que autorizou o esvaziamento de 646 → 137 linhas em
+  2026-08-12 (restaurado em `1873925`). Regra completa no `CLAUDE.md` §"O `doc-writer` NÃO APAGA
+  SEÇÃO DE RESTRIÇÃO PERMANENTE". **Encolher este arquivo é decisão do dev.**
 - Previews visuais em `preview/` (gitignored). **Preview gerado só conta como entregue depois de
   MOSTRADO ao dev, com CAMINHO ABSOLUTO** — foi exatamente o que falhou no 7.4.
 - **`referencias/` é gitignored** (imagens de terceiros, GDD §14.2).

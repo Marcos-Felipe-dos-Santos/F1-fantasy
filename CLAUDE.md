@@ -22,8 +22,34 @@ Este arquivo é a memória sempre-ativa do projeto. As regras aqui são **inviol
 - **`F1_Fantasy_GDD.md`** — regras de jogo, notas, pistas, catálogo de peças.
 
 **Ao concluir um PR, o `doc-writer` atualiza OS DOIS:** entrada detalhada no `HISTORICO.md`
-(acumula) e o `ESTADO.md` **reescrito** (substitui, não acumula). Se só um dos dois for atualizado,
-a próxima sessão começa com informação errada.
+(acumula) e o `ESTADO.md` **atualizado — só a seção "Onde parei" é reescrita** (ver a regra logo
+abaixo). Se só um dos dois for atualizado, a próxima sessão começa com informação errada.
+
+## 🔒 O `doc-writer` NÃO APAGA SEÇÃO DE RESTRIÇÃO PERMANENTE DO `ESTADO.md` (inviolável)
+
+**Aconteceu em 2026-08-12:** a atualização do PR 1/4 da corrida online reescreveu o `ESTADO.md` de
+**646 para 137 linhas**, levando junto as decisões travadas da paleta, as decisões travadas do
+redesenho e as regras invioláveis da Fase 7 — restrições que o dev aprovou uma vez e que não podem
+ser reabertas sem ele. Foi restaurado no commit `1873925`.
+
+**A causa não foi descuido: foi esta própria seção**, que dizia "`ESTADO.md` **reescrito**
+(substitui, não acumula)". Escrita para impedir que o arquivo inchasse, ela lê como autorização para
+apagar tudo. **Por isso a regra nova não vem sozinha — a linha antiga foi corrigida acima e a de
+`ESTADO.md` §Convenções também.** Regra nova ao lado da antiga contraditória devolve o mesmo
+esvaziamento, dependendo de qual o `doc-writer` ler primeiro.
+
+- **REESCREVER, só a seção `## Onde parei`.** É a única que substitui.
+- **Todo o resto é ACRESCIDO ou EDITADO PONTUALMENTE, nunca apagado em massa.** Vale em especial
+  para: decisões travadas (paleta, redesenho), regras invioláveis da Fase 7, portões visuais,
+  riscos ativos, pendências e planos de fase aprovados.
+- **Encolher o `ESTADO.md` é decisão do dev, não do `doc-writer`.** Se o arquivo ficou grande
+  demais, o caminho é PROPOR ao dev o que arquivar — não arquivar por conta própria.
+- 🔒 **Sinal de alarme mecânico:** se o `ESTADO.md` pós-atualização tiver **menos linhas** que o
+  anterior, algo foi apagado. Conferir `git diff --stat ESTADO.md` antes de commitar documentação
+  e, se o saldo for negativo, olhar o diff linha a linha.
+
+> Mesma família do "artefato que não foi verificado não conta como verificado": aqui, **regra que
+> não foi conferida contra a regra que ela substitui não conta como registrada.**
 
 ---
 
