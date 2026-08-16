@@ -226,14 +226,20 @@ export class Sala extends Server<Env> {
       return;
     }
 
-    // Com a partida concluída não há mais turno pra expirar: durante os 10
-    // minutos da janela isso seriam ~120 escritas em storage e 120 broadcasts
-    // de snapshot completo, por sala, sem nada mudar.
-    const proximo =
-      atualizado.sala.concluidaEm === null
-        ? aoPassarOTempo(atualizado, agora, PRAZO_TURNO_MS)
-        : { estado: atualizado, envios: [] };
-    await this.aplicar(proximo);
+    // 🔑 SEM `if` aqui — decidir é do NÚCLEO (PR 3/4). Este ponto tinha um
+    // `if (concluidaEm === null)` antes de chamar `aoPassarOTempo`, com o
+    // comentário de que o tique custaria "~120 escritas em storage e 120
+    // broadcasts" durante a janela. **A estimativa era falsa, e agora está
+    // medida** (`src/net/barreira-corrida.test.ts`): com o draft concluído,
+    // `deQuemEhAVez` devolve `[]`, `aoPassarOTempo` devolve o estado com a
+    // MESMA REFERÊNCIA e sem envios, e `aplicar` só grava quando a referência
+    // muda. Custo real: zero escritas, zero broadcasts.
+    //
+    // O `if` precisava sair de qualquer forma: é `aoPassarOTempo` que avalia a
+    // BARREIRA DO FIM DA CORRIDA no tique, e com o gate antigo o timeout de
+    // quem nunca atesta nunca seria avaliado — a sala ficaria com
+    // `concluidaEm` null até morrer pela carência de vazio.
+    await this.aplicar(aoPassarOTempo(atualizado, agora, PRAZO_TURNO_MS));
     await this.ctx.storage.setAlarm(agora + INTERVALO_TIQUE_MS);
   }
 }

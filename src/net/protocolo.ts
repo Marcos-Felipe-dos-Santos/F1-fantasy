@@ -96,7 +96,22 @@ export type ComandoSala =
    * diferentes do log têm hashes diferentes, e comparar isso seria alarme falso.
    * `seq` não serviria — ele avança também com evento de lobby.
    */
-  | { tipo: 'hash'; escopo: EscopoHash; ancora: number; hash: string };
+  | { tipo: 'hash'; escopo: EscopoHash; ancora: number; hash: string }
+  /**
+   * 🏁 "Terminei a corrida" (PR 3/4 de "corrida online") — alimenta a BARREIRA
+   * DO FIM. Não carrega nada: quem mandou vem do transporte, como todo comando
+   * desde o 3.1a, e QUANDO é o `agora` injetado no servidor.
+   *
+   * 🔑 **É barreira de FIM, nunca de LARGADA.** Nenhum cliente espera pelos
+   * atestados alheios para ver a corrida — a `seedCorrida` já vai no snapshot
+   * assim que o draft conclui. O que a sala faz com estes atestados é decidir
+   * QUANDO considerar a partida encerrada, para só então armar a janela de
+   * graça. Quem nunca atesta é resolvido pelo `TIMEOUT_FIM_DE_CORRIDA_MS`, sem
+   * prender ninguém.
+   *
+   * Idempotente: reatestar não muda estado nem gera escrita no Durable Object.
+   */
+  | { tipo: 'corrida-concluida' };
 
 /**
  * O que está sendo atestado. `draft` é o RISCO ATIVO que o 3.4 fechou (o pool
@@ -163,6 +178,14 @@ export type ErroSala =
    * divergência que o detector então acusaria. Barato prevenir, caro detectar.
    */
   | 'versao-divergente'
+  /**
+   * `corrida-concluida` chegou antes de existir corrida (PR 3/4). Cliente
+   * legítimo nunca manda isso — só chega a atestar quem já viu `seedCorrida`
+   * no snapshot, e ela só sai com o draft concluído. Recusar em vez de
+   * ignorar impede que um atestado precoce entre na contagem da barreira e
+   * feche a sala dos outros mais cedo.
+   */
+  | 'corrida-nao-comecou'
   | 'comando-invalido';
 
 /**

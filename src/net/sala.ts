@@ -83,6 +83,8 @@ export function criarSala(
     // Nasce vazia: a carência é o que dá tempo de compartilhar o código.
     vazioDesde: agora,
     concluidaEm: null,
+    corridaAbertaEm: null,
+    atestaramFimDaCorrida: [],
     seq: 0,
   };
 }
@@ -122,6 +124,11 @@ export function publicarSala(estado: EstadoSala): EstadoSalaPublico {
     draft: estado.draft,
     seq: estado.seq,
     concluidaEm: estado.concluidaEm,
+    corridaAbertaEm: estado.corridaAbertaEm,
+    // `atestaramFimDaCorrida` NÃO vai no fio de propósito: é contabilidade
+    // interna da barreira, não muda nada na tela, e publicá-la só daria a
+    // cada cliente uma lista de quem já terminou — informação que ninguém
+    // consome e que engordaria todo snapshot.
   };
 }
 

@@ -346,6 +346,11 @@ describe('seed: a mestra fica no servidor', () => {
     // `vazioDesde` é bookkeeping interno do ciclo de vida — a tela não precisa
     // saber há quanto tempo a sala está vazia, e publicá-lo só daria ruído.
     delete semSegredos.vazioDesde;
+    // `atestaramFimDaCorrida` (PR 3/4) é da mesma família: contabilidade
+    // interna da barreira do fim da corrida. A tela conta a janela por
+    // `concluidaEm`, que É publicado; a lista de quem já terminou não muda
+    // nada no que se vê e engordaria todo snapshot.
+    delete semSegredos.atestaramFimDaCorrida;
     // `salaIniciada` deixa o draft em 'sorteios' — antes de concluir, então
     // `seedCorrida` é `null` (ver bloco "seedCorrida" abaixo).
     expect(publicarSala(sala)).toEqual({
@@ -373,6 +378,11 @@ describe('seed: a mestra fica no servidor', () => {
     delete semSegredos.seedMestre;
     delete semSegredos.tokens;
     delete semSegredos.vazioDesde;
+    // `atestaramFimDaCorrida` (PR 3/4) é da mesma família: contabilidade
+    // interna da barreira do fim da corrida. A tela conta a janela por
+    // `concluidaEm`, que É publicado; a lista de quem já terminou não muda
+    // nada no que se vê e engordaria todo snapshot.
+    delete semSegredos.atestaramFimDaCorrida;
     expect(publicarSala(sala)).toEqual({
       ...semSegredos,
       seedDraft: seedDoDraft(sala),

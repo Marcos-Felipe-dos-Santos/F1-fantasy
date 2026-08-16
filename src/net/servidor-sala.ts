@@ -39,6 +39,7 @@ import {
   CARENCIA_VAZIO_MS,
   JANELA_DE_GRACA_MS,
   PRAZO_TURNO_MS,
+  TIMEOUT_FIM_DE_CORRIDA_MS,
   type EstadoSala,
 } from './tipos';
 import type { Dificuldade } from '../engine/types';
@@ -162,12 +163,121 @@ export function registrarConexoes(
 }
 
 /**
- * Marca o instante em que a partida terminou, se acabou de terminar. É o que
- * arma a janela de graça — e é idempotente: uma vez marcado, não se mexe mais.
+ * Marca o instante em que a CORRIDA ficou disponível (o draft concluiu), se
+ * acabou de acontecer. Idempotente: uma vez marcado, não se mexe mais.
+ *
+ * 🔑 **Antes do PR 3/4 esta função marcava `concluidaEm`** — ou seja, o fim do
+ * draft armava a janela de graça de 10 minutos, que então corria DURANTE o
+ * replay da corrida. A sala podia fechar com gente ainda assistindo. Agora ela
+ * marca `corridaAbertaEm`, que é só a âncora do timeout da barreira; quem
+ * marca `concluidaEm` é `avaliarBarreiraDaCorrida`.
  */
-export function marcarConclusao(estado: EstadoServidor, agora: number): EstadoServidor {
-  if (estado.sala.concluidaEm !== null) return estado;
+/**
+ * 🔒 Os dois campos da barreira, lidos de um estado que pode ter vindo do
+ * storage **sem eles**.
+ *
+ * O Durable Object devolve o objeto persistido CRU, sem migração de schema
+ * (`carregar()` em `party/sala.ts`). Uma sala gravada ANTES do PR 3/4 não tem
+ * `corridaAbertaEm` nem `atestaramFimDaCorrida`, e `undefined` não é `null`:
+ * um `!== null` deixaria `marcarCorridaAberta` retornar cedo para sempre — a
+ * corrida nunca abriria, a barreira nunca fecharia, `concluidaEm` ficaria
+ * `null` eternamente e o log append-only perderia o ponto de descarte que o C2
+ * do 3.2 criou. E `undefined.includes(...)` lançaria dentro do `onMessage`,
+ * quebrando a promessa de `aoReceber` de **nunca lançar**.
+ *
+ * Mesmo precedente e mesmo motivo do `estado.tokens ?? {}` em
+ * `sala.ts` (`jogadorDoToken`), escrito quando `tokens` entrou no 3.2.1.
+ * Ler por aqui, e nunca direto do campo, é o que impede o próximo sítio de
+ * esquecer.
+ */
+const abertaEmDe = (sala: EstadoSala): number | null => sala.corridaAbertaEm ?? null;
+const atestadosDe = (sala: EstadoSala): string[] => sala.atestaramFimDaCorrida ?? [];
+
+export function marcarCorridaAberta(estado: EstadoServidor, agora: number): EstadoServidor {
+  if (abertaEmDe(estado.sala) !== null) return estado;
   if (estado.sala.draft?.fase !== 'concluido') return estado;
+  return { ...estado, sala: { ...estado.sala, corridaAbertaEm: agora } };
+}
+
+/**
+ * Quem precisa atestar o fim da corrida para a barreira fechar: os humanos
+ * ATIVOS do draft.
+ *
+ * 🔒 **Ausentes fora, e isso não é detalhe:** se contassem, qualquer sala com
+ * um abandono nunca fecharia por atestado e cairia sempre no timeout inteiro —
+ * a barreira viraria enfeite. Bots também não entram: não têm cliente para
+ * atestar coisa nenhuma.
+ *
+ * ⚠️ **LIMITE CONHECIDO: este conjunto CONGELA quando o draft conclui.** Três
+ * coisas se somam — `aoDesconectar` não marca ausente com a sala iniciada,
+ * `abandonar` é recusado depois da conclusão (`draft-concluido`), e o tique
+ * pós-conclusão vai para a barreira em vez de `expirados`. Então **ninguém
+ * entra nem sai de `elegiveis` depois do fim do draft**: quem fecha a aba
+ * durante o replay continua sendo esperado, e a sala paga o
+ * `TIMEOUT_FIM_DE_CORRIDA_MS` inteiro. A exclusão de ausentes acima só age
+ * para quem abandonou DURANTE o draft. Aceitável porque o timeout é o teto e
+ * a carência de vazio mata antes se ninguém ficou — mas não confundir com
+ * "dropout no replay é detectado", que não é. (Achado da revisão do PR 3/4.)
+ */
+function elegiveisDaBarreira(estado: EstadoServidor): string[] {
+  const draft = estado.sala.draft;
+  if (draft === null) return [];
+  return draft.humanos.filter((id) => !draft.ausentes.includes(id));
+}
+
+/**
+ * Registra que um jogador terminou a corrida. Idempotente **por identidade**:
+ * um atestado repetido devolve o MESMO objeto, então `aplicar` (na casca) não
+ * grava no Durable Object. Sem isso, 22 clientes reatestando a cada reconexão
+ * seriam 22 escritas de graça.
+ */
+export function atestarFimDaCorrida(estado: EstadoServidor, jogadorId: string): EstadoServidor {
+  const ja = atestadosDe(estado.sala);
+  if (ja.includes(jogadorId)) return estado;
+  return {
+    ...estado,
+    sala: { ...estado.sala, atestaramFimDaCorrida: [...ja, jogadorId] },
+  };
+}
+
+/**
+ * 🏁 **A BARREIRA DO FIM DA CORRIDA** (PR 3/4 de "corrida online").
+ *
+ * Fecha `concluidaEm` quando **todos os elegíveis atestaram** ou quando o
+ * **timeout venceu** para quem nunca chega. É o que decide "a partida acabou"
+ * — e é o que arma a janela de graça a partir daí.
+ *
+ * 🔑 **Ela NÃO bloqueia ninguém.** Retomando o plano da Fase 3 ("cada um no seu
+ * ritmo, com barreira no fim + timeout") e a qualificação que o dev travou:
+ * **é mecanismo de ciclo de vida, não portão de UI.** Ninguém espera numa tela
+ * pelos atestados alheios — a `seedCorrida` já vai no snapshot assim que o
+ * draft conclui, e cada cliente corre sozinho. Se fosse barreira de LARGADA,
+ * um jogador parado no resumo prenderia os outros pelo timeout inteiro; foi
+ * exatamente esse desenho que o dev recusou.
+ *
+ * Idempotente por identidade, como todo redutor deste arquivo.
+ */
+export function avaliarBarreiraDaCorrida(
+  estado: EstadoServidor,
+  agora: number,
+  timeoutMs: number = TIMEOUT_FIM_DE_CORRIDA_MS,
+): EstadoServidor {
+  if (estado.sala.concluidaEm !== null) return estado;
+  const abertaEm = abertaEmDe(estado.sala);
+  if (abertaEm === null) return estado;
+
+  const atestaram = atestadosDe(estado.sala);
+  const elegiveis = elegiveisDaBarreira(estado);
+  // 🔒 `elegiveis.length > 0` não é defensividade vazia: sem ele, uma sala em
+  // que TODOS os humanos viraram ausentes teria `every` sobre lista vazia =
+  // `true` e fecharia a corrida no instante em que o draft concluísse — de
+  // novo armando a janela de graça cedo demais, que é o defeito que este PR
+  // existe para consertar. Com o guarda, esse caso resolve pelo timeout.
+  const todosAtestaram =
+    elegiveis.length > 0 && elegiveis.every((id) => atestaram.includes(id));
+  const venceu = agora - abertaEm >= timeoutMs;
+  if (!todosAtestaram && !venceu) return estado;
+
   return { ...estado, sala: { ...estado.sala, concluidaEm: agora } };
 }
 
@@ -180,15 +290,23 @@ const estadoPara = (estado: EstadoServidor): MensagemServidor => ({
 /**
  * Broadcast do snapshot + o que mais vier junto.
  *
- * `agora` entra aqui só para marcar o fim da partida no MESMO evento que a
- * concluiu — se ficasse para o próximo tique, o snapshot que anuncia o fim iria
- * sem `concluidaEm`, e a tela não teria como contar a janela.
+ * `agora` entra aqui só para marcar a abertura da corrida no MESMO evento que
+ * concluiu o draft — se ficasse para o próximo tique, o snapshot que anuncia o
+ * fim do draft iria sem `corridaAbertaEm`, e a tela não saberia que a corrida
+ * começou.
+ *
+ * 🔑 **Só `marcarCorridaAberta` roda aqui — `concluidaEm` NÃO.** Até o PR 3/4
+ * este ponto marcava o fim da partida, e era o defeito: o fim do DRAFT armava a
+ * janela de graça. Quem fecha `concluidaEm` agora é a barreira, e ela é
+ * avaliada onde há informação para isso (o atestado e o tique), nunca em todo
+ * broadcast. Manter a chamada antiga aqui faria a barreira nunca decidir nada
+ * e a suíte continuaria verde — mesma forma do bug do 8.4.
  */
 function difundir(estado: EstadoServidor, agora: number, extras: Envio[] = []): ResultadoServidor {
-  const comConclusao = marcarConclusao(estado, agora);
+  const comCorridaAberta = marcarCorridaAberta(estado, agora);
   return {
-    estado: comConclusao,
-    envios: [...extras, { para: null, mensagem: estadoPara(comConclusao) }],
+    estado: comCorridaAberta,
+    envios: [...extras, { para: null, mensagem: estadoPara(comCorridaAberta) }],
   };
 }
 
@@ -523,6 +641,31 @@ export function aoReceber(
     return registrarAtestado(estado, remetenteId, comando);
   }
 
+  /**
+   * 🏁 "Terminei a corrida" (PR 3/4). Alimenta a barreira do FIM — nunca a de
+   * largada: nada neste servidor segura um cliente esperando os outros.
+   *
+   * Difunde porque `concluidaEm` pode ter acabado de mudar, e é dele que a
+   * tela conta a janela de fechamento. Quando o atestado não move a barreira,
+   * `avaliarBarreiraDaCorrida` devolve a mesma referência e o `difundir`
+   * apenas repete o snapshot — sem escrita no Durable Object (`aplicar` só
+   * grava quando a identidade muda).
+   */
+  if (tipo === 'corrida-concluida') {
+    if (remetenteId === null) {
+      return soPara(estado, conexaoId, { tipo: 'erro', erro: 'jogador-desconhecido' });
+    }
+    // Atestar antes de existir corrida não é comando legítimo de cliente
+    // nenhum — é ruído ou tentativa de fechar a sala dos outros mais cedo.
+    if (abertaEmDe(estado.sala) === null) {
+      return soPara(estado, conexaoId, { tipo: 'erro', erro: 'corrida-nao-comecou' });
+    }
+    const comAtestado = atestarFimDaCorrida(estado, remetenteId);
+    const avaliado = avaliarBarreiraDaCorrida(comAtestado, agora);
+    if (avaliado === estado) return soPara(estado, conexaoId, estadoPara(estado));
+    return difundir(avaliado, agora);
+  }
+
   if (tipo === 'quem-sou') {
     return remetenteId === null
       ? soPara(estado, conexaoId, { tipo: 'erro', erro: 'jogador-desconhecido' })
@@ -605,6 +748,23 @@ export function aoPassarOTempo(
   prazoMs: number = PRAZO_TURNO_MS,
 ): ResultadoServidor {
   if (estado.sala.draft === null) return { estado, envios: [] };
+
+  /**
+   * 🏁 Com o draft concluído não há turno para expirar — o que há é a BARREIRA
+   * DO FIM DA CORRIDA para avaliar (PR 3/4). É aqui que o timeout vira decisão:
+   * sem isto, uma sala em que alguém nunca atesta ficaria com `concluidaEm`
+   * null para sempre e a janela de graça nunca começaria.
+   *
+   * 🔒 **A decisão mora no núcleo, não na casca.** `party/sala.ts` costumava
+   * ter o próprio `if (concluidaEm === null)` antes de chamar esta função —
+   * lógica de ciclo de vida num lugar que nenhum teste alcança, que é
+   * exatamente o defeito que o 3.3.2 corrigiu no `onClose`.
+   */
+  if (estado.sala.draft.fase === 'concluido') {
+    const avaliado = avaliarBarreiraDaCorrida(estado, agora);
+    return avaliado === estado ? { estado, envios: [] } : difundir(avaliado, agora);
+  }
+
   const vencidos = expirados(estado.sala.draft, agora, prazoMs);
   if (vencidos.length === 0) return { estado, envios: [] };
 

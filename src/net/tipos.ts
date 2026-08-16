@@ -129,8 +129,21 @@ export interface EstadoSalaPublico {
    * duplicação) vai asserir.
    */
   seq: number;
-  /** Quando a partida terminou (ms). `null` = ainda em andamento. */
+  /**
+   * Quando a CORRIDA terminou (ms). `null` = ainda em andamento.
+   *
+   * É o que a tela usa pra contar a janela de fechamento (`AvisoDeFechamento`
+   * em `FluxoOnline.tsx`). Desde o PR 3/4 de "corrida online" ele marca o fim
+   * da corrida, não o do draft — então o aviso deixa de aparecer no fim do
+   * draft e passa a aparecer depois do replay, que é o pretendido.
+   */
   concluidaEm: number | null;
+  /**
+   * Quando a corrida ficou disponível (ms) — o draft concluiu. `null` antes.
+   * Vai no fio porque a tela precisa saber que a corrida começou para poder
+   * atestar o fim dela (PR 3/4).
+   */
+  corridaAbertaEm: number | null;
 }
 
 /**
@@ -184,6 +197,26 @@ export const JANELA_DE_GRACA_MS = 10 * 60_000;
  * 2 minutos cobre os dois casos com folga e continua matando a sala zumbi.
  */
 export const CARENCIA_VAZIO_MS = 2 * 60_000;
+
+/**
+ * Teto da BARREIRA DO FIM DA CORRIDA (PR 3/4 de "corrida online"): quanto
+ * tempo a sala espera pelos atestados de fim de corrida antes de decidir
+ * sozinha que a corrida acabou.
+ *
+ * 🔑 **A barreira NÃO bloqueia ninguém** — é mecanismo de ciclo de vida, não
+ * portão de UI. Ninguém espera numa tela; quem chegou, corre. O timeout existe
+ * só para o caso de alguém nunca atestar (fechou a aba no meio do replay):
+ * sem ele, `concluidaEm` ficaria `null` para sempre e a janela de graça nunca
+ * começaria — a sala só morreria pela carência de vazio.
+ *
+ * **5 minutos, dimensionado contra o replay real:** a pista mais longa do
+ * dataset tem 15 voltas e a velocidade mais lenta gasta 9 s por volta
+ * (`MS_REPLAY_POR_VOLTA.lenta`), ou seja ~2min15s de relógio no pior caso.
+ * 5 min dá folga de mais de 2× para a tela de grid, pausas e a leitura do
+ * resultado, e ainda fica bem abaixo da `JANELA_DE_GRACA_MS` — que só começa
+ * a contar depois disto.
+ */
+export const TIMEOUT_FIM_DE_CORRIDA_MS = 5 * 60_000;
 
 /**
  * A partir de quanto tempo restante a tela avisa que a sala vai fechar.
@@ -270,8 +303,32 @@ export interface EstadoSala extends Omit<EstadoSalaPublico, 'seedDraft' | 'seedC
    * É o que arma a **janela de graça**: passada `JANELA_DE_GRACA_MS` daqui, a
    * sala é resetada. Também é o que dá ponto de descarte ao log append-only —
    * antes disso ele crescia para sempre, que era metade do problema C2 do 3.2.
+   *
+   * 🔑 **Desde o PR 3/4 de "corrida online", "a partida terminou" quer dizer
+   * A CORRIDA acabou, não o DRAFT.** Antes disto ele era marcado assim que o
+   * draft concluía, e os 10 minutos da janela corriam DURANTE o replay — a
+   * sala podia fechar com gente ainda assistindo. Quem o marca agora é a
+   * barreira (`avaliarBarreiraDaCorrida`), nunca o fim do draft.
    */
   concluidaEm: number | null;
+  /**
+   * Quando o draft concluiu e a corrida ficou disponível (ms, injetado).
+   * `null` antes disso. Marcado uma vez só, e é a **âncora do timeout** da
+   * barreira do fim da corrida (`TIMEOUT_FIM_DE_CORRIDA_MS`).
+   *
+   * Separado de `concluidaEm` de propósito: são dois instantes diferentes
+   * desde o PR 3/4, e reusar um campo para os dois foi exatamente o que fazia
+   * a janela de graça começar cedo demais.
+   */
+  corridaAbertaEm: number | null;
+  /**
+   * Quem já atestou que terminou a corrida (jogadorIds). Alimenta a barreira.
+   *
+   * 🔒 **Elegíveis são os humanos ATIVOS** — ausentes não contam. Se
+   * contassem, toda sala com um abandono cairia no timeout inteiro e a
+   * barreira seria decorativa.
+   */
+  atestaramFimDaCorrida: string[];
   /**
    * Desde quando a sala está SEM NINGUÉM conectado (ms, injetado). `null` = tem
    * gente dentro.

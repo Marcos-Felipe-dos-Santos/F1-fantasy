@@ -72,6 +72,22 @@ export interface UseSalaOnline {
    * docblock de `corrida-online.ts` pra tese completa.
    */
   corrida: CorridaPreparada | null;
+  /**
+   * 🏁 "Terminei a corrida" — alimenta a BARREIRA DO FIM (PR 3/4).
+   *
+   * 🔑 **Chamar isto NÃO segura ninguém, e não chamar não segura ninguém
+   * tampouco.** A barreira é ciclo de vida, não portão de UI: ela só decide
+   * QUANDO a sala considera a partida encerrada, para então armar a janela de
+   * graça de 10 minutos em que dá pra olhar o resultado. Quem nunca atesta é
+   * resolvido pelo `TIMEOUT_FIM_DE_CORRIDA_MS` do servidor.
+   *
+   * ⚠️ **A CHAMADA fica no PR 4/4**, quando existir a tela: o momento certo é
+   * o fim do replay (o jogador chegou à tela de resultado), e é lá que esse
+   * evento existe. Enquanto ninguém chamar, a barreira resolve sempre por
+   * timeout — funciona, só demora 5 minutos a mais para a janela começar.
+   * É seguro; é só não ser o ideal.
+   */
+  atestarFimDaCorrida: () => void;
 }
 
 export function useSalaOnline(sala: string): UseSalaOnline {
@@ -256,6 +272,13 @@ export function useSalaOnline(sala: string): UseSalaOnline {
     [enviar],
   );
   const iniciar = useCallback(() => enviar({ tipo: 'iniciar' }), [enviar]);
+  // Idempotente no servidor (atestado repetido preserva a identidade do estado
+  // e não gera escrita no Durable Object), então a UI pode chamar sem guardar
+  // se já chamou — inclusive depois de um F5 na tela de resultado.
+  const atestarFimDaCorrida = useCallback(
+    () => enviar({ tipo: 'corrida-concluida' }),
+    [enviar],
+  );
   const sair = useCallback(() => {
     enviar({ tipo: 'sair' });
     tokenRef.current = null;
@@ -307,5 +330,6 @@ export function useSalaOnline(sala: string): UseSalaOnline {
     encerrada: cliente.encerrada,
     inexistente: cliente.erros.includes('sala-inexistente'),
     corrida,
+    atestarFimDaCorrida,
   };
 }
