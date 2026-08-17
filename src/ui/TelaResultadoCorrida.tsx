@@ -22,6 +22,16 @@ interface TelaResultadoCorridaProps {
    * `undefined` na corrida avulsa — a tela fica exatamente como era.
    */
   extra?: ReactNode;
+  /**
+   * Rótulo do botão de saída (PR 4/4 de "corrida online"). Default `'Novo
+   * draft'` — o offline segue exatamente como era.
+   *
+   * 🔴 **Existe porque o rótulo MENTIA no online** (achado da revisão): lá
+   * `onReiniciar` é `sairDaSala`, então "Novo draft" prometia um draft novo e
+   * entregava a saída da sala. É o mesmo conserto que `TelaResumo` já tinha
+   * recebido com `rotuloReiniciar`, agora na tela que o PR 4 passou a alcançar.
+   */
+  rotuloReiniciar?: string;
 }
 
 /** Nome de exibição via `nomeJogador` (PR 2.1a); cai no próprio id se o jogador não for encontrado. */
@@ -55,6 +65,7 @@ export function TelaResultadoCorrida({
   resultado,
   onReiniciar,
   extra,
+  rotuloReiniciar,
 }: TelaResultadoCorridaProps) {
   const resultadosHumanos = resultado.classificacao.filter((c) => ehHumanoId(state, c.jogadorId));
   const [seedCopiada, setSeedCopiada] = useState(false);
@@ -143,7 +154,7 @@ export function TelaResultadoCorrida({
       {extra}
 
       <button type="button" className="botao-secundario" onClick={onReiniciar}>
-        Novo draft
+        {rotuloReiniciar ?? 'Novo draft'}
       </button>
     </div>
   );

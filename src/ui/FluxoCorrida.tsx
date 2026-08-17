@@ -37,6 +37,8 @@ interface FluxoCorridaProps {
    * ciclo de vida, resolvida por timeout no servidor para quem nunca atesta.
    */
   onChegouAoResultado?: () => void;
+  /** Repassado a `TelaResultadoCorrida` — no online, `onReiniciar` sai da sala. */
+  rotuloReiniciar?: string;
   onReiniciar: () => void;
 }
 
@@ -46,6 +48,7 @@ export function FluxoCorrida({
   extraResultado,
   autoLargar,
   onChegouAoResultado,
+  rotuloReiniciar,
   onReiniciar,
 }: FluxoCorridaProps) {
   const { fase, pista, grid, resultado, tempoSimMs, largar, acelerar, velocidade, setVelocidade } = useCorrida(
@@ -55,16 +58,20 @@ export function FluxoCorrida({
   );
 
   /**
-   * 🔴 Mora num EFEITO, e não no corpo do render — mesmo motivo já registrado
-   * nos atestados de `useSalaOnline`: render tem que ser puro, e chamar um
-   * callback que envia pela rede durante a renderização dispara duas vezes sob
-   * StrictMode. Idempotente no servidor (atestado repetido não gera escrita no
-   * Durable Object), mas amplificação de escrita de graça é justamente o que a
-   * revisão do 3.4 cobrou.
+   * 🔴 Mora num EFEITO, e não no corpo do render — render tem que ser puro, e
+   * chamar daqui um callback que envia pela rede é efeito colateral em
+   * renderização, que o React pode repetir ou descartar à vontade.
+   *
+   * ⚠️ **O StrictMode NÃO é o que segura o envio duplo, e creditá-lo a ele
+   * seria errado** (achado da revisão): o StrictMode invoca o efeito duas vezes
+   * na montagem também. Quem faz o envio sair uma vez só é a combinação de duas
+   * coisas: a montagem sempre acontece em `fase === 'grid'` (`useCorrida` nasce
+   * nela), e a guarda `fase === 'resultado'` abaixo. Quem "simplificar" a
+   * guarda achando que o efeito já protege, reabre o problema.
    *
    * Dispara na TRANSIÇÃO para `'resultado'`: `fase` só chega lá uma vez por
-   * corrida, e `onChegouAoResultado` é um `useCallback` estável do lado do
-   * chamador.
+   * corrida (não há botão de rever/relargar), e `onChegouAoResultado` é um
+   * `useCallback` estável do lado do chamador, então o efeito não re-dispara.
    */
   useEffect(() => {
     if (fase === 'resultado') onChegouAoResultado?.();
@@ -76,6 +83,7 @@ export function FluxoCorrida({
         state={state}
         resultado={resultado}
         onReiniciar={onReiniciar}
+        rotuloReiniciar={rotuloReiniciar}
         extra={extraResultado}
       />
     );

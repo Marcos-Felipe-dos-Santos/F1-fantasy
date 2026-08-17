@@ -274,7 +274,15 @@ export function useSalaOnline(sala: string): UseSalaOnline {
   const iniciar = useCallback(() => enviar({ tipo: 'iniciar' }), [enviar]);
   // Idempotente no servidor (atestado repetido preserva a identidade do estado
   // e não gera escrita no Durable Object), então a UI pode chamar sem guardar
-  // se já chamou — inclusive depois de um F5 na tela de resultado.
+  // se já chamou.
+  //
+  // ⚠️ **Correção do PR 4/4:** esta linha dizia "inclusive depois de um F5 na
+  // tela de resultado", e isso NÃO acontece — não há caminho que reateste após
+  // um F5. O `naCorrida` que leva à corrida é estado local do `FluxoOnline`, e
+  // recarregar devolve o jogador ao resumo (limite conhecido, registrado lá).
+  // Quem não reatesta cai no `TIMEOUT_FIM_DE_CORRIDA_MS`, que é o fallback
+  // projetado — funciona, só adia a janela de graça. As duas metades estavam
+  // documentadas em arquivos diferentes e ninguém tinha ligado uma na outra.
   const atestarFimDaCorrida = useCallback(
     () => enviar({ tipo: 'corrida-concluida' }),
     [enviar],

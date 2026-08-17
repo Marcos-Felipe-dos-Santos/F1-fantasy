@@ -194,11 +194,14 @@ describe('preview da corrida online', () => {
           'Tela de resultado do offline, reusada inteira: coluna de Pontos, destaque do humano, ' +
           'volta mais rápida com o ponto extra. É ao CHEGAR aqui que o cliente atesta "terminei" ' +
           'para a barreira do 3/4 — o que não segura ninguém, só decide quando a sala considera ' +
-          'a partida encerrada.',
+          'a partida encerrada. ⚠️ O botão do rodapé diz "← Voltar ao início", e NÃO "Novo draft" ' +
+          'como no offline: aqui ele sai da sala, e o rótulo antigo prometia um draft novo que ' +
+          'não vinha (achado da revisão).',
         html: renderToStaticMarkup(
           createElement(TelaResultadoCorrida, {
             state: draft,
             resultado: corrida.resultado,
+            rotuloReiniciar: '← Voltar ao início',
             onReiniciar: () => {},
           }),
         ),

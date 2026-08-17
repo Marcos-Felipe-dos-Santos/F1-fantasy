@@ -223,6 +223,7 @@ function ConteudoOnline({
             state={draft}
             fonte={{ modo: 'pronta', corrida }}
             onChegouAoResultado={online.atestarFimDaCorrida}
+            rotuloReiniciar="← Voltar ao início"
             onReiniciar={onVoltar}
           />
         </>

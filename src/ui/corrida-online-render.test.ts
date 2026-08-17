@@ -110,10 +110,21 @@ function salaConcluida(concluidaEm: number | null = null): EstadoSalaPublico {
   };
 }
 
+/**
+ * 🔒 `cliente` sai de `extras` ANTES do spread, e isso é uma armadilha de
+ * vacuidade desarmada, não estilo (achado da revisão). Com `...extras` por
+ * cima, um chamador que passasse `extras.cliente` descartaria o `cliente`
+ * COMPLETO montado em `renderizarOnline` e poria um parcial no lugar. Um
+ * cliente parcial cai no early return `draft === null` do `FluxoOnline`
+ * ("Preparando o draft…") e TODOS os `not.toContain` deste arquivo passariam
+ * por vacuidade — a sexta família de "o teste afirmava o que não conferia".
+ * O merge do cliente é responsabilidade de `renderizarOnline`, num lugar só.
+ */
 function retornoFalso(cliente: EstadoCliente, extras: Partial<Retorno> = {}): Retorno {
+  const outros = { ...extras };
+  delete outros.cliente;
   return {
     estadoConexao: 'aberta',
-    cliente,
     euSou: ID_HUMANO,
     minhaVez: false,
     souAusente: false,
@@ -127,8 +138,9 @@ function retornoFalso(cliente: EstadoCliente, extras: Partial<Retorno> = {}): Re
     sair: () => {},
     escolher: () => {},
     atestarFimDaCorrida: () => {},
-    ...extras,
-  } as Retorno;
+    ...outros,
+    cliente,
+  };
 }
 
 /** Renderiza o `FluxoOnline` com um retorno de hook forjado. */
@@ -226,11 +238,22 @@ describe('🔴 o alarme de divergência RAMIFICA por escopo', () => {
       } as EstadoCliente,
     });
 
+  /**
+   * 🔒 As asserções afirmam a FRASE INTEIRA do ramo, não a palavra solta
+   * (achado da revisão). `toContain('a corrida')` era **vacuamente verdadeira**:
+   * a mesma tela renderiza o botão "Ir pra corrida →", que contém "a corrida"
+   * como substring — logo passava mesmo com o banner dizendo "o draft". A
+   * frase completa é simétrica ao `not.toContain` de baixo, e só um dos dois
+   * ramos pode satisfazê-la.
+   */
+  const FRASE_CORRIDA = 'que a corrida é a mesma em todas as telas';
+  const FRASE_DRAFT = 'que o draft é o mesmo em todas as telas';
+
   it('🔴 escopo "corrida": o texto fala da CORRIDA, não do draft', () => {
     const html = comEscopo('corrida');
     expect(html).toContain('As máquinas divergiram');
-    expect(html).toContain('a corrida');
-    expect(html).not.toContain('que o draft é o mesmo');
+    expect(html).toContain(FRASE_CORRIDA);
+    expect(html).not.toContain(FRASE_DRAFT);
   });
 
   /**
@@ -241,8 +264,8 @@ describe('🔴 o alarme de divergência RAMIFICA por escopo', () => {
   it('🔒 escopo "draft": o texto continua falando do DRAFT', () => {
     const html = comEscopo('draft');
     expect(html).toContain('As máquinas divergiram');
-    expect(html).toContain('o draft');
-    expect(html).not.toContain('que a corrida é a mesma');
+    expect(html).toContain(FRASE_DRAFT);
+    expect(html).not.toContain(FRASE_CORRIDA);
   });
 
   it('🔒 nenhum dos dois acusa jogador nominalmente', () => {
