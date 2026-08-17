@@ -14,8 +14,16 @@
 > Plano de build e direção de arte: `PLANO_CLAUDE_CODE.md`. Regras invioláveis: `CLAUDE.md`.
 > Regras de jogo: `F1_Fantasy_GDD.md`. Nada foi pushado — tudo local.
 >
-> **Ao concluir um PR, atualizar OS DOIS:** entrada nova aqui (acumula) e o `ESTADO.md` reescrito
-> (substitui, não acumula).
+> **Ao concluir um PR, atualizar OS DOIS:** entrada nova aqui (acumula) e o `ESTADO.md`
+> **atualizado — só a seção `## Onde parei` é reescrita.**
+>
+> 🔒 **CORRIGIDO em 2026-08-17 (PR 4/4 da corrida online): esta linha dizia "`ESTADO.md` reescrito
+> (substitui, não acumula)" — a TERCEIRA cópia da instrução que esvaziou o arquivo de 646 para 137
+> linhas em 2026-08-12.** O `CLAUDE.md` registra que a linha foi corrigida em dois lugares (nele e
+> no `ESTADO.md` §Convenções); esta aqui passou despercebida. É exatamente o cenário que a regra
+> descreve: **regra nova ao lado da antiga contraditória devolve o mesmo esvaziamento, dependendo
+> de qual o `doc-writer` ler primeiro.** Todo o resto do `ESTADO.md` é ACRESCIDO ou EDITADO
+> PONTUALMENTE — nunca apagado em massa. Ver a seção inviolável do `CLAUDE.md`.
 
 ## Concluídos (mergeados na main — **exceto os do fim da lista**)
 
@@ -1845,3 +1853,65 @@ Até lá, a barreira resolve por timeout: **degradação segura, não caminho qu
 - **Novo limite conhecido (0 item novo):** o conjunto de elegíveis **congela quando o draft conclui** — ninguém vira ausente depois, então dropout durante replay ainda custa o timeout cheio. Sem reconexão de corrida.
 - **Oitava ocorrência:** teste vacuoso (`sincronizar` é o único que não difunde), registrado em série com as anteriores (5 código/net, 6 PR 1/4, 7 PR 2/4, 8 PR 3/4).
 - **Colateral:** comentário errado de estimativa em `party/sala.ts` foi corrigido no código.
+
+## CORRIDA ONLINE — PR 4/4 (a corrida chega na tela) — 2026-08-17
+
+**Commits:** `44d0dc8` (feature) + `8489b6f` (correções da revisão). **Mudanças:** 4 arquivos de produção, 2 novos (`corrida-online-render.test.ts`, `scripts/preview-corrida-online.preview.test.ts`). **Testes:** +8 (1480/62, era 1472/61). **⬅️ AGUARDANDO VEREDITO DO DEV no portão visual.**
+
+### Objetivo — ligar o último metro
+
+Os PRs 1 a 3 construíram a corrida online inteira e o jogador seguia parado no `TelaResumo`, com o botão "Ir pra corrida" escondido de propósito (não havia destino). Este PR liga o caminho: botão → `FluxoCorrida` no modo `'pronta'` → replay → resultado com pontuação FIA → atestado da barreira.
+
+**O que NÃO precisou ser feito, e é o mérito dos PRs anteriores:** a pontuação FIA já renderizava (`TelaResultadoCorrida` tinha coluna "Pontos" desde o 1.7b), `FonteDaCorrida` já tinha o modo `'pronta'` (PR 2/4), `useSalaOnline` já expunha `corrida` e `atestarFimDaCorrida`, e o `escopo: 'corrida'` já chegava ao cliente. O PR é pequeno porque o terreno estava preparado.
+
+### As decisões do dev, tomadas ANTES do código
+
+**1. A barreira NÃO ganha status na tela.** O pedido original sugeria "Aguardando jogadores terminarem…". **Recusado por contradizer decisão travada:** a barreira do 3/4 é a versão FRACA e não segura ninguém (`useSalaOnline.ts:78`: "chamar isto NÃO segura ninguém, e não chamar não segura ninguém tampouco"). A string afirmaria um bloqueio inexistente — a instância visual da família "o artefato afirma o que não confere". O dev escolheu **nada na tela**: o `AvisoDeFechamento` do último minuto já cobre o único prazo real, e a tela de resultado fica limpa nos 9 primeiros minutos, como ele decidiu no 3.3.2. O limite (k) fica só documentado.
+
+**2. `senior-reviewer` autorizado explicitamente** — o harness da sessão proíbe abrir subagente sem pedido do dev, e o `CLAUDE.md` o exige para alto risco. Lacuna fechada perguntando antes, não depois.
+
+### O que entrou
+
+- **`FluxoOnline.tsx`** — `naCorrida` (estado local, levantado ao componente de topo porque `ConteudoOnline` tem retornos antecipados antes de qualquer hook). Ramo novo renderiza `FluxoCorrida` com `{ modo: 'pronta', corrida }`, onde `corrida` é `online.corrida` — a **mesma referência** do `useMemo` que alimenta o hash. Nenhuma computação nova: a tese do 2/4 intacta.
+- **Guarda `corrida !== null`** — o botão só aparece com corrida disponível. A revisão mediu que a janela (draft concluído, `seedCorrida` ausente) é **inalcançável na prática** (`marcarCorridaAberta` roda no mesmo broadcast que conclui o draft), mas a guarda é correta e barata; mantida.
+- **`FluxoCorrida.tsx`** — prop `onChegouAoResultado`, disparada de efeito na transição para `'resultado'`. É por ela que o cliente atesta o fim para a barreira do 3/4.
+- **Banner de divergência RAMIFICA por escopo** — dizia "o draft" mesmo quando o que divergiu foi a corrida, mandando o jogador conferir a coisa errada.
+
+### 🔴 NONA OCORRÊNCIA de "o teste afirmava o que não conferia" — e desta vez no MEU teste
+
+`expect(html).toContain('a corrida')` era **vacuamente verdadeira**: a mesma tela renderiza o botão "Ir pra corrida →", que contém `"a corrida"` como substring. A asserção passava com o banner dizendo "o draft". Achado pela revisão, não por mim. Corrigido para assertar a **frase inteira do ramo**, simétrica ao `not.toContain`.
+
+**Confirmado por MUTAÇÃO, não por leitura:** inverter o ramo do banner mata os dois testes; `mostrarIrParaCorrida={true}` mata a guarda.
+
+**Segunda armadilha, ainda não disparada, desarmada junto:** o helper `retornoFalso` fazia `{...base, ...extras}` com `cliente` dentro de `extras` — o próximo teste que passasse um cliente parcial cairia no early return `draft === null` e **todos** os `not.toContain` do arquivo passariam por vacuidade. Série: 5 código/net · 6 PR 1/4 · 7 PR 2/4 · 8 PR 3/4 · **9 PR 4/4 (no teste, achado pela revisão)**.
+
+### O rótulo que MENTIA
+
+`TelaResultadoCorrida` dizia "Novo draft" no botão do rodapé, mas no online `onReiniciar` é `sairDaSala` — prometia draft novo e entregava saída da sala. Ganhou `rotuloReiniciar` opcional (default `'Novo draft'`, offline bit a bit intacto), repassado por `FluxoCorrida`. Mesmo conserto que `TelaResumo` já tinha recebido; o PR 4 só alcançou a segunda tela.
+
+### Dois comentários que creditavam o mecanismo errado
+
+- **`FluxoCorrida.tsx`** dizia que o efeito protege do envio duplo "pelo StrictMode". **Falso:** o StrictMode duplica o efeito na montagem também. Quem segura é a montagem sempre acontecer em `fase === 'grid'` + a guarda. Creditar o mecanismo errado convida a "simplificar" a guarda fora.
+- **`useSalaOnline.ts`** prometia re-atestado "inclusive depois de um F5 na tela de resultado" — **não existe**: `naCorrida` é estado local e o F5 devolve ao resumo. As duas metades estavam documentadas em arquivos diferentes e ninguém tinha ligado uma na outra. Quem não reatesta cai no timeout, que é o fallback projetado.
+
+### O portão visual — o preview escondia o que veio mostrar
+
+`preview/corrida-online.html`, 5 seções × 2 temas, componentes reais com CSS real. **A conferência (obrigação de quem apresenta, `CLAUDE.md` §"Definição de pronto" item 5) pegou um defeito:** a primeira versão usava frames de 620px e o botão "Ir pra corrida" — a mudança central do PR — ficava **atrás do scroll interno do iframe**. Alturas refeitas a partir de `body.scrollHeight` **medido no navegador**, não estimado.
+
+Mesma família do defeito do 3.4.1 (`data-tema` numa `<div>` em vez do `:root`), e igualmente **só pegável abrindo**. A lição do 3.4.1 em si foi respeitada: `data-tema` vai no `<html>` dentro do `srcdoc`, com asserção na forma escapada.
+
+**Verificado com os olhos, não só por asserção:** tema claro renderiza claro (`rgb(245,240,235)`) e escuro escuro (`rgb(26,26,26)`); botão presente na seção 1 e ausente na 2, nos dois temas; grid de largada de Imola (sorteada por `pistaSorteada(4242)`); pontuação FIA correta (vencedor com **26** = 25 + 1 da volta mais rápida); banner dizendo "a corrida".
+
+### Revisão (Opus) — aprovada sem bloqueante
+
+O que ela atacou e passou: a tese do 2/4 (uma trilha só, `contrato-corrida-online.test.ts` 22/22, allowlist intacta); o efeito dispara uma vez (`useCallback` estável, `fase` não volta a `'resultado'`, sem amplificação de escrita no DO); ordem de hooks correta; determinismo (nenhum `Math.random`/`Date.now` novo).
+
+**Aberto, por decisão de arte do dev:** no `TelaResumo`, "Ir pra corrida →" e "← Voltar ao início" usam **ambos** `botao-primario` — a ação principal não se distingue da secundária. **Pré-existente do fluxo offline**; o PR 4 só torna o par visível no online pela primeira vez.
+
+**Sem cobertura automática (declarado, não fingido):** `FluxoOnline.tsx:218-230` — o clique em "Ir pra corrida" e o replay avançando até `'resultado'`. Sem jsdom não há clique, e `useCorrida` nasce em `'grid'`. O teste monta `FluxoCorrida` direto, que é outro sítio de chamada. Fechar barato exigiria extrair o ramo `concluido` para um componente exportado — registrado, não feito.
+
+**Medido:** `npm test` **1480/62** (era 1472/61), `npm run typecheck` **0**, `eslint` **0**, `npm run build` **0**. `npm run balance` **não se aplica** — nada em `src/engine/`, `src/data/` ou `scripts/alavancas`. `VERSAO_APP` **não bumpado**: o tripwire hasheia `src/engine/`, `src/data/`, `cliente.ts` e `hash-draft.ts`, nenhum tocado.
+
+### Colateral — a terceira cópia da instrução que esvaziou o `ESTADO.md`
+
+O cabeçalho **deste arquivo** ainda dizia "o `ESTADO.md` reescrito (substitui, não acumula)". O `CLAUDE.md` registra a correção em dois lugares (nele e no `ESTADO.md` §Convenções) — esta passou despercebida. É o cenário que a própria regra descreve: regra nova ao lado da antiga contraditória devolve o mesmo esvaziamento, dependendo de qual o `doc-writer` ler primeiro. Corrigida.
