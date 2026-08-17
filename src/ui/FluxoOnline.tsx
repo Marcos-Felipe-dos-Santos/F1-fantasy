@@ -16,6 +16,7 @@
 
 import { useEffect, useState, type ReactNode } from 'react';
 import type { EscolhaDraft } from '../engine/types';
+import { FluxoCorrida } from './FluxoCorrida';
 import { TelaDraft } from './TelaDraft';
 import { TelaLobby } from './TelaLobby';
 import { TelaPeca } from './TelaPeca';
@@ -40,6 +41,19 @@ interface FluxoOnlineProps {
 export function FluxoOnline({ sala, onVoltar }: FluxoOnlineProps) {
   const online = useSalaOnline(sala);
   const [nome, setNome] = useState('');
+  /**
+   * 🏁 O jogador clicou "Ir pra corrida" (PR 4/4). Mora AQUI, e não em
+   * `ConteudoOnline`, pelo mesmo motivo de `nome`: aquele componente tem
+   * retornos antecipados antes de qualquer hook, e um `useState` lá dentro
+   * quebraria a ordem dos hooks entre renders.
+   *
+   * ⚠️ **LIMITE CONHECIDO — F5 no meio da corrida volta pro resumo.** Este é
+   * estado local, não vem do servidor; recarregar a página o perde e o jogador
+   * clica de novo. Aceitável porque a corrida é DETERMINÍSTICA: rever é rever
+   * exatamente a mesma corrida, não sortear outra. Persistir isso exigiria
+   * campo novo no protocolo para uma conveniência, não para uma correção.
+   */
+  const [naCorrida, setNaCorrida] = useState(false);
   return (
     <>
       <BannerDivergencia divergencia={online.cliente.divergencia} />
@@ -47,6 +61,8 @@ export function FluxoOnline({ sala, onVoltar }: FluxoOnlineProps) {
         online={online}
         nome={nome}
         setNome={setNome}
+        naCorrida={naCorrida}
+        onIrParaCorrida={() => setNaCorrida(true)}
         sala={sala}
         onVoltar={onVoltar}
       />
@@ -68,6 +84,12 @@ export function FluxoOnline({ sala, onVoltar }: FluxoOnlineProps) {
  * O texto evita acusar alguém. O servidor não tem dataset e **não sabe quem
  * está certo** — `jogadores` é a minoria que atestou diferente, uma pista, não
  * um veredito. Dizer "fulano está errado" seria afirmar mais do que se sabe.
+ *
+ * 🔴 **O texto RAMIFICA por escopo (PR 4/4).** O detector cobre dois escopos
+ * desde o PR 2/4 (`EscopoHash = 'draft' | 'corrida'`), e o servidor já
+ * carregava `escopo` até aqui — mas o texto dizia "o draft" nos dois casos.
+ * Divergir na corrida e ler "não dá pra confiar que o draft é o mesmo" manda o
+ * jogador conferir a coisa errada: o draft pode estar íntegro e a corrida não.
  */
 function BannerDivergencia({
   divergencia,
@@ -75,12 +97,16 @@ function BannerDivergencia({
   divergencia: { escopo: string; ancora: number; jogadores: string[] } | null;
 }) {
   if (divergencia === null) return null;
+  const oQueDivergiu =
+    divergencia.escopo === 'corrida'
+      ? 'não dá mais pra confiar que a corrida é a mesma em todas as telas.'
+      : 'não dá mais pra confiar que o draft é o mesmo em todas as telas.';
   return (
     <div className="fluxo-online__divergencia" role="alert">
       <strong>⚠️ As máquinas divergiram.</strong>{' '}
       <span>
         O resultado que você está vendo pode não ser o mesmo que os outros jogadores estão vendo. A
-        partida continua, mas não dá mais pra confiar que o draft é o mesmo em todas as telas.
+        partida continua, mas {oQueDivergiu}
       </span>
     </div>
   );
@@ -90,12 +116,16 @@ function ConteudoOnline({
   online,
   nome,
   setNome,
+  naCorrida,
+  onIrParaCorrida,
   sala,
   onVoltar,
 }: {
   online: ReturnType<typeof useSalaOnline>;
   nome: string;
   setNome: (nome: string) => void;
+  naCorrida: boolean;
+  onIrParaCorrida: () => void;
   sala: string;
   onVoltar: () => void;
 }) {
@@ -177,9 +207,33 @@ function ConteudoOnline({
   const escolher = (escolha: EscolhaDraft) => online.escolher(escolha);
 
   if (draft.fase === 'concluido') {
-    // `mostrarIrParaCorrida={false}`: a corrida online é PR posterior, e um
-    // botão "Ir pra corrida →" que devolve o jogador à tela inicial sem
-    // explicação é pior que botão nenhum (achado da revisão).
+    const corrida = online.corrida;
+
+    // 🏁 A CORRIDA ONLINE (PR 4/4). `{ modo: 'pronta', corrida }` passa a
+    // corrida JÁ COMPUTADA por `corridaDaSala` — a MESMA referência que
+    // alimentou o hash de divergência em `useSalaOnline`. Esta tela não pode
+    // preparar corrida nenhuma: duas trilhas, cada lado correto isoladamente e
+    // a composição errada, é a classe de bug do PR 8.4, e `npm test` não
+    // pegaria. `contrato-corrida-online.test.ts` varre isso estruturalmente.
+    if (naCorrida && corrida !== null) {
+      return (
+        <>
+          <AvisoDeFechamento concluidaEm={publica.concluidaEm} />
+          <FluxoCorrida
+            state={draft}
+            fonte={{ modo: 'pronta', corrida }}
+            onChegouAoResultado={online.atestarFimDaCorrida}
+            onReiniciar={onVoltar}
+          />
+        </>
+      );
+    }
+
+    // 🔒 `mostrarIrParaCorrida={corrida !== null}`: o draft pode concluir ANTES
+    // de a `seedCorrida` chegar num snapshot — são mensagens diferentes —, e
+    // nessa janela não há corrida pra entregar. Prometer a corrida e não ter o
+    // que mostrar é o mesmo achado da revisão que manteve o botão escondido
+    // desde o 3.3; o que mudou no PR 4 é que agora existe destino.
     return (
       <>
         <AvisoDeFechamento concluidaEm={publica.concluidaEm} />
@@ -187,8 +241,8 @@ function ConteudoOnline({
           state={draft}
           visibilidade="craque"
           onReiniciar={onVoltar}
-          onIrParaCorrida={onVoltar}
-          mostrarIrParaCorrida={false}
+          onIrParaCorrida={onIrParaCorrida}
+          mostrarIrParaCorrida={corrida !== null}
           rotuloReiniciar="← Voltar ao início"
         />
       </>
