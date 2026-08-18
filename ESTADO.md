@@ -566,10 +566,36 @@ se continua** — é ali que a decisão é barata, e não depois do 3.5.3.
 
 #### Fatiamento — QUATRO PRs, um por sessão, todos ALTO RISCO
 
-1. **3.5.1 — seed por etapa e cursor no servidor** (`src/net/`, `party/`; sem UI). `seedsEtapas` +
-   `etapaAtual` + `nEtapas` no estado; `publicarSala` publica `etapaAtual`, `nEtapas`,
-   `seedCalendario` (portão do draft concluído) e `seedsAbertas` (só as abertas); `Uint32Array(11)`
-   na casca. **O cursor ainda NÃO avança** — este PR publica só a etapa 0.
+1. ✅ **3.5.1 — seed por etapa e cursor no servidor** — **FEITO em 2026-08-18** (`83a6fde` +
+   `ffdabc1` + `4a4b801`). `seedsEtapas` + `etapaAtual` + `nEtapas` no estado; `publicarSala` publica
+   `etapaAtual`, `nEtapas`, `seedCalendario` (portão do draft concluído) e `seedsAbertas` (só as
+   abertas); `Uint32Array(11)` na casca. **O cursor ainda NÃO avança** — este PR publica só a etapa 0.
+   **Medido:** 1516/63, typecheck app 0, typecheck `party/` 0, eslint 0, build 0.
+   - 🔑 **`VERSAO_APP` NÃO precisou de bump, e foi MEDIDO** — fecha a dúvida que esta seção
+     registrava logo acima ("MEDIR, não herdar desta linha"). Duas pernas: o digest do
+     `versao.test.ts` cobre `src/engine/**` + `src/data/**.json` + `cliente.ts` + `hash-draft.ts`, e
+     **nenhum foi tocado**; e **nenhum rótulo novo nasceu** — `calendarioSorteado` deriva
+     internamente com `'calendario'` e `seedDaEtapa` com `camp:`, ambos já registrados.
+   - 🔒 **`N_ETAPAS_CURTA` é duplicado em `src/net/tipos.ts`, com teste de conformidade** contra
+     `N_ETAPAS.curta`. Importar de `campeonato.ts` arrastaria `simularQuali`/`simularCorrida`/
+     `resolverCarro` pro grafo do Durable Object (imports de RUNTIME lá), e **a cerca de lint não
+     pegaria — ela casa especificador, não grafo transitivo.** Medido também o que NÃO acontece:
+     `dataset.ts` importa só `./types`, então o JSON de 1 MB não entraria por essa porta.
+   - 🔒 **`seedsAbertas` tem o MESMO portão da `seedCorrida`** (draft concluído). O plano só o dava
+     explícito pra `seedCalendario`; a leitura aplicada é que **seed sem calendário não protege
+     nada** — são 10 pistas, o jogador computa as 10 e escolhe.
+   - 🔒 **O DISCRIMINANTE `VERSAO_ESTADO_SALA` (exigência do dev).** A leitura `?? []` colapsaria
+     "sala de antes do 3.5.1" com "sala que PERDEU as seeds na reidratação", e a segunda tratada como
+     a primeira **re-sortearia as etapas em silêncio**. `estadoDasSeeds` devolve
+     `legado | ok | corrompida`; `corrompida` **não tem cura** e a casca recusa a sala.
+   - 🔴 **DÉCIMA OCORRÊNCIA de "o teste afirmava o que não conferia", e foi BLOQUEANTE:**
+     **`party/` tem cobertura automatizada ZERO**, então os testes de `B-indep` rodavam sobre fixture
+     literal passada a `criarSala`. **Medido: M5 e M6 aplicadas no sítio real (`party/sala.ts`)
+     deixavam a suíte inteira VERDE — 1509/63.** Entrou cerca textual sobre `party/sala.ts`, que
+     **nasceu com dois defeitos, os dois pegos rodando**: regex de negação falso-negativo (sem flag
+     `m`, o lookahead cobre só a 1ª linha — repetição literal do "regex furado na cerca" do 3.2), e
+     cheque cego que reprovava a casca CORRETA por causa de um comentário. 🔒 **Negação se escreve
+     com `includes`, não com lookahead.**
 2. **3.5.2 — barreira e avanço de cursor por etapa** + elegíveis recomputados por etapa +
    `concluidaEm` só na última **+ o conserto do detector (campo `etapa`, chave `${escopo}:${etapa}`)**.
 3. **3.5.3 — cliente: N etapas por derivação pura.** `useMemo` sobre `seedsAbertas`; `corridaDaSala`
@@ -641,10 +667,29 @@ DO 4/4 APROVADO PELO DEV em 2026-08-18.** Não há nada pendente na corrida onli
 ✅ **Veredito do dev sobre `preview\corrida-online.html`: APROVADO (2026-08-18).** Portão fechado; não
 reabrir sem ele.
 
-**➡️ PRÓXIMO: o 3.5 campeonato online, que fecha a Fase 3.** O plano foi proposto pelo
-`fable-architect`, criticado pela sessão principal e **APROVADO pelo dev em 2026-08-18** — está
-registrado na §"3.5 CAMPEONATO ONLINE" logo acima. **Próxima sessão abre o PR 3.5.1**, que é o
-primeiro dos quatro. Nada dele foi implementado.
+**🏆 3.5 CAMPEONATO ONLINE COMEÇOU — PR 3.5.1 FEITO em 2026-08-18**, na branch
+`pr-3.5.1-seed-por-etapa` (`83a6fde` + `ffdabc1` + `4a4b801`). **NÃO mergeada, NÃO pushada, sem
+tag** — aguardando o dev. Plano na §"3.5 CAMPEONATO ONLINE" logo acima, com o fatiamento atualizado.
+
+- **`B-indep` no ar:** 11 seeds independentes sorteadas no DO (10 etapas + calendário), publicadas
+  uma por etapa. **O cursor não avança** — só a etapa 0 sai. `VERSAO_ESTADO_SALA` discrimina sala
+  legado de sala corrompida; `estadoDasSeeds` devolve `legado | ok | corrompida` e a casca recusa a
+  corrompida sem nunca re-semear.
+- **Medido:** `npm test` **1516/63** (era 1480/62), typecheck app **0**, typecheck `party/` **0**,
+  eslint **0**, build **0**. `npm run balance` não se aplica.
+- 🔑 **`VERSAO_APP` ficou em 3.4.2 — sem bump, e MEDIDO** (o plano dava o bump como certo).
+- 🔴 **A revisão achou UM BLOQUEANTE e ele era real: `party/` tem cobertura zero.** M5 e M6
+  aplicadas no sítio que de fato sorteia deixavam a suíte **inteira verde**. Corrigido com cerca
+  textual sobre `party/sala.ts` — que por sua vez nasceu com dois defeitos próprios, ambos pegos
+  rodando. Detalhe completo no `HISTORICO.md` §"PR 3.5.1".
+- 6 avisos da revisão aplicados (A1–A6). Três pendências novas registradas: **0(p)** o requisito (b)
+  do dev está entregue pela metade (o despejo do storage nunca foi rodado), **0(q)** ordem de deploy
+  `wrangler` antes de `vite` a partir do 3.5.2, **0(r)** `etapaAtual` fora do discriminante.
+
+**➡️ PRÓXIMO: o PR 3.5.2** — barreira e avanço de cursor por etapa, elegíveis recomputados por etapa,
+`concluidaEm` só na última **+ o conserto do detector** (campo `etapa`, chave `${escopo}:${etapa}`).
+🛑 **É no 3.5.2 que o dev pediu para ver, VISÍVEL, a opção de abandonar o 3.5 inteiro** — o corte
+honesto da fase pode ser o próprio 3.5, e é ali que a decisão é barata.
 
 **Duas decisões de arte esperando o dev** (nenhuma bloqueia o merge): os dois botões do
 `TelaResumo` são ambos `botao-primario` (pré-existente do offline, agora visível no online); e o
@@ -843,6 +888,20 @@ testes de que a substituição é determinística entre execuções independente
    tamanho da corrida online inteira"*. Fica para o PR de alargamento de entropia, que é onde (i)
    também vive. ⚠️ **O custo marginal lá é quase zero** (o `EstadoSala` já terá segredos sorteados
    pelo 3.5.1): quem pegar aquele PR deve tratar (i) e (o) **juntos**, não um de cada vez.
+   (p) **NOVA (PR 3.5.1) — o requisito (b) do dev está entregue PELA METADE.** `relatorioDeSeeds`
+   existe e é testado a partir do blob persistido (não-circular, não é código morto), mas **o comando
+   de despejo do storage do Durable Object nunca foi rodado** — o docblock diz "a confirmar pelo dev
+   na máquina dele". Fechar (b) de fato é rodar o despejo real numa sala local **uma vez** e registrar
+   o comando. Enquanto isso não acontece, "as seeds são extraíveis" é projeto, não fato medido.
+   (q) **NOVA (PR 3.5.1) — ORDEM DE DEPLOY a partir do 3.5.2: `wrangler` ANTES do `vite`.**
+   `cliente.ts` não valida forma de snapshot. Num deploy escalonado, cliente novo contra worker
+   antigo receberia `seedsAbertas: undefined` — **inócuo no 3.5.1** (ninguém lê), **letal no 3.5.2**,
+   quando o cliente passar a derivar as etapas dele.
+   (r) **NOVA (PR 3.5.1) — `etapaAtual` está FORA do discriminante.** Três leituras defensivas
+   (`?? 0`) tratam o cursor de forma frouxa, enquanto `estadoDasSeeds` valida as seeds com rigor.
+   Hoje é inconsistência de tese, não vazamento: `cursorPublicavel` clampa e o servidor nunca grava
+   outro tipo. Mas **o cursor é justamente o campo que governa quantos segredos saem no fio** —
+   quando o 3.5.2 o fizer se mover, trazê-lo para dentro do discriminante.
 1. **Abertas pelo 7.8:** (a) o `BotaoTema` é um botão discreto no canto do `app-shell` — posição e
    forma **não passaram por veredito de arte**; (b) `erro` (salmão `#FF7B85`) e `raridadeProibido`
    (`#FF4757`) continuam sendo dois vermelhos ao lado do vermelho da marca — não foi mexido porque
