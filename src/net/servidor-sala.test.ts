@@ -21,9 +21,20 @@ import { RODADAS_SORTEIO } from '../engine/draft-utils';
 import { deriveSeed } from '../engine/rng';
 import { ROTULO_SEED_CORRIDA } from './tipos';
 
+/**
+ * Seeds do campeonato para os testes desta suíte (3.5.1). Valores fixos e
+ * distintivos — nenhum deles é derivado da `seedMestre`, que é o ponto do
+ * `B-indep`. Quem exercita o comportamento das seeds é
+ * `campeonato-online.test.ts`; aqui elas só satisfazem o construtor.
+ */
+const SEEDS_T = {
+  etapas: [1001, 1002, 1003, 1004, 1005, 1006, 1007, 1008, 1009, 1010],
+  calendario: 7777,
+};
+
 const T0 = 1_000_000;
 
-const criar = () => criarServidor('sala-teste', 2026, 'dificil', T0);
+const criar = () => criarServidor('sala-teste', 2026, 'dificil', T0, SEEDS_T);
 
 /** Manda um comando cru, como o transporte faria. */
 function mandar(
@@ -309,7 +320,7 @@ describe('seedCorrida no fio, através do funil real (PR 1/4, item 2 da revisão
 
   /** Sala com 2 humanos prontos e o draft REALMENTE iniciado (via aoReceber). */
   function salaComDraftIniciado(): EstadoServidor {
-    let estado = criarServidor('sala-integ-seedcorrida', SEED_MESTRE, 'dificil', T0);
+    let estado = criarServidor('sala-integ-seedcorrida', SEED_MESTRE, 'dificil', T0, SEEDS_T);
     estado = entrar(estado, 'c1', 'Ana', 'tk-ana').estado;
     estado = entrar(estado, 'c2', 'Beto', 'tk-beto').estado;
     estado = mandar(estado, 'c1', { tipo: 'pronto', pronto: true }).estado;

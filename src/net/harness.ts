@@ -46,6 +46,7 @@ import {
 } from './cliente';
 import { VERSAO_PROTOCOLO, type ComandoDraft, type ComandoSala } from './protocolo';
 import { RODADAS_SORTEIO } from '../engine/draft-utils';
+import { MAX_ETAPAS } from './tipos';
 
 /** Patologias injetadas. Cada campo é probabilidade por mensagem (0..1). */
 export interface Patologias {
@@ -190,7 +191,25 @@ export function rodarHarness(opcoes: OpcoesHarness): ResultadoHarness {
     tokensRecusados: 0,
   };
 
-  let servidor = criarServidor('sala-harness', seed, 'dificil', 0);
+  // As seeds do campeonato (3.5.1). O harness é determinístico por `seed`, e
+  // sortear aqui quebraria isso — então elas são DERIVADAS, ao contrário da
+  // produção, onde são sorteadas (`party/sala.ts`). Isso não afrouxa o
+  // `B-indep`: este é o harness de rede, que não joga campeonato nenhum.
+  //
+  // 🔒 Quem prova que a PRODUÇÃO sorteia em vez de derivar é a cerca textual
+  // sobre `party/sala.ts`, em `campeonato-online.test.ts` §"CERCA DO SÍTIO QUE
+  // REALMENTE SORTEIA". A versão anterior deste comentário apontava para o
+  // arquivo de teste inteiro e era FALSA: os testes de `B-indep` de lá rodam
+  // sobre uma fixture literal passada a `criarSala`, e as mutações M5/M6
+  // aplicadas na casca deixavam a suíte inteira verde (medido: 1509/63).
+  // Bloqueante da revisão — o comentário afirmava cobertura que não existia.
+  const seedsHarness = {
+    etapas: Array.from({ length: MAX_ETAPAS }, (_, k) =>
+      deriveSeed(seed, `online:harness:etapa:${k}`),
+    ),
+    calendario: deriveSeed(seed, 'online:harness:calendario'),
+  };
+  let servidor = criarServidor('sala-harness', seed, 'dificil', 0, seedsHarness);
   const participantes = new Map<string, Participante>();
   const emTransito: EmTransito[] = [];
   let ordem = 0;

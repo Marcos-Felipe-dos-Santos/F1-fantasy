@@ -566,10 +566,38 @@ se continua** — é ali que a decisão é barata, e não depois do 3.5.3.
 
 #### Fatiamento — QUATRO PRs, um por sessão, todos ALTO RISCO
 
-1. **3.5.1 — seed por etapa e cursor no servidor** (`src/net/`, `party/`; sem UI). `seedsEtapas` +
-   `etapaAtual` + `nEtapas` no estado; `publicarSala` publica `etapaAtual`, `nEtapas`,
-   `seedCalendario` (portão do draft concluído) e `seedsAbertas` (só as abertas); `Uint32Array(11)`
-   na casca. **O cursor ainda NÃO avança** — este PR publica só a etapa 0.
+1. ✅ **3.5.1 — seed por etapa e cursor no servidor** — **FEITO em 2026-08-18** (`83a6fde` +
+   `ffdabc1` + `4a4b801`). `seedsEtapas` + `etapaAtual` + `nEtapas` no estado; `publicarSala` publica
+   `etapaAtual`, `nEtapas`, `seedCalendario` (portão do draft concluído) e `seedsAbertas` (só as
+   abertas); `Uint32Array(11)` na casca. **O cursor ainda NÃO avança** — este PR publica só a etapa 0.
+   **Medido:** 1516/63, typecheck app 0, typecheck `party/` 0, eslint 0, build 0.
+   - 🔑 **`VERSAO_APP` NÃO precisou de bump, e foi MEDIDO** — fecha a dúvida que esta seção
+     registrava logo acima ("MEDIR, não herdar desta linha"). Duas pernas: o digest do
+     `versao.test.ts` cobre `src/engine/**` + `src/data/**.json` + `cliente.ts` + `hash-draft.ts`, e
+     **nenhum foi tocado**; e **nenhum rótulo novo nasceu** — `calendarioSorteado` deriva
+     internamente com `'calendario'` e `seedDaEtapa` com `camp:`, ambos já registrados.
+   - 🔒 **`N_ETAPAS_CURTA` é duplicado em `src/net/tipos.ts`, com teste de conformidade** contra
+     `N_ETAPAS.curta`. Importar de `campeonato.ts` arrastaria `simularQuali`/`simularCorrida`/
+     `resolverCarro` pro grafo do Durable Object (imports de RUNTIME lá), e **a cerca de lint não
+     pegaria — ela casa especificador, não grafo transitivo.** Medido também o que NÃO acontece:
+     `dataset.ts` importa só `./types`, então o JSON de 1 MB não entraria por essa porta.
+   - 🔒 **`seedsAbertas` tem o MESMO portão da `seedCorrida`** (draft concluído). O plano só o dava
+     explícito pra `seedCalendario`; a leitura aplicada é que **seed sem calendário não protege
+     nada** — são 10 pistas, o jogador computa as 10 e escolhe.
+   - 🔒 **O DISCRIMINANTE `VERSAO_ESTADO_SALA` (exigência do dev).** A leitura `?? []` colapsaria
+     "sala de antes do 3.5.1" com "sala que PERDEU as seeds na reidratação", e a segunda tratada como
+     a primeira **re-sortearia as etapas em silêncio**. `estadoDasSeeds` devolve
+     `legado | ok | corrompida`; `corrompida` **não tem cura** e a casca recusa a sala.
+   - 🔴 **DÉCIMA OCORRÊNCIA de "o teste afirmava o que não conferia", e foi BLOQUEANTE:**
+     **`party/` tem cobertura automatizada ZERO**, então os testes de `B-indep` rodavam sobre fixture
+     literal passada a `criarSala`. **Medido: M5 e M6 aplicadas no sítio real (`party/sala.ts`)
+     deixavam a suíte inteira VERDE — 1509/63.** Entrou cerca textual sobre `party/sala.ts`, que
+     **nasceu com dois defeitos, os dois pegos rodando**: regex de negação falso-negativo (sem flag
+     `m`, o lookahead cobre só a 1ª linha — repetição literal do "regex furado na cerca" do 3.2), e
+     cheque cego que reprovava a casca CORRETA por causa de um comentário. 🔒 **Negação se escreve
+     com `includes`, não com lookahead.**
+     ⚠️ **A cerca que fechou esse bloqueante é TEXTUAL — leia a seção logo abaixo antes de citar
+     "M5 e M6 vermelhas" como garantia.**
 2. **3.5.2 — barreira e avanço de cursor por etapa** + elegíveis recomputados por etapa +
    `concluidaEm` só na última **+ o conserto do detector (campo `etapa`, chave `${escopo}:${etapa}`)**.
 3. **3.5.3 — cliente: N etapas por derivação pura.** `useMemo` sobre `seedsAbertas`; `corridaDaSala`
@@ -586,6 +614,41 @@ se continua** — é ali que a decisão é barata, e não depois do 3.5.3.
    🔑 **`key={'etapa-'+k}`** — sem a `key`, o `useState` de `useCorrida` mantém a corrida anterior e o
    jogador corre a etapa 1 cinco vezes (lição literal de `FluxoCampeonato.tsx:118-122`). Remove
    `naCorrida`.
+
+#### ⚠️ A CERCA DE M5/M6 É **TEXTUAL**, NÃO COMPORTAMENTAL — o que ela NÃO prova (registro pedido pelo dev, 2026-08-18)
+
+> **Escrito para ser lido daqui a três PRs**, por quem encontrar "M5 e M6 vistas vermelhas" no
+> `HISTORICO.md` e concluir que a independência das seeds está garantida por teste. **Não está.**
+
+A cerca vive em `src/net/campeonato-online.test.ts` §"CERCA DO SÍTIO QUE REALMENTE SORTEIA" e faz
+**varredura de string** sobre o texto de `party/sala.ts` (com comentários removidos). O que ela
+realmente afirma é:
+
+- a string `deriveSeed(` **não aparece** em código na casca;
+- existe um `new Uint32Array(SLOTS_SEEDS)` seguido de `crypto.getRandomValues(`;
+- o calendário vem literalmente de `todas[MAX_ETAPAS]` e as etapas de `todas.slice(0, MAX_ETAPAS)`;
+- existe um `Array.from(slots)`.
+
+**🔴 O QUE ELA NÃO PROVA: que as seeds são independentes em produção.** Ela não executa a casca, não
+observa valor nenhum, não compara seed com seed. Passa com as seeds acopladas em pelo menos estes
+casos, todos plausíveis:
+
+- **um `xmur3` inline** — copiar as ~6 linhas do hash direto para `party/sala.ts` e derivar dali;
+- **chamada por alias** — `import { deriveSeed as derivar }` ou `rng.deriveSeed(...)`;
+- **qualquer derivação que não escreva o identificador**, inclusive um helper novo em `src/net/`
+  chamado da casca (a cerca só lê `party/sala.ts`);
+- **acoplamento sem derivação** — `todas[MAX_ETAPAS] = todas[0]` numa linha antes da chamada
+  mantém as duas expressões exigidas e acopla o calendário à etapa 0 mesmo assim.
+
+**Por que ficou assim, e não é descuido:** não há como instanciar um Durable Object no Vitest, e a
+alternativa (`vitest-pool-workers` / `unstable_dev`) é dependência nova e infraestrutura própria —
+fora do escopo de um PR que já estava do tamanho da corrida online inteira. **A cerca compra o que
+dá para comprar barato: ela pega a mutação DESATENTA, que é a provável.** Não pega quem contorna.
+
+🔒 **Consequência prática, e é ela que importa:** a independência das seeds em produção é sustentada
+por **leitura de código**, não por teste. Qualquer PR que mexa em `party/sala.ts` precisa ser lido
+com isso em mente — e se alguém for **fortalecer** a garantia, o caminho é executar a casca de
+verdade, não acrescentar mais padrões à varredura. Ver o RISCO ATIVO de `party/` mais abaixo.
 
 #### 🔒 O QUE O DEV EXIGIU NO BASELINE VERMELHO DO 3.5.1 (não é nota de rodapé)
 
@@ -641,10 +704,29 @@ DO 4/4 APROVADO PELO DEV em 2026-08-18.** Não há nada pendente na corrida onli
 ✅ **Veredito do dev sobre `preview\corrida-online.html`: APROVADO (2026-08-18).** Portão fechado; não
 reabrir sem ele.
 
-**➡️ PRÓXIMO: o 3.5 campeonato online, que fecha a Fase 3.** O plano foi proposto pelo
-`fable-architect`, criticado pela sessão principal e **APROVADO pelo dev em 2026-08-18** — está
-registrado na §"3.5 CAMPEONATO ONLINE" logo acima. **Próxima sessão abre o PR 3.5.1**, que é o
-primeiro dos quatro. Nada dele foi implementado.
+**🏆 3.5 CAMPEONATO ONLINE COMEÇOU — PR 3.5.1 FEITO em 2026-08-18**, na branch
+`pr-3.5.1-seed-por-etapa` (`83a6fde` + `ffdabc1` + `4a4b801`). **NÃO mergeada, NÃO pushada, sem
+tag** — aguardando o dev. Plano na §"3.5 CAMPEONATO ONLINE" logo acima, com o fatiamento atualizado.
+
+- **`B-indep` no ar:** 11 seeds independentes sorteadas no DO (10 etapas + calendário), publicadas
+  uma por etapa. **O cursor não avança** — só a etapa 0 sai. `VERSAO_ESTADO_SALA` discrimina sala
+  legado de sala corrompida; `estadoDasSeeds` devolve `legado | ok | corrompida` e a casca recusa a
+  corrompida sem nunca re-semear.
+- **Medido:** `npm test` **1516/63** (era 1480/62), typecheck app **0**, typecheck `party/` **0**,
+  eslint **0**, build **0**. `npm run balance` não se aplica.
+- 🔑 **`VERSAO_APP` ficou em 3.4.2 — sem bump, e MEDIDO** (o plano dava o bump como certo).
+- 🔴 **A revisão achou UM BLOQUEANTE e ele era real: `party/` tem cobertura zero.** M5 e M6
+  aplicadas no sítio que de fato sorteia deixavam a suíte **inteira verde**. Corrigido com cerca
+  textual sobre `party/sala.ts` — que por sua vez nasceu com dois defeitos próprios, ambos pegos
+  rodando. Detalhe completo no `HISTORICO.md` §"PR 3.5.1".
+- 6 avisos da revisão aplicados (A1–A6). Três pendências novas registradas: **0(p)** o requisito (b)
+  do dev está entregue pela metade (o despejo do storage nunca foi rodado), **0(q)** ordem de deploy
+  `wrangler` antes de `vite` a partir do 3.5.2, **0(r)** `etapaAtual` fora do discriminante.
+
+**➡️ PRÓXIMO: o PR 3.5.2** — barreira e avanço de cursor por etapa, elegíveis recomputados por etapa,
+`concluidaEm` só na última **+ o conserto do detector** (campo `etapa`, chave `${escopo}:${etapa}`).
+🛑 **É no 3.5.2 que o dev pediu para ver, VISÍVEL, a opção de abandonar o 3.5 inteiro** — o corte
+honesto da fase pode ser o próprio 3.5, e é ali que a decisão é barata.
 
 **Duas decisões de arte esperando o dev** (nenhuma bloqueia o merge): os dois botões do
 `TelaResumo` são ambos `botao-primario` (pré-existente do offline, agora visível no online); e o
@@ -712,6 +794,39 @@ Reabrir é decisão de arte do dev. Medido no parque novo: o teto de 40% **morde
 Spa (33,4%) e Red Bull Ring (28,0%) não perdem candidato. Caso extremo, o Nürburgring: **29 trechos
 / 50,0% sem teto contra 24 / 38,7% com ele** — é o teto que segue impedindo a faixa contínua que o
 dev reprovou.
+
+## 🔴 RISCO ATIVO ABERTO — `party/` NÃO TEM COBERTURA AUTOMATIZADA
+
+**Registrado como pendência própria pelo dev em 2026-08-18**, ao aprovar o 3.5.1 — explicitamente
+**não** como linha dentro daquele PR. É a camada que **sorteia**, **reidrata** e que vai **carregar
+o cursor no 3.5.2**, e nenhum teste a executa.
+
+**O que foi MEDIDO (não deduzido), durante a revisão do 3.5.1:**
+
+- **Nada no repositório importa `party/sala.ts`.** `grep` por import/require de `party` em `src/` e
+  `scripts/` devolve zero (as ocorrências que aparecem são `partyserver`/`partykit`, o pacote).
+- **`src/net/cerca-lint.test.ts` não o alcança:** ele roda o ESLint sobre arquivos SINTÉTICOS
+  (`party/zz-cerca.ts`), para provar que a cerca está configurada — não sobre o arquivo real.
+- **`src/ui/contrato-corrida-online.test.ts` exclui `party/` de propósito** da varredura.
+- As únicas menções a "party/sala" em arquivos de teste são **comentários** em
+  `src/net/barreira-corrida.test.ts`, não asserções.
+
+**🔴 A consequência já se materializou UMA VEZ, e é por isso que isto é risco e não observação.**
+O baseline do 3.5.1 **declarou cobertura que não existia**: todo o bloco `B-indep` rodava sobre uma
+fixture literal passada a `criarSala`, e um comentário em `harness.ts` afirmava que
+`campeonato-online.test.ts` provava que a produção sorteia. **Medido: as mutações M5 (derivar por
+índice) e M6 (recoplar o 11º slot) aplicadas dentro de `party/sala.ts` — o sítio real — deixavam a
+suíte INTEIRA verde, 1509/63.** Foi bloqueante da revisão.
+
+**O que existe hoje como mitigação, e o tamanho dela:** uma cerca **textual** sobre o arquivo (ver
+a seção "A CERCA DE M5/M6 É TEXTUAL" na §3.5). Ela pega a mutação desatenta e **não** pega quem
+contorna — um `xmur3` inline ou uma chamada por alias passam.
+
+🛑 **O que o 3.5.2 herda:** o cursor passa a se mover, e quem o move é a casca (`alarm()` +
+`aoPassarOTempo`). O gate de sala corrompida no `alarm()` (aviso A2 da revisão do 3.5.1) **também
+não tem teste que o execute** — foi verificado por leitura. Vale decidir, ANTES do 3.5.2, se a
+casca deixa de ser terra sem teste; a opção conhecida é `@cloudflare/vitest-pool-workers`, que é
+**dependência nova e decisão do dev**, não minha.
 
 ## ✅ RISCO ATIVO FECHADO — divergência do ausente DETECTADA E VISÍVEL
 
@@ -843,6 +958,20 @@ testes de que a substituição é determinística entre execuções independente
    tamanho da corrida online inteira"*. Fica para o PR de alargamento de entropia, que é onde (i)
    também vive. ⚠️ **O custo marginal lá é quase zero** (o `EstadoSala` já terá segredos sorteados
    pelo 3.5.1): quem pegar aquele PR deve tratar (i) e (o) **juntos**, não um de cada vez.
+   (p) **NOVA (PR 3.5.1) — o requisito (b) do dev está entregue PELA METADE.** `relatorioDeSeeds`
+   existe e é testado a partir do blob persistido (não-circular, não é código morto), mas **o comando
+   de despejo do storage do Durable Object nunca foi rodado** — o docblock diz "a confirmar pelo dev
+   na máquina dele". Fechar (b) de fato é rodar o despejo real numa sala local **uma vez** e registrar
+   o comando. Enquanto isso não acontece, "as seeds são extraíveis" é projeto, não fato medido.
+   (q) **NOVA (PR 3.5.1) — ORDEM DE DEPLOY a partir do 3.5.2: `wrangler` ANTES do `vite`.**
+   `cliente.ts` não valida forma de snapshot. Num deploy escalonado, cliente novo contra worker
+   antigo receberia `seedsAbertas: undefined` — **inócuo no 3.5.1** (ninguém lê), **letal no 3.5.2**,
+   quando o cliente passar a derivar as etapas dele.
+   (r) **NOVA (PR 3.5.1) — `etapaAtual` está FORA do discriminante.** Três leituras defensivas
+   (`?? 0`) tratam o cursor de forma frouxa, enquanto `estadoDasSeeds` valida as seeds com rigor.
+   Hoje é inconsistência de tese, não vazamento: `cursorPublicavel` clampa e o servidor nunca grava
+   outro tipo. Mas **o cursor é justamente o campo que governa quantos segredos saem no fio** —
+   quando o 3.5.2 o fizer se mover, trazê-lo para dentro do discriminante.
 1. **Abertas pelo 7.8:** (a) o `BotaoTema` é um botão discreto no canto do `app-shell` — posição e
    forma **não passaram por veredito de arte**; (b) `erro` (salmão `#FF7B85`) e `raridadeProibido`
    (`#FF4757`) continuam sendo dois vermelhos ao lado do vermelho da marca — não foi mexido porque
@@ -880,6 +1009,12 @@ testes de que a substituição é determinística entre execuções independente
    trabalho encerrado, e teriam saído junto. **Cabeçalho não prova pertencimento — ler o conteúdo.**
    🛑 **SESSÃO PRÓPRIA, NÃO NO FIM DE OUTRA** (decisão do dev): cada movimento desses tem risco real
    de levar coisa viva junto, e o fim de uma sessão longa é o pior momento para corrê-lo.
+9. 🔴 **`party/` SEM COBERTURA AUTOMATIZADA — aberta em 2026-08-18, pendência NOMEADA a pedido do
+   dev.** Seção própria acima (§"🔴 RISCO ATIVO ABERTO"), com o que foi medido e o que o 3.5.2
+   herda. Em uma linha: é a camada que sorteia, reidrata e vai carregar o cursor, **nenhum teste a
+   executa**, e a consequência já se materializou uma vez (o baseline do 3.5.1 declarou cobertura
+   inexistente; M5/M6 no sítio real deixavam a suíte verde). Mitigação atual é cerca **textual**,
+   que não pega quem contorna.
 
 > ✅ Fechadas no 7.7: pendência 1 antiga (Spa fundia asfalto) · espinho de ~180° no vértice #0 de
 > Spa · preview da densidade alvo. Fechada no 7.7.1: Monza sem imagem.

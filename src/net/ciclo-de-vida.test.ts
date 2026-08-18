@@ -21,8 +21,19 @@ import {
 } from './servidor-sala';
 import { CARENCIA_VAZIO_MS, JANELA_DE_GRACA_MS } from './tipos';
 
+/**
+ * Seeds do campeonato para os testes desta suíte (3.5.1). Valores fixos e
+ * distintivos — nenhum deles é derivado da `seedMestre`, que é o ponto do
+ * `B-indep`. Quem exercita o comportamento das seeds é
+ * `campeonato-online.test.ts`; aqui elas só satisfazem o construtor.
+ */
+const SEEDS_T = {
+  etapas: [1001, 1002, 1003, 1004, 1005, 1006, 1007, 1008, 1009, 1010],
+  calendario: 7777,
+};
+
 const T0 = 1_000_000;
-const criar = (): EstadoServidor => criarServidor('A3F9C2', 2026, 'dificil', T0);
+const criar = (): EstadoServidor => criarServidor('A3F9C2', 2026, 'dificil', T0, SEEDS_T);
 
 /** Estado com a partida terminada em `T0`. */
 function concluida(): EstadoServidor {

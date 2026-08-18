@@ -40,6 +40,7 @@ import {
 } from './sala';
 import {
   MIN_HUMANOS,
+  N_ETAPAS_CURTA,
   QTD_JOGADORES,
   ROTULO_SEED_CORRIDA,
   ROTULO_SEED_DRAFT,
@@ -47,6 +48,17 @@ import {
   type FaseDraftRede,
 } from './tipos';
 import type { ComandoSala } from './protocolo';
+
+/**
+ * Seeds do campeonato para os testes desta suíte (3.5.1). Valores fixos e
+ * distintivos — nenhum deles é derivado da `seedMestre`, que é o ponto do
+ * `B-indep`. Quem exercita o comportamento das seeds é
+ * `campeonato-online.test.ts`; aqui elas só satisfazem o construtor.
+ */
+const SEEDS_T = {
+  etapas: [1001, 1002, 1003, 1004, 1005, 1006, 1007, 1008, 1009, 1010],
+  calendario: 7777,
+};
 
 const dataset = criarDataset(equipeAnosReal, pecasReal, pistasReal);
 
@@ -61,7 +73,7 @@ const reduzir = (estado: EstadoSala, comando: ComandoSala, remetenteId: string |
   reduzirSala(estado, comando, remetenteId, T0, `token-${(contadorToken += 1)}`);
 
 function salaVazia(dificuldade: Dificuldade = 'dificil'): EstadoSala {
-  return criarSala('sala-teste', SEED_MESTRE, dificuldade, T0);
+  return criarSala('sala-teste', SEED_MESTRE, dificuldade, T0, SEEDS_T);
 }
 
 /** Aplica um comando, falhando o teste se for recusado. */
@@ -288,8 +300,8 @@ describe('início da partida (congelamento)', () => {
 
 describe('seed: a mestra fica no servidor', () => {
   it('criarSala normaliza a seed pra uint32', () => {
-    expect(criarSala('s', -1, 'dificil', T0).seedMestre).toBe(4294967295);
-    expect(criarSala('s', 2 ** 32 + 7, 'dificil', T0).seedMestre).toBe(7);
+    expect(criarSala('s', -1, 'dificil', T0, SEEDS_T).seedMestre).toBe(4294967295);
+    expect(criarSala('s', 2 ** 32 + 7, 'dificil', T0, SEEDS_T).seedMestre).toBe(7);
   });
 
   it('o rótulo de seed do online usa o prefixo reservado `online:`', () => {
@@ -351,12 +363,23 @@ describe('seed: a mestra fica no servidor', () => {
     // `concluidaEm`, que É publicado; a lista de quem já terminou não muda
     // nada no que se vê e engordaria todo snapshot.
     delete semSegredos.atestaramFimDaCorrida;
+    // 🔒 3.5.1 — os TRÊS campos novos que não vão no fio. `seedsEtapas` é o
+    // terceiro segredo do estado (com ela, computa-se a corrida que ainda não
+    // aconteceu); `seedCalendario` idem até o draft concluir; `versaoSala` é o
+    // discriminante de formato persistido, que a tela não consome.
+    delete semSegredos.seedsEtapas;
+    delete semSegredos.seedCalendario;
+    delete semSegredos.versaoSala;
     // `salaIniciada` deixa o draft em 'sorteios' — antes de concluir, então
-    // `seedCorrida` é `null` (ver bloco "seedCorrida" abaixo).
+    // `seedCorrida` é `null` (ver bloco "seedCorrida" abaixo), e pelo MESMO
+    // portão `seedCalendario` é `null` e `seedsAbertas` é `[]`.
     expect(publicarSala(sala)).toEqual({
       ...semSegredos,
       seedDraft: seedDoDraft(sala),
       seedCorrida: null,
+      nEtapas: N_ETAPAS_CURTA,
+      seedCalendario: null,
+      seedsAbertas: [],
     });
   });
 
@@ -383,10 +406,19 @@ describe('seed: a mestra fica no servidor', () => {
     // `concluidaEm`, que É publicado; a lista de quem já terminou não muda
     // nada no que se vê e engordaria todo snapshot.
     delete semSegredos.atestaramFimDaCorrida;
+    // 🔒 3.5.1 — ver o teste irmão acima. Aqui o draft CONCLUIU, então o
+    // portão abriu: `seedCalendario` sai no fio e `seedsAbertas` tem
+    // exatamente a etapa 0 (o cursor não avança neste PR).
+    delete semSegredos.seedsEtapas;
+    delete semSegredos.seedCalendario;
+    delete semSegredos.versaoSala;
     expect(publicarSala(sala)).toEqual({
       ...semSegredos,
       seedDraft: seedDoDraft(sala),
       seedCorrida: deriveSeed(sala.seedMestre, ROTULO_SEED_CORRIDA),
+      nEtapas: N_ETAPAS_CURTA,
+      seedCalendario: SEEDS_T.calendario,
+      seedsAbertas: [SEEDS_T.etapas[0]],
     });
   });
 
@@ -408,7 +440,7 @@ describe('seedCorrida (PR 1/4 — corrida online: "seed e pista")', () => {
    * precisa variar a seed mestre e olhar `seedCorrida` em cada uma.
    */
   function salaIniciadaComSeed(seedMestre: number, n: number, dificuldade: Dificuldade = 'dificil'): EstadoSala {
-    const vazia = criarSala('sala-seed-corrida', seedMestre, dificuldade, T0);
+    const vazia = criarSala('sala-seed-corrida', seedMestre, dificuldade, T0, SEEDS_T);
     const pronta = todosProntos(comHumanos(vazia, nomesDe(n)));
     return ok(pronta, { tipo: 'iniciar' }, pronta.anfitriaoId);
   }

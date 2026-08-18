@@ -32,9 +32,10 @@ import {
   type EstadoServidor,
   type ResultadoServidor,
 } from '../src/net/servidor-sala';
+import { estadoDasSeeds } from '../src/net/sala';
 import { codigoDeBytes, TAMANHO_CODIGO } from '../src/net/codigo-sala';
 import { ROTA_CRIAR_SALA } from '../src/net/rotas';
-import { MAX_BYTES_MENSAGEM, PRAZO_TURNO_MS } from '../src/net/tipos';
+import { MAX_BYTES_MENSAGEM, MAX_ETAPAS, PRAZO_TURNO_MS, SLOTS_SEEDS } from '../src/net/tipos';
 
 interface Env {
   Sala: DurableObjectNamespace<Sala>;
@@ -79,7 +80,24 @@ export class Sala extends Server<Env> {
     if ((await this.carregar()) !== null) return false;
     const semente = new Uint32Array(1);
     crypto.getRandomValues(semente);
-    this.estado = criarServidor(codigo, semente[0], 'dificil', agora);
+
+    // 🔑 As seeds do CAMPEONATO (3.5.1, mecanismo `B-indep`): 11 slots
+    // INDEPENDENTES — `MAX_ETAPAS` etapas + o calendário. Sorteio SEPARADO do
+    // da `seedMestre` acima, e o 11º slot NÃO é `seedsEtapas[0]` reusado:
+    // derivá-las da mestra compraria zero contra a pendência 0(i), porque
+    // recomposta a mestra pela `seedDraft` do lobby todas cairiam juntas.
+    //
+    // ⚠️ `Array.from` NÃO é estilo: este objeto é persistido via JSON, e um
+    // `Uint32Array` round-trip vira `{"0":…,"1":…}` em silêncio — as seeds
+    // sumiriam na reidratação e as etapas futuras seriam re-sorteadas.
+    const slots = new Uint32Array(SLOTS_SEEDS);
+    crypto.getRandomValues(slots);
+    const todas = Array.from(slots);
+
+    this.estado = criarServidor(codigo, semente[0], 'dificil', agora, {
+      etapas: todas.slice(0, MAX_ETAPAS),
+      calendario: todas[MAX_ETAPAS],
+    });
     await this.ctx.storage.put('estado', this.estado);
     await this.ctx.storage.setAlarm(agora + INTERVALO_TIQUE_MS);
     return true;
@@ -137,6 +155,37 @@ export class Sala extends Server<Env> {
   }
 
   /**
+   * A sala é jogável? **Não**, se ela é pós-3.5.1 e perdeu as seeds do
+   * campeonato na reidratação.
+   *
+   * 🔒 **Recusar é o comportamento correto, e re-semear seria o bug.** Uma
+   * sala que perdeu as seeds no meio do campeonato só tem dois caminhos:
+   * parar, ou sortear de novo — e sortear de novo faz o jogador correr uma
+   * corrida diferente da que ele atestou, em silêncio. É o requisito (a) do
+   * baseline entrando pela porta do conserto. Por isso `criar()` continua
+   * sendo o ÚNICO sítio que sorteia, e ele só roda com o storage vazio
+   * (`carregar() !== null` barra) — nada aqui cura, nada aqui re-semeia.
+   *
+   * ⚠️ Reusa `sala-inexistente` em vez de um código próprio: pro jogador o
+   * desfecho é o mesmo (a sala não dá pra jogar) e um código novo no fio
+   * exigiria mexer no cliente, que está fora do escopo do 3.5.1. Quem precisa
+   * do detalhe é o operador, e ele tem `relatorioDeSeeds`.
+   *
+   * ⚠️ **Loga (aviso A6 da revisão).** Reusar `sala-inexistente` no fio é
+   * aceitável; o servidor não registrar nada é que não era. Sem o log, a sala
+   * recusa todo mundo e ninguém descobre por quê — `relatorioDeSeeds` só ajuda
+   * quem já suspeitou. Isto aparece no `wrangler tail` e não toca no protocolo.
+   */
+  private jogavel(estado: EstadoServidor): boolean {
+    const seeds = estadoDasSeeds(estado.sala);
+    if (seeds.tipo !== 'corrompida') return true;
+    console.error(
+      `[sala ${estado.sala.salaId}] recusando conexões: seeds corrompidas — ${seeds.motivo}`,
+    );
+    return false;
+  }
+
+  /**
    * Cria a sala. **Método RPC, não rota HTTP** — e a diferença é de segurança,
    * não de estilo.
    *
@@ -156,7 +205,7 @@ export class Sala extends Server<Env> {
 
   async onConnect(connection: Connection): Promise<void> {
     const estado = await this.carregar();
-    if (estado === null) {
+    if (estado === null || !this.jogavel(estado)) {
       this.recusar(connection);
       return;
     }
@@ -182,8 +231,9 @@ export class Sala extends Server<Env> {
       return;
     }
     const estado = await this.carregar();
-    if (estado === null) {
-      // Comando em voo de uma conexão que sobreviveu ao reset.
+    if (estado === null || !this.jogavel(estado)) {
+      // Comando em voo de uma conexão que sobreviveu ao reset — ou sala cujas
+      // seeds se perderam (ver `jogavel`).
       this.recusar(connection);
       return;
     }
@@ -239,7 +289,20 @@ export class Sala extends Server<Env> {
     // BARREIRA DO FIM DA CORRIDA no tique, e com o gate antigo o timeout de
     // quem nunca atesta nunca seria avaliado — a sala ficaria com
     // `concluidaEm` null até morrer pela carência de vazio.
-    await this.aplicar(aoPassarOTempo(atualizado, agora, PRAZO_TURNO_MS));
+    // 🔒 O GATE ENTRA AQUI, E SÓ AQUI (aviso A2 da revisão). `jogavel` cobria
+    // `onConnect` e `onMessage`, mas não o relógio — e `aoPassarOTempo` RESOLVE
+    // TURNOS VENCIDOS (`expirarNaSala`). Numa sala corrompida com o draft em
+    // andamento, ninguém conseguia conectar nem mandar comando, e o tique de
+    // 5 s ia expirando turno atrás de turno: **o draft se jogava inteiro
+    // sozinho**, numa sala que ninguém podia ver.
+    //
+    // ⚠️ O gate cobre SÓ o `aoPassarOTempo`. `registrarConexoes`, `decidirVida`
+    // e `encerrar` ficam de fora de propósito — a sala corrompida precisa
+    // continuar podendo MORRER pela carência de vazio, senão vira zumbi que
+    // recusa todo mundo e nunca libera o código.
+    if (this.jogavel(atualizado)) {
+      await this.aplicar(aoPassarOTempo(atualizado, agora, PRAZO_TURNO_MS));
+    }
     await this.ctx.storage.setAlarm(agora + INTERVALO_TIQUE_MS);
   }
 }

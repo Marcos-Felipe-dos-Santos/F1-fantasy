@@ -1975,3 +1975,147 @@ Isso não é descuido nem regressão de UX — é a decisão.
   `toContain('a corrida')` era vacuamente verdadeira — o botão "Ir pra corrida →" contém a
   substring. Achado pela revisão; corrigido para a frase inteira e **confirmado por mutação**.
   Preview conferido: `E:\projetos\F1 fantasy\preview\corrida-online.html`.
+
+---
+
+### PR 3.5.1 — seed por etapa e cursor no servidor (2026-08-18, `83a6fde` + `ffdabc1` + `4a4b801`) — ALTO RISCO
+
+Primeiro dos quatro PRs do **3.5 campeonato online**, que fecha a Fase 3. Escopo como registrado no
+plano aprovado: `src/net/` + `party/`, **sem UI**. Implementa o mecanismo **`B-indep`** (decisão D1
+do dev, 2026-08-18): **11 seeds INDEPENDENTES sorteadas no Durable Object** — 10 etapas
+(`MAX_ETAPAS`) + o calendário —, publicadas uma por etapa quando aquela etapa abre. **O cursor
+ainda NÃO avança**: este PR publica só a etapa 0.
+
+**Medido:** `npm test` **1516/63** (era 1480/62), `tsc --noEmit` app **0** e `party/` **0**,
+`eslint src scripts party vite.config.ts` **0**, `npm run build` **0**. `npm run balance` **não se
+aplica** — nada em `src/engine/`, `src/data/` ou `scripts/alavancas` foi tocado.
+
+#### 🔑 `VERSAO_APP` NÃO precisou de bump — e isso foi MEDIDO, não herdado
+
+O plano do arquiteto dava o bump como certo, e o `ESTADO.md` já registrava a dúvida ("**MEDIR, não
+herdar desta linha**"). As duas pernas:
+
+1. **O digest** do `versao.test.ts` cobre `src/engine/**` (menos `.test.ts` e `versao.ts`) +
+   `src/data/**.json` + exatamente `cliente.ts` e `hash-draft.ts`. O PR toca `tipos.ts`, `sala.ts`,
+   `servidor-sala.ts`, `harness.ts` e `party/sala.ts` — **nenhum dos quatro conjuntos**.
+2. **Nenhum rótulo `deriveSeed` novo nasceu.** O `online:calendario` que o plano previa **não
+   existe**: `calendarioSorteado` deriva internamente com `'calendario'` (já registrado) e
+   `seedDaEtapa` com `camp:` (já registrado). Os únicos rótulos novos são `online:harness:etapa:<k>`
+   e `online:harness:calendario`, no harness, sob o prefixo `online` já registrado.
+
+Digest segue `9dccd150`; `versao.test.ts` e `namespaces-seed.test.ts` verdes.
+
+#### 🔒 `N_ETAPAS_CURTA` é duplicado DE PROPÓSITO — e o motivo não é o que parece
+
+O plano dizia "`N_ETAPAS.curta` fixo no servidor". Importar a constante de `src/engine/campeonato.ts`
+**arrastaria `simularQuali`, `simularCorrida` e `resolverCarro` para o grafo do Durable Object** —
+`campeonato.ts` importa `./quali` e `./corrida` **em runtime** (só `Dataset` é `import type`, que é
+erasado). **A cerca de lint NÃO pegaria: ela casa especificador de import, não grafo transitivo.**
+
+Verificado e vale registrar: `dataset.ts` importa só `./types`, então o JSON de 1 MB **não** entraria
+por essa porta — o inviolável "o servidor nunca carrega o dataset" continua de pé pelos dois
+caminhos. O que se evita é arrastar a simulação inteira.
+
+A constante vive em `src/net/tipos.ts` com **teste de conformidade** (`N_ETAPAS_CURTA === N_ETAPAS.curta`),
+mesmo padrão do `QTD_JOGADORES` da pendência 0(a).
+
+#### 🔒 O DISCRIMINANTE — exigência do dev, e o achado que mudou o desenho
+
+A primeira proposta lia as seeds com `?? []` (precedente do `atestadosDe`). **O dev derrubou**: o `??`
+está certo para sala criada antes deste PR, mas **colapsa duas situações que precisam ser
+distinguidas** — sala que nunca teve seeds, e sala que TINHA seeds e as perdeu na reidratação. A
+segunda, tratada como a primeira, **re-sortearia as etapas em silêncio** e o jogador correria uma
+corrida diferente da que atestou. É o requisito (a) do baseline entrando pela porta do conserto.
+
+Conserto: **`VERSAO_ESTADO_SALA` gravado explicitamente** (mesmo padrão e mesmo motivo do
+`VERSAO_ESTADO_DRAFT`) e `estadoDasSeeds` de **três saídas** — `legado` | `ok` | `corrompida` —
+substituindo qualquer `??` espalhado. `corrompida` **não tem caminho de cura**: `criar()` segue sendo
+o único sítio que sorteia e só roda com o storage vazio. A casca recusa a sala corrompida.
+
+#### 🔴 O BLOQUEANTE DA REVISÃO — décima ocorrência de "o teste afirmava o que não conferia"
+
+**`party/` tem cobertura automatizada ZERO.** Nada o importa, `cerca-lint.test.ts` roda o ESLint
+sobre arquivos sintéticos e `contrato-corrida-online.test.ts` exclui `party/` de propósito. Todo o
+bloco `B-indep` do baseline exercitava `criarSala(..., SEEDS)` com **fixture literal** — provar que
+`811_000_001 !== deriveSeed(123_456_789, …)` é aritmética sobre constantes do próprio teste.
+
+**Medido, não deduzido:** M5 (derivar por índice) e M6 (recoplar o 11º slot) aplicadas **dentro de
+`party/sala.ts`, o sítio real**, deixavam a suíte inteira **VERDE — 1509/63**. E um comentário em
+`harness.ts` afirmava que `campeonato-online.test.ts` provava que a produção sorteia. Não provava.
+
+Conserto: **cerca TEXTUAL sobre `party/sala.ts`** (idioma de `namespaces-seed.test.ts` /
+`contrato-ausente.test.ts`) exigindo sorteio por `crypto.getRandomValues(new Uint32Array(SLOTS_SEEDS))`,
+ausência de `deriveSeed(` em código, calendário vindo de `todas[MAX_ETAPAS]` e `Array.from` na
+fronteira — com anti-vacuidade que aplica cada mutação ao texto.
+
+🔴 **A cerca nasceu com DOIS defeitos, os dois pegos rodando — e ambos são reincidência conhecida:**
+
+1. **Regex de negação falso-negativo.** Um lookahead negativo para dizer "não contém `deriveSeed`":
+   **sem a flag `m`, o `.*` do lookahead cobre só a PRIMEIRA linha**, então a cerca passava com
+   `deriveSeed` na linha 2. É a repetição literal do "regex furado na cerca" do 3.2.
+   **Negação se escreve com `includes`, não com lookahead.**
+2. **Cheque cego reprovava a casca CORRETA** — `party/sala.ts:232` explica num comentário por que o
+   token *não* usa `deriveSeed(seedMestre, …)`. Quem pegou foi **a asserção anti-vacuidade que exige
+   que a casca real passe**. Comentários são removidos antes do cheque, com teste dos dois lados.
+
+#### As mutações — sete no plano, e uma que precisou ser refeita
+
+Todas aplicadas sobre o código de produção **pronto** e vistas vermelhas (regra travada:
+**vermelho de compilação não conta**). Baseline de partida: 76 testes, 0 falhas.
+
+| # | Mutação | Resultado |
+|---|---|---|
+| M1 | `seedsEtapas` como `Uint32Array` no estado | 11 failed / 65 passed |
+| M2 | reordenar `seedsEtapas` na forma persistida | 10 / 66 |
+| M3 | `publicarSala` com spread menos os segredos **conhecidos** | 5 / 71 |
+| M4 | `slice(0, cursor + 2)` | 5 / 71 |
+| M5 | derivar as etapas da `seedMestre` por índice | 9 / 67 |
+| M6 | `seedCalendario = seedsEtapas[0]` | 6 / 70 |
+| M7 | `estadoDasSeeds` reduzido à leitura ingênua com `??` | 6 / 70 |
+
+🔴 **M5 saiu ERRADA na primeira tentativa e foi refeita.** A interpolação do índice foi comida pelo
+shell e o rótulo virou constante para todos os índices: o resultado era vermelho, **mas pela razão
+errada** — caiu "as 11 seeds são mutuamente distintas" e **não** caiu a asserção de derivação, que é
+a que carrega o `B-indep`. **Vermelho pela razão errada é a mesma família do teste que afirma o que
+não confere, do lado da mutação.**
+
+**M3 é a mais informativa:** a mutação exclui `seedMestre` e `tokens` de propósito — todos os
+segredos que existiam ANTES do PR. Ficou vermelha mesmo assim, porque quem vazou foi `seedsEtapas`,
+o segredo NOVO. É exatamente o que aconteceu com `tokens` no 3.2.1, e é o argumento de que a
+varredura tem de ser por `JSON.stringify`, nunca campo a campo.
+
+#### Os seis avisos da revisão, todos aplicados
+
+- **A1 — `etapaAtual` ia cru no fio** enquanto `seedsAbertas` saturava: o snapshot podia dizer
+  `etapaAtual: 15` com `nEtapas: 5`, e o cliente do 3.5.2 indexaria a etapa 15 do calendário →
+  `undefined`. Pior: o teste existente **abençoava** a inconsistência (olhava as seeds, não o
+  cursor). Clampado por `cursorPublicavel`, **fonte única do recorte**, + teste da invariante que
+  liga os três campos publicados.
+- **A2 — o `alarm()` não passava pelo `jogavel`**, e `aoPassarOTempo` **expira turno**: numa sala
+  corrompida ninguém conseguia conectar nem mandar comando, mas o tique de 5 s ia expirando turno
+  atrás de turno e **o draft se jogava inteiro sozinho**. Gate só no `aoPassarOTempo` —
+  `decidirVida`/`encerrar` ficam fora, para a sala corrompida ainda poder morrer pela carência.
+- **A3** — anti-vacuidade da varredura passava só pelo `seedMestre`; agora exige que uma **seed de
+  etapa** tenha sido pega.
+- **A4 — rótulo que mentia.** "a extração do operador NÃO aparece no fio" era falso: `seedCalendario`
+  e a etapa 0 saem no fio de propósito depois do draft. Mesmo defeito de rótulo que o PR 4/4
+  corrigiu na tela. Renomeado para o que confere, e o corpo passou a partir do relatório de verdade.
+- **A5** — `criarSala` valida a cardinalidade e **estoura**: sem isso, cardinalidade errada pariria
+  sala natimorta com **HTTP 200 e código entregue ao jogador**.
+- **A6** — `jogavel` loga o motivo. Recusa silenciosa não deixava o operador descobrir a corrupção.
+
+#### O que fica registrado para os próximos PRs do 3.5
+
+- 🔒 **`seedsAbertas` tem o MESMO portão da `seedCorrida`** (draft concluído). O plano só o dava
+  explícito para `seedCalendario`; a leitura aplicada é que **seed sem calendário não protege nada**
+  — são 10 pistas no dataset, o jogador computa as 10 e escolhe.
+- **Requisito (b) entregue pela metade, e é honesto dizer:** `relatorioDeSeeds` existe e é testado a
+  partir do blob persistido (não-circular), mas **o comando de despejo do storage do Durable Object
+  nunca foi rodado**. Fechar (b) de fato exige rodar o despejo real numa sala local.
+- **Ordem de deploy do 3.5.2 em diante: `wrangler` ANTES do `vite`.** `cliente.ts` não valida forma
+  de snapshot; num deploy escalonado o cliente novo contra worker antigo receberia
+  `seedsAbertas: undefined` — inócuo no 3.5.1 (ninguém lê), letal quando o cliente passar a ler.
+- **`etapaAtual` está fora do discriminante** (três leituras defensivas com `?? 0`). Inconsistência
+  de tese, não vazamento — o clamp coage e o servidor nunca grava outro tipo. Mas o cursor é o campo
+  que governa quantos segredos saem no fio: **quando o 3.5.2 o fizer se mover, trazê-lo para dentro
+  do discriminante.**
