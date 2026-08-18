@@ -958,7 +958,15 @@ testes de que a substituição é determinística entre execuções independente
    tamanho da corrida online inteira"*. Fica para o PR de alargamento de entropia, que é onde (i)
    também vive. ⚠️ **O custo marginal lá é quase zero** (o `EstadoSala` já terá segredos sorteados
    pelo 3.5.1): quem pegar aquele PR deve tratar (i) e (o) **juntos**, não um de cada vez.
-   (p) **NOVA (PR 3.5.1) — o requisito (b) do dev está entregue PELA METADE.** `relatorioDeSeeds`
+   (p) **NOVA (PR 3.5.1) — o requisito (b) do dev: FERRAMENTA PRONTA, medição do dev PENDENTE.**
+   ✅ **`scripts/despejar-seeds.ts` existe e foi rodado por mim** (2026-08-18) contra o storage local
+   real. 🔴 **Medido e importante: NÃO dá pra olhar o SQLite direto.** O DO é `new_sqlite_classes`, e
+   `ctx.storage.put` grava na tabela `_cf_KV` com o valor **V8-serializado, não JSON** — o blob começa
+   em `ff 0f` e um número é a tag `N` + 8 bytes IEEE-754. `sqlite3`, `strings` ou qualquer dump de
+   texto mostram os NOMES dos campos e **não os números**; por isso o script desserializa com
+   `node:v8`. **Falta o dev rodar numa sala pós-3.5.1** (as locais são todas legado) e confirmar as 11
+   seeds antes e depois de reiniciar o worker. Texto original da pendência abaixo, preservado:
+   **o requisito (b) do dev está entregue PELA METADE.** `relatorioDeSeeds`
    existe e é testado a partir do blob persistido (não-circular, não é código morto), mas **o comando
    de despejo do storage do Durable Object nunca foi rodado** — o docblock diz "a confirmar pelo dev
    na máquina dele". Fechar (b) de fato é rodar o despejo real numa sala local **uma vez** e registrar

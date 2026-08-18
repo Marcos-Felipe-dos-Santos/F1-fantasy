@@ -22,13 +22,47 @@ declare module 'node:fs' {
   export function rmSync(path: string, options?: { recursive?: boolean; force?: boolean }): void;
   /** Adicionado no PR 4.2 (agregar-fatos.ts) pra listar arquivos de cache por temporada. */
   export function readdirSync(path: string): string[];
-  /** Adicionado no PR 3.1b (namespaces-seed.test.ts) pra andar na árvore de fontes. */
-  export function statSync(path: string): { isDirectory(): boolean };
+  /**
+   * Adicionado no PR 3.1b (namespaces-seed.test.ts) pra andar na árvore de
+   * fontes. `mtimeMs` entrou no 3.5.1 (`despejar-seeds.ts`), pra ordenar os
+   * arquivos de storage do Durable Object do mais recente pro mais antigo.
+   */
+  export function statSync(path: string): { isDirectory(): boolean; mtimeMs: number };
 }
 
 declare module 'node:path' {
   export function dirname(p: string): string;
   export function join(...parts: string[]): string;
+  /** Adicionado no 3.5.1: encurtar o nome (hash) do arquivo do DO na saída. */
+  export function basename(p: string): string;
+}
+
+/**
+ * Adicionados no PR 3.5.1 (`despejar-seeds.ts`), pela pendência 0(p): extrair
+ * as seeds do campeonato do storage do Durable Object.
+ *
+ * 🔴 **Os dois andam juntos, e é por um motivo medido.** O DO é
+ * `new_sqlite_classes`, então `ctx.storage.put` grava na tabela `_cf_KV` com o
+ * valor **V8-serializado, não JSON** (o blob começa em `ff 0f`). Ler o SQLite
+ * sem desserializar devolve os NOMES dos campos e não os números — por isso
+ * `node:sqlite` sozinho não resolve, e `node:v8` não é luxo.
+ *
+ * Mínimo do mínimo, na linha do resto deste arquivo.
+ */
+declare module 'node:sqlite' {
+  export interface Consulta {
+    get(...parametros: unknown[]): unknown;
+  }
+  export class DatabaseSync {
+    constructor(caminho: string, opcoes?: { readOnly?: boolean });
+    prepare(sql: string): Consulta;
+    close(): void;
+  }
+}
+
+declare module 'node:v8' {
+  /** Aceita `Uint8Array` direto — o valor sai do `node:sqlite` já como um. */
+  export function deserialize(dados: Uint8Array): unknown;
 }
 
 declare module 'node:url' {
@@ -59,6 +93,8 @@ declare const process: {
   /** Adicionados no PR 3.3.4 (`checar-porta-sala.ts`) pra falhar ALTO e sair com código ≠ 0. */
   stderr: { write(texto: string): boolean };
   exit(codigo?: number): never;
+  /** Adicionado no PR 3.5.1 (`despejar-seeds.ts`): saída normal do despejo. */
+  stdout: { write(texto: string): boolean };
 };
 
 interface ImportMeta {
