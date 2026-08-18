@@ -390,7 +390,10 @@ duplicada entre engine e redutor, derivando em silêncio.
 - ✅ **3.4.1 Surfacing do alarme de divergência** — FEITO (`615e94f`). `BannerDivergencia` em `FluxoOnline` renderiza o detector (3.4) ao jogador em todas as telas. Veredito do dev: aprovado. Preview em `E:\projetos\F1 fantasy\preview\divergencia.html` (regenerável por `npm run preview`). **Lição registrada em `CLAUDE.md` § item 5:** preview de componente real com CSS real; defeito (`data-tema` em `<div>` vs cascata `:root`) só pegável abrindo; corrigido com iframe por tema.
 - 🏁 **CORRIDA ONLINE — 4 PRs, plano aprovado. Registrado abaixo, em seção própria.**
 - **3.5 Campeonato online (seed por etapa)** — **CORTE Nº 1 DA FASE** se ela ficar grande (não
-  confundir com o corte nº 1 *da corrida online*, logo abaixo). Autorizado pelo dev em 2026-08-11.
+  confundir com o corte nº 1 *da corrida online*, logo abaixo, nem com o **CORTE 3.5-F**, que é
+  interno ao 3.5). Autorizado pelo dev em 2026-08-11. ➡️ **PLANO APROVADO em 2026-08-18 — está na
+  §"🏆 3.5 CAMPEONATO ONLINE" mais abaixo, com D1 = `B-indep` decidido.** O mecanismo lá **supera** o
+  da decisão (b) desta seção; ler as duas juntas.
 
 ### 🏁 CORRIDA ONLINE — o plano aprovado (registrado em 2026-08-12)
 
@@ -458,6 +461,178 @@ latência, reordenação, duplicação e desconexão. O dev precisa testar **sem
 disponíveis**. **Abas no navegador só pro portão visual.** O spike já deixou o embrião disso em
 `E:\projetos\spike-partyserver\scripts\dois-clientes.mjs` (WebSocket global do Node ≥ 22, sem
 dependência).
+
+### 🏆 3.5 CAMPEONATO ONLINE — o plano aprovado (registrado em 2026-08-18)
+
+> Terceira vez que um plano desta fase corria risco de não ser registrado (ver os dois avisos
+> idênticos no topo da §FASE 3 e da §CORRIDA ONLINE). **Registrado no mesmo dia da aprovação.**
+> Proposto pelo `fable-architect`, criticado pela sessão principal, **aprovado pelo dev em
+> 2026-08-18.** ALTO RISCO (netcode) nos quatro PRs. **Nada implementado.**
+
+**O fato de arquitetura que decidiu tudo:** o servidor **não tem dataset ⇒ não conhece o calendário
+⇒ não pode computar `seedDaEtapa(X, pistaId)`** (ela exige `pistaId`, `src/engine/campeonato.ts:38`).
+Isso eliminou a solução óbvia e forçou a decisão D1 abaixo.
+
+**🔑 D1 — DECIDIDO PELO DEV: `B-indep`. N seeds INDEPENDENTES sorteadas no DO**, publicadas uma por
+etapa quando aquela etapa abre.
+
+⚠️ **HOMÔNIMO — não confundir com a decisão (b) da §FASE 3.** Aquela está registrada como *"D-E: SEED
+POR ETAPA (**opção B**), o DO guarda a `seedMestre`"*. O `B-indep` é **outro mecanismo**: N randoms
+independentes, sem mestra única. **Ele SUPERA O MECANISMO da decisão (b) preservando o PROPÓSITO
+dela** (ninguém computa etapa futura). Foi aprovado como troca consciente, não como continuidade.
+
+**Por que não as alternativas:** publicar a seed base reabre a decisão (b) literalmente; derivar por
+índice (`deriveSeed(seedMestre,'online:etapa:k')`) compra **ZERO** contra o atacante da pendência
+0(i) — recomposta a `seedMestre` pela `seedDraft` do lobby, todas as etapas caem juntas — e faria a
+segurança do 3.5 depender de o PR de alargamento de entropia vir antes. Com `B-indep`, saber a etapa 1
+não diz nada sobre a 2, e a ordenação de fase deixa de importar.
+
+🔒 **`seedCalendario` TAMBÉM É SORTEADA, NUNCA DERIVADA** (emenda da sessão principal, aceita pelo
+dev). Sob 0(i) a `seedMestre` é recomponível desde o lobby, então um calendário derivado dela seria
+**computável DURANTE o draft** — dá pra escolher peça sabendo as 5 pistas. É exatamente a vantagem que
+o portão do PR 1/4 fechou. **Sorteio: `Uint32Array(11)`** no mesmo `crypto.getRandomValues` que
+`party/sala.ts` já faz para 1 slot — **10 etapas (máximo) + o 11º slot, independente, do calendário.**
+O 11º **não é `seedsEtapas[0]` reusado**: registrado assim para que ninguém "simplifique" depois e
+recople os dois. Sortear 10 sempre (e usar as N primeiras) desacopla o sorteio do formato.
+
+🔒 **O rótulo de simulação NÃO muda.** O cliente compõe `seedDaEtapa(seedPublicadaDaEtapa, pistaId)` —
+**a mesma função e o mesmo rótulo `camp:${pistaId}` do offline**, travado por docblock contra o
+baseline do balance-harness. Inventar um esquema paralelo seria a classe de bug do 8.4. O rótulo novo
+`online:calendario` que o plano original previa **deixa de existir sob `B-indep`** (a seed é sorteada,
+não derivada). ⚠️ **Conferir na implementação se sobra algum rótulo novo a registrar em
+`src/engine/namespaces-seed.ts`; se não sobrar, o bump de `VERSAO_APP` do 3.5.1 pode não ser
+necessário. MEDIR, não herdar desta linha.**
+
+**Estado de SERVIDOR × estado de CLIENTE.** Servidor: `seedsEtapas` (segredo), `etapaAtual` (o
+servidor é o dono do cursor), `etapaAbertaEm` e `atestaramFimDaEtapa` **resetados a cada etapa**,
+`concluidaEm` marcado **só quando a barreira da ÚLTIMA etapa fecha**. Fio (`EstadoSalaPublico`):
+`etapaAtual`, `nEtapas`, `seedCalendario | null` (portão: draft concluído) e `seedsAbertas: number[]`
+— crescente, **nunca as futuras**; é ela que deixa quem reentra recompor as etapas passadas. O
+**cliente** apura a pontuação com `acumularClassificacao` (`campeonato.ts:244`), a mesma do offline.
+
+🔑 **Dois dos três custos da decisão (b) SOMEM:** sem `EstadoCampeonato`/`iniciarCampeonato`, não há
+fork (custo i) e `campeonatoConcluido` não é chamado (custo ii) — "acabou" é `etapaAtual >= nEtapas`,
+do servidor. **Só o custo (iii) permanece: o save do 8.2 continua fora do online.**
+
+🔒 **O cursor avança pela BARREIRA, nunca pelo anfitrião.** Com a sala iniciada, `anfitriaoId` não é
+reatribuído se o host cair (`sala.ts:216-217` só age em `fase === 'aberta'`), então avanço por host
+teria modo de falha "sala encalhada para sempre". **Não é barreira de largada:** ninguém fica preso
+esperando; quem está atrasado assiste à etapa 2 enquanto os outros já estão na 3, porque a etapa k
+segue computável para sempre depois que a seed dela foi publicada.
+
+**Reentrada:** identidade **coberta pela 3.2.1 sem mudança** (`sala.ts:277` só exige o jogador em
+`estado.jogadores`, e com a sala iniciada ninguém sai de lá). ✅ **A pendência 0(l) morre de graça:**
+com `etapaAtual` + `seedsAbertas` no snapshot, `naCorrida` (estado local, `FluxoOnline.tsx:56`) sai de
+cena e o F5 devolve o jogador à etapa certa com a tabela certa; reatestar é idempotente
+(`servidor-sala.ts:234-241`). 🔴 **A pendência 0(k) vira BLOQUEANTE:** elegíveis congelados no fim do
+draft fariam **cada** etapa pagar `TIMEOUT_FIM_DE_CORRIDA_MS` por quem caiu na etapa 1 — 5 × 5 min de
+sala parada. Recomputar por etapa (humano, não-ausente, com conexão em `jogadorPorConexao`).
+
+#### 🔴 ACHADO QUE MUDOU O ESCOPO — o detector dispara ALARME FALSO e ele TRAVA
+
+Descoberto ao planejar, não estava em pendência nenhuma. O balde de atestados é indexado **só por
+escopo** (`baldes[atestado.escopo]`, `servidor-sala.ts:454`) e a âncora é `draft.log.length`
+(`:638`), que **para de crescer quando o draft conclui**. Logo as etapas 1..N atestam com **a mesma
+âncora e o mesmo escopo `'corrida'`**, e o hash difere por `pistaId` (`hash-corrida.ts:132`) — por
+construção. **Verificado no código, não deduzido:** `alarmado: base.alarmado || divergentes.length > 0`
+(`servidor-sala.ts:509-513`) e `base` reusa o balde existente quando a âncora é igual — que é o caso.
+`porJogador` **acumula entre etapas**, então o hash da etapa 1 do jogador A é comparado contra o da
+etapa 2 do jogador B.
+
+**Consequência real: UM alarme falso na virada da etapa 2, TRAVADO para o resto do campeonato, sem
+caminho para limpar.** A reação natural a um banner permanentemente errado é desligar o banner — que
+é como se mata o detector inteiro, justamente na parte nova do jogo.
+
+🔒 **Conserto, NÃO CORTÁVEL e alocado ao PR 3.5.2:** o comando `hash` ganha `etapa: number` (validado
+como FORMA — o servidor continua sem entender conteúdo) e a chave do balde vira `${escopo}:${etapa}`.
+`ESCOPOS_VALIDOS ... satisfies Record<EscopoHash, true>` (`servidor-sala.ts:392`) faz o typecheck
+reprovar antes de qualquer teste.
+
+#### ✂️ CORTE 3.5-F — o corte nº 1 DENTRO do 3.5 (aprovado pelo dev)
+
+⚠️ **Três homônimos no projeto, não confundir:** (1) "o 3.5 é o corte nº 1 **da Fase 3**"; (2) o
+"corte nº 1 **da corrida online**", que **perdeu a razão de ser**, medido no PR 3/4; (3) este, o
+**corte interno do 3.5**.
+
+> **CORTE 3.5-F — formato fixo: campeonato curto de 5 etapas, SEM seletor no lobby.**
+
+**Sai:** o `<select>` de formato na `TelaLobby`, o campo `formato` no comando `iniciar` e sua
+propagação por `EstadoSala`/`EstadoSalaPublico`. **Fica:** `N_ETAPAS.curta` fixo no servidor.
+**O jogo ainda entrega:** campeonato online completo e determinístico de 5 etapas, com calendário
+sorteado, tabela acumulada, pódio final e reentrada. Restaurar depois = um campo no `iniciar` + um
+`<select>`, PR de uma sessão. **Corte reserva (pior):** 3.5-T, tabela acumulada só no fim — é *menos*
+atraente do que parece, porque `PainelCampeonato`/`PainelCalendario` já recebem `classificacao` pronta
+(`FluxoCampeonato.tsx:93-103,131-140`); cortar o formato é mais barato. **NÃO cortável:** a máquina de
+etapas, a barreira por etapa e o detector por etapa.
+
+#### 📏 O TAMANHO — o corte honesto da Fase 3 pode ser o PRÓPRIO 3.5 (registro pedido pelo dev)
+
+O 3.5 estava listado na §FASE 3 como **"CORTE Nº 1 DA FASE"** e está planejado com **quatro PRs — o
+mesmo tamanho da corrida online inteira**. 🛑 **Se a fase inflar, a opção a considerar é abandonar o
+3.5, não o 3.5-F.** O dev pediu esta opção **visível no momento em que ele estiver no 3.5.2 decidindo
+se continua** — é ali que a decisão é barata, e não depois do 3.5.3.
+
+#### Fatiamento — QUATRO PRs, um por sessão, todos ALTO RISCO
+
+1. **3.5.1 — seed por etapa e cursor no servidor** (`src/net/`, `party/`; sem UI). `seedsEtapas` +
+   `etapaAtual` + `nEtapas` no estado; `publicarSala` publica `etapaAtual`, `nEtapas`,
+   `seedCalendario` (portão do draft concluído) e `seedsAbertas` (só as abertas); `Uint32Array(11)`
+   na casca. **O cursor ainda NÃO avança** — este PR publica só a etapa 0.
+2. **3.5.2 — barreira e avanço de cursor por etapa** + elegíveis recomputados por etapa +
+   `concluidaEm` só na última **+ o conserto do detector (campo `etapa`, chave `${escopo}:${etapa}`)**.
+3. **3.5.3 — cliente: N etapas por derivação pura.** `useMemo` sobre `seedsAbertas`; `corridaDaSala`
+   passa a aceitar `pistaId` explícito (quando vier, **não** chama `pistaSorteada`); classificação por
+   `acumularClassificacao`; atestado por etapa (o campo já veio do 3.5.2). **Nada de estado local
+   acumulado** — tudo derivado do snapshot, que é o que faz o F5 funcionar.
+   🔒 **A restrição "uma função só" NÃO abre exceção:** `chamadasDe` conta **sítios TEXTUAIS**, não
+   invocações (`src/ui/contrato-corrida-online.test.ts:115`), então um `map` mantém a contagem em
+   **1**. `PERMITIDOS` (`:187`) ganha `seedDaEtapa: ['src/engine/campeonato.ts',
+   'src/ui/FluxoCampeonato.tsx', 'src/ui/corrida-online.ts']` — **cerca NOVA, não afrouxamento**:
+   impede que alguém "conserte" a derivação criando um segundo caminho.
+4. **3.5.4 — UI do campeonato online, com PORTÃO VISUAL.** Reusa
+   `PainelCampeonato`/`PainelCalendario`/pódio do 8.3, `FluxoCorrida` em `{modo:'pronta'}` e
+   🔑 **`key={'etapa-'+k}`** — sem a `key`, o `useState` de `useCorrida` mantém a corrida anterior e o
+   jogador corre a etapa 1 cinco vezes (lição literal de `FluxoCampeonato.tsx:118-122`). Remove
+   `naCorrida`.
+
+#### 🔒 O QUE O DEV EXIGIU NO BASELINE VERMELHO DO 3.5.1 (não é nota de rodapé)
+
+**Seeds independentes NÃO são reconstituíveis** — e isso cobra um preço que a derivação não cobrava.
+Palavras do dev: *"hoje um bug de corrida se reproduz com uma seed; num campeonato `B-indep` preciso
+das 11."* Portanto as seeds têm obrigatoriamente que:
+
+- **(a) SOBREVIVER À REIDRATAÇÃO DO DURABLE OBJECT.** Se não sobreviverem, um despejo no meio do
+  campeonato **re-sorteia as etapas futuras** e o jogador corre uma corrida diferente da que atestou:
+  quebra de determinismo **silenciosa**. (Reidratação de storage **já foi bloqueante de revisão no PR
+  3/4** — é reincidência conhecida, não risco hipotético.)
+- **(b) SER EXTRAÍVEIS PARA RELATÓRIO DE BUG.** *"Se eu não conseguir reproduzir uma etapa depois de
+  um despejo, o determinismo virou promessa não verificável."* ⚠️ Isto convive com a regra de que
+  `seedsEtapas` é SEGREDO: a extração é **do lado do dev/operador**, nunca no fio para os jogadores —
+  a via tem que ser desenhada no 3.5.1 sem virar vazamento.
+
+**Os dois entram no baseline vermelho do 3.5.1**, junto com: snapshot não vaza segredo (varredura de
+`JSON.stringify`, não campo a campo), `seedsAbertas.length === 1` na abertura, conformidade
+`seedDaEtapa(seedsAbertas[0], calendario[0])` recomposta de forma independente no teste, e calendário
+sem pista repetida.
+
+#### 🔒 REGRAS DE MÉTODO TRAVADAS PARA OS QUATRO PRs (crítica aceita pelo dev nos 4 pontos)
+
+1. **O baseline vermelho do detector é do 3.5.2 e é de SERVIDOR PURO** — atestados da etapa 0 por
+   todos, depois etapa 1 com a MESMA âncora e hash diferente: **alarme antes, silêncio depois**. Sem
+   cliente, sem jsdom. Deixá-lo no 3.5.3 prenderia o teste mais importante da fase à única camada sem
+   cobertura automática (0(m)).
+2. 🔒 **VERMELHO DE COMPILAÇÃO NÃO CONTA COMO BASELINE VERMELHO.** Um teste vermelho porque o campo
+   ainda não existe não prova nada sobre comportamento. **Quem carrega o baseline são as MUTAÇÕES, e
+   elas se aplicam sobre o código de produção PRONTO e têm que ser VISTAS vermelhas.** É a décima
+   ocorrência de "o teste afirmava o que não conferia" esperando para acontecer.
+3. **Persistência/reidratação entra no baseline** (ver o bloco do dev acima).
+4. **Caminho correto do contrato:** `src/ui/contrato-corrida-online.test.ts` — **não** `src/net/`.
+
+**Riscos aceitos conscientemente:** o brute-force de 2³² sobre a `seedMestre` continua abrindo o
+**draft** mesmo com `B-indep` (status quo de 0(i); o 3.5 não piora nem conserta) · `FluxoOnline` segue
+sem cobertura automática, mitigado mantendo lógica em `fluxo-*.ts` puro e o `.tsx` como casca fina ·
+CPU da recomputação (5 etapas × 22 carros a cada mudança de `seedsAbertas`) **a medir no 3.5.3**; se
+passar de ~50 ms, memoizar por etapa. Não antecipar otimização.
 
 ## Onde parei
 
@@ -666,6 +841,16 @@ testes de que a substituição é determinística entre execuções independente
    `:66`): a ação principal não se distingue da secundária. **Pré-existente do fluxo offline** — o
    PR 4 só torna o par visível no online pela primeira vez. Conserto seria trocar o segundo para
    `botao-secundario`; **é decisão do dev.**
+   (o) 🔴 **NOVA (planejamento do 3.5, 2026-08-18) — ASSIMETRIA DE POSTURA DE SEGURANÇA, endereçada
+   ao PR DE ALARGAMENTO DE ENTROPIA (o conserto de fundo da pendência (i)).** Com o `B-indep`
+   aprovado, o **campeonato** online passa a ter as pistas protegidas durante o draft (seeds e
+   `seedCalendario` sorteadas, não derivadas), mas a **corrida avulsa** online continua com
+   `seedCorrida` **DERIVADA** da `seedMestre` — e sob (i) ela é recomponível desde o lobby. **Dois
+   caminhos do mesmo produto ficam com posturas diferentes.**
+   **Decisão explícita do dev em 2026-08-18: NÃO entra no 3.5** — *"o 3.5 já está com quatro PRs, o
+   tamanho da corrida online inteira"*. Fica para o PR de alargamento de entropia, que é onde (i)
+   também vive. ⚠️ **O custo marginal lá é quase zero** (o `EstadoSala` já terá segredos sorteados
+   pelo 3.5.1): quem pegar aquele PR deve tratar (i) e (o) **juntos**, não um de cada vez.
 1. **Abertas pelo 7.8:** (a) o `BotaoTema` é um botão discreto no canto do `app-shell` — posição e
    forma **não passaram por veredito de arte**; (b) `erro` (salmão `#FF7B85`) e `raridadeProibido`
    (`#FF4757`) continuam sendo dois vermelhos ao lado do vermelho da marca — não foi mexido porque
