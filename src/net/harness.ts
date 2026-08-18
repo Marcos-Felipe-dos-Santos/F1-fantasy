@@ -199,9 +199,9 @@ export function rodarHarness(opcoes: OpcoesHarness): ResultadoHarness {
   // `campeonato-online.test.ts`.
   const seedsHarness = {
     etapas: Array.from({ length: MAX_ETAPAS }, (_, k) =>
-      deriveSeed(seed, `teste:harness:etapa:${k}`),
+      deriveSeed(seed, `online:harness:etapa:${k}`),
     ),
-    calendario: deriveSeed(seed, 'teste:harness:calendario'),
+    calendario: deriveSeed(seed, 'online:harness:calendario'),
   };
   let servidor = criarServidor('sala-harness', seed, 'dificil', 0, seedsHarness);
   const participantes = new Map<string, Participante>();
