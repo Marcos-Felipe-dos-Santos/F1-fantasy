@@ -390,50 +390,42 @@ duplicada entre engine e redutor, derivando em silêncio.
 - ✅ **3.4.1 Surfacing do alarme de divergência** — FEITO (`615e94f`). `BannerDivergencia` em `FluxoOnline` renderiza o detector (3.4) ao jogador em todas as telas. Veredito do dev: aprovado. Preview em `E:\projetos\F1 fantasy\preview\divergencia.html` (regenerável por `npm run preview`). **Lição registrada em `CLAUDE.md` § item 5:** preview de componente real com CSS real; defeito (`data-tema` em `<div>` vs cascata `:root`) só pegável abrindo; corrigido com iframe por tema.
 - 🏁 **CORRIDA ONLINE — 4 PRs, plano aprovado. Registrado abaixo, em seção própria.**
 - **3.5 Campeonato online (seed por etapa)** — **CORTE Nº 1 DA FASE** se ela ficar grande (não
-  confundir com o corte nº 1 *da corrida online*, logo abaixo, nem com o **CORTE 3.5-F**, que é
+  confundir com o corte nº 1 *da corrida online* — que **perdeu a razão de ser, medido no PR 3/4**, e
+  cujo texto foi para o `HISTORICO.md` com o plano encerrado — nem com o **CORTE 3.5-F**, que é
   interno ao 3.5). Autorizado pelo dev em 2026-08-11. ➡️ **PLANO APROVADO em 2026-08-18 — está na
   §"🏆 3.5 CAMPEONATO ONLINE" mais abaixo, com D1 = `B-indep` decidido.** O mecanismo lá **supera** o
   da decisão (b) desta seção; ler as duas juntas.
 
-### 🏁 CORRIDA ONLINE — o plano aprovado (registrado em 2026-08-12)
+### ✅ CORRIDA ONLINE — ENCERRADA. Plano movido para o `HISTORICO.md` em 2026-08-18
 
-> ⚠️ **Este plano foi aprovado numa sessão anterior e NÃO estava em lugar nenhum do repositório** —
-> nem aqui, nem no `HISTORICO.md`. Segunda vez que isso acontece nesta fase (ver o aviso idêntico
-> no topo da §FASE 3). Fica registrado para não custar uma terceira.
+Os quatro PRs (`b67ec2b`, `8a8088a`, `50906af`, `44d0dc8`+`8489b6f`) estão feitos e o **portão visual
+do 4/4 foi aprovado pelo dev em 2026-08-18**. O plano aprovado e o detalhe de cada PR vivem agora em
+**`HISTORICO.md` §"CORRIDA ONLINE — o plano aprovado"** (movido íntegro, não resumido) e nas quatro
+entradas "CORRIDA ONLINE — PR 1/4…4/4". **Nada pendente.**
 
-**🔑 VEREDITO DA SEED — a decisão que estava em aberto, resolvida pelo dev CONTRA a recomendação do
-arquiteto:** publicar `seedCorrida` **só quando o draft concluir**, nunca desde a criação da sala.
+🔒 **O QUE NÃO SAIU DAQUI.** Nasceram nesta seção e são **decisão travada / regra inviolável** — a
+regra do projeto proíbe que saiam do `ESTADO.md`, então ficam retidas abaixo (e estão íntegras
+também no `HISTORICO.md`, pelo registro). **Não reabrir sem o dev:**
 
-Razão, nas palavras do dev: é o mesmo precedente da **decisão (b)** desta fase. A seed base completa
-foi rejeitada porque *"qualquer jogador computa as corridas futuras no console — não é hack, é chamar
-uma função"*. Publicar durante o draft **é o mesmo buraco com outro nome**: dá pra simular loadouts
-candidatos e escolher com vantagem. **O contra-argumento da paridade com o offline foi recusado
-explicitamente** — lá a pista aparecer antes do draft é inofensivo porque não há adversário humano.
-Preço aceito: `| null` no tipo e um ramo no cliente.
+- **🔑 VEREDITO DA SEED:** publicar `seedCorrida` **só quando o draft concluir**, nunca desde a
+  criação da sala. Decisão do dev **CONTRA a recomendação do arquiteto**, pelo mesmo precedente da
+  **decisão (b)** desta fase: publicar durante o draft é o mesmo buraco com outro nome — dá pra
+  simular loadouts candidatos e escolher com vantagem. **A paridade com o offline foi recusada
+  explicitamente** (lá não há adversário humano). Preço aceito: `| null` no tipo e um ramo no cliente.
+  **Consequência aceita: a pista também só aparece no fim do draft** — é a decisão, não descuido.
+- 🔒 **UMA FUNÇÃO SÓ alimenta o hash e o `FluxoCorrida`, e não se abre exceção nisso** (palavras do
+  dev, PR 2/4). É a classe de bug do **8.4**: duas trilhas, cada lado certo isoladamente, composição
+  errada, **`npm test` não pega**. `corridaDaSala` (`src/ui/corrida-online.ts`), mesma referência pro
+  hash e pro replay, travada por `src/ui/contrato-corrida-online.test.ts` (allowlist de quem chama +
+  contagem exata por arquivo). **O 3.5.3 depende desta regra e não a afrouxa.**
+- 🔒 **A barreira NÃO ganha status na tela — decisão do dev** (PR 4/4). "Aguardando jogadores
+  terminarem…" foi RECUSADO por afirmar um bloqueio que não existe (a barreira do 3/4 é a versão
+  fraca e não segura ninguém). O `AvisoDeFechamento` cobre o único prazo real.
 
-**Consequência aceita:** a **pista também só aparece no fim do draft**, porque deriva da mesma seed.
-Isso não é descuido nem regressão de UX — é a decisão.
+### Portões, riscos e heranças da FASE 3 (valem para a fase INTEIRA, não só para a corrida online)
 
-**Fatiamento aprovado:**
-
-- ✅ **PR 1/4 — seed e pista** — FEITO (`b67ec2b`).
-- ✅ **PR 2/4 — o coração.** FEITO (`8a8088a`). 🔒 **A defesa estrutural é UMA FUNÇÃO SÓ alimentando o hash e o
-  `FluxoCorrida`, e não se abre exceção nisso** (palavras do dev). É a classe de bug do **8.4**: duas
-  trilhas, cada lado certo isoladamente, composição errada, **`npm test` não pega**. Determinado: uma
-  função só (`corridaDaSala`, `src/ui/corrida-online.ts`), mesma referência pro hash e pro replay.
-  Guarda estrutural travada em `contrato-corrida-online.test.ts` (allowlist de QUEM chama, contagem exata por arquivo).
-- ✅ **PR 3/4 — barreira no fim + `concluidaEm` marca a corrida** — FEITO (`50906af`). 🔒 **O CORTE Nº 1 PERDEU A RAZÃO DE SER — MEDIDO.** O custo do tique durante o replay é **zero** (com o draft concluído, `deQuemEhAVez()` devolve `[]`, `aoPassarOTempo()` devolve a **mesma referência** sem envios, `aplicar()` só grava quando muda). Ver item 0(e) de "Pendências ATIVAS" — medição registrada, comentário errado em `party/sala.ts` corrigido. **Bloqueante da revisão (reidratação de storage) foi corrigido.**
-- ✅ **PR 4/4 — UI, com PORTÃO VISUAL** — FEITO (`44d0dc8` + `8489b6f`), **✅ PORTÃO VISUAL APROVADO
-  PELO DEV em 2026-08-18.** O botão "Ir pra corrida" aparece (com guarda `corrida !== null`), `FluxoCorrida` roda no
-  modo `'pronta'` com a MESMA referência do hash, o resultado mostra pontuação FIA e o fim do replay
-  atesta a barreira do 3/4. Banner de divergência passou a **ramificar por escopo**.
-  🔒 **A barreira NÃO ganhou status na tela — decisão do dev.** "Aguardando jogadores terminarem…"
-  foi RECUSADO por afirmar um bloqueio que não existe (a barreira do 3/4 é a versão fraca e não
-  segura ninguém). O `AvisoDeFechamento` cobre o único prazo real.
-  🔴 **Nona ocorrência de "o teste afirmava o que não conferia", desta vez NO TESTE DESTE PR:**
-  `toContain('a corrida')` era vacuamente verdadeira — o botão "Ir pra corrida →" contém a
-  substring. Achado pela revisão; corrigido para a frase inteira e **confirmado por mutação**.
-  Preview conferido: `E:\projetos\F1 fantasy\preview\corrida-online.html`.
+> Este bloco estava aninhado sob a §CORRIDA ONLINE por acidente de formatação; ganhou cabeçalho
+> próprio em 2026-08-18 para não sair junto com o plano encerrado. Conteúdo inalterado.
 
 🛑 **PORTÕES OBRIGATÓRIOS (do dev):**
 1. **Parar ao final do 3.0** com o go/no-go. ✅ cumprido.
@@ -877,6 +869,17 @@ testes de que a substituição é determinística entre execuções independente
    (`git merge-base --is-ancestor origin/main HEAD` = 0).
 7. **A rede de segurança da memoização da LUT (7.5) acabou.** Recuperar exige capturar o golden
    sobre uma polilinha SINTÉTICA fixa — registrado, não feito.
+8. 📉 **ENCOLHER O `ESTADO.md` — aberta em 2026-08-18, adiada pelo dev.** O arquivo é lido por
+   inteiro na abertura de toda sessão, então cada linha é custo fixo; hoje ele tem ~930 linhas.
+   **Candidatos:** §FASE 8 encerrada (~128 linhas — único item vivo é o veredito do
+   `campeonato.html`) e §RISCO ATIVO FECHADO (~46 linhas). **Alvo: ~750 linhas.**
+   🔒 **REGRA APRENDIDA EM 2026-08-18, ao mover a §CORRIDA ONLINE — VERIFICAR ANINHAMENTO POR
+   ACIDENTE DE FORMATAÇÃO ANTES DE MOVER.** A §CORRIDA ONLINE tinha **quatro portões ATIVOS da Fase
+   3** aninhados sob o cabeçalho dela (portões obrigatórios do 3.0/3.1b, herança de config do spike,
+   riscos aprovados da fase, "harness headless não é opcional"): eram da fase inteira, não do
+   trabalho encerrado, e teriam saído junto. **Cabeçalho não prova pertencimento — ler o conteúdo.**
+   🛑 **SESSÃO PRÓPRIA, NÃO NO FIM DE OUTRA** (decisão do dev): cada movimento desses tem risco real
+   de levar coisa viva junto, e o fim de uma sessão longa é o pior momento para corrê-lo.
 
 > ✅ Fechadas no 7.7: pendência 1 antiga (Spa fundia asfalto) · espinho de ~180° no vértice #0 de
 > Spa · preview da densidade alvo. Fechada no 7.7.1: Monza sem imagem.

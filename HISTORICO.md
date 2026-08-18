@@ -1915,3 +1915,63 @@ O que ela atacou e passou: a tese do 2/4 (uma trilha só, `contrato-corrida-onli
 ### Colateral — a terceira cópia da instrução que esvaziou o `ESTADO.md`
 
 O cabeçalho **deste arquivo** ainda dizia "o `ESTADO.md` reescrito (substitui, não acumula)". O `CLAUDE.md` registra a correção em dois lugares (nele e no `ESTADO.md` §Convenções) — esta passou despercebida. É o cenário que a própria regra descreve: regra nova ao lado da antiga contraditória devolve o mesmo esvaziamento, dependendo de qual o `doc-writer` ler primeiro. Corrigida.
+
+## CORRIDA ONLINE — o plano aprovado (movido do `ESTADO.md` em 2026-08-18)
+
+> 📦 **Movido, não resumido.** Este texto vivia na §"🏁 CORRIDA ONLINE — o plano aprovado" do
+> `ESTADO.md` e descreve trabalho **encerrado**: os quatro PRs feitos e o portão visual do 4/4
+> aprovado pelo dev em 2026-08-18. Saiu de lá porque o `ESTADO.md` é lido por inteiro na abertura de
+> toda sessão e havia quatro PRs de netcode (o 3.5) pela frente pagando esse custo fixo.
+>
+> 🔒 **O que NÃO saiu do `ESTADO.md`:** o **VEREDITO DA SEED** (com a consequência aceita), a regra
+> **"uma função só, não se abre exceção"** e a decisão **"a barreira não ganhou status na tela"**.
+> São decisão travada e regra inviolável — a regra do projeto proíbe que saiam do `ESTADO.md`, então
+> elas estão **nos dois arquivos**: íntegras aqui pelo registro, e retidas lá porque continuam
+> valendo. Os portões obrigatórios do 3.0/3.1b, a herança de config do spike, os riscos aprovados da
+> fase e o "harness headless não é opcional" **também ficaram no `ESTADO.md`** — estavam aninhados
+> sob esta seção por acidente de formatação, mas são da **Fase 3 inteira**, não da corrida online.
+>
+> Detalhe PR a PR nas quatro entradas próprias acima: "CORRIDA ONLINE — PR 1/4", "PR 2/4", "PR 3/4"
+> e "PR 4/4".
+
+Texto íntegro, como estava no `ESTADO.md`:
+
+---
+
+> ⚠️ **Este plano foi aprovado numa sessão anterior e NÃO estava em lugar nenhum do repositório** —
+> nem aqui, nem no `HISTORICO.md`. Segunda vez que isso acontece nesta fase (ver o aviso idêntico
+> no topo da §FASE 3). Fica registrado para não custar uma terceira.
+
+**🔑 VEREDITO DA SEED — a decisão que estava em aberto, resolvida pelo dev CONTRA a recomendação do
+arquiteto:** publicar `seedCorrida` **só quando o draft concluir**, nunca desde a criação da sala.
+
+Razão, nas palavras do dev: é o mesmo precedente da **decisão (b)** desta fase. A seed base completa
+foi rejeitada porque *"qualquer jogador computa as corridas futuras no console — não é hack, é chamar
+uma função"*. Publicar durante o draft **é o mesmo buraco com outro nome**: dá pra simular loadouts
+candidatos e escolher com vantagem. **O contra-argumento da paridade com o offline foi recusado
+explicitamente** — lá a pista aparecer antes do draft é inofensivo porque não há adversário humano.
+Preço aceito: `| null` no tipo e um ramo no cliente.
+
+**Consequência aceita:** a **pista também só aparece no fim do draft**, porque deriva da mesma seed.
+Isso não é descuido nem regressão de UX — é a decisão.
+
+**Fatiamento aprovado:**
+
+- ✅ **PR 1/4 — seed e pista** — FEITO (`b67ec2b`).
+- ✅ **PR 2/4 — o coração.** FEITO (`8a8088a`). 🔒 **A defesa estrutural é UMA FUNÇÃO SÓ alimentando o hash e o
+  `FluxoCorrida`, e não se abre exceção nisso** (palavras do dev). É a classe de bug do **8.4**: duas
+  trilhas, cada lado certo isoladamente, composição errada, **`npm test` não pega**. Determinado: uma
+  função só (`corridaDaSala`, `src/ui/corrida-online.ts`), mesma referência pro hash e pro replay.
+  Guarda estrutural travada em `contrato-corrida-online.test.ts` (allowlist de QUEM chama, contagem exata por arquivo).
+- ✅ **PR 3/4 — barreira no fim + `concluidaEm` marca a corrida** — FEITO (`50906af`). 🔒 **O CORTE Nº 1 PERDEU A RAZÃO DE SER — MEDIDO.** O custo do tique durante o replay é **zero** (com o draft concluído, `deQuemEhAVez()` devolve `[]`, `aoPassarOTempo()` devolve a **mesma referência** sem envios, `aplicar()` só grava quando muda). Ver item 0(e) de "Pendências ATIVAS" — medição registrada, comentário errado em `party/sala.ts` corrigido. **Bloqueante da revisão (reidratação de storage) foi corrigido.**
+- ✅ **PR 4/4 — UI, com PORTÃO VISUAL** — FEITO (`44d0dc8` + `8489b6f`), **✅ PORTÃO VISUAL APROVADO
+  PELO DEV em 2026-08-18.** O botão "Ir pra corrida" aparece (com guarda `corrida !== null`), `FluxoCorrida` roda no
+  modo `'pronta'` com a MESMA referência do hash, o resultado mostra pontuação FIA e o fim do replay
+  atesta a barreira do 3/4. Banner de divergência passou a **ramificar por escopo**.
+  🔒 **A barreira NÃO ganhou status na tela — decisão do dev.** "Aguardando jogadores terminarem…"
+  foi RECUSADO por afirmar um bloqueio que não existe (a barreira do 3/4 é a versão fraca e não
+  segura ninguém). O `AvisoDeFechamento` cobre o único prazo real.
+  🔴 **Nona ocorrência de "o teste afirmava o que não conferia", desta vez NO TESTE DESTE PR:**
+  `toContain('a corrida')` era vacuamente verdadeira — o botão "Ir pra corrida →" contém a
+  substring. Achado pela revisão; corrigido para a frase inteira e **confirmado por mutação**.
+  Preview conferido: `E:\projetos\F1 fantasy\preview\corrida-online.html`.
