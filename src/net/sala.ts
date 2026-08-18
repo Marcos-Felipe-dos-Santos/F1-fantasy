@@ -21,13 +21,17 @@ import {
   type ErroSala,
 } from './protocolo';
 import {
+  MAX_ETAPAS,
   MIN_HUMANOS,
+  N_ETAPAS_CURTA,
   QTD_JOGADORES,
   ROTULO_SEED_CORRIDA,
   ROTULO_SEED_DRAFT,
+  VERSAO_ESTADO_SALA,
   type EstadoSala,
   type EstadoSalaPublico,
   type JogadorSala,
+  type SeedsDoCampeonato,
 } from './tipos';
 
 /** Resultado de uma redução. `erro === null` ⇒ o comando foi aceito. */
@@ -69,10 +73,22 @@ export function criarSala(
    * desde 1970" e morreria no primeiro tique — a armadilha exata do defeito
    * que a carência conserta. */
   agora: number,
+  /**
+   * As seeds do campeonato, sorteadas pela casca. **OBRIGATÓRIO e sem
+   * default**, pelo mesmo motivo de `agora`: um default aqui seria uma seed de
+   * produção fixa, e um parâmetro opcional faria "esqueci de passar" virar
+   * sala legado silenciosa — a exata confusão que `versaoSala` existe pra
+   * impedir. Faltando, não compila.
+   */
+  seeds: SeedsDoCampeonato,
 ): EstadoSala {
   return {
     salaId,
     seedMestre: seedMestre >>> 0,
+    versaoSala: VERSAO_ESTADO_SALA,
+    seedsEtapas: seeds.etapas,
+    seedCalendario: seeds.calendario,
+    etapaAtual: 0,
     dificuldade,
     fase: 'aberta',
     anfitriaoId: null,
@@ -87,6 +103,121 @@ export function criarSala(
     atestaramFimDaCorrida: [],
     seq: 0,
   };
+}
+
+/**
+ * O que as seeds desta sala são, das TRÊS coisas que elas podem ser.
+ *
+ * 🔒 **Substitui a leitura defensiva `sala.seedsEtapas ?? []`, e a diferença é
+ * o PR inteiro.** O `??` colapsa duas situações que precisam ser distinguidas:
+ * a sala que nunca teve seeds (criada antes do 3.5.1) e a sala que TINHA seeds
+ * e as perdeu na reidratação. Tratar a segunda como a primeira significa
+ * re-sortear as etapas em silêncio — o jogador correria uma corrida diferente
+ * da que atestou, que é exatamente a quebra de determinismo silenciosa que o
+ * requisito (a) do baseline existe pra impedir. Perda de segredo não pode
+ * virar estado válido pela porta do conserto.
+ *
+ * `corrompida` **não tem caminho de cura aqui, de propósito**: quem sorteia é
+ * `criar()` na casca, e ela só roda com o storage vazio. Sala corrompida é
+ * recusada, nunca re-semeada.
+ */
+export type EstadoDasSeeds =
+  /** Sala de antes do 3.5.1: nunca teve seeds. Não joga campeonato, e isso é correto. */
+  | { tipo: 'legado' }
+  | { tipo: 'ok'; etapas: number[]; calendario: number }
+  /** Pós-3.5.1 com seeds inválidas: é ERRO, não default. */
+  | { tipo: 'corrompida'; motivo: string };
+
+/** Uint32 de verdade — descarta `NaN`, fração, negativo e o que veio de JSON torto. */
+function ehUint32(valor: unknown): valor is number {
+  return typeof valor === 'number' && Number.isInteger(valor) && valor >= 0 && valor <= 0xffff_ffff;
+}
+
+/** O draft terminou? É o portão que libera calendário e seeds de etapa no fio. */
+function draftConcluido(estado: EstadoSala): boolean {
+  return estado.draft?.fase === 'concluido';
+}
+
+/**
+ * As seeds de etapa que podem ir no fio agora: as ABERTAS, nunca as futuras.
+ *
+ * Com o cursor em `etapaAtual`, abertas são `0..etapaAtual` — no 3.5.1 o
+ * cursor não avança, então isto devolve exatamente **um** elemento assim que o
+ * draft conclui. `corrompida` e `legado` devolvem `[]`: nenhuma das duas tem
+ * seed legítima pra publicar, e inventar uma é o que este PR proíbe.
+ */
+function seedsAbertasDe(estado: EstadoSala): number[] {
+  if (!draftConcluido(estado)) return [];
+  const seeds = estadoDasSeeds(estado);
+  if (seeds.tipo !== 'ok') return [];
+  const cursor = estado.etapaAtual ?? 0;
+  return seeds.etapas.slice(0, Math.min(cursor + 1, N_ETAPAS_CURTA));
+}
+
+/** A seed do calendário, se e só se o draft concluiu e as seeds estão íntegras. */
+function calendarioPublicavel(estado: EstadoSala): number | null {
+  if (!draftConcluido(estado)) return null;
+  const seeds = estadoDasSeeds(estado);
+  return seeds.tipo === 'ok' ? seeds.calendario : null;
+}
+
+export function estadoDasSeeds(sala: EstadoSala): EstadoDasSeeds {
+  if (sala.versaoSala === undefined) return { tipo: 'legado' };
+
+  const { seedsEtapas, seedCalendario } = sala;
+  if (!Array.isArray(seedsEtapas)) {
+    return { tipo: 'corrompida', motivo: 'seedsEtapas ausente numa sala pós-3.5.1' };
+  }
+  if (seedsEtapas.length !== MAX_ETAPAS) {
+    return {
+      tipo: 'corrompida',
+      motivo: `seedsEtapas tem ${seedsEtapas.length} slots, esperado ${MAX_ETAPAS}`,
+    };
+  }
+  if (!seedsEtapas.every(ehUint32)) {
+    return { tipo: 'corrompida', motivo: 'seedsEtapas tem slot que não é uint32' };
+  }
+  if (!ehUint32(seedCalendario)) {
+    return { tipo: 'corrompida', motivo: 'seedCalendario ausente ou não é uint32' };
+  }
+  return { tipo: 'ok', etapas: seedsEtapas, calendario: seedCalendario };
+}
+
+/**
+ * RELATÓRIO DE BUG DO OPERADOR — as seeds desta sala em texto colável.
+ *
+ * 🔒 **FERRAMENTA DE OPERADOR, NUNCA DO FIO.** Ela imprime segredos de
+ * propósito: `seedsEtapas` inteiro, inclusive as etapas ainda não abertas.
+ * Nada em `publicarSala` nem em `estadoPara` a chama, e a varredura de
+ * `JSON.stringify` no snapshot (`campeonato-online.test.ts`) é o que garante
+ * que a saída daqui não aparece no broadcast.
+ *
+ * 🔑 **Por que ela existe** (exigência do dev no 3.5.1): sob `B-indep` as
+ * seeds são independentes, logo **não são reconstituíveis** a partir da
+ * `seedMestre` — palavras dele, *"hoje um bug de corrida se reproduz com uma
+ * seed; num campeonato `B-indep` preciso das 11."* Sem via de extração, um
+ * despejo do Durable Object no meio do campeonato deixaria uma etapa
+ * irreproduzível e o determinismo viraria promessa não verificável.
+ *
+ * **Como o operador chega até aqui:** as seeds vivem no estado PERSISTIDO do
+ * Durable Object (chave `estado`), então extrair é ler o storage do DO e
+ * passar `sala` para esta função. ⚠️ O comando exato de despejo do storage
+ * depende do ambiente (local vs. deployado) e **fica a confirmar pelo dev na
+ * máquina dele** — não invento aqui um comando que não rodei.
+ *
+ * Para reproduzir a etapa k, o consumidor faz o que o cliente faz:
+ * `seedDaEtapa(etapas[k], calendarioSorteado(dataset, calendario, 'curta')[k])`.
+ */
+export function relatorioDeSeeds(sala: EstadoSala): string {
+  const seeds = estadoDasSeeds(sala);
+  const cabecalho = `sala=${sala.salaId} versaoSala=${sala.versaoSala ?? '(pré-3.5.1)'} etapaAtual=${sala.etapaAtual ?? 0}`;
+  if (seeds.tipo === 'legado') return `${cabecalho}\nsem seeds: sala criada antes do 3.5.1`;
+  if (seeds.tipo === 'corrompida') return `${cabecalho}\nSEEDS CORROMPIDAS: ${seeds.motivo}`;
+  return [
+    cabecalho,
+    `seedCalendario=${seeds.calendario}`,
+    ...seeds.etapas.map((seed, k) => `etapa[${k}]=${seed}`),
+  ].join('\n');
 }
 
 /** Seed do draft desta partida — derivada, pra que a `seedMestre` não precise sair do DO. */
@@ -116,6 +247,16 @@ export function publicarSala(estado: EstadoSala): EstadoSalaPublico {
       estado.draft?.fase === 'concluido'
         ? deriveSeed(estado.seedMestre, ROTULO_SEED_CORRIDA)
         : null,
+    etapaAtual: estado.etapaAtual ?? 0,
+    nEtapas: N_ETAPAS_CURTA,
+    // 🔒 As duas linhas abaixo têm o MESMO portão da `seedCorrida` acima, e o
+    // mesmo motivo. Sob a pendência 0(i) a `seedMestre` é recomponível desde o
+    // lobby; publicar calendário ou seed de etapa durante o draft deixaria
+    // escolher peça sabendo as 5 pistas. E seed sem calendário não protegeria
+    // nada sozinha: são 10 pistas no dataset, o jogador computa as 10 e
+    // escolhe. `seedsAbertas` fica `[]` até o draft concluir.
+    seedCalendario: calendarioPublicavel(estado),
+    seedsAbertas: seedsAbertasDe(estado),
     dificuldade: estado.dificuldade,
     fase: estado.fase,
     anfitriaoId: estado.anfitriaoId,

@@ -30,6 +30,17 @@ import type { MensagemServidor } from './protocolo';
 import { RODADAS_SORTEIO } from '../engine/draft-utils';
 import { JANELA_DE_GRACA_MS, TIMEOUT_FIM_DE_CORRIDA_MS, type EstadoSala } from './tipos';
 
+/**
+ * Seeds do campeonato para os testes desta suíte (3.5.1). Valores fixos e
+ * distintivos — nenhum deles é derivado da `seedMestre`, que é o ponto do
+ * `B-indep`. Quem exercita o comportamento das seeds é
+ * `campeonato-online.test.ts`; aqui elas só satisfazem o construtor.
+ */
+const SEEDS_T = {
+  etapas: [1001, 1002, 1003, 1004, 1005, 1006, 1007, 1008, 1009, 1010],
+  calendario: 7777,
+};
+
 const T0 = 1_000_000;
 const CONEXAO_DO_HUMANO: Record<string, string> = {
   'humano-01': 'c1',
@@ -51,7 +62,7 @@ function mandar(
 
 /** Sala com N humanos prontos e o draft REALMENTE iniciado — nenhuma fase forjada. */
 function salaIniciada(quantos: number): EstadoServidor {
-  let estado = criarServidor('sala-barreira', 987_654, 'dificil', T0);
+  let estado = criarServidor('sala-barreira', 987_654, 'dificil', T0, SEEDS_T);
   const nomes = ['Ana', 'Beto', 'Cida'];
   for (let i = 0; i < quantos; i += 1) {
     estado = mandar(estado, `c${i + 1}`, { tipo: 'entrar', nome: nomes[i] }, T0, `tk${i + 1}`).estado;

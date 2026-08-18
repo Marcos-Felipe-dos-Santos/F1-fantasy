@@ -144,6 +144,47 @@ export interface EstadoSalaPublico {
    * atestar o fim dela (PR 3/4).
    */
   corridaAbertaEm: number | null;
+  /**
+   * Índice da etapa corrente do campeonato, 0-based. **O servidor é o dono do
+   * cursor** — nunca o anfitrião, porque com a sala iniciada `anfitriaoId` não
+   * é reatribuído se o host cair (`party/sala.ts` só reatribui em
+   * `fase === 'aberta'`), e avanço por host teria modo de falha "sala
+   * encalhada para sempre".
+   *
+   * ⚠️ **No 3.5.1 ele NÃO avança** — fica em 0. Quem o move é a barreira do
+   * 3.5.2.
+   */
+  etapaAtual: number;
+  /** Quantas etapas tem este campeonato. Fixo em `N_ETAPAS_CURTA` (CORTE 3.5-F). */
+  nEtapas: number;
+  /**
+   * Seed do CALENDÁRIO — só quando o draft CONCLUI. Antes disso, `null`.
+   *
+   * 🔒 **Mesmo portão da `seedCorrida`, e pelo mesmo motivo.** Sob a pendência
+   * 0(i) a `seedMestre` é recomponível desde o lobby, então um calendário
+   * DERIVADO dela seria computável durante o draft — dá pra escolher peça
+   * sabendo as 5 pistas, que é exatamente a vantagem que o portão do PR 1/4
+   * fechou. Por isso ela é sorteada (ver `SeedsDoCampeonato`) **e** publicada
+   * só no fim do draft.
+   *
+   * O cliente compõe `calendarioSorteado(dataset, seedCalendario, 'curta')` —
+   * a função da engine, que deriva internamente com o rótulo `'calendario'` já
+   * registrado. **Nenhum rótulo novo nasce aqui.**
+   */
+  seedCalendario: number | null;
+  /**
+   * As seeds das etapas JÁ ABERTAS, em ordem crescente de etapa. **Nunca as
+   * futuras** — é este recorte que impede computar a etapa k+1 antes da hora, e
+   * é ele que deixa quem reentra recompor as etapas passadas sem estado local.
+   *
+   * 🔒 **Vazia (`[]`) enquanto o draft não conclui**, mesmo portão da
+   * `seedCalendario`. Seed sem calendário não protegeria nada: são 10 pistas no
+   * dataset, o jogador computa as 10 e escolhe. Publicar antes devolveria a
+   * vantagem que o portão do PR 1/4 fechou.
+   *
+   * Ao concluir o draft com o cursor em 0, tem exatamente **um** elemento.
+   */
+  seedsAbertas: number[];
 }
 
 /**
@@ -229,6 +270,90 @@ export const AVISAR_FECHAMENTO_MS = 60_000;
 export const VERSAO_ESTADO_DRAFT = 1;
 
 /**
+ * Versão do formato de `EstadoSala` persistido pelo Durable Object.
+ *
+ * 🔒 **É O DISCRIMINANTE, e ele existe pra que a ausência de campo nunca seja
+ * lida como default** (exigência do dev no 3.5.1). Duas situações produzem um
+ * `seedsEtapas` faltando, e elas NÃO podem ser tratadas igual:
+ *
+ * - sala criada ANTES do 3.5.1 → nunca teve seeds; não jogar campeonato é o
+ *   comportamento correto;
+ * - sala criada DEPOIS do 3.5.1 que perdeu as seeds na reidratação → é
+ *   corrupção, e tratá-la como "sala nova" re-sortearia as etapas em silêncio,
+ *   fazendo o jogador correr uma corrida diferente da que atestou. É
+ *   exatamente o que o requisito (a) existe pra impedir, entrando pela porta
+ *   do conserto.
+ *
+ * Inferir "é antiga" da ausência do campo colapsa as duas. Por isso a versão é
+ * gravada explicitamente, no mesmo padrão (e pelo mesmo motivo) do
+ * `VERSAO_ESTADO_DRAFT` acima. Quem lê é `estadoDasSeeds`, em `sala.ts` —
+ * **nunca um `?? []` espalhado pelos chamadores.**
+ */
+export const VERSAO_ESTADO_SALA = 1;
+
+/**
+ * Quantas seeds de etapa são sorteadas por sala — SEMPRE 10, o máximo
+ * (`N_ETAPAS.completa`), independentemente do formato jogado.
+ *
+ * Sortear o máximo e usar as N primeiras desacopla o sorteio do formato: o
+ * CORTE 3.5-F fixa a temporada curta agora, e restaurar o seletor depois não
+ * mexe em nada aqui.
+ */
+export const MAX_ETAPAS = 10;
+
+/**
+ * Slots sorteados na criação da sala: `MAX_ETAPAS` para as etapas **+ 1** para
+ * o calendário.
+ *
+ * 🔒 **O 11º slot NÃO é `seedsEtapas[0]` reusado, e isso é decisão travada.**
+ * Registrado assim no plano aprovado justamente para que ninguém
+ * "simplifique" depois e recople os dois: com o calendário derivado da mesma
+ * seed da etapa 1, saber uma passaria a dizer algo sobre a outra, que é o
+ * oposto do que `B-indep` compra.
+ */
+export const SLOTS_SEEDS = MAX_ETAPAS + 1;
+
+/**
+ * Número de etapas do campeonato online. **Fixo em `curta` (5)** pelo
+ * CORTE 3.5-F: sem seletor de formato no lobby.
+ *
+ * ⚠️ **Duplicado de `N_ETAPAS.curta` (`src/engine/campeonato.ts`) DE
+ * PROPÓSITO, e vigiado por teste de conformidade** — mesmo padrão do
+ * `QTD_JOGADORES` (pendência 0(a)). Importar a constante de lá arrastaria
+ * `simularQuali`, `simularCorrida` e `resolverCarro` para o grafo do Durable
+ * Object: `campeonato.ts` importa os dois EM RUNTIME (só `Dataset` é `import
+ * type`). A cerca de lint não pegaria — ela casa especificador de import, não
+ * grafo transitivo. E movê-la para um módulo folha da engine mexeria em
+ * `src/engine/**`, o que move o digest do `versao.test.ts` e força bump de
+ * `VERSAO_APP` por motivo cosmético.
+ *
+ * O teste `N_ETAPAS_CURTA === N_ETAPAS.curta` mora em
+ * `campeonato-online.test.ts`, fora da cerca, e importa os dois lados.
+ */
+export const N_ETAPAS_CURTA = 5;
+
+/**
+ * As seeds do campeonato desta sala, sorteadas na CASCA (`party/sala.ts`) com
+ * `crypto.getRandomValues` sobre um `Uint32Array(SLOTS_SEEDS)`.
+ *
+ * 🔑 **Sorteadas, NUNCA derivadas da `seedMestre`** — é o mecanismo `B-indep`
+ * (D1, aprovado pelo dev em 2026-08-18). Derivar por índice compraria ZERO
+ * contra o atacante da pendência 0(i): recomposta a `seedMestre` a partir da
+ * `seedDraft` pública desde o lobby, todas as etapas cairiam juntas. Com
+ * seeds independentes, saber a etapa 1 não diz nada sobre a 2.
+ *
+ * ⚠️ **`number[]`, nunca `Uint32Array`.** O Durable Object persiste este
+ * objeto via JSON, e um `Uint32Array` round-trip vira `{"0":…,"1":…}` — em
+ * silêncio. A conversão (`Array.from`) acontece na casca, na fronteira.
+ */
+export interface SeedsDoCampeonato {
+  /** `MAX_ETAPAS` seeds independentes, uma por etapa, na ordem das etapas. */
+  etapas: number[];
+  /** O 11º slot — a seed do calendário, independente de `etapas[0]`. */
+  calendario: number;
+}
+
+/**
  * Prazo de um turno, em ms. O redutor é PURO: nunca lê relógio — quem chama
  * injeta `agora`. É por isso que `Date.now` é erro de lint em `src/net/**`.
  */
@@ -294,9 +419,37 @@ export interface EstadoDraftRede {
  * `publicarSala`, e o tipo do broadcast (`MensagemServidor`) é
  * `EstadoSalaPublico` — então esquecer de filtrar não compila.
  */
-export interface EstadoSala extends Omit<EstadoSalaPublico, 'seedDraft' | 'seedCorrida'> {
+export interface EstadoSala
+  extends Omit<
+    EstadoSalaPublico,
+    'seedDraft' | 'seedCorrida' | 'seedCalendario' | 'seedsAbertas' | 'nEtapas'
+  > {
   /** Seed mestre da partida, fixada na criação da sala (uint32). */
   seedMestre: number;
+  /**
+   * Versão do formato deste objeto — **o discriminante do 3.5.1**. Ver
+   * `VERSAO_ESTADO_SALA`: `undefined` significa "sala criada antes do 3.5.1",
+   * e é a ÚNICA leitura legítima de "não tem seeds". Sala pós-3.5.1 sem seeds
+   * é corrupção, não sala nova.
+   */
+  versaoSala?: number;
+  /**
+   * 🔒 **TERCEIRO SEGREDO DO ESTADO**, junto com `seedMestre` e `tokens`, e
+   * pelo motivo de sempre: com as seeds futuras na mão, qualquer jogador
+   * computa as corridas que ainda não aconteceram. Quem filtra é
+   * `publicarSala`, que copia campo a campo e publica só `seedsAbertas`.
+   *
+   * `MAX_ETAPAS` valores, sorteados na casca. `undefined` só em sala de antes
+   * do 3.5.1 — ver `versaoSala`.
+   */
+  seedsEtapas?: number[];
+  /**
+   * A seed do calendário (11º slot). Segredo até o draft concluir, quando
+   * `publicarSala` a promove a `seedCalendario` no fio.
+   *
+   * `undefined` só em sala de antes do 3.5.1 — ver `versaoSala`.
+   */
+  seedCalendario?: number;
   /**
    * Quando a partida terminou (ms, injetado). `null` enquanto não terminou.
    *

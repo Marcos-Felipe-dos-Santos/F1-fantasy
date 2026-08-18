@@ -30,6 +30,17 @@ import { QTD_JOGADORES } from './tipos';
 import type { MensagemServidor } from './protocolo';
 import type { DraftState } from '../engine/types';
 
+/**
+ * Seeds do campeonato para os testes desta suíte (3.5.1). Valores fixos e
+ * distintivos — nenhum deles é derivado da `seedMestre`, que é o ponto do
+ * `B-indep`. Quem exercita o comportamento das seeds é
+ * `campeonato-online.test.ts`; aqui elas só satisfazem o construtor.
+ */
+const SEEDS_T = {
+  etapas: [1001, 1002, 1003, 1004, 1005, 1006, 1007, 1008, 1009, 1010],
+  calendario: 7777,
+};
+
 const dataset = criarDataset(equipeAnosReal, pecasReal, pistasReal);
 
 const T0 = 1_000;
@@ -191,7 +202,7 @@ describe('HANDSHAKE de versão: builds diferentes não entram na mesma sala', ()
   }
 
   it('mesma versão entra', () => {
-    let s = criarServidor('s', 1, 'dificil', T0);
+    let s = criarServidor('s', 1, 'dificil', T0, SEEDS_T);
     s = entrar(s, 'c0', '3.4.0').estado;
     const r = entrar(s, 'c1', '3.4.0');
     expect(r.envios.some((e) => e.mensagem.tipo === 'erro')).toBe(false);
@@ -199,7 +210,7 @@ describe('HANDSHAKE de versão: builds diferentes não entram na mesma sala', ()
   });
 
   it('🔴 versão diferente é RECUSADA', () => {
-    let s = criarServidor('s', 1, 'dificil', T0);
+    let s = criarServidor('s', 1, 'dificil', T0, SEEDS_T);
     s = entrar(s, 'c0', '3.4.0').estado;
     const r = entrar(s, 'c1', '3.5.0');
     expect(r.envios[0].mensagem).toEqual({ tipo: 'erro', erro: 'versao-divergente' });
@@ -209,7 +220,7 @@ describe('HANDSHAKE de versão: builds diferentes não entram na mesma sala', ()
   it('cliente ANTIGO (sem `versaoApp`) também é recusado', () => {
     // "Não sei a sua versão" não é o mesmo que "a sua versão serve". Um cliente
     // velho é justamente o caso que o handshake existe pra pegar.
-    let s = criarServidor('s', 1, 'dificil', T0);
+    let s = criarServidor('s', 1, 'dificil', T0, SEEDS_T);
     s = entrar(s, 'c0', '3.4.0').estado;
     const r = entrar(s, 'c1');
     expect(r.envios[0].mensagem).toEqual({ tipo: 'erro', erro: 'versao-divergente' });
@@ -220,7 +231,7 @@ describe('HANDSHAKE de versão: builds diferentes não entram na mesma sala', ()
     // reconecta-se a cada F5, e a UI dispara `reentrar` sozinha. Um deploy no
     // meio da partida traria o jogador de volta com engine nova numa sala de
     // engine velha — sem verificação nenhuma, na primeira versão deste PR.
-    let s = criarServidor('s', 1, 'dificil', T0);
+    let s = criarServidor('s', 1, 'dificil', T0, SEEDS_T);
     s = entrar(s, 'c0', '3.4.0').estado;
     const token = 'tok-c0';
 
@@ -245,7 +256,7 @@ describe('HANDSHAKE de versão: builds diferentes não entram na mesma sala', ()
   it('🔒 a versão é fixada pelo primeiro `entrar` ACEITO, não por um recusado', () => {
     // Se um `entrar` recusado fixasse a versão, um cliente hostil trancaria a
     // sala inteira do lado de fora sem nunca entrar nela.
-    let s = criarServidor('s', 1, 'dificil', T0);
+    let s = criarServidor('s', 1, 'dificil', T0, SEEDS_T);
     // Recusado por falta de token gerado (não é `entrar` aceito).
     const semToken = aoReceber(
       s,
@@ -263,7 +274,7 @@ describe('HANDSHAKE de versão: builds diferentes não entram na mesma sala', ()
 
 describe('o servidor continua SEM dataset — ele só compara strings', () => {
   it('recusa atestado de quem não é jogador da sala', () => {
-    const servidor = criarServidor('sala-x', 1, 'dificil', T0);
+    const servidor = criarServidor('sala-x', 1, 'dificil', T0, SEEDS_T);
     const r = aoReceber(
       servidor,
       'intruso',
@@ -279,7 +290,7 @@ describe('o servidor continua SEM dataset — ele só compara strings', () => {
     // Logo UMA mensagem com âncora absurda de qualquer jogador sentado fazia
     // todo atestado honesto seguinte cair no silêncio pelo RESTO da partida —
     // apagando exatamente a defesa que este PR existe pra criar.
-    let s = criarServidor('s-teto', 1, 'dificil', T0);
+    let s = criarServidor('s-teto', 1, 'dificil', T0, SEEDS_T);
     s = aoReceber(s, 'c0', JSON.stringify({ tipo: 'entrar', nome: 'A', versaoApp: 'v' }), T0, 'tk')
       .estado;
 
@@ -302,7 +313,7 @@ describe('o servidor continua SEM dataset — ele só compara strings', () => {
     // identidade. Reconstruir o balde a cada atestado daria ~22 escritas por
     // evento de draft, e reenviar o mesmo payload válido seria amplificação de
     // escrita de graça.
-    let s = criarServidor('s-idem', 1, 'dificil', T0);
+    let s = criarServidor('s-idem', 1, 'dificil', T0, SEEDS_T);
     s = aoReceber(s, 'c0', JSON.stringify({ tipo: 'entrar', nome: 'A', versaoApp: 'v' }), T0, 'tk')
       .estado;
 
@@ -321,7 +332,7 @@ describe('o servidor continua SEM dataset — ele só compara strings', () => {
   });
 
   it('recusa atestado malformado sem derrubar a sala', () => {
-    let servidor = criarServidor('sala-y', 1, 'dificil', T0);
+    let servidor = criarServidor('sala-y', 1, 'dificil', T0, SEEDS_T);
     servidor = aoReceber(
       servidor,
       'c0',
@@ -375,7 +386,7 @@ describe('o servidor continua SEM dataset — ele só compara strings', () => {
     // legítimo continuaria batendo em `comando-invalido` pra sempre — código
     // morto que nenhum teste flagraria, porque "recusa atestado malformado"
     // tratava exatamente este caso como malformado.
-    let servidor = criarServidor('sala-corrida-ok', 1, 'dificil', T0);
+    let servidor = criarServidor('sala-corrida-ok', 1, 'dificil', T0, SEEDS_T);
     servidor = aoReceber(
       servidor,
       'c0',
@@ -399,7 +410,7 @@ describe('o servidor continua SEM dataset — ele só compara strings', () => {
 describe('atestados por escopo NÃO se misturam (PR 2/4 de "corrida online")', () => {
   /** Dois jogadores conectados, cada um com sua conexão — mesmo padrão dos testes acima. */
   function duasConexoes(): EstadoServidor {
-    let s = criarServidor('s-dois-escopos', 1, 'dificil', T0);
+    let s = criarServidor('s-dois-escopos', 1, 'dificil', T0, SEEDS_T);
     s = aoReceber(s, 'c0', JSON.stringify({ tipo: 'entrar', nome: 'A', versaoApp: 'v' }), T0, 'tk0')
       .estado;
     s = aoReceber(s, 'c1', JSON.stringify({ tipo: 'entrar', nome: 'B', versaoApp: 'v' }), T0, 'tk1')

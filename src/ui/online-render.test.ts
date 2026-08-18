@@ -20,13 +20,24 @@ import { criarSala, publicarSala, reduzirSala } from '../net/sala';
 import type { EstadoSala } from '../net/tipos';
 import type { ComandoSala } from '../net/protocolo';
 
+/**
+ * Seeds do campeonato para os testes desta suíte (3.5.1). Valores fixos e
+ * distintivos — nenhum deles é derivado da `seedMestre`, que é o ponto do
+ * `B-indep`. Quem exercita o comportamento das seeds é
+ * `campeonato-online.test.ts`; aqui elas só satisfazem o construtor.
+ */
+const SEEDS_T = {
+  etapas: [1001, 1002, 1003, 1004, 1005, 1006, 1007, 1008, 1009, 1010],
+  calendario: 7777,
+};
+
 const T0 = 1_000_000;
 let n = 0;
 const aplicar = (estado: EstadoSala, comando: ComandoSala, remetente: string | null): EstadoSala =>
   reduzirSala(estado, comando, remetente, T0, `tk-${(n += 1)}`).estado;
 
 function salaCom(nomes: string[], prontos: boolean[] = []): EstadoSala {
-  let sala = criarSala('sala-render', 2026, 'dificil', T0);
+  let sala = criarSala('sala-render', 2026, 'dificil', T0, SEEDS_T);
   for (const nome of nomes) sala = aplicar(sala, { tipo: 'entrar', nome }, null);
   sala.jogadores.forEach((j, i) => {
     if (prontos[i]) sala = aplicar(sala, { tipo: 'pronto', pronto: true }, j.id);

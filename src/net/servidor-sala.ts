@@ -41,6 +41,7 @@ import {
   PRAZO_TURNO_MS,
   TIMEOUT_FIM_DE_CORRIDA_MS,
   type EstadoSala,
+  type SeedsDoCampeonato,
 } from './tipos';
 import type { Dificuldade } from '../engine/types';
 
@@ -101,8 +102,10 @@ export function criarServidor(
   seedMestre: number,
   dificuldade: Dificuldade,
   agora: number,
+  /** Seeds do campeonato, sorteadas na casca. Sem default — ver `criarSala`. */
+  seeds: SeedsDoCampeonato,
 ): EstadoServidor {
-  return { sala: criarSala(salaId, seedMestre, dificuldade, agora), jogadorPorConexao: {} };
+  return { sala: criarSala(salaId, seedMestre, dificuldade, agora, seeds), jogadorPorConexao: {} };
 }
 
 /** O que o servidor deve fazer com a sala neste instante. */

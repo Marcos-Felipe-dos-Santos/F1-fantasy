@@ -46,6 +46,7 @@ import {
 } from './cliente';
 import { VERSAO_PROTOCOLO, type ComandoDraft, type ComandoSala } from './protocolo';
 import { RODADAS_SORTEIO } from '../engine/draft-utils';
+import { MAX_ETAPAS } from './tipos';
 
 /** Patologias injetadas. Cada campo é probabilidade por mensagem (0..1). */
 export interface Patologias {
@@ -190,7 +191,19 @@ export function rodarHarness(opcoes: OpcoesHarness): ResultadoHarness {
     tokensRecusados: 0,
   };
 
-  let servidor = criarServidor('sala-harness', seed, 'dificil', 0);
+  // As seeds do campeonato (3.5.1). O harness é determinístico por `seed`, e
+  // sortear aqui quebraria isso — então elas são DERIVADAS, ao contrário da
+  // produção, onde são sorteadas (`party/sala.ts`). Isso não afrouxa o
+  // `B-indep`: este é o harness de rede, que não joga campeonato nenhum; o
+  // que prova que a produção sorteia em vez de derivar é
+  // `campeonato-online.test.ts`.
+  const seedsHarness = {
+    etapas: Array.from({ length: MAX_ETAPAS }, (_, k) =>
+      deriveSeed(seed, `teste:harness:etapa:${k}`),
+    ),
+    calendario: deriveSeed(seed, 'teste:harness:calendario'),
+  };
+  let servidor = criarServidor('sala-harness', seed, 'dificil', 0, seedsHarness);
   const participantes = new Map<string, Participante>();
   const emTransito: EmTransito[] = [];
   let ordem = 0;

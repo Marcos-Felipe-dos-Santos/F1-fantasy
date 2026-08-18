@@ -32,9 +32,10 @@ import {
   type EstadoServidor,
   type ResultadoServidor,
 } from '../src/net/servidor-sala';
+import { estadoDasSeeds } from '../src/net/sala';
 import { codigoDeBytes, TAMANHO_CODIGO } from '../src/net/codigo-sala';
 import { ROTA_CRIAR_SALA } from '../src/net/rotas';
-import { MAX_BYTES_MENSAGEM, PRAZO_TURNO_MS } from '../src/net/tipos';
+import { MAX_BYTES_MENSAGEM, MAX_ETAPAS, PRAZO_TURNO_MS, SLOTS_SEEDS } from '../src/net/tipos';
 
 interface Env {
   Sala: DurableObjectNamespace<Sala>;
@@ -79,7 +80,24 @@ export class Sala extends Server<Env> {
     if ((await this.carregar()) !== null) return false;
     const semente = new Uint32Array(1);
     crypto.getRandomValues(semente);
-    this.estado = criarServidor(codigo, semente[0], 'dificil', agora);
+
+    // 🔑 As seeds do CAMPEONATO (3.5.1, mecanismo `B-indep`): 11 slots
+    // INDEPENDENTES — `MAX_ETAPAS` etapas + o calendário. Sorteio SEPARADO do
+    // da `seedMestre` acima, e o 11º slot NÃO é `seedsEtapas[0]` reusado:
+    // derivá-las da mestra compraria zero contra a pendência 0(i), porque
+    // recomposta a mestra pela `seedDraft` do lobby todas cairiam juntas.
+    //
+    // ⚠️ `Array.from` NÃO é estilo: este objeto é persistido via JSON, e um
+    // `Uint32Array` round-trip vira `{"0":…,"1":…}` em silêncio — as seeds
+    // sumiriam na reidratação e as etapas futuras seriam re-sorteadas.
+    const slots = new Uint32Array(SLOTS_SEEDS);
+    crypto.getRandomValues(slots);
+    const todas = Array.from(slots);
+
+    this.estado = criarServidor(codigo, semente[0], 'dificil', agora, {
+      etapas: todas.slice(0, MAX_ETAPAS),
+      calendario: todas[MAX_ETAPAS],
+    });
     await this.ctx.storage.put('estado', this.estado);
     await this.ctx.storage.setAlarm(agora + INTERVALO_TIQUE_MS);
     return true;
@@ -137,6 +155,27 @@ export class Sala extends Server<Env> {
   }
 
   /**
+   * A sala é jogável? **Não**, se ela é pós-3.5.1 e perdeu as seeds do
+   * campeonato na reidratação.
+   *
+   * 🔒 **Recusar é o comportamento correto, e re-semear seria o bug.** Uma
+   * sala que perdeu as seeds no meio do campeonato só tem dois caminhos:
+   * parar, ou sortear de novo — e sortear de novo faz o jogador correr uma
+   * corrida diferente da que ele atestou, em silêncio. É o requisito (a) do
+   * baseline entrando pela porta do conserto. Por isso `criar()` continua
+   * sendo o ÚNICO sítio que sorteia, e ele só roda com o storage vazio
+   * (`carregar() !== null` barra) — nada aqui cura, nada aqui re-semeia.
+   *
+   * ⚠️ Reusa `sala-inexistente` em vez de um código próprio: pro jogador o
+   * desfecho é o mesmo (a sala não dá pra jogar) e um código novo no fio
+   * exigiria mexer no cliente, que está fora do escopo do 3.5.1. Quem precisa
+   * do detalhe é o operador, e ele tem `relatorioDeSeeds`.
+   */
+  private jogavel(estado: EstadoServidor): boolean {
+    return estadoDasSeeds(estado.sala).tipo !== 'corrompida';
+  }
+
+  /**
    * Cria a sala. **Método RPC, não rota HTTP** — e a diferença é de segurança,
    * não de estilo.
    *
@@ -156,7 +195,7 @@ export class Sala extends Server<Env> {
 
   async onConnect(connection: Connection): Promise<void> {
     const estado = await this.carregar();
-    if (estado === null) {
+    if (estado === null || !this.jogavel(estado)) {
       this.recusar(connection);
       return;
     }
@@ -182,8 +221,9 @@ export class Sala extends Server<Env> {
       return;
     }
     const estado = await this.carregar();
-    if (estado === null) {
-      // Comando em voo de uma conexão que sobreviveu ao reset.
+    if (estado === null || !this.jogavel(estado)) {
+      // Comando em voo de uma conexão que sobreviveu ao reset — ou sala cujas
+      // seeds se perderam (ver `jogavel`).
       this.recusar(connection);
       return;
     }
