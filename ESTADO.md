@@ -420,8 +420,8 @@ Isso não é descuido nem regressão de UX — é a decisão.
   função só (`corridaDaSala`, `src/ui/corrida-online.ts`), mesma referência pro hash e pro replay.
   Guarda estrutural travada em `contrato-corrida-online.test.ts` (allowlist de QUEM chama, contagem exata por arquivo).
 - ✅ **PR 3/4 — barreira no fim + `concluidaEm` marca a corrida** — FEITO (`50906af`). 🔒 **O CORTE Nº 1 PERDEU A RAZÃO DE SER — MEDIDO.** O custo do tique durante o replay é **zero** (com o draft concluído, `deQuemEhAVez()` devolve `[]`, `aoPassarOTempo()` devolve a **mesma referência** sem envios, `aplicar()` só grava quando muda). Ver item 0(e) de "Pendências ATIVAS" — medição registrada, comentário errado em `party/sala.ts` corrigido. **Bloqueante da revisão (reidratação de storage) foi corrigido.**
-- ✅ **PR 4/4 — UI, com PORTÃO VISUAL** — FEITO (`44d0dc8` + `8489b6f`), **⬅️ AGUARDANDO VEREDITO DO
-  DEV.** O botão "Ir pra corrida" aparece (com guarda `corrida !== null`), `FluxoCorrida` roda no
+- ✅ **PR 4/4 — UI, com PORTÃO VISUAL** — FEITO (`44d0dc8` + `8489b6f`), **✅ PORTÃO VISUAL APROVADO
+  PELO DEV em 2026-08-18.** O botão "Ir pra corrida" aparece (com guarda `corrida !== null`), `FluxoCorrida` roda no
   modo `'pronta'` com a MESMA referência do hash, o resultado mostra pontuação FIA e o fim do replay
   atesta a barreira do 3/4. Banner de divergência passou a **ramificar por escopo**.
   🔒 **A barreira NÃO ganhou status na tela — decisão do dev.** "Aguardando jogadores terminarem…"
@@ -461,8 +461,8 @@ dependência).
 
 ## Onde parei
 
-**🏁 CORRIDA ONLINE — OS QUATRO PRs FEITOS (2026-08-12 a 2026-08-17). ⬅️ AGUARDANDO O VEREDITO DO
-DEV NO PORTÃO VISUAL DO 4/4 — é o único item que trava o fechamento.**
+**🏁 CORRIDA ONLINE — ENCERRADA. Os quatro PRs feitos (2026-08-12 a 2026-08-17) e o ✅ PORTÃO VISUAL
+DO 4/4 APROVADO PELO DEV em 2026-08-18.** Não há nada pendente na corrida online.
 - PR 1/4 (`b67ec2b`) — seed e pista sorteadas ao fim do draft online. **Medido:** 1412/56.
 - PR 2/4 (`8a8088a`) — uma função só computa a corrida online; mesma referência pra hash e tela (defesa contra bug do 8.4). **Medido:** 1454/60.
 - PR 3/4 (`50906af`) — barreira no fim (versão fraca, não bloqueia ninguém) + `concluidaEm` marca a corrida. **Medido:** 1472/61. **Bloqueante da revisão (reidratação) foi corrigido.**
@@ -471,11 +471,13 @@ DEV NO PORTÃO VISUAL DO 4/4 — é o único item que trava o fechamento.**
   replay, banner ramificando por escopo. **Medido:** 1480/62, typecheck 0, eslint 0, build 0.
   Revisão (Opus) **aprovada sem bloqueante**; 6 avisos aplicados.
 
-**⬅️ O QUE FALTA — NADA DE CÓDIGO, SÓ O SEU VEREDITO:**
+✅ **Veredito do dev sobre `preview\corrida-online.html`: APROVADO (2026-08-18).** Portão fechado; não
+reabrir sem ele.
 
-    start "" "E:\projetos\F1 fantasy\preview\corrida-online.html"
-
-**Depois do veredito:** o **3.5 campeonato online** fecha a Fase 3.
+**➡️ PRÓXIMO: o 3.5 campeonato online, que fecha a Fase 3.** O plano foi proposto pelo
+`fable-architect`, criticado pela sessão principal e **APROVADO pelo dev em 2026-08-18** — está
+registrado na §"3.5 CAMPEONATO ONLINE" logo acima. **Próxima sessão abre o PR 3.5.1**, que é o
+primeiro dos quatro. Nada dele foi implementado.
 
 **Duas decisões de arte esperando o dev** (nenhuma bloqueia o merge): os dois botões do
 `TelaResumo` são ambos `botao-primario` (pré-existente do offline, agora visível no online); e o
@@ -492,11 +494,11 @@ deixou de ser inalcançável — tem seletor, encadeia corridas, salva e retoma)
 **O teste do online foi FECHADO no PR 3.3.4 com todos os quatro casos validados pelo dev.**
 **O alarme de divergência foi MOSTRADO ao jogador no PR 3.4.1 — SURFACING CONCLUÍDO.**
 
-1. 🏁 **A CORRIDA ONLINE — OS QUATRO PRs FEITOS. ⬅️ AGUARDANDO VEREDITO DO PORTÃO VISUAL DO 4/4.**
-   Plano dos 4 PRs registrado na §FASE 3. `b67ec2b`, `8a8088a`, `50906af`, `44d0dc8`+`8489b6f`.
-   **Não há código pendente** — o que falta é o dev abrir `preview/corrida-online.html` e dar o
-   veredito. Depois dele, o **3.5 campeonato online** fecha a fase.
-   **Próxima sessão:** se o veredito for positivo, ir pro 3.5; se houver ajuste de arte, é PR curto.
+1. ✅ **A CORRIDA ONLINE — OS QUATRO PRs FEITOS E O PORTÃO VISUAL DO 4/4 APROVADO PELO DEV
+   (2026-08-18). ITEM ENCERRADO.** Plano dos 4 PRs registrado na §FASE 3. `b67ec2b`, `8a8088a`,
+   `50906af`, `44d0dc8`+`8489b6f`. **A corrida online está fechada** — nada de código nem de veredito
+   pendente nela. O que fecha a Fase 3 agora é o **3.5 campeonato online**, cujo plano está aprovado
+   e registrado em seção própria logo abaixo da §CORRIDA ONLINE.
 2. ⬅️ **VEREDITO do dev sobre `preview/campeonato.html`** (as três telas do 8.3) — segue aberto.
 4. **PR de INFRA — DESTRAVADO pela aprovação das silhuetas.** Era "pré-requisito caso as silhuetas
    fossem aprovadas"; com o 10/10, **deixa de ser pré-requisito e vira consolidação**: restrições
