@@ -596,6 +596,8 @@ se continua** — é ali que a decisão é barata, e não depois do 3.5.3.
      `m`, o lookahead cobre só a 1ª linha — repetição literal do "regex furado na cerca" do 3.2), e
      cheque cego que reprovava a casca CORRETA por causa de um comentário. 🔒 **Negação se escreve
      com `includes`, não com lookahead.**
+     ⚠️ **A cerca que fechou esse bloqueante é TEXTUAL — leia a seção logo abaixo antes de citar
+     "M5 e M6 vermelhas" como garantia.**
 2. **3.5.2 — barreira e avanço de cursor por etapa** + elegíveis recomputados por etapa +
    `concluidaEm` só na última **+ o conserto do detector (campo `etapa`, chave `${escopo}:${etapa}`)**.
 3. **3.5.3 — cliente: N etapas por derivação pura.** `useMemo` sobre `seedsAbertas`; `corridaDaSala`
@@ -612,6 +614,41 @@ se continua** — é ali que a decisão é barata, e não depois do 3.5.3.
    🔑 **`key={'etapa-'+k}`** — sem a `key`, o `useState` de `useCorrida` mantém a corrida anterior e o
    jogador corre a etapa 1 cinco vezes (lição literal de `FluxoCampeonato.tsx:118-122`). Remove
    `naCorrida`.
+
+#### ⚠️ A CERCA DE M5/M6 É **TEXTUAL**, NÃO COMPORTAMENTAL — o que ela NÃO prova (registro pedido pelo dev, 2026-08-18)
+
+> **Escrito para ser lido daqui a três PRs**, por quem encontrar "M5 e M6 vistas vermelhas" no
+> `HISTORICO.md` e concluir que a independência das seeds está garantida por teste. **Não está.**
+
+A cerca vive em `src/net/campeonato-online.test.ts` §"CERCA DO SÍTIO QUE REALMENTE SORTEIA" e faz
+**varredura de string** sobre o texto de `party/sala.ts` (com comentários removidos). O que ela
+realmente afirma é:
+
+- a string `deriveSeed(` **não aparece** em código na casca;
+- existe um `new Uint32Array(SLOTS_SEEDS)` seguido de `crypto.getRandomValues(`;
+- o calendário vem literalmente de `todas[MAX_ETAPAS]` e as etapas de `todas.slice(0, MAX_ETAPAS)`;
+- existe um `Array.from(slots)`.
+
+**🔴 O QUE ELA NÃO PROVA: que as seeds são independentes em produção.** Ela não executa a casca, não
+observa valor nenhum, não compara seed com seed. Passa com as seeds acopladas em pelo menos estes
+casos, todos plausíveis:
+
+- **um `xmur3` inline** — copiar as ~6 linhas do hash direto para `party/sala.ts` e derivar dali;
+- **chamada por alias** — `import { deriveSeed as derivar }` ou `rng.deriveSeed(...)`;
+- **qualquer derivação que não escreva o identificador**, inclusive um helper novo em `src/net/`
+  chamado da casca (a cerca só lê `party/sala.ts`);
+- **acoplamento sem derivação** — `todas[MAX_ETAPAS] = todas[0]` numa linha antes da chamada
+  mantém as duas expressões exigidas e acopla o calendário à etapa 0 mesmo assim.
+
+**Por que ficou assim, e não é descuido:** não há como instanciar um Durable Object no Vitest, e a
+alternativa (`vitest-pool-workers` / `unstable_dev`) é dependência nova e infraestrutura própria —
+fora do escopo de um PR que já estava do tamanho da corrida online inteira. **A cerca compra o que
+dá para comprar barato: ela pega a mutação DESATENTA, que é a provável.** Não pega quem contorna.
+
+🔒 **Consequência prática, e é ela que importa:** a independência das seeds em produção é sustentada
+por **leitura de código**, não por teste. Qualquer PR que mexa em `party/sala.ts` precisa ser lido
+com isso em mente — e se alguém for **fortalecer** a garantia, o caminho é executar a casca de
+verdade, não acrescentar mais padrões à varredura. Ver o RISCO ATIVO de `party/` mais abaixo.
 
 #### 🔒 O QUE O DEV EXIGIU NO BASELINE VERMELHO DO 3.5.1 (não é nota de rodapé)
 
@@ -757,6 +794,39 @@ Reabrir é decisão de arte do dev. Medido no parque novo: o teto de 40% **morde
 Spa (33,4%) e Red Bull Ring (28,0%) não perdem candidato. Caso extremo, o Nürburgring: **29 trechos
 / 50,0% sem teto contra 24 / 38,7% com ele** — é o teto que segue impedindo a faixa contínua que o
 dev reprovou.
+
+## 🔴 RISCO ATIVO ABERTO — `party/` NÃO TEM COBERTURA AUTOMATIZADA
+
+**Registrado como pendência própria pelo dev em 2026-08-18**, ao aprovar o 3.5.1 — explicitamente
+**não** como linha dentro daquele PR. É a camada que **sorteia**, **reidrata** e que vai **carregar
+o cursor no 3.5.2**, e nenhum teste a executa.
+
+**O que foi MEDIDO (não deduzido), durante a revisão do 3.5.1:**
+
+- **Nada no repositório importa `party/sala.ts`.** `grep` por import/require de `party` em `src/` e
+  `scripts/` devolve zero (as ocorrências que aparecem são `partyserver`/`partykit`, o pacote).
+- **`src/net/cerca-lint.test.ts` não o alcança:** ele roda o ESLint sobre arquivos SINTÉTICOS
+  (`party/zz-cerca.ts`), para provar que a cerca está configurada — não sobre o arquivo real.
+- **`src/ui/contrato-corrida-online.test.ts` exclui `party/` de propósito** da varredura.
+- As únicas menções a "party/sala" em arquivos de teste são **comentários** em
+  `src/net/barreira-corrida.test.ts`, não asserções.
+
+**🔴 A consequência já se materializou UMA VEZ, e é por isso que isto é risco e não observação.**
+O baseline do 3.5.1 **declarou cobertura que não existia**: todo o bloco `B-indep` rodava sobre uma
+fixture literal passada a `criarSala`, e um comentário em `harness.ts` afirmava que
+`campeonato-online.test.ts` provava que a produção sorteia. **Medido: as mutações M5 (derivar por
+índice) e M6 (recoplar o 11º slot) aplicadas dentro de `party/sala.ts` — o sítio real — deixavam a
+suíte INTEIRA verde, 1509/63.** Foi bloqueante da revisão.
+
+**O que existe hoje como mitigação, e o tamanho dela:** uma cerca **textual** sobre o arquivo (ver
+a seção "A CERCA DE M5/M6 É TEXTUAL" na §3.5). Ela pega a mutação desatenta e **não** pega quem
+contorna — um `xmur3` inline ou uma chamada por alias passam.
+
+🛑 **O que o 3.5.2 herda:** o cursor passa a se mover, e quem o move é a casca (`alarm()` +
+`aoPassarOTempo`). O gate de sala corrompida no `alarm()` (aviso A2 da revisão do 3.5.1) **também
+não tem teste que o execute** — foi verificado por leitura. Vale decidir, ANTES do 3.5.2, se a
+casca deixa de ser terra sem teste; a opção conhecida é `@cloudflare/vitest-pool-workers`, que é
+**dependência nova e decisão do dev**, não minha.
 
 ## ✅ RISCO ATIVO FECHADO — divergência do ausente DETECTADA E VISÍVEL
 
@@ -939,6 +1009,12 @@ testes de que a substituição é determinística entre execuções independente
    trabalho encerrado, e teriam saído junto. **Cabeçalho não prova pertencimento — ler o conteúdo.**
    🛑 **SESSÃO PRÓPRIA, NÃO NO FIM DE OUTRA** (decisão do dev): cada movimento desses tem risco real
    de levar coisa viva junto, e o fim de uma sessão longa é o pior momento para corrê-lo.
+9. 🔴 **`party/` SEM COBERTURA AUTOMATIZADA — aberta em 2026-08-18, pendência NOMEADA a pedido do
+   dev.** Seção própria acima (§"🔴 RISCO ATIVO ABERTO"), com o que foi medido e o que o 3.5.2
+   herda. Em uma linha: é a camada que sorteia, reidrata e vai carregar o cursor, **nenhum teste a
+   executa**, e a consequência já se materializou uma vez (o baseline do 3.5.1 declarou cobertura
+   inexistente; M5/M6 no sítio real deixavam a suíte verde). Mitigação atual é cerca **textual**,
+   que não pega quem contorna.
 
 > ✅ Fechadas no 7.7: pendência 1 antiga (Spa fundia asfalto) · espinho de ~180° no vértice #0 de
 > Spa · preview da densidade alvo. Fechada no 7.7.1: Monza sem imagem.
