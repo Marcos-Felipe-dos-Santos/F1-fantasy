@@ -170,9 +170,19 @@ export class Sala extends Server<Env> {
    * desfecho é o mesmo (a sala não dá pra jogar) e um código novo no fio
    * exigiria mexer no cliente, que está fora do escopo do 3.5.1. Quem precisa
    * do detalhe é o operador, e ele tem `relatorioDeSeeds`.
+   *
+   * ⚠️ **Loga (aviso A6 da revisão).** Reusar `sala-inexistente` no fio é
+   * aceitável; o servidor não registrar nada é que não era. Sem o log, a sala
+   * recusa todo mundo e ninguém descobre por quê — `relatorioDeSeeds` só ajuda
+   * quem já suspeitou. Isto aparece no `wrangler tail` e não toca no protocolo.
    */
   private jogavel(estado: EstadoServidor): boolean {
-    return estadoDasSeeds(estado.sala).tipo !== 'corrompida';
+    const seeds = estadoDasSeeds(estado.sala);
+    if (seeds.tipo !== 'corrompida') return true;
+    console.error(
+      `[sala ${estado.sala.salaId}] recusando conexões: seeds corrompidas — ${seeds.motivo}`,
+    );
+    return false;
   }
 
   /**
@@ -279,7 +289,20 @@ export class Sala extends Server<Env> {
     // BARREIRA DO FIM DA CORRIDA no tique, e com o gate antigo o timeout de
     // quem nunca atesta nunca seria avaliado — a sala ficaria com
     // `concluidaEm` null até morrer pela carência de vazio.
-    await this.aplicar(aoPassarOTempo(atualizado, agora, PRAZO_TURNO_MS));
+    // 🔒 O GATE ENTRA AQUI, E SÓ AQUI (aviso A2 da revisão). `jogavel` cobria
+    // `onConnect` e `onMessage`, mas não o relógio — e `aoPassarOTempo` RESOLVE
+    // TURNOS VENCIDOS (`expirarNaSala`). Numa sala corrompida com o draft em
+    // andamento, ninguém conseguia conectar nem mandar comando, e o tique de
+    // 5 s ia expirando turno atrás de turno: **o draft se jogava inteiro
+    // sozinho**, numa sala que ninguém podia ver.
+    //
+    // ⚠️ O gate cobre SÓ o `aoPassarOTempo`. `registrarConexoes`, `decidirVida`
+    // e `encerrar` ficam de fora de propósito — a sala corrompida precisa
+    // continuar podendo MORRER pela carência de vazio, senão vira zumbi que
+    // recusa todo mundo e nunca libera o código.
+    if (this.jogavel(atualizado)) {
+      await this.aplicar(aoPassarOTempo(atualizado, agora, PRAZO_TURNO_MS));
+    }
     await this.ctx.storage.setAlarm(agora + INTERVALO_TIQUE_MS);
   }
 }

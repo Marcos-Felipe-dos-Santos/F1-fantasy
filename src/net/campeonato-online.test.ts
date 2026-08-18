@@ -22,6 +22,9 @@
  * pública desde o lobby, todas as etapas cairiam juntas.
  */
 
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { criarDataset } from '../engine/dataset';
 import equipeAnosReal from '../fixtures/dataset-semente/equipe-anos.json';
@@ -241,14 +244,30 @@ describe('🔴 (b) AS SEEDS SÃO EXTRAÍVEIS PARA RELATÓRIO DE BUG (lado do ope
     expect(relatorioDeSeeds(quebrada)).toContain('SEEDS CORROMPIDAS');
   });
 
-  it('🔒 a extração do operador NÃO aparece no fio', () => {
-    // A contrapartida obrigatória de (b): a via existe, mas é do lado do
-    // operador. Se o relatório vazasse no snapshot, a extração teria virado
-    // exatamente o vazamento que `seedsEtapas` existe pra evitar.
+  it('🔒 o que o relatório mostra a MAIS que o fio são as etapas ainda fechadas', () => {
+    // ⚠️ Este teste já se chamou "a extração do operador NÃO aparece no fio",
+    // e o nome MENTIA (aviso A4 da revisão): parte do relatório — a
+    // `seedCalendario` e a etapa 0 — aparece no fio de propósito depois que o
+    // draft conclui. O nome afirmava um bloqueio total que não existe, que é o
+    // mesmo defeito de rótulo que o PR 4/4 corrigiu na tela.
+    //
+    // O que É verdade, e o que se confere aqui: tudo o que o relatório tem e o
+    // fio não tem são as etapas ainda FECHADAS. E o corpo agora parte do
+    // relatório de verdade, em vez de reimplementar a lista à mão.
     const sala = salaConcluida();
+    const relatorio = relatorioDeSeeds(sala);
     const fio = JSON.stringify(publicarSala(sala));
-    for (let k = N_ETAPAS_CURTA; k < MAX_ETAPAS; k += 1) {
-      expect(fio, `a etapa futura ${k} vazou no fio`).not.toContain(String(SEEDS.etapas[k]));
+
+    const publicas = new Set([String(SEEDS.etapas[0]), String(SEEDS.calendario)]);
+    const noRelatorio = [...relatorio.matchAll(/=(\d{6,})/g)].map((m) => m[1]);
+    expect(noRelatorio.length, 'o relatório não listou seed nenhuma').toBeGreaterThan(0);
+
+    for (const valor of noRelatorio) {
+      if (publicas.has(valor)) {
+        expect(fio, `${valor} é pública e deveria estar no fio`).toContain(valor);
+      } else {
+        expect(fio, `${valor} está no relatório e VAZOU no fio`).not.toContain(valor);
+      }
     }
   });
 });
@@ -302,8 +321,16 @@ describe('🔒 o snapshot não vaza segredo (varredura, não campo a campo)', ()
     };
     const fio = JSON.stringify(comVazamento);
     const pegos = segredosDe(sala).filter(({ valor }) => fio.includes(valor));
-    expect(pegos.length, 'a varredura não pegaria um vazamento real').toBeGreaterThan(0);
     expect(fio).toContain(String(sala.seedMestre));
+    // 🔒 Exige que a varredura pegue especificamente uma SEED DE ETAPA (aviso
+    // A3 da revisão). Com só `pegos.length > 0`, uma mutação que apagasse as
+    // entradas de etapa de `segredosDe` continuaria passando aqui — pelo
+    // `seedMestre` — e o teste principal pararia de checar seed EM SILÊNCIO.
+    // Anti-vacuidade que não distingue qual asserção sobrou é ela própria vaga.
+    expect(
+      pegos.map((p) => p.nome).filter((n) => n.startsWith('seed da etapa')),
+      'a varredura não cobre mais as seeds de etapa',
+    ).not.toEqual([]);
   });
 
   it('os valores de fixture são distinguíveis — a varredura não é frágil por acidente', () => {
@@ -355,6 +382,25 @@ describe('🔒 seedsAbertas — só as abertas, nunca as futuras', () => {
     const noFim = publicarSala({ ...base, etapaAtual: MAX_ETAPAS + 5 });
     expect(noFim.seedsAbertas).toHaveLength(N_ETAPAS_CURTA);
     expect(noFim.seedsAbertas).toEqual(SEEDS.etapas.slice(0, N_ETAPAS_CURTA));
+  });
+
+  it('🔒 o CURSOR publicado também é clampado — o snapshot não se contradiz', () => {
+    // Aviso A1 da revisão: `seedsAbertas` saturava mas `etapaAtual` ia cru, e o
+    // teste acima ABENÇOAVA a inconsistência (olhava as seeds e não o cursor).
+    // Um snapshot com `etapaAtual: 15`, `nEtapas: 5` e 5 seeds faria o cliente
+    // do 3.5.2 indexar `calendario[15]` e pegar `undefined`.
+    const base = salaConcluida();
+    for (const cursor of [0, 2, N_ETAPAS_CURTA - 1, N_ETAPAS_CURTA, MAX_ETAPAS + 5, -3]) {
+      const publico = publicarSala({ ...base, etapaAtual: cursor });
+      expect(publico.etapaAtual, `cursor ${cursor} saiu fora da faixa`).toBeGreaterThanOrEqual(0);
+      expect(publico.etapaAtual, `cursor ${cursor} passou de nEtapas`).toBeLessThan(
+        publico.nEtapas,
+      );
+      // A invariante que liga os três campos publicados.
+      expect(publico.seedsAbertas, `invariante quebrada no cursor ${cursor}`).toHaveLength(
+        Math.min(publico.etapaAtual + 1, publico.nEtapas),
+      );
+    }
   });
 
   it('🔑 conformidade: seedDaEtapa(seedsAbertas[0], calendário[0]) é o que o cliente computa', () => {
@@ -438,6 +484,133 @@ describe('🔑 B-indep: as seeds são SORTEADAS, não derivadas', () => {
       ROTULOS_PLAUSIVEIS(k).some((r) => seed === deriveSeed(derivada.seedMestre, r)),
     );
     expect(derivavel, 'a asserção de independência não pegaria uma sala derivada').toBe(true);
+  });
+});
+
+describe('🔴 CERCA DO SÍTIO QUE REALMENTE SORTEIA (`party/sala.ts`)', () => {
+  /**
+   * 🔴 **BLOQUEANTE DA REVISÃO, e o achado mais importante do PR.** Todo o
+   * bloco `B-indep` acima exercita `criarSala(..., SEEDS)` com uma FIXTURE
+   * LITERAL. Provar que `811_000_001 !== deriveSeed(123_456_789, …)` é
+   * aritmética sobre constantes do próprio teste — **não diz nada sobre
+   * produção.** Quem sorteia de verdade é `party/sala.ts`, e `party/` tem
+   * cobertura automatizada ZERO: nada o importa, `cerca-lint.test.ts` roda o
+   * ESLint sobre arquivos sintéticos, e `contrato-corrida-online.test.ts`
+   * exclui `party/` da varredura de propósito.
+   *
+   * **Medido, não deduzido:** as mutações M5 (derivar por índice) e M6
+   * (recoplar o 11º slot) aplicadas DENTRO de `party/sala.ts` deixaram a suíte
+   * inteira **verde — 1509/63**. A tabela de mutações do cabeçalho declarava
+   * cobertura que não existia onde importa. É a família "o teste afirmava o
+   * que não conferia", agora na camada que ninguém testa.
+   *
+   * A cerca é TEXTUAL, no idioma que o projeto já usa (`namespaces-seed.test.ts`,
+   * `contrato-ausente.test.ts`): não dá pra instanciar um Durable Object aqui,
+   * mas dá pra exigir que o sorteio esteja escrito do jeito certo.
+   */
+  const RAIZ = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
+
+  /**
+   * A fonte da casca SEM COMENTÁRIOS.
+   *
+   * ⚠️ Necessário, não estético: `party/sala.ts:232` explica num comentário por
+   * que o token NÃO usa `deriveSeed(seedMestre, …)`. Um cheque cego por
+   * substring reprova a casca correta por causa da prosa que documenta a
+   * decisão certa — foi o que aconteceu na primeira versão desta cerca, e quem
+   * pegou foi a asserção anti-vacuidade que exige que a casca REAL passe.
+   */
+  const semComentarios = (fonte: string): string =>
+    fonte.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/^\s*\/\/.*$/gm, ' ');
+
+  const fonteDaCasca = (): string =>
+    semComentarios(readFileSync(join(RAIZ, 'party', 'sala.ts'), 'utf8'));
+
+  /**
+   * As três propriedades que fazem o sorteio ser sorteio. Cada uma é a negação
+   * exata de uma mutação: (1) e (2) matam M5, (3) mata M6.
+   *
+   * ⚠️ **PREDICADO, não regex de negação.** A primeira versão desta cerca usava
+   * `/^(?!.*\bderiveSeed\b)[\s\S]*$/` para dizer "não contém `deriveSeed`", e
+   * ela era **falso-negativo**: sem a flag `m`, o `.*` do lookahead cobre só a
+   * PRIMEIRA linha, então a cerca passava com `deriveSeed` na linha 2. Medido,
+   * não suposto — e é a repetição literal do "regex furado na cerca" que a
+   * Fase 3 já pagou uma vez. Negação se escreve com `includes`, não com
+   * lookahead.
+   */
+  const EXIGENCIAS: { nome: string; checa: (fonte: string) => boolean; mata: string }[] = [
+    {
+      nome: 'sorteia SLOTS_SEEDS slots com crypto.getRandomValues',
+      checa: (f) => /new Uint32Array\(SLOTS_SEEDS\)[\s\S]{0,200}?crypto\.getRandomValues\(/.test(f),
+      mata: 'M5 — derivar por índice em vez de sortear',
+    },
+    {
+      nome: 'a casca NÃO deriva seed nenhuma',
+      // `deriveSeed` na casca só pode significar uma coisa: alguém trocou o
+      // sorteio por derivação, e o `B-indep` morreu em silêncio.
+      checa: (f) => !f.includes('deriveSeed('),
+      mata: 'M5 — derivar por índice em vez de sortear',
+    },
+    {
+      nome: 'o calendário vem do 11º slot, não de etapas[0]',
+      checa: (f) => /calendario:\s*todas\[MAX_ETAPAS\]/.test(f),
+      mata: 'M6 — recoplar o 11º slot em seedsEtapas[0]',
+    },
+  ];
+
+  it.each(EXIGENCIAS)('party/sala.ts $nome (mata $mata)', ({ checa }) => {
+    expect(checa(fonteDaCasca())).toBe(true);
+  });
+
+  it('as etapas saem do MESMO sorteio, fatiado — não de um segundo sorteio', () => {
+    // Se as etapas viessem de um `getRandomValues` e o calendário de outro, o
+    // 11º slot deixaria de ser "o 11º slot" e a decisão travada perderia
+    // sentido, mesmo continuando independente por acaso.
+    expect(fonteDaCasca()).toMatch(/etapas:\s*todas\.slice\(0, MAX_ETAPAS\)/);
+  });
+
+  it('🔒 anti-vacuidade: a cerca REPROVA cada mutação, aplicada ao texto', () => {
+    // Sem isto, os `toMatch` acima passariam por acidente de regex — que é
+    // exatamente como a cerca do 3.2 furou (regex falso-negativo continuava
+    // verde com a sabotagem aplicada). Aqui cada mutação é aplicada ao TEXTO e
+    // se exige que a exigência correspondente caia.
+    const original = fonteDaCasca();
+    const reprovadas = (fonte: string): string[] =>
+      EXIGENCIAS.filter(({ checa }) => !checa(fonte)).map(({ nome }) => nome);
+
+    expect(reprovadas(original), 'a casca de verdade já reprova — cerca sem sentido').toEqual([]);
+
+    // A remoção de comentários não pode virar buraco: `deriveSeed(` dentro de
+    // um comentário é prosa e deve passar, mas em CÓDIGO tem que reprovar.
+    expect(reprovadas(semComentarios('// deriveSeed(x, y)\nconst a = 1;'))).not.toContain(
+      'a casca NÃO deriva seed nenhuma',
+    );
+    expect(reprovadas(semComentarios('const a = deriveSeed(x, y);'))).toContain(
+      'a casca NÃO deriva seed nenhuma',
+    );
+
+    // M5 escrita como ela seria de fato: o sorteio continua no arquivo (código
+    // morto), e só o consumo muda pra derivação. É o caso mais difícil, e o que
+    // a versão com regex de negação deixava passar.
+    const comM5 = original.replace(
+      'etapas: todas.slice(0, MAX_ETAPAS),',
+      'etapas: mapa((k) => deriveSeed(semente[0], k)),',
+    );
+    expect(comM5, 'a mutação de teste não mudou nada').not.toBe(original);
+    expect(reprovadas(comM5), 'a cerca não pegaria M5 no sítio real').toContain(
+      'a casca NÃO deriva seed nenhuma',
+    );
+
+    const comM6 = original.replace('calendario: todas[MAX_ETAPAS],', 'calendario: todas[0],');
+    expect(comM6).not.toBe(original);
+    expect(reprovadas(comM6), 'a cerca não pegaria M6 no sítio real').toContain(
+      'o calendário vem do 11º slot, não de etapas[0]',
+    );
+  });
+
+  it('a casca converte pra number[] antes de guardar (Array.from na fronteira)', () => {
+    // O par textual de M1: sem `Array.from`, o `Uint32Array` chega ao estado e
+    // não sobrevive ao JSON do storage.
+    expect(fonteDaCasca()).toMatch(/const todas = Array\.from\(slots\)/);
   });
 });
 

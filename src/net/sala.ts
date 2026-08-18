@@ -82,6 +82,18 @@ export function criarSala(
    */
   seeds: SeedsDoCampeonato,
 ): EstadoSala {
+  // 🔒 FALHA ALTO, e de propósito (aviso A5 da revisão). `SeedsDoCampeonato`
+  // não expressa cardinalidade no tipo, então um chamador que passe menos de
+  // `MAX_ETAPAS` seeds gravaria `versaoSala` com comprimento errado:
+  // `estadoDasSeeds` classificaria `corrompida`, a casca recusaria TODA
+  // conexão — e o `POST /criar-sala` já teria respondido 200 com o código. O
+  // jogador receberia o código de uma sala que nunca aceita ninguém. Melhor
+  // estourar no deploy do que parir sala morta em produção.
+  if (seeds.etapas.length !== MAX_ETAPAS) {
+    throw new Error(
+      `criarSala: esperava ${MAX_ETAPAS} seeds de etapa, recebeu ${seeds.etapas.length}`,
+    );
+  }
   return {
     salaId,
     seedMestre: seedMestre >>> 0,
@@ -150,8 +162,20 @@ function seedsAbertasDe(estado: EstadoSala): number[] {
   if (!draftConcluido(estado)) return [];
   const seeds = estadoDasSeeds(estado);
   if (seeds.tipo !== 'ok') return [];
+  return seeds.etapas.slice(0, cursorPublicavel(estado) + 1);
+}
+
+/**
+ * O cursor como ele vai no fio: dentro de `[0, nEtapas - 1]`.
+ *
+ * Fonte ÚNICA do recorte — `seedsAbertasDe` e `publicarSala` usam esta mesma
+ * função justamente para que não possam discordar. Duas contas paralelas do
+ * mesmo número é a classe de bug do 8.4 em miniatura.
+ */
+function cursorPublicavel(estado: EstadoSala): number {
   const cursor = estado.etapaAtual ?? 0;
-  return seeds.etapas.slice(0, Math.min(cursor + 1, N_ETAPAS_CURTA));
+  if (!Number.isInteger(cursor) || cursor < 0) return 0;
+  return Math.min(cursor, N_ETAPAS_CURTA - 1);
 }
 
 /** A seed do calendário, se e só se o draft concluiu e as seeds estão íntegras. */
@@ -247,7 +271,14 @@ export function publicarSala(estado: EstadoSala): EstadoSalaPublico {
       estado.draft?.fase === 'concluido'
         ? deriveSeed(estado.seedMestre, ROTULO_SEED_CORRIDA)
         : null,
-    etapaAtual: estado.etapaAtual ?? 0,
+    // 🔒 CLAMPADO (aviso A1 da revisão). `seedsAbertasDe` satura em
+    // `N_ETAPAS_CURTA`; publicar o cursor cru deixaria o snapshot
+    // internamente inconsistente — `etapaAtual: 15` com `nEtapas: 5` e
+    // 5 seeds abertas. No 3.5.2 o cliente indexaria `calendario[15]` e pegaria
+    // `undefined`. A invariante publicada é
+    // `seedsAbertas.length === min(etapaAtual + 1, nEtapas)` quando o portão
+    // está aberto, e ela tem teste.
+    etapaAtual: cursorPublicavel(estado),
     nEtapas: N_ETAPAS_CURTA,
     // 🔒 As duas linhas abaixo têm o MESMO portão da `seedCorrida` acima, e o
     // mesmo motivo. Sob a pendência 0(i) a `seedMestre` é recomponível desde o

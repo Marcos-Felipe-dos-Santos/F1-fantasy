@@ -323,9 +323,7 @@ export const SLOTS_SEEDS = MAX_ETAPAS + 1;
  * `simularQuali`, `simularCorrida` e `resolverCarro` para o grafo do Durable
  * Object: `campeonato.ts` importa os dois EM RUNTIME (só `Dataset` é `import
  * type`). A cerca de lint não pegaria — ela casa especificador de import, não
- * grafo transitivo. E movê-la para um módulo folha da engine mexeria em
- * `src/engine/**`, o que move o digest do `versao.test.ts` e força bump de
- * `VERSAO_APP` por motivo cosmético.
+ * grafo transitivo.
  *
  * O teste `N_ETAPAS_CURTA === N_ETAPAS.curta` mora em
  * `campeonato-online.test.ts`, fora da cerca, e importa os dois lados.
