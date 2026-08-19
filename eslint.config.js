@@ -4,7 +4,13 @@ import globals from 'globals';
 
 export default tseslint.config(
   {
-    ignores: ['dist/**', 'node_modules/**', 'coverage/**'],
+    // `.wrangler/` é estado local do wrangler (cache do workerd, storage do DO)
+    // e, desde o PR A do spike, também o BUNDLE que `scripts/checar-casca-sem-node.ts`
+    // empacota para inspecionar. É artefato gerado, não fonte: sem esta linha o
+    // `npm run lint` reprova o código minificado do `partyserver` que vem dentro
+    // dele. 🔒 Só `ignores` — nenhuma regra é redefinida aqui (ver a lição do
+    // PR 3.2 no `CLAUDE.md`: bloco que redefine regra APAGA as opções dela).
+    ignores: ['dist/**', 'node_modules/**', 'coverage/**', '.wrangler/**'],
   },
   ...tseslint.configs.recommended,
   {

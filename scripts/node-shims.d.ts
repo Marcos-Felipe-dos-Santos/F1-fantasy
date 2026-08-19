@@ -30,6 +30,20 @@ declare module 'node:fs' {
   export function statSync(path: string): { isDirectory(): boolean; mtimeMs: number };
 }
 
+/**
+ * Adicionado no PR A do spike (`checar-casca-sem-node.ts`): empacotar o worker
+ * com o `wrangler` e inspecionar o bundle. `stdio: 'pipe'` porque a saída do
+ * wrangler não interessa — o que interessa é o artefato e o código de saída
+ * (`execFileSync` lança se o comando falhar, e é isso que se quer).
+ */
+declare module 'node:child_process' {
+  export function execFileSync(
+    arquivo: string,
+    argumentos: string[],
+    opcoes?: { stdio?: 'pipe' | 'inherit' | 'ignore' },
+  ): Uint8Array;
+}
+
 declare module 'node:path' {
   export function dirname(p: string): string;
   export function join(...parts: string[]): string;
@@ -95,6 +109,12 @@ declare const process: {
   exit(codigo?: number): never;
   /** Adicionado no PR 3.5.1 (`despejar-seeds.ts`): saída normal do despejo. */
   stdout: { write(texto: string): boolean };
+  /**
+   * Adicionado no PR A do spike (`checar-casca-sem-node.ts`): invocar o entry
+   * JS do wrangler com o PRÓPRIO Node, sem passar por `npx`. Ver os três
+   * motivos no docblock daquele script.
+   */
+  execPath: string;
 };
 
 interface ImportMeta {
