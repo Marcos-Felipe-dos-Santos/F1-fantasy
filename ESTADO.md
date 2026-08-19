@@ -736,13 +736,18 @@ worker derrubado de verdade e reconexão forçando reidratação: **as 11 seeds 
 cinco salas antigas caíram em `legado`. Os requisitos **(a)** e **(b)** do baseline do 3.5.1 deixam
 de ser projeto e viram **fato medido**. Ressalva registrada na pendência: isso **refuta M6, não M5**.
 
-**➡️ PRÓXIMO: NÃO é o 3.5.2. O dev decidiu em 2026-08-19 adotar
-`@cloudflare/vitest-pool-workers` ANTES dele**, fechando a **pendência 9** (`party/` sem cobertura).
+**➡️ PRÓXIMO: NÃO é o 3.5.2. É o PR A do SPIKE de `@cloudflare/vitest-pool-workers`** — decisão do
+dev em 2026-08-19, com **plano APROVADO e registrado na §"🧪 SPIKE + COBERTURA DA CASCA"**.
 **Motivo do dev, e ele é de método:** o 3.5.2 põe o cursor na casca, ou seja, **a lógica de avanço de
 etapa nasceria exatamente na camada sem cobertura**. Escrever o cursor primeiro e testar depois faz o
 teste nascer **moldado ao código** — que é como se produz a próxima ocorrência da família "o teste
 afirmava o que não conferia". O **gate do `alarm()` para sala corrompida (aviso A2 do 3.5.1)**, hoje
-verificado só por leitura, entra no mesmo PR. Plano pedido ao `fable-architect` em 2026-08-19.
+verificado só por leitura, entra no PR C.
+
+🛑 **O PR A é SPIKE e fecha com GO/NO-GO do dev** (precedente deliberado do SPIKE 3.0). Se **NO-GO**:
+nada de produção mudou, pendência 9 fica 🟡 e **o 3.5.2 abre na sessão seguinte** com a cerca textual.
+**Começar pelo passo 0:** `npm i -D @cloudflare/vitest-pool-workers --dry-run` e **reportar
+contagem/MB ao dev ANTES de instalar de verdade**.
 
 **Depois dele, o PR 3.5.2** — barreira e avanço de cursor por etapa, elegíveis recomputados por
 etapa, `concluidaEm` só na última **+ o conserto do detector** (campo `etapa`, chave
@@ -860,6 +865,152 @@ provaria nada sobre o teste NOVO. O baseline tem que ser uma mutação que a cer
 *(Texto original da pergunta, preservado:)* Vale decidir, ANTES do 3.5.2, se a
 casca deixa de ser terra sem teste; a opção conhecida é `@cloudflare/vitest-pool-workers`, que é
 **dependência nova e decisão do dev**, não minha.
+
+## 🧪 SPIKE + COBERTURA DA CASCA — o plano aprovado (registrado em 2026-08-19)
+
+> ⚠️ **QUARTA vez que um plano desta fase corre risco de não ser registrado** (ver os avisos
+> idênticos no topo da §FASE 3, da §CORRIDA ONLINE e da §3.5 CAMPEONATO ONLINE). **Registrado no
+> mesmo dia da aprovação, a pedido explícito do dev, escrito pela sessão principal (sem
+> `doc-writer`).** Proposto pelo `fable-architect`, criticado pela sessão principal, **aprovado pelo
+> dev em 2026-08-19 com as 5 decisões abaixo.** Fecha (parcialmente) a **pendência 9**.
+> **Plano longo, íntegro:** `C:\Users\marcos\.claude\plans\radiant-jingling-phoenix-agent-a3a867774469c99b1.md`
+> — este registro é o que basta para retomar sem ele.
+
+**Vem ANTES do 3.5.2**, e o motivo é de método: o 3.5.2 põe o cursor na casca, então a lógica de
+avanço de etapa nasceria na única camada sem cobertura, e o teste nasceria **moldado ao código**.
+
+🔑 **GATE DE VERSÃO — MEDIDO em 2026-08-19, antes de planejar.** Era o risco que mudava a FORMA do
+plano: `@cloudflare/vitest-pool-workers@0.22.0` tem peer **`vitest ^4.1.0`** e o projeto já roda
+**`vitest@4.1.10`**. **Sem downgrade nem bump de major** — o custo que teria inviabilizado a adoção
+(mexer em 63 arquivos / 1516 testes) não existe.
+
+### As 5 decisões do dev (2026-08-19)
+
+1. 🔒 **`nodejs_compat`: RAMO 1** — a flag vive **só** em `poolOptions.workers.miniflare.
+   compatibilityFlags`, no `vitest.party.config.ts`. **`wrangler.jsonc` INTOCADO.**
+   🔒 **O COMPENSADOR ENTRA NO PR A, INEGOCIÁVEL, e é `wrangler deploy --dry-run`.** Razão aceita
+   pelo dev: com a flag ligada nos testes, a suíte **deixa de certificar** que o grafo do DO não
+   toca `node:*` — um import acidental passaria verde e quebraria o deploy real. **Adotar o pool sem
+   compensador REDUZ uma garantia no mesmo PR que aumenta cobertura**, que é a forma exata do defeito
+   que este projeto persegue. O `--dry-run` empacota com a config de PRODUÇÃO (sem a flag) e falha de
+   verdade — é **comportamental e pega grafo transitivo**, ao contrário da cerca de lint, que casa
+   **especificador** (limitação que já mordeu no 3.5.1, no `N_ETAPAS_CURTA`).
+   ⚠️ **Registrado para não se perder:** mesmo o Ramo 1 preserva **a letra** da decisão travada do
+   3.2, **não a substância** — o teste roda sob uma configuração de compat que a produção não tem.
+   O dev aceitou **sabendo**; não é detalhe de config.
+2. 🔒 **Wrangler duplicado: ACEITAR AS DUAS CÓPIAS.** O pool traz `wrangler 4.124.0`; o de produção
+   **continua o par exato validado no SPIKE 3.0** (`partyserver@0.5.10` + `wrangler@4.120.0`).
+   **NÃO subir para 4.124.0 agora**, e não usar `overrides` (arriscaria romper a dependência exata
+   do pool).
+3. 🛑 **O PR A É UM SPIKE, COM GO/NO-GO EXPLÍCITO — veredito do dev no fim da sessão.** Precedente
+   deliberado: o SPIKE 3.0, que é como este projeto trata dependência móvel. Ele carrega **todo o
+   risco de descoberta** (miniflare alpha, wrangler duplicado, workerd no Windows, SQLite +
+   `isolatedStorage`) e **nenhuma asserção de lógica de sala**.
+   **Se NO-GO:** perdeu-se uma sessão, **nada de produção mudou** (rollback = `git checkout
+   package.json package-lock.json`), a **pendência 9 fica 🟡** e o **3.5.2 abre na sessão seguinte**
+   com a cerca textual. Isto devolve ao dev a decisão barata que o adiamento do 3.5.2 tinha empurrado
+   três sessões para a frente.
+4. **O docblock refutado do `Array.from` — CORRIGIR DENTRO DO PR A** (duas linhas; o spike já mexe na
+   casca). Não merece PR próprio. Ver o bloco "R4" abaixo.
+5. **O MZ (zumbi) — REPORTAR como pendência, NÃO consertar dentro do spike.** Se confirmar que é bug,
+   **entra ANTES do 3.5.2 como PR curto.** Registrado como **pendência 0(s)**.
+
+### Classificação e portões
+
+**BAIXO RISCO pelo diff** — infra de teste, `party/sala.ts` e `src/net/*.ts` intactos (exceto as duas
+linhas de comentário da decisão 4). **`senior-reviewer`: PULAR.** Dois portões que **não vêm do
+rótulo** e valem mesmo assim:
+- **(i) cada mutação VISTA vermelha, uma a uma**, sobre código de produção pronto. Ordem obrigatória:
+  código pronto → teste VERDE → aplica a mutação → **VÊ** vermelho → reverte → VERDE de novo.
+- **(ii) `npm test` medido antes e depois: tem que continuar 1516/63.**
+🔒 **Vermelho de compilação/infra NÃO CONTA como baseline** — por isso o PR A entrega um smoke verde
+primeiro (regra travada da §3.5, item 2).
+
+### Fatiamento — TRÊS PRs, o A estritamente sozinho
+
+- **PR A — INFRA / SPIKE.** Passo 0: `npm i -D @cloudflare/vitest-pool-workers --dry-run` e
+  **REPORTAR contagem/MB ao dev ANTES de instalar de verdade** (portão barato que troca estimativa
+  por número). Depois: `vitest.party.config.ts` (`include: ['party/**/*.test.ts']`,
+  `wrangler: { configPath: './wrangler.jsonc' }`), script `test:party`, `party/tsconfig.test.json`
+  entrando em `typecheck` **e** `build`, `party/smoke.test.ts` verde, o compensador `--dry-run`, e a
+  correção do docblock (decisão 4). **Fecha com veredito go/no-go do dev.**
+  🔒 **O `party/tsconfig.json` atual EXCLUI `**/*.test.ts` de propósito — NÃO mexer nele.** Sem um
+  tsconfig de teste próprio, o arquivo que referencia `cloudflare:test`/`env` não é checado por gate
+  nenhum, e é onde erro silencioso mora.
+  🔒 **O TESTE MORA EM `party/`, NUNCA EM `src/`** — sob `src/` ele entraria no `include` do
+  `npm test` e arrastaria os 63 arquivos para dentro do workerd.
+- **PR B — sorteio real e reidratação** (`party/seeds.test.ts`). Baselines **MA** e **MR**.
+  **Edita o docblock da cerca textual com a matriz de cobertura** (obrigatório — ver abaixo).
+- **PR C — gate do `alarm()`** (`party/alarme.test.ts`). Baselines **MB**, **MD** e a anti-vacuidade.
+
+### Os baselines vermelhos
+
+**Critério em todos: `src/net/campeonato-online.test.ts` (a cerca textual) VERDE e o teste novo
+VERMELHO, na MESMA invocação. Par OBSERVADO, não raciocinado** — raciocinar sobre cerca é o que já
+falhou duas vezes neste projeto.
+
+- 🔑 **MA — `todas[MAX_ETAPAS] = todas[0]`** na linha antes de `criarServidor` (`party/sala.ts:96`).
+  **É o furo ENUMERADO da cerca textual**, então ela fica VERDE e o teste novo cai em 100% das salas.
+  **Era essencial não usar M5/M6 como baseline:** a cerca textual já pega as duas, as duas cercas
+  ficariam vermelhas juntas e o PR não provaria nada sobre o teste NOVO.
+  N = 5 salas, não 20 (MA cai já na primeira; salas extras compram largura, não força).
+- **MR — `const todas = slots`** (sem `Array.from`), o requisito (a) do dev. ⚠️ **`isolatedStorage`
+  (ligado por padrão) desfaz escritas entre testes** — escrita e leitura no MESMO `it`.
+- **MB — remover o gate do `alarm()`** (aviso A2): sala CORROMPIDA com draft em andamento e turno
+  vencido ⇒ `seq` e `draft` INALTERADOS. Com a mutação, o draft se joga sozinho.
+- **MD — gate cedo demais** (early return no topo): sala corrompida e vazia há mais de 2 min **ainda
+  morre**. Protege o "o gate cobre SÓ o `aoPassarOTempo`" de `party/sala.ts:299-302`.
+- **ANTI-VACUIDADE de MB, obrigatória:** sala sã, mesmo setup de relógio, o alarme **EXPIRA** o turno.
+  Sem ela, "não avança" passaria por "nada nunca avança".
+
+🛑 **A ARMADILHA DE VACUIDADE — o furo mais grave, e é obrigatório resolvê-lo.** Conferido no código,
+não deduzido: em `alarm()`, `decidirVida` chama **`encerrar()` na linha 274, ANTES do gate da 303**.
+Se o setup atrasar **todos** os timestamps de uma vez, `vazioDesde` estoura `CARENCIA_VAZIO_MS`, a
+sala é DESTRUÍDA e `aoPassarOTempo` nunca roda: **teste verde, gate nunca exercitado** — "o teste
+afirmava o que não conferia" no teste que o dev chamou de mais importante. **Os dois relógios são
+independentes e o setup dita cada um:**
+- **MB:** `vazioDesde: null` (com 0 conexões, `registrarConexoes` grava `agora`, e `agora - agora`
+  = 0 ⇒ a sala SOBREVIVE até a 303) **E** `draft.iniciadoEm[jogadorDaVez] = agora - 10 × PRAZO_TURNO_MS`.
+- **MD:** o oposto — `vazioDesde = agora - 3 × 60_000` e 0 conexões.
+🔒 **`decidirVida` tem DUAS portas de `encerrar`, não uma** (`src/net/servidor-sala.ts:145`:
+`concluidaEm !== null && agora - concluidaEm >= janelaMs`). As fixtures são montadas à mão via
+`storage.put`, então **fixar `concluidaEm: null` explicitamente, com comentário do porquê** — senão a
+armadilha volta pela segunda porta e a nota sobre ela lê como coberta sem estar.
+
+### 🔴 O que NÃO passa a ser coberto — e a cerca textual FICA
+
+**M5 (derivar seeds por índice) continua fora de alcance COMPORTAMENTAL, para sempre.** Seeds
+derivadas por índice **também** são distintas entre si e entre salas; um teste que compara "são
+diferentes" não pega M5. E não dá para fixar a `seedMestre` e comparar salas, porque `criar()` só
+roda com o storage vazio. Matriz que **vai escrita no docblock da cerca, no PR B**:
+
+| Mutação | cerca textual | comportamental |
+|---|---|---|
+| **M5** (derivar por índice) | SIM | **NÃO, nunca** |
+| **M6** (calendário = `todas[0]` no literal) | SIM | SIM |
+| **MA** (`todas[MAX_ETAPAS] = todas[0]`) | **NÃO** | SIM |
+
+🔒 **A CERCA TEXTUAL PERMANECE, E PERMANECE POR CAUSA DE M5.** Sem essa frase no docblock, o próximo
+leitor a apaga citando a cobertura comportamental nova — é o risco R3 do plano.
+**A pendência 9 vai de 🔴 para 🟡, NÃO para ✅:** depois de A+B+C, `onMessage`, `onClose`, `encerrar`,
+CORS e a propriedade RPC-vs-HTTP seguem sem cobertura. Também seguem fora: `FluxoOnline.tsx`
+(workerd não é jsdom — **não muda nada** em 0(m)/0(j)), fan-out REAL (latência, concorrência de
+borda, hibernação de verdade), token por origem 0(h) e o brute-force de 2³² de 0(i).
+
+### R4 — o docblock de `party/sala.ts:90-92` está REFUTADO pela medição do 0(p)
+
+O comentário afirma que o estado *"é persistido via **JSON**, e um `Uint32Array` round-trip vira
+`{"0":…}`"*. 🔑 **JSON não está no caminho:** o despejo do dev (pendência 0(p), 2026-08-19)
+estabeleceu que `ctx.storage.put` grava **V8-serializado** na `_cf_KV` — foi por isso que o
+`despejar-seeds.ts` precisou do `node:v8`. **É afirmação técnica errada em código de produção.**
+- **MR continua baseline VÁLIDO** — conferido: `estadoDasSeeds` usa `Array.isArray`
+  (`src/net/sala.ts:192`) e um `Uint32Array` reprova ali. Mas fica vermelho **por outro motivo** do
+  que o docblock diz: a sala vira **`corrompida` e é RECUSADA**, não "as seeds somem e as etapas
+  futuras são re-sorteadas em silêncio".
+- 🔒 **O teste tem que asserir o comportamento OBSERVADO, não o docblocado.**
+- **Ainda genuinamente aberto:** se o `Uint32Array` sobrevive ao V8 (structured clone normalmente
+  preserva typed arrays, mas **não foi executado em workerd**). O 0(p) prova o **serializador**, não
+  esse detalhe.
 
 ## ✅ RISCO ATIVO FECHADO — divergência do ausente DETECTADA E VISÍVEL
 
@@ -1033,6 +1184,23 @@ testes de que a substituição é determinística entre execuções independente
    Hoje é inconsistência de tese, não vazamento: `cursorPublicavel` clampa e o servidor nunca grava
    outro tipo. Mas **o cursor é justamente o campo que governa quantos segredos saem no fio** —
    quando o 3.5.2 o fizer se mover, trazê-lo para dentro do discriminante.
+   (s) 🟠 **NOVA (planejamento do spike, 2026-08-19) — SUSPEITA DE BUG DE PRODUÇÃO: sala corrompida
+   com `vazioDesde: null` pode NUNCA MORRER.** Achado por LEITURA de `party/sala.ts:268-306` pelo
+   `fable-architect`; **não confirmado por execução** — é exatamente por não haver como executar a
+   casca que ele não foi confirmado. Cadeia: (1) `carregar()` devolve o estado com
+   `vazioDesde: null`; (2) `registrarConexoes` produz `atualizado` com `vazioDesde = agora`, num
+   objeto NOVO; (3) `decidirVida`: `agora - agora = 0 < CARENCIA_VAZIO_MS` ⇒ segue; (4) `jogavel` é
+   **false** ⇒ **`aplicar()` nunca é chamado** ⇒ `atualizado` nunca é persistido e `this.estado`
+   continua com `vazioDesde: null`; (5) próximo tique repete — `agora - agora` é sempre 0.
+   **Consequência: uma sala que se corrompe ENQUANTO AINDA TINHA CONEXÕES vira o zumbi exato que o
+   comentário de `party/sala.ts:299-302` afirma que a posição do gate impede** — recusa todo mundo e
+   nunca libera o código.
+   🔒 **DECISÃO DO DEV (2026-08-19): reportar, NÃO consertar dentro do spike** — "zero diff de
+   produção" é restrição que aquele PR se impõe e mantém. **Se o PR C confirmar que é bug, o conserto
+   entra ANTES do 3.5.2, como PR curto e com baseline próprio.** ⚠️ É caminho que o **3.5.1 acabou de
+   criar** (sala corrompida só existe desde o discriminante), então não é dívida velha.
+   💡 Se confirmar, é também **o argumento mais forte a favor da dependência**: o harness achou o que
+   a leitura não achou.
 1. **Abertas pelo 7.8:** (a) o `BotaoTema` é um botão discreto no canto do `app-shell` — posição e
    forma **não passaram por veredito de arte**; (b) `erro` (salmão `#FF7B85`) e `raridadeProibido`
    (`#FF4757`) continuam sendo dois vermelhos ao lado do vermelho da marca — não foi mexido porque
@@ -1076,9 +1244,12 @@ testes de que a substituição é determinística entre execuções independente
    executa**, e a consequência já se materializou uma vez (o baseline do 3.5.1 declarou cobertura
    inexistente; M5/M6 no sítio real deixavam a suíte verde). Mitigação atual é cerca **textual**,
    que não pega quem contorna.
-   ➡️ **DECIDIDO PELO DEV em 2026-08-19: adotar `@cloudflare/vitest-pool-workers`, e ANTES do
-   3.5.2** — porque o 3.5.2 põe o cursor na casca e o teste nasceria moldado ao código. O gate do
-   `alarm()` (aviso A2) entra no mesmo PR. **Plano pedido ao `fable-architect`; nada implementado.**
+   ✅ **PLANO APROVADO PELO DEV em 2026-08-19 — está na §"🧪 SPIKE + COBERTURA DA CASCA" acima**,
+   com as 5 decisões dele (Ramo 1 do `nodejs_compat` + compensador `--dry-run` inegociável em PR A ·
+   duas cópias de wrangler · **PR A é SPIKE com go/no-go** · docblock do R4 corrigido no A · MZ vira
+   pendência **0(s)**). Três PRs (A/B/C), o A sozinho. **Nada implementado.**
+   ⚠️ **Fecha esta pendência só PARCIALMENTE: ela vai a 🟡, não a ✅** — M5 segue indetectável
+   comportamentalmente e `onMessage`/`onClose`/`encerrar`/CORS seguem descobertos.
    🔑 **Gate de versão MEDIDO em 2026-08-19, antes de planejar** (era o risco que mudava a FORMA do
    plano, não um detalhe): `@cloudflare/vitest-pool-workers@0.22.0` tem peer **`vitest ^4.1.0`** e o
    projeto já roda **`vitest@4.1.10`** — **não há downgrade nem bump de major**, o que era o custo
