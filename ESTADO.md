@@ -705,8 +705,16 @@ DO 4/4 APROVADO PELO DEV em 2026-08-18.** Não há nada pendente na corrida onli
 reabrir sem ele.
 
 **🏆 3.5 CAMPEONATO ONLINE COMEÇOU — PR 3.5.1 FEITO em 2026-08-18**, na branch
-`pr-3.5.1-seed-por-etapa` (`83a6fde` + `ffdabc1` + `4a4b801`). **NÃO mergeada, NÃO pushada, sem
-tag** — aguardando o dev. Plano na §"3.5 CAMPEONATO ONLINE" logo acima, com o fatiamento atualizado.
+`pr-3.5.1-seed-por-etapa` (`83a6fde` + `ffdabc1` + `4a4b801`). ✅ **MERGEADO na `main`** (`3308be3`)
+✅ **e PUSHADO** — **sem tag**, como o dev pediu. Plano na §"3.5 CAMPEONATO ONLINE" logo acima, com
+o fatiamento atualizado.
+
+⚠️ **CORREÇÃO DE AFIRMAÇÃO DE ESTADO (2026-08-19).** Esta linha dizia *"NÃO mergeada, NÃO pushada,
+sem tag — aguardando o dev"* e **estava falsa nas duas primeiras pernas**. Medido ao vivo, não
+herdado: `git ls-remote origin refs/heads/main` = `f9d5348`, **idêntico ao `HEAD` local**, e
+`git rev-list --left-right --count origin/main...main` = `0 0`. A branch `pr-3.5.1-seed-por-etapa`
+segue existindo **só local**, em `3282852`, já contida na `main`. É a terceira ocorrência da lição
+do rodapé das pendências — **"afirmação de estado só entra medida"** —, desta vez sobre git.
 
 - **`B-indep` no ar:** 11 seeds independentes sorteadas no DO (10 etapas + calendário), publicadas
   uma por etapa. **O cursor não avança** — só a etapa 0 sai. `VERSAO_ESTADO_SALA` discrimina sala
@@ -719,12 +727,26 @@ tag** — aguardando o dev. Plano na §"3.5 CAMPEONATO ONLINE" logo acima, com o
   aplicadas no sítio que de fato sorteia deixavam a suíte **inteira verde**. Corrigido com cerca
   textual sobre `party/sala.ts` — que por sua vez nasceu com dois defeitos próprios, ambos pegos
   rodando. Detalhe completo no `HISTORICO.md` §"PR 3.5.1".
-- 6 avisos da revisão aplicados (A1–A6). Três pendências novas registradas: **0(p)** o requisito (b)
-  do dev está entregue pela metade (o despejo do storage nunca foi rodado), **0(q)** ordem de deploy
-  `wrangler` antes de `vite` a partir do 3.5.2, **0(r)** `etapaAtual` fora do discriminante.
+- 6 avisos da revisão aplicados (A1–A6). Três pendências novas registradas: **0(p)** ✅ **FECHADA em
+  2026-08-19 pela medição do dev** (ver a pendência), **0(q)** ordem de deploy `wrangler` antes de
+  `vite` a partir do 3.5.2, **0(r)** `etapaAtual` fora do discriminante — **as duas seguem abertas**.
 
-**➡️ PRÓXIMO: o PR 3.5.2** — barreira e avanço de cursor por etapa, elegíveis recomputados por etapa,
-`concluidaEm` só na última **+ o conserto do detector** (campo `etapa`, chave `${escopo}:${etapa}`).
+✅ **PENDÊNCIA 0(p) FECHADA em 2026-08-19 — o dev rodou o despejo real.** Sala `420320` pós-3.5.1,
+worker derrubado de verdade e reconexão forçando reidratação: **as 11 seeds vieram idênticas**, e as
+cinco salas antigas caíram em `legado`. Os requisitos **(a)** e **(b)** do baseline do 3.5.1 deixam
+de ser projeto e viram **fato medido**. Ressalva registrada na pendência: isso **refuta M6, não M5**.
+
+**➡️ PRÓXIMO: NÃO é o 3.5.2. O dev decidiu em 2026-08-19 adotar
+`@cloudflare/vitest-pool-workers` ANTES dele**, fechando a **pendência 9** (`party/` sem cobertura).
+**Motivo do dev, e ele é de método:** o 3.5.2 põe o cursor na casca, ou seja, **a lógica de avanço de
+etapa nasceria exatamente na camada sem cobertura**. Escrever o cursor primeiro e testar depois faz o
+teste nascer **moldado ao código** — que é como se produz a próxima ocorrência da família "o teste
+afirmava o que não conferia". O **gate do `alarm()` para sala corrompida (aviso A2 do 3.5.1)**, hoje
+verificado só por leitura, entra no mesmo PR. Plano pedido ao `fable-architect` em 2026-08-19.
+
+**Depois dele, o PR 3.5.2** — barreira e avanço de cursor por etapa, elegíveis recomputados por
+etapa, `concluidaEm` só na última **+ o conserto do detector** (campo `etapa`, chave
+`${escopo}:${etapa}`).
 🛑 **É no 3.5.2 que o dev pediu para ver, VISÍVEL, a opção de abandonar o 3.5 inteiro** — o corte
 honesto da fase pode ser o próprio 3.5, e é ali que a decisão é barata.
 
@@ -824,7 +846,18 @@ contorna — um `xmur3` inline ou uma chamada por alias passam.
 
 🛑 **O que o 3.5.2 herda:** o cursor passa a se mover, e quem o move é a casca (`alarm()` +
 `aoPassarOTempo`). O gate de sala corrompida no `alarm()` (aviso A2 da revisão do 3.5.1) **também
-não tem teste que o execute** — foi verificado por leitura. Vale decidir, ANTES do 3.5.2, se a
+não tem teste que o execute** — foi verificado por leitura.
+
+✅ **A DECISÃO FOI TOMADA — dev, 2026-08-19: adotar `@cloudflare/vitest-pool-workers` ANTES do
+3.5.2.** Esta seção registrava a pergunta em aberto; **decidido que sim.** Motivo, gate de versão
+medido e custos residuais estão na **pendência 9**.
+🔒 **A regra de método que esse PR não pode furar:** o baseline vermelho **não pode ser M5 nem M6** —
+a cerca **textual** já pega as duas, então as duas cercas ficariam vermelhas juntas e o PR não
+provaria nada sobre o teste NOVO. O baseline tem que ser uma mutação que a cerca textual
+**provadamente não pega** (a §"A CERCA DE M5/M6 É TEXTUAL" lista os furos), com critério de sucesso
+**cerca textual VERDE + teste comportamental novo VERMELHO**.
+
+*(Texto original da pergunta, preservado:)* Vale decidir, ANTES do 3.5.2, se a
 casca deixa de ser terra sem teste; a opção conhecida é `@cloudflare/vitest-pool-workers`, que é
 **dependência nova e decisão do dev**, não minha.
 
@@ -958,14 +991,34 @@ testes de que a substituição é determinística entre execuções independente
    tamanho da corrida online inteira"*. Fica para o PR de alargamento de entropia, que é onde (i)
    também vive. ⚠️ **O custo marginal lá é quase zero** (o `EstadoSala` já terá segredos sorteados
    pelo 3.5.1): quem pegar aquele PR deve tratar (i) e (o) **juntos**, não um de cada vez.
-   (p) **NOVA (PR 3.5.1) — o requisito (b) do dev: FERRAMENTA PRONTA, medição do dev PENDENTE.**
-   ✅ **`scripts/despejar-seeds.ts` existe e foi rodado por mim** (2026-08-18) contra o storage local
-   real. 🔴 **Medido e importante: NÃO dá pra olhar o SQLite direto.** O DO é `new_sqlite_classes`, e
-   `ctx.storage.put` grava na tabela `_cf_KV` com o valor **V8-serializado, não JSON** — o blob começa
-   em `ff 0f` e um número é a tag `N` + 8 bytes IEEE-754. `sqlite3`, `strings` ou qualquer dump de
-   texto mostram os NOMES dos campos e **não os números**; por isso o script desserializa com
-   `node:v8`. **Falta o dev rodar numa sala pós-3.5.1** (as locais são todas legado) e confirmar as 11
-   seeds antes e depois de reiniciar o worker. Texto original da pendência abaixo, preservado:
+   (p) ✅ **FECHADA em 2026-08-19 — MEDIDA PELO DEV, NÃO DEDUZIDA.** O requisito (b) foi confirmado
+   em produção, e de quebra o (a) junto. **Método (é o que dá valor ao fechamento):** sala nova
+   `420320` criada pós-3.5.1 (`versaoSala: 1`, `etapaAtual: 0`, 10 slots de etapa), os 11 números
+   anotados; **derrubada real do worker** (Ctrl-C no `npm run sala`); worker subido de novo;
+   **reconexão pela 420320 no navegador, forçando a reidratação**; segundo despejo. **Os 11 números
+   vieram IDÊNTICOS.**
+   - ✅ **Requisito (a) — SOBREVIVER À REIDRATAÇÃO DO DURABLE OBJECT — confirmado em produção.** Até
+     aqui (a) estava sustentado só por teste unitário sobre o blob persistido; agora atravessou um
+     restart de verdade do DO. Fecha a reincidência que já tinha sido bloqueante de revisão no PR 3/4.
+   - ✅ **Requisito (b) — SER EXTRAÍVEL PARA RELATÓRIO DE BUG — deixou de ser projeto e virou fato
+     medido.** `scripts/despejar-seeds.ts` roda e devolve as 11 seeds de uma sala real.
+   - ✅ **O OUTRO RAMO DO DISCRIMINANTE confirmado em dados reais:** as cinco salas pré-3.5.1 foram
+     classificadas como **`legado`**. ⚠️ **O ramo `corrompida` continua NÃO OBSERVADO em produção** —
+     existe só em teste, e fechar (p) não fecha isso. (É um dos ganhos da pendência 9.)
+   - 🔑 **O QUE A MEDIÇÃO REFUTA, COM PRECISÃO — ler antes de citá-la:** `seedCalendario 1903767602`
+     ≠ primeira `seedsEtapas 3187109758` ⇒ **o 11º slot NÃO foi recoplado. Isso é a mutação M6
+     refutada em dados de produção.** 🛑 **E não diz NADA sobre M5** (derivar por índice): seeds
+     derivadas por índice **também** diferem entre si, então "os números são diferentes" não
+     distingue sorteio de derivação. **NÃO ler esta medição como "independência das seeds confirmada
+     em produção"** — é exatamente o exagero que a §"A CERCA DE M5/M6 É TEXTUAL" foi escrita para
+     impedir daqui a três PRs. A cerca textual continua valendo, por causa de M5.
+   - ℹ️ **"qtd de etapas: 10" no despejo são os 10 SLOTS sorteados** (`Uint32Array(11)` = 10 etapas +
+     o 11º do calendário), **não** mudança de formato — o **CORTE 3.5-F** segue fixando curta = 5.
+   🔴 **Achado técnico que fica valendo: NÃO dá pra olhar o SQLite direto.** O DO é
+   `new_sqlite_classes`, e `ctx.storage.put` grava na tabela `_cf_KV` com o valor **V8-serializado,
+   não JSON** — o blob começa em `ff 0f` e um número é a tag `N` + 8 bytes IEEE-754. `sqlite3`,
+   `strings` ou qualquer dump de texto mostram os NOMES dos campos e **não os números**; por isso o
+   script desserializa com `node:v8`. Texto original da pendência abaixo, preservado:
    **o requisito (b) do dev está entregue PELA METADE.** `relatorioDeSeeds`
    existe e é testado a partir do blob persistido (não-circular, não é código morto), mas **o comando
    de despejo do storage do Durable Object nunca foi rodado** — o docblock diz "a confirmar pelo dev
@@ -1023,6 +1076,16 @@ testes de que a substituição é determinística entre execuções independente
    executa**, e a consequência já se materializou uma vez (o baseline do 3.5.1 declarou cobertura
    inexistente; M5/M6 no sítio real deixavam a suíte verde). Mitigação atual é cerca **textual**,
    que não pega quem contorna.
+   ➡️ **DECIDIDO PELO DEV em 2026-08-19: adotar `@cloudflare/vitest-pool-workers`, e ANTES do
+   3.5.2** — porque o 3.5.2 põe o cursor na casca e o teste nasceria moldado ao código. O gate do
+   `alarm()` (aviso A2) entra no mesmo PR. **Plano pedido ao `fable-architect`; nada implementado.**
+   🔑 **Gate de versão MEDIDO em 2026-08-19, antes de planejar** (era o risco que mudava a FORMA do
+   plano, não um detalhe): `@cloudflare/vitest-pool-workers@0.22.0` tem peer **`vitest ^4.1.0`** e o
+   projeto já roda **`vitest@4.1.10`** — **não há downgrade nem bump de major**, o que era o custo
+   que teria inviabilizado a adoção (seria mexer em 63 arquivos / 1516 testes). ⚠️ **Custos que
+   sobram e não devem sumir daqui:** o pacote arrasta `miniflare 5.20260815.0-alpha` (**alpha**) e um
+   **segundo `wrangler` (4.124.0)** ao lado do `4.120.0` que o `wrangler.jsonc` fixa de propósito
+   desde o SPIKE 3.0.
 
 > ✅ Fechadas no 7.7: pendência 1 antiga (Spa fundia asfalto) · espinho de ~180° no vértice #0 de
 > Spa · preview da densidade alvo. Fechada no 7.7.1: Monza sem imagem.
