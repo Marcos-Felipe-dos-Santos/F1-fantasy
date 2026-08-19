@@ -246,59 +246,56 @@ DO 4/4 APROVADO PELO DEV em 2026-08-18.** Não há nada pendente na corrida onli
 - PR 4/4 (`44d0dc8` + `8489b6f`) — **a corrida chega na tela.** Botão "Ir pra corrida" com guarda,
   `FluxoCorrida` no modo `'pronta'`, resultado com pontuação FIA, atestado da barreira no fim do
   replay, banner ramificando por escopo. **Medido:** 1480/62, typecheck 0, eslint 0, build 0.
-  Revisão (Opus) **aprovada sem bloqueante**; 6 avisos aplicados.
 
-✅ **Veredito do dev sobre `preview\corrida-online.html`: APROVADO (2026-08-18).** Portão fechado; não
-reabrir sem ele.
+✅ **Veredito do dev sobre `preview\corrida-online.html`: APROVADO (2026-08-18).** Portão fechado.
 
-**🏆 3.5 CAMPEONATO ONLINE COMEÇOU — PR 3.5.1 FEITO em 2026-08-18**, na branch
+**🏆 3.5 CAMPEONATO ONLINE — PR 3.5.1 FEITO em 2026-08-18**, na branch
 `pr-3.5.1-seed-por-etapa` (`83a6fde` + `ffdabc1` + `4a4b801`). ✅ **MERGEADO na `main`** (`3308be3`)
-✅ **e PUSHADO** — **sem tag**, como o dev pediu. Plano em `PLANOS_ATIVOS.md` §"3.5 CAMPEONATO ONLINE", com
-o fatiamento atualizado.
+✅ **e PUSHADO** — **sem tag**, como o dev pediu. **`npm test` 1516/63** (era 1480/62), typecheck
+app **0**, typecheck `party/` **0**, eslint **0**, build **0**. Plano em `PLANOS_ATIVOS.md`
+§"3.5 CAMPEONATO ONLINE".
 
-⚠️ **CORREÇÃO DE AFIRMAÇÃO DE ESTADO (2026-08-19).** Esta linha dizia *"NÃO mergeada, NÃO pushada,
-sem tag — aguardando o dev"* e **estava falsa nas duas primeiras pernas**. Medido ao vivo, não
-herdado: `git ls-remote origin refs/heads/main` = `f9d5348`, **idêntico ao `HEAD` local**, e
-`git rev-list --left-right --count origin/main...main` = `0 0`. A branch `pr-3.5.1-seed-por-etapa`
-segue existindo **só local**, em `3282852`, já contida na `main`. É a terceira ocorrência da lição
-do rodapé das pendências — **"afirmação de estado só entra medida"** —, desta vez sobre git.
+⚠️ **CORREÇÃO DE AFIRMAÇÃO DE ESTADO (2026-08-19).** Linha anterior dizia *"NÃO mergeada, NÃO pushada,
+sem tag — aguardando o dev"* e **estava falsa nas duas primeiras pernas**. Medido em 2026-08-19 com
+HEAD na `main`: `git ls-remote origin refs/heads/main` = `f9d5348`, **idêntico ao `HEAD` local**; `git
+rev-list --left-right --count origin/main...main` = `0 0`. **Hoje o HEAD está em
+`pr-a-spike-vitest-pool-workers` (`5fca74b`)** e a afirmação anterior continua valendo. Branch
+`pr-3.5.1-seed-por-etapa` segue só local (`3282852`), contida na `main`. É a terceira ocorrência de
+**"afirmação de estado só entra medida"** — desta vez sobre git.
 
-- **`B-indep` no ar:** 11 seeds independentes sorteadas no DO (10 etapas + calendário), publicadas
-  uma por etapa. **O cursor não avança** — só a etapa 0 sai. `VERSAO_ESTADO_SALA` discrimina sala
-  legado de sala corrompida; `estadoDasSeeds` devolve `legado | ok | corrompida` e a casca recusa a
-  corrompida sem nunca re-semear.
-- **Medido:** `npm test` **1516/63** (era 1480/62), typecheck app **0**, typecheck `party/` **0**,
-  eslint **0**, build **0**. `npm run balance` não se aplica.
-- 🔑 **`VERSAO_APP` ficou em 3.4.2 — sem bump, e MEDIDO** (o plano dava o bump como certo).
-- 🔴 **A revisão achou UM BLOQUEANTE e ele era real: `party/` tem cobertura zero.** M5 e M6
-  aplicadas no sítio que de fato sorteia deixavam a suíte **inteira verde**. Corrigido com cerca
-  textual sobre `party/sala.ts` — que por sua vez nasceu com dois defeitos próprios, ambos pegos
-  rodando. Detalhe completo no `HISTORICO.md` §"PR 3.5.1".
-- 6 avisos da revisão aplicados (A1–A6). Três pendências novas registradas: **0(p)** ✅ **FECHADA em
-  2026-08-19 pela medição do dev** (ver a pendência), **0(q)** ordem de deploy `wrangler` antes de
-  `vite` a partir do 3.5.2, **0(r)** `etapaAtual` fora do discriminante — **as duas seguem abertas**.
+Escopo: `src/net/` + `party/`, sem UI. Implementa `B-indep` (decisão D1): **11 seeds INDEPENDENTES
+sorteadas no DO** (10 etapas + calendário), publicadas uma por etapa quando aquela abre. **O cursor
+ainda NÃO avança** — só etapa 0 sai. `VERSAO_ESTADO_SALA` discrimina sala legado de corrompida;
+`estadoDasSeeds` devolve `legado | ok | corrompida` e casca recusa corrompida.
+- 🔑 **`VERSAO_APP` ficou em 3.4.2 — sem bump, e MEDIDO** (plano dava como certo; digest
+  `src/engine/**` + `src/data/` + `cliente.ts` + `hash-draft.ts` — nenhum tocado; rótulos novos:
+  nenhum em `src/engine/`).
+- 🔴 **A revisão achou UM BLOQUEANTE e ele era real:** `party/` tem cobertura zero. M5 e M6 no sítio
+  real deixavam suíte **inteira verde — 1509/63**. Conserto: **cerca textual** sobre `party/sala.ts`,
+  nasceu com dois defeitos (ambos pegos rodando): regex falso-negativo multilinhas, cheque cego.
+- **6 avisos da revisão aplicados** (A1–A6). Três pendências novas: **0(p)** ✅ **FECHADA 2026-08-19
+  (dev mediu despejo real)**; **0(q)** ordem deploy wrangler antes vite (3.5.2+); **0(r)** `etapaAtual`
+  fora discriminante.
 
-✅ **PENDÊNCIA 0(p) FECHADA em 2026-08-19 — o dev rodou o despejo real.** Sala `420320` pós-3.5.1,
-worker derrubado de verdade e reconexão forçando reidratação: **as 11 seeds vieram idênticas**, e as
-cinco salas antigas caíram em `legado`. Os requisitos **(a)** e **(b)** do baseline do 3.5.1 deixam
-de ser projeto e viram **fato medido**. Ressalva registrada na pendência: isso **refuta M6, não M5**.
+✅ **PENDÊNCIA 0(p) FECHADA em 2026-08-19 — o dev rodou o despejo real.** Sala 420320 pós-3.5.1,
+worker derrubado, reconexão forçando reidratação. **As 11 seeds vieram idênticas**; cinco pré-3.5.1
+em `legado`. Requisitos (a) e (b) do baseline deixam de ser projeto e viram **fato medido**.
 
-**➡️ PRÓXIMO: NÃO é o 3.5.2. É o PR A do SPIKE de `@cloudflare/vitest-pool-workers`** — decisão do
-dev em 2026-08-19, com **plano APROVADO e registrado em `PLANOS_ATIVOS.md` §"SPIKE + COBERTURA DA CASCA"**.
-**Motivo do dev, e ele é de método:** o 3.5.2 põe o cursor na casca, ou seja, **a lógica de avanço de
-etapa nasceria exatamente na camada sem cobertura**. Escrever o cursor primeiro e testar depois faz o
-teste nascer **moldado ao código** — que é como se produz a próxima ocorrência da família "o teste
-afirmava o que não conferia". O **gate do `alarm()` para sala corrompida (aviso A2 do 3.5.1)**, hoje
-verificado só por leitura, entra no PR C.
+**➡️ PRÓXIMO: PR A SPIKE `@cloudflare/vitest-pool-workers`** (decisão dev 2026-08-19) — **FEITO em
+2026-08-19, commit `72b931e` na branch `pr-a-spike-vitest-pool-workers`, NÃO mergeada, NÃO pushada,
+sem tag. Veredito GO/NO-GO pendente**. `npm test` **1516/63 antes e depois**.
+`npm run test:party`: **5/5 verde (~665 ms)**. Plano aprovado: `PLANOS_ATIVOS.md` §"SPIKE + COBERTURA
+DA CASCA" (5 decisões do dev). **Três achados que contrariam o plano aprovado** (o valor do spike):
+(1) `nodejs_compat` não foi necessária — teste passa SEM flag; (2) compensador `--dry-run` era vacuoso
+— novo script empacota e inspeciona de verdade; (3) `isolatedStorage` morreu — substitutos medidos
+`reset()` + `evictAllDurableObjects()`. **Descoberta crítica:** wrangler topo precisou ser **PINADO
+exato (4.120.0)** pra não deduplicar para 4.124.0 do pool. Portões **(i)** 3 mutações vistas
+vermelhas, **(ii)** 1516/63 antes/depois — cumpridos. **Classificação BAIXO RISCO**, sem
+`senior-reviewer`. Se NO-GO: rollback uma linha, pendência 9 fica 🟡, 3.5.2 abre próxima sessão.
+Detalhes completos em `HISTORICO.md` §"PR A".
 
-🛑 **O PR A é SPIKE e fecha com GO/NO-GO do dev** (precedente deliberado do SPIKE 3.0). Se **NO-GO**:
-nada de produção mudou, pendência 9 fica 🟡 e **o 3.5.2 abre na sessão seguinte** com a cerca textual.
-**Começar pelo passo 0:** `npm i -D @cloudflare/vitest-pool-workers --dry-run` e **reportar
-contagem/MB ao dev ANTES de instalar de verdade**.
-
-**Depois dele, o PR 3.5.2** — barreira e avanço de cursor por etapa, elegíveis recomputados por
-etapa, `concluidaEm` só na última **+ o conserto do detector** (campo `etapa`, chave
-`${escopo}:${etapa}`).
+**Depois do veredito, PR 3.5.2** — barreira e avanço de cursor por etapa, elegíveis recomputados,
+`concluidaEm` só na última, **+ conserto do detector** (campo `etapa`, chave `${escopo}:${etapa}`).
 🛑 **É no 3.5.2 que o dev pediu para ver, VISÍVEL, a opção de abandonar o 3.5 inteiro** — o corte
 honesto da fase pode ser o próprio 3.5, e é ali que a decisão é barata.
 
