@@ -13,6 +13,11 @@ Este arquivo é a memória sempre-ativa do projeto. As regras aqui são **inviol
 
 **Sob demanda, nunca por completo na abertura:**
 
+- **`PLANOS_ATIVOS.md`** — os planos de fase **ATIVOS** (Fase 3, 3.5 campeonato online, spike da
+  casca). Criado em 2026-08-19, na higiene do `ESTADO.md`: eram 51% do arquivo e se leem **uma vez,
+  quando o PR começa**, não em toda sessão. Consultar **o plano que interessa**, nunca inteiro.
+  🔒 **O plano mora lá; as OBRIGAÇÕES (decisões travadas, regras invioláveis, pendências) ficaram no
+  `ESTADO.md`**, em blocos de retenção. Procurando uma regra inviolável? Está no `ESTADO.md`.
 - **`HISTORICO.md`** — registro detalhado dos PRs das fases **6 e 7** (~19 mil tokens). Consultar
   **o PR que interessa** quando precisar do porquê de uma decisão. Ler inteiro estoura o contexto
   inicial — foi exatamente por isso que o `ESTADO.md` passou a existir.

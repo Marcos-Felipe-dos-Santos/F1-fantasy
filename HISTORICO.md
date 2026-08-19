@@ -2119,3 +2119,391 @@ varredura tem de ser por `JSON.stringify`, nunca campo a campo.
   de tese, não vazamento — o clamp coage e o servidor nunca grava outro tipo. Mas o cursor é o campo
   que governa quantos segredos saem no fio: **quando o 3.5.2 o fizer se mover, trazê-lo para dentro
   do discriminante.**
+
+---
+
+# ARQUIVADO DO `ESTADO.md` em 2026-08-19 (sessão de higiene — pendência 8)
+
+> Tudo abaixo veio **íntegro, linha por linha**, do `ESTADO.md`, na sessão de higiene autorizada pelo
+> dev. **Nada foi resumido e nada foi apagado.** O que era decisão travada, regra inviolável ou
+> pendência aberta **ficou no `ESTADO.md`** em bloco de retenção (regra do aninhamento).
+> Os **planos de fase** não vieram para cá — foram para o **`PLANOS_ATIVOS.md`**, porque seguem ativos.
+
+## §FASE 8 — MODO CAMPEONATO (encerrada) — texto integral arquivado
+
+**Por que saiu do `ESTADO.md`:** a Fase 8 está completa. **Ficaram lá**, em bloco de retenção: o BUG
+QUE QUASE ENTROU do 8.4, as regras de honestidade da narração, o "pit não é ultrapassagem", o
+`calendarioAnotado` que não vaza vencedor, a silhueta que reusa `pathDaVolta`, o "nenhuma alavanca" e
+o **veredito do `campeonato.html`, que segue ABERTO**.
+
+## 🚩 FASE 8 — MODO CAMPEONATO: o plano aprovado NÃO bate com o código
+
+Plano aprovado pelo dev (sessão de 2026-08-07), 4 PRs: **8.1** engine · **8.2** persistência ·
+**8.3** telas · **8.4** integração. Dois submodos — **curta** (5 pistas sorteadas das 10, default) e
+**completa** (10 embaralhadas) — convivendo com "Corrida rápida" na `TelaInicio` (3 opções).
+Decisões travadas: **nenhuma alavanca** (sem lastro, sem pit de meio de temporada) — é jogo de
+draft, o campeonato é confirmação. Draft único por campeonato. Ordem embaralhada nas duas modalidades.
+
+**O achado do 8.1, que reordena o resto da fase:** o 8.1 e o 8.2 do plano descreviam trabalho que
+**a Fase 6 já tinha feito**. Já existiam e são testados: `src/engine/campeonato.ts` (etapas,
+pontuação FIA, desempate countback), `src/ui/fluxo-campeonato.ts` (curta/completa,
+`iniciarCampeonato`, `avancarEtapa`, `simularOResto`, `classificacaoApos`) e
+`src/ui/persistencia.ts` (save, impressão digital, `retomarCampeonato`). A "promoção da lógica do
+balance-harness pra engine" **já tinha acontecido**.
+
+**O que NUNCA tinha sido feito é o antigo PR 6.6 — as TELAS.** Era daí que vinha o desalinhamento
+inteiro: o modo existia, determinístico e testado, e era **inalcançável pelo jogador**.
+✅ **Resolvido no 8.4-mínimo** (`4ba4f50`): o campeonato ganhou seletor, encadeia corridas, salva e
+retoma. ✅ **E o 8.3** (`0da36fb`) substituiu as telas cruas pelas de verdade — calendário com
+silhuetas, classificação com variação de posição e fim de campeonato com pódio.
+**A Fase 8 está completa**; o que resta é o veredito do dev sobre o preview.
+
+### O 8.2 colapsou — FEITO, mas não é o PR que o plano descrevia
+
+- **compress+base64: MORTO pela medição.** Save real = **16,48 KB** (22 jogadores, completa;
+  16,39 KB na curta) = **0,32% de uma quota de 5 MB**. Método: draft REAL resolvido por bots, não
+  save sintético. Comprimir seria dependência nova sem problema pra resolver.
+- **Camada de abstração e impressão digital: já existiam** (PR 6.5 / 6.2).
+- **"Salvar após cada corrida" depende da UI**, que é o 8.4.
+- ✅ **O que sobrou virou os commits `6cb02cc` + `0f3e178` — diff SÓ DE TESTE, `persistencia.ts`
+  intacto.** Três testes provam que o save aguenta o calendário sorteado: round-trip preserva o
+  calendário embaralhado e o cursor **sem bump de `VERSAO_FORMATO`**; temporada curta **concluída**
+  (`etapaAtual === etapas.length`) faz round-trip inteiro; e o discriminante — **um save com o
+  calendário REORDENADO é REJEITADO**. `calcularImpressaoDigital` junta as etapas na **ORDEM** do
+  array, então a integridade cobre a ordem, não só o conjunto. Isso importa pro 8.3/8.4: é a UI que
+  vai gravar e reler esse save. **Duas mutações:** ordenar as etapas na impressão digital mata o
+  teste de reordenação; trocar o guard pra `>= length` mata o teste de borda.
+  **Revisão: sem bloqueante, 3 avisos aplicados** — o mais útil deles é que duas asserções que eu
+  tinha escrito eram **infalsificáveis** (implicadas por `carga.ok` e pelo próprio `throw` do
+  `retomar`). Asserção que não pode falhar se lê como cobertura e não é.
+- 🛑 **O dev pediu "pare ao final do 8.2 pra eu ver a mecânica rodando", mas depois do 8.2 não há
+  nada pra ver rodando** — não existe UI. **DECIDIDO pelo dev em 2026-08-07 (ver seção abaixo):
+  wiring mínimo do 8.4, não script de demo.**
+
+### ✅ PR 8.4-mínimo FEITO (commit `4ba4f50`) — o campeonato é JOGÁVEL
+
+O dev pediu o seletor de "Formato" e classificou como **baixo risco (UI)** — a classificação vale,
+porque **ele mesmo vai rodar o app**, o que é mais forte que preview. (A entrada anterior deste
+arquivo dizia "alto risco, portão visual"; foi superada pela classificação do dev.)
+
+**Entregue mais que o `<select>`, porque o `<select>` sozinho seria decorativo:** antes do commit
+nada em `App.tsx` importava campeonato e nada chamava `salvarCampeonato`. Agora: seletor Formato
+(única/curta/completa), Pista **e a linha de perfil** somem nos campeonatos, corridas encadeiam de
+verdade, save a cada corrida, e "Continuar campeonato" no topo da `TelaInicio`.
+
+🔑 **O BUG QUE QUASE ENTROU — a lição que sobrevive ao PR.** As duas trilhas de corrida usam seeds
+**diferentes de propósito** (decisão D6): a avulsa usa a seed **crua** do draft, a etapa de
+campeonato usa `seedDaEtapa(seed, pistaId)`. Como `iniciarCampeonato` **pré-simula** as etapas e a
+pontuação sai dali, ligar o campeonato no `FluxoCorrida` existente faria o jogador **assistir a uma
+corrida e ver OUTRA na tabela**. **`npm test` não pegaria** — cada lado, isolado, está certo; só a
+composição estava errada. `prepararCorrida` ganhou `seed` (default preserva a avulsa bit a bit) e há
+teste provando a reprodução bit a bit da etapa pré-simulada.
+
+### ✅ RODADA DE NARRAÇÃO RICA + AUTO-AVANÇO (PRs A, B, C) — FEITA
+
+Feedback de quem jogou, planejada pelo `fable-architect`, aprovada pelo dev com três correções ao
+pedido original. **Nada tocou `src/engine/`** — nem aditivamente.
+
+- **A (`1537ad6`)** — variedade de erro + vocabulário de chuva. `deriveSeed` usado como **HASH, nunca
+  como stream**: nenhum tempo muda, nenhum RNG novo é consumido, seeds de ouro e `balance` intactos
+  por construção. Pool de chuva **só pra `erro-piloto`**, porque `chuvaMultErro` só multiplica
+  `chanceErro` — vocabulário molhado numa quebra de motor sugeriria causalidade inexistente.
+- **B (`43fe420`)** — causalidade **contrafactual**: a linha causal só sai se, descontado o custo do
+  erro, X continuaria à frente. Mais restritivo que o pedido original, e aprovado pelo dev
+  exatamente por isso.
+  📏 **MEDIDO em 200 corridas reais: 3,19 linhas causais/corrida, 93% das corridas com pelo menos
+  uma, 42% de aproveitamento.** O dev cogitava cortar o PR se rendesse pouco — decidiu com o número.
+- **C (`fc7f20d`)** — auto-avanço com auto-largada (sem ela, empacaria na tela de grid).
+
+🔒 **Regras de honestidade da narração, travadas por TESTE, não por comentário:** nenhuma frase pode
+afirmar manobra, local da pista, disputa ou clima evoluindo — um regex reprova
+`ultrapass|disputa|começou a chover|pneu de chuva` em qualquer variante nova. **A engine simula cada
+carro isoladamente e o clima é uma flag global**; qualquer frase fora disso é falsa por construção.
+
+📌 **Regra registrada para código que ainda não existe (item d do dev):** quando houver narração de
+troca de posição, **pit não é ultrapassagem** — pit de qualquer um dos dois desqualifica a palavra.
+Hoje não existe narração de troca de posição (a única narração do jogo era `ROTULOS_EVENTO`), então
+a regra fica aqui aguardando o código que a consumirá.
+
+### ✅ PR 8.3 FEITO — as telas do campeonato (commits `0da36fb` + `499114c`)
+
+⬅️ **AGUARDANDO VEREDITO DO DEV — o único item aberto do projeto agora:**
+
+    start "" "E:\projetos\F1 fantasy\preview\campeonato.html"
+
+As três telas numa página só, a partir de um campeonato real (seed 2026, curta, 8 jogadores):
+**calendário** (silhuetas, vencedores, próxima destacada), **classificação com variação de posição**
+(▲/▼) e **fim de campeonato** (pódio + tabela final + calendário completo).
+
+⚠️ **Este preview NÃO é maquete** — diferente do `paleta.html`. Ele inlina `tokens.css` e
+`estilos.css` REAIS e renderiza os COMPONENTES REAIS; o que se vê é o que o app desenha, com o mesmo
+CSS. Falta só interação (nada clica, não há replay). Regerar:
+`npx vitest run --config vitest.preview.config.ts scripts/preview-campeonato.preview.test.ts`
+(ou `npm run preview`, que agora é seguro — os dois portões antigos estão fechados).
+
+🔒 **A decisão que sustenta a tela de calendário:** `iniciarCampeonato` **pré-simula todas as
+etapas**, então o resultado das próximas está em memória o tempo todo. `calendarioAnotado` só revela
+vencedor de etapa com `indice < etapaAtual` — vazar o vencedor de uma corrida que o jogador ainda
+vai assistir estragaria a corrida. **Tem teste dedicado, e é o mais importante do PR.**
+
+🔒 **A silhueta da miniatura reusa `pathDaVolta`**, a mesma geometria da tela de corrida. Foi ela que
+tirou 10/10 no teste cego; redesenhar à mão na miniatura jogaria isso fora.
+
+### ✅ PR 8.2.1 FEITO — calendário mora na engine (fecha a pendência 0)
+
+`FormatoTemporada`, `FORMATO_PADRAO`, `N_ETAPAS`, `calendarioPadrao`, `calendarioSorteado` e o
+helper `etapasDoFormato` foram pra `src/engine/campeonato.ts`. **`fluxo-campeonato.ts` re-exporta os
+cinco públicos, então NENHUM chamador mudou** — nem as ~90 referências de teste, nem a UI.
+
+**O que FICOU na UI, de propósito:** `FormatoPartida`, `ehCampeonato`, `mostraSeletorDePista`,
+`ROTULO_FORMATO`, `formatoDoCalendario`, `resumoCampeonatoSalvo`. Nenhum é regra de jogo — são
+decisões de TELA (qual seletor aparece, que texto o botão mostra). Movê-los levaria UI pra dentro da
+engine, que é a violação inversa.
+
+**Refactor sem mudança de comportamento: 1078 testes seguem passando, os mesmos, sem teste novo — e
+o ponto é esse.** `npm run balance` rodado (mexeu em `src/engine/`): **tabela idêntica**,
+`seedDaEtapa` e `simularCampeonato` só mudaram de vizinhança.
+
+
+## §Estado atual — o changelog histórico, arquivado
+
+**Por que saiu:** era registro em ordem inversa que este arquivo já cobre por PR. **Ficaram no
+`ESTADO.md`:** os dois blocos "COMO TESTAR" (online e campeonato), os quatro casos de propósito, o
+bloco de celular/rede, o repositório-privado, a regra de `docs/img/` versionada e o aviso do badge.
+
+### Bloco 1 — narrativas de PR (corrida online 1/4, 3.3.4, 3.4.1, 3.3.2, 3.3.3)
+
+- 🏁 **CORRIDA ONLINE COMEÇOU — PR 1/4 FEITO em 2026-08-12** (`b67ec2b`). `seedCorrida: number | null`
+  em `EstadoSalaPublico`, publicada **só quando o draft conclui**; `pistaSorteada` nova em
+  `src/engine/pista-sorteada.ts`, pura, rótulo próprio `'online:pista'`. **O plano dos 4 PRs está
+  registrado na §FASE 3 abaixo** — ele não estava em lugar nenhum do repositório até agora.
+  - **Medido (PR 1/4):** `npm test` **1412/56** (era 1398/55), `npm run typecheck` **0**, `eslint` **0**,
+    `npm run build` **0**, `npm run balance` **inalterado** (tocou `src/engine/`).
+    `VERSAO_APP` **3.4.0 → 3.4.2** (tripwire do `versao.test.ts`).
+  - 🔴 **A revisão derrubou uma afirmação de SEGURANÇA, não um bug** — ver pendência 0(i).
+  - 🟡 **Sexta ocorrência de "o teste afirmava o que não conferia"**: os nove testes do portão
+    chamavam `publicarSala` direto e **forjavam** a fase; reescrever `estadoPara` à mão vazaria a
+    `seedMestre` no fio com todos verdes. Entrou teste que dirige um draft de verdade até concluir,
+    pelo funil de broadcast — **visto vermelho nas duas mutações** antes de ficar verde.
+- ✅ **TESTE DO ONLINE FECHADO — PR 3.3.4 em 2026-08-11** (F5 perdia sala; porta 8787 ocupada falha
+  silencioso). **Os quatro casos de propósito rodados e validados pelo dev.**
+- ✅ **SURFACING DO ALARME CONCLUÍDO — PR 3.4.1 em 2026-08-11** (BannerDivergencia em FluxoOnline). **Detector (3.4) agora visível ao jogador — alarme aparece em todas as telas do online.** Veredito do dev: "legível, destacado sem ser gritante, texto correto". **Próximo PR: corrida online (autorizada pelo dev; 3.5 de campeonato online fecha a Fase 3).**
+- ✅ **CÓDIGO DE SALA E CICLO DE VIDA FEITOS — PR 3.3.2 em 2026-08-10** (`02ff6ee` + `b882d9b`).
+  **O modo online agora tem sala privada por padrão** (código hexadecimal de 6 dígitos, não 4, sorteado
+  pelo servidor; enumeração impossível em tempo casual).
+- ✅ **ROTA `/CRIAR-SALA` FUNCIONANDO — PR 3.3.3 em 2026-08-11** (`a6010ef`). O 3.3.2 trocou a criação para
+  `POST /criar-sala` no worker, mas o proxy do Vite repassava só `/parties/*`. Corrigido centralizando rotas
+  em `src/net/rotas.ts` — fonte única que o `vite.config.ts` consome. Tela órfã do modo Online removida
+  (campo "Nome da sala" e estado morto). **Caminho principal testado e funcionando** (criar sala → link em segunda aba →
+  nomes → prontos → "Começar o draft" → rodada 1 de 5 nas duas).
+
+### Bloco 2 — medições por PR, 3.3.1, portão nº 2, SPIKE 3.0 e o inventário da `main`
+
+  - **Medido (3.3.3):** `npm test` **1362/50** (era 1355/49), `npm run typecheck` **0** (app + `party/`),
+    `eslint src scripts party vite.config.ts` **0**, `npm run build` **0**. `npm run balance` **não rodado**
+    — nada em `src/engine/`, `src/data/` ou `scripts/alavancas` foi tocado.
+  - **Medido (3.3.4):** `npm test` **1368/51** (era 1362/50), `npm run typecheck` **0**, `eslint` **0**,
+    `npm run build` **0**. `npm run balance` **não se aplica** — nada em `src/engine/`, `src/data/` ou
+    `scripts/alavancas` foi tocado.
+  - **Medido (3.4):** `npm test` **1394/54** (era 1368/51), `npm run typecheck` **0**, `eslint` **0**,
+    `npm run build` **0**. `npm run balance` **rodado** (tocou `src/engine/versao.ts`): **inalterado**.
+  - **Medido (3.4.1):** `npm test` **1398/55** (era 1394/54), `npm run typecheck` **0**, `eslint` **0**,
+    `npm run build` **0**. `npm run balance` **não se aplica** — nada em `src/engine/`, `src/data/` ou
+    `scripts/alavancas` foi tocado.
+  - 🔌 **PR 3.3.1 (`23d1cce`) — o worker passa pela PORTA DO VITE.** `wrangler dev` sobe em
+    `127.0.0.1` (só localhost), então de fora o app carregava e o WebSocket morria; e abrir o worker
+    na rede **não bastaria**, porque a URL do WS era fixa (`:8787`) e **cada visitante chega por um
+    IP diferente**. Agora o Vite repassa `/parties/*` (proxy com `ws: true`) e a URL do socket vem
+    do **host da página**. Uma porta só (5173), qualquer interface.
+    **Medido:** o smoke de 17 cheques passou pelas **quatro** rotas — `localhost`, `192.168.0.13`
+    (LAN), `10.241.222.232` (ZeroTier) e `26.156.17.128` (Radmin) — todas na 5173, com o worker
+    ainda fechado em `127.0.0.1`.
+  - 🔴 **O CONTRATO DO AUSENTE tem teste explícito agora** (`src/ui/contrato-ausente.test.ts`) —
+    pedido do dev. Ver o RISCO ATIVO abaixo.
+- ✅ **PORTÃO Nº 2 APROVADO PELO DEV em 2026-08-09.** O 3.1b (`2efb145`) fechou com os dois testes
+  verdes (conformidade e commutatividade, 20 seeds cada) e o dev **chancelou as duas coisas que
+  precisavam de decisão**: (a) `deQuemEhAVez` devolver um **CONJUNTO** e não um id — a fase sorteios
+  é concorrente no online, e espelhar `alvoHumano` serializaria 22 jogadores; (b) o **contrato do
+  ausente** como obrigação herdada, registrado como **RISCO ATIVO** (seção própria abaixo).
+  Detalhe completo no `HISTORICO.md` (entradas "PR 3.1a", "PR 3.1b" e "PR 3.2").
+- 🟢 **SPIKE 3.0 RODADO em 2026-08-09 — veredito: GO** — e o **portão do dev foi CONFIRMADO na
+  bancada dele: as duas abas funcionaram, digitou numa e apareceu na outra.** A paridade bit a bit
+  do RNG entre workerd e Node, que era a premissa da fase inteira, passou. Detalhe
+  completo no `HISTORICO.md` (entrada "SPIKE 3.0"); o resumo operacional está na seção **FASE 3**
+  logo abaixo. **O spike vive FORA do repositório** (`E:\projetos\spike-partyserver\`) e a `main`
+  ficou intocada — medido, não assumido: `git status` limpo e nenhum pacote de rede no
+  `node_modules/` do projeto.
+- **Estamos na `main`** (a branch `pr-8.1-calendario-sorteado` foi mergeada nela em 2026-08-08 e
+  está encerrada) · últimos PRs **8.1** (calendário sorteado, `63e3e82`),
+  **8.2** (round-trip do save, `6cb02cc`), **8.4-mínimo** (seletor de Formato + campeonato jogável,
+  `4ba4f50`) e a rodada de **narração rica + auto-avanço**: **A** (variedade/chuva, `1537ad6`),
+  **B** (causalidade contrafactual, `43fe420`), **C** (avanço automático, `fc7f20d`); e ainda
+  **8.2.1** (calendário na engine, `cfe1c47`) e **8.3** (telas do campeonato, `0da36fb`) ·
+  **1412 testes** (56 arquivos) verdes — medido em 2026-08-12 (PR 1/4 da corrida online); eram
+  1398/55 no 3.4.1 e 1094/36 antes da Fase 3.
+  ⚠️ O badge do README ainda diz **1094** e é estático — está desatualizado (deveria ser 1398).
+- **Medido em 2026-08-07, não herdado:** `npm test` **1094/36**, `tsc --noEmit` **exit 0**,
+  `eslint src scripts` **exit 0**, `npm run build` **exit 0**. **`npm run balance` inalterado por
+  construção** — o harness importa só `src/engine/dataset`, `src/data/*.json` e `scripts/alavancas`,
+  e nenhum dos três foi tocado. `prettier --check` reprova `fluxo-campeonato.ts`/`.test.ts`, mas
+  **já reprovava no HEAD** (verificado com `git show HEAD:<arquivo>`) — pré-existente, não é gate.
+
+### Bloco 3 — working tree, push de 2026-08-07, merge de 2026-08-08, README/LICENSE
+
+- **Working tree limpa.** `tmp-medir-save.ts` continua no disco, mas agora é **ignorado** pelo
+  `.gitignore` (regra `tmp-*`, adicionada em 2026-08-07) — é script descartável do dev e está
+  **quebrado** (`criarDraft` exige 22 jogadores + `atribuirPerfis` antes; o arquivo passa 4). A
+  medição que ele buscava já foi feita e está registrada abaixo.
+- ✅ **A `main` FOI PUSHADA em 2026-08-07, com autorização explícita do dev** (`git push origin
+  main:main --tags`, fast-forward `b39782d..49f3ca8`). **`main` local == `origin/main` == `49f3ca8`**
+  (verificado: `git rev-list --left-right --count main...origin/main` = `0 0`). Não existem mais
+  duas `main`s divergentes — `git checkout main` e o remoto apontam pro mesmo commit. A tag
+  **`v0.1.0-fase0`** também subiu (era a única local; o remoto não tinha nenhuma).
+- ✅ **MERGE NA `main` FEITO em 2026-08-08, com "ok" explícito do dev** (`git merge --no-ff`,
+  commit `f1216d5`). A `main` agora **contém 7.7, 7.7.1, 7.8, 8.1, 8.2, 8.2.1, 8.3**, a rodada de
+  narração + auto-avanço, e o **README/LICENSE/`docs/img/`**. Medido na `main` pós-merge:
+  `npm test` **1094/36**, `tsc --noEmit` **exit 0**, `npm run build` **exit 0**.
+  **`pr-8.1-calendario-sorteado` continua só local e sem uso** — todo o conteúdo dela está na `main`.
+- 📄 **README, LICENSE e `docs/img/` existem desde 2026-08-08** (`10dd10a`). A licença é **MIT** —
+  cobre o código escrito aqui e **não** reivindica nada sobre nomes de pilotos, equipes ou
+  circuitos, o que preserva o aviso de projeto de fã não oficial. **`docs/img/` é VERSIONADA** (ao
+  contrário de `preview/` e `referencias/`, gitignored): guarda os três prints do dev
+  (`corrida.png`, `draft.png`, `campeonato.png`) e a grade `silhuetas.svg`, esta **gerada** por
+  `scripts/gerar-silhuetas-readme.preview.test.ts` via `npm run preview`, a partir do `pathDaVolta`
+  de produção. **Se um traçado mudar, regerar e commitar a grade.**
+  ⚠️ O badge "testes 1094 passando" do README é **estático** — não há CI neste repo (`.github/`
+  não existe). Ele não se atualiza sozinho e vai mentir se um teste quebrar.
+
+## §RISCO ATIVO FECHADO — divergência do ausente: o corpo, arquivado
+
+**Por que saiu:** o risco está fechado (detector no 3.4, surfacing no 3.4.1). 🔒 **As duas RESSALVAS
+FICARAM no `ESTADO.md`** — são limitações que *permanecem* e precisam ser lidas toda sessão.
+
+**Registrado como risco pelo dev em 2026-08-09, ao aprovar o portão do 3.1b.** Deixou de ser "diverge
+em silêncio" (🔴) para "diverge com alarme que ninguém vê" (🟡) no **PR 3.4**, e foi CONCLUÍDO no **PR 3.4.1** quando o alarme subiu à tela. Ressalvas abaixo registram as limitações que permanecerão.
+
+**O que é.** Quando um jogador abandona ou estoura o prazo, o redutor do servidor o marca ausente e
+**pula a casa dele** — o servidor não pode escolher por ele, porque escolher é regra de jogo e regra
+de jogo precisa do dataset. Quem escolhe pelo ausente é **cada cliente, localmente**. A rodada 6 tem
+**pool compartilhado, 2 cópias por peça**. Se dois clientes escolherem peças **diferentes** pelo mesmo
+ausente, cada um debita uma cópia diferente: os estados divergem, os loadouts divergem, corrida que
+cada um assiste é outra. **Antes:** nada acusava. **Agora:** o detector compara hashes do draft entre
+os 22 e acusa em `EstadoCliente.divergencia`.
+
+**✅ DETECTOR FUNCIONA (PR 3.4):**
+- `src/net/hash-draft.ts` (novo): hash determinístico do estado do draft, campos enumerados, chaves
+  ordenadas.
+- `src/engine/versao.ts` (novo): handshake de versão recusa entrada se build diferente.
+- `registrarAtestado` em `src/net/servidor-sala.ts`: servidor compara strings opacas, sem dataset.
+- Resultado: divergência do ausente → detectada · 20 seeds sem sabotagem → nenhum alarme falso · cliente
+  atrasado com estado diferente → silencioso (regra de âncora) · atestado malformado → recusado.
+
+**✅ TESTE EXPLÍCITO (pedido do dev no 3.3):**
+`src/ui/contrato-ausente.test.ts` — **allowlist repo-wide** de quem pode tocar `escolherBot`
+(asserir *ausência* num diretório era contornável por indireção), `escolhaPadrao` banida na UI,
+proibição do 3º argumento de `sincronizarDraft` **por contagem de parênteses balanceados** (a versão
+por regex era falso-negativo: com a sabotagem aplicada, continuava verde), varredura recursiva, e
+testes de que a substituição é determinística entre execuções independentes.
+
+**Já coberto:**
+- o portão do 3.1b abandona jogadores nas duas fases em 10 seeds e assere a reconvergência passo a
+  passo;
+- o **harness do 3.2 mede isso empiricamente**: o CONTROLE NEGATIVO faz um cliente escolher
+  diferente pelo ausente e **exige que a comparação FALHE**. Foi ali que se descobriu que sabotar a
+  escolha *própria* não diverge nada (ela vai pro log, que é a verdade compartilhada) — **a
+  substituição do ausente é literalmente a única decisão que cada cliente toma sozinho.**
+
+## Pendências FECHADAS, arquivadas do `ESTADO.md`
+
+**Por que saíram:** estavam marcadas ✅ e mantidas só como registro. As **abertas** e as que têm
+resíduo vivo continuam todas no `ESTADO.md`.
+
+### 0(b), 0(c), 0(d), 0(e), 0(f) — fechadas na Fase 3
+
+   (b) ✅ **`src/engine/namespaces-seed.ts` FEITO no 3.1b** — registro + varredura do código-fonte
+   que reprova rótulo não registrado, com guarda anti-vacuidade. Fecha o risco aprovado da fase.
+   (c) ✅ **RECONEXÃO FEITA no 3.2.1.** O token nasce na casca (`crypto.randomUUID`), `reentrar` é o
+   único comando de lobby que vale com a sala iniciada, e há evicção (uma conexão por jogador).
+   **O que ficou de fora, de propósito:** quem volta DEPOIS de já ter expirado volta como
+   espectador — desfazer a ausência exigiria reconstruir `rodada` a partir do log, porque
+   `marcarAusente` a sobrescreve, e isso é complexidade que o jogo não precisa.
+   (d) ✅ **`seq` resolvido no 3.2** — `reduzirDraftDaSala`/`expirarNaSala` incrementam o contador,
+   então o `draft` não muda mais sob um `seq` congelado. **Falta ainda** correlacionar erro↔comando:
+   com duplicação e reordenação, um `{tipo:'erro'}` continua inatribuível.
+   (e) ✅ **Prazo do turno tem dono no 3.2**: o `alarm()` do Durable Object chama `aoPassarOTempo` a
+   cada 5 s. ⚠️ **CORRIGIDO em 2026-08-11 — esta linha afirmava que ele "para de se reagendar com a
+   sala concluída ou vazia", e o código não faz isso** (achado do `fable-architect` ao planejar a
+   corrida online). `party/sala.ts:237` reagenda SEMPRE; quem para o tique é o `encerrar()`, que
+   apaga o alarme. Com a sala concluída o que fica de fora é só a chamada a `aoPassarOTempo` — o
+   tique continua. **✅ MEDIÇÃO DO PR 3/4 (2026-08-16):** adiar `concluidaEm` para o fim da corrida **faz custo ZERO** — com o draft concluído, `deQuemEhAVez()` devolve `[]`, `aoPassarOTempo()` devolve a **mesma referência** sem envios, `aplicar()` só grava quando a identidade muda. Medido com par anti-vacuidade (baseline vermelho confirmado). Isso **fecha a razão do "CORTE Nº 1"** que o ESTADO anterior registrava. **Falta a UI** mostrar o cronômetro ao jogador — isso é 3.3.
+   (f) ✅ **O 3.4 foi FEITO (detector + handshake). O 3.4.1 foi FEITO (surfacing visual).**
+   🏁 **A CORRIDA ONLINE COMEÇOU** — plano dos 4 PRs na §FASE 3, PR 1/4 feito em 2026-08-12
+   (`b67ec2b`). **Até o PR 4/4 o draft online continua terminando no `TelaResumo`**, com o botão
+   "Ir pra corrida" escondido de propósito — prometer a corrida e devolver à tela inicial é pior que
+   botão nenhum.
+
+### 0(p) — as seeds medidas em produção (fechada em 2026-08-19)
+
+🔒 **A ressalva desta pendência FICOU no `ESTADO.md`**, resumida: a medição **refuta M6, não M5**.
+
+   (p) ✅ **FECHADA em 2026-08-19 — MEDIDA PELO DEV, NÃO DEDUZIDA.** O requisito (b) foi confirmado
+   em produção, e de quebra o (a) junto. **Método (é o que dá valor ao fechamento):** sala nova
+   `420320` criada pós-3.5.1 (`versaoSala: 1`, `etapaAtual: 0`, 10 slots de etapa), os 11 números
+   anotados; **derrubada real do worker** (Ctrl-C no `npm run sala`); worker subido de novo;
+   **reconexão pela 420320 no navegador, forçando a reidratação**; segundo despejo. **Os 11 números
+   vieram IDÊNTICOS.**
+   - ✅ **Requisito (a) — SOBREVIVER À REIDRATAÇÃO DO DURABLE OBJECT — confirmado em produção.** Até
+     aqui (a) estava sustentado só por teste unitário sobre o blob persistido; agora atravessou um
+     restart de verdade do DO. Fecha a reincidência que já tinha sido bloqueante de revisão no PR 3/4.
+   - ✅ **Requisito (b) — SER EXTRAÍVEL PARA RELATÓRIO DE BUG — deixou de ser projeto e virou fato
+     medido.** `scripts/despejar-seeds.ts` roda e devolve as 11 seeds de uma sala real.
+   - ✅ **O OUTRO RAMO DO DISCRIMINANTE confirmado em dados reais:** as cinco salas pré-3.5.1 foram
+     classificadas como **`legado`**. ⚠️ **O ramo `corrompida` continua NÃO OBSERVADO em produção** —
+     existe só em teste, e fechar (p) não fecha isso. (É um dos ganhos da pendência 9.)
+   - 🔑 **O QUE A MEDIÇÃO REFUTA, COM PRECISÃO — ler antes de citá-la:** `seedCalendario 1903767602`
+     ≠ primeira `seedsEtapas 3187109758` ⇒ **o 11º slot NÃO foi recoplado. Isso é a mutação M6
+     refutada em dados de produção.** 🛑 **E não diz NADA sobre M5** (derivar por índice): seeds
+     derivadas por índice **também** diferem entre si, então "os números são diferentes" não
+     distingue sorteio de derivação. **NÃO ler esta medição como "independência das seeds confirmada
+     em produção"** — é exatamente o exagero que a §"A CERCA DE M5/M6 É TEXTUAL" foi escrita para
+     impedir daqui a três PRs. A cerca textual continua valendo, por causa de M5.
+   - ℹ️ **"qtd de etapas: 10" no despejo são os 10 SLOTS sorteados** (`Uint32Array(11)` = 10 etapas +
+     o 11º do calendário), **não** mudança de formato — o **CORTE 3.5-F** segue fixando curta = 5.
+   🔴 **Achado técnico que fica valendo: NÃO dá pra olhar o SQLite direto.** O DO é
+   `new_sqlite_classes`, e `ctx.storage.put` grava na tabela `_cf_KV` com o valor **V8-serializado,
+   não JSON** — o blob começa em `ff 0f` e um número é a tag `N` + 8 bytes IEEE-754. `sqlite3`,
+   `strings` ou qualquer dump de texto mostram os NOMES dos campos e **não os números**; por isso o
+   script desserializa com `node:v8`. Texto original da pendência abaixo, preservado:
+   **o requisito (b) do dev está entregue PELA METADE.** `relatorioDeSeeds`
+   existe e é testado a partir do blob persistido (não-circular, não é código morto), mas **o comando
+   de despejo do storage do Durable Object nunca foi rodado** — o docblock diz "a confirmar pelo dev
+   na máquina dele". Fechar (b) de fato é rodar o despejo real numa sala local **uma vez** e registrar
+   o comando. Enquanto isso não acontece, "as seeds são extraíveis" é projeto, não fato medido.
+
+### Pendência 6 — dívida de processo do 7.4 (resolvida na prática em 2026-08-06)
+
+6. **Dívida de processo do 7.4 — RESOLVIDA na prática em 2026-08-06.** A branch tinha sido
+   renomeada por cima da `main` (`git branch -M`), sem merge commit, e a pendência era "decidir se
+   vira branch antes de qualquer push". **Virou branch:** o push criou
+   `origin/pr-7.7-dados-nurburgring` e deixou a `main` remota parada em `b39782d`. Em 2026-08-07 a
+   `main` local foi pushada e o remoto subiu pra `49f3ca8` (até o 7.6.1). O que sobra é decisão do
+   dev, não dívida: como a `main` recebe os commits de 7.7 em diante desta branch — PR no GitHub ou
+   fast-forward direto, possível porque o histórico é linear
+   (`git merge-base --is-ancestor origin/main HEAD` = 0).
+
+### Pendência 8 — o texto ORIGINAL, antes de ser executada (aberta 2026-08-18, executada 2026-08-19)
+
+Preservado porque registra o alvo e o diagnóstico de quem a abriu — inclusive o "SESSÃO PRÓPRIA",
+que foi cumprido. O texto vivo, com o método efetivamente usado, está no `ESTADO.md`.
+
+8. 📉 **ENCOLHER O `ESTADO.md` — aberta em 2026-08-18, adiada pelo dev.** O arquivo é lido por
+   inteiro na abertura de toda sessão, então cada linha é custo fixo; hoje ele tem ~930 linhas.
+   **Candidatos:** §FASE 8 encerrada (~128 linhas — único item vivo é o veredito do
+   `campeonato.html`) e §RISCO ATIVO FECHADO (~46 linhas). **Alvo: ~750 linhas.**
+   🔒 **REGRA APRENDIDA EM 2026-08-18, ao mover a §CORRIDA ONLINE — VERIFICAR ANINHAMENTO POR
+   ACIDENTE DE FORMATAÇÃO ANTES DE MOVER.** A §CORRIDA ONLINE tinha **quatro portões ATIVOS da Fase
+   3** aninhados sob o cabeçalho dela (portões obrigatórios do 3.0/3.1b, herança de config do spike,
+   riscos aprovados da fase, "harness headless não é opcional"): eram da fase inteira, não do
+   trabalho encerrado, e teriam saído junto. **Cabeçalho não prova pertencimento — ler o conteúdo.**
+   🛑 **SESSÃO PRÓPRIA, NÃO NO FIM DE OUTRA** (decisão do dev): cada movimento desses tem risco real
+   de levar coisa viva junto, e o fim de uma sessão longa é o pior momento para corrê-lo.
