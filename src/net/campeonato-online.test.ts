@@ -507,6 +507,36 @@ describe('🔴 CERCA DO SÍTIO QUE REALMENTE SORTEIA (`party/sala.ts`)', () => {
    * A cerca é TEXTUAL, no idioma que o projeto já usa (`namespaces-seed.test.ts`,
    * `contrato-ausente.test.ts`): não dá pra instanciar um Durable Object aqui,
    * mas dá pra exigir que o sorteio esteja escrito do jeito certo.
+   *
+   * ## 🔒 A MATRIZ DE COBERTURA (PR B do spike, 2026-08-19) — cada linha MEDIDA
+   *
+   * Desde o PR B existe cobertura COMPORTAMENTAL do sítio real, em
+   * `party/seeds.test.ts`, rodando dentro do `workerd`
+   * (`npm run test:party` — config à parte, fora do `npm test`). Isto NÃO torna
+   * esta cerca redundante, e a matriz é o registro de por quê:
+   *
+   * | Mutação | esta cerca | comportamental | serve de baseline? |
+   * |---|---|---|---|
+   * | **M5** `seedsEtapas[k] = deriveSeed(…)` | SIM | **NÃO, nunca** | — |
+   * | **M6** `seedCalendario = seedsEtapas[0]` | SIM | SIM | não: a cerca cai junto |
+   * | **MR** `const todas = slots` (sem `Array.from`) | SIM | SIM | **não**: cerca cai + TS2740 |
+   * | **MA** `todas[MAX_ETAPAS] = todas[0]` | **NÃO** | SIM | ✅ sorteio |
+   * | **MC** `carregar()` não lê o storage | **NÃO** | SIM | ✅ reidratação |
+   *
+   * 🔒 **A CERCA TEXTUAL PERMANECE, E PERMANECE POR CAUSA DE M5.** Seeds
+   * derivadas por índice também são distintas entre si e entre salas: nenhuma
+   * asserção comportamental pega M5, hoje nem nunca. E não dá para fixar a
+   * `seedMestre` e comparar salas, porque `criar()` só roda com o storage
+   * vazio. **Quem apagar esta cerca citando "agora tem cobertura de verdade"
+   * reabre o buraco** — é o risco R3 do plano do spike, escrito aqui para que o
+   * próximo leitor não precise deduzi-lo.
+   *
+   * ⚠️ **MR era baseline no plano aprovado e foi DISQUALIFICADO por medição**
+   * (2026-08-19), por dois motivos independentes: ele derruba a exigência
+   * `const todas = Array.from(slots)` mais abaixo — logo as duas cercas ficariam
+   * vermelhas juntas, que é exatamente por que M5/M6 já tinham sido recusadas
+   * como baseline — e `Uint32Array` não é atribuível a `number[]`, o que dá
+   * **TS2740**, vermelho de compilação, que não conta.
    */
   const RAIZ = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
@@ -609,7 +639,16 @@ describe('🔴 CERCA DO SÍTIO QUE REALMENTE SORTEIA (`party/sala.ts`)', () => {
 
   it('a casca converte pra number[] antes de guardar (Array.from na fronteira)', () => {
     // O par textual de M1: sem `Array.from`, o `Uint32Array` chega ao estado e
-    // não sobrevive ao JSON do storage.
+    // a sala é RECUSADA na reidratação.
+    //
+    // 🔑 Esta nota dizia "não sobrevive ao JSON do storage" e estava errada em
+    // dois níveis. JSON nunca esteve no caminho (`ctx.storage.put` grava
+    // V8-serializado — pendência 0(p)); e **medido no workerd real pelo PR B**
+    // (`party/seeds.test.ts`, R4), o `Uint32Array` SOBREVIVE ao round-trip como
+    // `Uint32Array`. O desfecho real é outro e é pior de diagnosticar: ele volta
+    // íntegro, `estadoDasSeeds` reprova no `Array.isArray`, e a sala vira
+    // `corrompida` — recusando todo mundo. **`Array.from` é necessário, e agora
+    // isso está medido, não argumentado.**
     expect(fonteDaCasca()).toMatch(/const todas = Array\.from\(slots\)/);
   });
 });
@@ -664,7 +703,11 @@ describe('🔴 M7 — seeds PERDIDAS não são sala nova (o discriminante)', () 
       { nome: 'seedsEtapas curto', quebrar: (s) => void (s.seedsEtapas = [1, 2, 3]) },
       { nome: 'seedsEtapas longo', quebrar: (s) => void (s.seedsEtapas = [...SEEDS.etapas, 9]) },
       {
-        // Exatamente o que M1 produz: `Uint32Array` que virou objeto indexado.
+        // ⚠️ O caso continua VÁLIDO (é uma forma torta que `estadoDasSeeds`
+        // tem de reprovar), mas a legenda antiga — "exatamente o que M1
+        // produz" — foi refutada: medido no workerd pelo PR B, um
+        // `Uint32Array` volta do storage como `Uint32Array`, não como objeto
+        // indexado. Quem reproduz M1 de verdade é `party/seeds.test.ts`.
         nome: 'seedsEtapas virou objeto indexado',
         quebrar: (s) => void ((s as unknown as { seedsEtapas: unknown }).seedsEtapas = { '0': 1 }),
       },

@@ -439,8 +439,10 @@ primeiro (regra travada da §3.5, item 2).
   nenhum, e é onde erro silencioso mora.
   🔒 **O TESTE MORA EM `party/`, NUNCA EM `src/`** — sob `src/` ele entraria no `include` do
   `npm test` e arrastaria os 63 arquivos para dentro do workerd.
-- **PR B — sorteio real e reidratação** (`party/seeds.test.ts`). Baselines **MA** e **MR**.
+- **PR B — sorteio real e reidratação** (`party/seeds.test.ts`). Baselines **MA** e ~~MR~~ **MC**
+  (troca medida e aprovada pelo dev em 2026-08-19 — ver "Os baselines vermelhos").
   **Edita o docblock da cerca textual com a matriz de cobertura** (obrigatório — ver abaixo).
+  **+ mede o R4** (decisão do dev, 2026-08-19): se um `Uint32Array` sobrevive ao storage do DO.
 - **PR C — gate do `alarm()`** (`party/alarme.test.ts`). Baselines **MB**, **MD** e a anti-vacuidade.
 
 ### Os baselines vermelhos
@@ -454,8 +456,26 @@ falhou duas vezes neste projeto.
   **Era essencial não usar M5/M6 como baseline:** a cerca textual já pega as duas, as duas cercas
   ficariam vermelhas juntas e o PR não provaria nada sobre o teste NOVO.
   N = 5 salas, não 20 (MA cai já na primeira; salas extras compram largura, não força).
-- **MR — `const todas = slots`** (sem `Array.from`), o requisito (a) do dev. ⚠️ **`isolatedStorage`
-  (ligado por padrão) desfaz escritas entre testes** — escrita e leitura no MESMO `it`.
+- ❌ **MR — `const todas = slots`** (sem `Array.from`) — **DISQUALIFICADO POR MEDIÇÃO em 2026-08-19,
+  na abertura do PR B. Substituído por MC, com aprovação do dev.** Dois motivos independentes,
+  qualquer um sozinho já bastando:
+  1. a cerca textual tem uma **quarta** exigência que este plano não considerou
+     (`campeonato-online.test.ts`, *"a casca converte pra number[] antes de guardar"*, casando
+     `const todas = Array.from(slots)`): sob MR ela fica **VERMELHA** — medido — e as duas cercas
+     caindo juntas é exatamente por que M5/M6 já tinham sido recusadas como baseline;
+  2. `Uint32Array` não é atribuível a `number[]` ⇒ **TS2740** — medido —, e **vermelho de compilação
+     não conta como baseline** (regra travada da §3.5).
+  ⚠️ A nota original *"`isolatedStorage` (ligado por padrão) desfaz escritas entre testes"* também
+  foi refutada pelo PR A: **a opção não existe mais na v0.22** e o storage ATRAVESSA os `it`s.
+- 🔑 **MC — `carregar()` deixa de ler o estado persistido** (`party/sala.ts:69`), o requisito (a) do
+  dev. **Medido antes de escrever o teste:** cerca textual **VERDE 36/36**, `typecheck` **0**,
+  `lint` **0** — nenhuma das cinco exigências da cerca toca `carregar()`.
+  🔴 **O furo que MC conserta, e que era maior que a troca de mutação: NENHUM baseline do plano
+  original exigia o `evictAllDurableObjects()`.** MA cai na criação; MR também (a sala vira
+  `corrompida` já ali — o próprio R4 admite). A metade REIDRATAÇÃO sairia com **cobertura declarada
+  e não provada**, que é a forma exata do defeito do baseline do 3.5.1 — dentro do PR que existe
+  para fechar essa pendência. O vermelho de MC pousa **DEPOIS** do evict, na asserção de
+  reidratação: a sala se **re-cria e re-sorteia**.
 - **MB — remover o gate do `alarm()`** (aviso A2): sala CORROMPIDA com draft em andamento e turno
   vencido ⇒ `seq` e `draft` INALTERADOS. Com a mutação, o draft se joga sozinho.
 - **MD — gate cedo demais** (early return no topo): sala corrompida e vazia há mais de 2 min **ainda
@@ -484,11 +504,17 @@ derivadas por índice **também** são distintas entre si e entre salas; um test
 diferentes" não pega M5. E não dá para fixar a `seedMestre` e comparar salas, porque `criar()` só
 roda com o storage vazio. Matriz que **vai escrita no docblock da cerca, no PR B**:
 
-| Mutação | cerca textual | comportamental |
-|---|---|---|
-| **M5** (derivar por índice) | SIM | **NÃO, nunca** |
-| **M6** (calendário = `todas[0]` no literal) | SIM | SIM |
-| **MA** (`todas[MAX_ETAPAS] = todas[0]`) | **NÃO** | SIM |
+| Mutação | cerca textual | comportamental | serve de baseline? |
+|---|---|---|---|
+| **M5** (derivar por índice) | SIM | **NÃO, nunca** | — |
+| **M6** (calendário = `todas[0]` no literal) | SIM | SIM | não: a cerca cai junto |
+| **MR** (sem `Array.from`) | **SIM — medido** | SIM | **não**: cerca cai + TS2740 |
+| **MA** (`todas[MAX_ETAPAS] = todas[0]`) | **NÃO — medido** | SIM | ✅ sorteio |
+| **MC** (`carregar()` não lê o storage) | **NÃO — medido** | SIM | ✅ reidratação |
+
+**Cada célula desta matriz foi MEDIDA em 2026-08-19** aplicando a mutação à árvore real e rodando as
+duas suítes — não deduzida da leitura. A cópia canônica vive no docblock da cerca
+(`src/net/campeonato-online.test.ts`), escrita pelo PR B.
 
 🔒 **A CERCA TEXTUAL PERMANECE, E PERMANECE POR CAUSA DE M5.** Sem essa frase no docblock, o próximo
 leitor a apaga citando a cobertura comportamental nova — é o risco R3 do plano.
@@ -508,7 +534,14 @@ estabeleceu que `ctx.storage.put` grava **V8-serializado** na `_cf_KV` — foi p
   que o docblock diz: a sala vira **`corrompida` e é RECUSADA**, não "as seeds somem e as etapas
   futuras são re-sorteadas em silêncio".
 - 🔒 **O teste tem que asserir o comportamento OBSERVADO, não o docblocado.**
-- **Ainda genuinamente aberto:** se o `Uint32Array` sobrevive ao V8 (structured clone normalmente
-  preserva typed arrays, mas **não foi executado em workerd**). O 0(p) prova o **serializador**, não
-  esse detalhe.
+- ✅ **FECHADO POR MEDIÇÃO NO PR B (2026-08-19).** Era: *"se o `Uint32Array` sobrevive ao V8
+  (structured clone normalmente preserva typed arrays, mas **não foi executado em workerd**)"*.
+  **Executado agora, em workerd de verdade** (`party/seeds.test.ts`, bloco R4): `put` de um
+  `Uint32Array` → `evictAllDurableObjects()` → `get` devolve **`Uint32Array`**, íntegro. Ele
+  **sobrevive**.
+  🔑 **Consequência: `Array.from` na fronteira é NECESSÁRIO, e o desfecho real é o pior dos dois
+  para diagnosticar.** Não é "as seeds viram `{"0":…}` e somem": elas voltam perfeitas, e mesmo
+  assim `estadoDasSeeds` reprova no `Array.isArray` ⇒ sala **`corrompida`, recusando todo mundo**.
+  A legenda *"exatamente o que M1 produz: objeto indexado"* em `campeonato-online.test.ts` foi
+  corrigida pelo PR B — o caso de teste continua válido, a legenda é que estava errada.
 
