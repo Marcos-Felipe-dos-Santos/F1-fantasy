@@ -22,7 +22,9 @@
 - **§3.5 CAMPEONATO ONLINE — o plano aprovado** — `B-indep`, o fatiamento em 4 PRs, o CORTE 3.5-F,
   a cerca textual de M5/M6. **EM ANDAMENTO — o 3.5.1 está feito.**
 - **§SPIKE + COBERTURA DA CASCA — o plano aprovado** — `@cloudflare/vitest-pool-workers`, os 3 PRs
-  A/B/C, os baselines MA/MR/MB/MD. **EM ANDAMENTO — o PR A é o próximo trabalho do projeto.**
+  A/B/C, os baselines MA/**MC**/MB/MD (MR disqualificada por medição). **EM ANDAMENTO — PR A e PR B
+  FEITOS e mergeados na `main` em 2026-08-19; o PR C foi ADIADO pelo dev em 2026-08-20 para DEPOIS
+  do 3.5.4.** Sequência: **3.5.2 → 3.5.3 → 3.5.4 → PR C → Fase 3 encerrada.**
 
 ---
 
@@ -133,7 +135,9 @@ duplicada entre engine e redutor, derivando em silêncio.
 > Terceira vez que um plano desta fase corria risco de não ser registrado (ver os dois avisos
 > idênticos no topo da §FASE 3 e da §CORRIDA ONLINE). **Registrado no mesmo dia da aprovação.**
 > Proposto pelo `fable-architect`, criticado pela sessão principal, **aprovado pelo dev em
-> 2026-08-18.** ALTO RISCO (netcode) nos quatro PRs. **Nada implementado.**
+> 2026-08-18.** ALTO RISCO (netcode) nos quatro PRs. ~~**Nada implementado.**~~
+> ⚠️ **Desatualizado desde 2026-08-18 e corrigido em 2026-08-19: o 3.5.1 ESTÁ FEITO e mergeado na
+> `main`** (`3308be3`). Faltam 3.5.2, 3.5.3 e 3.5.4.
 
 **O fato de arquitetura que decidiu tudo:** o servidor **não tem dataset ⇒ não conhece o calendário
 ⇒ não pode computar `seedDaEtapa(X, pistaId)`** (ela exige `pistaId`, `src/engine/campeonato.ts:38`).
@@ -274,6 +278,12 @@ se continua** — é ali que a decisão é barata, e não depois do 3.5.3.
      "M5 e M6 vermelhas" como garantia.**
 2. **3.5.2 — barreira e avanço de cursor por etapa** + elegíveis recomputados por etapa +
    `concluidaEm` só na última **+ o conserto do detector (campo `etapa`, chave `${escopo}:${etapa}`)**.
+   ➡️ **É O PR EM CURSO desde 2026-08-20**, aberto direto após o PR B do spike — **o PR C do spike
+   foi adiado para depois do 3.5.4** (decisão do dev; ver §SPIKE, "PR C"). **Sequência até fechar a
+   fase: 3.5.2 → 3.5.3 → 3.5.4 → PR C → Fase 3 encerrada.**
+   🛑 **É AQUI que a opção de abandonar o 3.5 inteiro tem que estar visível ao dev** — ver §"O
+   TAMANHO" logo acima; o pedido foi que a opção aparecesse **no momento** do 3.5.2, e o momento é
+   este.
 3. **3.5.3 — cliente: N etapas por derivação pura.** `useMemo` sobre `seedsAbertas`; `corridaDaSala`
    passa a aceitar `pistaId` explícito (quando vier, **não** chama `pistaSorteada`); classificação por
    `acumularClassificacao`; atestado por etapa (o campo já veio do 3.5.2). **Nada de estado local
@@ -444,6 +454,21 @@ primeiro (regra travada da §3.5, item 2).
   **Edita o docblock da cerca textual com a matriz de cobertura** (obrigatório — ver abaixo).
   **+ mede o R4** (decisão do dev, 2026-08-19): se um `Uint32Array` sobrevive ao storage do DO.
 - **PR C — gate do `alarm()`** (`party/alarme.test.ts`). Baselines **MB**, **MD** e a anti-vacuidade.
+  🔁 **ADIADO POR DECISÃO DO DEV EM 2026-08-20 — NÃO CANCELADO.** Sai da posição "antes do 3.5.2" e
+  vai para **depois do 3.5.4**, antes de declarar a Fase 3 encerrada. **Sequência:
+  3.5.2 → 3.5.3 → 3.5.4 → PR C → Fase 3 encerrada.**
+  **Motivo do dev:** o 3.5.2 exercita `onMessage` de qualquer forma ao testar o cursor, e cobertura
+  defensiva **rende mais depois de a lógica existir** — o C feito agora seria moldado ao código de
+  ontem; feito depois, é moldado aos bugs reais que a casca revelar.
+  ⚠️ **A frase do topo desta seção — "Vem ANTES do 3.5.2, e o motivo é de método" — vale para o PR A
+  (que veio antes e está feito), NÃO mais para o C.** Corrigido aqui em vez de só contradito, pela
+  regra do `CLAUDE.md` §"o `doc-writer` NÃO APAGA".
+  🔁 **GATILHO DE REAVALIAÇÃO:** se o 3.5.2 ou o 3.5.3 revelarem na casca um bug que MB/MD teriam
+  pego, **puxar o C para a frente** em vez de seguir a sequência.
+  🛑 **Preço aceito, e ele não muda por ter sido aceito:** o 3.5.2 nasce na única parte da casca sem
+  cobertura, e a **pendência 0(s)** (sala-zumbi) segue **não confirmada** — quem a confirmaria é o
+  harness que o C constrói. Os baselines **MB**, **MD** e a **anti-vacuidade** continuam válidos
+  como especificados acima; nada neste adiamento os reabre.
 
 ### Os baselines vermelhos
 
@@ -519,20 +544,30 @@ duas suítes — não deduzida da leitura. A cópia canônica vive no docblock d
 🔒 **A CERCA TEXTUAL PERMANECE, E PERMANECE POR CAUSA DE M5.** Sem essa frase no docblock, o próximo
 leitor a apaga citando a cobertura comportamental nova — é o risco R3 do plano.
 **A pendência 9 vai de 🔴 para 🟡, NÃO para ✅:** depois de A+B+C, `onMessage`, `onClose`, `encerrar`,
-CORS e a propriedade RPC-vs-HTTP seguem sem cobertura. Também seguem fora: `FluxoOnline.tsx`
+CORS e a propriedade RPC-vs-HTTP seguem sem cobertura.
+⚠️ **CORREÇÃO DE FATO em 2026-08-20: o 🟡 foi marcado com A+B feitos e o C ADIADO** — decisão do dev,
+não cumprimento do plano acima. **Consequência a não perder de vista:** neste 🟡 o **gate do
+`alarm()` também está descoberto**, o que não estaria na versão A+B+C.
+Também seguem fora: `FluxoOnline.tsx`
 (workerd não é jsdom — **não muda nada** em 0(m)/0(j)), fan-out REAL (latência, concorrência de
 borda, hibernação de verdade), token por origem 0(h) e o brute-force de 2³² de 0(i).
 
-### R4 — o docblock de `party/sala.ts:90-92` está REFUTADO pela medição do 0(p)
+### ✅ R4 — o docblock de `party/sala.ts:90-92` está REFUTADO pela medição do 0(p) — RESOLVIDO NO PR B
 
 O comentário afirma que o estado *"é persistido via **JSON**, e um `Uint32Array` round-trip vira
 `{"0":…}`"*. 🔑 **JSON não está no caminho:** o despejo do dev (pendência 0(p), 2026-08-19)
 estabeleceu que `ctx.storage.put` grava **V8-serializado** na `_cf_KV` — foi por isso que o
 `despejar-seeds.ts` precisou do `node:v8`. **É afirmação técnica errada em código de produção.**
-- **MR continua baseline VÁLIDO** — conferido: `estadoDasSeeds` usa `Array.isArray`
-  (`src/net/sala.ts:192`) e um `Uint32Array` reprova ali. Mas fica vermelho **por outro motivo** do
-  que o docblock diz: a sala vira **`corrompida` e é RECUSADA**, não "as seeds somem e as etapas
-  futuras são re-sorteadas em silêncio".
+- ❌ ~~**MR continua baseline VÁLIDO**~~ — **DERRUBADO em 2026-08-19 pela medição do PR B. Ver "Os
+  baselines vermelhos" acima: MR derruba a cerca textual E dá TS2740.** A linha original ficava a
+  duas telas da disqualificação e as duas se contradiziam — é a forma exata de defeito que o
+  `CLAUDE.md` §"o `doc-writer` NÃO APAGA" registra: *regra nova ao lado da antiga contraditória
+  devolve o mesmo estrago, dependendo de qual o leitor achar primeiro*. Por isso ela foi corrigida
+  aqui, e não só acrescentada lá.
+  **O que da linha antiga PERMANECE VERDADEIRO e por isso fica:** `estadoDasSeeds` usa
+  `Array.isArray` (`src/net/sala.ts:192`) e um `Uint32Array` reprova ali; e o desfecho é a sala
+  virando **`corrompida` e RECUSADA**, não "as seeds somem e as etapas futuras são re-sorteadas em
+  silêncio". Isso descreve corretamente o COMPORTAMENTO — só não faz de MR um baseline utilizável.
 - 🔒 **O teste tem que asserir o comportamento OBSERVADO, não o docblocado.**
 - ✅ **FECHADO POR MEDIÇÃO NO PR B (2026-08-19).** Era: *"se o `Uint32Array` sobrevive ao V8
   (structured clone normalmente preserva typed arrays, mas **não foi executado em workerd**)"*.

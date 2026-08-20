@@ -8,8 +8,15 @@
 
 ## Estado atual
 
-**Última medição (PR 3.5.1, 2026-08-18):** `npm test` **1516/63**, typecheck app **0**, typecheck
-`party/` **0**, eslint **0**, build **0**. `VERSAO_APP` **3.4.2**.
+**Última medição (PR B do spike, 2026-08-19, na `main` pós-merge):** `npm test` **1516/63**,
+**`npm run test:party` 8/8** (novo portão desde o PR A — era 5/5 lá), typecheck app **0**, typecheck
+`party/` **0**, **typecheck `party/tsconfig.test.json` 0** (novo), eslint **0**, build **0**
+(o `checar:casca` roda dentro dele). `VERSAO_APP` **3.4.2**.
+⚠️ **`npm test` e `npm run test:party` são suítes SEPARADAS, e é de propósito** — `party/` roda no
+`workerd` com config à parte, fora do `include` do `npm test`. **Medir só um dos dois deixa metade
+do projeto sem portão.**
+*(Medição anterior, PR 3.5.1, 2026-08-18: `npm test` 1516/63, typecheck app 0, typecheck `party/` 0,
+eslint 0, build 0.)*
 ⚠️ O badge do README diz **1094** e é **estático** — não há CI neste repo (`.github/` não existe).
 Está desatualizado e vai mentir se um teste quebrar.
 
@@ -258,12 +265,17 @@ app **0**, typecheck `party/` **0**, eslint **0**, build **0**. Plano em `PLANOS
 ⚠️ **CORREÇÃO DE AFIRMAÇÃO DE ESTADO (2026-08-19).** Linha anterior dizia *"NÃO mergeada, NÃO pushada,
 sem tag — aguardando o dev"* e **estava falsa nas duas primeiras pernas**. Medido em 2026-08-19 com
 HEAD na `main`: `git ls-remote origin refs/heads/main` = `f9d5348`, **idêntico ao `HEAD` local**; `git
-rev-list --left-right --count origin/main...main` = `0 0`. **Hoje o HEAD está na branch
-`pr-a-spike-vitest-pool-workers`** (o PR A; commit de código `72b931e`) e a afirmação anterior
-continua valendo. ⚠️ Esta linha citou por um momento um `5fca74b` que **não era o `HEAD`** —
-quarta ocorrência da mesma lição, dentro do próprio bloco que a registra. Branch
-`pr-3.5.1-seed-por-etapa` segue só local (`3282852`), contida na `main`. É a terceira ocorrência de
-**"afirmação de estado só entra medida"** — desta vez sobre git.
+rev-list --left-right --count origin/main...main` = `0 0`. ⚠️ Esta linha citou por um momento um
+`5fca74b` que **não era o `HEAD`** — quarta ocorrência da mesma lição, dentro do próprio bloco que a
+registra. Branch `pr-3.5.1-seed-por-etapa` segue só local (`3282852`), contida na `main`. É a
+terceira ocorrência de **"afirmação de estado só entra medida"** — desta vez sobre git.
+
+🔄 **ESTADO DO GIT REMEDIDO EM 2026-08-19, pós PR A + PR B** (a linha acima descrevia a sessão
+anterior e envelheceu — remedir é obrigação, não zelo):
+`git rev-parse HEAD` = **`aa68690`**, branch **`main`**; `git ls-remote origin refs/heads/main` =
+**`b41deb7`**; `git rev-list --left-right --count origin/main...main` = **`0 6`**.
+**A `main` local está 6 commits À FRENTE do remoto e NADA foi pushado** — os merges do PR A
+(`c798976`) e do PR B (`aa68690`) são locais, **sem tag**, como o dev pediu.
 
 Escopo: `src/net/` + `party/`, sem UI. Implementa `B-indep` (decisão D1): **11 seeds INDEPENDENTES
 sorteadas no DO** (10 etapas + calendário), publicadas uma por etapa quando aquela abre. **O cursor
@@ -283,23 +295,71 @@ ainda NÃO avança** — só etapa 0 sai. `VERSAO_ESTADO_SALA` discrimina sala l
 worker derrubado, reconexão forçando reidratação. **As 11 seeds vieram idênticas**; cinco pré-3.5.1
 em `legado`. Requisitos (a) e (b) do baseline deixam de ser projeto e viram **fato medido**.
 
-**➡️ PRÓXIMO: PR A SPIKE `@cloudflare/vitest-pool-workers`** (decisão dev 2026-08-19) — **FEITO em
-2026-08-19, commit `72b931e` na branch `pr-a-spike-vitest-pool-workers`, NÃO mergeada, NÃO pushada,
-sem tag. Veredito GO/NO-GO pendente**. `npm test` **1516/63 antes e depois**.
-`npm run test:party`: **5/5 verde (~665 ms)**. Plano aprovado: `PLANOS_ATIVOS.md` §"SPIKE + COBERTURA
-DA CASCA" (5 decisões do dev). **Três achados que contrariam o plano aprovado** (o valor do spike):
-(1) `nodejs_compat` não foi necessária — teste passa SEM flag; (2) compensador `--dry-run` era vacuoso
-— novo script empacota e inspeciona de verdade; (3) `isolatedStorage` morreu — substitutos medidos
-`reset()` + `evictAllDurableObjects()`. **Descoberta crítica:** wrangler topo precisou ser **PINADO
-exato (4.120.0)** pra não deduplicar para 4.124.0 do pool. Portões **(i)** 3 mutações vistas
-vermelhas, **(ii)** 1516/63 antes/depois — cumpridos. **Classificação BAIXO RISCO**, sem
-`senior-reviewer`. Se NO-GO: rollback uma linha, pendência 9 fica 🟡, 3.5.2 abre próxima sessão.
-Detalhes completos em `HISTORICO.md` §"PR A".
+**✅ PR A DO SPIKE — VEREDITO DO DEV: GO (2026-08-19).** `@cloudflare/vitest-pool-workers` adotado.
+Commit de código `72b931e`, **MERGEADO na `main` em `c798976`** (`--no-ff`), sem tag, sem push.
+**Três achados que contrariam o plano aprovado** (o valor do spike): (1) `nodejs_compat` **não foi
+necessária** — teste passa SEM flag, então teste e produção rodam sob a MESMA config de compat, e a
+decisão travada do 3.2 fica preservada na substância, não só na letra; (2) compensador `--dry-run`
+era vacuoso — `scripts/checar-casca-sem-node.ts` empacota e **inspeciona o bundle**, e roda dentro do
+`npm run build`; (3) **`isolatedStorage` não existe mais na v0.22** — o storage ATRAVESSA os `it`s;
+substitutos medidos: nome de DO distinto por teste + `reset()` + `evictAllDurableObjects()`.
+**Descoberta crítica:** o `wrangler` do topo precisou ser **PINADO exato (4.120.0)** pra não
+deduplicar para o 4.124.0 que o pool traz. Detalhes em `HISTORICO.md` §"PR A".
 
-**Depois do veredito, PR 3.5.2** — barreira e avanço de cursor por etapa, elegíveis recomputados,
+**✅ PR B DO SPIKE — FEITO em 2026-08-19.** Commit `ceb2228` na branch `pr-b-cobertura-seeds-casca`,
+**MERGEADO na `main` em `aa68690`** (`--no-ff`), sem tag, sem push. **BAIXO RISCO** (diff de produção
+= 4 linhas de comentário, aprovadas pelo dev), sem `senior-reviewer`.
+🔑 **É o primeiro arquivo do projeto que asserta LÓGICA sobre `party/sala.ts`** (`party/seeds.test.ts`,
+rodando no `workerd`): sorteio dos 11 slots pelo caminho real (`criarSeNova` → `criar`) e reidratação
+pós-`evictAllDurableObjects()` sem re-sorteio.
+**Medido na `main` pós-merge:** `npm test` **1516/63** (inalterado, e correto — a matriz entrou como
+docblock, não como asserção), `npm run test:party` **8/8** (era 5/5 no PR A), typecheck **0** nos
+três projetos, eslint **0**, build **0**.
+🔴 **DOIS ACHADOS QUE DERRUBARAM O PLANO APROVADO, ambos medidos antes de escrever teste:**
+(1) **MR é inutilizável como baseline** — ela derruba a **quarta** exigência da cerca textual
+(`const todas = Array.from(slots)`, que o plano não considerou) **e** dá **TS2740**, vermelho de
+compilação, que não conta. Os dois motivos são independentes.
+(2) 🔑 **Mais grave: NENHUM baseline do plano exigia o `evictAllDurableObjects()`** — MA cai na
+criação, MR também. A metade **reidratação** sairia com **cobertura declarada e não provada**, que é
+a forma exata do defeito do baseline do 3.5.1, dentro do PR que existe para fechá-lo.
+**Conserto aprovado pelo dev: MR sai, entra MC** (`carregar()` deixa de ler o storage) — o vermelho
+dela pousa **DEPOIS** do evict, com as asserções anteriores passando. Baselines **MA** e **MC**
+vistos vermelhos um a um, com a cerca textual **VERDE (36/36)** ao lado, revertidos e verdes de novo.
+✅ **R4 fechado por medição** (ver pendência 0(p)): `Uint32Array` sobrevive ao storage do DO.
+
+**➡️ DECISÃO DO DEV (2026-08-20): PR C ADIADO — abre o 3.5.2 direto.** O **PR C** é o gate do
+`alarm()` (`party/alarme.test.ts`, baselines MB/MD + anti-vacuidade). **Ele não foi cancelado: foi
+REPOSICIONADO para DEPOIS do 3.5.4**, último PR da Fase 3, e **antes de declarar a Fase 3 encerrada**.
+**Motivo registrado pelo dev:** o 3.5.2 vai exercitar `onMessage` de qualquer forma ao testar o
+cursor, e **cobertura defensiva rende mais depois de a lógica existir** — o C escrito hoje seria
+moldado ao código de ontem, e escrito depois é moldado aos bugs reais que a casca revelar.
+🔁 **GATILHO DE REAVALIAÇÃO, travado junto com a decisão:** se o **3.5.2 ou o 3.5.3 revelarem na
+casca um bug que o PR C teria pego**, puxar o C para a frente em vez de seguir a sequência.
+🛑 **O preço aceito, dito por inteiro** (era o argumento contra, e continua verdadeiro): o 3.5.2
+nasce na única parte da casca ainda sem cobertura, e a **pendência 0(s)** — suspeita de sala-zumbi —
+segue **não confirmada**, porque quem a confirmaria é o harness que o C constrói.
+
+**🔢 SEQUÊNCIA ATÉ FECHAR A FASE 3 (atualizada em 2026-08-20):**
+**3.5.2 → 3.5.3 → 3.5.4 → PR C → Fase 3 encerrada.**
+
+**PR 3.5.2 — É O TRABALHO DESTA SESSÃO** — barreira e avanço de cursor por etapa, elegíveis
+recomputados,
 `concluidaEm` só na última, **+ conserto do detector** (campo `etapa`, chave `${escopo}:${etapa}`).
 🛑 **É no 3.5.2 que o dev pediu para ver, VISÍVEL, a opção de abandonar o 3.5 inteiro** — o corte
 honesto da fase pode ser o próprio 3.5, e é ali que a decisão é barata.
+🛑 **E É AGORA (2026-08-20): o 3.5.2 é esta sessão, então esta é A hora do dev decidir.** O pedido
+foi para a opção estar visível **no momento** do 3.5.2, não depois — abandonar o 3.5 custa 3 PRs
+poupados agora (3.5.2 + 3.5.3 + 3.5.4) e custa muito mais depois do 3.5.3. **O que o abandono
+sacrificaria:** o campeonato online inteiro; a corrida online avulsa (encerrada no 4/4) **fica de
+pé sozinha** e a Fase 3 fecharia com ela + o PR C.
+**O que o abandono TAMBÉM dispensa:** o conserto do detector (alarme falso travado a partir da
+etapa 2) — o alarme falso **só existe porque existe etapa 2**, então ele some junto com o 3.5. Não
+é dívida que fica; é trabalho que deixa de ser necessário.
+**O que o abandono NÃO resolve:** as pendências **0(i)** (`seedMestre` de 32 bits, enumerável) e
+**0(o)** (assimetria de postura entre corrida avulsa e campeonato) — elas seguem abertas de
+qualquer jeito, e continuam esperando o PR de alargamento de entropia. ⚠️ Com o 3.5 abandonado,
+0(o) muda de forma (não haveria campeonato online para contrastar com a avulsa), **mas 0(i) não
+muda em nada** — ela é da corrida avulsa, que fica.
 
 **Duas decisões de arte esperando o dev** (nenhuma bloqueia o merge): os dois botões do
 `TelaResumo` são ambos `botao-primario` (pré-existente do offline, agora visível no online); e o
@@ -311,6 +371,10 @@ PRs **8.1** (calendário sorteado), **8.2** (round-trip do save) e **8.4-mínimo
 deixou de ser inalcançável — tem seletor, encadeia corridas, salva e retoma).
 
 ## SEQUÊNCIA — o que sobrou
+
+**🔢 ATÉ FECHAR A FASE 3 (atualizado em 2026-08-20, decisão do dev que adiou o PR C do spike):**
+**3.5.2 → 3.5.3 → 3.5.4 → PR C → Fase 3 encerrada.** O PR C é o gate do `alarm()` e foi
+**reposicionado** para o fim, não cancelado — motivo e gatilho de reavaliação na §"Onde parei".
 
 **Os portões visuais saíram desta lista: os dois foram aprovados em 2026-08-07.**
 **O teste do online foi FECHADO no PR 3.3.4 com todos os quatro casos validados pelo dev.**
@@ -368,7 +432,12 @@ Spa (33,4%) e Red Bull Ring (28,0%) não perdem candidato. Caso extremo, o Nürb
 / 50,0% sem teto contra 24 / 38,7% com ele** — é o teto que segue impedindo a faixa contínua que o
 dev reprovou.
 
-## 🔴 RISCO ATIVO ABERTO — `party/` NÃO TEM COBERTURA AUTOMATIZADA
+## 🟡 RISCO ATIVO — `party/` TEM COBERTURA PARCIAL (era 🔴 "NÃO TEM COBERTURA AUTOMATIZADA")
+
+> 🟡 **Rebaixado de 🔴 para 🟡 em 2026-08-20**, junto com a pendência 9 e por decisão do dev. **O
+> título antigo virou falso no PR B** e por isso foi corrigido, não só anotado: `party/seeds.test.ts`
+> executa a casca de verdade. **A seção CONTINUA ABERTA** — o inventário do que segue descoberto
+> está no bloco 📊 no fim dela, e o gate do `alarm()` é o mais relevante deles.
 
 **Registrado como pendência própria pelo dev em 2026-08-18**, ao aprovar o 3.5.1 — explicitamente
 **não** como linha dentro daquele PR. É a camada que **sorteia**, **reidrata** e que vai **carregar
@@ -402,6 +471,26 @@ não tem teste que o execute** — foi verificado por leitura.
 ✅ **A DECISÃO FOI TOMADA — dev, 2026-08-19: adotar `@cloudflare/vitest-pool-workers` ANTES do
 3.5.2.** Esta seção registrava a pergunta em aberto; **decidido que sim.** Motivo, gate de versão
 medido e custos residuais estão na **pendência 9**.
+
+📊 **ESTADO DA SEÇÃO em 2026-08-19, pós PR A + PR B (ambos mergeados na `main`):**
+- ✅ **"nenhum teste a executa" DEIXOU DE SER VERDADE.** `party/seeds.test.ts` executa o sorteio real
+  (`criarSeNova` → `criar`) e a reidratação pós-`evictAllDurableObjects()`. `npm run test:party` 8/8.
+- ✅ **A consequência que já se materializou uma vez está coberta:** M6 (recoplar o 11º slot) agora
+  cai comportamentalmente, não só na cerca textual.
+- 🔴 **A SEÇÃO CONTINUA ABERTA, e o motivo é específico:** `onMessage`, `onClose`, `encerrar`, CORS e
+  a propriedade RPC-vs-HTTP seguem **sem nenhum teste**, e o **gate do `alarm()` (aviso A2) também**
+  — ele é o PR C, que **não foi feito**. O 3.5.2 põe o cursor exatamente ali.
+  ➡️ **ATUALIZAÇÃO 2026-08-20:** o PR C foi **adiado por decisão do dev** para **depois do 3.5.4**
+  (sequência **3.5.2 → 3.5.3 → 3.5.4 → PR C → Fase 3 encerrada**). Enquanto ele não vier, **este
+  parágrafo é a descrição corrente do risco, não histórico** — e o 3.5.2 abre ciente disso.
+  🔎 **O que muda de fato com o 3.5.2:** ele exercita `onMessage` (é por onde o atestado da barreira
+  chega e o cursor anda), então a lacuna de `onMessage` encolhe **como efeito colateral**, sem que
+  isso seja o gate do `alarm()` — não confundir os dois ao ler esta lista depois.
+- 🔒 **M5 SEGUE INDETECTÁVEL COMPORTAMENTALMENTE, PARA SEMPRE**, e por isso **a cerca textual de
+  `src/net/campeonato-online.test.ts` NÃO SAI.** Seeds derivadas por índice também são distintas
+  entre si e entre salas; e não dá para fixar a `seedMestre` e comparar salas, porque `criar()` só
+  roda com o storage vazio. A matriz de cobertura medida vive no docblock da cerca.
+  ⚠️ **A ressalva do 0(p) continua valendo e NÃO foi resolvida pela cobertura nova.**
 🔒 **A regra de método que esse PR não pode furar:** o baseline vermelho **não pode ser M5 nem M6** —
 a cerca **textual** já pega as duas, então as duas cercas ficariam vermelhas juntas e o PR não
 provaria nada sobre o teste NOVO. O baseline tem que ser uma mutação que a cerca textual
@@ -495,10 +584,21 @@ casca deixa de ser terra sem teste; a opção conhecida é `@cloudflare/vitest-p
    tamanho da corrida online inteira"*. Fica para o PR de alargamento de entropia, que é onde (i)
    também vive. ⚠️ **O custo marginal lá é quase zero** (o `EstadoSala` já terá segredos sorteados
    pelo 3.5.1): quem pegar aquele PR deve tratar (i) e (o) **juntos**, não um de cada vez.
-   (p) ✅ **FECHADA em 2026-08-19 — MEDIDA PELO DEV, NÃO DEDUZIDA.** Sala `420320` pós-3.5.1, worker
-   derrubado de verdade (Ctrl-C no `npm run sala`) e reconexão forçando reidratação: **as 11 seeds
-   vieram IDÊNTICAS**; as cinco salas pré-3.5.1 caíram em `legado`. Fecha os requisitos **(a)**
-   reidratação e **(b)** extratibilidade do baseline do 3.5.1. **Método e detalhe:** `HISTORICO.md`.
+   (p) ✅ **FECHADA em 2026-08-19 — MEDIDA PELO DEV EM PRODUÇÃO, NÃO DEDUZIDA.**
+   🔑 **O MÉTODO, porque é ele que faz a medida valer** (registrado aqui a pedido do dev, 2026-08-19,
+   para não depender do `HISTORICO.md`): **(1) despejo** do storage do Durable Object da sala `420320`
+   (pós-3.5.1) via `scripts/despejar-seeds.ts`, anotando os 11 números; **(2) derrubada real** do
+   worker — Ctrl-C no `npm run sala`, não um reload nem um restart de dev server; **(3) reconexão**,
+   forçando a sala a reidratar do storage em vez de servir cache de memória; **(4) segundo despejo**
+   e comparação número a número. **Os 11 vieram IDÊNTICOS.** As cinco salas pré-3.5.1 caíram em
+   `legado`. Fecha os requisitos **(a)** reidratação e **(b)** extratibilidade do baseline do 3.5.1.
+   **Detalhe completo:** `HISTORICO.md`.
+   ✅ **AUTOMATIZADA no PR B (2026-08-19):** o que o dev fez à mão agora tem par em teste —
+   `party/seeds.test.ts` cria a sala pelo caminho real, despeja a instância com
+   `evictAllDurableObjects()` e exige que as 11 seeds voltem idênticas **e que a sala não se
+   re-crie**. Baseline **MC** visto vermelho. **Isto NÃO substitui a medida em produção** (workerd
+   local não é a borda da Cloudflare); ele impede a regressão silenciosa entre uma medida manual e a
+   próxima.
    🔑 **A RESSALVA, que não pode sair daqui:** `seedCalendario 1903767602` ≠ `seedsEtapas[0]
    3187109758` **refuta M6** (11º slot recoplado) e **NÃO diz nada sobre M5** (derivar por índice) —
    seeds derivadas por índice **também** diferem entre si. **NÃO ler como "independência das seeds
@@ -507,7 +607,18 @@ casca deixa de ser terra sem teste; a opção conhecida é `@cloudflare/vitest-p
    🔴 **Achado técnico que fica valendo:** o DO é `new_sqlite_classes` e `ctx.storage.put` grava na
    `_cf_KV` **V8-serializado, não JSON** — `sqlite3`/`strings` mostram os NOMES dos campos e não os
    números; por isso `scripts/despejar-seeds.ts` desserializa com `node:v8`. **Isto REFUTA o docblock
-   de `party/sala.ts:90-92`, que será corrigido no PR A do spike.**
+   de `party/sala.ts:90-92`** — ✅ **corrigido no PR A do spike**, como planejado.
+   🔑 **R4 — MEDIDO NO `workerd` REAL PELO PR B (2026-08-19). Era pergunta explicitamente em aberto;
+   virou fato.** O 0(p) provou o **serializador** (V8, não JSON); faltava saber o que o V8 faz com um
+   `Uint32Array`. Executado em `party/seeds.test.ts` (bloco R4), **na forma aninhada de produção**
+   (`estado.sala.seedsEtapas`, não um valor no topo da chave — medir o topo e afirmar sobre o
+   aninhado seria supor que o structured clone é recursivo em vez de conferir):
+   **o `Uint32Array` SOBREVIVE ao round-trip, íntegro, como `Uint32Array`.**
+   🔒 **Consequência travada: `Array.from` na fronteira é NECESSÁRIO, não estilo — e o caminho de
+   falha é o pior dos dois para diagnosticar.** As seeds **não somem** nem viram `{"0":…}`: elas
+   voltam perfeitas, e mesmo assim `estadoDasSeeds` reprova no **`Array.isArray`**
+   (`src/net/sala.ts:192`) ⇒ a sala vira **`corrompida` e passa a RECUSAR TODO MUNDO**. Quem um dia
+   olhar `const todas = Array.from(slots)` e achar que é cerimônia tem, agora, o número e o teste.
    (q) **NOVA (PR 3.5.1) — ORDEM DE DEPLOY a partir do 3.5.2: `wrangler` ANTES do `vite`.**
    `cliente.ts` não valida forma de snapshot. Num deploy escalonado, cliente novo contra worker
    antigo receberia `seedsAbertas: undefined` — **inócuo no 3.5.1** (ninguém lê), **letal no 3.5.2**,
@@ -568,18 +679,33 @@ casca deixa de ser terra sem teste; a opção conhecida é `@cloudflare/vitest-p
    trabalho encerrado, e teriam saído junto. **Cabeçalho não prova pertencimento — ler o conteúdo.**
    ✅ **A regra foi aplicada:** os quatro portões, as três retenções da §CORRIDA ONLINE, as
    invioláveis do 3.1a/3.1b/3.2 e as cinco retenções da §FASE 8 **ficaram neste arquivo**.
-9. 🔴 **`party/` SEM COBERTURA AUTOMATIZADA — aberta em 2026-08-18, pendência NOMEADA a pedido do
-   dev.** Seção própria acima (§"🔴 RISCO ATIVO ABERTO"), com o que foi medido e o que o 3.5.2
-   herda. Em uma linha: é a camada que sorteia, reidrata e vai carregar o cursor, **nenhum teste a
-   executa**, e a consequência já se materializou uma vez (o baseline do 3.5.1 declarou cobertura
-   inexistente; M5/M6 no sítio real deixavam a suíte verde). Mitigação atual é cerca **textual**,
-   que não pega quem contorna.
+9. 🟡 **`party/` COM COBERTURA PARCIAL — aberta 🔴 em 2026-08-18, pendência NOMEADA a pedido do
+   dev; passou a 🟡 em 2026-08-20 (ver o STATUS mais abaixo neste item).** Seção própria acima
+   (§"🟡 RISCO ATIVO — `party/` TEM COBERTURA PARCIAL"), com o que foi medido e o que o 3.5.2 herda.
+   Em uma linha: é a camada que sorteia, reidrata e vai carregar o cursor; ~~**nenhum teste a
+   executa**~~ **— falso desde o PR B (2026-08-19): `party/seeds.test.ts` executa sorteio e
+   reidratação reais; o que segue sem teste é o `alarm()` + `onMessage`/`onClose`/`encerrar`/CORS** —
+   e a consequência já se materializou uma vez (o baseline do 3.5.1 declarou cobertura
+   inexistente; M5/M6 no sítio real deixavam a suíte verde). Mitigação **contra M5** segue sendo a
+   cerca **textual**, que não pega quem contorna.
    ✅ **PLANO APROVADO PELO DEV em 2026-08-19 — está em `PLANOS_ATIVOS.md` §"SPIKE + COBERTURA DA CASCA"**,
    com as 5 decisões dele (Ramo 1 do `nodejs_compat` + compensador `--dry-run` inegociável em PR A ·
    duas cópias de wrangler · **PR A é SPIKE com go/no-go** · docblock do R4 corrigido no A · MZ vira
-   pendência **0(s)**). Três PRs (A/B/C), o A sozinho. **Nada implementado.**
+   pendência **0(s)**). Três PRs (A/B/C), o A sozinho. ~~**Nada implementado.**~~ **Desatualizado em
+   2026-08-19 — ver o ANDAMENTO logo abaixo.**
    ⚠️ **Fecha esta pendência só PARCIALMENTE: ela vai a 🟡, não a ✅** — M5 segue indetectável
    comportamentalmente e `onMessage`/`onClose`/`encerrar`/CORS seguem descobertos.
+   📊 **ANDAMENTO em 2026-08-19: PR A ✅ e PR B ✅, ambos mergeados na `main`. PR C NÃO feito.**
+   🟡 **STATUS EM 2026-08-20: 🔴 → 🟡, POR DECISÃO DO DEV** (a mesma que adiou o PR C para depois do
+   3.5.4). ⚠️ **A redação anterior desta linha dizia o contrário** — *"continua 🔴 e NÃO vai a 🟡
+   ainda, porque o 🟡 do plano é depois de A+B+C"* — e foi **corrigida aqui, não só contradita
+   abaixo**, pela regra do `CLAUDE.md` §"o `doc-writer` NÃO APAGA": regra nova ao lado da antiga
+   contraditória devolve o mesmo estrago, dependendo de qual o leitor achar primeiro.
+   🔒 **O que este 🟡 significa EXATAMENTE, para ninguém o ler como mais do que é:** a casca deixou
+   de ser terra sem teste (`npm run test:party` 8/8 executa sorteio real e reidratação real), **e**
+   o gate do `alarm()` **segue sem nenhum teste que o execute**, junto com `onMessage`, `onClose`,
+   `encerrar`, CORS e a propriedade RPC-vs-HTTP. O 🟡 é *"parcialmente coberta"*, não *"o plano
+   A+B+C cumpriu"* — o C não foi feito.
    🔑 **Gate de versão MEDIDO em 2026-08-19, antes de planejar** (era o risco que mudava a FORMA do
    plano, não um detalhe): `@cloudflare/vitest-pool-workers@0.22.0` tem peer **`vitest ^4.1.0`** e o
    projeto já roda **`vitest@4.1.10`** — **não há downgrade nem bump de major**, o que era o custo
