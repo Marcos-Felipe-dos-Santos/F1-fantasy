@@ -258,8 +258,10 @@ app **0**, typecheck `party/` **0**, eslint **0**, build **0**. Plano em `PLANOS
 ⚠️ **CORREÇÃO DE AFIRMAÇÃO DE ESTADO (2026-08-19).** Linha anterior dizia *"NÃO mergeada, NÃO pushada,
 sem tag — aguardando o dev"* e **estava falsa nas duas primeiras pernas**. Medido em 2026-08-19 com
 HEAD na `main`: `git ls-remote origin refs/heads/main` = `f9d5348`, **idêntico ao `HEAD` local**; `git
-rev-list --left-right --count origin/main...main` = `0 0`. **Hoje o HEAD está em
-`pr-a-spike-vitest-pool-workers` (`5fca74b`)** e a afirmação anterior continua valendo. Branch
+rev-list --left-right --count origin/main...main` = `0 0`. **Hoje o HEAD está na branch
+`pr-a-spike-vitest-pool-workers`** (o PR A; commit de código `72b931e`) e a afirmação anterior
+continua valendo. ⚠️ Esta linha citou por um momento um `5fca74b` que **não era o `HEAD`** —
+quarta ocorrência da mesma lição, dentro do próprio bloco que a registra. Branch
 `pr-3.5.1-seed-por-etapa` segue só local (`3282852`), contida na `main`. É a terceira ocorrência de
 **"afirmação de estado só entra medida"** — desta vez sobre git.
 
