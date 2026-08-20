@@ -276,14 +276,44 @@ se continua** — é ali que a decisão é barata, e não depois do 3.5.3.
      com `includes`, não com lookahead.**
      ⚠️ **A cerca que fechou esse bloqueante é TEXTUAL — leia a seção logo abaixo antes de citar
      "M5 e M6 vermelhas" como garantia.**
-2. **3.5.2 — barreira e avanço de cursor por etapa** + elegíveis recomputados por etapa +
-   `concluidaEm` só na última **+ o conserto do detector (campo `etapa`, chave `${escopo}:${etapa}`)**.
-   ➡️ **É O PR EM CURSO desde 2026-08-20**, aberto direto após o PR B do spike — **o PR C do spike
-   foi adiado para depois do 3.5.4** (decisão do dev; ver §SPIKE, "PR C"). **Sequência até fechar a
-   fase: 3.5.2 → 3.5.3 → 3.5.4 → PR C → Fase 3 encerrada.**
-   🛑 **É AQUI que a opção de abandonar o 3.5 inteiro tem que estar visível ao dev** — ver §"O
-   TAMANHO" logo acima; o pedido foi que a opção aparecesse **no momento** do 3.5.2, e o momento é
-   este.
+2. ✅ **3.5.2 — barreira e avanço de cursor por etapa** + elegíveis recomputados por etapa +
+   `concluidaEm` só na última **+ o conserto do detector (campo `etapa`, chave `${escopo}:${etapa}`)**
+   — **FEITO em 2026-08-20**, branch `pr-3.5.2-cursor-por-etapa`. **Medido:** `npm test` **1544/64**,
+   `npm run test:party` **10/10**, typecheck 0, eslint 0, build 0. **Sem merge, sem push, sem tag.**
+   **O PR C do spike segue adiado para depois do 3.5.4** (decisão do dev; ver §SPIKE, "PR C").
+   **Sequência até fechar a fase: 3.5.2 → 3.5.3 → 3.5.4 → PR C → Fase 3 encerrada.**
+   ✅ **A opção de abandonar o 3.5 FOI apresentada ao dev nesta sessão, como esta linha exigia — e o
+   VEREDITO foi SEGUIR COM O 3.5** (2026-08-20). Obrigação cumprida; ver §"O TAMANHO" logo acima
+   para o que foi pesado.
+   - 🔴 **A REVISÃO REPROVOU NA PRIMEIRA PASSADA — três bloqueantes, os três confirmados por
+     MEDIÇÃO.** **C1** (substância): `nEtapas` virou campo persistido e ficou FORA do discriminante,
+     lido por `??` com default 1 — sala de 5 etapas que perde o campo encerra o campeonato na
+     **etapa 1, em silêncio** (medido em sonda), ou vira `corrompida` e recusa todo mundo. O bump de
+     `VERSAO_ESTADO_SALA` (1 → 2) era **pré-requisito**: sem ele, "v1 legítima sem o campo" e "v2 que
+     o perdeu" são o mesmo objeto. **C2/C3** (método): as duas metades da decisão D1 tinham
+     cobertura ILUSÓRIA — apagar a guarda `etapa < cursor` e trocar `?? cursor` por `?? 0` deixavam a
+     suíte **inteira verde, 1531/1531**. Ver `ESTADO.md` §Processo, sexta instância.
+   - 🔴 **ACHADO PRÓPRIO — `M-nEtapas` nasceu VERDE.** Trocar `N_ETAPAS_CURTA` por `1` na casca
+     sobrevivia a **todos** os portões (typecheck 0, eslint 0, 1531/1531, 8/8): campeonato online de
+     uma etapa, com todo o resto funcionando. 🔑 **Parâmetro obrigatório sem default pega a OMISSÃO,
+     não o VALOR ERRADO.** Fechado no mesmo PR (aviso A5) com cerca comportamental em
+     `party/seeds.test.ts`. ✅ A segunda propriedade que a revisão dava como descoberta
+     (`todas[MAX_ETAPAS] → todas[0]`) **já estava coberta** — refutado por mutação.
+   - **Escopo de conserto autorizado pelo dev:** bloqueantes + A5 + A4 (validação de `nEtapas` em
+     `criarSala`) + N2 (a barreira deixou de curar em silêncio cursor fora de faixa). **Os avisos
+     não consertados viraram a pendência 0(u)**, sendo o mais urgente de DEPLOY: o worker do 3.5.2
+     só vai a produção **junto com o cliente do 3.5.3**, senão a sala pendura ~20 min por timeout.
+   - 🔁 **DUAS PASSADAS DE REVISÃO.** A segunda voltou **sem bloqueante**, com quatro avisos — e
+     **três eram sobre o conserto da primeira**: a guarda do N2 não cobria o caso C1 com cursor 0
+     (o docblock dizia que cobria); `nEtapas` tinha guarda de escrita e não de leitura (999 baldes
+     no DO); e dois docblocks que o próprio PR falsificou. **Os três atendidos.** O quarto
+     (`versaoSala` sem checagem de forma) virou **0(u6)**, decisão do dev.
+   - 📊 **12 mutações, todas vermelhas contra o código final**, todas com `tsc` limpo, cada reversão
+     conferida por `git hash-object`. 🔑 **Duas sobreviveram na rodada intermediária e foi assim que
+     os avisos 1 e 3 viraram fato medido** — argumento a favor de rerodar a tabela INTEIRA depois de
+     cada conserto. Uma guarda morta foi **removida** por não haver mutação que a matasse.
+     Pendências fechadas: **0(k)** e **0(r)**. Abertas por ele: **0(t)** (encolhida pelo N2) e
+     **0(u)**.
 3. **3.5.3 — cliente: N etapas por derivação pura.** `useMemo` sobre `seedsAbertas`; `corridaDaSala`
    passa a aceitar `pistaId` explícito (quando vier, **não** chama `pistaSorteada`); classificação por
    `acumularClassificacao`; atestado por etapa (o campo já veio do 3.5.2). **Nada de estado local

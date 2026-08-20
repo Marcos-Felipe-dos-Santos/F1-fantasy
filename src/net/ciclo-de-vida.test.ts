@@ -19,7 +19,7 @@ import {
   registrarConexoes,
   type EstadoServidor,
 } from './servidor-sala';
-import { CARENCIA_VAZIO_MS, JANELA_DE_GRACA_MS } from './tipos';
+import { CARENCIA_VAZIO_MS, JANELA_DE_GRACA_MS, N_ETAPAS_CURTA } from './tipos';
 
 /**
  * Seeds do campeonato para os testes desta suíte (3.5.1). Valores fixos e
@@ -33,7 +33,7 @@ const SEEDS_T = {
 };
 
 const T0 = 1_000_000;
-const criar = (): EstadoServidor => criarServidor('A3F9C2', 2026, 'dificil', T0, SEEDS_T);
+const criar = (): EstadoServidor => criarServidor('A3F9C2', 2026, 'dificil', T0, SEEDS_T, N_ETAPAS_CURTA);
 
 /** Estado com a partida terminada em `T0`. */
 function concluida(): EstadoServidor {
@@ -63,7 +63,22 @@ function concluida(): EstadoServidor {
   // corrida; quem marca `concluidaEm` é a BARREIRA DO FIM. `timeoutMs: 0` faz
   // a barreira decidir na hora, que é o que este helper quer (uma partida já
   // terminada em `T0`) sem simular atestado de ninguém.
-  return avaliarBarreiraDaCorrida(marcarCorridaAberta(comGente, T0), T0, 0);
+  //
+  // 🏆 **N PASSOS desde o 3.5.2, e não mais dois.** Todo jogo online é
+  // campeonato de `N_ETAPAS_CURTA` etapas: fechar a barreira da etapa k só
+  // AVANÇA O CURSOR; quem marca `concluidaEm` é a barreira da ÚLTIMA. O laço
+  // fecha as cinco **pelo caminho real** — nada de forjar `etapaAtual`, que é
+  // o que faria este helper abençoar um estado que a produção não produz.
+  // Todas as chamadas em `T0`, então `corridaAbertaEm` re-ancora sempre no
+  // mesmo instante e a partida segue "terminada em T0" para quem lê daqui.
+  let estado = avaliarBarreiraDaCorrida(marcarCorridaAberta(comGente, T0), T0, 0);
+  let voltas = 0;
+  while (estado.sala.concluidaEm === null) {
+    estado = avaliarBarreiraDaCorrida(estado, T0, 0);
+    voltas += 1;
+    if (voltas > N_ETAPAS_CURTA) throw new Error('a barreira não concluiu o campeonato');
+  }
+  return estado;
 }
 
 describe('marcarCorridaAberta (antes do PR 3/4 isto era `marcarConclusao`)', () => {

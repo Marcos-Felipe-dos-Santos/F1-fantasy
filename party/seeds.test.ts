@@ -54,8 +54,8 @@ import { env, evictAllDurableObjects, reset, runInDurableObject } from 'cloudfla
 import { afterEach, describe, expect, it } from 'vitest';
 
 import type { EstadoServidor } from '../src/net/servidor-sala';
-import { estadoDasSeeds } from '../src/net/sala';
-import { MAX_ETAPAS, SLOTS_SEEDS } from '../src/net/tipos';
+import { estadoDasSeeds, publicarSala } from '../src/net/sala';
+import { MAX_ETAPAS, N_ETAPAS_CURTA, SLOTS_SEEDS } from '../src/net/tipos';
 
 import type { Sala } from './sala';
 
@@ -147,6 +147,60 @@ describe('o sorteio das seeds no sítio REAL (`party/sala.ts`)', () => {
     // passaria em tudo acima e cairia aqui.
     const distintos = new Set(conjuntos.map((c) => c.join(',')));
     expect(distintos.size, 'duas salas nasceram com o mesmo conjunto de seeds').toBe(N_SALAS);
+  });
+});
+
+describe('🔴 M-nEtapas — o FORMATO que a casca declara (3.5.2)', () => {
+  /**
+   * 🔴 **ACHADO DE MUTAÇÃO DO 3.5.2, medido em 2026-08-20, e o aviso A5 da
+   * revisão bateu no mesmo ponto de forma independente.**
+   *
+   * O 3.5.2 tornou `nEtapas` um parâmetro **obrigatório e sem default** de
+   * `criarSala`/`criarServidor`, e a casca passou a declará-lo (`N_ETAPAS_CURTA`).
+   * O docblock de lá diz que o obrigatório existe "para que este valor não possa
+   * ser herdado de um default" — verdade, **e a proteção termina aí**.
+   *
+   * 🔑 **Medido: trocar `N_ETAPAS_CURTA` por `1` na chamada de `criarServidor`
+   * em `party/sala.ts` sobrevivia a TODOS os portões** — typecheck 0, eslint 0,
+   * `npm test` 1531/1531, `npm run test:party` 8/8. Em produção seria um
+   * campeonato online de UMA etapa: a primeira barreira marcaria `concluidaEm`,
+   * o jogo acabaria na etapa 1 e todo o resto do PR continuaria funcionando
+   * perfeitamente. **O parâmetro obrigatório pega a OMISSÃO (não compila); não
+   * pega o VALOR ERRADO.**
+   *
+   * 🔒 É a mesma FORMA do bloqueante que o 3.5.1 já pagou (M5/M6 aplicadas no
+   * sítio real deixavam a suíte inteira verde, 1509/63): propriedade da casca
+   * sem nenhuma asserção que a execute. A cerca textual daquele PR não ajuda
+   * aqui — ela casa o texto do SORTEIO, e `nEtapas` não é sorteado.
+   */
+  it('🔑 a casca declara N_ETAPAS_CURTA etapas — não 1, não um default herdado', async () => {
+    const nome = 'netapas-formato';
+    expect(await criarSala(nome, 'C0FFEE'), 'pré-condição: a sala nasceu aqui').toBe(true);
+
+    const estado = await lerEstadoPersistido(nome);
+    expect(estado, 'pré-condição: o estado foi persistido').toBeDefined();
+
+    // 🔒 Lido do estado PERSISTIDO e do SNAPSHOT, não da constante importada:
+    // comparar `N_ETAPAS_CURTA` com `N_ETAPAS_CURTA` seria aritmética sobre
+    // constantes do próprio teste, que é exatamente o defeito que o bloqueante
+    // do 3.5.1 nomeou.
+    expect(estado!.sala.nEtapas, 'a casca gravou outro formato').toBe(N_ETAPAS_CURTA);
+    expect(publicarSala(estado!.sala).nEtapas, 'e o fio publica outro formato').toBe(
+      N_ETAPAS_CURTA,
+    );
+  });
+
+  it('🛡️ ANTI-VACUIDADE: a sala nasce JOGÁVEL e no começo do campeonato', async () => {
+    // Sem isto, a asserção acima passaria numa sala corrompida ou já concluída
+    // — o número certo num estado que não serve para nada.
+    const nome = 'netapas-vacuidade';
+    expect(await criarSala(nome, 'C0FFE1')).toBe(true);
+    const estado = (await lerEstadoPersistido(nome))!;
+
+    expect(estadoDasSeeds(estado.sala).tipo, 'a sala nasce corrompida').toBe('ok');
+    expect(estado.sala.etapaAtual, 'o cursor não nasce em zero').toBe(0);
+    expect(estado.sala.concluidaEm, 'a sala nasce concluída').toBeNull();
+    expect(estado.sala.nEtapas, 'anti-vacuidade: 1 etapa não é campeonato').toBeGreaterThan(1);
   });
 });
 

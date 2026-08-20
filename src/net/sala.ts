@@ -23,7 +23,6 @@ import {
 import {
   MAX_ETAPAS,
   MIN_HUMANOS,
-  N_ETAPAS_CURTA,
   QTD_JOGADORES,
   ROTULO_SEED_CORRIDA,
   ROTULO_SEED_DRAFT,
@@ -81,6 +80,21 @@ export function criarSala(
    * impedir. Faltando, não compila.
    */
   seeds: SeedsDoCampeonato,
+  /**
+   * Quantas etapas esta sala tem.
+   *
+   * 🔒 **OBRIGATÓRIO e sem default, pelo mesmo motivo de `agora` e `seeds`
+   * (decisão do dev, 2026-08-20).** Um default aqui deixaria a casca herdar em
+   * silêncio um formato que ela não declarou — e como é `nEtapas` que decide
+   * quando o campeonato ACABA, "esqueci de passar" viraria uma sala que
+   * conclui na primeira barreira sem que ninguém tenha pedido isso. Faltando,
+   * não compila; foi assim que a medição desta sessão flagrou que
+   * `N_ETAPAS_CURTA` não tinha mais nenhum chamador de produção.
+   *
+   * **Todo jogo online é campeonato de `N_ETAPAS_CURTA` etapas** — a corrida
+   * avulsa online foi o degrau, não um modo (decisão do dev, 2026-08-20).
+   */
+  nEtapas: number,
 ): EstadoSala {
   // 🔒 FALHA ALTO, e de propósito (aviso A5 da revisão). `SeedsDoCampeonato`
   // não expressa cardinalidade no tipo, então um chamador que passe menos de
@@ -94,6 +108,20 @@ export function criarSala(
       `criarSala: esperava ${MAX_ETAPAS} seeds de etapa, recebeu ${seeds.etapas.length}`,
     );
   }
+  // 🔒 MESMA guarda, MESMO motivo, para `nEtapas` (aviso A4 da revisão do
+  // 3.5.2). Ele entrava CRU ao lado da cardinalidade das seeds, e os dois casos
+  // ruins não são simétricos:
+  // - `nEtapas > seeds.etapas.length` nasce uma sala que o discriminante APROVA
+  //   e que joga normalmente até a última seed existente, e só então pede uma
+  //   etapa sem seed — falha tardia, no meio de um campeonato em andamento;
+  // - `nEtapas < 1` deixa estado e leitura em desacordo (o campo diz 0,
+  //   `nEtapasDaSala` devolve 1), que é a inconsistência de tese que a
+  //   pendência 0(r) fechou para o cursor.
+  if (!Number.isInteger(nEtapas) || nEtapas < 1 || nEtapas > seeds.etapas.length) {
+    throw new Error(
+      `criarSala: nEtapas deve ser inteiro em [1, ${seeds.etapas.length}], recebeu ${String(nEtapas)}`,
+    );
+  }
   return {
     salaId,
     seedMestre: seedMestre >>> 0,
@@ -101,6 +129,7 @@ export function criarSala(
     seedsEtapas: seeds.etapas,
     seedCalendario: seeds.calendario,
     etapaAtual: 0,
+    nEtapas,
     dificuldade,
     fase: 'aberta',
     anfitriaoId: null,
@@ -153,10 +182,13 @@ function draftConcluido(estado: EstadoSala): boolean {
 /**
  * As seeds de etapa que podem ir no fio agora: as ABERTAS, nunca as futuras.
  *
- * Com o cursor em `etapaAtual`, abertas são `0..etapaAtual` — no 3.5.1 o
- * cursor não avança, então isto devolve exatamente **um** elemento assim que o
- * draft conclui. `corrompida` e `legado` devolvem `[]`: nenhuma das duas tem
- * seed legítima pra publicar, e inventar uma é o que este PR proíbe.
+ * Com o cursor em `etapaAtual`, abertas são `0..etapaAtual`.
+ * ⚠️ **A redação anterior dizia "no 3.5.1 o cursor não avança, então isto
+ * devolve exatamente UM elemento" — verdade até o 3.5.1 e FALSA desde o
+ * 3.5.2**, que é o PR onde a barreira passa a mover o cursor. Hoje isto devolve
+ * `cursor + 1` elementos, crescendo etapa a etapa.
+ * `corrompida` e `legado` devolvem `[]`: nenhuma das duas tem
+ * seed legítima pra publicar, e inventar uma é o que o 3.5.1 proíbe.
  */
 function seedsAbertasDe(estado: EstadoSala): number[] {
   if (!draftConcluido(estado)) return [];
@@ -171,11 +203,77 @@ function seedsAbertasDe(estado: EstadoSala): number[] {
  * Fonte ÚNICA do recorte — `seedsAbertasDe` e `publicarSala` usam esta mesma
  * função justamente para que não possam discordar. Duas contas paralelas do
  * mesmo número é a classe de bug do 8.4 em miniatura.
+ *
+ * 🔒 **O clamp FICA, mesmo com o cursor agora dentro do discriminante (3.5.2,
+ * pendência 0(r)) — e as duas coisas não são redundantes, são camadas
+ * diferentes.** O discriminante decide se a SALA é jogável (cursor fora de
+ * forma ⇒ `corrompida` ⇒ a casca recusa todo mundo); o clamp garante que o
+ * SNAPSHOT nunca se contradiz. Tirar o clamp confiando no discriminante
+ * apostaria que nenhum caminho futuro publica uma sala não validada — aposta
+ * que o aviso A1 da revisão do 3.5.1 já perdeu uma vez.
  */
 function cursorPublicavel(estado: EstadoSala): number {
-  const cursor = estado.etapaAtual ?? 0;
+  const cursor = estado.etapaAtual;
   if (!Number.isInteger(cursor) || cursor < 0) return 0;
-  return Math.min(cursor, N_ETAPAS_CURTA - 1);
+  return Math.min(cursor, nEtapasDaSala(estado) - 1);
+}
+
+/**
+ * `nEtapas` está na forma que uma sala v2 exige? Inteiro em `[1, teto]`.
+ *
+ * O teto é o número de seeds de etapa que a sala tem — ver a chamada em
+ * `estadoDasSeeds`. Sem ele, o campo lido do storage governa o teto de baldes
+ * de atestado sem nenhum limite.
+ */
+function nEtapasIntegro(n: unknown, teto: number): n is number {
+  return typeof n === 'number' && Number.isInteger(n) && n >= 1 && n <= teto;
+}
+
+/**
+ * Quantas etapas esta sala tem — **fonte ÚNICA**, e é ela que substitui o
+ * `N_ETAPAS_CURTA` que estava hardcodado em cinco sítios (barreira, clamp,
+ * discriminante, teto do balde de atestados e o campo publicado).
+ *
+ * 🔒 **O default 1 vale SÓ para sala v1 (3.5.1), e essa restrição é o conserto
+ * do bloqueante C1 da revisão.** Numa sala **v1** a ausência do campo é
+ * legítima: o código do 3.5.1 marcava `concluidaEm` no primeiro fechamento de
+ * barreira, o que é exatamente um campeonato de uma etapa. Numa sala **v2** a
+ * mesma ausência é **corrupção**, e quem a recusa é `estadoDasSeeds` — ver
+ * `VERSAO_ESTADO_SALA` para por que o bump era pré-requisito de conseguir
+ * distinguir as duas.
+ *
+ * ⚠️ **O 1 devolvido no caso v2-corrompido é piso de segurança, não
+ * comportamento pretendido.** Nenhum caminho de produção chega aqui com uma
+ * sala v2 sem o campo — a casca recusa sala `corrompida` antes de jogar
+ * qualquer comando —, mas esta função é chamada de sítios que não passam pelo
+ * discriminante (`cursorPublicavel`, a barreira, o teto do balde), e devolver
+ * `NaN` ou lançar quebraria a promessa de `aoReceber` de nunca lançar.
+ * **Ela não decide a recusa; só se recusa a inventar um número grande.**
+ */
+export function nEtapasDaSala(estado: EstadoSala): number {
+  // 🔒 O MESMO teto do discriminante, derivado da própria sala — duas contas
+  // paralelas do mesmo limite é a classe de bug do 8.4 em miniatura.
+  // `MAX_ETAPAS` só entra quando `seedsEtapas` está fora de forma, e aí a sala
+  // já é `corrompida` por outra guarda: aqui o número só existe para não
+  // inventar um grande.
+  const teto = Array.isArray(estado.seedsEtapas) ? estado.seedsEtapas.length : MAX_ETAPAS;
+  return nEtapasIntegro(estado.nEtapas, teto) ? estado.nEtapas : 1;
+}
+
+/**
+ * O cursor está na forma que o campeonato exige? (pendência 0(r), fechada no
+ * 3.5.2.)
+ *
+ * 🔑 **Por que ele entrou no discriminante exatamente neste PR:** até o 3.5.1
+ * o cursor não se movia, então tratá-lo com `?? 0` era inconsistência de tese,
+ * não vazamento. **É o cursor que governa quantos segredos saem no fio**
+ * (`seedsAbertasDe` fatia por ele), e a partir daqui ele se move — então um
+ * cursor fora de forma deixa de ser detalhe e vira a mesma classe de risco que
+ * `seedsEtapas` corrompida: melhor recusar a sala do que servir um default
+ * silencioso que abre seed que não devia abrir.
+ */
+function cursorIntegro(cursor: unknown, nEtapas: number): boolean {
+  return typeof cursor === 'number' && Number.isInteger(cursor) && cursor >= 0 && cursor < nEtapas;
 }
 
 /** A seed do calendário, se e só se o draft concluiu e as seeds estão íntegras. */
@@ -203,6 +301,41 @@ export function estadoDasSeeds(sala: EstadoSala): EstadoDasSeeds {
   }
   if (!ehUint32(seedCalendario)) {
     return { tipo: 'corrompida', motivo: 'seedCalendario ausente ou não é uint32' };
+  }
+  // 🔴 Bloqueante C1 da revisão do 3.5.2: `nEtapas` é campo do formato v2 e
+  // entra no discriminante ANTES do cursor — é ele que define a faixa contra a
+  // qual o cursor é medido, então validar o cursor primeiro seria medi-lo
+  // contra um número que pode ser o default de emergência.
+  //
+  // 🔒 A guarda é `versaoSala >= 2` e não "campo ausente": numa sala v1 a
+  // ausência é LEGÍTIMA (o 3.5.1 não tinha o campo, e a semântica dele era 1
+  // etapa). Reprovar por ausência mataria toda sala em andamento no instante
+  // do deploy, que é o oposto do que o discriminante existe para fazer.
+  //
+  // 🔒 **O TETO É PARTE DA GUARDA, não refinamento** (aviso 3 da segunda passada
+  // da revisão). `criarSala` limita `nEtapas` a `[1, seeds.etapas.length]`, mas
+  // o CAMINHO DE LEITURA não limitava nada: um `nEtapas: 999` persistido passava
+  // no discriminante e `aoReceber` usava `nEtapasDaSala(sala) - 1` como teto de
+  // `atestadoValido` ⇒ **999 baldes por escopo no estado do Durable Object**,
+  // derrubando a propriedade que este mesmo PR declara em `EstadoServidor`
+  // ("o teto do número de baldes é `escopos × nEtapas`"). Guarda de escrita sem
+  // guarda de leitura não é teto — é convenção.
+  // Custa zero aqui: `seedsEtapas.length === MAX_ETAPAS` já foi validado acima.
+  if (sala.versaoSala >= 2 && !nEtapasIntegro(sala.nEtapas, seedsEtapas.length)) {
+    return {
+      tipo: 'corrompida',
+      motivo: `nEtapas ausente ou fora de [1, ${seedsEtapas.length}] numa sala v${sala.versaoSala}: ${String(sala.nEtapas)}`,
+    };
+  }
+  // 🔒 Pendência 0(r), fechada no 3.5.2: o CURSOR entra no discriminante junto
+  // com as seeds. Ver `cursorIntegro` — é ele que decide quantos segredos saem
+  // no fio, e a partir deste PR ele se move.
+  const nEtapas = nEtapasDaSala(sala);
+  if (!cursorIntegro(sala.etapaAtual, nEtapas)) {
+    return {
+      tipo: 'corrompida',
+      motivo: `etapaAtual fora de [0, ${nEtapas - 1}]: ${String(sala.etapaAtual)}`,
+    };
   }
   return { tipo: 'ok', etapas: seedsEtapas, calendario: seedCalendario };
 }
@@ -234,7 +367,11 @@ export function estadoDasSeeds(sala: EstadoSala): EstadoDasSeeds {
  */
 export function relatorioDeSeeds(sala: EstadoSala): string {
   const seeds = estadoDasSeeds(sala);
-  const cabecalho = `sala=${sala.salaId} versaoSala=${sala.versaoSala ?? '(pré-3.5.1)'} etapaAtual=${sala.etapaAtual ?? 0}`;
+  // 🔒 `etapaAtual` sai CRU aqui, sem `?? 0` (pendência 0(r), 3.5.2). Isto é
+  // relatório de BUG: mascarar um cursor corrompido com um zero plausível
+  // esconderia justamente o que o operador precisa ver. Quem valida é
+  // `estadoDasSeeds`, logo abaixo.
+  const cabecalho = `sala=${sala.salaId} versaoSala=${sala.versaoSala ?? '(pré-3.5.1)'} etapaAtual=${String(sala.etapaAtual)}`;
   if (seeds.tipo === 'legado') return `${cabecalho}\nsem seeds: sala criada antes do 3.5.1`;
   if (seeds.tipo === 'corrompida') return `${cabecalho}\nSEEDS CORROMPIDAS: ${seeds.motivo}`;
   return [
@@ -279,7 +416,7 @@ export function publicarSala(estado: EstadoSala): EstadoSalaPublico {
     // `seedsAbertas.length === min(etapaAtual + 1, nEtapas)` quando o portão
     // está aberto, e ela tem teste.
     etapaAtual: cursorPublicavel(estado),
-    nEtapas: N_ETAPAS_CURTA,
+    nEtapas: nEtapasDaSala(estado),
     // 🔒 As duas linhas abaixo têm o MESMO portão da `seedCorrida` acima, e o
     // mesmo motivo. Sob a pendência 0(i) a `seedMestre` é recomponível desde o
     // lobby; publicar calendário ou seed de etapa durante o draft deixaria

@@ -1916,6 +1916,191 @@ O que ela atacou e passou: a tese do 2/4 (uma trilha só, `contrato-corrida-onli
 
 O cabeçalho **deste arquivo** ainda dizia "o `ESTADO.md` reescrito (substitui, não acumula)". O `CLAUDE.md` registra a correção em dois lugares (nele e no `ESTADO.md` §Convenções) — esta passou despercebida. É o cenário que a própria regra descreve: regra nova ao lado da antiga contraditória devolve o mesmo esvaziamento, dependendo de qual o `doc-writer` ler primeiro. Corrigida.
 
+## 3.5 CAMPEONATO ONLINE — PR 3.5.2 (barreira e cursor POR ETAPA) — 2026-08-20
+
+Branch `pr-3.5.2-cursor-por-etapa` (commit `wip` `469278f` + o trabalho da sessão de 2026-08-20).
+**ALTO RISCO** (netcode). **Sem merge, sem push, sem tag.**
+
+**Medido:** `npm test` **1544/64** (era 1516/63), `npm run test:party` **10/10** (era 8/8),
+`npm run typecheck` **0** nos três projetos, `eslint` **0**, `npm run build` **0**. `npm run balance`
+**não se aplica** — nada em `src/engine/`, `src/data/` ou `scripts/alavancas`. `VERSAO_APP`
+**não bumpado** (digest intocado). ⚠️ **`VERSAO_ESTADO_SALA` subiu de 1 para 2** — ver C1.
+
+### O que o PR faz
+
+- `avaliarBarreiraDaCorrida` **move o cursor**: fechada a barreira da etapa k, se há etapa depois o
+  cursor vai a `k+1`, os atestados **zeram** e `corridaAbertaEm` **re-ancora** em `agora`; só a
+  última marca `concluidaEm`. O cursor **para em `nEtapas - 1`** — deixá-lo passar criaria um
+  segundo jeito de dizer "acabou" (a classe de bug do 8.4 em miniatura).
+- **Elegíveis deixaram de congelar** (fecha 0(k)): exigem conexão viva. Com N etapas, o
+  congelamento virava bloqueante — quem fechasse a aba na etapa 1 faria **cada** etapa seguinte
+  pagar `TIMEOUT_FIM_DE_CORRIDA_MS`.
+- **Detector por etapa:** o balde passou a ser chaveado por `${escopo}:${etapa}`; atestado com etapa
+  MENOR que o cursor é ignorado em silêncio (D1); o alarme carrega `etapa` (D2). Sem isso, a partir
+  da etapa 2 as etapas caíam no mesmo balde com a mesma âncora e hashes que diferem por `pistaId` —
+  **alarme falso permanente**.
+- `nEtapas` virou campo do estado e parâmetro **obrigatório sem default** de `criarSala`/
+  `criarServidor`; a casca (`party/sala.ts`) o declara com `N_ETAPAS_CURTA`. Foi a obrigatoriedade
+  que flagrou que `N_ETAPAS_CURTA` não tinha mais nenhum chamador de produção.
+- **Cursor no discriminante** (fecha 0(r)): `estadoDasSeeds` reprova cursor fora de `[0, nEtapas-1]`.
+
+### 🔴 A revisão REPROVOU na primeira passada — três bloqueantes, os três medidos
+
+**C1 — substância.** `nEtapas` virou campo persistido e ficou **fora** do discriminante, lido por um
+`??` com default 1, enquanto os outros três campos do formato já estavam dentro. Medido em sonda
+descartável (criada, rodada, apagada): sala de 5 etapas que perde o campo na reidratação faz a
+PRIMEIRA barreira gravar `concluidaEm: 1000000` — contra `concluidaEm: null` + cursor 1 no controle
+—, **campeonato de 5 etapas encerrado na etapa 1, em silêncio**; e com o cursor já em 3 a sala vira
+`corrompida` (`etapaAtual fora de [0, 0]: 3`) e recusa todo mundo, caindo na 0(s).
+🔑 **O bump de `VERSAO_ESTADO_SALA` era PRÉ-REQUISITO do conserto, não zelo.** Com a versão parada
+em 1, "sala 3.5.1 que legitimamente não tem `nEtapas`" e "sala 3.5.2 que o perdeu" são o **mesmo
+objeto**, e nenhuma guarda consegue separá-las — a colisão exata que `versaoSala` foi criada para
+impedir. Agravante documental: o PR afirmava num comentário que "o formato não mudou, só o
+significado do cursor", **e era falso** — o formato ganhou um campo. Corrigido no lugar.
+🔒 **Regra que fica:** campo NOVO no estado persistido ⇒ **versão sobe E o campo entra em
+`estadoDasSeeds`**, os dois juntos. A versão sozinha não valida nada; a guarda sozinha não distingue
+ausência legítima de ausência por corrupção.
+
+**C2 e C3 — método.** O código estava certo; o que não existia era prova.
+- **C2:** o teste `🔴 BASELINE D1: cliente ATRASADO … é ignorado EM SILÊNCIO` rodava com o cursor em
+  **0** e mandava o atestado atrasado com `etapa: 0`. A guarda é `etapa < cursor` — **`0 < 0`, nunca
+  entrada.** Medido: apagar a guarda deixava a suíte **inteira verde, 1531/1531**. O silêncio vinha
+  do balde vazio. **Sexta instância de "o teste afirmava o que não conferia"**, desta vez dentro do
+  teste rotulado como baseline da decisão que o PR chama de inseparável.
+- **C3:** a metade 1 da mesma decisão (`atestado.etapa ?? cursor`) não tinha teste nenhum — o
+  mutante `?? 0`, que o docblock diz que "devolveria o alarme falso inteiro pela porta do conserto",
+  sobrevivia a tudo (1531/1531, lint 0, typecheck 0).
+
+Os dois testes foram reescritos para **alcançar** as guardas, com as pré-condições **asseridas** em
+vez de supostas (o cursor ANDOU pelo caminho real; o balde da etapa velha está POPULADO com hash
+conflitante — sem a segunda, o silêncio volta a ser superdeterminado pelo balde vazio).
+
+### 🔴 Achado próprio da sessão: `M-nEtapas` nasceu VERDE
+
+Trocar `N_ETAPAS_CURTA` por `1` na chamada de `criarServidor` em `party/sala.ts` sobrevivia a
+**todos** os portões: typecheck 0, eslint 0, `npm test` 1531/1531, `npm run test:party` 8/8. Medido
+em duas formas para eliminar o colateral: com `1` literal o eslint acusava apenas o **import
+órfão**; com `Math.min(N_ETAPAS_CURTA, 1)` — mesmo valor, import usado — **nada acusava nada**.
+Em produção: campeonato online de UMA etapa, com todo o resto do PR funcionando.
+
+🔑 **A lição:** o parâmetro obrigatório sem default pega a **OMISSÃO** (não compila) e **não pega o
+VALOR ERRADO**. É a mesma FORMA do bloqueante do 3.5.1 (M5/M6 no sítio real, suíte verde a
+1509/63), agora sobre `nEtapas`. Fechado no mesmo PR com cerca **comportamental** em
+`party/seeds.test.ts`, que lê `nEtapas` do estado **persistido** e do **snapshot** (nunca da
+constante importada — comparar `N_ETAPAS_CURTA` com `N_ETAPAS_CURTA` é aritmética sobre constantes
+do próprio teste, o defeito que o 3.5.1 nomeou), com anti-vacuidade.
+
+✅ **A segunda propriedade que a revisão dava como descoberta JÁ ESTAVA COBERTA.** O revisor afirmou
+que `todas[MAX_ETAPAS] → todas[0]` (calendário colide com a seed da etapa 0) passaria despercebido.
+**Refutado por mutação:** cai em `party/seeds.test.ts:137`, a asserção de MA do PR B. **Achado de
+revisão também entra medido.**
+
+### Escopo de conserto autorizado pelo dev (2026-08-20): bloqueantes + A5 + A4/N2
+
+- **A4** — `criarSala` recusa `nEtapas` fora de `[1, seeds.etapas.length]`, na mesma guarda e pelo
+  mesmo motivo do `throw` da cardinalidade das seeds. O caso que dói é `nEtapas > seeds.length`: a
+  sala nasce válida, joga até a última seed existente e só então pede uma etapa sem seed.
+- **N2** — a barreira deixou de **curar em silêncio**: `cursorDaSala` é tolerante de propósito (sala
+  LEGADO), mas o valor tolerado era **escrito de volta** em `etapaAtual: cursor + 1`, e uma sala com
+  `etapaAtual: -3` saía de lá com `1`, `corrompida` virando íntegra. Agora devolve o mesmo objeto.
+  Campo **AUSENTE** (legado) continua fechando a barreira, com anti-vacuidade própria.
+
+### 🔁 A SEGUNDA passada da revisão — sem bloqueante, e três avisos sobre o CONSERTO
+
+Rodar a segunda passada não era zelo: mutação verde prova que o conserto **funciona**, e não
+substitui o portão de ALTO RISCO. Ela achou três coisas no código escrito para consertar a primeira.
+
+- 🔴 **Aviso 1 — a guarda do N2 não cobria o caso C1, e o docblock afirmava que cobria.** Ela
+  validava a forma do **cursor**, não a de `nEtapas`. Sala v2 sem o campo **com o cursor em 0**:
+  `nEtapasDaSala` no piso 1, `cursorIntegro(0, 1)` verdadeiro, guarda passando, `concluidaEm`
+  marcado — **o modo de falha do bloqueante C1 intacto dentro da camada pura**, defendido só pelo
+  `jogavel()` da casca, a mesma camada de antes do conserto. Conserto: a guarda passou a consultar
+  **`estadoDasSeeds`**, a mesma autoridade do discriminante, em vez de uma checagem paralela —
+  checagem paralela é como se chega a duas respostas para a mesma pergunta, que é a 0(t).
+  🔑 **É a classe de defeito que o PR inteiro combate, cometida dentro do conserto dela.**
+- 🔴 **Aviso 3 — guarda de ESCRITA sem guarda de LEITURA não é teto, é convenção.** `criarSala`
+  limitava `nEtapas` a `[1, seeds.etapas.length]` (A4), mas o caminho de leitura não limitava nada:
+  `nEtapas: 999` vindo do storage passava no discriminante e `aoReceber` o usava como teto de
+  `atestadoValido` ⇒ **999 baldes por escopo no Durable Object**, derrubando a propriedade que o
+  próprio PR declara no docblock de `EstadoServidor.atestados`. Consertado no discriminante, com
+  anti-vacuidade (`MAX_ETAPAS` continua legítimo).
+- 🔴 **Aviso 4 — docblocks que o próprio PR falsificou**, a mesma família do comentário do C1:
+  `tipos.ts` afirmava que `nEtapas` é "fixo em `N_ETAPAS_CURTA`" (o snapshot publica **1** para sala
+  v1/legado, e é o tipo que o cliente do 3.5.3 vai ler) e que o cursor "no 3.5.1 NÃO avança" (é o PR
+  que o faz avançar); `sala.ts` dizia que `seedsAbertas` devolve "exatamente UM elemento".
+  **Corrigidos no lugar.**
+- 🟡 **Aviso 2 — `versaoSala` é o único campo persistido sem checagem de forma.** `null`, `0`, `NaN`
+  ou string atravessam as duas portas. **NÃO consertado — é decisão do dev**, porque tocar no caso
+  `undefined` contradiria comportamento já fixado por teste. Virou **0(u6)**.
+
+🔴 **A guarda morta que só a tabela pegou.** Com o cheque do discriminante na frente, o cheque de
+cursor que sobrou ao lado virou **inalcançável**, e `M-N2` passou a deixar a suíte inteira verde.
+**Removido, não documentado.** 🔒 **Guarda que nenhuma mutação mata é guarda morta — e guarda morta
+ao lado de um comentário que a explica é a próxima afirmação falsa esperando leitor.**
+
+### Tabela de mutações — 12, todas vermelhas contra o código final
+
+Ordem em todas: verde → aplica → **vê vermelho** → reverte → verde, com `git hash-object` conferindo
+cada reversão e `diff` do patch completo contra o baseline salvo antes da primeira mutação.
+
+| Mutação | Sítio | Falhas |
+|---|---|---|
+| `M-det` (chave do balde só escopo) | `servidor-sala.ts` | 7 |
+| `M-cursor` (barreira fecha e não avança) | `servidor-sala.ts` | 22 |
+| `M-anchor` (avanço não re-ancora) | `servidor-sala.ts` | 1 |
+| `M-eleg` (elegíveis congelados) | `servidor-sala.ts` | 1 |
+| `M-nEtapas` (casca declara 1 etapa) | `party/sala.ts` | 2 (`test:party`) |
+| `M-C1` (nEtapas fora do discriminante) | `sala.ts` | 4 |
+| `M-C1v` (`VERSAO_ESTADO_SALA` volta a 1) | `tipos.ts` | 5 |
+| `M-C2` (guarda do atrasado) | `servidor-sala.ts` | 1 |
+| `M-C3` (default vira 0 fixo) | `servidor-sala.ts` | 1 |
+| `M-A4` (sem validação de `nEtapas` na escrita) | `sala.ts` | 1 |
+| `M-A1` (barreira não consulta o discriminante) | `servidor-sala.ts` | 3 |
+| `M-A3` (`nEtapas` sem teto na leitura) | `sala.ts` | 1 |
+
+🔑 **DUAS MUTAÇÕES SOBREVIVERAM NA RODADA INTERMEDIÁRIA** — `M-A3` (o teto novo não tinha teste) e
+`M-N2` (a guarda tinha virado inalcançável). Foi assim que os avisos 1 e 3 saíram de "leitura do
+revisor" para "fato medido", e foi a tabela — não a leitura — que achou a guarda morta. **Argumento
+a favor de rerodar a tabela INTEIRA depois de cada conserto, nunca só as mutações novas.**
+
+⚠️ **`M-anchor` é o vermelho mais estreito e vale registrar por quê:** só um teste o pega, e por
+asserção direta de campo. Os dois helpers que fecham barreiras em massa (`naUltimaEtapa` e
+`concluida()`) usam `timeoutMs: 0`, e com timeout zero o ramo `venceu` é verdadeiro
+**independentemente da âncora**. A consequência que o docblock descreve — "a etapa 2 nasceria com o
+timeout da etapa 1 já vencido e concluiria sozinha na hora" — **não tem teste com timeout real**.
+
+### Decisões do dev registradas nesta sessão
+
+- **SEGUIR COM O 3.5.** A opção de abandonar a fase inteira foi apresentada como o `ESTADO.md`
+  exigia (com os três bloqueantes já na mesa, o que a tornava mais barata: C2 e C3 evaporariam com o
+  3.5, e C1 quase todo). **Veredito: seguir.** Obrigação de visibilidade cumprida.
+- **O achado `M-nEtapas` NÃO dispara o gatilho de reavaliação do PR C.** O gatilho nomeia o
+  `alarm()`; isto é o caminho de criação, o valor está certo hoje, e é ausência de portão, não bug.
+  **PR C segue depois do 3.5.4.**
+
+### Pendências
+
+**Fechadas:** 0(k) (congelamento de elegíveis) e 0(r) (`etapaAtual` fora do discriminante).
+**Abertas por ele:** 0(t) — segue aberta, encolhida pelo N2 mas não resolvida, porque
+`publicarSala` continua com dois leitores respondendo a autoridades diferentes; e **0(u)**, os
+avisos de revisão fora do escopo autorizado.
+
+🔑 **PROVENIÊNCIA DA 0(u), e ela NÃO é uniforme.** Esta sessão refutou por mutação uma alegação da
+própria revisão, então achado de revisão obtido por LEITURA carrega taxa de erro conhecida e não
+entra como fato medido. **Só a u1 foi MEDIDA** (rastreada no código nesta sessão:
+`useSalaOnline.ts:219-224` computa `corrida` num `useMemo` sobre `[cliente.draft,
+cliente.sala?.seedCorrida]`, **sem `etapaAtual`**, então a referência nunca troca;
+`FluxoCorrida.tsx:77` dispara `onChegouAoResultado` só na entrada em `'resultado'`;
+`FluxoOnline.tsx:225` o liga a `atestarFimDaCorrida`). **Consequência medida:** worker 3.5.2 com
+cliente 3.5.1 fecha a etapa 0 normalmente e as quatro seguintes só por timeout — **4 × 5 min = ~20
+minutos**. Por isso o worker do 3.5.2 **só vai a produção junto com o cliente do 3.5.3**.
+**u2 a u5 são LEITURA da revisão, não medidos**, e estão rotulados assim no `ESTADO.md`.
+
+> 📌 As entradas irmãs desta fase estão mais abaixo, em nível `###`, sob a §"CORRIDA ONLINE — o
+> plano aprovado": **PR 3.5.1**, **PR A** e **PR B** do spike. Esta entrada ficou em `##` para
+> acompanhar as quatro entradas `## CORRIDA ONLINE — PR n/4` logo acima, que são a convenção de
+> entrada-por-PR deste arquivo.
+
 ## CORRIDA ONLINE — o plano aprovado (movido do `ESTADO.md` em 2026-08-18)
 
 > 📦 **Movido, não resumido.** Este texto vivia na §"🏁 CORRIDA ONLINE — o plano aprovado" do

@@ -17,7 +17,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { TelaLobby } from './TelaLobby';
 import { criarSala, publicarSala, reduzirSala } from '../net/sala';
-import type { EstadoSala } from '../net/tipos';
+import { N_ETAPAS_CURTA, type EstadoSala } from '../net/tipos';
 import type { ComandoSala } from '../net/protocolo';
 
 /**
@@ -37,7 +37,7 @@ const aplicar = (estado: EstadoSala, comando: ComandoSala, remetente: string | n
   reduzirSala(estado, comando, remetente, T0, `tk-${(n += 1)}`).estado;
 
 function salaCom(nomes: string[], prontos: boolean[] = []): EstadoSala {
-  let sala = criarSala('sala-render', 2026, 'dificil', T0, SEEDS_T);
+  let sala = criarSala('sala-render', 2026, 'dificil', T0, SEEDS_T, N_ETAPAS_CURTA);
   for (const nome of nomes) sala = aplicar(sala, { tipo: 'entrar', nome }, null);
   sala.jogadores.forEach((j, i) => {
     if (prontos[i]) sala = aplicar(sala, { tipo: 'pronto', pronto: true }, j.id);

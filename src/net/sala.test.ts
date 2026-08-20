@@ -73,7 +73,7 @@ const reduzir = (estado: EstadoSala, comando: ComandoSala, remetenteId: string |
   reduzirSala(estado, comando, remetenteId, T0, `token-${(contadorToken += 1)}`);
 
 function salaVazia(dificuldade: Dificuldade = 'dificil'): EstadoSala {
-  return criarSala('sala-teste', SEED_MESTRE, dificuldade, T0, SEEDS_T);
+  return criarSala('sala-teste', SEED_MESTRE, dificuldade, T0, SEEDS_T, N_ETAPAS_CURTA);
 }
 
 /** Aplica um comando, falhando o teste se for recusado. */
@@ -300,8 +300,8 @@ describe('início da partida (congelamento)', () => {
 
 describe('seed: a mestra fica no servidor', () => {
   it('criarSala normaliza a seed pra uint32', () => {
-    expect(criarSala('s', -1, 'dificil', T0, SEEDS_T).seedMestre).toBe(4294967295);
-    expect(criarSala('s', 2 ** 32 + 7, 'dificil', T0, SEEDS_T).seedMestre).toBe(7);
+    expect(criarSala('s', -1, 'dificil', T0, SEEDS_T, N_ETAPAS_CURTA).seedMestre).toBe(4294967295);
+    expect(criarSala('s', 2 ** 32 + 7, 'dificil', T0, SEEDS_T, N_ETAPAS_CURTA).seedMestre).toBe(7);
   });
 
   it('o rótulo de seed do online usa o prefixo reservado `online:`', () => {
@@ -440,7 +440,7 @@ describe('seedCorrida (PR 1/4 — corrida online: "seed e pista")', () => {
    * precisa variar a seed mestre e olhar `seedCorrida` em cada uma.
    */
   function salaIniciadaComSeed(seedMestre: number, n: number, dificuldade: Dificuldade = 'dificil'): EstadoSala {
-    const vazia = criarSala('sala-seed-corrida', seedMestre, dificuldade, T0, SEEDS_T);
+    const vazia = criarSala('sala-seed-corrida', seedMestre, dificuldade, T0, SEEDS_T, N_ETAPAS_CURTA);
     const pronta = todosProntos(comHumanos(vazia, nomesDe(n)));
     return ok(pronta, { tipo: 'iniciar' }, pronta.anfitriaoId);
   }

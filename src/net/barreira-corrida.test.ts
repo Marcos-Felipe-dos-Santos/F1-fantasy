@@ -21,6 +21,7 @@ import { describe, expect, it } from 'vitest';
 import {
   aoPassarOTempo,
   aoReceber,
+  avaliarBarreiraDaCorrida,
   criarServidor,
   decidirVida,
   registrarConexoes,
@@ -28,7 +29,12 @@ import {
 } from './servidor-sala';
 import type { MensagemServidor } from './protocolo';
 import { RODADAS_SORTEIO } from '../engine/draft-utils';
-import { JANELA_DE_GRACA_MS, TIMEOUT_FIM_DE_CORRIDA_MS, type EstadoSala } from './tipos';
+import {
+  JANELA_DE_GRACA_MS,
+  N_ETAPAS_CURTA,
+  TIMEOUT_FIM_DE_CORRIDA_MS,
+  type EstadoSala,
+} from './tipos';
 
 /**
  * Seeds do campeonato para os testes desta suíte (3.5.1). Valores fixos e
@@ -62,7 +68,7 @@ function mandar(
 
 /** Sala com N humanos prontos e o draft REALMENTE iniciado — nenhuma fase forjada. */
 function salaIniciada(quantos: number): EstadoServidor {
-  let estado = criarServidor('sala-barreira', 987_654, 'dificil', T0, SEEDS_T);
+  let estado = criarServidor('sala-barreira', 987_654, 'dificil', T0, SEEDS_T, N_ETAPAS_CURTA);
   const nomes = ['Ana', 'Beto', 'Cida'];
   for (let i = 0; i < quantos; i += 1) {
     estado = mandar(estado, `c${i + 1}`, { tipo: 'entrar', nome: nomes[i] }, T0, `tk${i + 1}`).estado;
@@ -101,6 +107,51 @@ function passoDoDraft(estado: EstadoServidor): EstadoServidor {
 const comConexoes = (estado: EstadoServidor): EstadoServidor =>
   registrarConexoes(estado, 2, T0);
 
+/**
+ * Leva a sala até a ÚLTIMA etapa do campeonato, fechando as barreiras
+ * anteriores **pelo caminho real** (3.5.2).
+ *
+ * 🏆 **Por que este arquivo inteiro passou a precisar disto, e por que NÃO é
+ * um contorno para deixar teste verde.** Desde o 3.5.2 todo jogo online é
+ * campeonato de `N_ETAPAS_CURTA` etapas (decisão do dev, 2026-08-20): fechar a
+ * barreira de uma etapa que não é a última **avança o cursor** em vez de
+ * marcar `concluidaEm`. As asserções deste arquivo são sobre o MECANISMO da
+ * barreira — quem conta como elegível, quando ela fecha, o que o timeout
+ * resolve — e esse mecanismo é idêntico em qualquer etapa; o que muda é só o
+ * DESFECHO de fechá-la. Ancorando na última etapa, cada asserção continua
+ * dizendo exatamente o que dizia antes, agora sobre o caminho que a produção
+ * de fato percorre. **Quem cobre o avanço nas etapas intermediárias é
+ * `cursor-etapas.test.ts`** — não é lacuna, é divisão de trabalho.
+ *
+ * 🔒 **Nada de forjar `etapaAtual`.** Um `{ ...estado.sala, etapaAtual: 4 }`
+ * deixaria o arquivo verde abençoando um estado que nenhum caminho produz — a
+ * classe de defeito que este projeto já pagou dez vezes ("o teste afirmava o
+ * que não conferia"). Aqui o cursor chega a 4 porque quatro barreiras
+ * fecharam, com `timeoutMs: 0` fazendo cada uma decidir na hora.
+ *
+ * ⚠️ **O instante de cada avanço é `corridaAbertaEm`, NUNCA `T0` fixo** — e a
+ * diferença já quebrou este helper uma vez. O avanço exige `venceu`, que é
+ * `agora - corridaAbertaEm >= timeoutMs`; nos testes em que o draft conclui
+ * DEPOIS de `T0` (os de abandono, que gastam T0+500/+600 antes), `T0` fixo dá
+ * diferença NEGATIVA, a barreira não fecha e o laço estoura. Usando a própria
+ * âncora, `corridaAbertaEm` re-ancora no valor que já tinha e fica **estável**
+ * — os testes que exigem `corridaAbertaEm === T0` seguem literais, e os de
+ * abandono passam a funcionar pela mesma linha.
+ */
+function naUltimaEtapa(estado: EstadoServidor): EstadoServidor {
+  let atual = estado;
+  let voltas = 0;
+  while (atual.sala.etapaAtual < N_ETAPAS_CURTA - 1) {
+    atual = avaliarBarreiraDaCorrida(atual, atual.sala.corridaAbertaEm ?? T0, 0);
+    voltas += 1;
+    if (voltas > N_ETAPAS_CURTA) throw new Error('o cursor não chegou à última etapa');
+  }
+  // Pré-condições do que este helper promete, asseridas em vez de supostas.
+  expect(atual.sala.concluidaEm, 'a última barreira NÃO pode ter fechado aqui').toBeNull();
+  expect(atual.sala.atestaramFimDaCorrida, 'o avanço zera os atestados').toEqual([]);
+  return atual;
+}
+
 /** Leva o draft até `concluido` DE VERDADE, pelo funil real do servidor. */
 function comDraftConcluido(quantos = 2): EstadoServidor {
   let estado = salaIniciada(quantos);
@@ -110,7 +161,7 @@ function comDraftConcluido(quantos = 2): EstadoServidor {
     passos += 1;
     if (passos > 500) throw new Error('o driver do teste não conseguiu concluir o draft');
   }
-  return estado;
+  return naUltimaEtapa(estado);
 }
 
 describe('📏 MEDIÇÃO da pendência 0(e): o tique com o draft concluído é inofensivo', () => {
@@ -222,6 +273,10 @@ describe('🔴 SALA REIDRATADA DE ANTES DO PR 3/4 (campos ausentes no storage)',
     }
     const abertaEm = estado.sala.corridaAbertaEm!;
     expect(abertaEm, 'a corrida abriu apesar do storage velho').toBe(T0);
+
+    // 3.5.2: a barreira que marca `concluidaEm` é a da ÚLTIMA etapa. Ver
+    // `naUltimaEtapa` — o cursor chega lá fechando barreiras de verdade.
+    estado = naUltimaEtapa(estado);
 
     estado = mandar(estado, 'c1', { tipo: 'corrida-concluida' }, T0 + 1000).estado;
     expect(estado.sala.concluidaEm, '1 de 2 não fecha').toBeNull();
@@ -346,6 +401,8 @@ describe('🔴 (A fraca) a barreira é NO FIM e NÃO bloqueia ninguém', () => {
       if (passos > 500) throw new Error('o driver do teste não conseguiu concluir o draft');
     }
 
+    estado = naUltimaEtapa(estado);
+
     const tFim = T0 + 200_000;
     estado = mandar(estado, 'c1', { tipo: 'corrida-concluida' }, tFim).estado;
     expect(estado.sala.concluidaEm).toBe(tFim);
@@ -385,6 +442,8 @@ describe('🔴 (A fraca) a barreira é NO FIM e NÃO bloqueia ninguém', () => {
       if (passos > 500) throw new Error('o driver do teste não conseguiu concluir o draft');
     }
     expect(estado.sala.draft?.ausentes.length, 'pré-condição: ninguém ativo').toBe(2);
+
+    estado = naUltimaEtapa(estado);
 
     expect(estado.sala.concluidaEm, 'sem elegíveis, NÃO fecha na conclusão do draft').toBeNull();
     // ⚠️ A âncora é `corridaAbertaEm`, NÃO `T0`: aqui o draft conclui depois
