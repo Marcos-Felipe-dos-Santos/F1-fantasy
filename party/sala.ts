@@ -93,6 +93,10 @@ export class Sala extends Server<Env> {
     // ⚠️ `Array.from` NÃO é estilo: `estadoDasSeeds` valida com `Array.isArray`
     // (`src/net/sala.ts`), e um `Uint32Array` reprova ali — a sala reidrataria
     // como CORROMPIDA e passaria a recusar todo mundo.
+    // 🔑 **MEDIDO no workerd pelo PR B** (`party/seeds.test.ts`, bloco R4), não
+    // argumentado: o `Uint32Array` SOBREVIVE ao round-trip do storage como
+    // `Uint32Array`. Ou seja, o caminho acima é real — ele volta íntegro e
+    // mesmo assim reprova no `Array.isArray`.
     //
     // 🔑 Esta nota dizia "é persistido via JSON, e um `Uint32Array` round-trip
     // vira `{"0":…}`". **Refutado pela medição da pendência 0(p) (2026-08-19):**
