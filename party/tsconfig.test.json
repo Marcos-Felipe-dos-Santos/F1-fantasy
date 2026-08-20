@@ -1,0 +1,20 @@
+{
+  // tsconfig dos TESTES da casca (PR A do spike, 2026-08-19).
+  //
+  // 🔒 Existe porque o `party/tsconfig.json` EXCLUI `**/*.test.ts` de propósito
+  // — e mexer naquele arquivo não é opção: ele é o gate de tipos do worker de
+  // produção. Sem esta configuração à parte, o arquivo que referencia
+  // `cloudflare:test` e o binding `env` não passaria por gate NENHUM, que é
+  // exatamente onde erro silencioso mora.
+  //
+  // Herda tudo do tsconfig do worker (lib sem DOM, tipos do workerd) e só
+  // acrescenta os tipos do pool, que são quem declara o módulo `cloudflare:test`.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "types": ["@cloudflare/workers-types", "@cloudflare/vitest-pool-workers/types"]
+  },
+  // Só `party/`: os testes de `src/` rodam em Node, com outra lib e outros
+  // globais, e arrastá-los para cá faria o gate reprovar código que não mudou.
+  "include": ["**/*.ts"],
+  "exclude": []
+}

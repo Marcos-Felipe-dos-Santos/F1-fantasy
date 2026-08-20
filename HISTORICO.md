@@ -2122,6 +2122,62 @@ varredura tem de ser por `JSON.stringify`, nunca campo a campo.
 
 ---
 
+### PR A — SPIKE @cloudflare/vitest-pool-workers (2026-08-19, `72b931e`) — BAIXO RISCO / SPIKE COM GO/NO-GO PENDENTE
+
+**Spike de dependência e cobertura da casca:** `@cloudflare/vitest-pool-workers@0.22.0` como pool de
+testes para executar `party/sala.ts` em ambiente workerd de verdade. O plano foi aprovado pelo dev em
+2026-08-19 com as 5 decisões registradas em `PLANOS_ATIVOS.md` §"SPIKE + COBERTURA DA CASCA". **Este
+PR é infra puro** — nenhuma lógica de sala muda, nenhum teste de comportamento nasce — e fecha com
+**go/no-go explícito do dev** (precedente do SPIKE 3.0). Se NO-GO: rollback é uma linha
+(`git checkout package.json package-lock.json`), pendência 9 fica 🟡 e o 3.5.2 abre na sessão
+seguinte com a cerca textual.
+
+**O que foi entregue:**
+- `vitest.party.config.ts` (novo) — pool via `cloudflareTest({ wrangler: { configPath: './wrangler.jsonc' } })`, `include: ['party/**/*.test.ts']`. Config de PRODUÇÃO, sem flags experimentais.
+- `party/smoke.test.ts` (novo) — **cinco testes, nenhum de lógica de sala** (de propósito): binding do DO, round-trip SQLite, `evictAllDurableObjects` preserva storage, storage ATRAVESSA testes (achado: `isolatedStorage` morreu), `reset()` limpa. Verde com **~660 ms**.
+- `party/tsconfig.test.json` (novo) — entra em `typecheck` (novo terceiro `tsc`) e `build`. O `party/tsconfig.json` não foi tocado.
+- `scripts/checar-casca-sem-node.ts` (novo) + script `npm run checar:casca` — **o compensador do dev** (decisão 1): `wrangler deploy --dry-run` empacota com a config de PRODUÇÃO e falha de verdade com `node:*` no grafo, mesmo que a flag de compat esteja ligada **nos testes**. Comportamental e pega grafo transitivo.
+- `package.json` — novos scripts `test:party` (o verde acima) e `checar:casca`; `build` reformulado como `npm run typecheck && npm run checar:casca && vite build`; `typecheck` ganhou terceiro `tsc` para `party/tsconfig.test.json`.
+- `eslint.config.js` — `.wrangler/**` adicionado aos `ignores` (SÓ ignores, nenhuma regra redefinida; a cerca `src/net/cerca-lint.test.ts` segue verde 7/7).
+- `scripts/node-shims.d.ts` — shims mínimos novos: `node:child_process` (para `execFileSync` do compensador) e `process.execPath`.
+- `party/sala.ts` — **SÓ COMENTÁRIO** (decisão 4 do dev): docblock do `Array.from` refutado pela revisão do 3.5.1 foi corrigido (duas linhas; o spike já mexe na casca).
+- Wrangler: **não foi bumped**. A decisão 2 do dev ("aceitar as duas cópias") obrigou a **pinar** `"wrangler": "4.120.0"` exato no `package.json` para materializar a intenção — com o `^` o npm deduplicava para UMA cópia e subia a de produção para a versão do pool (4.124.0), o inverso da decisão. Com o pin: topo 4.120.0, 4.124.0 aninhada no pool.
+
+**Medições (todas medidas, nenhuma deduzida):**
+- `npm test`: **1516/63 ANTES e 1516/63 DEPOIS** (2,98–3,12 s, variância normal). Portão (ii) cumprido.
+- `npm run test:party`: **5/5 verde**, ~665 ms.
+- Typecheck / lint / build: **0 / 0 / 0**.
+- `node_modules`: **271 MB → 430 MB** (+159 MB); o binário `workerd` é a maior parte. Pacotes: 232 → 239 (+7).
+- Instalação: **7 segundos**.
+- Versões: `@cloudflare/vitest-pool-workers@0.22.0`, pool declara `wrangler@4.124.0` exato, topo `4.120.0` após pin, `partyserver@0.5.10` intacto, Node v24.16.0.
+- ⚠️ **`@cloudflare/workers-types` moveu de `5.20260809.1` → `5.20260819.1`** (só no lock; o `^` permitia). Não entra no bundle (é tipo, compile-time), typecheck 0. **Mas altera a tripla que o SPIKE 3.0 validou** — registre como fato e como decisão que sobra pro dev (pinar ou não).
+
+**Os três achados que contrariam o plano aprovado (o valor do spike está aqui):**
+
+1. 🔑 **`nodejs_compat` NÃO foi necessária.** O plano previa Ramo 1 (flag só no `poolOptions.miniflare`). Medido: o smoke passa **SEM a flag**. Consequência: a decisão travada do 3.2 fica preservada na SUBSTÂNCIA, não só na letra — teste e produção rodam sob a MESMA config de compat. O aviso do plano ("mesmo o Ramo 1 preserva a letra, não a substância") deixa de valer.
+
+2. 🔴 **O COMPENSADOR ESPECIFICADO ERA VACUOSO.** O plano afirmava que `wrangler deploy --dry-run` "falha de verdade" com um `node:*` fora da flag. **Medido com `import { join } from 'node:path'` USADO em `party/sala.ts`:** o `--dry-run` só imprime WARNING e sai **exit 0**, e o `npm run test:party` fica **VERDE** (o pool resolve `node:*` mesmo sem a flag). Os dois gates óbvios são CEGOS. **Por isso o compensador virou um script que empacota e inspeciona o BUNDLE emitido.** Ele pega DUAS formas, ambas exercitadas com mutação: (a) `node:*` explícito — empacota e o import fica no bundle, pego pela inspeção; (b) builtin SEM prefixo (`from 'stream'`) — o esbuild não resolve e o empacotamento FALHA, pego pelo throw.
+
+3. 🔴 **`isolatedStorage` NÃO EXISTE MAIS em `@cloudflare/vitest-pool-workers@0.22.0`** (zero ocorrências no pacote). O plano dizia "ligado por padrão, desfaz escritas entre testes — escrita e leitura no MESMO `it`". Medido: o storage **ATRAVESSA** os `it`s. **A instrução do plano para o baseline MR está INVERTIDA:** o risco para os PRs B e C não é escrita desfeita, é VAZAMENTO entre testes. Substitutos medidos: `reset()` (limpa) e `evictAllDurableObjects()` (derruba a instância PRESERVANDO o storage) — este último é exatamente a ferramenta que o baseline MR do PR B precisa, porque `Sala` cacheia `this.estado` em memória e um teste que só rechamasse o DO leria o cache sem nunca reidratar.
+
+**A descoberta do pin do wrangler (o detalhe de infra que quase perdeu a decisão):**
+A decisão 2 do dev era "aceitar as duas cópias; a de produção continua o par exato do SPIKE 3.0". Medido: o pool declara `wrangler: '4.124.0'` **exato como dependency** (não peer). Com `"wrangler": "^4.120.0"` no package.json, o npm **DEDUPA para UMA cópia só e SOBE a de produção para 4.124.0** — o oposto do que o dev travou. **Para materializar a decisão foi preciso PINAR `"wrangler": "4.120.0"`** (exato). Com o pin: topo 4.120.0, 4.124.0 aninhada no pool. Não usa `overrides` e não rompe a dep exata do pool.
+
+**Portões cumpridos:**
+- **(i) cada mutação VISTA vermelha, uma a uma:** três mutações, cada uma vista vermelha e revertida ao verde — (a) `node:path` no compensador (exit 1); (b) `from 'stream'` (outro mecanismo, exit 1); (c) `throw` no topo de `party/sala.ts` derrubando o smoke, provando que o pool carrega o módulo de PRODUÇÃO real (anti-vacuidade).
+- **(ii) `npm test` medido: 1516/63 antes e depois** — cumprido.
+- **Classificação BAIXO RISCO conforme o plano** — `senior-reviewer` pulado.
+
+**O que fica para os próximos PRs (B e C):**
+- A pendência 9 **NÃO fecha** e nem vai a 🟡 ainda — isso depende do veredito go/no-go do dev. O PR A é infra.
+- O PR B herda a correção do achado 3 (usar `evictAllDurableObjects()`, e nome de DO distinto por teste + `reset()` contra vazamento).
+- **Decisões que sobram pro dev** (registre-as como tais): (1) pinar ou não `@cloudflare/workers-types`; (2) `npm run build` agora depende de o empacotamento do wrangler funcionar — acoplamento novo, baixo impacto porque não há CI.
+- A pendência 0(s) (MZ/zumbi) NÃO foi tocada, conforme a decisão 5 do dev. Ela segue aberta e continua sendo alvo do PR C.
+
+**⚠️ VEREDITO AINDA PENDENTE:** O dev não decidiu GO ou NO-GO. As medições e achados acima valem independente do veredito. Registre a decisão quando vier aqui como linha nova — uma linha declarando `GO: <commit do merge da branch>` ou `NO-GO: rollback executado em <data>`, com o estado do projeto resultante.
+
+---
+
 # ARQUIVADO DO `ESTADO.md` em 2026-08-19 (sessão de higiene — pendência 8)
 
 > Tudo abaixo veio **íntegro, linha por linha**, do `ESTADO.md`, na sessão de higiene autorizada pelo

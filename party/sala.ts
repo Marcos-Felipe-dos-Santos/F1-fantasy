@@ -16,7 +16,10 @@
  * que já foi encerrado) devolve `sala-inexistente`.
  *
  * ⚠️ Sem `nodejs_compat` no `wrangler.jsonc`, de propósito — ver o comentário
- * lá. Nada no grafo de imports abaixo toca `node:*`.
+ * lá. Nada no grafo de imports abaixo toca `node:*`, e isso é VERIFICADO a cada
+ * `npm run build` por `scripts/checar-casca-sem-node.ts`. Medido no PR A do
+ * spike: nem o `wrangler deploy --dry-run` (só avisa) nem o `npm run test:party`
+ * (o pool resolve `node:*`) pegam um import acidental — só aquele script pega.
  */
 
 import { routePartykitRequest, Server, type Connection } from 'partyserver';
@@ -87,9 +90,16 @@ export class Sala extends Server<Env> {
     // derivá-las da mestra compraria zero contra a pendência 0(i), porque
     // recomposta a mestra pela `seedDraft` do lobby todas cairiam juntas.
     //
-    // ⚠️ `Array.from` NÃO é estilo: este objeto é persistido via JSON, e um
-    // `Uint32Array` round-trip vira `{"0":…,"1":…}` em silêncio — as seeds
-    // sumiriam na reidratação e as etapas futuras seriam re-sorteadas.
+    // ⚠️ `Array.from` NÃO é estilo: `estadoDasSeeds` valida com `Array.isArray`
+    // (`src/net/sala.ts`), e um `Uint32Array` reprova ali — a sala reidrataria
+    // como CORROMPIDA e passaria a recusar todo mundo.
+    //
+    // 🔑 Esta nota dizia "é persistido via JSON, e um `Uint32Array` round-trip
+    // vira `{"0":…}`". **Refutado pela medição da pendência 0(p) (2026-08-19):**
+    // o DO é `new_sqlite_classes` e `ctx.storage.put` grava V8-serializado na
+    // `_cf_KV`, não JSON — foi por isso que `scripts/despejar-seeds.ts` precisou
+    // do `node:v8`. JSON nunca esteve no caminho, e o desfecho real é recusa
+    // explícita, não seeds sumindo em silêncio.
     const slots = new Uint32Array(SLOTS_SEEDS);
     crypto.getRandomValues(slots);
     const todas = Array.from(slots);

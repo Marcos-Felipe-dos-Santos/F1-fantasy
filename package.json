@@ -8,8 +8,10 @@
     "dev": "vite",
     "dev:rede": "vite --host",
     "sala": "node scripts/checar-porta-sala.ts && wrangler dev --port 8787",
-    "build": "tsc --noEmit && tsc --noEmit -p party/tsconfig.json && vite build",
+    "build": "npm run typecheck && npm run checar:casca && vite build",
     "test": "vitest run",
+    "test:party": "vitest run --config vitest.party.config.ts",
+    "checar:casca": "node scripts/checar-casca-sem-node.ts",
     "test:watch": "vitest",
     "balance": "vitest run --config vitest.balance.config.ts --reporter=verbose --silent=false",
     "preview": "vitest run --config vitest.preview.config.ts --reporter=verbose --silent=false",
@@ -19,26 +21,27 @@
     "dataset:report": "node scripts/dataset-report.ts",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "typecheck": "tsc --noEmit && tsc --noEmit -p party/tsconfig.json"
+    "typecheck": "tsc --noEmit && tsc --noEmit -p party/tsconfig.json && tsc --noEmit -p party/tsconfig.test.json"
   },
   "dependencies": {
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.22.0",
     "@cloudflare/workers-types": "^5.20260809.1",
-    "partyserver": "^0.5.10",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^4.3.4",
     "eslint": "^9.0.0",
     "eslint-config-prettier": "^9.1.0",
     "globals": "^15.0.0",
+    "partyserver": "^0.5.10",
     "prettier": "^3.0.0",
     "typescript": "~5.9.0",
     "typescript-eslint": "^8.0.0",
     "vite": "^7.0.0",
     "vitest": "^4.0.0",
-    "wrangler": "^4.120.0"
+    "wrangler": "4.120.0"
   }
 }
