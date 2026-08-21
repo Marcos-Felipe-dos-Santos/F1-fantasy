@@ -183,13 +183,44 @@ function referenciaDe(fonteSemComentarios: string, nomeFn: string): boolean {
  *   a pista pra um cabeçalho com a seed errada e mostrar pista diferente da
  *   hasheada — mesma família de risco, outra porta. Só `corrida-online.ts`
  *   (dentro de `corridaDaSala`) pode chamá-la.
+ * - `corridaDaSala` ganhou um SEGUNDO sítio no 3.5.3: `corrida-online.ts`,
+ *   onde `etapasDaSala` a chama uma vez por etapa aberta. **Não é
+ *   afrouxamento** — são dois sítios com dono declarado (a corrida avulsa no
+ *   hook, as etapas no módulo puro), cada um travado em UMA chamada exata
+ *   pelo bloqueante 2 abaixo. Um terceiro arquivo continua reprovando.
+ * - 🔒 **`seedDaEtapa` entrou no 3.5.3 — cerca NOVA, não relaxamento de
+ *   nenhuma.** Ela é a costura entre a seed publicada pelo servidor e a
+ *   simulação: quem criar um segundo caminho de derivação ("consertando" a
+ *   etapa online com um rótulo próprio) produz uma corrida determinística e
+ *   DIFERENTE da etapa offline, sem nada quebrar. Os dois primeiros arquivos
+ *   são pré-existentes (medidos por `grep`, não herdados do plano): a engine
+ *   a declara e a usa em `simularCampeonato`, e `FluxoCampeonato.tsx` a chama
+ *   na etapa offline. As menções em `fluxo-corrida.ts`, `persistencia.ts` e
+ *   `net/sala.ts` são só COMENTÁRIO, e `semComentarios` as remove.
+ * - 🔴 **`namespaces-seed.ts` entrou na lista por MEDIÇÃO, contrariando o que
+ *   este bloco dizia antes de a cerca rodar.** O `grep` mostrava a linha 36
+ *   e ela foi classificada como "registro, não código"; a cerca discordou. O
+ *   nome está dentro de uma STRING (`dono: '… (seedDaEtapa)'`), e
+ *   `semComentarios` remove comentário, não literal — `referenciaDe` não
+ *   distingue string de código, e não deveria mesmo: um acesso computado
+ *   `obj['seedDaEtapa']` também mora numa string, e é indireção de verdade.
+ *   A entrada é o registro do DONO do rótulo `camp:`, o oposto de um segundo
+ *   caminho de derivação. **Fica listada; o preço é uma linha aqui, e a
+ *   alternativa — editar a string do registro para escapar da cerca — seria
+ *   mexer em produção para a conveniência do teste.**
  */
 const PERMITIDOS: Record<string, string[]> = {
   prepararCorrida: ['src/ui/useCorrida.ts', 'src/ui/corrida-online.ts'],
   simularCorrida: ['src/engine/campeonato.ts', 'src/ui/fluxo-corrida.ts'],
   simularQuali: ['src/engine/campeonato.ts', 'src/ui/fluxo-corrida.ts'],
-  corridaDaSala: ['src/ui/useSalaOnline.ts'],
+  corridaDaSala: ['src/ui/corrida-online.ts', 'src/ui/useSalaOnline.ts'],
   pistaSorteada: ['src/ui/corrida-online.ts'],
+  seedDaEtapa: [
+    'src/engine/campeonato.ts',
+    'src/engine/namespaces-seed.ts',
+    'src/ui/FluxoCampeonato.tsx',
+    'src/ui/corrida-online.ts',
+  ],
 };
 
 describe('a varredura enxerga os arquivos de verdade (anti-vacuidade)', () => {
@@ -215,6 +246,12 @@ describe('a varredura enxerga os arquivos de verdade (anti-vacuidade)', () => {
 
     const useSalaOnlineFonte = readFileSync(join(AQUI, 'useSalaOnline.ts'), 'utf8');
     expect(chamadasDe(useSalaOnlineFonte, 'corridaDaSala')).toBeGreaterThan(0);
+
+    // PR 3.5.3: a cerca nova de `seedDaEtapa` tem que enxergar os dois sítios
+    // legítimos, senão ela passaria por não encontrar nada em lugar nenhum.
+    expect(chamadasDe(corridaOnlineFonte, 'seedDaEtapa')).toBeGreaterThan(0);
+    const fluxoCampeonatoFonte = readFileSync(join(AQUI, 'FluxoCampeonato.tsx'), 'utf8');
+    expect(chamadasDe(fluxoCampeonatoFonte, 'seedDaEtapa')).toBeGreaterThan(0);
   });
 
   it('`chamadasDe` NÃO conta a própria declaração da função (anti-falso-positivo)', () => {
@@ -312,6 +349,36 @@ describe('ALLOWLIST em src/{engine,net,ui}: quem pode REFERENCIAR cada função'
         .sort();
       expect(referenciadores).not.toEqual([...PERMITIDOS.prepararCorrida].sort());
       expect(referenciadores).toContain('src/ui/__sabotagem_alias.ts');
+    } finally {
+      unlinkSync(sabotagem);
+    }
+  });
+
+  it('🔴 SABOTAGEM: um segundo caminho de derivação de seed de etapa reprova (PR 3.5.3)', () => {
+    // O cenário exato que a cerca nova de `seedDaEtapa` existe pra impedir: um
+    // arquivo que "conserta" a etapa online derivando a seed por conta própria.
+    // O resultado seria uma corrida perfeitamente determinística e DIFERENTE da
+    // etapa que o offline simula com a mesma seed — nada quebra, o hash bate
+    // entre os clientes, e só a conformidade contra `simularEtapa` acusa.
+    const sabotagem = join(AQUI, '__sabotagem_seed_etapa.ts');
+    writeFileSync(
+      sabotagem,
+      [
+        "import { seedDaEtapa } from '../engine/campeonato';",
+        'export function seedDaEtapaOnline(seed: number, pistaId: string): number {',
+        '  return seedDaEtapa(seed, pistaId);',
+        '}',
+        '',
+      ].join('\n'),
+      'utf8',
+    );
+    try {
+      const referenciadores = arquivosDeProducao()
+        .filter((arquivo) => referenciaDe(semComentarios(readFileSync(arquivo, 'utf8')), 'seedDaEtapa'))
+        .map(relativo)
+        .sort();
+      expect(referenciadores).not.toEqual([...PERMITIDOS.seedDaEtapa].sort());
+      expect(referenciadores).toContain('src/ui/__sabotagem_seed_etapa.ts');
     } finally {
       unlinkSync(sabotagem);
     }
@@ -428,6 +495,33 @@ describe('BLOQUEANTE 2: contagem EXATA — nunca duas computações no mesmo arq
   it('`prepararCorrida` é chamada exatamente 1 vez em `corrida-online.ts`', () => {
     const fonte = readFileSync(join(AQUI, 'corrida-online.ts'), 'utf8');
     expect(chamadasMax(fonte, 'prepararCorrida')).toBe(1);
+  });
+
+  it('`corridaDaSala` é chamada exatamente 1 vez em `corrida-online.ts` (PR 3.5.3)', () => {
+    // O sítio das ETAPAS, dentro de `etapasDaSala`. A allowlist acima permite o
+    // arquivo; esta contagem impede que ele ganhe uma SEGUNDA computação — por
+    // exemplo, um ramo "recomputar a etapa corrente" ao lado do `map`, que
+    // devolveria uma referência diferente da que entrou na lista e da que o
+    // hash vai atestar no 3.5.4. Mesmo defeito do bloqueante 2, uma porta
+    // adiante — o mesmo raciocínio que trouxe `useCorrida.ts` pra cá.
+    const fonte = readFileSync(join(AQUI, 'corrida-online.ts'), 'utf8');
+    expect(
+      chamadasMax(fonte, 'corridaDaSala'),
+      'só `etapasDaSala` pode computar etapa aqui, e uma vez só (dentro do `map`)',
+    ).toBe(1);
+  });
+
+  it('🔴 SABOTAGEM: duplicar a chamada de `corridaDaSala` em `corrida-online.ts` reprova', () => {
+    // Em memória, pelo mesmo motivo das outras sabotagens de contagem.
+    const original = readFileSync(join(AQUI, 'corrida-online.ts'), 'utf8');
+    const sabotado = original.replace(
+      'return corridaDaSala(dataset, draft, seed, pistaId);',
+      'return corridaDaSala(dataset, draft, seed, pistaId) ?? corridaDaSala(dataset, draft, seed, pistaId);',
+    );
+    expect(sabotado, 'a substituição de texto não encontrou o alvo — o teste não provaria nada').not.toBe(
+      original,
+    );
+    expect(chamadasMax(sabotado, 'corridaDaSala')).not.toBe(1);
   });
 
   it('`prepararCorrida` é chamada exatamente 1 vez em `useCorrida.ts`', () => {

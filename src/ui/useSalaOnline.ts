@@ -34,8 +34,13 @@ import { hashDoDraft } from '../net/hash-draft';
 import { hashDaCorrida } from '../net/hash-corrida';
 import { RODADA_COMPLETA } from '../net/tipos';
 import { VERSAO_APP } from '../engine/versao';
-import type { EscolhaDraft } from '../engine/types';
-import { corridaDaSala, type CorridaPreparada } from './corrida-online';
+import type { EscolhaDraft, LinhaClassificacao } from '../engine/types';
+import {
+  classificacaoDaSala,
+  corridaDaSala,
+  etapasDaSala,
+  type CorridaPreparada,
+} from './corrida-online';
 import { dataset } from './dataset-app';
 import { storageDoNavegador } from './storage-app';
 
@@ -72,6 +77,28 @@ export interface UseSalaOnline {
    * docblock de `corrida-online.ts` pra tese completa.
    */
   corrida: CorridaPreparada | null;
+  /**
+   * 🏆 As etapas ABERTAS do campeonato online, derivadas do snapshot (PR 3.5.3).
+   *
+   * `[]` enquanto o draft não conclui e em sala legado. Cresce quando o cursor
+   * do servidor anda: `etapas[k]` é a etapa k, e `etapas.length - 1` é a etapa
+   * corrente (`cliente.sala.etapaAtual` diz o mesmo, pelo lado do servidor).
+   *
+   * ⚠️ **NADA CONSOME ISTO AINDA, e é de propósito (recorte do 3.5.3).** A tela
+   * e o atestado de hash continuam ligados em `corrida` acima — a corrida
+   * AVULSA — exatamente como no 3.5.2. Ligar a tela às etapas exige o
+   * `key={'etapa-'+k}` no `FluxoCorrida` (sem ele o `useState` de `useCorrida`
+   * mantém a corrida anterior) e o atestado por etapa; as duas coisas andam
+   * JUNTAS, porque atestar o hash da etapa k com a tela mostrando a etapa 0 é a
+   * classe de bug do 8.4 — a mesma que este arquivo existe para evitar. **É o
+   * 3.5.4 que as liga, no PR que tem portão visual.**
+   */
+  etapas: CorridaPreparada[];
+  /**
+   * 🏆 A classificação acumulada das etapas ABERTAS (PR 3.5.3), pela mesma
+   * `acumularClassificacao` do offline. `[]` junto com `etapas`.
+   */
+  classificacao: LinhaClassificacao[];
   /**
    * 🏁 "Terminei a corrida" — alimenta a BARREIRA DO FIM (PR 3/4).
    *
@@ -224,6 +251,46 @@ export function useSalaOnline(sala: string): UseSalaOnline {
   }, [cliente.draft, cliente.sala?.seedCorrida]);
 
   /**
+   * 🏆 AS ETAPAS DO CAMPEONATO ONLINE (PR 3.5.3) — derivação PURA do snapshot.
+   *
+   * Toda a lógica mora em `etapasDaSala` (`corrida-online.ts`), e este `useMemo`
+   * é casca fina em cima dela. **Não é estilo:** o projeto não tem
+   * `jsdom`/`@testing-library`, então nada que more dentro deste hook pode ser
+   * alcançado por teste — e o 3.5.2 acabou de pagar caro pela lição de que
+   * baseline que não alcança a guarda não é baseline. O pareamento
+   * `seedsAbertas[k]` ↔ `calendario[k]`, que é o coração deste PR, fica do lado
+   * puro justamente para que as mutações possam ser vistas vermelhas.
+   *
+   * 🔴 **`chaveSeedsAbertas` (string) na lista de dependências, e NÃO o array.**
+   * `cliente.sala` é reconstruído a cada snapshot que chega do servidor, então
+   * `seedsAbertas` é um array NOVO a cada mensagem, mesmo sem nenhuma etapa ter
+   * aberto. Depender da referência recomputaria 5 etapas × 22 carros a cada
+   * broadcast — inclusive durante o draft dos outros. A chave por VALOR muda
+   * exatamente quando o conteúdo muda, que é o gatilho pretendido. Mesma
+   * família da limitação registrada na pendência 0(j), agora resolvida em vez
+   * de rastreada à mão.
+   */
+  const chaveSeedsAbertas = (cliente.sala?.seedsAbertas ?? []).join(',');
+  const etapas = useMemo<CorridaPreparada[]>(() => {
+    if (cliente.draft === null || cliente.draft.fase !== 'concluido') return [];
+    return etapasDaSala(
+      dataset,
+      cliente.draft,
+      cliente.sala?.seedCalendario ?? null,
+      cliente.sala?.seedsAbertas ?? [],
+    );
+    // `cliente.sala?.seedsAbertas` é LIDA aqui mas não entra nas dependências —
+    // quem a representa é `chaveSeedsAbertas`, pelo motivo acima. O projeto não
+    // usa `react-hooks/exhaustive-deps` (medido em `eslint.config.js`), então
+    // isto é decisão explícita, não regra silenciada.
+  }, [cliente.draft, cliente.sala?.seedCalendario, chaveSeedsAbertas]);
+
+  const classificacao = useMemo<LinhaClassificacao[]>(
+    () => (cliente.draft === null ? [] : classificacaoDaSala(etapas, cliente.draft)),
+    [etapas, cliente.draft],
+  );
+
+  /**
    * 🔴 ATESTADO DE HASH DA CORRIDA (PR 2/4) — mesmo detector do draft, agora
    * sobre `corrida`. Mesmo molde do efeito acima: mora num efeito separado
    * (não dentro de um updater de `setState`, pelo mesmo motivo do StrictMode
@@ -338,6 +405,8 @@ export function useSalaOnline(sala: string): UseSalaOnline {
     encerrada: cliente.encerrada,
     inexistente: cliente.erros.includes('sala-inexistente'),
     corrida,
+    etapas,
+    classificacao,
     atestarFimDaCorrida,
   };
 }
