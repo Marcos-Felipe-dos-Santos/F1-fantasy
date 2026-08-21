@@ -315,8 +315,8 @@ se continua** — é ali que a decisão é barata, e não depois do 3.5.3.
      Pendências fechadas: **0(k)** e **0(r)**. Abertas por ele: **0(t)** (encolhida pelo N2) e
      **0(u)**.
 3. ✅ **3.5.3 — cliente: N etapas por derivação pura — FEITO em 2026-08-21**, branch
-   `pr-3.5.3-cliente-multietapa` (`cffe699` + `c64b8b4` + `01689a5` + `d478617`). **Medido:**
-   `npm test` **1560/64**, `test:party` **10/10**, typecheck 0, eslint 0, build 0.
+   `pr-3.5.3-cliente-multietapa` (`cffe699` + `c64b8b4` + `01689a5` + `d478617` + `92bcee7` + `e48a5fc`). **Medido:**
+   `npm test` **1565/64**, `test:party` **10/10**, typecheck 0, eslint 0, build 0.
    **Sem merge, sem push, sem tag.** Detalhe: `HISTORICO.md` §"PR 3.5.3".
    🔑 **O RECORTE MUDOU, por decisão do dev (opção A de três): o atestado por etapa SAIU deste PR.**
    Motivo rastreado no código: `useCorrida` semeia o `useState` de `fonte` uma vez, o atestado sai

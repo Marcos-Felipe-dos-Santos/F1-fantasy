@@ -9,12 +9,12 @@
 ## Estado atual
 
 **Última medição (PR 3.5.3, 2026-08-21, na branch `pr-3.5.3-cliente-multietapa`, pós-revisão e
-pós-conserto do bloqueante C1):** `npm test` **1560/64**, **`npm run test:party` 10/10**, typecheck
+pós-conserto do bloqueante C1):** `npm test` **1565/64**, **`npm run test:party` 10/10**, typecheck
 **0** nos três projetos, eslint **0**, build **0**. `VERSAO_APP` **3.4.2** (sem bump — medido: o
 digest não foi tocado e nenhum rótulo novo nasceu).
 ⚠️ **O `npm test` deste projeto tem uma corrida de I/O entre duas cercas e pode falhar por
 escalonamento — pendência 0(v), medida e PRÉ-EXISTENTE.** A parcela introduzida pelo 3.5.3 foi
-fechada (5 rodadas seguidas a 1560/1560), mas **um vermelho em `contrato-ausente.test.ts` num PR que
+FECHADA NA RAIZ no proprio PR (8 rodadas seguidas a 1565/1565), mas **um vermelho em `contrato-ausente.test.ts` num PR que
 não toca o ausente é sintoma disso, não regressão** — reproduzir antes de caçar bug.
 
 *(Medição anterior, PR 3.5.2, 2026-08-20, na branch `pr-3.5.2-cursor-por-etapa`):* `npm test`
@@ -260,8 +260,8 @@ dependência).
 ## Onde parei
 
 **🏆 PR 3.5.3 — CLIENTE MULTIETAPA: CÓDIGO COMPLETO E VERDE em 2026-08-21**, na branch
-**`pr-3.5.3-cliente-multietapa`** (`cffe699` + `c64b8b4` + `01689a5`). **NÃO mergeado, NÃO pushado,
-sem tag.** **Medido:** `npm test` **1560/64** (era 1544/64), `npm run test:party` **10/10**
+**`pr-3.5.3-cliente-multietapa`** (`cffe699` + `c64b8b4` + `01689a5` + `d478617` + `92bcee7` + `e48a5fc`). **NÃO mergeado, NÃO pushado,
+sem tag.** **Medido:** `npm test` **1565/64** (era 1544/64), `npm run test:party` **10/10**
 (inalterado — não toca `party/`), typecheck **0** nos três projetos, eslint **0**, build **0**.
 **`VERSAO_APP` 3.4.2 sem bump, MEDIDO** (nenhum arquivo do digest tocado, nenhum `deriveSeed` novo).
 **`balance-harness` não rodado, e dito**: rótulo `camp:` intacto, zero arquivo de `src/engine/`.
@@ -298,9 +298,27 @@ o sítio único **mudou de arquivo**, não deixou de ser único, e virou testáv
   olha `draft.fase`** e **LANÇA** em vez de devolver `[]`; e a etapa corrente é
   **`etapas.length - 1`, NUNCA `sala.etapaAtual`**. **Todos consertados.**
 
-📊 **9 mutações, 0 sobreviventes, tabela RERODADA INTEIRA após os consertos** — todas com `tsc` e
+📊 **11 mutações, 0 sobreviventes, tabela RERODADA INTEIRA após os consertos** — todas com `tsc` e
 `eslint` limpos, cada reversão conferida por `git hash-object`: `M-seedcrua` · `M-seed-default` ·
-`M-pista` · `M-indice` · `M-futuras` · `M-throw` · `M-classif` · `M-jogadores` · `M-avulsa`.
+`M-pista` · `M-indice` · `M-futuras` · `M-throw` · `M-classif` · `M-jogadores` · `M-avulsa` ·
+`M-conta` · `M-guarda-classif`.
+🔴 **`M-guarda-classif` SOBREVIVEU na primeira tentativa, e é o registro que mais importa da 2ª
+passada:** a guarda de fase tinha sido posta dentro do `useMemo`, e **sem jsdom não existe baseline
+possível para código dentro do hook** — apagá-la deixava tudo verde. Movida para a função pura, a
+mesma mutação ficou vermelha. 🔑 **Guarda sem baseline é o defeito que este PR combate, cometido no
+conserto dele** — repetição literal do que o 3.5.2 registrou.
+
+🔁 **A SEGUNDA PASSADA DA REVISÃO voltou SEM BLOQUEANTE, com três avisos — e dois eram sobre os
+consertos da primeira:** **A1** (o docblock dizia que a classificação era `[]` junto com `etapas`;
+medido, na fase de peça ela já devolvia **17 linhas zeradas**, e um painel do 3.5.4 aberto com
+`classificacao.length > 0` mostraria a tabela do campeonato **durante o draft**); **A2**
+(`calendarioSorteado` ficou fora da cerca — o docblock declara a etapa como o PAR
+`(seed, calendario)` e só a metade da seed estava cercada, justo quando o 3.5.4 precisa do
+calendário INTEIRO, que não sai do hook); e **A3** (os números da documentação, que os próprios
+commits de conserto tornaram falsos). **Os três atendidos.**
+⚠️ **A lista da allowlist de `calendarioSorteado` saiu da CERCA, não de `grep`** — `grep -l` acusava
+três arquivos a mais, todos com menção só em comentário. É a lição do `namespaces-seed.ts` na
+direção oposta.
 
 🔑 **A PENDÊNCIA 0(t) MELHOROU — e o 3.5.4 pode desfazer isso sem perceber.** A 0(t) previa que este
 cliente leria `etapaAtual` para indexar o calendário; **ele nunca lê `etapaAtual`**. No caso
@@ -320,7 +338,7 @@ acusou na hora e as mutações seguintes disseram `ALVO NAO ENCONTRADO` em vez d
 `npm test` caiu com 2 testes de `contrato-ausente.test.ts` — arquivo que o PR não toca. Causa: a
 sabotagem varria a árvore **6×** com o arquivo de fuga em disco, e aquela suíte percorre `src/ui/`
 com `readdirSync`/`statSync` em paralelo. Conserto: **uma varredura só**, apagar, assertar em
-memória. **5 rodadas seguidas de `npm test`, 1560/1560 em todas.** ⚠️ **A janela é PRÉ-EXISTENTE,
+memória, E a causa RAIZ consertada nos dois pontos da janela. **8 rodadas seguidas de `npm test`, 1565/1565 em todas** (a taxa era ~50%). ⚠️ **A janela é PRÉ-EXISTENTE,
 medido contra a base:** em `3f54436` as duas cercas juntas já falham **1-2 testes**. Virou a
 pendência **0(v)**.
 
@@ -987,12 +1005,22 @@ casca deixa de ser terra sem teste; a opção conhecida é `@cloudflare/vitest-p
    **Medido contra a base `3f54436`:** as duas cercas rodadas juntas já falham **1-2 testes**
    **sem** o 3.5.3; com a primeira versão do 3.5.3, **3-4**, e o `npm test` inteiro passou a cair.
    ✅ **A contribuição do 3.5.3 foi FECHADA no próprio PR** (a sabotagem nova passou de 6 varreduras
-   com o arquivo em disco para 1; 5 rodadas seguidas de `npm test` a 1560/1560). 🔴 **A fragilidade
-   de fundo NÃO foi consertada e é decisão do dev:** `arquivosDaUi` não tolera arquivo sumindo
-   durante a caminhada, então **qualquer** sabotagem futura que grave em `src/ui/` pode derrubá-la —
-   e o `npm test` esconde o problema por escalonamento, o que é pior do que falhar sempre.
-   Conserto provável: `try/catch` no `statSync` da caminhada, ignorando `ENOENT`.
-   ⚠️ **Isto é um portão que passa por SORTE**, e a regra do projeto trata portão assim como risco,
+   com o arquivo em disco para 1). ✅ **E A CAUSA RAIZ FOI CONSERTADA NO MESMO PR (2ª passada da
+   revisão) — porque estreitar a janela NÃO BASTOU: a taxa voltou a 3 falhas em 6 rodadas.**
+   `arquivosDaUi` não tolerava arquivo sumindo durante a caminhada, e as sabotagens de allowlist
+   gravam/apagam em `src/ui/` **por desenho**. Entrou `catch` **estreito (só `ENOENT`)** nos DOIS
+   pontos da janela — `statSync` **e** `readFileSync`.
+   ⚠️ **A primeira tentativa guardou só o `statSync` e AFIRMOU no docblock que a leitura não
+   precisava — falso, medido:** o `ENOENT` capturado era **na leitura**
+   (`open 'src\ui\__sabotagem_etapas_dupla.tsx'`). Corrigido no lugar.
+   **Medido depois do conserto: 8 rodadas seguidas de `npm test`, 1565/1565 em todas** (taxa anterior
+   ~50%). 🔑 Colateral: `NodeJS.ErrnoException` não compila aqui (sem `@types/node`) — virou
+   `{ code?: string }`.
+   🟡 **Fica em 🟡 e não em ✅ por uma razão:** o conserto torna a VARREDURA robusta, mas o desenho
+   que a provoca continua de pé — suíte que grava em `src/ui/` enquanto outra a percorre. Uma cerca
+   futura que pergunte *"TODO arquivo contém X"* (em vez de *"algum contém"*) voltaria a ser
+   vulnerável, agora por vacuidade em vez de exceção. Está escrito no docblock de `lerFonte`.
+   ⚠️ **Era um portão que passava por SORTE**, e a regra do projeto trata portão assim como risco,
    não como detalhe.
    (w) 🟠 **NOVA (revisão do 3.5.3, 2026-08-21) — O CLIENTE FIXA `'curta'` (5) E O TETO DE LEITURA DE
    `nEtapas` NO SERVIDOR É `[1, 10]`. DECISÃO DO DEV.** `etapasDaSala` chama

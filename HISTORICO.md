@@ -2104,10 +2104,10 @@ minutos**. Por isso o worker do 3.5.2 **só vai a produção junto com o cliente
 ## 3.5 CAMPEONATO ONLINE — PR 3.5.3 (cliente multietapa, derivação pura) — 2026-08-21
 
 Branch `pr-3.5.3-cliente-multietapa`: `cffe699` (código) + `c64b8b4` (consertos da revisão) +
-`01689a5` (conserto de instabilidade achada por mim). **ALTO RISCO** (netcode).
+`01689a5` (instabilidade achada por mim) + `d478617` (docs) + `92bcee7` e `e48a5fc` (avisos das duas passadas de revisão). **ALTO RISCO** (netcode).
 **Sem merge, sem push, sem tag.**
 
-**Medido, ao fim:** `npm test` **1560/64** (era 1544/64), `npm run test:party` **10/10**
+**Medido, ao fim:** `npm test` **1565/64** (era 1544/64), `npm run test:party` **10/10**
 (inalterado — o PR não toca `party/`), typecheck **0** nos três projetos, `eslint` **0**,
 `build` **0**. **`VERSAO_APP` 3.4.2, sem bump — e MEDIDO**, não herdado: nenhum arquivo do digest
 (`src/engine/**`, `src/data/**.json`, `cliente.ts`, `hash-draft.ts`) foi tocado e nenhum
@@ -2192,11 +2192,24 @@ consumir o campo autocontraditório.
 `etapas.length - 1`, nunca por `sala.etapaAtual`. Indexar pelo cursor com a lista vinda de
 `seedsAbertas` traz a 0(t) de volta como **tela quebrada**.
 
-### 📊 TABELA DE MUTAÇÕES — 9 mutações, 0 sobreviventes, RERODADA INTEIRA após os consertos
+### 📊 TABELA DE MUTAÇÕES — 11 mutações, 0 sobreviventes, RERODADA INTEIRA após os consertos
 
 `M-seedcrua` · `M-seed-default` · `M-pista` · `M-indice` · `M-futuras` · `M-throw` · `M-classif` ·
-`M-jogadores` · `M-avulsa`. Todas com `tsc` e `eslint` limpos (vermelho comportamental, **nunca de
-compilação**), cada reversão conferida por `git hash-object`.
+`M-jogadores` · `M-avulsa` · **`M-conta`** · **`M-guarda-classif`**. Todas com `tsc` e `eslint`
+limpos (vermelho comportamental, **nunca de compilação**), cada reversão conferida por
+`git hash-object`.
+
+As duas últimas nasceram das passadas de revisão e cada uma tem uma história:
+- **`M-conta`** (segunda chamada de `etapasDaSala` em `useSalaOnline.ts`) — vermelha na primeira
+  tentativa. Ela existe porque o conserto do C1 fechou **quem chama** e não **quantas vezes**.
+- 🔴 **`M-guarda-classif`** — **SOBREVIVEU na primeira tentativa, e é o registro que mais importa
+  desta rodada.** A guarda de fase tinha sido posta dentro do `useMemo`; apagá-la deixava tudo
+  verde, porque **sem jsdom não existe baseline possível para código dentro do hook**. Movida para a
+  função pura, a mesma mutação ficou vermelha. 🔑 **Guarda sem baseline é o defeito que este PR
+  combate, cometido no conserto dele — a repetição literal do que o 3.5.2 registrou.**
+  ⚠️ A primeira versão dessa mutação neutralizava a guarda com um valor fora da união `FaseDraft` e
+  **reprovava no `tsc`** — vermelho de compilação **não conta**, então ela foi refeita removendo a
+  linha inteira, o que é `tsc` limpo.
 
 🔑 **Rerodar a tabela INTEIRA depois do conserto não é zelo — foi ela que mostrou que `M-seedcrua`
 passou a cair em DOIS testes** (o novo da avulsa e o de conformidade), o que só é verdade porque o
@@ -2235,7 +2248,20 @@ por asserção) com o arquivo de fuga em disco, e `contrato-ausente.test.ts` per
 `readdirSync`/`statSync` em paralelo; arquivo que some no meio da caminhada faz o `statSync` estourar.
 
 **Conserto:** ler o disco **uma vez**, apagar o arquivo em seguida, assertar em memória.
-**Verificado:** 5 rodadas seguidas de `npm test`, **1560/1560 em todas**.
+**Verificado:** 8 rodadas seguidas de `npm test`, **1565/1565 em todas** (a taxa de falha era ~50%).
+
+🔴 **E A CAUSA RAIZ FOI CONSERTADA TAMBÉM, na segunda passada — porque estreitar a janela não bastou.**
+Depois do conserto acima, a taxa voltou a **3 falhas em 6 rodadas**. `arquivosDaUi`
+(`contrato-ausente.test.ts`) simplesmente **não tolera arquivo sumindo durante a caminhada**, e as
+sabotagens de allowlist gravam e apagam em `src/ui/` **por desenho**, não por descuido. Consertado
+com `catch` **estreito (só `ENOENT`)** nos dois pontos da janela.
+⚠️ **E aqui houve mais uma afirmação falsa minha, medida e corrigida no lugar:** a primeira tentativa
+guardou **só o `statSync`** e o docblock afirmava que `readFileSync` não precisava — *"quem sumiu no
+`statSync` nunca chega lá"*. **Falso:** o `npm test` continuou caindo, e o erro capturado foi
+`ENOENT ... open 'src\ui\__sabotagem_etapas_dupla.tsx'`, **na LEITURA**. A janela existe **nos dois
+pontos**. Entrou `lerFonte`, e o parágrafo foi corrigido onde estava.
+🔑 Colateral: `NodeJS.ErrnoException` **não compila neste projeto** (não há `@types/node` — o próprio
+`contrato-corrida-online.test.ts` já registrava isso); o tipo virou `{ code?: string }`.
 
 ⚠️ **A janela é PRÉ-EXISTENTE, e isso foi medido contra a base, não suposto:** em `3f54436`, as duas
 cercas rodadas juntas já falham **1-2 testes**; com a versão anterior deste PR, **3-4**, e o
