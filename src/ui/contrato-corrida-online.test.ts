@@ -234,6 +234,35 @@ const PERMITIDOS: Record<string, string[]> = {
   ],
   etapasDaSala: ['src/ui/useSalaOnline.ts'],
   classificacaoDaSala: ['src/ui/useSalaOnline.ts'],
+  // 🔴 **A METADE DO CALENDÁRIO, que a primeira rodada de cercas esqueceu**
+  // (aviso A2 da segunda passada). O docblock de `etapasDaSala` declara que a
+  // etapa k é o PAR `(seedsAbertas[k], calendario[k])` — o PR cercou a metade
+  // da SEED (`seedDaEtapa`) e deixou a do CALENDÁRIO livre.
+  //
+  // Por que a lacuna é real e não simetria estética: `etapasDaSala` expõe **só
+  // as etapas abertas**, e o 3.5.4 precisa do calendário INTEIRO (inclusive as
+  // pistas fechadas) para desenhar o `PainelCalendario` — lista que **não sai
+  // do hook**. A saída óbvia é chamar `calendarioSorteado` dentro do painel; se
+  // ele passar `'completa'`, ou pegar a seed de outra fonte, **o calendário
+  // exibido diverge das pistas efetivamente corridas e NADA acusa**: o hash
+  // cobre a corrida, não o calendário, e a conformidade contra `simularEtapa`
+  // não olha painel nenhum. Mesmo argumento que pôs `pistaSorteada` aqui.
+  //
+  // ⚠️ **Esta entrada é FROUXA e é honesto dizer:** são 4 arquivos
+  // pré-existentes. O que ela pega é o cenário que importa — **arquivo NOVO**
+  // do 3.5.4 derivando calendário por conta própria.
+  //
+  // 🔑 **A lista saiu da CERCA, não de `grep`, e a diferença apareceu:** um
+  // `grep -l` acusa também `pista-sorteada.ts` e dois arquivos de `src/net/`,
+  // mas nos três a menção é só COMENTÁRIO, e `semComentarios` a remove. Foi o
+  // teste que deu a lista certa — a mesma lição do 3.5.3 sobre
+  // `namespaces-seed.ts`, agora na direção oposta.
+  calendarioSorteado: [
+    'src/engine/campeonato.ts',
+    'src/ui/App.tsx',
+    'src/ui/corrida-online.ts',
+    'src/ui/fluxo-campeonato.ts',
+  ],
 };
 
 describe('a varredura enxerga os arquivos de verdade (anti-vacuidade)', () => {
@@ -596,6 +625,20 @@ describe('BLOQUEANTE 2: contagem EXATA — nunca duas computações no mesmo arq
       original,
     );
     expect(chamadasMax(sabotado, 'etapasDaSala')).not.toBe(1);
+  });
+
+  it('🔴 SABOTAGEM: duplicar a chamada de `classificacaoDaSala` em `useSalaOnline.ts` reprova', () => {
+    // O par da sabotagem acima — a contagem de `classificacaoDaSala` tinha
+    // asserção e não tinha demonstração (sugestão da segunda passada).
+    const original = readFileSync(join(AQUI, 'useSalaOnline.ts'), 'utf8');
+    const sabotado = original.replace(
+      '? [] : classificacaoDaSala(etapas, cliente.draft)),',
+      '? [] : classificacaoDaSala(etapas, cliente.draft) ?? classificacaoDaSala(etapas, cliente.draft)),',
+    );
+    expect(sabotado, 'a substituição de texto não encontrou o alvo — o teste não provaria nada').not.toBe(
+      original,
+    );
+    expect(chamadasMax(sabotado, 'classificacaoDaSala')).not.toBe(1);
   });
 
   it('🔴 SABOTAGEM: duplicar a chamada de `corridaDaSala` em `corrida-online.ts` reprova', () => {

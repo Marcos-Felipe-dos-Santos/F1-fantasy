@@ -113,7 +113,17 @@ export interface UseSalaOnline {
   etapas: CorridaPreparada[];
   /**
    * 🏆 A classificação acumulada das etapas ABERTAS (PR 3.5.3), pela mesma
-   * `acumularClassificacao` do offline. `[]` junto com `etapas`.
+   * `acumularClassificacao` do offline.
+   *
+   * `[]` exatamente quando `etapas` é `[]` — e isso é garantido pela GUARDA do
+   * `useMemo`, **não** pela função pura, que com lista de etapas vazia devolve
+   * **uma linha zerada por jogador**, não lista vazia. Ver o bloco do aviso A1
+   * na implementação; a versão anterior deste comentário afirmava o mesmo sem
+   * que a guarda existisse, e a tabela crescia durante o draft.
+   *
+   * 🔒 **O 3.5.4 pode gatear por `classificacao.length` COM SEGURANÇA por causa
+   * dessa guarda** — mas gatear por `etapas.length` continua sendo o mais
+   * direto, porque é ele que diz se existe corrida para pontuar.
    */
   classificacao: LinhaClassificacao[];
   /**
@@ -312,6 +322,20 @@ export function useSalaOnline(sala: string): UseSalaOnline {
     // isto é decisão explícita, não regra silenciada.
   }, [cliente.draft, cliente.sala?.seedCalendario, chaveSeedsAbertas]);
 
+  /**
+   * 🔒 **UMA guarda só, e ela mora na função PURA** (aviso A1 da segunda passada
+   * da revisão). Este `useMemo` só checa `null`; quem garante `[]` com o draft
+   * em andamento é `classificacaoDaSala`, onde a regra tem mutação vermelha ao
+   * lado. A primeira versão do conserto duplicou a guarda aqui e a **mutação
+   * que a apagava sobreviveu a tudo** — sem jsdom, guarda dentro do hook é
+   * inalcançável por teste. Duplicar também criaria duas respostas para a mesma
+   * pergunta, que é a forma da pendência 0(t).
+   *
+   * ⚠️ **Comentário nenhum aqui pode escrever o nome de uma função vigiada
+   * seguido de parêntese:** `chamadasMax` toma o MÁXIMO entre a fonte crua e a
+   * sem-comentários, então isso derruba a contagem exata do contrato. Aconteceu
+   * na primeira versão deste bloco — a cerca funcionando como ela mesma avisa.
+   */
   const classificacao = useMemo<LinhaClassificacao[]>(
     () => (cliente.draft === null ? [] : classificacaoDaSala(etapas, cliente.draft)),
     [etapas, cliente.draft],

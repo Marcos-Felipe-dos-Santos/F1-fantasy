@@ -119,8 +119,8 @@ export function corridaDaSala(
  * `N_ETAPAS_CURTA`.** Mas o teto de LEITURA do servidor é `[1, 10]`
  * (`sala.ts`, contra `seedsEtapas.length === MAX_ETAPAS`), não 5 — então uma
  * sala v2 com `nEtapas: 10` é considerada **`ok`**, publica 6+ seeds abertas,
- * e esta função lança em `calendario[5]`. **Pendência aberta, decisão do
- * dev** (ver `ESTADO.md`): ou o formato passa a sair de `sala.nEtapas`, ou o
+ * e esta função lança em `calendario[5]`. **Pendência 0(w), aberta, decisão do
+ * dev** (ver `ESTADO.md` §Pendências ATIVAS): ou o formato passa a sair de `sala.nEtapas`, ou o
  * cliente ganha uma borda que capture o erro. Registrado aqui porque é onde a
  * próxima pessoa vai olhar.
  */
@@ -164,11 +164,27 @@ export function etapasDaSala(
  *
  * Acumula **só as etapas abertas** que recebe — a tabela cresce junto com o
  * cursor do servidor, e nenhuma etapa futura entra na conta.
+ *
+ * 🔴 **DEVOLVE `[]` COM O DRAFT EM ANDAMENTO, e a guarda mora AQUI de propósito**
+ * (aviso A1 da segunda passada da revisão, e o conserto dele em segunda
+ * tentativa). `aplicarEscolha` (`engine/draft.ts`) popula `loadouts`
+ * **incrementalmente**, antes de `fase: 'concluido'` — medido: na fase de peça
+ * de um draft de teste já havia **17 loadouts**, e sem esta guarda a função
+ * devolvia 17 linhas zeradas. Um painel do 3.5.4 aberto com
+ * `classificacao.length > 0` mostraria a **tabela do campeonato durante o
+ * draft**, cheia de zeros, antes de existir etapa nenhuma.
+ *
+ * 🔑 **Por que na função PURA e não no `useMemo`, onde ela nasceu:** a primeira
+ * versão do conserto pôs a guarda no hook, e a **mutação que a apagava
+ * SOBREVIVEU a tudo** — o projeto não tem jsdom, então guarda dentro do hook é
+ * inalcançável por teste. Guarda sem baseline é exatamente o defeito que este
+ * PR existe para combater. Aqui ela tem mutação vermelha ao lado.
  */
 export function classificacaoDaSala(
   etapas: readonly CorridaPreparada[],
   draft: DraftState,
 ): LinhaClassificacao[] {
+  if (draft.fase !== 'concluido') return [];
   const jogadorIds = Object.keys(draft.loadouts).sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
   return acumularClassificacao([...etapas], jogadorIds);
 }

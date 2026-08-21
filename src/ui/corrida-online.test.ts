@@ -50,6 +50,36 @@ function jogarDraftAteConcluir(seedTexto: string): DraftState {
   return aplicarEscolhaHumano(dataset, atual, { tipo: 'peca', pecaId: revelacao.pecasReveladas[0] });
 }
 
+/**
+ * O mesmo caminho de `jogarDraftAteConcluir`, mas PARANDO na fase de peça — o
+ * estado em que `loadouts` já está populado e `fase` ainda **não** é
+ * `'concluido'`. É esse par que a guarda de `classificacaoDaSala` protege, e
+ * sem ele o teste do aviso A1 passaria por vacuidade.
+ */
+function draftNaFaseDePeca(seedTexto: string): DraftState {
+  let atual = iniciarDraftSingle(dataset, seedTexto, 'facil');
+  for (let i = 0; i < 5; i++) {
+    const revelacao = revelarRodada(atual, ID_HUMANO);
+    if (revelacao.fase !== 'sorteios') break;
+    const slot = revelacao.slotsDisponiveis[0];
+    const escolha: EscolhaDraft =
+      slot === 'piloto'
+        ? {
+            tipo: 'piloto',
+            pilotoId: (() => {
+              const equipeAno = dataset.equipeAnos.find(
+                (ea) => ea.equipe === revelacao.equipeAno.equipe && ea.ano === revelacao.equipeAno.ano,
+              );
+              if (!equipeAno) throw new Error('equipe/ano sorteada não encontrada no dataset de teste');
+              return equipeAno.pilotos[0].id;
+            })(),
+          }
+        : { tipo: 'componente', slot };
+    atual = aplicarEscolhaHumano(dataset, atual, escolha);
+  }
+  return atual;
+}
+
 describe('corridaDaSala', () => {
   it('é a fonte única e determinística: mesma (draft, seedCorrida) ⇒ mesma pista e mesmo resultado', () => {
     const draft1 = jogarDraftAteConcluir('corrida-sala-det');
@@ -312,5 +342,40 @@ describe('classificacaoDaSala — a tabela acumulada do campeonato online', () =
     const tabela = classificacaoDaSala([], draft);
     expect(tabela).toHaveLength(Object.keys(draft.loadouts).length);
     expect(tabela.every((l) => l.pontos === 0)).toBe(true);
+  });
+
+  it('🔑 devolve [] com o draft EM ANDAMENTO, mesmo com loadouts já populados (aviso A1)', () => {
+    // 🔴 **A armadilha que a segunda passada da revisão achou.** `aplicarEscolha`
+    // popula `loadouts` INCREMENTALMENTE, antes de `fase: 'concluido'`: medido,
+    // na fase de peça deste mesmo draft já há loadouts, e sem a guarda esta
+    // função devolvia uma linha zerada por jogador. Um painel do 3.5.4 aberto
+    // com `classificacao.length > 0` mostraria a tabela do campeonato DURANTE O
+    // DRAFT, cheia de zeros, antes de existir etapa nenhuma.
+    //
+    // 🔒 **A guarda mora na função PURA, não no hook** — a primeira tentativa de
+    // conserto a pôs no `useMemo` e a mutação que a apagava SOBREVIVEU a tudo
+    // (sem jsdom, guarda dentro do hook não tem baseline possível). Este teste é
+    // o baseline que faltava.
+    const emAndamento = draftNaFaseDePeca('classif-em-andamento');
+
+    // 🔴 ANTI-VACUIDADE, e ela é o coração deste teste: sem estas duas
+    // asserções, um draft sem loadouts nenhum passaria por vacuidade — que é
+    // exatamente o caso em que a guarda não faz diferença.
+    expect(emAndamento.fase, 'PRÉ-CONDIÇÃO: o draft tem que estar EM ANDAMENTO').not.toBe(
+      'concluido',
+    );
+    expect(
+      Object.keys(emAndamento.loadouts).length,
+      'PRÉ-CONDIÇÃO: já tem que haver loadouts, senão a guarda não é exercida',
+    ).toBeGreaterThan(0);
+
+    expect(classificacaoDaSala([], emAndamento)).toEqual([]);
+
+    // E com o draft CONCLUÍDO ela volta a devolver a linha por jogador — a
+    // guarda discrimina por fase, não zera sempre.
+    const concluido = jogarDraftAteConcluir('classif-concluido');
+    expect(classificacaoDaSala([], concluido)).toHaveLength(
+      Object.keys(concluido.loadouts).length,
+    );
   });
 });
