@@ -38,7 +38,13 @@ import {
 import { estadoDasSeeds } from '../src/net/sala';
 import { codigoDeBytes, TAMANHO_CODIGO } from '../src/net/codigo-sala';
 import { ROTA_CRIAR_SALA } from '../src/net/rotas';
-import { MAX_BYTES_MENSAGEM, MAX_ETAPAS, PRAZO_TURNO_MS, SLOTS_SEEDS } from '../src/net/tipos';
+import {
+  MAX_BYTES_MENSAGEM,
+  MAX_ETAPAS,
+  N_ETAPAS_CURTA,
+  PRAZO_TURNO_MS,
+  SLOTS_SEEDS,
+} from '../src/net/tipos';
 
 interface Env {
   Sala: DurableObjectNamespace<Sala>;
@@ -108,10 +114,22 @@ export class Sala extends Server<Env> {
     crypto.getRandomValues(slots);
     const todas = Array.from(slots);
 
-    this.estado = criarServidor(codigo, semente[0], 'dificil', agora, {
-      etapas: todas.slice(0, MAX_ETAPAS),
-      calendario: todas[MAX_ETAPAS],
-    });
+    // 🔒 `N_ETAPAS_CURTA` explícito, e é a CASCA que o declara (decisão do dev,
+    // 2026-08-20): todo jogo online é campeonato de 5 etapas — a corrida avulsa
+    // online foi o degrau para chegar aqui, não um modo que sobrevive. O
+    // parâmetro é obrigatório de propósito, para que este valor não possa ser
+    // herdado de um default: é ele que decide quando o campeonato ACABA.
+    this.estado = criarServidor(
+      codigo,
+      semente[0],
+      'dificil',
+      agora,
+      {
+        etapas: todas.slice(0, MAX_ETAPAS),
+        calendario: todas[MAX_ETAPAS],
+      },
+      N_ETAPAS_CURTA,
+    );
     await this.ctx.storage.put('estado', this.estado);
     await this.ctx.storage.setAlarm(agora + INTERVALO_TIQUE_MS);
     return true;

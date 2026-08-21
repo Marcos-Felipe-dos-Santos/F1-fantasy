@@ -95,8 +95,26 @@ export type ComandoSala =
    * aplicou. É o que torna a comparação justa: dois clientes CORRETOS em pontos
    * diferentes do log têm hashes diferentes, e comparar isso seria alarme falso.
    * `seq` não serviria — ele avança também com evento de lobby.
+   *
+   * 🔴 **`etapa` entrou no 3.5.2, e ela é o CONSERTO de um alarme falso que
+   * travava o campeonato inteiro.** A âncora é `draft.log.length`, que **para
+   * de crescer quando o draft conclui**: sem `etapa`, todas as etapas de um
+   * campeonato atestam com a MESMA âncora e o MESMO escopo `'corrida'`, e o
+   * hash difere por `pistaId` **por construção**. O detector via 22 hashes
+   * discordando e alarmava — uma vez, e travado para o resto do campeonato,
+   * porque `alarmado` não volta atrás. Banner permanentemente errado é banner
+   * que o dev desliga, e aí a divergência real volta a ser silenciosa.
+   *
+   * 🔒 **OPCIONAL NO FIO, e isso é decisão do dev (D1, 2026-08-20) — não
+   * descuido.** A pendência 0(q) obriga a deployar o `wrangler` ANTES do
+   * `vite` a partir do 3.5.2, então existe uma janela em que **worker novo
+   * conversa com cliente antigo**. Se `etapa` fosse obrigatória, todo atestado
+   * desse cliente viraria `comando-invalido` e o detector morreria em
+   * SILÊNCIO, justamente na janela de deploy. Ausente ⇒ o servidor usa
+   * `etapaAtual`, que **ele mesmo conhece** — nunca um `0` fixo, que
+   * devolveria o alarme falso por outra porta.
    */
-  | { tipo: 'hash'; escopo: EscopoHash; ancora: number; hash: string }
+  | { tipo: 'hash'; escopo: EscopoHash; ancora: number; hash: string; etapa?: number }
   /**
    * 🏁 "Terminei a corrida" (PR 3/4 de "corrida online") — alimenta a BARREIRA
    * DO FIM. Não carrega nada: quem mandou vem do transporte, como todo comando
@@ -214,8 +232,15 @@ export type MensagemServidor =
    *
    * Sai UMA vez por âncora: sem isso, cada atestado seguinte redisparia o
    * alarme e a tela viraria enxurrada.
+   *
+   * 🔑 **`etapa` entrou no 3.5.2 (decisão D2 do dev, 2026-08-20).** Sem ela o
+   * banner do 3.4.1 não sabe QUAL etapa divergiu, e dois alarmes de etapas
+   * diferentes ficam indistinguíveis na tela e no log. Com o balde agora
+   * chaveado por `${escopo}:${etapa}`, "sai uma vez" passa a valer **por
+   * etapa** — que é o pretendido: divergir na etapa 3 é fato novo, não
+   * repetição do alarme da etapa 1.
    */
-  | { tipo: 'divergencia'; escopo: EscopoHash; ancora: number; jogadores: string[] }
+  | { tipo: 'divergencia'; escopo: EscopoHash; ancora: number; etapa: number; jogadores: string[] }
   /**
    * A sala acabou de ser encerrada e o estado foi descartado. Vem antes de o
    * servidor fechar as conexões, pra que a tela diga o que houve em vez de

@@ -28,8 +28,10 @@ import {
 } from './protocolo';
 import {
   criarSala,
+  estadoDasSeeds,
   expirarNaSala,
   jogadorDoToken,
+  nEtapasDaSala,
   publicarSala,
   reduzirDraftDaSala,
   reduzirSala,
@@ -60,11 +62,20 @@ export interface EstadoServidor {
   /** conexaoId → jogadorId. Só o `entrar` escreve aqui. */
   jogadorPorConexao: Record<string, string>;
   /**
-   * Atestados de hash por escopo (PR 3.4). Ver `Atestados` — e note que só
-   * existe UM balde por escopo, o da âncora mais alta vista. Isso é o que
-   * mantém o estado limitado num log append-only.
+   * Atestados de hash por `${escopo}:${etapa}` (PR 3.4; a etapa entrou no
+   * 3.5.2). Ver `Atestados` — e note que só existe UM balde por chave, o da
+   * âncora mais alta vista. Isso é o que mantém o estado limitado num log
+   * append-only.
+   *
+   * 🔒 **O TETO DO NÚMERO DE BALDES É `escopos × nEtapas`, e ele não é
+   * acidente.** A partir do 3.5.2 a chave passa a depender de um número que
+   * **vem do cliente**, e o estado é PERSISTIDO no Durable Object: sem teto,
+   * uma sequência de `etapa` distintas cresceria o storage sem limite —
+   * amplificação de escrita, que `party/sala.ts` nomeia como "barata de
+   * explorar". Quem impõe o teto é `atestadoValido`, no mesmo lugar e pelo
+   * mesmo motivo que o `tetoAncora` já existente.
    */
-  atestados?: Partial<Record<EscopoHash, Atestados>>;
+  atestados?: Record<string, Atestados>;
   /**
    * A `VERSAO_APP` desta sala (PR 3.4), fixada por quem entrou primeiro.
    * `undefined` enquanto ninguém entrou; `''` quando quem abriu a sala é um
@@ -86,6 +97,12 @@ export interface EstadoServidor {
 export interface Atestados {
   /** A âncora deste balde: `eventosAplicados`. Só a mais alta é guardada. */
   ancora: number;
+  /**
+   * A ETAPA deste balde (3.5.2). Redundante com a chave `${escopo}:${etapa}`
+   * de propósito: é ela que permite ignorar em silêncio o cliente atrasado
+   * (decisão D1) sem parsear a chave de volta, e é ela que vai no alarme (D2).
+   */
+  etapa: number;
   /** jogadorId → hash atestado nesta âncora. */
   porJogador: Record<string, string>;
   /** O alarme já saiu para esta âncora? Evita enxurrada. */
@@ -104,8 +121,13 @@ export function criarServidor(
   agora: number,
   /** Seeds do campeonato, sorteadas na casca. Sem default — ver `criarSala`. */
   seeds: SeedsDoCampeonato,
+  /** Quantas etapas o campeonato tem. Obrigatório — ver `criarSala`. */
+  nEtapas: number,
 ): EstadoServidor {
-  return { sala: criarSala(salaId, seedMestre, dificuldade, agora, seeds), jogadorPorConexao: {} };
+  return {
+    sala: criarSala(salaId, seedMestre, dificuldade, agora, seeds, nEtapas),
+    jogadorPorConexao: {},
+  };
 }
 
 /** O que o servidor deve fazer com a sala neste instante. */
@@ -196,6 +218,26 @@ export function registrarConexoes(
 const abertaEmDe = (sala: EstadoSala): number | null => sala.corridaAbertaEm ?? null;
 const atestadosDe = (sala: EstadoSala): string[] => sala.atestaramFimDaCorrida ?? [];
 
+/**
+ * O cursor de etapas desta sala, para uso do SERVIDOR (3.5.2).
+ *
+ * 🔒 **É a ÚNICA leitura tolerante de `etapaAtual` que sobrou, e ela existe por
+ * um motivo diferente do que a pendência 0(r) fechou.** A 0(r) tratava das
+ * leituras `?? 0` no caminho das SEEDS — lá, cursor fora de forma agora é
+ * `corrompida` e a sala é recusada (`estadoDasSeeds`), porque é o cursor que
+ * decide quantos segredos saem no fio. Aqui não há segredo em jogo: uma sala
+ * LEGADO (pré-3.5.1) não tem `etapaAtual` em runtime e mesmo assim precisa
+ * bucketizar atestados de draft, que é o escopo que o 3.4 protege. Etapa 0 é a
+ * única leitura sensata para quem não tem campeonato.
+ *
+ * Uma função só, num lugar só — o oposto dos três `?? 0` espalhados que a 0(r)
+ * registrava como inconsistência de tese.
+ */
+function cursorDaSala(sala: EstadoSala): number {
+  const cursor = sala.etapaAtual;
+  return typeof cursor === 'number' && Number.isInteger(cursor) && cursor >= 0 ? cursor : 0;
+}
+
 export function marcarCorridaAberta(estado: EstadoServidor, agora: number): EstadoServidor {
   if (abertaEmDe(estado.sala) !== null) return estado;
   if (estado.sala.draft?.fase !== 'concluido') return estado;
@@ -211,21 +253,32 @@ export function marcarCorridaAberta(estado: EstadoServidor, agora: number): Esta
  * a barreira viraria enfeite. Bots também não entram: não têm cliente para
  * atestar coisa nenhuma.
  *
- * ⚠️ **LIMITE CONHECIDO: este conjunto CONGELA quando o draft conclui.** Três
- * coisas se somam — `aoDesconectar` não marca ausente com a sala iniciada,
- * `abandonar` é recusado depois da conclusão (`draft-concluido`), e o tique
- * pós-conclusão vai para a barreira em vez de `expirados`. Então **ninguém
- * entra nem sai de `elegiveis` depois do fim do draft**: quem fecha a aba
- * durante o replay continua sendo esperado, e a sala paga o
- * `TIMEOUT_FIM_DE_CORRIDA_MS` inteiro. A exclusão de ausentes acima só age
- * para quem abandonou DURANTE o draft. Aceitável porque o timeout é o teto e
- * a carência de vazio mata antes se ninguém ficou — mas não confundir com
- * "dropout no replay é detectado", que não é. (Achado da revisão do PR 3/4.)
+ * ✅ **A PENDÊNCIA 0(k) FOI FECHADA AQUI, NO 3.5.2 — o conjunto DEIXOU de
+ * congelar.** Ele agora exige, além de humano e não-ausente, **ter conexão
+ * viva** (`jogadorPorConexao`). Era limite conhecido e aceitável enquanto
+ * havia UMA corrida: o timeout era teto pago uma vez. Com N etapas ele virava
+ * bloqueante — quem fechasse a aba na etapa 1 faria **cada uma** das etapas
+ * seguintes pagar `TIMEOUT_FIM_DE_CORRIDA_MS`, cinco minutos de sala parada
+ * por etapa, com todo mundo esperando um jogador que não vai voltar.
+ *
+ * 🔑 **Por que "com conexão" e não "marcar ausente":** `aoDesconectar` não
+ * marca ausente com a sala iniciada (e não deve — quem cai e volta pelo token
+ * continua sendo jogador), e `abandonar` é recusado depois da conclusão do
+ * draft. Ler a presença direto do mapa de conexões é o que já existe e é
+ * verdade no instante da avaliação. **Quem reconecta volta a ser elegível
+ * sozinho**, sem caminho de cura especial.
+ *
+ * ⚠️ **O que isto NÃO resolve:** a sala em que TODOS caíram tem `elegiveis`
+ * vazio, e aí o guarda `elegiveis.length > 0` em `avaliarBarreiraDaCorrida`
+ * segura a conclusão até o timeout — de propósito. Sem ele, `every` sobre
+ * lista vazia é `true` e o campeonato inteiro concluiria sozinho no primeiro
+ * instante em que a sala ficasse sem ninguém.
  */
 function elegiveisDaBarreira(estado: EstadoServidor): string[] {
   const draft = estado.sala.draft;
   if (draft === null) return [];
-  return draft.humanos.filter((id) => !draft.ausentes.includes(id));
+  const conectados = new Set(Object.values(estado.jogadorPorConexao));
+  return draft.humanos.filter((id) => !draft.ausentes.includes(id) && conectados.has(id));
 }
 
 /**
@@ -259,6 +312,26 @@ export function atestarFimDaCorrida(estado: EstadoServidor, jogadorId: string): 
  * exatamente esse desenho que o dev recusou.
  *
  * Idempotente por identidade, como todo redutor deste arquivo.
+ *
+ * 🏆 **NO 3.5.2 ELA PASSOU A MOVER O CURSOR — e continua sendo a MESMA
+ * barreira, não uma segunda.** Fechada a barreira da etapa k:
+ * - se **ainda há etapa depois**, o cursor vai a `k+1`, os atestados **zeram**
+ *   e o relógio **re-ancora** em `agora`. É esse re-ancoramento que dá à etapa
+ *   nova o seu próprio `TIMEOUT_FIM_DE_CORRIDA_MS`; sem ele a etapa 2 nasceria
+ *   com o timeout da etapa 1 já vencido e concluiria sozinha na hora;
+ * - se **era a última**, marca `concluidaEm` — e só aí a janela de graça arma.
+ *
+ * 🔒 **O CURSOR PARA EM `nEtapas - 1`; quem diz "acabou" é `concluidaEm`.**
+ * Deixá-lo passar para `nEtapas` criaria um SEGUNDO jeito de dizer a mesma
+ * coisa, e o cliente teria duas fontes para "o campeonato terminou" — a classe
+ * de bug do 8.4 em miniatura, que este projeto já pagou uma vez. Também é o
+ * que mantém o cursor dentro da faixa que o discriminante agora exige
+ * (pendência 0(r)).
+ *
+ * 🔒 **O AVANÇO É PELA BARREIRA, NUNCA PELO ANFITRIÃO** (decisão travada do
+ * plano do 3.5): com a sala iniciada, `anfitriaoId` não é reatribuído se o
+ * host cair, então avanço por host teria modo de falha "sala encalhada para
+ * sempre".
  */
 export function avaliarBarreiraDaCorrida(
   estado: EstadoServidor,
@@ -281,7 +354,71 @@ export function avaliarBarreiraDaCorrida(
   const venceu = agora - abertaEm >= timeoutMs;
   if (!todosAtestaram && !venceu) return estado;
 
-  return { ...estado, sala: { ...estado.sala, concluidaEm: agora } };
+  const nEtapas = nEtapasDaSala(estado.sala);
+  // 🔒 **Aviso N2 da revisão: o valor TOLERADO não pode ser escrito de volta.**
+  // `cursorDaSala` devolve 0 para um cursor fora de forma — o que é certo para
+  // BUCKETIZAR atestado de sala legado —, mas aqui o resultado vira
+  // `etapaAtual: cursor + 1` no estado persistido: uma sala com `etapaAtual:
+  // -3` (que `estadoDasSeeds` classifica `corrompida`) sairia daqui com
+  // `etapaAtual: 1`, **curada em silêncio**. Curar corrupção é exatamente o que
+  // o discriminante do 3.5.1 existe para não fazer.
+  //
+  // 🔴 **A PRIMEIRA VERSÃO DESTA GUARDA CHECAVA SÓ A FORMA DO CURSOR, e o
+  // comentário afirmava que ela localizava a invariante inteira — mais forte do
+  // que o código.** Pego pela SEGUNDA passada da revisão (aviso 1) e medido: uma
+  // sala v2 que perde `nEtapas` **com o cursor em 0** tem `nEtapasDaSala` no
+  // piso 1, `cursorIntegro(0, 1)` verdadeiro, guarda passando — e a linha
+  // seguinte marcava `concluidaEm`. **Era o modo de falha do bloqueante C1
+  // intacto dentro da camada pura**, defendido só pelo `jogavel()` da casca,
+  // exatamente como antes do conserto. Escrever a garantia no comentário não a
+  // implementa — é a classe de defeito que este PR inteiro existe para combater.
+  //
+  // 🔒 Por isso a guarda consulta **`estadoDasSeeds`, a MESMA autoridade do
+  // discriminante**, em vez de uma checagem paralela: checagem paralela é como
+  // se chega a duas respostas para a mesma pergunta, que é a pendência 0(t).
+  // Sala `legado` NÃO é recusada aqui — ela é pré-3.5.1, é campeonato de uma
+  // etapa e tem de continuar fechando a barreira (anti-vacuidade própria).
+  //
+  // ⚠️ **Houve por um momento um SEGUNDO cheque aqui** (`etapaAtual !==
+  // undefined && !cursorIntegro(...)`), e ele foi **removido por medição, não
+  // por gosto**: com o cheque do discriminante na frente, nenhuma mutação
+  // conseguia matá-lo — `M-N2` passou a deixar a suíte inteira verde. Guarda
+  // que nenhuma mutação mata é guarda morta, e guarda morta ao lado de um
+  // comentário que a explica é a próxima afirmação falsa esperando leitor.
+  // (Ela era de fato inalcançável: numa sala `legado` o `nEtapas` é 1, então o
+  // ramo de avanço — o único que escreve o cursor de volta — nunca roda.)
+  if (estadoDasSeeds(estado.sala).tipo === 'corrompida') {
+    return estado;
+  }
+
+  const cursor = cursorDaSala(estado.sala);
+  if (cursor >= nEtapas - 1) {
+    return { ...estado, sala: { ...estado.sala, concluidaEm: agora } };
+  }
+
+  return {
+    ...estado,
+    sala: {
+      ...estado.sala,
+      etapaAtual: cursor + 1,
+      // Os dois campos da barreira são POR ETAPA a partir daqui. Reusar os
+      // nomes de "corrida" em vez de criar `etapaAbertaEm`/`atestaramFimDaEtapa`
+      // é deliberado: `abertaEmDe`/`atestadosDe` já fazem a leitura defensiva
+      // do estado persistido pré-PR-3/4, e um segundo par de leitores faria
+      // sala antiga parecer que nunca abriu corrida. Estes dois campos, de
+      // fato, não mudaram de formato — só de significado (passaram a ser POR
+      // ETAPA).
+      //
+      // ⚠️ **Esta nota já afirmou "sem bump de `VERSAO_ESTADO_SALA` — o formato
+      // não mudou", e era FALSO** (bloqueante C1 da revisão): o mesmo PR
+      // acrescentou `nEtapas` ao estado persistido, o que é mudança de formato.
+      // A versão subiu para **2** e `nEtapas` entrou em `estadoDasSeeds`.
+      // Corrigido aqui, e não só contradito lá, porque nota antiga sobrevivente
+      // ao lado da regra nova devolve o mesmo estrago.
+      atestaramFimDaCorrida: [],
+      corridaAbertaEm: agora,
+    },
+  };
 }
 
 const estadoPara = (estado: EstadoServidor): MensagemServidor => ({
@@ -418,18 +555,39 @@ function escopoValido(escopo: unknown): escopo is EscopoHash {
  * `protocolo.ts` já prometia isso "sem mudar o protocolo": o tipo já era a
  * união desde o 3.4/2-de-4; o que faltava era esta validação parar de travar
  * na string literal antiga.
+ *
+ * 🔴 **`etapa` tem TETO PELO MESMO MOTIVO QUE `ancora`, e o motivo é ainda mais
+ * direto aqui** (3.5.2): desde este PR a etapa entra na CHAVE do balde
+ * (`${escopo}:${etapa}`), então ela deixa de ser um número comparado e passa a
+ * criar entrada nova no estado PERSISTIDO. Um cliente mandando 10 mil etapas
+ * distintas escreveria 10 mil baldes no Durable Object. Com o teto, o número
+ * de baldes é no máximo `escopos × nEtapas`.
+ *
+ * 🔒 **AUSENTE É VÁLIDO — decisão D1 do dev (2026-08-20).** Cliente antigo não
+ * manda `etapa`, e a pendência 0(q) obriga o worker novo a subir ANTES do
+ * cliente novo: recusar aqui mataria o detector em silêncio na janela de
+ * deploy. Quem preenche o default é `registrarAtestado`, com o `etapaAtual`
+ * que o servidor conhece — **nunca `0`**, que reintroduziria o alarme falso.
  */
 function atestadoValido(
   c: unknown,
   tetoAncora: number,
-): c is { escopo: EscopoHash; ancora: number; hash: string } {
-  const o = c as { escopo?: unknown; ancora?: unknown; hash?: unknown };
+  tetoEtapa: number,
+): c is { escopo: EscopoHash; ancora: number; hash: string; etapa?: number } {
+  const o = c as { escopo?: unknown; ancora?: unknown; hash?: unknown; etapa?: unknown };
+  const etapaOk =
+    o.etapa === undefined ||
+    (typeof o.etapa === 'number' &&
+      Number.isInteger(o.etapa) &&
+      o.etapa >= 0 &&
+      o.etapa <= tetoEtapa);
   return (
     escopoValido(o.escopo) &&
     typeof o.ancora === 'number' &&
     Number.isInteger(o.ancora) &&
     o.ancora >= 0 &&
     o.ancora <= tetoAncora &&
+    etapaOk &&
     typeof o.hash === 'string' &&
     // Teto de tamanho: o hash tem 16 hex; aceitar string livre deixaria um
     // cliente hostil inflar o estado persistido do Durable Object de graça.
@@ -450,14 +608,45 @@ function atestadoValido(
  *   erro fatal do detector: um alarme que dispara com lag de rede é desligado
  *   pelo dev na primeira semana, e aí a divergência real volta a ser silenciosa.
  * - **Âncora IGUAL** ⇒ compara. Diferente do que já havia ⇒ alarme, uma vez só.
+ *
+ * 🔴 **A ETAPA (3.5.2) — o conserto do alarme falso que travava o campeonato.**
+ * O balde passa a ser chaveado por `${escopo}:${etapa}`. Sem isso, a âncora
+ * (`draft.log.length`) **para de crescer quando o draft conclui**, então todas
+ * as etapas caem no mesmo balde com a mesma âncora e hashes que diferem por
+ * `pistaId` **por construção**: alarme falso na virada da etapa 1, travado para
+ * o resto do campeonato porque `alarmado` não volta atrás.
+ *
+ * 🔒 **AS DUAS METADES DA DECISÃO D1 SÃO INSEPARÁVEIS** (dev, 2026-08-20):
+ * 1. **default = `etapaAtual` do servidor** quando o cliente não manda o campo
+ *    (cliente antigo na janela de deploy da pendência 0(q)). Um default `0`
+ *    fixo jogaria os atestados da etapa 3 no balde da etapa 0 e devolveria o
+ *    alarme falso inteiro pela porta do conserto;
+ * 2. **etapa MENOR que a do balde ⇒ ignora em silêncio**, exatamente como a
+ *    âncora já faz. Sem esta metade, o cliente atrasado que ainda atesta a
+ *    etapa 0 seria bucketado como etapa 1 (pelo default do item 1) e
+ *    compararia o hash da etapa 0 contra os da etapa 1 — o mesmo alarme falso,
+ *    de novo, por outra porta. **Uma metade sem a outra é pior que nenhuma.**
  */
 function registrarAtestado(
   estado: EstadoServidor,
   jogadorId: string,
-  atestado: { escopo: EscopoHash; ancora: number; hash: string },
+  atestado: { escopo: EscopoHash; ancora: number; hash: string; etapa?: number },
 ): ResultadoServidor {
   const baldes = estado.atestados ?? {};
-  const balde = baldes[atestado.escopo];
+  const cursor = cursorDaSala(estado.sala);
+  // D1, metade 1: ausente ⇒ a etapa que o SERVIDOR sabe estar corrente.
+  const etapa = atestado.etapa ?? cursor;
+
+  // D1, metade 2: atrasado na ETAPA cala igual a atrasado na âncora. Sem isto,
+  // um retardatário que ainda atesta a etapa que já fechou reabre a comparação
+  // de uma corrida que todo mundo terminou — alarme sobre um fato que o
+  // jogador não tem mais como agir, que é a definição de ruído.
+  if (etapa < cursor) {
+    return { estado, envios: [] };
+  }
+
+  const chave = `${atestado.escopo}:${etapa}`;
+  const balde = baldes[chave];
 
   if (balde !== undefined && atestado.ancora < balde.ancora) {
     return { estado, envios: [] };
@@ -465,7 +654,7 @@ function registrarAtestado(
 
   const base: Atestados =
     balde === undefined || atestado.ancora > balde.ancora
-      ? { ancora: atestado.ancora, porJogador: {}, alarmado: false }
+      ? { ancora: atestado.ancora, etapa, porJogador: {}, alarmado: false }
       : balde;
 
   // 🔒 NADA MUDOU ⇒ MESMO OBJETO. O Durable Object grava quando o estado muda
@@ -513,13 +702,14 @@ function registrarAtestado(
   const deveAlarmar = divergentes.length > 0 && !base.alarmado;
   const atualizado: Atestados = {
     ancora: atestado.ancora,
+    etapa,
     porJogador,
     alarmado: base.alarmado || divergentes.length > 0,
   };
 
   const novoEstado: EstadoServidor = {
     ...estado,
-    atestados: { ...baldes, [atestado.escopo]: atualizado },
+    atestados: { ...baldes, [chave]: atualizado },
   };
 
   return {
@@ -532,6 +722,8 @@ function registrarAtestado(
               tipo: 'divergencia',
               escopo: atestado.escopo,
               ancora: atestado.ancora,
+              // D2 (dev, 2026-08-20): o alarme diz QUAL etapa divergiu.
+              etapa,
               jogadores: divergentes,
             },
           },
@@ -638,7 +830,9 @@ export function aoReceber(
       return soPara(estado, conexaoId, { tipo: 'erro', erro: 'jogador-desconhecido' });
     }
     // O teto é o tamanho do log: a âncora é um índice dele. Ver `atestadoValido`.
-    if (!atestadoValido(comando, estado.sala.draft?.log.length ?? 0)) {
+    // O teto da ETAPA é `nEtapas - 1` — ela vira CHAVE de balde no estado
+    // persistido, então sem teto o cliente escreveria baldes à vontade.
+    if (!atestadoValido(comando, estado.sala.draft?.log.length ?? 0, nEtapasDaSala(estado.sala) - 1)) {
       return soPara(estado, conexaoId, { tipo: 'erro', erro: 'comando-invalido' });
     }
     return registrarAtestado(estado, remetenteId, comando);

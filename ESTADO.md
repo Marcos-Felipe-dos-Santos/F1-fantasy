@@ -8,7 +8,12 @@
 
 ## Estado atual
 
-**Última medição (PR B do spike, 2026-08-19, na `main` pós-merge):** `npm test` **1516/63**,
+**Última medição (PR 3.5.2, 2026-08-20, na branch `pr-3.5.2-cursor-por-etapa`, pós-revisão e
+pós-conserto de DUAS passadas de revisão):** `npm test` **1544/64**, **`npm run test:party` 10/10**,
+typecheck **0** nos três projetos, eslint **0**, build **0**. `VERSAO_APP` **3.4.2** (sem bump —
+o digest não foi tocado). ⚠️ **`VERSAO_ESTADO_SALA` subiu de 1 para 2** — ver a §Onde parei.
+
+*(Medição anterior, PR B do spike, 2026-08-19, na `main` pós-merge):* `npm test` **1516/63**,
 **`npm run test:party` 8/8** (novo portão desde o PR A — era 5/5 lá), typecheck app **0**, typecheck
 `party/` **0**, **typecheck `party/tsconfig.test.json` 0** (novo), eslint **0**, build **0**
 (o `checar:casca` roda dentro dele). `VERSAO_APP` **3.4.2**.
@@ -333,6 +338,12 @@ REPOSICIONADO para DEPOIS do 3.5.4**, último PR da Fase 3, e **antes de declara
 **Motivo registrado pelo dev:** o 3.5.2 vai exercitar `onMessage` de qualquer forma ao testar o
 cursor, e **cobertura defensiva rende mais depois de a lógica existir** — o C escrito hoje seria
 moldado ao código de ontem, e escrito depois é moldado aos bugs reais que a casca revelar.
+⚠️ **A PRIMEIRA METADE DESSE MOTIVO NÃO SE REALIZOU — medido em 2026-08-20, ver a correção na
+§"🟡 RISCO ATIVO".** O 3.5.2 testou o cursor pelo redutor puro (`aoReceber`, em `src/net/`), **não
+por `onMessage`**; `npm run test:party` segue 8/8 e nenhum arquivo de `party/` foi tocado. **A
+decisão de adiar o PR C continua de pé** — a segunda metade do motivo (cobertura moldada aos bugs
+reais) é independente e não foi afetada —, mas o adiamento sai **mais caro do que o registrado**:
+esperava-se herdar `onMessage` de graça, e não se herdou nada.
 🔁 **GATILHO DE REAVALIAÇÃO, travado junto com a decisão:** se o **3.5.2 ou o 3.5.3 revelarem na
 casca um bug que o PR C teria pego**, puxar o C para a frente em vez de seguir a sequência.
 🛑 **O preço aceito, dito por inteiro** (era o argumento contra, e continua verdadeiro): o 3.5.2
@@ -342,12 +353,129 @@ segue **não confirmada**, porque quem a confirmaria é o harness que o C constr
 **🔢 SEQUÊNCIA ATÉ FECHAR A FASE 3 (atualizada em 2026-08-20):**
 **3.5.2 → 3.5.3 → 3.5.4 → PR C → Fase 3 encerrada.**
 
-**PR 3.5.2 — É O TRABALHO DESTA SESSÃO** — barreira e avanço de cursor por etapa, elegíveis
-recomputados,
+**🏆 PR 3.5.2 — CÓDIGO COMPLETO E VERDE em 2026-08-20**, na branch **`pr-3.5.2-cursor-por-etapa`**
+(o commit `wip` `469278f` mais o trabalho desta sessão). **NÃO commitado como final, NÃO mergeado,
+NÃO pushado, sem tag.**
+✅ **ITEM 3 DO `CLAUDE.md` (revisão de ALTO RISCO) FECHADO — em DUAS passadas.** A primeira
+**reprovou** (três bloqueantes). Os consertos foram revisados numa **segunda passada, que voltou SEM
+BLOQUEANTE** e com quatro avisos; **três deles eram sobre o próprio conserto e foram atendidos** —
+ver "A segunda passada" abaixo. Rodar a segunda passada não era zelo: mutação verde prova que o
+conserto FUNCIONA, e não substitui o portão. Barreira e avanço de cursor por etapa, elegíveis recomputados, `concluidaEm` só na última,
+**+ conserto do detector** (campo `etapa`, chave `${escopo}:${etapa}`), **+ os três bloqueantes da
+revisão consertados**. **Medido:** `npm test` **1544/64** (era 1516/63), `npm run test:party`
+**10/10** (era 8/8), typecheck **0**, eslint **0**, build **0**.
+
+🔴 **A REVISÃO REPROVOU O PR NA PRIMEIRA PASSADA — três bloqueantes, e os três se confirmaram por
+MEDIÇÃO, não por leitura.** É o registro que mais importa desta sessão:
+
+- **C1 (substância, código de produção).** `nEtapas` virou campo do estado persistido e ficou **fora
+  do discriminante**, lido por um `??` com default 1 — enquanto `seedsEtapas`, `seedCalendario` e
+  `etapaAtual` já estavam dentro. **Medido em sonda descartável:** sala de 5 etapas que perde o
+  campo na reidratação faz a PRIMEIRA barreira gravar `concluidaEm` (contra `concluidaEm: null` +
+  cursor 1 no controle) — **campeonato de 5 etapas encerrado na etapa 1, em silêncio**; e com o
+  cursor já em 3 a sala vira **`corrompida`** (`etapaAtual fora de [0, 0]: 3`) e recusa todo mundo.
+  🔑 **O bump de `VERSAO_ESTADO_SALA` (1 → 2) era PRÉ-REQUISITO do conserto, não zelo:** com a
+  versão parada, "sala 3.5.1 que legitimamente não tem o campo" e "sala 3.5.2 que o perdeu" são o
+  mesmo objeto e **nenhuma guarda consegue separá-las**. Conserto: versão 2, `nEtapas` em
+  `estadoDasSeeds` sob `versaoSala >= 2`, e default 1 preservado **só** para v1.
+- **C2 e C3 (método).** Aqui o código estava **certo** — o que não existia era prova. **C2:**
+  neutralizar a guarda `if (etapa < cursor)` deixava a suíte **inteira verde, 1531/1531**, incluindo
+  o teste chamado `🔴 BASELINE D1: cliente ATRASADO … é ignorado EM SILÊNCIO`. Ele rodava com o
+  cursor parado em 0, então a condição era `0 < 0` — **a guarda nunca era entrada**, e o silêncio
+  vinha do balde vazio. **C3:** o mutante `atestado.etapa ?? 0` — que o docblock diz que "devolveria
+  o alarme falso inteiro pela porta do conserto" — sobrevivia a tudo, porque nenhum teste mandava
+  atestado sem o campo com o cursor fora do zero.
+
+🔑 **É a SEXTA instância de "o teste afirmava o que não conferia"** (as cinco anteriores estão na
+§Processo), desta vez **dentro do teste rotulado como baseline** da decisão que o PR chama de
+inseparável. **A lição operacional que fica: baseline cujo cenário não ALCANÇA a guarda não é
+baseline.** Os dois testes agora asserem as pré-condições (cursor andou; balde populado com hash
+conflitante) em vez de supô-las, e os dois foram **validados por mutação**.
+
+📊 **TABELA DE MUTAÇÕES — 12 mutações, todas VERMELHAS contra o código final**, e todas com
+`tsc` limpo (vermelho comportamental, nunca de compilação). Ordem em todas: verde → aplica → **vê
+vermelho** → reverte → verde, com `git hash-object` conferindo cada reversão:
+`M-det` 7 · `M-cursor` 22 · `M-anchor` 1 · `M-eleg` 1 · `M-nEtapas` 2 (na casca) · `M-C1` 4 ·
+`M-C1v` (versão volta a 1) 5 · `M-C2` 1 · `M-C3` 1 · `M-A4` 1 · `M-A1` 3 · `M-A3` 1.
+
+🔑 **DUAS MUTAÇÕES SOBREVIVERAM NA RODADA INTERMEDIÁRIA, e as duas eram sobre o conserto que eu
+mesmo tinha acabado de escrever — foi assim que os avisos 1 e 3 da segunda passada saíram de
+"leitura do revisor" para "fato medido".** Registrado porque é o argumento a favor de rodar a tabela
+INTEIRA de novo depois de cada conserto, e não só as mutações novas.
+
+🔴 **ACHADO PRÓPRIO DA SESSÃO, e ele nasceu VERDE — `M-nEtapas`.** Trocar `N_ETAPAS_CURTA` por `1`
+na chamada de `criarServidor` em `party/sala.ts` sobrevivia a **TODOS** os portões: typecheck 0,
+eslint 0, `npm test` 1531/1531, `npm run test:party` 8/8. Medido em duas formas para eliminar o
+colateral: com `1` literal o eslint acusava só o import órfão; com `Math.min(N_ETAPAS_CURTA, 1)`
+**nada acusava nada**. Em produção: campeonato online de UMA etapa, com todo o resto do PR
+funcionando. 🔑 **O parâmetro obrigatório sem default pega a OMISSÃO (não compila) e NÃO pega o
+VALOR ERRADO** — o docblock de `criarSala` podia ser lido como mais forte do que é. **Fechado nesta
+sessão** (aviso A5 da revisão, autorizado pelo dev): `party/seeds.test.ts` ganhou cerca
+comportamental que lê `nEtapas` do estado **persistido** e do **snapshot**, com anti-vacuidade.
+✅ **A segunda propriedade que a revisão dava como descoberta JÁ ESTAVA COBERTA** — refutado por
+mutação: `todas[MAX_ETAPAS] → todas[0]` cai em `party/seeds.test.ts:137`, a asserção de MA do PR B.
+**Achado de revisão também entra medido.**
+
+**🔁 A SEGUNDA PASSADA DA REVISÃO — sem bloqueante, quatro avisos, TRÊS deles sobre o conserto:**
+- 🔴 **Aviso 1 — a guarda do N2 NÃO cobria o caso C1, e o docblock dizia que cobria.** Ela validava
+  a forma do **cursor**; uma sala v2 sem `nEtapas` **com o cursor em 0** tem `nEtapasDaSala` no piso
+  1, `cursorIntegro(0, 1)` verdadeiro, guarda passando — **o modo de falha do C1 intacto dentro da
+  camada pura**, defendido só pelo `jogavel()` da casca, exatamente como antes. **Medido e
+  consertado:** a guarda passou a consultar `estadoDasSeeds`, a MESMA autoridade do discriminante.
+  🔑 **É a classe de defeito que este PR inteiro existe para combater, cometida no conserto dela** —
+  escrever a garantia no comentário não a implementa.
+- 🔴 **Aviso 3 — `nEtapas` tinha guarda de ESCRITA e não de LEITURA.** `criarSala` limitava a
+  `[1, seeds.etapas.length]`, mas um `nEtapas: 999` vindo do storage passava, e `aoReceber` usa
+  `nEtapasDaSala - 1` como teto de `atestadoValido` ⇒ **999 baldes por escopo no Durable Object**,
+  derrubando a propriedade que o próprio PR declara. **Guarda de escrita sem guarda de leitura não
+  é teto, é convenção.** Consertado no discriminante, com anti-vacuidade (`MAX_ETAPAS` continua
+  legítimo).
+- 🔴 **Aviso 4 — dois docblocks que o PRÓPRIO PR falsificou.** `tipos.ts` dizia que `nEtapas` é
+  "fixo em `N_ETAPAS_CURTA`" (deixou de ser: o snapshot publica 1 para sala v1/legado) e que o
+  cursor "no 3.5.1 NÃO avança" (é o PR que o faz avançar); `sala.ts` dizia que `seedsAbertas`
+  devolve "exatamente UM elemento". **Corrigidos no lugar**, não contraditos em outro arquivo.
+- 🟡 **Aviso 2 — `versaoSala` é o único campo persistido sem checagem de FORMA.** `null`, `0`,
+  `NaN` ou string atravessam as duas portas (`=== undefined` falso, `>= 2` falso). **NÃO
+  consertado: é decisão do dev**, porque mexer no caso `undefined` contradiria comportamento já
+  fixado por teste. Registrado como **0(u6)**.
+
+🔴 **E a guarda morta que a tabela pegou:** o cheque de cursor que sobrou ao lado do novo virou
+**inalcançável**, e `M-N2` passou a deixar a suíte inteira verde. **Removido, não documentado** —
+guarda que nenhuma mutação mata é guarda morta, e guarda morta ao lado de um comentário que a
+explica é a próxima afirmação falsa esperando leitor.
+
+**Consertos aplicados nesta sessão, com o escopo que o dev autorizou** (bloqueantes + A5 + A4/N2):
+- **C1** — `VERSAO_ESTADO_SALA = 2`; `nEtapas` no discriminante; default 1 restrito a v1; corrigido
+  o comentário FALSO de `servidor-sala.ts` que afirmava "sem bump — o formato não mudou".
+- **C2/C3** — os dois testes da D1 reescritos para alcançar as guardas de verdade.
+- **A5** — cerca comportamental de `nEtapas` na casca (`party/seeds.test.ts`).
+- **A4** — `criarSala` recusa `nEtapas` fora de `[1, seeds.etapas.length]`, na mesma guarda e pelo
+  mesmo motivo do `throw` da cardinalidade das seeds.
+- **N2** — a barreira deixou de **curar em silêncio** um cursor fora de faixa: `etapaAtual: -3`
+  saía de lá como `1`, transformando sala `corrompida` em íntegra. Agora devolve o mesmo objeto.
+  Preserva sala LEGADO (campo AUSENTE ≠ campo fora de faixa), com anti-vacuidade própria.
+
+⬅️ **AVISOS DA REVISÃO NÃO CONSERTADOS — viraram a pendência 0(u)**, por estarem fora do escopo
+autorizado. **O mais urgente é de DEPLOY, não de merge (A3).**
+
+🔑 **DECISÃO DO DEV (2026-08-20) sobre o gatilho do PR C: o achado `M-nEtapas` NÃO o dispara.** O
+gatilho nomeia o `alarm()`; isto é o caminho de CRIAÇÃO, o valor está certo hoje, e é ausência de
+portão, não bug. **PR C segue depois do 3.5.4.**
+
+🛑 **A OPÇÃO DE ABANDONAR O 3.5 FOI POSTA AO DEV nesta sessão, como o `ESTADO.md` exigia — e ele
+decidiu SEGUIR COM O 3.5** (2026-08-20). A obrigação de visibilidade está cumprida; o texto do
+"o que o abandono custaria" fica abaixo como registro do que foi pesado, não como pergunta aberta.
+
+*Texto original do item, preservado:* **PR 3.5.2** — barreira e avanço de cursor por etapa,
+elegíveis recomputados,
 `concluidaEm` só na última, **+ conserto do detector** (campo `etapa`, chave `${escopo}:${etapa}`).
 🛑 **É no 3.5.2 que o dev pediu para ver, VISÍVEL, a opção de abandonar o 3.5 inteiro** — o corte
 honesto da fase pode ser o próprio 3.5, e é ali que a decisão é barata.
-🛑 **E É AGORA (2026-08-20): o 3.5.2 é esta sessão, então esta é A hora do dev decidir.** O pedido
+✅ **CUMPRIDO E DECIDIDO EM 2026-08-20: a opção foi apresentada ao dev na sessão do 3.5.2, com os
+três bloqueantes da revisão já na mesa (o que a tornava mais barata ainda — C2 e C3 evaporariam
+junto com o 3.5, e C1 quase todo). VEREDITO DO DEV: SEGUIR COM O 3.5.** O bloco abaixo fica como
+registro do que foi pesado; **não é mais pergunta aberta**, e reabri-lo é decisão nova do dev.
+🛑 **(Texto do pedido original, preservado.) E É AGORA (2026-08-20): o 3.5.2 é esta sessão.** O pedido
 foi para a opção estar visível **no momento** do 3.5.2, não depois — abandonar o 3.5 custa 3 PRs
 poupados agora (3.5.2 + 3.5.3 + 3.5.4) e custa muito mais depois do 3.5.3. **O que o abandono
 sacrificaria:** o campeonato online inteiro; a corrida online avulsa (encerrada no 4/4) **fica de
@@ -483,9 +611,31 @@ medido e custos residuais estão na **pendência 9**.
   ➡️ **ATUALIZAÇÃO 2026-08-20:** o PR C foi **adiado por decisão do dev** para **depois do 3.5.4**
   (sequência **3.5.2 → 3.5.3 → 3.5.4 → PR C → Fase 3 encerrada**). Enquanto ele não vier, **este
   parágrafo é a descrição corrente do risco, não histórico** — e o 3.5.2 abre ciente disso.
-  🔎 **O que muda de fato com o 3.5.2:** ele exercita `onMessage` (é por onde o atestado da barreira
-  chega e o cursor anda), então a lacuna de `onMessage` encolhe **como efeito colateral**, sem que
-  isso seja o gate do `alarm()` — não confundir os dois ao ler esta lista depois.
+  ⚠️ **CORREÇÃO MEDIDA EM 2026-08-20 — a redação anterior deste item era FALSA e por isso foi
+  corrigida aqui, não só contradita abaixo.** Ela dizia: *"o 3.5.2 exercita `onMessage` (é por onde o
+  atestado da barreira chega e o cursor anda), então a lacuna de `onMessage` encolhe como efeito
+  colateral"*. **Não encolheu — o 3.5.2 NÃO exercitou `onMessage`, e a lacuna está do mesmo tamanho.**
+  Medido, não deduzido: o teste do cursor é `src/net/cursor-etapas.test.ts`, que roda em `npm test` e
+  chama **`aoReceber`** — o redutor PURO de `src/net/`. `onMessage` vive em `party/sala.ts:238`, é
+  a casca, e **nenhum arquivo de `party/` foi tocado pelo 3.5.2**: `npm run test:party` segue **8/8**,
+  os mesmos oito do PR B. 🔑 **A lição por trás do erro:** "o PR exercita X" foi inferido de *o PR
+  mexe na lógica que X carrega*, e as duas coisas são diferentes quando existe um redutor puro no
+  meio — que é exatamente a arquitetura deste projeto. **`aoReceber` testado não é `onMessage`
+  testado.**
+  ✅ **MAS a lacuna encolheu por OUTRO caminho, no mesmo dia:** o 3.5.2 acrescentou cobertura
+  comportamental à casca pelo lado da CRIAÇÃO: `party/seeds.test.ts` ganhou **dois testes** (a
+  cerca de `nEtapas` do aviso A5 + a anti-vacuidade dela), e a suíte `npm run test:party` — que é
+  `seeds.test.ts` **mais** `smoke.test.ts` — foi de **8 para 10**. **Isso NÃO é `onMessage`, `onClose`, `encerrar`, CORS nem o gate
+  do `alarm()`** — nenhum deles mudou de tamanho. Registrado aqui só para que a contagem de
+  `test:party` não pareça ter mudado sozinha.
+- 🔴 **ACHADO DO 3.5.2 (2026-08-20) QUE PERTENCE A ESTA SEÇÃO — a casca podia declarar o FORMATO
+  ERRADO sem nenhum portão notar.** `M-nEtapas` (trocar `N_ETAPAS_CURTA` por `1` na chamada de
+  `criarServidor` em `party/sala.ts`) sobrevivia a typecheck 0, eslint 0, `npm test` 1531/1531 e
+  `npm run test:party` 8/8 — **mesma FORMA do bloqueante do 3.5.1** (M5/M6 no sítio real, suíte
+  verde a 1509/63), agora sobre `nEtapas` em vez das seeds. ✅ **Fechado no mesmo PR** por cerca
+  comportamental. 🔑 **A lição que fica maior que o caso: parâmetro obrigatório sem default pega a
+  OMISSÃO, não o VALOR ERRADO** — quem escrever "é obrigatório, então está protegido" está errado
+  pela metade.
 - 🔒 **M5 SEGUE INDETECTÁVEL COMPORTAMENTALMENTE, PARA SEMPRE**, e por isso **a cerca textual de
   `src/net/campeonato-online.test.ts` NÃO SAI.** Seeds derivadas por índice também são distintas
   entre si e entre salas; e não dá para fixar a `seedMestre` e comparar salas, porque `criar()` só
@@ -555,7 +705,13 @@ casca deixa de ser terra sem teste; a opção conhecida é `@cloudflare/vitest-p
    vê seeds derivadas —, mas mexe na semeadura do online inteiro e no estado persistido do Durable
    Object. **PR próprio, e é decisão do dev, não minha.**
    (j) **NOVA (PR 2/4 da corrida online) — o atestado de hash da corrida ATIVA UMA VEZ.** `useSalaOnline` chama `corridaDaSala` em `useMemo` e a ref fica estável entre renders; `registrarAtestado` ativa sobre mudança de `corrida`. **Limitação:** a estabilidade depende de `cliente.draft` ter REFERÊNCIA estável entre re-sincronizações sem evento novo — rastreada manualmente em `sincronizarDraft`, **sem asserção própria** porque o projeto não tem jsdom/@testing-library pra renderizar o hook. **Se `sincronizarDraft` mudar** (ex.: reconstruir de forma diferente, remover memoização), o efeito volta a reatestar cada snapshot, **silenciosamente**. Nenhum teste vai falhar — é a mesma classe de regressão invisível que (d) lista. Registrado para que ninguém apague o `useMemo` achando que está ocioso.
-   (k) **LIMITE CONHECIDO (PR 3/4 da corrida online) — congelamento de elegíveis.** O conjunto de elegíveis para a barreira **congela quando o draft conclui**. Ninguém vira ausente **depois** — qualquer dropout durante o replay ainda custa o timeout cheio (`TIMEOUT_FIM_DE_CORRIDA_MS = 5 min`). Sem reconexão de corrida implementada. Documentado e testado.
+   (k) ✅ **FECHADA no 3.5.2 (2026-08-20) — o conjunto DEIXOU de congelar.** `elegiveisDaBarreira`
+   passou a exigir **conexão viva** além de humano e não-ausente; quem reconecta volta a ser
+   elegível sozinho. Era limite aceitável com UMA corrida (timeout pago uma vez) e virava bloqueante
+   com N etapas: quem fechasse a aba na etapa 1 faria **cada** etapa seguinte pagar
+   `TIMEOUT_FIM_DE_CORRIDA_MS`. Baseline vermelho visto (`M-eleg`). ⚠️ **Preço registrado como
+   0(u3):** blip de rede de 3 s tira o jogador dos elegíveis e a sala anda sem ele.
+   *(Texto original, preservado:)* **LIMITE CONHECIDO (PR 3/4 da corrida online) — congelamento de elegíveis.** O conjunto de elegíveis para a barreira **congela quando o draft conclui**. Ninguém vira ausente **depois** — qualquer dropout durante o replay ainda custa o timeout cheio (`TIMEOUT_FIM_DE_CORRIDA_MS = 5 min`). Sem reconexão de corrida implementada. Documentado e testado.
    (l) **NOVA (PR 4/4) — F5 no meio da corrida volta pro resumo.** `naCorrida` é estado LOCAL do
    `FluxoOnline`, não vem do servidor; recarregar a página o perde e o jogador clica "Ir pra
    corrida" de novo. **Aceitável porque a corrida é determinística** — rever é rever exatamente a
@@ -620,10 +776,18 @@ casca deixa de ser terra sem teste; a opção conhecida é `@cloudflare/vitest-p
    (`src/net/sala.ts:192`) ⇒ a sala vira **`corrompida` e passa a RECUSAR TODO MUNDO**. Quem um dia
    olhar `const todas = Array.from(slots)` e achar que é cerimônia tem, agora, o número e o teste.
    (q) **NOVA (PR 3.5.1) — ORDEM DE DEPLOY a partir do 3.5.2: `wrangler` ANTES do `vite`.**
+   ⚠️ **ATUALIZADA em 2026-08-20 (revisão do 3.5.2): esta pendência tem AGORA uma irmã que aponta
+   para o outro lado — a 0(u1).** Sozinha, a 0(q) diz "worker primeiro"; a 0(u1) mede que o worker
+   3.5.2 sozinho pendura a sala ~20 min contra o cliente 3.5.1. **Lidas juntas, a conclusão é a
+   única segura: os dois lados sobem no MESMO deploy, com o `wrangler` primeiro dentro dele.**
    `cliente.ts` não valida forma de snapshot. Num deploy escalonado, cliente novo contra worker
    antigo receberia `seedsAbertas: undefined` — **inócuo no 3.5.1** (ninguém lê), **letal no 3.5.2**,
    quando o cliente passar a derivar as etapas dele.
-   (r) **NOVA (PR 3.5.1) — `etapaAtual` está FORA do discriminante.** Três leituras defensivas
+   (r) ✅ **FECHADA no 3.5.2 (2026-08-20).** `cursorIntegro` entrou em `estadoDasSeeds`: cursor fora
+   de `[0, nEtapas-1]` ⇒ sala `corrompida`. As três leituras `?? 0` viraram **uma** função tolerante
+   com dono e docblock (`cursorDaSala`), que existe só para sala LEGADO. ⚠️ **Fechá-la ABRIU a
+   0(t)** — é o custo registrado, não um efeito colateral esquecido.
+   *(Texto original, preservado:)* **NOVA (PR 3.5.1) — `etapaAtual` está FORA do discriminante.** Três leituras defensivas
    (`?? 0`) tratam o cursor de forma frouxa, enquanto `estadoDasSeeds` valida as seeds com rigor.
    Hoje é inconsistência de tese, não vazamento: `cursorPublicavel` clampa e o servidor nunca grava
    outro tipo. Mas **o cursor é justamente o campo que governa quantos segredos saem no fio** —
@@ -645,6 +809,94 @@ casca deixa de ser terra sem teste; a opção conhecida é `@cloudflare/vitest-p
    criar** (sala corrompida só existe desde o discriminante), então não é dívida velha.
    💡 Se confirmar, é também **o argumento mais forte a favor da dependência**: o harness achou o que
    a leitura não achou.
+   (t) 🟠 **NOVA (3.5.2, 2026-08-20) — A INVARIANTE DO SNAPSHOT DEIXOU DE SER LOCAL: ele pode se
+   AUTOCONTRADIZER quando a sala é `corrompida`.** Achado ao trazer o cursor para dentro do
+   discriminante (pendência 0(r)); **registrado por decisão do dev, NÃO consertado no 3.5.2.**
+   **A cadeia, verificada no código:** `publicarSala` monta o snapshot com dois leitores que agora
+   respondem a autoridades diferentes. `cursorPublicavel` (`src/net/sala.ts`) **clampa** — cursor 15
+   sai como 4. `seedsAbertasDe` chama `estadoDasSeeds`, que desde o 3.5.2 reprova cursor fora de
+   faixa e devolve **`corrompida` ⇒ `seedsAbertas: []`**. Resultado no fio:
+   **`etapaAtual: 4`, `nEtapas: 5`, `seedsAbertas: []`** — um snapshot que afirma estar na etapa 5
+   e não publica seed nenhuma. A invariante que o 3.5.1 travou por teste
+   (`seedsAbertas.length === min(etapaAtual + 1, nEtapas)`) **quebra**.
+   🔑 **Por que isto é mudança de tese e não um bug qualquer:** até o 3.5.1 a invariante era
+   **LOCAL** — dava para prová-la olhando só `publicarSala`, porque os dois campos saíam do mesmo
+   clamp. Agora ela **depende de uma guarda ANTERIOR** (a casca recusar a sala `corrompida` antes de
+   publicá-la). O snapshot só é coerente **se ninguém publicar sala não validada** — e é exatamente
+   a aposta que o docblock de `cursorPublicavel` diz não querer fazer ("aposta que o aviso A1 da
+   revisão do 3.5.1 já perdeu uma vez"). ⚠️ **Hoje não é vazamento** (o caminho vaza *menos*, não
+   mais: publica zero seed), e nenhuma sala de produção chega lá — o servidor nunca grava cursor
+   fora de faixa. **É armadilha para quem vier depois:** o cliente do 3.5.3 vai derivar as etapas de
+   `seedsAbertas` e ler `etapaAtual` para indexar o calendário.
+   **Caminhos possíveis, nenhum escolhido:** (1) `publicarSala` recusar publicar sala `corrompida`,
+   levando a guarda para dentro; (2) o clamp passar a zerar o cursor quando as seeds não estão `ok`,
+   restaurando a localidade; (3) manter e travar a nova invariante condicional por teste. **É
+   decisão do dev.** Os 2 vermelhos do grupo 2 em `campeonato-online.test.ts` são a manifestação
+   disto — os testes forjam `etapaAtual: 15` e `-3` à mão, que é o único jeito de chegar ao estado.
+   ➡️ **ATUALIZAÇÃO 2026-08-20, pós-revisão: SEGUE ABERTA, e o conserto do N2 encolheu o problema
+   sem resolvê-lo.** `avaliarBarreiraDaCorrida` passou a recusar cursor fora de faixa em vez de
+   curá-lo (a barreira voltou a ser local), mas **`publicarSala` continua com os dois leitores
+   respondendo a autoridades diferentes** — que é a pendência. Os três caminhos possíveis continuam
+   sem escolha, e o teste que TRAVA o comportamento atual (`🟠 PENDÊNCIA 0(t)` em
+   `campeonato-online.test.ts`) continua no lugar, de propósito: ele não abençoa, ele impede que
+   mude sem alguém perceber.
+   (u) 🟠 **NOVA (revisão do 3.5.2, 2026-08-20) — OS AVISOS QUE O DEV DECIDIU NÃO CONSERTAR NESTE
+   PR.** O escopo autorizado foi "bloqueantes + A5 + A4/N2"; o que sobrou está aqui, para não virar
+   folclore de revisão. **Nenhum bloqueia o merge; o primeiro bloqueia o DEPLOY.**
+   🔑 **PROVENIÊNCIA, e ela não é uniforme — ler o rótulo de cada item antes de agir sobre ele.**
+   Esta sessão refutou por mutação uma das alegações da própria revisão (a de que
+   `todas[MAX_ETAPAS] → todas[0]` estaria descoberto — **já estava coberto**), então achado de
+   revisão obtido por LEITURA tem taxa de erro conhecida e **não entra aqui como fato medido**.
+   Mesmo padrão da 0(s) ("achado por LEITURA … não confirmado por execução") e da 0(p) ("MEDIDA …
+   NÃO DEDUZIDA"). **Só a u1 foi medida; u2–u5 são leitura.**
+   - 🔴 **(u1) ORDEM DE DEPLOY — o worker do 3.5.2 SÓ VAI A PRODUÇÃO JUNTO COM O CLIENTE DO 3.5.3.**
+     ✅ **MEDIDO nesta sessão, rastreando a cadeia de chamada no código — não é a leitura da
+     revisão.** É pendência NOVA e **não é a 0(q)** (aquela é cliente novo × worker antigo; esta é o
+     inverso). A cadeia, verificada arquivo a arquivo:
+     `useSalaOnline.ts:219-224` — `corrida` é `useMemo` sobre `[cliente.draft,
+     cliente.sala?.seedCorrida]`, **sem `etapaAtual` e sem `seedsAbertas`**, logo a corrida é
+     computada **uma vez** e a referência nunca troca; `FluxoCorrida.tsx:77` — `onChegouAoResultado`
+     dispara no efeito `if (fase === 'resultado')`, e `fase` fica em `'resultado'` para sempre;
+     `FluxoOnline.tsx:225` liga esse callback a `atestarFimDaCorrida`
+     (`useSalaOnline.ts:286-289`), que envia `{tipo: 'corrida-concluida'}`.
+     **Consequência:** com worker 3.5.2 e cliente 3.5.1, a etapa 0 fecha normalmente, o cursor vai a
+     1, os atestados zeram — **e nada no cliente reatesta, porque nada nele mudou de referência**.
+     As quatro barreiras seguintes fecham só por `TIMEOUT_FIM_DE_CORRIDA_MS`: **4 × 5 min = ~20
+     minutos** de jogador parado na tela de resultado.
+     ⚠️ **Ler junto com a 0(q): as duas juntas dizem que os dois lados sobem no MESMO deploy, com o
+     `wrangler` antes do `vite` dentro dele.**
+   - 🟠 **(u2) — ACHADO POR LEITURA DA REVISÃO, NÃO MEDIDO. A guarda de etapa é ASSIMÉTRICA —
+     `etapa > cursor` é aceita e escreve balde FUTURO.**
+     `atestadoValido` só impõe o teto `nEtapas - 1`, então um cliente manda `etapa: 4` com o cursor
+     em 0 e o estado persistido ganha `corrida:4` antes de a etapa 4 existir. **Não é crescimento
+     ilimitado** (o teto segura em `escopos × nEtapas`); o dano é outro: quando a etapa 4 chegar, a
+     âncora é a mesma (o log do draft parou de crescer), então o balde envenenado **sobrevive** e um
+     `alarmado: true` pré-queimado **suprime o alarme real daquela etapa** — o oposto do que o PR
+     existe para garantir. Conserto mínimo seria `etapa !== cursor` ignorar em silêncio (nunca
+     `comando-invalido`, para não punir cliente em corrida legítima). ⚠️ **Isso derrubaria vários
+     testes atuais do detector**, o que é evidência de que eles não modelam o fluxo de produção — os
+     do bloco do detector atestam `etapa: 1` com o cursor em 0, que é atestado ADIANTADO.
+   - 🟠 **(u3) — ACHADO POR LEITURA DA REVISÃO, NÃO MEDIDO. Blip de rede faz a sala ANDAR sem o
+     jogador.** É o preço da 0(k) fechada: elegível
+     passou a exigir conexão viva, e `aoDesconectar` tira do mapa na hora. A + B + C na etapa 1, B e
+     C já atestaram, A cai por 3 s ⇒ no tique seguinte (o tique é de **5 s**) a barreira fecha sem
+     A e o cursor anda. **Sem perda de dado** (as seeds `0..cursor` seguem abertas e o cliente
+     re-simula), mas é repetível em rede ruim. Fechar exigiria carência de desconexão — campo novo
+     no estado, **decisão do dev**.
+   - 🟢 **(u4) — LEITURA, não medido. Baldes com a chave ANTIGA (`'draft'`, `'corrida'`, sem etapa) ficam órfãos para
+     sempre** numa sala 3.4/3.5.1 reidratada. Custo: duas entradas mortas e um `alarmado` perdido —
+     um alarme pode redisparar uma vez após o deploy.
+   - 🟡 **(u6) — ACHADO POR LEITURA (2ª passada), NÃO MEDIDO. `versaoSala` é o único campo
+     persistido SEM checagem de forma.** `null >= 2` é `false` e `null === undefined` é `false`, então
+     `null`, `0`, `NaN` ou string **atravessam as duas portas** do discriminante: não tomam o ramo
+     `legado` e escapam da guarda de `nEtapas`. Com `nEtapas` ausente ⇒ piso 1 ⇒ a primeira barreira
+     encerra um campeonato de 5 etapas em silêncio — o desfecho que o C1 existe para matar. **Exige
+     corrupção de VALOR, não perda de campo** (por isso não é bloqueante). **É decisão do dev**:
+     validar a forma (`inteiro em [1, VERSAO_ESTADO_SALA]`, fora disso `corrompida`) mexeria no caso
+     `undefined`, que já está fixado por teste como `legado`.
+   - 🟢 **(u5) — LEITURA, não medido. Cliente antigo (sem `etapa`) atestando na virada de etapa** é
+     bucketizado na etapa nova e pode produzir alarme falso residual — a mesma classe que o PR
+     conserta, agora numa janela estreita.
 1. **Abertas pelo 7.8:** (a) o `BotaoTema` é um botão discreto no canto do `app-shell` — posição e
    forma **não passaram por veredito de arte**; (b) `erro` (salmão `#FF7B85`) e `raridadeProibido`
    (`#FF4757`) continuam sendo dois vermelhos ao lado do vermelho da marca — não foi mexido porque
@@ -748,6 +1000,17 @@ arte vai ao dev** — mudar composição sozinho já custou 2 bloqueantes no 7.3
   **Quarta instância (3.4):** um dos dois testes de lag comparava estados IDÊNTICOS, então permanecia
   verde mesmo sem a regra de âncora — era cobertura ilusória. Reescrito com atraso real. Registrado
   como padrão a observar: teste que parece cobrir uma guarda mas testa o caminho feliz.
+  🔒 **SEXTA instância (3.5.2, achada pela revisão e CONFIRMADA por mutação, 2026-08-20):** o teste
+  `🔴 BASELINE D1: cliente ATRASADO … é ignorado EM SILÊNCIO` rodava com o cursor em **0** e mandava
+  o atestado atrasado com `etapa: 0`. A guarda é `etapa < cursor` — **`0 < 0`, nunca entrada.**
+  Apagar a guarda deixava a suíte inteira verde (1531/1531). O silêncio observado vinha do balde
+  vazio, não da guarda. 🔑 **A regra operacional que esta instância acrescenta às cinco anteriores:
+  BASELINE CUJO CENÁRIO NÃO ALCANÇA A GUARDA NÃO É BASELINE** — e o jeito de não repetir é **asserir
+  a pré-condição** (aqui: "o cursor ANDOU" e "o balde da etapa velha está POPULADO") em vez de
+  supô-la, porque a pré-condição suposta é justamente o que sai do lugar.
+  ⚠️ **Irmã dela, na mesma revisão:** a metade 1 da mesma decisão (`atestado.etapa ?? cursor`) não
+  tinha teste NENHUM — o mutante `?? 0` sobrevivia a tudo. **Guarda documentada em docblock não é
+  guarda testada.**
 - **Ao mexer em silhueta, use o harness de `preview/`** (`preview/harness.test.ts` +
   `preview/desenhos.ts`, gitignored). Rodar:
   `npx vitest run --config preview/harness.config.ts --reporter=verbose --silent=false`.

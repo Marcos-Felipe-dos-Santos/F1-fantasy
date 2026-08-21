@@ -151,11 +151,22 @@ export interface EstadoSalaPublico {
    * `fase === 'aberta'`), e avanço por host teria modo de falha "sala
    * encalhada para sempre".
    *
-   * ⚠️ **No 3.5.1 ele NÃO avança** — fica em 0. Quem o move é a barreira do
-   * 3.5.2.
+   * ⚠️ **No 3.5.1 ele NÃO avançava** — ficava em 0. **Desde o 3.5.2 ELE SE
+   * MOVE**, e quem o move é a barreira do fim de etapa. A redação anterior
+   * ("no 3.5.1 ele NÃO avança") descrevia o presente e virou falsa no PR que
+   * está ao lado dela; corrigida aqui, não só contradita em outro arquivo.
    */
   etapaAtual: number;
-  /** Quantas etapas tem este campeonato. Fixo em `N_ETAPAS_CURTA` (CORTE 3.5-F). */
+  /**
+   * Quantas etapas tem este campeonato.
+   *
+   * ⚠️ **NÃO é "fixo em `N_ETAPAS_CURTA`", e a redação anterior dizia isso**
+   * (aviso 4 da segunda passada da revisão do 3.5.2). Desde o 3.5.2 este campo
+   * sai de `nEtapasDaSala`, que devolve **1** para sala `legado` ou v1 — e é
+   * este o tipo do SNAPSHOT que o cliente do 3.5.3 vai ler. Quem fixa
+   * `N_ETAPAS_CURTA` é a CASCA, ao criar a sala (CORTE 3.5-F); o que chega no
+   * fio depende da versão da sala que está sendo publicada.
+   */
   nEtapas: number;
   /**
    * Seed do CALENDÁRIO — só quando o draft CONCLUI. Antes disso, `null`.
@@ -288,8 +299,28 @@ export const VERSAO_ESTADO_DRAFT = 1;
  * gravada explicitamente, no mesmo padrão (e pelo mesmo motivo) do
  * `VERSAO_ESTADO_DRAFT` acima. Quem lê é `estadoDasSeeds`, em `sala.ts` —
  * **nunca um `?? []` espalhado pelos chamadores.**
+ *
+ * ## Histórico de versões (a versão só sobe quando o FORMATO muda)
+ *
+ * - **1** (3.5.1): `seedsEtapas`, `seedCalendario`, `etapaAtual`.
+ * - **2** (3.5.2, bloqueante C1 da revisão): entra **`nEtapas`**.
+ *
+ * 🔴 **O bump da 2 foi o CONSERTO de um bloqueante, não zelo.** O 3.5.2 chegou
+ * à revisão acrescentando `nEtapas` ao estado persistido **sem** subir a
+ * versão, sob o comentário — falso — de que "o formato não mudou, só o
+ * significado do cursor". Com a versão parada em 1, uma sala 3.5.1 (que
+ * legitimamente não tem o campo) e uma sala 3.5.2 que o PERDEU na reidratação
+ * viram o mesmo objeto, e **nenhuma guarda consegue separá-las**. Medido antes
+ * do conserto: a sala que perdia o campo caía no default 1 e a PRIMEIRA
+ * barreira gravava `concluidaEm` — campeonato de 5 etapas encerrado na etapa 1,
+ * em silêncio.
+ *
+ * 🔒 **A regra que fica, e que este bump paga por ter aprendido: campo NOVO no
+ * estado persistido ⇒ versão sobe E o campo entra em `estadoDasSeeds`.** Os
+ * dois juntos, sempre — a versão sozinha não valida nada, e a guarda sozinha
+ * não consegue distinguir ausência legítima de ausência por corrupção.
  */
-export const VERSAO_ESTADO_SALA = 1;
+export const VERSAO_ESTADO_SALA = 2;
 
 /**
  * Quantas seeds de etapa são sorteadas por sala — SEMPRE 10, o máximo
@@ -431,6 +462,17 @@ export interface EstadoSala
    * é corrupção, não sala nova.
    */
   versaoSala?: number;
+  /**
+   * Quantas etapas esta sala tem. **MEDIÇÃO DO 3.5.2 (2026-08-20)** — a
+   * hipótese do dev de que "a avulsa é campeonato de 1 etapa".
+   *
+   * `undefined` = sala persistida antes do 3.5.2. Quem lê é
+   * `nEtapasDaSala` (`sala.ts`), com default **1** — o que preserva o
+   * comportamento dessa sala no meio da vida dela: sob o código do 3.5.1 a
+   * barreira marcava `concluidaEm` no primeiro fechamento, que é exatamente o
+   * que `nEtapas: 1` faz.
+   */
+  nEtapas?: number;
   /**
    * 🔒 **TERCEIRO SEGREDO DO ESTADO**, junto com `seedMestre` e `tokens`, e
    * pelo motivo de sempre: com as seeds futuras na mão, qualquer jogador

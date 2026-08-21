@@ -46,7 +46,7 @@ import {
 } from './cliente';
 import { VERSAO_PROTOCOLO, type ComandoDraft, type ComandoSala } from './protocolo';
 import { RODADAS_SORTEIO } from '../engine/draft-utils';
-import { MAX_ETAPAS } from './tipos';
+import { MAX_ETAPAS, N_ETAPAS_CURTA } from './tipos';
 
 /** Patologias injetadas. Cada campo é probabilidade por mensagem (0..1). */
 export interface Patologias {
@@ -209,7 +209,7 @@ export function rodarHarness(opcoes: OpcoesHarness): ResultadoHarness {
     ),
     calendario: deriveSeed(seed, 'online:harness:calendario'),
   };
-  let servidor = criarServidor('sala-harness', seed, 'dificil', 0, seedsHarness);
+  let servidor = criarServidor('sala-harness', seed, 'dificil', 0, seedsHarness, N_ETAPAS_CURTA);
   const participantes = new Map<string, Participante>();
   const emTransito: EmTransito[] = [];
   let ordem = 0;

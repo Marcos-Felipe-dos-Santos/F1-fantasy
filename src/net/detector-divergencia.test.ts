@@ -26,7 +26,7 @@ import pistasReal from '../fixtures/dataset-semente/pistas.json';
 import { rodarHarness, SEM_PATOLOGIA, type ResultadoHarness } from './harness';
 import { aoReceber, criarServidor, type EstadoServidor } from './servidor-sala';
 import { hashDoDraft } from './hash-draft';
-import { QTD_JOGADORES } from './tipos';
+import { N_ETAPAS_CURTA, QTD_JOGADORES } from './tipos';
 import type { MensagemServidor } from './protocolo';
 import type { DraftState } from '../engine/types';
 
@@ -184,7 +184,7 @@ describe('CALA quando está tudo certo', () => {
     const { servidor } = atestarTodos(r, r.draftsPorJogador, (id) =>
       id === ids[ids.length - 1] ? 1 : teto,
     );
-    expect(servidor.atestados?.draft?.ancora).toBe(teto);
+    expect(servidor.atestados?.['draft:0']?.ancora).toBe(teto);
   });
 });
 
@@ -202,7 +202,7 @@ describe('HANDSHAKE de versão: builds diferentes não entram na mesma sala', ()
   }
 
   it('mesma versão entra', () => {
-    let s = criarServidor('s', 1, 'dificil', T0, SEEDS_T);
+    let s = criarServidor('s', 1, 'dificil', T0, SEEDS_T, N_ETAPAS_CURTA);
     s = entrar(s, 'c0', '3.4.0').estado;
     const r = entrar(s, 'c1', '3.4.0');
     expect(r.envios.some((e) => e.mensagem.tipo === 'erro')).toBe(false);
@@ -210,7 +210,7 @@ describe('HANDSHAKE de versão: builds diferentes não entram na mesma sala', ()
   });
 
   it('🔴 versão diferente é RECUSADA', () => {
-    let s = criarServidor('s', 1, 'dificil', T0, SEEDS_T);
+    let s = criarServidor('s', 1, 'dificil', T0, SEEDS_T, N_ETAPAS_CURTA);
     s = entrar(s, 'c0', '3.4.0').estado;
     const r = entrar(s, 'c1', '3.5.0');
     expect(r.envios[0].mensagem).toEqual({ tipo: 'erro', erro: 'versao-divergente' });
@@ -220,7 +220,7 @@ describe('HANDSHAKE de versão: builds diferentes não entram na mesma sala', ()
   it('cliente ANTIGO (sem `versaoApp`) também é recusado', () => {
     // "Não sei a sua versão" não é o mesmo que "a sua versão serve". Um cliente
     // velho é justamente o caso que o handshake existe pra pegar.
-    let s = criarServidor('s', 1, 'dificil', T0, SEEDS_T);
+    let s = criarServidor('s', 1, 'dificil', T0, SEEDS_T, N_ETAPAS_CURTA);
     s = entrar(s, 'c0', '3.4.0').estado;
     const r = entrar(s, 'c1');
     expect(r.envios[0].mensagem).toEqual({ tipo: 'erro', erro: 'versao-divergente' });
@@ -231,7 +231,7 @@ describe('HANDSHAKE de versão: builds diferentes não entram na mesma sala', ()
     // reconecta-se a cada F5, e a UI dispara `reentrar` sozinha. Um deploy no
     // meio da partida traria o jogador de volta com engine nova numa sala de
     // engine velha — sem verificação nenhuma, na primeira versão deste PR.
-    let s = criarServidor('s', 1, 'dificil', T0, SEEDS_T);
+    let s = criarServidor('s', 1, 'dificil', T0, SEEDS_T, N_ETAPAS_CURTA);
     s = entrar(s, 'c0', '3.4.0').estado;
     const token = 'tok-c0';
 
@@ -256,7 +256,7 @@ describe('HANDSHAKE de versão: builds diferentes não entram na mesma sala', ()
   it('🔒 a versão é fixada pelo primeiro `entrar` ACEITO, não por um recusado', () => {
     // Se um `entrar` recusado fixasse a versão, um cliente hostil trancaria a
     // sala inteira do lado de fora sem nunca entrar nela.
-    let s = criarServidor('s', 1, 'dificil', T0, SEEDS_T);
+    let s = criarServidor('s', 1, 'dificil', T0, SEEDS_T, N_ETAPAS_CURTA);
     // Recusado por falta de token gerado (não é `entrar` aceito).
     const semToken = aoReceber(
       s,
@@ -274,7 +274,7 @@ describe('HANDSHAKE de versão: builds diferentes não entram na mesma sala', ()
 
 describe('o servidor continua SEM dataset — ele só compara strings', () => {
   it('recusa atestado de quem não é jogador da sala', () => {
-    const servidor = criarServidor('sala-x', 1, 'dificil', T0, SEEDS_T);
+    const servidor = criarServidor('sala-x', 1, 'dificil', T0, SEEDS_T, N_ETAPAS_CURTA);
     const r = aoReceber(
       servidor,
       'intruso',
@@ -290,9 +290,14 @@ describe('o servidor continua SEM dataset — ele só compara strings', () => {
     // Logo UMA mensagem com âncora absurda de qualquer jogador sentado fazia
     // todo atestado honesto seguinte cair no silêncio pelo RESTO da partida —
     // apagando exatamente a defesa que este PR existe pra criar.
-    let s = criarServidor('s-teto', 1, 'dificil', T0, SEEDS_T);
-    s = aoReceber(s, 'c0', JSON.stringify({ tipo: 'entrar', nome: 'A', versaoApp: 'v' }), T0, 'tk')
-      .estado;
+    let s = criarServidor('s-teto', 1, 'dificil', T0, SEEDS_T, N_ETAPAS_CURTA);
+    s = aoReceber(
+      s,
+      'c0',
+      JSON.stringify({ tipo: 'entrar', nome: 'A', versaoApp: 'v' }),
+      T0,
+      'tk',
+    ).estado;
 
     // Sala no lobby: log vazio ⇒ teto 0. Âncora 1 já está acima.
     const absurda = aoReceber(
@@ -303,7 +308,7 @@ describe('o servidor continua SEM dataset — ele só compara strings', () => {
     );
     expect(absurda.envios[0].mensagem).toEqual({ tipo: 'erro', erro: 'comando-invalido' });
     expect(
-      absurda.estado.atestados?.draft,
+      absurda.estado.atestados?.['draft:0'],
       'a âncora absurda não pode entrar no estado — é o que trancaria o detector',
     ).toBeUndefined();
   });
@@ -313,9 +318,14 @@ describe('o servidor continua SEM dataset — ele só compara strings', () => {
     // identidade. Reconstruir o balde a cada atestado daria ~22 escritas por
     // evento de draft, e reenviar o mesmo payload válido seria amplificação de
     // escrita de graça.
-    let s = criarServidor('s-idem', 1, 'dificil', T0, SEEDS_T);
-    s = aoReceber(s, 'c0', JSON.stringify({ tipo: 'entrar', nome: 'A', versaoApp: 'v' }), T0, 'tk')
-      .estado;
+    let s = criarServidor('s-idem', 1, 'dificil', T0, SEEDS_T, N_ETAPAS_CURTA);
+    s = aoReceber(
+      s,
+      'c0',
+      JSON.stringify({ tipo: 'entrar', nome: 'A', versaoApp: 'v' }),
+      T0,
+      'tk',
+    ).estado;
 
     const atestado = JSON.stringify({
       tipo: 'hash',
@@ -332,7 +342,7 @@ describe('o servidor continua SEM dataset — ele só compara strings', () => {
   });
 
   it('recusa atestado malformado sem derrubar a sala', () => {
-    let servidor = criarServidor('sala-y', 1, 'dificil', T0, SEEDS_T);
+    let servidor = criarServidor('sala-y', 1, 'dificil', T0, SEEDS_T, N_ETAPAS_CURTA);
     servidor = aoReceber(
       servidor,
       'c0',
@@ -373,8 +383,14 @@ describe('o servidor continua SEM dataset — ele só compara strings', () => {
         tipo: 'erro',
         erro: 'comando-invalido',
       });
-      expect(r.estado.atestados?.draft, 'atestado inválido não pode entrar no estado').toBeUndefined();
-      expect(r.estado.atestados?.corrida, 'atestado inválido não pode entrar no estado').toBeUndefined();
+      expect(
+        r.estado.atestados?.['draft:0'],
+        'atestado inválido não pode entrar no estado',
+      ).toBeUndefined();
+      expect(
+        r.estado.atestados?.['corrida:0'],
+        'atestado inválido não pode entrar no estado',
+      ).toBeUndefined();
     }
   });
 
@@ -386,7 +402,7 @@ describe('o servidor continua SEM dataset — ele só compara strings', () => {
     // legítimo continuaria batendo em `comando-invalido` pra sempre — código
     // morto que nenhum teste flagraria, porque "recusa atestado malformado"
     // tratava exatamente este caso como malformado.
-    let servidor = criarServidor('sala-corrida-ok', 1, 'dificil', T0, SEEDS_T);
+    let servidor = criarServidor('sala-corrida-ok', 1, 'dificil', T0, SEEDS_T, N_ETAPAS_CURTA);
     servidor = aoReceber(
       servidor,
       'c0',
@@ -403,18 +419,28 @@ describe('o servidor continua SEM dataset — ele só compara strings', () => {
     );
 
     expect(r.envios.some((e) => e.mensagem.tipo === 'erro')).toBe(false);
-    expect(r.estado.atestados?.corrida?.porJogador['humano-01']).toBe('a'.repeat(16));
+    expect(r.estado.atestados?.['corrida:0']?.porJogador['humano-01']).toBe('a'.repeat(16));
   });
 });
 
 describe('atestados por escopo NÃO se misturam (PR 2/4 de "corrida online")', () => {
   /** Dois jogadores conectados, cada um com sua conexão — mesmo padrão dos testes acima. */
   function duasConexoes(): EstadoServidor {
-    let s = criarServidor('s-dois-escopos', 1, 'dificil', T0, SEEDS_T);
-    s = aoReceber(s, 'c0', JSON.stringify({ tipo: 'entrar', nome: 'A', versaoApp: 'v' }), T0, 'tk0')
-      .estado;
-    s = aoReceber(s, 'c1', JSON.stringify({ tipo: 'entrar', nome: 'B', versaoApp: 'v' }), T0, 'tk1')
-      .estado;
+    let s = criarServidor('s-dois-escopos', 1, 'dificil', T0, SEEDS_T, N_ETAPAS_CURTA);
+    s = aoReceber(
+      s,
+      'c0',
+      JSON.stringify({ tipo: 'entrar', nome: 'A', versaoApp: 'v' }),
+      T0,
+      'tk0',
+    ).estado;
+    s = aoReceber(
+      s,
+      'c1',
+      JSON.stringify({ tipo: 'entrar', nome: 'B', versaoApp: 'v' }),
+      T0,
+      'tk1',
+    ).estado;
     return s;
   }
 
@@ -422,13 +448,18 @@ describe('atestados por escopo NÃO se misturam (PR 2/4 de "corrida online")', (
     servidor: EstadoServidor,
     conexaoId: string,
     comando: unknown,
-  ): { estado: EstadoServidor; divergencias: Extract<MensagemServidor, { tipo: 'divergencia' }>[] } {
+  ): {
+    estado: EstadoServidor;
+    divergencias: Extract<MensagemServidor, { tipo: 'divergencia' }>[];
+  } {
     const r = aoReceber(servidor, conexaoId, JSON.stringify(comando), T0);
     return {
       estado: r.estado,
       divergencias: r.envios
         .map((e) => e.mensagem)
-        .filter((m): m is Extract<MensagemServidor, { tipo: 'divergencia' }> => m.tipo === 'divergencia'),
+        .filter(
+          (m): m is Extract<MensagemServidor, { tipo: 'divergencia' }> => m.tipo === 'divergencia',
+        ),
     };
   }
 
@@ -437,7 +468,12 @@ describe('atestados por escopo NÃO se misturam (PR 2/4 de "corrida online")', (
     const alarmes: Extract<MensagemServidor, { tipo: 'divergencia' }>[] = [];
 
     // Draft: os dois atestam o MESMO hash — não diverge.
-    ({ estado: s } = enviar(s, 'c0', { tipo: 'hash', escopo: 'draft', ancora: 0, hash: 'd'.repeat(16) }));
+    ({ estado: s } = enviar(s, 'c0', {
+      tipo: 'hash',
+      escopo: 'draft',
+      ancora: 0,
+      hash: 'd'.repeat(16),
+    }));
     let r = enviar(s, 'c1', { tipo: 'hash', escopo: 'draft', ancora: 0, hash: 'd'.repeat(16) });
     s = r.estado;
     alarmes.push(...r.divergencias);
@@ -458,10 +494,11 @@ describe('atestados por escopo NÃO se misturam (PR 2/4 de "corrida online")', (
       alarmes.every((a) => a.escopo === 'corrida'),
       'nenhum alarme pode sair em "draft" — os dois concordaram lá',
     ).toBe(true);
-    expect(s.atestados?.draft?.alarmado ?? false, 'o balde do draft não pode ter sido tocado').toBe(
-      false,
-    );
-    expect(s.atestados?.corrida?.alarmado).toBe(true);
+    expect(
+      s.atestados?.['draft:0']?.alarmado ?? false,
+      'o balde do draft não pode ter sido tocado',
+    ).toBe(false);
+    expect(s.atestados?.['corrida:0']?.alarmado).toBe(true);
   });
 
   it('🔴 inverso: DIVERGEM no DRAFT, concordam na CORRIDA ⇒ alarme só em "draft", nunca em "corrida"', () => {
@@ -469,7 +506,12 @@ describe('atestados por escopo NÃO se misturam (PR 2/4 de "corrida online")', (
     const alarmes: Extract<MensagemServidor, { tipo: 'divergencia' }>[] = [];
 
     // Draft: hashes DIFERENTES — diverge.
-    ({ estado: s } = enviar(s, 'c0', { tipo: 'hash', escopo: 'draft', ancora: 0, hash: 'a'.repeat(16) }));
+    ({ estado: s } = enviar(s, 'c0', {
+      tipo: 'hash',
+      escopo: 'draft',
+      ancora: 0,
+      hash: 'a'.repeat(16),
+    }));
     let r = enviar(s, 'c1', { tipo: 'hash', escopo: 'draft', ancora: 0, hash: 'b'.repeat(16) });
     s = r.estado;
     alarmes.push(...r.divergencias);
@@ -490,9 +532,10 @@ describe('atestados por escopo NÃO se misturam (PR 2/4 de "corrida online")', (
       alarmes.every((a) => a.escopo === 'draft'),
       'nenhum alarme pode sair em "corrida" — os dois concordaram lá',
     ).toBe(true);
-    expect(s.atestados?.corrida?.alarmado ?? false, 'o balde da corrida não pode ter sido tocado').toBe(
-      false,
-    );
-    expect(s.atestados?.draft?.alarmado).toBe(true);
+    expect(
+      s.atestados?.['corrida:0']?.alarmado ?? false,
+      'o balde da corrida não pode ter sido tocado',
+    ).toBe(false);
+    expect(s.atestados?.['draft:0']?.alarmado).toBe(true);
   });
 });

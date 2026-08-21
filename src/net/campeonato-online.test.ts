@@ -83,7 +83,7 @@ function ok(estado: EstadoSala, comando: ComandoSala, remetenteId: string | null
 }
 
 function salaVazia(dificuldade: Dificuldade = 'dificil'): EstadoSala {
-  return criarSala('A3F9C2', SEED_MESTRE, dificuldade, T0, SEEDS);
+  return criarSala('A3F9C2', SEED_MESTRE, dificuldade, T0, SEEDS, N_ETAPAS_CURTA);
 }
 
 /** Sala iniciada com `n` humanos — draft criado, fase 'sorteios'. */
@@ -365,41 +365,71 @@ describe('🔒 seedsAbertas — só as abertas, nunca as futuras', () => {
     expect(publico.nEtapas).toBe(N_ETAPAS_CURTA);
   });
 
-  it('o cursor NÃO avança neste PR — publicar só a etapa 0 é o escopo', () => {
+  it('o cursor avança desde o 3.5.2 — na etapa 0 sai só a etapa 0', () => {
     const sala = salaConcluida();
     expect(sala.etapaAtual).toBe(0);
     expect(publicarSala(sala).seedsAbertas).toEqual([SEEDS.etapas[0]]);
   });
 
-  it('com o cursor adiantado à mão, abertas acompanham — e param em nEtapas', () => {
-    // O 3.5.2 é quem move o cursor; aqui se prova que o RECORTE está certo
-    // antes de existir quem o mova, e que ele satura em `N_ETAPAS_CURTA` em
-    // vez de vazar as 10 sorteadas.
+  it('com o cursor adiantado, abertas acompanham — e param em nEtapas', () => {
+    // O RECORTE: cursor k ⇒ as k+1 primeiras seeds, nunca as futuras, e nunca
+    // mais que `nEtapas` das 10 sorteadas.
     const base = salaConcluida();
     expect(publicarSala({ ...base, etapaAtual: 2 }).seedsAbertas).toEqual(
       SEEDS.etapas.slice(0, 3),
     );
-    const noFim = publicarSala({ ...base, etapaAtual: MAX_ETAPAS + 5 });
+    // 🔒 A ÚLTIMA etapa é o teto legal do cursor desde o 3.5.2, e é aqui que
+    // se prova que o recorte satura nela em vez de vazar as 10.
+    const noFim = publicarSala({ ...base, etapaAtual: N_ETAPAS_CURTA - 1 });
     expect(noFim.seedsAbertas).toHaveLength(N_ETAPAS_CURTA);
     expect(noFim.seedsAbertas).toEqual(SEEDS.etapas.slice(0, N_ETAPAS_CURTA));
   });
 
-  it('🔒 o CURSOR publicado também é clampado — o snapshot não se contradiz', () => {
-    // Aviso A1 da revisão: `seedsAbertas` saturava mas `etapaAtual` ia cru, e o
-    // teste acima ABENÇOAVA a inconsistência (olhava as seeds e não o cursor).
-    // Um snapshot com `etapaAtual: 15`, `nEtapas: 5` e 5 seeds faria o cliente
-    // do 3.5.2 indexar `calendario[15]` e pegar `undefined`.
+  it('🔒 cursor VÁLIDO: a invariante dos três campos publicados vale', () => {
+    // Aviso A1 da revisão do 3.5.1: `seedsAbertas` saturava mas `etapaAtual`
+    // ia cru, e o teste ABENÇOAVA a inconsistência (olhava as seeds e não o
+    // cursor). Um snapshot com `etapaAtual: 15`, `nEtapas: 5` e 5 seeds faria
+    // o cliente do 3.5.3 indexar `calendario[15]` e pegar `undefined`.
     const base = salaConcluida();
-    for (const cursor of [0, 2, N_ETAPAS_CURTA - 1, N_ETAPAS_CURTA, MAX_ETAPAS + 5, -3]) {
+    for (let cursor = 0; cursor < N_ETAPAS_CURTA; cursor += 1) {
       const publico = publicarSala({ ...base, etapaAtual: cursor });
-      expect(publico.etapaAtual, `cursor ${cursor} saiu fora da faixa`).toBeGreaterThanOrEqual(0);
+      expect(publico.etapaAtual, `cursor ${cursor} saiu fora da faixa`).toBe(cursor);
       expect(publico.etapaAtual, `cursor ${cursor} passou de nEtapas`).toBeLessThan(
         publico.nEtapas,
       );
-      // A invariante que liga os três campos publicados.
       expect(publico.seedsAbertas, `invariante quebrada no cursor ${cursor}`).toHaveLength(
         Math.min(publico.etapaAtual + 1, publico.nEtapas),
       );
+    }
+  });
+
+  it('🟠 PENDÊNCIA 0(t): cursor INVÁLIDO ⇒ o snapshot SE CONTRADIZ (registrado, não consertado)', () => {
+    // 🔴 Este teste NÃO abençoa o comportamento — ele o TRAVA para que a
+    // pendência 0(t) não possa mudar de forma sem alguém perceber. Ver
+    // `ESTADO.md` §Pendências 0(t).
+    //
+    // O que mudou no 3.5.2: `cursorPublicavel` CLAMPA o cursor, mas
+    // `seedsAbertasDe` passa por `estadoDasSeeds`, que agora reprova cursor
+    // fora de faixa e devolve `corrompida` ⇒ `[]`. Os dois leitores do mesmo
+    // snapshot passaram a responder a autoridades diferentes, e a invariante
+    // `seedsAbertas.length === min(etapaAtual + 1, nEtapas)` **quebra**.
+    //
+    // 🔑 A invariante deixou de ser LOCAL: ela só vale porque a casca recusa a
+    // sala `corrompida` ANTES de publicá-la. Nenhuma sala de produção chega
+    // aqui — o servidor nunca grava cursor fora de faixa, e por isso os
+    // valores abaixo precisam ser forjados à mão.
+    const base = salaConcluida();
+    for (const cursor of [N_ETAPAS_CURTA, MAX_ETAPAS + 5, -3]) {
+      const publico = publicarSala({ ...base, etapaAtual: cursor });
+
+      // O clamp continua fazendo a parte dele: o cursor publicado é legal.
+      expect(publico.etapaAtual, `cursor ${cursor} vazou cru`).toBeGreaterThanOrEqual(0);
+      expect(publico.etapaAtual, `cursor ${cursor} passou de nEtapas`).toBeLessThan(
+        publico.nEtapas,
+      );
+      // E o vazamento é para MENOS, nunca para mais: zero seed publicada.
+      expect(publico.seedsAbertas, `cursor ${cursor} vazou seed de sala corrompida`).toEqual([]);
+      expect(estadoDasSeeds({ ...base, etapaAtual: cursor }).tipo).toBe('corrompida');
     }
   });
 
@@ -490,7 +520,7 @@ describe('🔑 B-indep: as seeds são SORTEADAS, não derivadas', () => {
 describe('🔴 CERCA DO SÍTIO QUE REALMENTE SORTEIA (`party/sala.ts`)', () => {
   /**
    * 🔴 **BLOQUEANTE DA REVISÃO, e o achado mais importante do PR.** Todo o
-   * bloco `B-indep` acima exercita `criarSala(..., SEEDS)` com uma FIXTURE
+   * bloco `B-indep` acima exercita `criarSala(..., SEEDS, N_ETAPAS_CURTA)` com uma FIXTURE
    * LITERAL. Provar que `811_000_001 !== deriveSeed(123_456_789, …)` é
    * aritmética sobre constantes do próprio teste — **não diz nada sobre
    * produção.** Quem sorteia de verdade é `party/sala.ts`, e `party/` tem
@@ -650,6 +680,128 @@ describe('🔴 CERCA DO SÍTIO QUE REALMENTE SORTEIA (`party/sala.ts`)', () => {
     // `corrompida` — recusando todo mundo. **`Array.from` é necessário, e agora
     // isso está medido, não argumentado.**
     expect(fonteDaCasca()).toMatch(/const todas = Array\.from\(slots\)/);
+  });
+});
+
+describe('🔴 C1 (revisão do 3.5.2) — `nEtapas` é campo PERSISTIDO e entra no discriminante', () => {
+  /**
+   * 🔴 **BLOQUEANTE C1 DA REVISÃO, e ele era real — medido, não deduzido.**
+   *
+   * O 3.5.2 acrescentou `nEtapas` ao estado persistido e o deixou de fora do
+   * discriminante, lido por um `??` com default 1. Medido numa sonda antes do
+   * conserto: sala de 5 etapas que perde o campo na reidratação faz a PRIMEIRA
+   * barreira gravar `concluidaEm` (contra `concluidaEm: null` + cursor 1 no
+   * controle) — **campeonato de 5 etapas encerrado na etapa 1, em silêncio**;
+   * e, se o cursor já tinha andado, `cursorIntegro(3, 1)` reprova e a sala vira
+   * `corrompida`, recusando todo mundo.
+   *
+   * 🔑 **É exatamente a tese que o 3.5.1 travou** ("campo que some na
+   * reidratação é CORRUPÇÃO, não default"), furada pela porta do conserto: os
+   * três campos anteriores (`seedsEtapas`, `seedCalendario`, `etapaAtual`) já
+   * estavam no discriminante, e o quarto — o que decide quando o campeonato
+   * ACABA — entrou por fora.
+   *
+   * ⚠️ **O bump de `VERSAO_ESTADO_SALA` não é cerimônia: sem ele o conserto é
+   * impossível.** Com a versão parada em 1, "sala 3.5.1 que legitimamente não
+   * tem `nEtapas`" e "sala 3.5.2 que o perdeu" são o MESMO objeto, e nenhuma
+   * guarda consegue separá-las. É a colisão que `versaoSala` foi criada para
+   * impedir — e o comentário de `servidor-sala.ts` que afirmava "o formato não
+   * mudou, só o significado do cursor" era falso: o formato ganhou um campo.
+   */
+  it('🔴 BASELINE: sala v2 que PERDE `nEtapas` é CORROMPIDA, não sala de 1 etapa', () => {
+    const quebrada = reidratar(salaConcluida());
+    // Pré-condições asseridas, não supostas.
+    expect(quebrada.versaoSala, 'a sala nasce na versão corrente').toBe(VERSAO_ESTADO_SALA);
+    expect(quebrada.nEtapas, 'e o campo novo está lá').toBe(N_ETAPAS_CURTA);
+    delete quebrada.nEtapas;
+
+    const estado = estadoDasSeeds(quebrada);
+    expect(estado.tipo).toBe('corrompida');
+    expect(estado.tipo === 'corrompida' && estado.motivo).toContain('nEtapas');
+  });
+
+  it('🔴 BASELINE: o BUMP existe — o formato mudou, a versão tem de acompanhar', () => {
+    // Sem isto, o teste acima passaria com a versão parada em 1 e a distinção
+    // v1-legítima × v2-corrompida seria impossível de escrever.
+    expect(VERSAO_ESTADO_SALA).toBeGreaterThanOrEqual(2);
+  });
+
+  it('🔒 sala 3.5.1 LEGÍTIMA (v1, sem `nEtapas`) NÃO vira corrompida por isso', () => {
+    // O outro lado da guarda, e é ele que impede o conserto de matar toda sala
+    // em andamento no momento do deploy. Uma sala v1 é campeonato de 1 etapa
+    // por definição — é o que o código do 3.5.1 fazia.
+    const v1 = reidratar(salaConcluida());
+    delete v1.nEtapas;
+    v1.versaoSala = 1;
+
+    expect(estadoDasSeeds(v1).tipo).toBe('ok');
+    expect(publicarSala(v1).nEtapas, 'v1 é campeonato de UMA etapa').toBe(1);
+  });
+
+  it('🔒 valor FORA DE FORMA em sala v2 é corrupção igual à ausência', () => {
+    for (const ruim of [0, -1, 1.5, '5', null, Number.NaN]) {
+      const quebrada = reidratar(salaConcluida());
+      (quebrada as unknown as { nEtapas: unknown }).nEtapas = ruim;
+      expect(estadoDasSeeds(quebrada).tipo, `nEtapas=${String(ruim)} passou`).toBe('corrompida');
+    }
+  });
+
+  /**
+   * 🔴 **Aviso 3 da SEGUNDA passada da revisão.** `criarSala` limita `nEtapas` a
+   * `[1, seeds.etapas.length]` (A4), mas o **caminho de LEITURA** não limitava
+   * nada: um `nEtapas: 999` vindo do storage passava no discriminante, e
+   * `aoReceber` usa `nEtapasDaSala(sala) - 1` como teto de `atestadoValido` ⇒
+   * **999 baldes por escopo no estado persistido do Durable Object**.
+   *
+   * 🔑 Isso derrubava a propriedade que o próprio PR declara no docblock de
+   * `EstadoServidor.atestados` ("o teto do número de baldes é
+   * `escopos × nEtapas`") — **guarda de escrita sem guarda de leitura não é
+   * teto, é convenção**, e o estado persistido não vem só de `criarSala`.
+   */
+  it('🔒 TETO DE LEITURA: `nEtapas` acima do número de seeds é corrupção', () => {
+    for (const alto of [MAX_ETAPAS + 1, 999, 2 ** 40]) {
+      const quebrada = reidratar(salaConcluida());
+      quebrada.nEtapas = alto;
+      expect(estadoDasSeeds(quebrada).tipo, `nEtapas=${alto} passou`).toBe('corrompida');
+    }
+  });
+
+  it('🛡️ ANTI-VACUIDADE do teto: `nEtapas === MAX_ETAPAS` continua legítimo', () => {
+    // Sem isto, o teto poderia ter sido escrito com `<` no lugar de `<=` e
+    // reprovaria o campeonato completo, que é formato válido.
+    const noLimite = reidratar(salaConcluida());
+    noLimite.nEtapas = MAX_ETAPAS;
+    expect(estadoDasSeeds(noLimite).tipo).toBe('ok');
+  });
+
+  /**
+   * 🔴 **Aviso A4 da revisão do 3.5.2, promovido a conserto por decisão do dev.**
+   *
+   * `criarSala` já falhava alto na cardinalidade das SEEDS (aviso A5 da revisão
+   * do 3.5.1) e pelo mesmo motivo: melhor estourar no deploy do que parir sala
+   * morta em produção, porque o `POST /criar-sala` já respondeu 200 com o
+   * código. `nEtapas` entrava CRU ao lado dessa guarda.
+   *
+   * O caso que dói é `nEtapas > seeds.etapas.length`: a sala nasce válida pelo
+   * discriminante, joga normalmente até a etapa 9 e então pede uma seed que não
+   * existe. E `nEtapas: 0` produzia estado e leitura em desacordo — o campo
+   * dizia 0, `nEtapasDaSala` devolvia 1.
+   */
+  it('🔴 BASELINE (A4): `criarSala` recusa `nEtapas` fora de forma ou maior que as seeds', () => {
+    for (const ruim of [0, -1, 1.5, MAX_ETAPAS + 1, Number.NaN]) {
+      expect(
+        () => criarSala('A3F9C2', SEED_MESTRE, 'dificil', T0, SEEDS, ruim),
+        `nEtapas=${String(ruim)} não estourou`,
+      ).toThrow(/nEtapas/);
+    }
+  });
+
+  it('🔒 anti-vacuidade (A4): os valores LEGÍTIMOS continuam passando', () => {
+    // Sem isto, a guarda acima passaria com um `throw` incondicional.
+    for (const bom of [1, N_ETAPAS_CURTA, MAX_ETAPAS]) {
+      const sala = criarSala('A3F9C2', SEED_MESTRE, 'dificil', T0, SEEDS, bom);
+      expect(sala.nEtapas, `nEtapas=${bom} foi recusado`).toBe(bom);
+    }
   });
 });
 
