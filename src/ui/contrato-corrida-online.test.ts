@@ -404,22 +404,37 @@ describe('ALLOWLIST em src/{engine,net,ui}: quem pode REFERENCIAR cada função'
       ].join('\n'),
       'utf8',
     );
+    // 🔴 **UMA varredura só, e o arquivo sai do disco IMEDIATAMENTE depois.**
+    // A primeira versão deste teste varria a árvore SEIS vezes (uma por
+    // asserção) com o arquivo de sabotagem em disco, e isso derrubou o
+    // `npm test`: `contrato-ausente.test.ts` percorre `src/ui/` com
+    // `readdirSync`/`statSync` em paralelo, e um arquivo que some no meio do
+    // passeio faz o `statSync` estourar. Foi observado como **2 testes
+    // vermelhos em `contrato-ausente.test.ts`**, num PR que não toca nada do
+    // ausente. Ler o disco uma vez e assertar em memória fecha a janela para
+    // o tamanho das outras sabotagens.
+    let fontes: { caminho: string; semCom: string }[];
     try {
-      const referenciadoresDe = (nomeFn: string): string[] =>
-        arquivosDeProducao()
-          .filter((arquivo) => referenciaDe(semComentarios(readFileSync(arquivo, 'utf8')), nomeFn))
-          .map(relativo)
-          .sort();
-
-      for (const nomeFn of ['etapasDaSala', 'classificacaoDaSala', 'seedDaEtapa']) {
-        expect(
-          referenciadoresDe(nomeFn),
-          `a cerca de "${nomeFn}" não pegou o arquivo de fuga — é o bloqueante C1 voltando`,
-        ).not.toEqual([...PERMITIDOS[nomeFn]].sort());
-        expect(referenciadoresDe(nomeFn)).toContain('src/ui/__sabotagem_etapas_dupla.tsx');
-      }
+      fontes = arquivosDeProducao().map((arquivo) => ({
+        caminho: relativo(arquivo),
+        semCom: semComentarios(readFileSync(arquivo, 'utf8')),
+      }));
     } finally {
       unlinkSync(sabotagem);
+    }
+
+    const referenciadoresDe = (nomeFn: string): string[] =>
+      fontes
+        .filter(({ semCom }) => referenciaDe(semCom, nomeFn))
+        .map(({ caminho }) => caminho)
+        .sort();
+
+    for (const nomeFn of ['etapasDaSala', 'classificacaoDaSala', 'seedDaEtapa']) {
+      expect(
+        referenciadoresDe(nomeFn),
+        `a cerca de "${nomeFn}" não pegou o arquivo de fuga — é o bloqueante C1 voltando`,
+      ).not.toEqual([...PERMITIDOS[nomeFn]].sort());
+      expect(referenciadoresDe(nomeFn)).toContain('src/ui/__sabotagem_etapas_dupla.tsx');
     }
   });
 
