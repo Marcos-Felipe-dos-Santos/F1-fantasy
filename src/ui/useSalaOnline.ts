@@ -81,8 +81,15 @@ export interface UseSalaOnline {
    * 🏆 As etapas ABERTAS do campeonato online, derivadas do snapshot (PR 3.5.3).
    *
    * `[]` enquanto o draft não conclui e em sala legado. Cresce quando o cursor
-   * do servidor anda: `etapas[k]` é a etapa k, e `etapas.length - 1` é a etapa
-   * corrente (`cliente.sala.etapaAtual` diz o mesmo, pelo lado do servidor).
+   * do servidor anda: `etapas[k]` é a etapa k.
+   *
+   * 🔒 **A ETAPA CORRENTE É `etapas.length - 1`, NUNCA `sala.etapaAtual` — e a
+   * redação anterior desta linha dizia que os dois "dizem o mesmo", o que a
+   * pendência 0(t) torna FALSO.** Numa sala `corrompida` o snapshot se
+   * autocontradiz: sai `etapaAtual: 4` com `seedsAbertas: []`. Derivando de
+   * `seedsAbertas`, este código devolve `[]` e não trava; indexando por
+   * `etapaAtual`, o 3.5.4 leria `etapas[4]` de uma lista vazia e a 0(t)
+   * voltaria como tela quebrada. **Invariante que o 3.5.4 tem que preservar.**
    *
    * ⚠️ **NADA CONSOME ISTO AINDA, e é de propósito (recorte do 3.5.3).** A tela
    * e o atestado de hash continuam ligados em `corrida` acima — a corrida
@@ -92,6 +99,16 @@ export interface UseSalaOnline {
    * JUNTAS, porque atestar o hash da etapa k com a tela mostrando a etapa 0 é a
    * classe de bug do 8.4 — a mesma que este arquivo existe para evitar. **É o
    * 3.5.4 que as liga, no PR que tem portão visual.**
+   *
+   * 🔴 **"Nada consome" é verdade sobre CONSUMO e falso sobre EXECUÇÃO** (aviso
+   * A1 da revisão). `useMemo` roda o corpo quando as dependências mudam, leia
+   * alguém o retorno ou não — então, a partir do merge, a derivação roda em
+   * todo cliente de toda sala. Duas consequências, ditas como são: o custo
+   * medido (mediana **0,6 ms**, pior **1,8 ms**, para 22 carros × 5 etapas) é
+   * gasto na main thread **agora**, não adiado para o 3.5.4; e o `throw` de
+   * `etapasDaSala` para snapshot incoerente já pode cair **em render** neste
+   * PR, não no seguinte. Ver a ressalva de `nEtapas` no docblock de
+   * `etapasDaSala`.
    */
   etapas: CorridaPreparada[];
   /**

@@ -14,6 +14,7 @@ import { revelarRodada } from '../engine/draft';
 import type { DraftState, EscolhaDraft } from '../engine/types';
 import { aplicarEscolhaHumano, ID_HUMANO, iniciarDraftSingle } from './fluxo-draft';
 import { classificacaoDaSala, corridaDaSala, etapasDaSala } from './corrida-online';
+import { prepararCorrida } from './fluxo-corrida';
 import { pistaSorteada } from '../engine/pista-sorteada';
 import { calendarioSorteado, seedDaEtapa, simularEtapa } from '../engine/campeonato';
 import type { Loadout } from '../engine/types';
@@ -67,6 +68,36 @@ describe('corridaDaSala', () => {
     const corrida = corridaDaSala(dataset, draft, 777);
     expect(corrida.pistaId).toBe(pistaSorteada(dataset, 777));
     expect(corrida.pista.id).toBe(corrida.pistaId);
+  });
+
+  it('🔑 SEM `pistaId`, a simulação usa a seed CRUA — a outra metade da bifurcação (aviso A3)', () => {
+    // 🔴 **A revisão do 3.5.3 achou este buraco e a MEDIÇÃO confirmou:** o
+    // docblock de `corridaDaSala` declara as duas semânticas de seed como
+    // carga estrutural, mas só a metade da ETAPA estava travada. Medido: a
+    // mutação `const seedDaSimulacao = seedDaEtapa(seed, idDaPista);`
+    // (incondicional, matando o ternário) deixava a suíte **INTEIRA verde,
+    // 1557/1557**, com `tsc` e `eslint` limpos — a corrida avulsa online
+    // passaria a ser simulada com seed derivada, deixando de bater com a
+    // avulsa OFFLINE, e nada acusaria.
+    //
+    // Simétrico do teste de conformidade das etapas: recompõe pelo caminho
+    // independente (`prepararCorrida` com a seed crua) e exige igualdade.
+    const draft = jogarDraftAteConcluir('avulsa-seed-crua');
+    const seed = 987_654;
+    const pistaId = pistaSorteada(dataset, seed);
+    const esperada = prepararCorrida(dataset, draft, pistaId, seed);
+
+    const avulsa = corridaDaSala(dataset, draft, seed);
+    expect(avulsa.pistaId).toBe(pistaId);
+    expect(avulsa.grid).toEqual(esperada.grid);
+    expect(avulsa.resultado).toEqual(esperada.resultado);
+
+    // 🔴 ANTI-VACUIDADE: a seed DERIVADA tem que produzir outra corrida na
+    // MESMA pista. Sem isto, as duas semânticas poderiam coincidir e a
+    // asserção acima passaria sem distinguir nada.
+    const comoEtapa = corridaDaSala(dataset, draft, seed, pistaId);
+    expect(comoEtapa.pistaId).toBe(pistaId);
+    expect(comoEtapa.resultado).not.toEqual(esperada.resultado);
   });
 
   it('seedCorrida diferente ⇒ resultado diferente (a seed está sendo usada)', () => {

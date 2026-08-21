@@ -100,9 +100,29 @@ export function corridaDaSala(
  * computáveis porque a seed delas não está aqui**, não porque alguém se lembrou
  * de cortar a lista.
  *
- * Devolve `[]` quando o draft ainda não concluiu (o servidor segura
- * `seedCalendario` e `seedsAbertas` até lá, mesmo portão da `seedCorrida`) e
- * para sala **legado** — que nunca teve seeds de campeonato.
+ * Devolve `[]` em dois casos, e **só nesses dois**: `seedCalendario === null`
+ * e `seedsAbertas` vazio. Na prática é o que cobre sala **legado** (nunca teve
+ * seeds) e o draft em andamento — mas por caminho INDIRETO, e a diferença
+ * importa.
+ *
+ * ⚠️ **Esta função NÃO olha `draft.fase`, e a redação anterior deste bloco
+ * dizia que ela devolvia `[]` "quando o draft ainda não concluiu"** (aviso A5
+ * da revisão). Isso é falso: chamada com draft em andamento e `seedsAbertas`
+ * não vazio, ela **LANÇA**, por `prepararCorrida` (`fluxo-corrida.ts`). Quem
+ * garante que esse par nunca acontece são o portão do SERVIDOR (segura
+ * `seedCalendario`/`seedsAbertas` até o draft concluir, mesmo portão da
+ * `seedCorrida`) e a guarda de fase do `useSalaOnline`. Quem chamar daqui
+ * sem uma das duas recebe exceção, não lista vazia.
+ *
+ * ⚠️ **`nEtapas` do snapshot NÃO é lido aqui — o formato é fixo em `'curta'`
+ * (5), e hoje isso é coerente porque a casca sempre cria a sala com
+ * `N_ETAPAS_CURTA`.** Mas o teto de LEITURA do servidor é `[1, 10]`
+ * (`sala.ts`, contra `seedsEtapas.length === MAX_ETAPAS`), não 5 — então uma
+ * sala v2 com `nEtapas: 10` é considerada **`ok`**, publica 6+ seeds abertas,
+ * e esta função lança em `calendario[5]`. **Pendência aberta, decisão do
+ * dev** (ver `ESTADO.md`): ou o formato passa a sair de `sala.nEtapas`, ou o
+ * cliente ganha uma borda que capture o erro. Registrado aqui porque é onde a
+ * próxima pessoa vai olhar.
  */
 export function etapasDaSala(
   dataset: Dataset,

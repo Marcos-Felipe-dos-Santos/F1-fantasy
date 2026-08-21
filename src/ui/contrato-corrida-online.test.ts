@@ -188,11 +188,22 @@ function referenciaDe(fonteSemComentarios: string, nomeFn: string): boolean {
  *   afrouxamento** — são dois sítios com dono declarado (a corrida avulsa no
  *   hook, as etapas no módulo puro), cada um travado em UMA chamada exata
  *   pelo bloqueante 2 abaixo. Um terceiro arquivo continua reprovando.
+ * - 🔴 **`etapasDaSala` e `classificacaoDaSala` entraram por BLOQUEANTE da
+ *   revisão (C1), e a lacuna foi MEDIDA:** com elas fora da allowlist, um
+ *   painel do 3.5.4 chamando `etapasDaSala` direto deixava esta cerca
+ *   **verde, 26/26** — nenhum dos nomes vigiados aparece, porque todos ficam
+ *   atrás da indireção. Ponto de entrada público que computa corrida online
+ *   entra aqui **no PR que o cria**, nunca no seguinte.
  * - 🔒 **`seedDaEtapa` entrou no 3.5.3 — cerca NOVA, não relaxamento de
- *   nenhuma.** Ela é a costura entre a seed publicada pelo servidor e a
- *   simulação: quem criar um segundo caminho de derivação ("consertando" a
- *   etapa online com um rótulo próprio) produz uma corrida determinística e
- *   DIFERENTE da etapa offline, sem nada quebrar. Os dois primeiros arquivos
+ *   nenhuma.** ⚠️ **O que ela mede, dito com precisão** (aviso A4 da revisão;
+ *   a redação anterior afirmava mais): ela garante **UMA COSTURA SÓ** entre a
+ *   seed publicada e a simulação — ninguém além destes arquivos chama a
+ *   função. Ela **NÃO** pega quem derivar por fora sem citá-la: um
+ *   `deriveSeed(seed, \`camp:${pistaId}:online\`)` num arquivo novo passa
+ *   aqui **e** no registro de namespaces (o prefixo capturado é `camp`, que
+ *   está registrado). Contra ESSE caminho quem defende é o teste de
+ *   conformidade bit a bit contra `simularEtapa`, não esta varredura.
+ *   Os dois primeiros arquivos
  *   são pré-existentes (medidos por `grep`, não herdados do plano): a engine
  *   a declara e a usa em `simularCampeonato`, e `FluxoCampeonato.tsx` a chama
  *   na etapa offline. As menções em `fluxo-corrida.ts`, `persistencia.ts` e
@@ -221,6 +232,8 @@ const PERMITIDOS: Record<string, string[]> = {
     'src/ui/FluxoCampeonato.tsx',
     'src/ui/corrida-online.ts',
   ],
+  etapasDaSala: ['src/ui/useSalaOnline.ts'],
+  classificacaoDaSala: ['src/ui/useSalaOnline.ts'],
 };
 
 describe('a varredura enxerga os arquivos de verdade (anti-vacuidade)', () => {
@@ -354,31 +367,57 @@ describe('ALLOWLIST em src/{engine,net,ui}: quem pode REFERENCIAR cada função'
     }
   });
 
-  it('🔴 SABOTAGEM: um segundo caminho de derivação de seed de etapa reprova (PR 3.5.3)', () => {
-    // O cenário exato que a cerca nova de `seedDaEtapa` existe pra impedir: um
-    // arquivo que "conserta" a etapa online derivando a seed por conta própria.
-    // O resultado seria uma corrida perfeitamente determinística e DIFERENTE da
-    // etapa que o offline simula com a mesma seed — nada quebra, o hash bate
-    // entre os clientes, e só a conformidade contra `simularEtapa` acusa.
-    const sabotagem = join(AQUI, '__sabotagem_seed_etapa.ts');
+  it('🔴 SABOTAGEM: o arquivo NOVO do 3.5.4 que deriva as etapas por conta própria reprova (PR 3.5.3)', () => {
+    // 🔴 **BLOQUEANTE C1 DA REVISÃO, e ele era real — medido, não lido.** A
+    // primeira versão deste PR pôs `etapasDaSala`/`classificacaoDaSala` em
+    // produção SEM entrada na allowlist. Medido com um `PainelFuga.tsx`
+    // sintético na árvore chamando `etapasDaSala`: esta cerca ficava
+    // **VERDE, 26/26** — o arquivo não referencia nenhum dos nomes vigiados,
+    // porque todos ficam ATRÁS da indireção. Era o cenário literal da
+    // sabotagem `__sabotagem_corrida_dupla` entrando por uma porta nova:
+    // duas listas de etapas com referências diferentes, a tela lendo uma e o
+    // atestado a outra — a classe de bug do 8.4, que é a tese do arquivo.
+    //
+    // 🔒 **Cerca criada no MESMO PR da tentação, de propósito.** O 3.5.4 é
+    // quem vai desenhar a tabela e o calendário, e a tentação exata é chamar
+    // `etapasDaSala` direto no painel em vez de receber a lista já computada
+    // por `useSalaOnline`. Escrita depois, seria moldada pela tentação.
+    //
+    // 🔑 **Um arquivo só para as TRÊS cercas novas, e isso não é economia de
+    // digitação:** cada sabotagem que grava em `src/ui/` abre uma janela em
+    // que outra suíte varrendo a mesma árvore em paralelo pode falhar. A
+    // janela é PRÉ-EXISTENTE e está medida (ver a dívida registrada no
+    // `ESTADO.md`); somar um arquivo por cerca a alargaria de graça.
+    const sabotagem = join(AQUI, '__sabotagem_etapas_dupla.tsx');
     writeFileSync(
       sabotagem,
       [
+        "import { classificacaoDaSala, etapasDaSala } from './corrida-online';",
         "import { seedDaEtapa } from '../engine/campeonato';",
-        'export function seedDaEtapaOnline(seed: number, pistaId: string): number {',
-        '  return seedDaEtapa(seed, pistaId);',
+        "import { dataset } from './dataset-app';",
+        'export function PainelFuga({ draft, seedCal, abertas }: { draft: any; seedCal: number; abertas: number[] }) {',
+        '  const etapas = etapasDaSala(dataset, draft, seedCal, abertas);',
+        '  const tabela = classificacaoDaSala(etapas, draft);',
+        '  return <p>{tabela.length + seedDaEtapa(seedCal, "x")}</p>;',
         '}',
         '',
       ].join('\n'),
       'utf8',
     );
     try {
-      const referenciadores = arquivosDeProducao()
-        .filter((arquivo) => referenciaDe(semComentarios(readFileSync(arquivo, 'utf8')), 'seedDaEtapa'))
-        .map(relativo)
-        .sort();
-      expect(referenciadores).not.toEqual([...PERMITIDOS.seedDaEtapa].sort());
-      expect(referenciadores).toContain('src/ui/__sabotagem_seed_etapa.ts');
+      const referenciadoresDe = (nomeFn: string): string[] =>
+        arquivosDeProducao()
+          .filter((arquivo) => referenciaDe(semComentarios(readFileSync(arquivo, 'utf8')), nomeFn))
+          .map(relativo)
+          .sort();
+
+      for (const nomeFn of ['etapasDaSala', 'classificacaoDaSala', 'seedDaEtapa']) {
+        expect(
+          referenciadoresDe(nomeFn),
+          `a cerca de "${nomeFn}" não pegou o arquivo de fuga — é o bloqueante C1 voltando`,
+        ).not.toEqual([...PERMITIDOS[nomeFn]].sort());
+        expect(referenciadoresDe(nomeFn)).toContain('src/ui/__sabotagem_etapas_dupla.tsx');
+      }
     } finally {
       unlinkSync(sabotagem);
     }
