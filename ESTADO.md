@@ -8,10 +8,19 @@
 
 ## Estado atual
 
-**Última medição (PR 3.5.2, 2026-08-20, na branch `pr-3.5.2-cursor-por-etapa`, pós-revisão e
-pós-conserto de DUAS passadas de revisão):** `npm test` **1544/64**, **`npm run test:party` 10/10**,
-typecheck **0** nos três projetos, eslint **0**, build **0**. `VERSAO_APP` **3.4.2** (sem bump —
-o digest não foi tocado). ⚠️ **`VERSAO_ESTADO_SALA` subiu de 1 para 2** — ver a §Onde parei.
+**Última medição (PR 3.5.3, 2026-08-21, na branch `pr-3.5.3-cliente-multietapa`, pós-revisão e
+pós-conserto do bloqueante C1):** `npm test` **1560/64**, **`npm run test:party` 10/10**, typecheck
+**0** nos três projetos, eslint **0**, build **0**. `VERSAO_APP` **3.4.2** (sem bump — medido: o
+digest não foi tocado e nenhum rótulo novo nasceu).
+⚠️ **O `npm test` deste projeto tem uma corrida de I/O entre duas cercas e pode falhar por
+escalonamento — pendência 0(v), medida e PRÉ-EXISTENTE.** A parcela introduzida pelo 3.5.3 foi
+fechada (5 rodadas seguidas a 1560/1560), mas **um vermelho em `contrato-ausente.test.ts` num PR que
+não toca o ausente é sintoma disso, não regressão** — reproduzir antes de caçar bug.
+
+*(Medição anterior, PR 3.5.2, 2026-08-20, na branch `pr-3.5.2-cursor-por-etapa`):* `npm test`
+**1544/64**, **`npm run test:party` 10/10**, typecheck **0** nos três projetos, eslint **0**, build
+**0**. `VERSAO_APP` **3.4.2** (sem bump — o digest não foi tocado).
+⚠️ **`VERSAO_ESTADO_SALA` subiu de 1 para 2** — ver a §Onde parei.
 
 *(Medição anterior, PR B do spike, 2026-08-19, na `main` pós-merge):* `npm test` **1516/63**,
 **`npm run test:party` 8/8** (novo portão desde o PR A — era 5/5 lá), typecheck app **0**, typecheck
@@ -250,6 +259,75 @@ dependência).
 
 ## Onde parei
 
+**🏆 PR 3.5.3 — CLIENTE MULTIETAPA: CÓDIGO COMPLETO E VERDE em 2026-08-21**, na branch
+**`pr-3.5.3-cliente-multietapa`** (`cffe699` + `c64b8b4` + `01689a5`). **NÃO mergeado, NÃO pushado,
+sem tag.** **Medido:** `npm test` **1560/64** (era 1544/64), `npm run test:party` **10/10**
+(inalterado — não toca `party/`), typecheck **0** nos três projetos, eslint **0**, build **0**.
+**`VERSAO_APP` 3.4.2 sem bump, MEDIDO** (nenhum arquivo do digest tocado, nenhum `deriveSeed` novo).
+**`balance-harness` não rodado, e dito**: rótulo `camp:` intacto, zero arquivo de `src/engine/`.
+Detalhe completo: `HISTORICO.md` §"PR 3.5.3".
+
+🔑 **O RECORTE MUDOU ANTES DE COMEÇAR, por decisão do dev — e o motivo é código, não preferência.**
+O plano punha "atestado por etapa" no 3.5.3 e o `key={'etapa-'+k}` + remoção do `naCorrida` no
+3.5.4. Rastreado no código: `useCorrida` semeia o `useState` de `fonte` UMA vez, o atestado sai por
+mudança de REFERÊNCIA de `corrida`, e `corrida-concluida` não carrega etapa (o balde vem do cursor
+do servidor). Logo, atestar `etapa: etapaAtual` **sem o remount** dá **hash da etapa k com a tela da
+etapa 0** — a forma exata do bug do 8.4, produzida pelo fatiamento, dentro do PR cuja cerca existe
+para impedi-la; e `contrato-corrida-online.test.ts` **não pegaria** (conta sítios textuais, não
+remount). **Veredito do dev: opção (A), derivação PURA.** A fiação inteira vai para o 3.5.4, que tem
+portão visual. A opção de seguir o plano à risca foi descartada explicitamente — deixaria
+divergência conhecida na `main` entre dois PRs.
+
+🔒 **A lógica ficou em módulo PURO (`etapasDaSala`/`classificacaoDaSala` em `corrida-online.ts`), não
+no `useMemo`** — porque **o projeto não tem `jsdom` nem `@testing-library` (medido)** e nada dentro
+do hook é alcançável por mutação. Desvio declarado da letra do dev ("o map mantém a contagem em 1"):
+o sítio único **mudou de arquivo**, não deixou de ser único, e virou testável.
+
+🔴 **A REVISÃO REPROVOU NA PRIMEIRA PASSADA — um bloqueante, confirmado por MEDIÇÃO:**
+- **C1** — `etapasDaSala`/`classificacaoDaSala` nasceram **fora** da allowlist. Medido com um
+  `PainelFuga.tsx` sintético chamando `etapasDaSala`: a cerca ficava **VERDE, 26/26**, porque o
+  arquivo não cita nenhum nome vigiado — **todos ficam atrás da indireção**. 🔑 **Ponto de entrada
+  público que computa corrida online entra na cerca NO PR QUE O CRIA** (o 3.5.4 é quem desenha os
+  painéis, e é lá que a tentação mora).
+- **A3** — a metade **avulsa** das duas semânticas de seed **não tinha baseline**: a mutação
+  `seedDaSimulacao = seedDaEtapa(seed, idDaPista)` deixava a suíte **INTEIRA verde, 1557/1557**,
+  `tsc` e `eslint` limpos. 🔑 **Bifurcação declarada crítica com um lado travado é meia cerca.**
+- **A4/A5 + a meia-frase da 0(t)** — três docblocks que afirmavam mais que o código: a cerca de
+  `seedDaEtapa` garante **uma costura só** e não pega quem derive por fora sem citá-la
+  (`deriveSeed(seed,'camp:X:online')` passa nela e no registro de namespaces); `etapasDaSala` **não
+  olha `draft.fase`** e **LANÇA** em vez de devolver `[]`; e a etapa corrente é
+  **`etapas.length - 1`, NUNCA `sala.etapaAtual`**. **Todos consertados.**
+
+📊 **9 mutações, 0 sobreviventes, tabela RERODADA INTEIRA após os consertos** — todas com `tsc` e
+`eslint` limpos, cada reversão conferida por `git hash-object`: `M-seedcrua` · `M-seed-default` ·
+`M-pista` · `M-indice` · `M-futuras` · `M-throw` · `M-classif` · `M-jogadores` · `M-avulsa`.
+
+🔑 **A PENDÊNCIA 0(t) MELHOROU — e o 3.5.4 pode desfazer isso sem perceber.** A 0(t) previa que este
+cliente leria `etapaAtual` para indexar o calendário; **ele nunca lê `etapaAtual`**. No caso
+corrompido o snapshot publica `seedsAbertas: []` ⇒ `etapas` é `[]`, sem travar e sem consumir o
+campo autocontraditório. 🔒 **Invariante obrigatória para o 3.5.4: indexar por `etapas.length - 1`,
+nunca por `sala.etapaAtual`.**
+
+🔴 **TRÊS ACHADOS DE MÉTODO desta sessão** (detalhe no `HISTORICO.md`): (1) a asserção de
+**pré-condição** pegou uma seed que colidia com o calendário — `M-pista` sobreviveria por acaso;
+(2) a cerca **contrariou a minha própria medição** sobre `namespaces-seed.ts` (o nome está numa
+STRING, e `semComentarios` remove comentário, não literal); (3) 🔴 **`git checkout --` apagou o PR
+num arquivo** no meio da tabela, porque o alvo era trabalho **não commitado** — a guarda de hash
+acusou na hora e as mutações seguintes disseram `ALVO NAO ENCONTRADO` em vez de darem falso verde.
+**Reversão de mutação sobre trabalho não commitado se faz por CÓPIA.**
+
+🔴 **O PORTÃO PRINCIPAL FICOU VERMELHO POR CAUSA DA SABOTAGEM NOVA, e o conserto está medido.**
+`npm test` caiu com 2 testes de `contrato-ausente.test.ts` — arquivo que o PR não toca. Causa: a
+sabotagem varria a árvore **6×** com o arquivo de fuga em disco, e aquela suíte percorre `src/ui/`
+com `readdirSync`/`statSync` em paralelo. Conserto: **uma varredura só**, apagar, assertar em
+memória. **5 rodadas seguidas de `npm test`, 1560/1560 em todas.** ⚠️ **A janela é PRÉ-EXISTENTE,
+medido contra a base:** em `3f54436` as duas cercas juntas já falham **1-2 testes**. Virou a
+pendência **0(v)**.
+
+⬅️ **ABERTO, decisão do dev: o aviso A2 da revisão** — o cliente fixa `'curta'` (5) e o teto de
+LEITURA de `nEtapas` no servidor é `[1, 10]` (`sala.ts:324`, contra `seedsEtapas.length`). Virou a
+pendência **0(w)**.
+
 **🏁 CORRIDA ONLINE — ENCERRADA. Os quatro PRs feitos (2026-08-12 a 2026-08-17) e o ✅ PORTÃO VISUAL
 DO 4/4 APROVADO PELO DEV em 2026-08-18.** Não há nada pendente na corrida online.
 - PR 1/4 (`b67ec2b`) — seed e pista sorteadas ao fim do draft online. **Medido:** 1412/56.
@@ -350,8 +428,12 @@ casca um bug que o PR C teria pego**, puxar o C para a frente em vez de seguir a
 nasce na única parte da casca ainda sem cobertura, e a **pendência 0(s)** — suspeita de sala-zumbi —
 segue **não confirmada**, porque quem a confirmaria é o harness que o C constrói.
 
-**🔢 SEQUÊNCIA ATÉ FECHAR A FASE 3 (atualizada em 2026-08-20):**
-**3.5.2 → 3.5.3 → 3.5.4 → PR C → Fase 3 encerrada.**
+**🔢 SEQUÊNCIA ATÉ FECHAR A FASE 3 (atualizada em 2026-08-21):**
+**~~3.5.2~~ ✅ → ~~3.5.3~~ ✅ → 3.5.4 → PR C → Fase 3 encerrada.**
+🔒 **O 3.5.4 herda MAIS do que o plano previa**, por decisão do dev no 3.5.3 (opção A): além dos
+painéis e do portão visual, ele leva o **`key={'etapa-'+k}`**, a remoção do **`naCorrida`** e o
+**atestado por etapa** — as três são a mesma solda, e separá-las produz hash de uma etapa com a tela
+de outra. Ver a §Onde parei.
 
 **🏆 PR 3.5.2 — CÓDIGO COMPLETO E VERDE em 2026-08-20**, na branch **`pr-3.5.2-cursor-por-etapa`**
 (o commit `wip` `469278f` mais o trabalho desta sessão). **NÃO commitado como final, NÃO mergeado,
@@ -897,6 +979,38 @@ casca deixa de ser terra sem teste; a opção conhecida é `@cloudflare/vitest-p
    - 🟢 **(u5) — LEITURA, não medido. Cliente antigo (sem `etapa`) atestando na virada de etapa** é
      bucketizado na etapa nova e pode produzir alarme falso residual — a mesma classe que o PR
      conserta, agora numa janela estreita.
+   (v) 🟠 **NOVA (3.5.3, 2026-08-21) — MEDIDA, NÃO DEDUZIDA: o `npm test` tem uma corrida de I/O
+   entre as cercas, e ela é PRÉ-EXISTENTE.** `contrato-ausente.test.ts` percorre `src/ui/` com
+   `readdirSync`/`statSync` (`arquivosDaUi`), enquanto `contrato-corrida-online.test.ts` **grava e
+   apaga** arquivos de sabotagem na MESMA pasta, em paralelo. Arquivo que some no meio da caminhada
+   faz o `statSync` estourar, e o sintoma aparece **em outro arquivo**, sem relação com o PR.
+   **Medido contra a base `3f54436`:** as duas cercas rodadas juntas já falham **1-2 testes**
+   **sem** o 3.5.3; com a primeira versão do 3.5.3, **3-4**, e o `npm test` inteiro passou a cair.
+   ✅ **A contribuição do 3.5.3 foi FECHADA no próprio PR** (a sabotagem nova passou de 6 varreduras
+   com o arquivo em disco para 1; 5 rodadas seguidas de `npm test` a 1560/1560). 🔴 **A fragilidade
+   de fundo NÃO foi consertada e é decisão do dev:** `arquivosDaUi` não tolera arquivo sumindo
+   durante a caminhada, então **qualquer** sabotagem futura que grave em `src/ui/` pode derrubá-la —
+   e o `npm test` esconde o problema por escalonamento, o que é pior do que falhar sempre.
+   Conserto provável: `try/catch` no `statSync` da caminhada, ignorando `ENOENT`.
+   ⚠️ **Isto é um portão que passa por SORTE**, e a regra do projeto trata portão assim como risco,
+   não como detalhe.
+   (w) 🟠 **NOVA (revisão do 3.5.3, 2026-08-21) — O CLIENTE FIXA `'curta'` (5) E O TETO DE LEITURA DE
+   `nEtapas` NO SERVIDOR É `[1, 10]`. DECISÃO DO DEV.** `etapasDaSala` chama
+   `calendarioSorteado(dataset, seedCalendario, 'curta')` e ignora o `nEtapas` do snapshot — hoje
+   coerente, porque `party/sala.ts` sempre cria a sala com `N_ETAPAS_CURTA`. **Mas o caminho de
+   LEITURA não prende em 5:** `sala.ts:324` valida `nEtapasIntegro(sala.nEtapas, seedsEtapas.length)`
+   com `seedsEtapas.length === MAX_ETAPAS === 10`. Uma sala v2 com `nEtapas: 10` é **`ok`**, publica
+   6+ seeds abertas, e `etapasDaSala` **lança** em `calendario[5]` — dentro de um `useMemo`, **em
+   render**, e **não existe `ErrorBoundary` em `src/`** (medido: zero ocorrências). Resultado: tela
+   branca para todos os 22, e o F5 rederiva do mesmo snapshot ⇒ laço.
+   **Não é alcançável hoje** (por isso aviso, não bloqueante) — é o dia em que alguém ligar o formato
+   "completa" no servidor sem tocar no cliente. ⚠️ **Mesma família do `M-nEtapas` do 3.5.2**: o valor
+   está certo hoje e nada o prende amanhã.
+   **Dois caminhos, NENHUM escolhido:** (1) derivar o formato de `sala.nEtapas` — mantendo o portão
+   `seedCalendario === null` **ANTES**, porque sala legado publica `nEtapas: 1`, que não existe em
+   `N_ETAPAS` e faria um lookup ingênuo lançar onde hoje devolve `[]` corretamente; (2) o hook
+   capturar e expor pelo canal de erro que já tem, deixando a função pura lançando alto.
+   🔑 **Registrada também no docblock de `etapasDaSala`**, que é onde a próxima pessoa vai olhar.
 1. **Abertas pelo 7.8:** (a) o `BotaoTema` é um botão discreto no canto do `app-shell` — posição e
    forma **não passaram por veredito de arte**; (b) `erro` (salmão `#FF7B85`) e `raridadeProibido`
    (`#FF4757`) continuam sendo dois vermelhos ao lado do vermelho da marca — não foi mexido porque

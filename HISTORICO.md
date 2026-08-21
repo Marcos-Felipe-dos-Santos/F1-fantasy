@@ -2101,6 +2101,162 @@ minutos**. Por isso o worker do 3.5.2 **só vai a produção junto com o cliente
 > acompanhar as quatro entradas `## CORRIDA ONLINE — PR n/4` logo acima, que são a convenção de
 > entrada-por-PR deste arquivo.
 
+## 3.5 CAMPEONATO ONLINE — PR 3.5.3 (cliente multietapa, derivação pura) — 2026-08-21
+
+Branch `pr-3.5.3-cliente-multietapa`: `cffe699` (código) + `c64b8b4` (consertos da revisão) +
+`01689a5` (conserto de instabilidade achada por mim). **ALTO RISCO** (netcode).
+**Sem merge, sem push, sem tag.**
+
+**Medido, ao fim:** `npm test` **1560/64** (era 1544/64), `npm run test:party` **10/10**
+(inalterado — o PR não toca `party/`), typecheck **0** nos três projetos, `eslint` **0**,
+`build` **0**. **`VERSAO_APP` 3.4.2, sem bump — e MEDIDO**, não herdado: nenhum arquivo do digest
+(`src/engine/**`, `src/data/**.json`, `cliente.ts`, `hash-draft.ts`) foi tocado e nenhum
+`deriveSeed` novo nasceu. **`balance-harness` NÃO rodado, e dito de propósito em vez de pulado
+calado:** o rótulo `camp:` está intacto e nenhum arquivo de `src/engine/` entrou no diff.
+
+### 🔴 O ACHADO QUE MUDOU O RECORTE DO PR, antes de escrever uma linha
+
+O plano alocava ao 3.5.3 o **atestado por etapa**, e ao 3.5.4 o `key={'etapa-'+k}` e a remoção do
+`naCorrida`. Rastreando a cadeia no código (não deduzindo): `useCorrida` semeia o `useState` a
+partir de `fonte` **uma vez** — é a lição literal de `FluxoCampeonato.tsx:118-122` que o próprio
+plano cita ao justificar a `key` —, o atestado de hash sai por **mudança de referência** de
+`corrida` (`useSalaOnline.ts`), e `corrida-concluida` (`servidor-sala.ts:851-863`) **não carrega
+etapa**: o balde vem do cursor do servidor, que o 3.5.2 reseta por etapa.
+
+**Consequência:** fazer o cliente atestar `etapa: etapaAtual` sem o remount produz **hash da etapa
+k com a tela da etapa 0** — a forma exata do bug do 8.4, produzida pelo próprio fatiamento, dentro
+do PR cuja cerca existe para impedi-la. E `contrato-corrida-online.test.ts` **não pegaria**: ele
+conta sítios textuais, não semântica de remount. O plano soldava em PRs diferentes duas metades que
+a tese do PR 2/4 declara inseparáveis (*"a MESMA referência alimenta hash e tela"*).
+
+🔑 **DECISÃO DO DEV (2026-08-21), entre três opções apresentadas: opção (A) — derivação PURA.** O
+3.5.3 entrega `etapasDaSala`/`classificacaoDaSala` + cercas + testes; a tela e o atestado seguem
+ligados na corrida **avulsa**, intocados. A fiação inteira (`key`, `naCorrida`, atestado por etapa)
+vai para o **3.5.4**, que tem portão visual. É a única das três em que o estado divergente **nunca
+existe**, e casa com o título que o plano deu ao PR: *"N etapas por derivação pura"*.
+A opção (C) — seguir o plano ao pé da letra — foi explicitamente descartada: deixaria divergência
+hash↔tela conhecida na `main` entre dois PRs.
+
+### 🔒 A lógica ficou em módulo PURO, e o motivo é a sexta instância
+
+**Medido em `package.json`: o projeto não tem `jsdom` nem `@testing-library`.** Logo nada que more
+dentro de `useSalaOnline` é alcançável por mutação — e o pareamento `seedsAbertas[k]` ↔
+`calendario[k]` é o coração do PR. Pôr a lógica no `useMemo` seria escrever cobertura declarada e
+não provada, que é a forma exata do defeito que o 3.5.2 pagou caro para aprender. `etapasDaSala` e
+`classificacaoDaSala` vivem em `src/ui/corrida-online.ts`; o hook é casca fina.
+⚠️ **Desvio declarado da instrução do dev** (*"o map mantém a contagem em 1"*, que sugeria o map no
+hook): o sítio único **mudou de arquivo**, não deixou de ser único — e passou a ser testável.
+
+### As duas semânticas de seed de `corridaDaSala`
+
+`corridaDaSala(dataset, draft, seed, pistaId?)`. **Sem `pistaId`** (avulsa): pista de
+`pistaSorteada(seed)`, simulação com a seed **CRUA**. **Com `pistaId`** (etapa): pista do
+**calendário**, `pistaSorteada` **não é chamada**, simulação com `seedDaEtapa(seed, pistaId)` — a
+mesma função e o mesmo rótulo `camp:${pistaId}` do offline. É a decisão D6 da Fase 6 preservada bit
+a bit. ⚠️ `prepararCorrida` tem **default `seed = draftState.seed`**, então esquecer o 4º argumento
+**compila limpo e erra em silêncio** — só a conformidade contra `simularEtapa` acusa.
+
+### 🔴 A REVISÃO REPROVOU NA PRIMEIRA PASSADA — um bloqueante, e ele era real
+
+- **C1 (BLOQUEANTE, e a lacuna foi MEDIDA, não lida).** `etapasDaSala`/`classificacaoDaSala`
+  nasceram **fora** de `PERMITIDOS`. Medido com um `PainelFuga.tsx` sintético na árvore chamando
+  `etapasDaSala`: a cerca ficava **VERDE, 26/26** — o arquivo não referencia nenhum dos nomes
+  vigiados, porque **todos ficam atrás da indireção**. Era o cenário literal da sabotagem
+  `__sabotagem_corrida_dupla` entrando por porta nova: duas listas de etapas com referências
+  diferentes, a tela lendo uma e o atestado a outra.
+  🔑 **Ponto de entrada público que computa corrida online entra na cerca NO PR QUE O CRIA.** Cerca
+  escrita depois é moldada pela tentação — é o mesmo argumento que este PR usou para justificar a
+  cerca nova de `seedDaEtapa`.
+- **A3 (aviso que virou fato medido).** A metade **avulsa** das duas semânticas de seed não tinha
+  baseline nenhum. Medido: a mutação `const seedDaSimulacao = seedDaEtapa(seed, idDaPista);`
+  (incondicional, matando o ternário) deixava a suíte **INTEIRA verde — 1557/1557**, com `tsc` e
+  `eslint` limpos. Entrou teste de conformidade simétrico ao das etapas, com anti-vacuidade.
+  🔑 **Bifurcação declarada como crítica com só um dos lados travado é meia cerca.**
+- **A4/A5 + a meia-frase da 0(t) — três docblocks que afirmavam mais do que o código faz.**
+  (i) a cerca de `seedDaEtapa` garante **uma costura só**, e **não** pega quem derive por fora sem
+  citá-la: um `deriveSeed(seed, 'camp:X:online')` passa nela **e** no registro de namespaces (o
+  prefixo capturado é `camp`, registrado) — contra esse caminho quem defende é a conformidade bit a
+  bit; (ii) `etapasDaSala` **não olha `draft.fase`**: com draft em andamento ela **LANÇA**, não
+  devolve `[]`; (iii) a etapa corrente é **`etapas.length - 1`, NUNCA `sala.etapaAtual`** — sob a
+  pendência 0(t) os dois **não** dizem o mesmo, e a redação anterior dizia que sim.
+- **A1 — "nada consome" é verdade sobre CONSUMO e falso sobre EXECUÇÃO.** O `useMemo` roda quando as
+  dependências mudam, leia alguém o retorno ou não. O custo medido é gasto **agora**, não adiado.
+
+### 🔑 A pendência 0(t) MELHOROU, e é preciso saber por quê
+
+A 0(t) previa que *"o cliente do 3.5.3 vai derivar as etapas de `seedsAbertas` e **ler `etapaAtual`
+para indexar o calendário**"*. **Este código nunca lê `etapaAtual`.** No caso corrompido o snapshot
+publica `seedsAbertas: []`, então `etapas` é `[]`: sem travamento, sem pareamento errado, sem
+consumir o campo autocontraditório.
+🔒 **Invariante que o 3.5.4 tem que preservar para não desfazer isso:** indexar por
+`etapas.length - 1`, nunca por `sala.etapaAtual`. Indexar pelo cursor com a lista vinda de
+`seedsAbertas` traz a 0(t) de volta como **tela quebrada**.
+
+### 📊 TABELA DE MUTAÇÕES — 9 mutações, 0 sobreviventes, RERODADA INTEIRA após os consertos
+
+`M-seedcrua` · `M-seed-default` · `M-pista` · `M-indice` · `M-futuras` · `M-throw` · `M-classif` ·
+`M-jogadores` · `M-avulsa`. Todas com `tsc` e `eslint` limpos (vermelho comportamental, **nunca de
+compilação**), cada reversão conferida por `git hash-object`.
+
+🔑 **Rerodar a tabela INTEIRA depois do conserto não é zelo — foi ela que mostrou que `M-seedcrua`
+passou a cair em DOIS testes** (o novo da avulsa e o de conformidade), o que só é verdade porque o
+conserto do A3 existe.
+
+### 🔴 Três achados de MÉTODO desta sessão, que valem além do PR
+
+1. **A asserção de pré-condição pegou uma colisão por acaso.** A seed que eu havia escolhido para a
+   etapa 1 (`2415019033`) sorteava, por `pistaSorteada`, **exatamente** a pista que o calendário
+   dava àquela etapa — `M-pista` sobreviveria ali por coincidência e o teste passaria sem provar
+   nada. Trocada por `2415019035`, com o motivo no código. **É o argumento inteiro a favor de
+   ASSERTAR a pré-condição em vez de supô-la** (a regra que a sexta instância acrescentou).
+2. **A cerca contrariou a minha própria medição.** Eu havia classificado a menção a `seedDaEtapa` em
+   `namespaces-seed.ts:36` como "registro, não código". A cerca discordou: o nome está dentro de uma
+   **string**, e `semComentarios` remove comentário, **não literal**. Entrou na allowlist por
+   medição. E é correto que `referenciaDe` não distinga: `obj['seedDaEtapa']` também mora numa
+   string e é indireção de verdade.
+3. **🔴 `git checkout --` APAGOU O PR num arquivo, no meio da tabela de mutações.** O script revertia
+   cada mutação com `git checkout -- <arquivo>`, e o alvo era trabalho **não commitado** — então o
+   comando restaurou a versão do **HEAD**. A guarda de hash que o script já tinha acusou na hora
+   (`REVERSAO FALHOU`) e as sete mutações seguintes reportaram `ALVO NAO ENCONTRADO` **em vez de
+   fingirem sucesso**. Arquivo reconstruído, reversão trocada por **cópia de backup**, e a tabela
+   rodada **do zero**.
+   🔑 **Duas lições:** reversão de mutação sobre trabalho não commitado se faz por CÓPIA; e a guarda
+   de hash pagou-se sozinha na primeira vez que foi exercida.
+   ⚠️ **Colateral aprendido depois:** `git checkout` reescreve com **CRLF**, e as âncoras multilinha
+   do script (com `\n`) pararam de casar — `M-futuras` e `M-throw` voltaram `ALVO_NAO_ENCONTRADO` e
+   **ficaram sem medir** até serem rodadas com âncora tolerante a fim de linha. De novo: o script
+   reportou o problema em vez de dar falso verde.
+
+### 🔴 O PORTÃO PRINCIPAL FICOU VERMELHO POR CAUSA DA SABOTAGEM NOVA — e o achado é do PR
+
+Logo após o commit dos consertos, `npm test` caiu com **2 testes de `contrato-ausente.test.ts`** —
+arquivo que este PR **não toca**. Causa medida: a sabotagem nova varria a árvore **seis vezes** (uma
+por asserção) com o arquivo de fuga em disco, e `contrato-ausente.test.ts` percorre `src/ui/` com
+`readdirSync`/`statSync` em paralelo; arquivo que some no meio da caminhada faz o `statSync` estourar.
+
+**Conserto:** ler o disco **uma vez**, apagar o arquivo em seguida, assertar em memória.
+**Verificado:** 5 rodadas seguidas de `npm test`, **1560/1560 em todas**.
+
+⚠️ **A janela é PRÉ-EXISTENTE, e isso foi medido contra a base, não suposto:** em `3f54436`, as duas
+cercas rodadas juntas já falham **1-2 testes**; com a versão anterior deste PR, **3-4**, e o
+`npm test` inteiro passou a falhar. **A fragilidade de fundo continua** — `arquivosDaUi` não tolera
+arquivo sumindo durante a caminhada, e qualquer sabotagem que grave em `src/ui/` pode derrubá-la.
+Registrada como pendência; **é decisão do dev**, e está fora do escopo deste PR.
+
+### ⬅️ O QUE FICOU ABERTO — decisão do dev (aviso A2 da revisão)
+
+**O cliente fixa `'curta'` (5 etapas) e o teto de LEITURA de `nEtapas` no servidor é `[1, 10]`.**
+Medido em `src/net/sala.ts:324`: `nEtapasIntegro(sala.nEtapas, seedsEtapas.length)`, com
+`seedsEtapas.length === MAX_ETAPAS === 10`. Então uma sala v2 com `nEtapas: 10` é considerada **`ok`**,
+publica 6+ seeds abertas, e `etapasDaSala` **lança** em `calendario[5]` — dentro de um `useMemo`,
+**em render**, e **não existe `ErrorBoundary` em `src/`** (medido: zero ocorrências). Tela branca
+para todos, e o F5 rederiva do mesmo snapshot.
+**Não é alcançável hoje** (`party/sala.ts` sempre passa `N_ETAPAS_CURTA`), por isso é aviso e não
+bloqueante — mas é exatamente o dia em que alguém ligar o formato "completa" no servidor sem tocar
+no cliente. **Dois caminhos, nenhum escolhido:** derivar o formato de `sala.nEtapas` (mantendo o
+portão `seedCalendario === null` ANTES, porque sala legado publica `nEtapas: 1`, que não existe em
+`N_ETAPAS`), ou o hook capturar e expor pelo canal de erro que já tem.
+
 ## CORRIDA ONLINE — o plano aprovado (movido do `ESTADO.md` em 2026-08-18)
 
 > 📦 **Movido, não resumido.** Este texto vivia na §"🏁 CORRIDA ONLINE — o plano aprovado" do
