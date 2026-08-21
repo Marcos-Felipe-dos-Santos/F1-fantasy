@@ -314,20 +314,46 @@ se continua** — é ali que a decisão é barata, e não depois do 3.5.3.
      cada conserto. Uma guarda morta foi **removida** por não haver mutação que a matasse.
      Pendências fechadas: **0(k)** e **0(r)**. Abertas por ele: **0(t)** (encolhida pelo N2) e
      **0(u)**.
-3. **3.5.3 — cliente: N etapas por derivação pura.** `useMemo` sobre `seedsAbertas`; `corridaDaSala`
-   passa a aceitar `pistaId` explícito (quando vier, **não** chama `pistaSorteada`); classificação por
-   `acumularClassificacao`; atestado por etapa (o campo já veio do 3.5.2). **Nada de estado local
-   acumulado** — tudo derivado do snapshot, que é o que faz o F5 funcionar.
-   🔒 **A restrição "uma função só" NÃO abre exceção:** `chamadasDe` conta **sítios TEXTUAIS**, não
-   invocações (`src/ui/contrato-corrida-online.test.ts:115`), então um `map` mantém a contagem em
-   **1**. `PERMITIDOS` (`:187`) ganha `seedDaEtapa: ['src/engine/campeonato.ts',
-   'src/ui/FluxoCampeonato.tsx', 'src/ui/corrida-online.ts']` — **cerca NOVA, não afrouxamento**:
-   impede que alguém "conserte" a derivação criando um segundo caminho.
+3. ✅ **3.5.3 — cliente: N etapas por derivação pura — FEITO em 2026-08-21**, branch
+   `pr-3.5.3-cliente-multietapa` (`cffe699` + `c64b8b4` + `01689a5` + `d478617`). **Medido:**
+   `npm test` **1560/64**, `test:party` **10/10**, typecheck 0, eslint 0, build 0.
+   **Sem merge, sem push, sem tag.** Detalhe: `HISTORICO.md` §"PR 3.5.3".
+   🔑 **O RECORTE MUDOU, por decisão do dev (opção A de três): o atestado por etapa SAIU deste PR.**
+   Motivo rastreado no código: `useCorrida` semeia o `useState` de `fonte` uma vez, o atestado sai
+   por mudança de REFERÊNCIA de `corrida`, e `corrida-concluida` não carrega etapa. Atestar
+   `etapa: etapaAtual` sem o remount ⇒ **hash da etapa k com a tela da etapa 0**, a forma exata do
+   bug do 8.4, e a cerca **não pega** (conta sítio textual, não remount). A fiação foi inteira para
+   o 3.5.4. **Entregue aqui:** `etapasDaSala`/`classificacaoDaSala` puras, `corridaDaSala` com
+   `pistaId` explícito, cercas e testes.
+   ⚠️ **DUAS AFIRMAÇÕES DESTE ITEM ENVELHECERAM E ESTÃO CORRIGIDAS AQUI, não contraditas em outro
+   arquivo** (regra do `CLAUDE.md` §"o `doc-writer` NÃO APAGA"):
+   - *"um `map` mantém a contagem em 1"* pressupunha o map **dentro de `useSalaOnline`**. Ele ficou
+     em **`corrida-online.ts`**, porque o projeto **não tem jsdom** (medido) e lógica dentro do hook
+     é inalcançável por mutação. `PERMITIDOS.corridaDaSala` tem hoje **DOIS** arquivos, cada um
+     travado em UMA chamada exata.
+   - *"`PERMITIDOS` ganha `seedDaEtapa`"* ficou **incompleto**: ganhou também
+     **`etapasDaSala`** e **`classificacaoDaSala`** — foi **BLOQUEANTE C1 da revisão**, medido: sem
+     elas, um painel do 3.5.4 chamando `etapasDaSala` deixava a cerca **verde, 26/26**, porque todos
+     os nomes vigiados ficam atrás da indireção. E `seedDaEtapa` inclui
+     **`src/engine/namespaces-seed.ts`**, que o plano não previa: o nome está numa STRING, e
+     `semComentarios` remove comentário, não literal.
 4. **3.5.4 — UI do campeonato online, com PORTÃO VISUAL.** Reusa
    `PainelCampeonato`/`PainelCalendario`/pódio do 8.3, `FluxoCorrida` em `{modo:'pronta'}` e
    🔑 **`key={'etapa-'+k}`** — sem a `key`, o `useState` de `useCorrida` mantém a corrida anterior e o
    jogador corre a etapa 1 cinco vezes (lição literal de `FluxoCampeonato.tsx:118-122`). Remove
    `naCorrida`.
+   🔒 **ELE HERDA MAIS DO QUE ESTA LINHA DIZIA (decisão do dev no 3.5.3):** entra também o
+   **atestado por etapa**, que estava no item 3. **As três — `key`, remoção do `naCorrida` e
+   atestado por etapa — são a MESMA solda e não se separam**: ligar a tela às etapas sem o remount,
+   ou atestar por etapa sem ligar a tela, produz hash de uma etapa com a tela de outra.
+   🔒 **INVARIANTE OBRIGATÓRIA, herdada do 3.5.3:** indexar a etapa corrente por
+   **`etapas.length - 1`, NUNCA por `sala.etapaAtual`**. Sob a pendência **0(t)** os dois **não**
+   dizem o mesmo (sala corrompida publica `etapaAtual: 4` com `seedsAbertas: []`), e indexar pelo
+   cursor traz a 0(t) de volta como **tela quebrada**. O 3.5.3 melhorou a 0(t) justamente por
+   **nunca ler `etapaAtual`** — é fácil desfazer isso sem perceber.
+   ⚠️ **Decidir a pendência 0(w) ANTES de ligar a tela:** o cliente fixa `'curta'` (5) e o teto de
+   LEITURA de `nEtapas` no servidor é `[1, 10]`; o `throw` de `etapasDaSala` cai **em render** e não
+   há `ErrorBoundary` no projeto.
 
 #### ⚠️ A CERCA DE M5/M6 É **TEXTUAL**, NÃO COMPORTAMENTAL — o que ela NÃO prova (registro pedido pelo dev, 2026-08-18)
 
@@ -400,8 +426,12 @@ sem pista repetida.
 **Riscos aceitos conscientemente:** o brute-force de 2³² sobre a `seedMestre` continua abrindo o
 **draft** mesmo com `B-indep` (status quo de 0(i); o 3.5 não piora nem conserta) · `FluxoOnline` segue
 sem cobertura automática, mitigado mantendo lógica em `fluxo-*.ts` puro e o `.tsx` como casca fina ·
-CPU da recomputação (5 etapas × 22 carros a cada mudança de `seedsAbertas`) **a medir no 3.5.3**; se
-passar de ~50 ms, memoizar por etapa. Não antecipar otimização.
+CPU da recomputação (5 etapas × 22 carros a cada mudança de `seedsAbertas`) ~~**a medir no 3.5.3**~~
+✅ **MEDIDA no 3.5.3 (2026-08-21): mediana 0,6 ms, pior caso 1,8 ms, com 22 carros × 5 etapas.**
+Muito abaixo do teto de ~50 ms ⇒ **NÃO foi memoizado por etapa**, obedecendo a própria regra abaixo.
+⚠️ **O custo é gasto DESDE JÁ, não a partir do 3.5.4:** `useMemo` executa quando as dependências
+mudam, leia alguém o retorno ou não. Se `nEtapas` variável entrar (pendência 0(w)), remedir.
+*(Texto original:)* se passar de ~50 ms, memoizar por etapa. Não antecipar otimização.
 
 
 ---

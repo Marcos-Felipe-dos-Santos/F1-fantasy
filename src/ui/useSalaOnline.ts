@@ -283,9 +283,19 @@ export function useSalaOnline(sala: string): UseSalaOnline {
    * `seedsAbertas` é um array NOVO a cada mensagem, mesmo sem nenhuma etapa ter
    * aberto. Depender da referência recomputaria 5 etapas × 22 carros a cada
    * broadcast — inclusive durante o draft dos outros. A chave por VALOR muda
-   * exatamente quando o conteúdo muda, que é o gatilho pretendido. Mesma
-   * família da limitação registrada na pendência 0(j), agora resolvida em vez
-   * de rastreada à mão.
+   * exatamente quando o conteúdo muda, que é o gatilho pretendido (`join(',')`
+   * é injetivo sobre uint32: `toString` nunca produz vírgula).
+   *
+   * ⚠️ **ISTO NÃO FECHA A PENDÊNCIA 0(j), e a redação anterior desta linha
+   * dizia que fechava.** A 0(j) é sobre a estabilidade de REFERÊNCIA de
+   * `cliente.draft` entre re-sincronizações sem evento novo — rastreada à mão
+   * em `sincronizarDraft`, **sem asserção própria**, porque não há jsdom para
+   * observar o hook. E `cliente.draft` está aqui nas dependências, **por
+   * referência**: a chave por valor conserta a instabilidade do ARRAY, não a
+   * do DRAFT. **A 0(j) segue aberta.**
+   * 🔴 **E este `useMemo` AUMENTA o que ela custa:** antes, uma troca espúria
+   * de identidade de `cliente.draft` custava um atestado reenviado; agora
+   * custa também **5 corridas × 22 carros recomputadas a cada snapshot**.
    */
   const chaveSeedsAbertas = (cliente.sala?.seedsAbertas ?? []).join(',');
   const etapas = useMemo<CorridaPreparada[]>(() => {

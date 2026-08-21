@@ -565,6 +565,39 @@ describe('BLOQUEANTE 2: contagem EXATA — nunca duas computações no mesmo arq
     ).toBe(1);
   });
 
+  it('`etapasDaSala` e `classificacaoDaSala` são chamadas exatamente 1 vez em `useSalaOnline.ts`', () => {
+    // 🔴 **O conserto do bloqueante C1 fechou QUEM chama, e não QUANTAS VEZES —
+    // e a allowlist, sozinha, nunca fechou a segunda pergunta.** Este arquivo
+    // já documenta essa distinção para `useCorrida.ts`, logo abaixo; aqui ela
+    // vale para a superfície NOVA do 3.5.3.
+    //
+    // Modo de falha concreto, e é a tentação óbvia do 3.5.4: um segundo
+    // `useMemo` "da etapa corrente" no mesmo hook chama `etapasDaSala` de novo
+    // e devolve um array com conteúdo IDÊNTICO e REFERÊNCIA diferente. A
+    // allowlist passa (mesmo arquivo aprovado), o typecheck passa, e a tela
+    // renderiza uma lista enquanto o atestado de hash carrega a outra — a
+    // classe de bug do 8.4, entrando pelo arquivo que a cerca já aprovou.
+    const fonte = readFileSync(join(AQUI, 'useSalaOnline.ts'), 'utf8');
+    expect(
+      chamadasMax(fonte, 'etapasDaSala'),
+      'uma segunda derivação das etapas neste arquivo = duas listas com referências diferentes; a tela lê uma e o hash atesta a outra',
+    ).toBe(1);
+    expect(chamadasMax(fonte, 'classificacaoDaSala')).toBe(1);
+  });
+
+  it('🔴 SABOTAGEM: duplicar a chamada de `etapasDaSala` em `useSalaOnline.ts` reprova', () => {
+    // Em memória, como as demais sabotagens de contagem.
+    const original = readFileSync(join(AQUI, 'useSalaOnline.ts'), 'utf8');
+    const sabotado = original.replace(
+      'return etapasDaSala(',
+      'return etapasDaSala(dataset, cliente.draft, null, []) ?? etapasDaSala(',
+    );
+    expect(sabotado, 'a substituição de texto não encontrou o alvo — o teste não provaria nada').not.toBe(
+      original,
+    );
+    expect(chamadasMax(sabotado, 'etapasDaSala')).not.toBe(1);
+  });
+
   it('🔴 SABOTAGEM: duplicar a chamada de `corridaDaSala` em `corrida-online.ts` reprova', () => {
     // Em memória, pelo mesmo motivo das outras sabotagens de contagem.
     const original = readFileSync(join(AQUI, 'corrida-online.ts'), 'utf8');
