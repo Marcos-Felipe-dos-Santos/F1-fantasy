@@ -18,5 +18,35 @@
  *
  * Formato: `<marco>.<n>`. O marco acompanha a fase; `n` sobe a cada mudança de
  * engine ou dataset que altere resultado.
+ *
+ * 🔴 **BUMP DO PR 3.5.4 (3.4.2 → 3.4.3) — E ELE CONTRARIA A REGRA DO DIGEST DE
+ * PROPÓSITO. Leia antes de "corrigir" isto.**
+ *
+ * O digest de `versao.test.ts` cobre `src/engine/` + `src/data/` + `cliente.ts`
+ * + `hash-draft.ts`, e o 3.5.4 **não tocou nenhum deles** — o PR inteiro vive
+ * em `src/ui/`. Pelo teste, o valor podia ficar parado; foi **bloqueante C1 da
+ * revisão**, medido, que obrigou a subir:
+ *
+ * 1. O cliente **3.5.3** atesta a corrida AVULSA **sem o campo `etapa`**
+ *    (`useSalaOnline.ts` na `main`, efeito do hash da corrida).
+ * 2. O servidor preenche o que falta com o cursor dele
+ *    (`servidor-sala.ts`: `atestado.etapa ?? cursor`) ⇒ balde `corrida:0`.
+ * 3. O cliente **3.5.4** atesta a ETAPA 0 com `etapa: 0` ⇒ **o mesmo balde**,
+ *    com a **mesma âncora** (os dois aplicaram o log inteiro).
+ * 4. Os dois hashes **diferem por construção** — decisão D6: a avulsa simula
+ *    com a `seedCorrida` crua, a etapa com `seedDaEtapa(seed, pistaId)`.
+ * 5. `alarmado` **não volta atrás** ⇒ banner de divergência permanentemente
+ *    errado, no PR que liga o campeonato na tela.
+ *
+ * 🔑 **O handshake de `VERSAO_APP` é a ÚNICA coisa que impede os dois builds de
+ * dividirem uma sala** (aba velha aberta, cache — a janela que a pendência 0(q)
+ * descreve, aqui em vite × vite em vez de wrangler × vite). Sem o bump, o
+ * portão existia e estava aberto.
+ *
+ * 🔒 **A lição, para a próxima vez:** o digest cobre quem **CALCULA** o
+ * resultado, e o 3.5.4 mostrou que **mudar QUANDO/COMO se atesta divide uma
+ * partida do mesmo jeito**, sem tocar em nada que o digest vigia. Um PR só de
+ * `src/ui/` que mude a FORMA do atestado precisa deste bump, e o teste **não
+ * vai lembrar por você**.
  */
-export const VERSAO_APP = '3.4.2';
+export const VERSAO_APP = '3.4.3';

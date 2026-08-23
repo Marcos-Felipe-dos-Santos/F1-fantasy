@@ -16,9 +16,11 @@
 
 import { useEffect, useState, type ReactNode } from 'react';
 import type { DraftState, LinhaClassificacao } from '../engine/types';
+import type { EtapaDoCalendario } from './fluxo-campeonato';
 import type { EscolhaDraft } from '../engine/types';
 import { FluxoCorrida } from './FluxoCorrida';
-import { nomeDaPista, nomeDoJogador } from './FluxoCampeonato';
+import { nomeDaPista } from './FluxoCampeonato';
+import { Podio } from './Podio';
 import { PainelCalendario } from './PainelCalendario';
 import { PainelCampeonato } from './PainelCampeonato';
 import { TelaDraft } from './TelaDraft';
@@ -212,8 +214,10 @@ function ConteudoOnline({
     // errada, é a classe de bug do PR 8.4, e `npm test` não pegaria.
     if (etapa !== undefined) {
       const k = online.etapaCorrente;
+      // `nEtapas` do SNAPSHOT, não `etapas.length`: o total é quantas etapas o
+      // campeonato TEM, e `etapas` só traz as abertas até agora. Usar o
+      // comprimento aqui faria a tabela dizer "1 de 1" na primeira corrida.
       const total = publica.nEtapas;
-      const ehUltima = k + 1 >= total;
       return (
         <>
           <AvisoDeFechamento concluidaEm={publica.concluidaEm} />
@@ -235,42 +239,40 @@ function ConteudoOnline({
             rotuloReiniciar="← Voltar ao início"
             onReiniciar={onVoltar}
             extraResultado={
-              <>
-                {ehUltima && <PodioOnline state={draft} classificacao={online.classificacao} />}
-                <PainelCampeonato
-                  state={draft}
-                  classificacao={online.classificacao}
-                  // `k + 1` = `etapas.length`: a tabela mostrada no fim da
-                  // corrida INCLUI a etapa que o jogador acabou de ver.
-                  corridasFeitas={k + 1}
-                  totalCorridas={total}
-                  concluido={ehUltima}
-                  // 🔒 **`null` de propósito: no online quem avança é a
-                  // BARREIRA do servidor, nunca um botão.** Quando a etapa
-                  // seguinte abre, o snapshot cresce, `etapaCorrente` anda e a
-                  // `key` acima remonta a tela sozinha. Um botão aqui
-                  // prometeria um controle que o jogador não tem.
-                  onProximaCorrida={null}
-                  nomeProximaPista={
-                    ehUltima ? null : nomeDaPista(online.calendario[k + 1]?.pistaId)
-                  }
-                />
-                {/* O calendário sai do hook já anotado, com `etapasVistas =
-                    etapas.length` — correto AQUI porque `extraResultado` só
-                    renderiza na fase de resultado. Ver `calendarioDaSala`. */}
-                <PainelCalendario state={draft} etapas={online.calendario} />
-              </>
+              <ResumoDaEtapaOnline
+                state={draft}
+                etapa={k}
+                totalEtapas={total}
+                classificacao={online.classificacao}
+                calendario={online.calendario}
+              />
             }
           />
         </>
       );
     }
 
-    // Draft concluído e nenhuma etapa aberta ainda: o servidor publica o draft
-    // e as seeds em mensagens diferentes, então existe uma janela curta sem
-    // etapa. Mostrar o resumo do draft é a resposta honesta — e **sem botão de
-    // corrida**, porque não há destino: quando a etapa abrir, o ramo acima
-    // assume sozinho, sem clique nenhum.
+    // Draft concluído e NENHUMA etapa aberta. Mostrar o resumo do draft é a
+    // resposta honesta — e **sem botão de corrida**, porque não há destino:
+    // quando (e se) a etapa abrir, o ramo acima assume sozinho, sem clique.
+    //
+    // ⚠️ **A redação anterior dizia "existe uma janela curta sem etapa", e isso
+    // é falso em dois sentidos (aviso A1 da revisão, medido).**
+    //
+    // 1. Para sala v2 saudável a janela provavelmente **nem existe**:
+    //    `seedCorrida` e `seedsAbertas` estão atrás do MESMO portão
+    //    (`draft.fase === 'concluido'`, `src/net/sala.ts`), então chegam no
+    //    mesmo snapshot.
+    // 2. Para três classes de sala este ramo é **PERMANENTE**, não uma janela:
+    //    sala **legado** (`seedCalendario === null`), sala **corrompida**
+    //    (`seedsAbertas: []`, pendência 0(t)) e `nEtapas` sem formato
+    //    correspondente (pendência 0(w)). Nas três, `etapasDaSala` devolve `[]`
+    //    para sempre e o jogador fica aqui até a sala expirar.
+    //
+    // 🔑 **É beco sem saída COM saída** — o botão "← Voltar ao início" existe —,
+    // e é o comportamento certo: sem seed publicada não há corrida que os 22
+    // possam derivar igual, e inventar uma seria pior. Sala legado só existe
+    // persistida de antes do 3.5.1, e toda sala nova nasce com `N_ETAPAS_CURTA`.
     return (
       <>
         <AvisoDeFechamento concluidaEm={publica.concluidaEm} />
@@ -332,6 +334,61 @@ function ConteudoOnline({
 }
 
 /**
+ * 🏆 O que aparece ABAIXO do resultado de cada etapa online (PR 3.5.4):
+ * tabela acumulada, calendário e — na última — o pódio.
+ *
+ * 🔑 **É um componente EXPORTADO, e não JSX inline no `extraResultado`, por
+ * causa do PORTÃO VISUAL.** O `extraResultado` só renderiza sob
+ * `fase === 'resultado'` (`FluxoCorrida.tsx:80-87`), e o render estático nasce
+ * em `'grid'` e nada o move dali — então o preview **não consegue** chegar
+ * nesta parte da tela pelo `FluxoOnline`. A alternativa seria o preview
+ * remontar esta composição por conta própria, e aí ele passaria a mostrar uma
+ * cópia que pode divergir do que o jogo desenha: **um preview que mente sobre
+ * o que está mostrando**, que é a lição do 3.4.1. Exportando, o preview
+ * renderiza ESTE componente — o mesmo que o jogo usa.
+ */
+export function ResumoDaEtapaOnline({
+  state,
+  etapa,
+  totalEtapas,
+  classificacao,
+  calendario,
+}: {
+  state: DraftState;
+  etapa: number;
+  totalEtapas: number;
+  classificacao: LinhaClassificacao[];
+  calendario: EtapaDoCalendario[];
+}) {
+  const ehUltima = etapa + 1 >= totalEtapas;
+  return (
+    <>
+      {ehUltima && <PodioOnline state={state} classificacao={classificacao} />}
+      <PainelCampeonato
+        state={state}
+        classificacao={classificacao}
+        // `etapa + 1` = `etapas.length`: a tabela mostrada no fim da corrida
+        // INCLUI a etapa que o jogador acabou de ver.
+        corridasFeitas={etapa + 1}
+        totalCorridas={totalEtapas}
+        concluido={ehUltima}
+        // 🔒 **`null` de propósito: no online quem avança é a BARREIRA do
+        // servidor, nunca um botão.** Quando a etapa seguinte abre, o snapshot
+        // cresce, `etapaCorrente` anda e a `key` do `FluxoCorrida` remonta a
+        // tela sozinha. Um botão aqui prometeria um controle que o jogador não
+        // tem — o mesmo raciocínio que recusou o status na barreira do 4/4.
+        onProximaCorrida={null}
+        nomeProximaPista={ehUltima ? null : nomeDaPista(calendario[etapa + 1]?.pistaId)}
+      />
+      {/* O calendário vem do hook já anotado, com `etapasVistas = etapas.length`
+          — correto AQUI porque este bloco só existe na fase de resultado. Ver
+          o docblock de `calendarioDaSala`. */}
+      <PainelCalendario state={state} etapas={calendario} />
+    </>
+  );
+}
+
+/**
  * 🏆 O pódio do campeonato online (PR 3.5.4) — o desfecho, no fim da ÚLTIMA
  * etapa.
  *
@@ -354,24 +411,10 @@ function PodioOnline({
   state: DraftState;
   classificacao: LinhaClassificacao[];
 }) {
-  const podio = classificacao.slice(0, 3);
   return (
     <div className="tela-fim-campeonato">
       <h2>🏆 Fim do campeonato</h2>
-      <ol className="podio">
-        {[podio[1], podio[0], podio[2]].map((linha, posicaoVisual) =>
-          linha === undefined ? null : (
-            <li
-              key={linha.jogadorId}
-              className={`podio__lugar podio__lugar--${[2, 1, 3][posicaoVisual]}`}
-            >
-              <span className="podio__medalha">{['🥈', '🥇', '🥉'][posicaoVisual]}</span>
-              <span className="podio__nome">{nomeDoJogador(state, linha.jogadorId)}</span>
-              <span className="podio__pontos">{linha.pontos} pts</span>
-            </li>
-          ),
-        )}
-      </ol>
+      <Podio state={state} classificacao={classificacao} />
     </div>
   );
 }

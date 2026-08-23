@@ -813,6 +813,44 @@ describe('🏆 3.5.4 — a `key` da etapa e o fim do `naCorrida` (cerca textual)
   });
 
   /**
+   * 🔴 **A defesa anti-spoiler é ESTRUTURAL — depende de ONDE o painel é
+   * montado, e nada automatizado a defendia (aviso A2 da revisão).**
+   *
+   * `calendarioDaSala` recebe `etapasVistas = etapas.length`, o que é correto
+   * **só** porque o `PainelCalendario` vive dentro do `extraResultado`, que o
+   * `FluxoCorrida` só renderiza sob `fase === 'resultado'`
+   * (`FluxoCorrida.tsx:80-87`) — ali o jogador já assistiu à etapa corrente.
+   * Movido para fora (para o grid, para o replay, para um cabeçalho), o mesmo
+   * cálculo passa a **revelar o vencedor da corrida em curso**, e sem jsdom
+   * isso passa em todos os portões.
+   *
+   * A cerca é do mesmo feitio das duas acima: textual, pega a mutação
+   * desatenta, e não substitui o portão visual.
+   */
+  it('🔴 o `PainelCalendario` do online só existe DENTRO do `extraResultado`', () => {
+    const fonte = semComentarios(readFileSync(join(AQUI, 'FluxoOnline.tsx'), 'utf8'));
+    // O painel é montado por `ResumoDaEtapaOnline`, e é esse componente — e só
+    // ele — que o `extraResultado` recebe.
+    expect(
+      fonte.includes('extraResultado={'),
+      'o `FluxoOnline` deixou de passar `extraResultado` — o calendário perdeu a guarda de fase',
+    ).toBe(true);
+    expect(
+      fonte.includes('<ResumoDaEtapaOnline'),
+      'o bloco de tabela/calendário/pódio saiu de `ResumoDaEtapaOnline`',
+    ).toBe(true);
+    // 🔒 O QUE A CERCA REALMENTE PEGA: `PainelCalendario` citado FORA do
+    // `ResumoDaEtapaOnline`. Como o componente é o último bloco do arquivo que
+    // o cita, qualquer segundo sítio é uso novo — e o único uso novo possível
+    // é fora da fase de resultado.
+    const usos = fonte.split('<PainelCalendario').length - 1;
+    expect(
+      usos,
+      'o `PainelCalendario` aparece mais de uma vez em `FluxoOnline.tsx`: o segundo sítio não está protegido pela fase de resultado e vaza o vencedor da corrida em curso',
+    ).toBe(1);
+  });
+
+  /**
    * 🔴 ANTI-VACUIDADE das duas asserções acima — sem isto, um `arquivosDaUi()`
    * vazio ou um `semComentarios` que engolisse o arquivo inteiro fariam as
    * duas passarem sem ler nada. É a mesma armadilha que o 3.5.1 encontrou na
