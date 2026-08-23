@@ -36,11 +36,15 @@ import { RODADA_COMPLETA } from '../net/tipos';
 import { VERSAO_APP } from '../engine/versao';
 import type { EscolhaDraft, LinhaClassificacao } from '../engine/types';
 import {
+  alvoDoAtestado,
+  calendarioDaSala,
   classificacaoDaSala,
   corridaDaSala,
+  etapaCorrenteDaSala,
   etapasDaSala,
   type CorridaPreparada,
 } from './corrida-online';
+import type { EtapaDoCalendario } from './fluxo-campeonato';
 import { dataset } from './dataset-app';
 import { storageDoNavegador } from './storage-app';
 
@@ -91,14 +95,14 @@ export interface UseSalaOnline {
    * `etapaAtual`, o 3.5.4 leria `etapas[4]` de uma lista vazia e a 0(t)
    * voltaria como tela quebrada. **Invariante que o 3.5.4 tem que preservar.**
    *
-   * ⚠️ **NADA CONSOME ISTO AINDA, e é de propósito (recorte do 3.5.3).** A tela
-   * e o atestado de hash continuam ligados em `corrida` acima — a corrida
-   * AVULSA — exatamente como no 3.5.2. Ligar a tela às etapas exige o
-   * `key={'etapa-'+k}` no `FluxoCorrida` (sem ele o `useState` de `useCorrida`
-   * mantém a corrida anterior) e o atestado por etapa; as duas coisas andam
-   * JUNTAS, porque atestar o hash da etapa k com a tela mostrando a etapa 0 é a
-   * classe de bug do 8.4 — a mesma que este arquivo existe para evitar. **É o
-   * 3.5.4 que as liga, no PR que tem portão visual.**
+   * ✅ **LIGADO NA TELA PELO 3.5.4** — a linha anterior dizia "nada consome isto
+   * ainda", e deixou de ser verdade neste PR. `FluxoOnline` renderiza
+   * `etapas[etapaCorrente]` com `key={'etapa-'+k}` (sem a `key`, o `useState`
+   * de `useCorrida` mantém a corrida anterior e o jogador corre a etapa 1
+   * cinco vezes), e o atestado de hash abaixo passou a sair **por etapa**. As
+   * duas coisas entraram JUNTAS de propósito: atestar o hash da etapa k com a
+   * tela mostrando a etapa 0 é a classe de bug do 8.4 — a mesma que este
+   * arquivo existe para evitar.
    *
    * 🔴 **"Nada consome" é verdade sobre CONSUMO e falso sobre EXECUÇÃO** (aviso
    * A1 da revisão). `useMemo` roda o corpo quando as dependências mudam, leia
@@ -111,6 +115,22 @@ export interface UseSalaOnline {
    * `etapasDaSala`.
    */
   etapas: CorridaPreparada[];
+  /**
+   * 🏆 O índice da etapa que o jogador corre AGORA (PR 3.5.4); `-1` quando não
+   * há etapa aberta. É `etapas.length - 1` — **nunca `sala.etapaAtual`**, ver
+   * `etapaCorrenteDaSala`.
+   */
+  etapaCorrente: number;
+  /**
+   * 🏆 O calendário INTEIRO anotado (PR 3.5.4), com as pistas ainda fechadas —
+   * é o que o `PainelCalendario` desenha. `[]` em sala legado e antes de o
+   * calendário ser publicado.
+   *
+   * 🔒 **Só pode ser montado na tela de RESULTADO** (é o que o `extraResultado`
+   * garante): `etapasVistas` é `etapas.length`, então o vencedor da etapa
+   * corrente aparece — correto depois de o jogador assistir, spoiler antes.
+   */
+  calendario: EtapaDoCalendario[];
   /**
    * 🏆 A classificação acumulada das etapas ABERTAS (PR 3.5.3), pela mesma
    * `acumularClassificacao` do offline.
@@ -315,12 +335,47 @@ export function useSalaOnline(sala: string): UseSalaOnline {
       cliente.draft,
       cliente.sala?.seedCalendario ?? null,
       cliente.sala?.seedsAbertas ?? [],
+      // 🏆 **PR 3.5.4 — pendência 0(w) fechada:** o formato sai do snapshot,
+      // não é mais `'curta'` fixo lá dentro. O `?? 0` cobre sala sem o campo:
+      // 0 não existe em `N_ETAPAS`, o lookup TOTAL devolve `null` e a função
+      // devolve `[]` — nunca lança em render.
+      cliente.sala?.nEtapas ?? 0,
     );
     // `cliente.sala?.seedsAbertas` é LIDA aqui mas não entra nas dependências —
     // quem a representa é `chaveSeedsAbertas`, pelo motivo acima. O projeto não
     // usa `react-hooks/exhaustive-deps` (medido em `eslint.config.js`), então
     // isto é decisão explícita, não regra silenciada.
-  }, [cliente.draft, cliente.sala?.seedCalendario, chaveSeedsAbertas]);
+  }, [cliente.draft, cliente.sala?.seedCalendario, cliente.sala?.nEtapas, chaveSeedsAbertas]);
+
+  /**
+   * 🏆 O ÍNDICE DA ETAPA CORRENTE (PR 3.5.4) — `etapas.length - 1`, via função
+   * pura, **nunca `sala.etapaAtual`**. Ver `etapaCorrenteDaSala`, onde a
+   * invariante está travada com mutação vermelha ao lado. `-1` = nenhuma etapa.
+   */
+  const etapaCorrente = etapaCorrenteDaSala(etapas);
+
+  /**
+   * 🏆 O CALENDÁRIO INTEIRO, anotado (PR 3.5.4) — inclusive as pistas ainda
+   * fechadas, que não saem de `etapas`.
+   *
+   * 🔒 **`etapas.length` como `etapasVistas`, e a correção depende de ONDE o
+   * painel é montado:** ele vive no `extraResultado` do `FluxoCorrida`, que só
+   * renderiza sob `fase === 'resultado'` — naquele ponto o jogador já assistiu
+   * à etapa corrente, então revelar o vencedor dela não é spoiler. **Montar o
+   * `PainelCalendario` em qualquer ponto anterior passaria a vazar o vencedor
+   * da corrida em curso**, que é a decisão travada do 8.3.
+   */
+  const calendario = useMemo<EtapaDoCalendario[]>(
+    () =>
+      calendarioDaSala(
+        dataset,
+        cliente.sala?.seedCalendario ?? null,
+        cliente.sala?.nEtapas ?? 0,
+        etapas,
+        etapas.length,
+      ),
+    [cliente.sala?.seedCalendario, cliente.sala?.nEtapas, etapas],
+  );
 
   /**
    * 🔒 **UMA guarda só, e ela mora na função PURA** (aviso A1 da segunda passada
@@ -363,20 +418,43 @@ export function useSalaOnline(sala: string): UseSalaOnline {
    * mudar a ponto de `estado.draft` passar a trocar de identidade mesmo sem
    * evento novo, este efeito volta a reatestar a cada snapshot — silenciosamente.
    */
+  /**
+   * 🏆 **PR 3.5.4 — o atestado passou a ser POR ETAPA, e o alvo é UM SÓ.**
+   *
+   * 🔴 A escolha de QUEM atestar mora em `alvoDoAtestado` (função pura), não
+   * aqui: atestar a corrida avulsa **e** a etapa corrente mandaria dois hashes
+   * diferentes para o MESMO balde `corrida:k` do servidor (a avulsa vai sem
+   * `etapa`, e `protocolo.ts:113-115` faz o servidor preencher com o
+   * `etapaAtual` dele) ⇒ **alarme falso travado**. Ver o docblock de
+   * `alvoDoAtestado` para a cadeia inteira; a mutação M6 a mantém vermelha.
+   *
+   * 🔒 **`etapa` vai no comando; `corrida-concluida` continua SEM campo** — o
+   * servidor é dono do cursor e grava no balde da etapa corrente sozinho
+   * (`servidor-sala.ts:860`). A assimetria que isso deixa (jogador atrasado
+   * atesta o FIM da etapa em que o servidor está, não a que assistiu) é a
+   * **pendência 0(x)**, registrada e não consertada aqui por decisão do dev.
+   */
+  const alvo = alvoDoAtestado(corrida, etapas);
   useEffect(() => {
-    if (corrida === null || cliente.euSou === null) return;
+    if (alvo === null || cliente.euSou === null) return;
     conexaoRef.current?.enviar({
       tipo: 'hash',
       escopo: 'corrida',
       ancora: cliente.eventosAplicados,
-      hash: hashDaCorrida(corrida),
+      hash: hashDaCorrida(alvo.corrida),
+      // Ausente na sala legado (sem etapas), e é o certo: o servidor preenche
+      // com o `etapaAtual` dele, que numa sala sem campeonato é 0.
+      ...(alvo.etapa === undefined ? {} : { etapa: alvo.etapa }),
     });
     // `eventosAplicados` fora das dependências de propósito, mesmo raciocínio
-    // do efeito do draft: quando `corrida` já está disponível, o log parou de
-    // crescer (draft concluído), então `eventosAplicados` já está no valor
-    // final. Disparar por `corrida` (a referência) é suficiente e evita
-    // qualquer reatestado supérfluo.
-  }, [corrida, cliente.euSou]);
+    // do efeito do draft: quando há corrida, o log parou de crescer (draft
+    // concluído), então `eventosAplicados` já está no valor final.
+    //
+    // 🔑 **`alvo.corrida` (a REFERÊNCIA) é o gatilho, e é o que faz o atestado
+    // sair UMA VEZ POR ETAPA**: `etapasDaSala` só recomputa quando
+    // `chaveSeedsAbertas` muda, ou seja, quando uma etapa nova abre. Depender
+    // de `alvo` (objeto novo a cada render) reatestaria a cada render.
+  }, [alvo?.corrida, alvo?.etapa, cliente.euSou]);
 
   // `versaoApp` é o handshake do 3.4: dois builds diferentes produzem loadouts
   // diferentes do mesmo log, e o servidor recusa a entrada em vez de deixar a
@@ -394,13 +472,17 @@ export function useSalaOnline(sala: string): UseSalaOnline {
   // e não gera escrita no Durable Object), então a UI pode chamar sem guardar
   // se já chamou.
   //
-  // ⚠️ **Correção do PR 4/4:** esta linha dizia "inclusive depois de um F5 na
-  // tela de resultado", e isso NÃO acontece — não há caminho que reateste após
-  // um F5. O `naCorrida` que leva à corrida é estado local do `FluxoOnline`, e
-  // recarregar devolve o jogador ao resumo (limite conhecido, registrado lá).
-  // Quem não reatesta cai no `TIMEOUT_FIM_DE_CORRIDA_MS`, que é o fallback
-  // projetado — funciona, só adia a janela de graça. As duas metades estavam
-  // documentadas em arquivos diferentes e ninguém tinha ligado uma na outra.
+  // ✅ **PR 3.5.4 — o limite do F5 ACABOU, e a causa dele também.** A redação
+  // anterior explicava que recarregar devolvia o jogador ao resumo porque o
+  // `naCorrida` era estado local do `FluxoOnline`. **Esse estado não existe
+  // mais**: a tela é derivada do snapshot (`etapas`), então o F5 devolve o
+  // jogador à etapa em que ele estava, e o atestado volta a sair sozinho.
+  // Quem ainda assim não atestar cai no `TIMEOUT_FIM_DE_CORRIDA_MS`, que segue
+  // sendo o fallback projetado.
+  // ⚠️ **Sem `etapa` no comando, de propósito** — o servidor grava no balde do
+  // cursor dele. É a **pendência 0(x)**: o jogador atrasado atesta a etapa em
+  // que o SERVIDOR está, não a que assistiu. Decisão do dev: registrar, não
+  // consertar neste PR.
   const atestarFimDaCorrida = useCallback(
     () => enviar({ tipo: 'corrida-concluida' }),
     [enviar],
@@ -457,6 +539,8 @@ export function useSalaOnline(sala: string): UseSalaOnline {
     inexistente: cliente.erros.includes('sala-inexistente'),
     corrida,
     etapas,
+    etapaCorrente,
+    calendario,
     classificacao,
     atestarFimDaCorrida,
   };

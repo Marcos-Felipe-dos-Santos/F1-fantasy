@@ -38,14 +38,20 @@ interface FluxoCampeonatoProps {
   onReiniciar: () => void;
 }
 
-/** Nome de exibição do jogador; cai no id se não achar (mesmo padrão das outras telas). */
-function nomeDoJogador(state: DraftState, jogadorId: string): string {
+/**
+ * Nome de exibição do jogador; cai no id se não achar (mesmo padrão das outras telas).
+ *
+ * **Exportada no PR 3.5.4** para o campeonato ONLINE (`FluxoOnline`) usar a
+ * mesma função — duplicar as duas linhas lá faria as duas telas divergirem no
+ * dia em que o formato do nome mudar.
+ */
+export function nomeDoJogador(state: DraftState, jogadorId: string): string {
   const jogador = state.jogadores.find((j) => j.id === jogadorId);
   return jogador ? nomeJogador(jogador) : jogadorId;
 }
 
 /** Nome da pista pra exibição; cai no id se o dataset não a tiver (save de outro dataset). */
-function nomeDaPista(pistaId: string | undefined): string | null {
+export function nomeDaPista(pistaId: string | undefined): string | null {
   if (pistaId === undefined) return null;
   return dataset.pistasById.get(pistaId)?.nome ?? pistaId;
 }

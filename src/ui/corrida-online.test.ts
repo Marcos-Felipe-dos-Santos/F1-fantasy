@@ -13,10 +13,18 @@ import pistasReal from '../fixtures/dataset-semente/pistas.json';
 import { revelarRodada } from '../engine/draft';
 import type { DraftState, EscolhaDraft } from '../engine/types';
 import { aplicarEscolhaHumano, ID_HUMANO, iniciarDraftSingle } from './fluxo-draft';
-import { classificacaoDaSala, corridaDaSala, etapasDaSala } from './corrida-online';
+import {
+  alvoDoAtestado,
+  calendarioDaSala,
+  classificacaoDaSala,
+  corridaDaSala,
+  etapaCorrenteDaSala,
+  etapasDaSala,
+  formatoDeNEtapas,
+} from './corrida-online';
 import { prepararCorrida } from './fluxo-corrida';
 import { pistaSorteada } from '../engine/pista-sorteada';
-import { calendarioSorteado, seedDaEtapa, simularEtapa } from '../engine/campeonato';
+import { N_ETAPAS, calendarioSorteado, seedDaEtapa, simularEtapa } from '../engine/campeonato';
 import type { Loadout } from '../engine/types';
 
 const dataset = criarDataset(equipeAnosReal, pecasReal, pistasReal);
@@ -170,6 +178,12 @@ describe('corridaDaSala', () => {
  */
 const SEED_CALENDARIO = 1903767602;
 const SEEDS_ETAPAS = [3187109758, 2415019035, 881203344, 4013558712, 190288147];
+/**
+ * O `nEtapas` que o snapshot publica numa sala `'curta'` (PR 3.5.4, pendência
+ * 0(w)). Sai de `N_ETAPAS.curta`, e **não** do literal `5`: se o formato mudar
+ * de tamanho, este teste tem que acompanhar em vez de passar por acidente.
+ */
+const N_CURTA = N_ETAPAS.curta;
 
 /**
  * Os loadouts na MESMA ordem em que `prepararCorrida` os monta
@@ -192,7 +206,7 @@ describe('etapasDaSala — as etapas abertas derivadas do snapshot', () => {
     // argumento COMPILA LIMPO e produz uma corrida determinística e errada.
     const draft = jogarDraftAteConcluir('etapas-conformidade');
     const calendario = calendarioSorteado(dataset, SEED_CALENDARIO, 'curta');
-    const etapas = etapasDaSala(dataset, draft, SEED_CALENDARIO, SEEDS_ETAPAS);
+    const etapas = etapasDaSala(dataset, draft, SEED_CALENDARIO, SEEDS_ETAPAS, N_CURTA);
 
     expect(etapas).toHaveLength(SEEDS_ETAPAS.length);
     const loadouts = loadoutsOrdenados(draft);
@@ -226,7 +240,7 @@ describe('etapasDaSala — as etapas abertas derivadas do snapshot', () => {
       'PRÉ-CONDIÇÃO: nenhuma seed pode sortear justamente a pista do calendário — se colidir, a mutação sobrevive por acaso e o teste vira teatro',
     ).toEqual([]);
 
-    const etapas = etapasDaSala(dataset, draft, SEED_CALENDARIO, SEEDS_ETAPAS);
+    const etapas = etapasDaSala(dataset, draft, SEED_CALENDARIO, SEEDS_ETAPAS, N_CURTA);
     expect(etapas.map((e) => e.pistaId)).toEqual(calendario.slice(0, SEEDS_ETAPAS.length));
   });
 
@@ -241,17 +255,20 @@ describe('etapasDaSala — as etapas abertas derivadas do snapshot', () => {
       calendario[1],
     );
 
-    const etapas = etapasDaSala(dataset, draft, SEED_CALENDARIO, SEEDS_ETAPAS.slice(0, 2));
+    const etapas = etapasDaSala(dataset, draft, SEED_CALENDARIO, SEEDS_ETAPAS.slice(0, 2), N_CURTA);
     expect(etapas).toHaveLength(2);
     expect(etapas[0].pistaId).toBe(calendario[0]);
     expect(etapas[1].pistaId).toBe(calendario[1]);
 
     // E a seed também é pareada por índice: trocar as duas seeds de lugar tem
     // que mudar o resultado das duas etapas.
-    const trocadas = etapasDaSala(dataset, draft, SEED_CALENDARIO, [
-      SEEDS_ETAPAS[1],
-      SEEDS_ETAPAS[0],
-    ]);
+    const trocadas = etapasDaSala(
+      dataset,
+      draft,
+      SEED_CALENDARIO,
+      [SEEDS_ETAPAS[1], SEEDS_ETAPAS[0]],
+      N_CURTA,
+    );
     expect(trocadas[0].resultado).not.toEqual(etapas[0].resultado);
     expect(trocadas[1].resultado).not.toEqual(etapas[1].resultado);
   });
@@ -269,7 +286,7 @@ describe('etapasDaSala — as etapas abertas derivadas do snapshot', () => {
       'PRÉ-CONDIÇÃO: o cursor precisa estar no MEIO do campeonato',
     ).toBeLessThan(calendario.length);
 
-    const etapas = etapasDaSala(dataset, draft, SEED_CALENDARIO, abertas);
+    const etapas = etapasDaSala(dataset, draft, SEED_CALENDARIO, abertas, N_CURTA);
     expect(etapas).toHaveLength(2);
     expect(etapas.some((e) => e.pistaId === calendario[2])).toBe(false);
   });
@@ -279,9 +296,9 @@ describe('etapasDaSala — as etapas abertas derivadas do snapshot', () => {
     // recompõe exatamente as etapas anteriores, e a etapa 0 não muda quando a
     // etapa 1 abre.
     const draft = jogarDraftAteConcluir('etapas-f5');
-    const antes = etapasDaSala(dataset, draft, SEED_CALENDARIO, SEEDS_ETAPAS.slice(0, 1));
-    const denovo = etapasDaSala(dataset, draft, SEED_CALENDARIO, SEEDS_ETAPAS.slice(0, 1));
-    const depois = etapasDaSala(dataset, draft, SEED_CALENDARIO, SEEDS_ETAPAS.slice(0, 2));
+    const antes = etapasDaSala(dataset, draft, SEED_CALENDARIO, SEEDS_ETAPAS.slice(0, 1), N_CURTA);
+    const denovo = etapasDaSala(dataset, draft, SEED_CALENDARIO, SEEDS_ETAPAS.slice(0, 1), N_CURTA);
+    const depois = etapasDaSala(dataset, draft, SEED_CALENDARIO, SEEDS_ETAPAS.slice(0, 2), N_CURTA);
 
     expect(denovo).toEqual(antes);
     expect(depois[0]).toEqual(antes[0]);
@@ -290,17 +307,17 @@ describe('etapasDaSala — as etapas abertas derivadas do snapshot', () => {
 
   it('devolve [] sem calendário ou sem seeds abertas (sala legado / draft em andamento), com anti-vacuidade', () => {
     const draft = jogarDraftAteConcluir('etapas-legado');
-    expect(etapasDaSala(dataset, draft, null, SEEDS_ETAPAS)).toEqual([]);
-    expect(etapasDaSala(dataset, draft, SEED_CALENDARIO, [])).toEqual([]);
+    expect(etapasDaSala(dataset, draft, null, SEEDS_ETAPAS, N_CURTA)).toEqual([]);
+    expect(etapasDaSala(dataset, draft, SEED_CALENDARIO, [], N_CURTA)).toEqual([]);
     // 🔴 ANTI-VACUIDADE: o caso não-vazio no MESMO bloco. Sem ele, uma função
     // que devolvesse `[]` sempre passaria nas duas asserções acima.
-    expect(etapasDaSala(dataset, draft, SEED_CALENDARIO, SEEDS_ETAPAS)).toHaveLength(5);
+    expect(etapasDaSala(dataset, draft, SEED_CALENDARIO, SEEDS_ETAPAS, N_CURTA)).toHaveLength(5);
   });
 
   it('LANÇA quando o servidor abre mais etapas do que o calendário tem (nunca pista `undefined`)', () => {
     const draft = jogarDraftAteConcluir('etapas-incoerente');
     const demais = [...SEEDS_ETAPAS, 42, 43];
-    expect(() => etapasDaSala(dataset, draft, SEED_CALENDARIO, demais)).toThrow(/etapasDaSala/);
+    expect(() => etapasDaSala(dataset, draft, SEED_CALENDARIO, demais, N_CURTA)).toThrow(/etapasDaSala/);
   });
 });
 
@@ -310,7 +327,7 @@ describe('classificacaoDaSala — a tabela acumulada do campeonato online', () =
     // segunda etapa tem que MOVER a tabela — se ela somasse zero ponto pra
     // todo mundo, cortar a etapa seria indistinguível de mantê-la.
     const draft = jogarDraftAteConcluir('classif-online');
-    const etapas = etapasDaSala(dataset, draft, SEED_CALENDARIO, SEEDS_ETAPAS.slice(0, 2));
+    const etapas = etapasDaSala(dataset, draft, SEED_CALENDARIO, SEEDS_ETAPAS.slice(0, 2), N_CURTA);
 
     const pontosPorEtapa = etapas.map((etapa) => {
       const soma = new Map<string, number>();
@@ -377,5 +394,249 @@ describe('classificacaoDaSala — a tabela acumulada do campeonato online', () =
     expect(classificacaoDaSala([], concluido)).toHaveLength(
       Object.keys(concluido.loadouts).length,
     );
+  });
+});
+
+/* ========================================================================== *
+ * 🏆 PR 3.5.4 — UI DO CAMPEONATO ONLINE: as funções puras que a tela consome
+ *
+ * 🔒 **Mesmo motivo do bloco do 3.5.3 acima, e ele ficou MAIS forte:** o 3.5.4
+ * é essencialmente um PR de `.tsx`, e sem jsdom nada que more dentro do
+ * componente ou do hook é alcançável por mutação. Cada decisão que pode errar
+ * em silêncio foi empurrada para uma função pura DAQUI — o índice da etapa
+ * corrente, o formato derivado de `nEtapas`, a fronteira do spoiler no
+ * calendário e a precedência do atestado.
+ *
+ * ⚠️ **O que continua SEM baseline, e está dito para não ser confundido com
+ * cobertura:** a `key={'etapa-'+k}` do `FluxoCorrida` (o React não emite `key`
+ * no markup, então nenhum render estático a enxerga) e a remontagem que ela
+ * causa. O portão dessas é o VISUAL.
+ * ========================================================================== */
+
+describe('formatoDeNEtapas (pendência 0(w))', () => {
+  it('🔴 é o lookup REVERSO de N_ETAPAS, e deriva dele em vez de repetir os números', () => {
+    expect(formatoDeNEtapas(N_ETAPAS.curta)).toBe('curta');
+    expect(formatoDeNEtapas(N_ETAPAS.completa)).toBe('completa');
+  });
+
+  /**
+   * 🔴 **É ESTE CASO QUE FECHA A 0(w), e não o de sala legado.** O teto de
+   * LEITURA de `nEtapas` no servidor é `[1, 10]` (`src/net/sala.ts`, contra
+   * `seedsEtapas.length`), **não** `{5, 10}`: uma sala v2 com `nEtapas: 7`
+   * passa o discriminante como `ok`. Se o lookup lançasse aqui, a 0(w) estaria
+   * MOVIDA — o `throw` em render continuaria alcançável, por outro valor — em
+   * vez de fechada.
+   */
+  it('🔒 é TOTAL: valor sem formato correspondente devolve null, NUNCA lança', () => {
+    for (const n of [0, 1, 2, 7, 9, 11, 999, -1]) {
+      expect(() => formatoDeNEtapas(n), `nEtapas ${n} não pode lançar`).not.toThrow();
+      expect(formatoDeNEtapas(n), `nEtapas ${n} não tem formato`).toBeNull();
+    }
+  });
+});
+
+describe('etapaCorrenteDaSala (invariante travada pelo dev)', () => {
+  it('🔴 é `etapas.length - 1`: a última etapa ABERTA é a que se corre agora', () => {
+    const draft = jogarDraftAteConcluir('etapa-corrente');
+    const etapas = etapasDaSala(dataset, draft, SEED_CALENDARIO, SEEDS_ETAPAS.slice(0, 3), N_CURTA);
+    expect(etapas, 'PRÉ-CONDIÇÃO: 3 etapas abertas').toHaveLength(3);
+    expect(etapaCorrenteDaSala(etapas)).toBe(2);
+  });
+
+  /**
+   * 🔴 **O CASO DA PENDÊNCIA 0(t), e é o que a invariante existe para
+   * proteger.** Uma sala `corrompida` publica um snapshot que se
+   * autocontradiz: `etapaAtual: 4` junto com `seedsAbertas: []`. Derivando do
+   * comprimento, isto dá `-1` e a tela não abre etapa nenhuma; indexando pelo
+   * cursor, `etapas[4]` de uma lista vazia é `undefined` e a 0(t) volta como
+   * tela quebrada.
+   */
+  it('🔒 0(t): sem etapa aberta devolve -1, mesmo que o snapshot afirme outro cursor', () => {
+    expect(etapaCorrenteDaSala([])).toBe(-1);
+    // O `-1` importa por ser um índice INVÁLIDO: `etapas[-1]` é `undefined`, e
+    // é isso que faz o `FluxoOnline` cair no ramo sem etapa em vez de montar
+    // uma corrida inexistente.
+    expect(([] as unknown[])[etapaCorrenteDaSala([])]).toBeUndefined();
+  });
+});
+
+describe('etapasDaSala × nEtapas do snapshot (0(w) fechada)', () => {
+  it('🔴 o formato SAI do snapshot: nEtapas 10 ⇒ 10 etapas, não 5', () => {
+    const draft = jogarDraftAteConcluir('netapas-completa');
+    const dez = [...SEEDS_ETAPAS, ...SEEDS_ETAPAS.map((s) => (s ^ 0x5f5f5f5f) >>> 0)];
+    expect(dez, 'PRÉ-CONDIÇÃO: 10 seeds abertas').toHaveLength(10);
+
+    const etapas = etapasDaSala(dataset, draft, SEED_CALENDARIO, dez, N_ETAPAS.completa);
+    expect(etapas).toHaveLength(10);
+    // 🔒 ANTI-VACUIDADE: com o formato fixo em `'curta'` (o comportamento
+    // ANTERIOR ao 3.5.4) esta MESMA chamada lançava em `calendario[5]`, em
+    // render, sem ErrorBoundary. É a 0(w) inteira, num caso só.
+    expect(new Set(etapas.map((e) => e.pistaId)).size, 'sem pista repetida').toBe(10);
+  });
+
+  it('🔒 nEtapas sem formato correspondente ⇒ [] em vez de exceção em render', () => {
+    const draft = jogarDraftAteConcluir('netapas-invalido');
+    for (const n of [0, 1, 7, 999]) {
+      expect(() => etapasDaSala(dataset, draft, SEED_CALENDARIO, SEEDS_ETAPAS, n)).not.toThrow();
+      expect(etapasDaSala(dataset, draft, SEED_CALENDARIO, SEEDS_ETAPAS, n)).toEqual([]);
+    }
+  });
+
+  /**
+   * 🔒 **A ORDEM DOS DOIS PORTÕES, exigida pelo dev.** Sala legado publica
+   * `nEtapas: 1` **e** `seedCalendario: null`. Se o lookup do formato viesse
+   * ANTES do portão da seed, a sala legado tomaria o caminho do formato
+   * inválido — mesma saída hoje (`[]`), mas por acidente.
+   */
+  it('🔒 sala LEGADO: seedCalendario null vence, qualquer que seja o nEtapas', () => {
+    const draft = jogarDraftAteConcluir('legado-ordem');
+    expect(etapasDaSala(dataset, draft, null, SEEDS_ETAPAS, 1)).toEqual([]);
+    expect(etapasDaSala(dataset, draft, null, SEEDS_ETAPAS, N_CURTA)).toEqual([]);
+  });
+});
+
+describe('calendarioDaSala — o calendário inteiro, sem vazar vencedor', () => {
+  it('🔴 devolve o calendário INTEIRO, incluindo as etapas ainda fechadas', () => {
+    const draft = jogarDraftAteConcluir('calendario-inteiro');
+    const etapas = etapasDaSala(dataset, draft, SEED_CALENDARIO, SEEDS_ETAPAS.slice(0, 2), N_CURTA);
+    const calendario = calendarioDaSala(dataset, SEED_CALENDARIO, N_CURTA, etapas, etapas.length);
+
+    // 5 linhas com 2 etapas abertas: é essa diferença que faz a tela parecer um
+    // campeonato, e é ela que NÃO sai de `etapasDaSala`.
+    expect(calendario).toHaveLength(N_CURTA);
+    expect(etapas).toHaveLength(2);
+    expect(calendario[0].pistaId).toBe(etapas[0].pistaId);
+    expect(calendario[1].pistaId).toBe(etapas[1].pistaId);
+    expect(calendario.map((e) => e.numero)).toEqual([1, 2, 3, 4, 5]);
+  });
+
+  /**
+   * 🔴 **O TESTE MAIS IMPORTANTE DESTE PR — a decisão travada do 8.3, agora do
+   * lado online.** TODAS as etapas abertas estão simuladas em memória o tempo
+   * todo, inclusive a que o jogador ainda está assistindo. `etapasVistas` é a
+   * única coisa que separa "simulado" de "revelado".
+   *
+   * O teste dedicado do 8.3 cobre `calendarioAnotado` (offline) — **não cobre
+   * esta função**, que é código novo com a mesma responsabilidade.
+   */
+  it('🔴 NUNCA revela vencedor de etapa não vista, mesmo estando simulada', () => {
+    const draft = jogarDraftAteConcluir('calendario-spoiler');
+    const etapas = etapasDaSala(dataset, draft, SEED_CALENDARIO, SEEDS_ETAPAS.slice(0, 3), N_CURTA);
+    expect(etapas, 'PRÉ-CONDIÇÃO: 3 etapas SIMULADAS em memória').toHaveLength(3);
+
+    // O jogador viu só a primeira; está assistindo à segunda agora.
+    const calendario = calendarioDaSala(dataset, SEED_CALENDARIO, N_CURTA, etapas, 1);
+
+    expect(calendario[0].disputada).toBe(true);
+    expect(calendario[0].vencedorId).not.toBeNull();
+    // 🔴 A etapa 1 ESTÁ simulada e TEM vencedor — e mesmo assim o calendário
+    // não pode revelá-lo. Sem esta pré-condição o teste passaria por vacuidade.
+    expect(
+      etapas[1].resultado.classificacao[0].jogadorId,
+      'PRÉ-CONDIÇÃO: há um vencedor a vazar',
+    ).toBeTruthy();
+    expect(calendario[1].disputada).toBe(false);
+    expect(calendario[1].vencedorId).toBeNull();
+    expect(calendario[2].vencedorId).toBeNull();
+  });
+
+  it('🔒 o vencedor revelado é o da etapa CERTA, pareado por índice', () => {
+    const draft = jogarDraftAteConcluir('calendario-pareado');
+    const etapas = etapasDaSala(dataset, draft, SEED_CALENDARIO, SEEDS_ETAPAS.slice(0, 3), N_CURTA);
+    const calendario = calendarioDaSala(dataset, SEED_CALENDARIO, N_CURTA, etapas, etapas.length);
+
+    for (let k = 0; k < etapas.length; k++) {
+      expect(calendario[k].vencedorId, `etapa ${k}`).toBe(
+        etapas[k].resultado.classificacao[0].jogadorId,
+      );
+    }
+  });
+
+  it('🔒 `proxima` marca a primeira ainda não vista, e nenhuma quando acabou', () => {
+    const draft = jogarDraftAteConcluir('calendario-proxima');
+    const etapas = etapasDaSala(dataset, draft, SEED_CALENDARIO, SEEDS_ETAPAS, N_CURTA);
+
+    const noMeio = calendarioDaSala(dataset, SEED_CALENDARIO, N_CURTA, etapas, 2);
+    expect(noMeio.filter((e) => e.proxima).map((e) => e.numero)).toEqual([3]);
+
+    const noFim = calendarioDaSala(dataset, SEED_CALENDARIO, N_CURTA, etapas, N_CURTA);
+    expect(
+      noFim.some((e) => e.proxima),
+      'acabou: não há próxima',
+    ).toBe(false);
+    expect(noFim.every((e) => e.disputada)).toBe(true);
+  });
+
+  it('🔒 os mesmos dois portões de etapasDaSala, na mesma ordem', () => {
+    const draft = jogarDraftAteConcluir('calendario-portoes');
+    const etapas = etapasDaSala(dataset, draft, SEED_CALENDARIO, SEEDS_ETAPAS, N_CURTA);
+    expect(calendarioDaSala(dataset, null, N_CURTA, etapas, 1)).toEqual([]);
+    expect(calendarioDaSala(dataset, SEED_CALENDARIO, 1, etapas, 1)).toEqual([]);
+    expect(() => calendarioDaSala(dataset, SEED_CALENDARIO, 7, etapas, 1)).not.toThrow();
+  });
+
+  /**
+   * 🔒 **A metade do calendário que a cerca do 3.5.3 (aviso A2) protege.** O
+   * calendário da TELA tem que ser o mesmo que gerou as etapas — se esta função
+   * pegasse a seed de outra fonte, ou passasse outro formato, o jogador veria
+   * um calendário e correria outro, e **nada acusaria**: o hash cobre a
+   * corrida, não o calendário.
+   */
+  it('🔴 conformidade: o calendário da tela é o MESMO que gerou as etapas', () => {
+    const draft = jogarDraftAteConcluir('calendario-conformidade');
+    const etapas = etapasDaSala(dataset, draft, SEED_CALENDARIO, SEEDS_ETAPAS, N_CURTA);
+    const calendario = calendarioDaSala(dataset, SEED_CALENDARIO, N_CURTA, etapas, etapas.length);
+    // Recomposto pelo caminho independente, como o baseline de conformidade do 3.5.3.
+    expect(calendario.map((e) => e.pistaId)).toEqual(
+      calendarioSorteado(dataset, SEED_CALENDARIO, 'curta'),
+    );
+    expect(calendario.map((e) => e.pistaId)).toEqual(etapas.map((e) => e.pistaId));
+  });
+});
+
+describe('alvoDoAtestado — UM alvo só, campeonato tem precedência', () => {
+  /**
+   * 🔴 **ACHADO DESTE PR: sem esta precedência o 3.5.4 produz ALARME FALSO
+   * TRAVADO.** O atestado da avulsa vai **sem** `etapa`, e o servidor o joga no
+   * balde `corrida:${etapaAtual}` — o MESMO balde da etapa corrente — com um
+   * hash que difere por construção (seed crua × `seedDaEtapa`). E `alarmado`
+   * não volta atrás.
+   */
+  it('🔴 havendo etapa aberta, atesta a ETAPA (com o índice), nunca a avulsa', () => {
+    const draft = jogarDraftAteConcluir('alvo-precedencia');
+    const etapas = etapasDaSala(dataset, draft, SEED_CALENDARIO, SEEDS_ETAPAS.slice(0, 2), N_CURTA);
+    const avulsa = corridaDaSala(dataset, draft, 987_654);
+
+    // 🔒 PRÉ-CONDIÇÃO: as duas corridas TÊM que ser distinguíveis, senão o
+    // teste passaria sem discriminar nada — e é justamente a diferença entre
+    // elas que produz o alarme falso.
+    expect(avulsa.resultado, 'PRÉ-CONDIÇÃO: avulsa ≠ etapa corrente').not.toEqual(
+      etapas[1].resultado,
+    );
+
+    const alvo = alvoDoAtestado(avulsa, etapas);
+    expect(alvo).not.toBeNull();
+    expect(alvo?.corrida).toBe(etapas[1]);
+    expect(alvo?.etapa).toBe(1);
+  });
+
+  it('🔒 sem etapa aberta (sala legado), cai na avulsa e SEM o campo etapa', () => {
+    const draft = jogarDraftAteConcluir('alvo-legado');
+    const avulsa = corridaDaSala(dataset, draft, 555);
+    const alvo = alvoDoAtestado(avulsa, []);
+    expect(alvo?.corrida).toBe(avulsa);
+    expect(alvo?.etapa).toBeUndefined();
+  });
+
+  it('🔒 sem etapa e sem avulsa, não há o que atestar', () => {
+    expect(alvoDoAtestado(null, [])).toBeNull();
+  });
+
+  it('🔒 a referência atestada é a MESMA que vai à tela (tese do 2/4)', () => {
+    const draft = jogarDraftAteConcluir('alvo-referencia');
+    const etapas = etapasDaSala(dataset, draft, SEED_CALENDARIO, SEEDS_ETAPAS.slice(0, 3), N_CURTA);
+    // Identidade, não igualdade estrutural: é a referência que o `FluxoOnline`
+    // passa como `{ modo: 'pronta', corrida: etapas[etapaCorrente] }`.
+    expect(alvoDoAtestado(null, etapas)?.corrida).toBe(etapas[etapaCorrenteDaSala(etapas)]);
   });
 });

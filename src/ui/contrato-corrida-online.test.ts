@@ -263,6 +263,34 @@ const PERMITIDOS: Record<string, string[]> = {
     'src/ui/corrida-online.ts',
     'src/ui/fluxo-campeonato.ts',
   ],
+  // 🔒 **A SUPERFÍCIE NOVA DO 3.5.4, cercada NO PR QUE A CRIA** — é literalmente
+  // o bloqueante C1 da revisão do 3.5.3, que registrou: *"ponto de entrada
+  // público que computa corrida online entra na cerca no PR que o cria (o 3.5.4
+  // é quem desenha os painéis, e é lá que a tentação mora)"*. Medido lá: um
+  // painel sintético chamando `etapasDaSala` deixava a cerca **verde, 26/26**,
+  // porque todos os nomes vigiados ficam atrás da indireção.
+  //
+  // O cenário concreto que cada uma pega, e não é simetria estética:
+  // - `calendarioDaSala` — um painel que monte o próprio calendário passa a
+  //   mostrar pistas diferentes das corridas, e **nada acusa**: o hash cobre a
+  //   corrida, não o calendário.
+  // - `etapaCorrenteDaSala` — a invariante travada pelo dev. Quem indexar por
+  //   `sala.etapaAtual` num arquivo novo traz a 0(t) de volta como tela
+  //   quebrada, e a cerca é o que obriga a passar por aqui.
+  // - `alvoDoAtestado` — dois sítios atestando produzem o alarme falso travado
+  //   que este PR descobriu; a precedência tem que morar num lugar só.
+  // ⚠️ **AS LISTAS SAÍRAM DA CERCA, NÃO DE PALPITE — e a diferença apareceu na
+  // primeira rodada.** Escrevi as quatro com `corrida-online.ts` incluso, por
+  // simetria; a cerca reprovou duas: `calendarioDaSala` e `alvoDoAtestado` são
+  // DEFINIDAS lá e não são chamadas lá, e `referenciaDe` mede referência, não
+  // definição. `etapaCorrenteDaSala` fica com os dois porque `alvoDoAtestado` a
+  // chama de verdade; `formatoDeNEtapas` só com um porque é uso interno.
+  // Mesma lição do `namespaces-seed.ts` no 3.5.3 e do `calendarioSorteado` logo
+  // acima, agora na terceira direção: **simetria estética não é evidência.**
+  calendarioDaSala: ['src/ui/useSalaOnline.ts'],
+  etapaCorrenteDaSala: ['src/ui/corrida-online.ts', 'src/ui/useSalaOnline.ts'],
+  alvoDoAtestado: ['src/ui/useSalaOnline.ts'],
+  formatoDeNEtapas: ['src/ui/corrida-online.ts'],
 };
 
 describe('a varredura enxerga os arquivos de verdade (anti-vacuidade)', () => {
@@ -714,5 +742,97 @@ describe('BLOQUEANTE 2: contagem EXATA — nunca duas computações no mesmo arq
       original,
     );
     expect(chamadasMax(sabotado, 'corridaDaSala')).not.toBe(1);
+  });
+});
+
+/* ========================================================================== *
+ * 🏆 PR 3.5.4 — A CERCA DO QUE NÃO TEM BASELINE
+ *
+ * 🔴 **Este bloco existe porque duas mudanças centrais do 3.5.4 são
+ * INALCANÇÁVEIS por mutação, e isso está dito em vez de disfarçado:**
+ *
+ * - a **`key={'etapa-'+k}`** no `FluxoCorrida` — o React **não emite `key` no
+ *   markup**, então `renderToStaticMarkup` não a enxerga; e o efeito dela
+ *   (remontar entre etapas) exige duas renderizações com estado preservado,
+ *   que sem jsdom não existem;
+ * - a **morte do `naCorrida`** — apagar um `useState` não deixa rastro
+ *   observável num render único.
+ *
+ * Cerca TEXTUAL é o que dá para comprar barato aqui, e ela pega a mutação
+ * DESATENTA, que é a provável — exatamente o que a §"A CERCA DE M5/M6 É
+ * TEXTUAL" do `PLANOS_ATIVOS.md` registrou sobre a cerca de `party/sala.ts`.
+ * **Ela não substitui o portão visual; ela evita que o portão visual seja
+ * desfeito em silêncio depois de aprovado.**
+ * ========================================================================== */
+describe('🏆 3.5.4 — a `key` da etapa e o fim do `naCorrida` (cerca textual)', () => {
+  /**
+   * 🔴 **Sem a `key`, o `useState` de `useCorrida` mantém a corrida da etapa
+   * anterior e o jogador corre a etapa 1 cinco vezes**, enquanto a tabela
+   * pontua as cinco etapas certas — a classe de bug do 8.4, com a agravante de
+   * que **o hash sai correto** (vem de `etapas[k]`, não da tela) e portanto o
+   * detector não acusa nada.
+   */
+  it('🔴 `FluxoOnline.tsx` monta o `FluxoCorrida` da etapa com uma `key` por etapa', () => {
+    const fonte = semComentarios(readFileSync(join(AQUI, 'FluxoOnline.tsx'), 'utf8'));
+    expect(
+      fonte.includes('key={`etapa-${k}`}'),
+      'a `key` por etapa sumiu do `FluxoOnline` — sem ela o jogador corre a etapa 1 cinco vezes, e NENHUM teste automatizado pega isso',
+    ).toBe(true);
+  });
+
+  /**
+   * 🔒 **A NEGAÇÃO SE ESCREVE COM `includes`, NUNCA COM LOOKAHEAD** — lição
+   * literal do 3.5.1, onde um regex de negação sem a flag `m` cobria só a
+   * primeira linha e nascia falso-negativo. Aqui a pergunta é sobre a
+   * PRESENÇA de um identificador no texto, e `includes` responde exatamente
+   * isso, sem sintaxe que possa mentir.
+   */
+  it('🔴 o `naCorrida` MORREU no ONLINE: só o fluxo offline pode tê-lo', () => {
+    // 🔴 **A PRIMEIRA VERSÃO DESTA CERCA EXIGIA `[]` E ESTAVA ERRADA — a cerca
+    // acusou, e o achado é registrado aqui em vez de contornado.** `App.tsx`
+    // tem um `naCorrida` PRÓPRIO, do fluxo OFFLINE (single/local), que decide
+    // quando o resumo do draft dá lugar à corrida ou ao campeonato. Ele é
+    // legítimo: ali o cursor é do jogador, não de um servidor, e não existe
+    // snapshot de onde derivar. O que o 3.5.4 matou foi o `naCorrida` do
+    // **`FluxoOnline`**, onde havia snapshot e o estado local só servia para o
+    // F5 perder a corrida.
+    //
+    // 🔑 Por isso a cerca é uma ALLOWLIST e não uma proibição total: um
+    // `naCorrida` novo em qualquer arquivo fora desta lista reprova, inclusive
+    // — e principalmente — se voltar ao `FluxoOnline.tsx`.
+    const PODEM_TER = ['src/ui/App.tsx'];
+    const reincidentes = arquivosDaUi()
+      .filter((arquivo) => !arquivo.endsWith('contrato-corrida-online.test.ts'))
+      .filter((arquivo) => semComentarios(readFileSync(arquivo, 'utf8')).includes('naCorrida'))
+      .map(relativo)
+      .sort();
+    expect(
+      reincidentes,
+      'estado local de "já fui pra corrida" no fluxo ONLINE reabre o buraco do F5 que o 3.5.4 fechou — a tela online deriva do snapshot',
+    ).toEqual(PODEM_TER);
+  });
+
+  /**
+   * 🔴 ANTI-VACUIDADE das duas asserções acima — sem isto, um `arquivosDaUi()`
+   * vazio ou um `semComentarios` que engolisse o arquivo inteiro fariam as
+   * duas passarem sem ler nada. É a mesma armadilha que o 3.5.1 encontrou na
+   * cerca de `party/sala.ts` (cheque cego) e que o 3.5.3 encontrou na
+   * contagem.
+   */
+  it('🔒 ANTI-VACUIDADE: a varredura enxerga o `FluxoOnline` e acha `naCorrida` quando ele existe', () => {
+    const arquivos = arquivosDaUi().map(relativo);
+    expect(arquivos).toContain('src/ui/FluxoOnline.tsx');
+
+    // O detector reprova um arquivo que REALMENTE contenha o identificador —
+    // em memória, sem tocar no disco (mesma política das outras sabotagens).
+    const original = readFileSync(join(AQUI, 'FluxoOnline.tsx'), 'utf8');
+    const sabotado = original.replace(
+      'const online = useSalaOnline(sala);',
+      'const online = useSalaOnline(sala);\n  const [naCorrida] = useState(false);',
+    );
+    expect(sabotado, 'a substituição de texto não encontrou o alvo — o teste não provaria nada').not.toBe(
+      original,
+    );
+    expect(semComentarios(sabotado).includes('naCorrida')).toBe(true);
   });
 });
