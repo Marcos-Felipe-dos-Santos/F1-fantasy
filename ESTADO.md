@@ -8,8 +8,18 @@
 
 ## Estado atual
 
-**Última medição (PR 3.5.3, 2026-08-21, na branch `pr-3.5.3-cliente-multietapa`, pós-revisão e
-pós-conserto do bloqueante C1):** `npm test` **1565/64**, **`npm run test:party` 10/10**, typecheck
+**Última medição (2026-08-23, na `main` PÓS-MERGE do 3.5.3 — `922bdd0` —, medida na `main` e não
+herdada da branch):** `npm test` **1565/64** em **8 rodadas seguidas**, **`npm run test:party`
+10/10**, typecheck **0** nos três projetos, eslint **0**, build **0**.
+⚠️ **Uma leva ANTERIOR de 8 rodadas, no mesmo commit, teve 1 vermelho na rodada 1** (1564/1565) —
+rodada **com leitura de arquivos do projeto em paralelo**, que é o gatilho da 0(v). O nome do teste
+**não foi capturado** (o filtro da medição descartou a linha), então ele não pode ser atribuído à
+0(v) por medição, só por plausibilidade. A leva limpa que vale (8/8) foi rodada **sem nada
+concorrente**. 🔑 **Medição de portão instável se faz com a saída INTEIRA salva por rodada** — filtro
+que guarda só o placar joga fora justamente o dado que discrimina 0(v) de regressão.
+
+*(Medição anterior, PR 3.5.3, 2026-08-21, na branch `pr-3.5.3-cliente-multietapa`, pós-revisão e
+pós-conserto do bloqueante C1):* `npm test` **1565/64**, **`npm run test:party` 10/10**, typecheck
 **0** nos três projetos, eslint **0**, build **0**. `VERSAO_APP` **3.4.2** (sem bump — medido: o
 digest não foi tocado e nenhum rótulo novo nasceu).
 ⚠️ **O `npm test` deste projeto tem uma corrida de I/O entre duas cercas e pode falhar por
@@ -260,8 +270,17 @@ dependência).
 ## Onde parei
 
 **🏆 PR 3.5.3 — CLIENTE MULTIETAPA: CÓDIGO COMPLETO E VERDE em 2026-08-21**, na branch
-**`pr-3.5.3-cliente-multietapa`** (`cffe699` + `c64b8b4` + `01689a5` + `d478617` + `92bcee7` + `e48a5fc`). **NÃO mergeado, NÃO pushado,
-sem tag.** **Medido:** `npm test` **1565/64** (era 1544/64), `npm run test:party` **10/10**
+**`pr-3.5.3-cliente-multietapa`** (`cffe699` + `c64b8b4` + `01689a5` + `d478617` + `92bcee7` + `e48a5fc`).
+✅ **MERGEADO na `main` em 2026-08-23** (`922bdd0`, `--no-ff`) ✅ **e PUSHADO pelo dev** — **sem tag.**
+⚠️ **CORREÇÃO DE AFIRMAÇÃO DE ESTADO (2026-08-23).** Esta linha dizia *"NÃO mergeado, NÃO pushado,
+sem tag"* e a perna **"NÃO pushado" já era FALSA quando foi escrita**: medido na abertura da sessão
+do 3.5.4, `git ls-remote origin refs/heads/pr-3.5.3-cliente-multietapa` devolvia **`bce5fc8`**,
+idêntico ao `HEAD` local — a **branch** estava no remoto desde o 3.5.3. Só "NÃO mergeado" era
+verdade, e deixou de ser nesta sessão. 🔑 **É a QUARTA ocorrência de "afirmação de estado só entra
+medida" sobre git** (as anteriores estão logo abaixo, no bloco do 3.5.1) — e desta vez o erro não
+foi citar o commit errado, foi **afirmar sobre o remoto sem consultar o remoto**. `git status` diz
+o que a árvore tem, **não** o que o `origin` tem; quem responde isso é `git ls-remote`.
+**Medido:** `npm test` **1565/64** (era 1544/64), `npm run test:party` **10/10**
 (inalterado — não toca `party/`), typecheck **0** nos três projetos, eslint **0**, build **0**.
 **`VERSAO_APP` 3.4.2 sem bump, MEDIDO** (nenhum arquivo do digest tocado, nenhum `deriveSeed` novo).
 **`balance-harness` não rodado, e dito**: rótulo `camp:` intacto, zero arquivo de `src/engine/`.
@@ -1039,6 +1058,29 @@ casca deixa de ser terra sem teste; a opção conhecida é `@cloudflare/vitest-p
    `N_ETAPAS` e faria um lookup ingênuo lançar onde hoje devolve `[]` corretamente; (2) o hook
    capturar e expor pelo canal de erro que já tem, deixando a função pura lançando alto.
    🔑 **Registrada também no docblock de `etapasDaSala`**, que é onde a próxima pessoa vai olhar.
+   ➡️ **O 3.5.4 vai pelo caminho (1), decidido pelo dev em 2026-08-23.** Esta linha NÃO afirma que
+   está fechada: quem fecha é o commit de feature, e o registro do fechamento entra com ele.
+   (x) 🟠 **NOVA (planejamento do 3.5.4, 2026-08-23) — `corrida-concluida` NÃO CARREGA `etapa`, e o
+   jogador ATRASADO atesta a etapa em que o SERVIDOR está, não a que ele assistiu. DECISÃO DO DEV:
+   registrar, NÃO consertar no 3.5.4** ("o servidor é dono do cursor e grava no balde correto sem o
+   campo; este PR já é grande o suficiente").
+   **Medido no código, não deduzido da revisão:** `protocolo.ts:117` dá `etapa?: number` ao comando
+   **`hash`** — e **só a ele**; `corrida-concluida` é `{ tipo: 'corrida-concluida' }`, sem campo
+   nenhum (`protocolo.ts:132`). No servidor, `atestarFimDaCorrida(estado, remetenteId)`
+   (`servidor-sala.ts:860`) grava no balde da **etapa corrente do servidor**.
+   **A consequência, dita por inteiro:** quem ainda assiste a etapa k quando a barreira de k fecha
+   por `TIMEOUT_FIM_DE_CORRIDA_MS` chega ao resultado com o cursor já em k+1 — e o atestado dele
+   **conta para a k+1**, uma etapa que ele não viu. A barreira de k+1 fecha mais cedo do que devia,
+   para todo mundo.
+   🔑 **Por que NÃO é regressão do 3.5.4 e não vira bloqueante dele:** o caminho existe desde o
+   **3.5.2**, que é quem fez o cursor andar; o 3.5.4 só o torna alcançável com mais frequência, ao
+   ligar de fato as N etapas na tela. **É o espelho exato da guarda `etapa < cursor` que o 3.5.2
+   escreveu para o `hash`** — lá o cliente atrasado é ignorado em silêncio, aqui ele é contado.
+   ⚠️ **A assimetria é o achado**: o mesmo PR protegeu um dos dois atestados e não o outro.
+   **Conserto natural, quando vier:** `corrida-concluida` ganha `etapa?: number` (opcional, pelo
+   mesmo motivo do `hash` — cliente antigo não pode virar `comando-invalido` na janela de deploy) e
+   o servidor ignora em silêncio quem atesta etapa ≠ cursor. **Ler junto com a 0(u2)**, que é a
+   assimetria irmã no `hash` (etapa FUTURA é aceita e escreve balde adiantado).
 1. **Abertas pelo 7.8:** (a) o `BotaoTema` é um botão discreto no canto do `app-shell` — posição e
    forma **não passaram por veredito de arte**; (b) `erro` (salmão `#FF7B85`) e `raridadeProibido`
    (`#FF4757`) continuam sendo dois vermelhos ao lado do vermelho da marca — não foi mexido porque
