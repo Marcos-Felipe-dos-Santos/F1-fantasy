@@ -16,11 +16,24 @@ interface TelaResumoProps {
   /** Visibilidade da partida (§5): propagada pros cards do carro final de cada humano. */
   visibilidade: Visibilidade;
   onReiniciar: () => void;
-  onIrParaCorrida: () => void;
   /**
-   * Esconde "Ir pra corrida" (default: mostra). O modo Online usa `false`
-   * porque a corrida online ainda não existe — e um botão que promete a
-   * corrida e devolve à tela inicial é pior que botão nenhum.
+   * ⚠️ **Opcional desde o PR 3.5.4**, e o par com `mostrarIrParaCorrida` é a
+   * razão: quem esconde o botão não tem destino nenhum para onde mandar o
+   * jogador, e era obrigado a inventar um callback morto só para satisfazer o
+   * tipo. Callback morto é exatamente o tipo de coisa que alguém liga depois
+   * "porque estava lá".
+   */
+  onIrParaCorrida?: () => void;
+  /**
+   * Esconde "Ir pra corrida" (default: mostra).
+   *
+   * ⚠️ **A redação anterior dizia que o Online usa `false` "porque a corrida
+   * online ainda não existe" — envelheceu duas vezes.** A corrida online passou
+   * a existir no PR 4/4 (e o botão apareceu), e no **3.5.4** o botão sumiu de
+   * novo por outro motivo: no campeonato online **não há clique para dar** —
+   * quando a etapa abre, a tela troca sozinha, derivada do snapshot. O `false`
+   * do online hoje cobre só a janela entre o draft concluir e a primeira seed
+   * chegar.
    */
   mostrarIrParaCorrida?: boolean;
   /** Rótulo do botão de reinício, para quem usa esta tela fora do fluxo Single. */

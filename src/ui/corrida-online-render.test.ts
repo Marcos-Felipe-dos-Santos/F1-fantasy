@@ -36,7 +36,7 @@ import pistasReal from '../data/pistas.json';
 import { revelarRodada } from '../engine/draft';
 import type { DraftState, EscolhaDraft } from '../engine/types';
 import { aplicarEscolhaHumano, ID_HUMANO, iniciarDraftSingle } from './fluxo-draft';
-import { corridaDaSala } from './corrida-online';
+import { corridaDaSala, etapasDaSala } from './corrida-online';
 import { criarCliente, type EstadoCliente } from '../net/cliente';
 import type { EstadoSalaPublico } from '../net/tipos';
 import { FluxoOnline } from './FluxoOnline';
@@ -136,10 +136,17 @@ function retornoFalso(cliente: EstadoCliente, extras: Partial<Retorno> = {}): Re
     inexistente: false,
     ultimoErro: null,
     corrida: null,
-    // PR 3.5.3: as etapas do campeonato online. Vazias aqui de propósito —
-    // este arquivo testa o ramo da corrida AVULSA, que é quem alimenta a tela
-    // e o hash até o 3.5.4 ligar as etapas.
+    // PR 3.5.3: as etapas do campeonato online. Vazias no DEFAULT de propósito
+    // — assim todo teste que não fala de etapa exercita o ramo **sem etapa
+    // aberta** (sala legado, ou a janela entre o draft concluir e a primeira
+    // seed chegar). O ramo do CAMPEONATO, que o 3.5.4 ligou, tem bloco próprio
+    // mais abaixo neste mesmo arquivo, passando `etapas` explicitamente.
+    // ⚠️ `etapaCorrente: -1` é o valor coerente com `etapas: []` — é o que
+    // `etapaCorrenteDaSala([])` devolve. Pôr `0` aqui faria os testes deste
+    // arquivo passarem por um caminho que a produção nunca toma.
     etapas: [],
+    etapaCorrente: -1,
+    calendario: [],
     classificacao: [],
     entrar: () => {},
     definirPronto: () => {},
@@ -174,19 +181,92 @@ function renderizarOnline(extras: Partial<Retorno> = {}): string {
 const ROTULO_IR = 'Ir pra corrida';
 
 describe('🏁 o botão "Ir pra corrida" e a guarda da seed', () => {
-  it('🔴 com a corrida disponível, o botão aparece no resumo do draft online', () => {
-    expect(renderizarOnline({ corrida: corridaPronta })).toContain(ROTULO_IR);
+  /**
+   * ⚠️ **ESTE BLOCO MUDOU DE TESE NO PR 3.5.4 — e a mudança é intencional, não
+   * um teste ajustado para passar.**
+   *
+   * Até o 3.5.3 a asserção era *"com a corrida disponível, o botão APARECE"*.
+   * O 3.5.4 **removeu o botão e o `naCorrida` que ele alimentava**: no
+   * campeonato online não existe clique a dar, porque quem abre a etapa é a
+   * barreira do servidor e a tela troca sozinha quando o snapshot cresce.
+   *
+   * 🔒 **O teste não foi apagado, foi INVERTIDO** — continua havendo asserção
+   * sobre o rótulo, agora exigindo a AUSÊNCIA dele nos dois ramos. Apagar
+   * deixaria o rótulo livre para voltar por descuido, que é exatamente o que
+   * uma cerca existe para impedir.
+   */
+  it('🔴 3.5.4: mesmo com a corrida avulsa disponível, NÃO há botão "Ir pra corrida"', () => {
+    const html = renderizarOnline({ corrida: corridaPronta });
+    expect(html).not.toContain(ROTULO_IR);
+    // 🔒 ANTI-VACUIDADE: o resumo do draft REALMENTE renderizou. Sem isto, um
+    // early return qualquer (cliente parcial, draft null) faria o `not.toContain`
+    // passar sem provar nada — a família "o teste afirmava o que não conferia".
+    expect(html).toContain('Draft concluído');
   });
 
   /**
-   * 🔒 ANTI-VACUIDADE, e é a guarda que importa. O draft pode concluir ANTES de
-   * a `seedCorrida` chegar num snapshot — são mensagens diferentes. Nessa
-   * janela `corrida` é `null`, e um botão que promete a corrida e não tem
-   * corrida pra entregar devolveria o jogador pra lugar nenhum. É o mesmo
-   * achado que manteve `mostrarIrParaCorrida={false}` desde o PR 3.3.
+   * A janela entre o draft concluir e a primeira seed chegar: mensagens
+   * diferentes do servidor. Sem corrida e sem etapa, o resumo aparece — e
+   * continua sem botão, porque continua sem destino.
    */
-  it('🔒 sem a corrida (seedCorrida ainda não publicada), o botão NÃO aparece', () => {
-    expect(renderizarOnline({ corrida: null })).not.toContain(ROTULO_IR);
+  it('🔒 sem corrida e sem etapa aberta, o resumo aparece sem botão de corrida', () => {
+    const html = renderizarOnline({ corrida: null });
+    expect(html).not.toContain(ROTULO_IR);
+    expect(html).toContain('Draft concluído');
+  });
+});
+
+/* ========================================================================== *
+ * 🏆 PR 3.5.4 — O CAMPEONATO CHEGA NA TELA
+ *
+ * ⚠️ **Os limites deste arquivo continuam valendo, e um deles é o ponto:**
+ * `renderToStaticMarkup` monta UMA vez, não roda efeito nem evento, e o React
+ * **não emite `key` no markup**. Portanto **nada aqui prova a `key={'etapa-'+k}`
+ * nem a remontagem entre etapas** — isso é o PORTÃO VISUAL, e dizer o
+ * contrário seria a família "o teste afirmava o que não conferia".
+ *
+ * O que ESTES testes provam é a outra metade, que erraria em silêncio: que a
+ * tela monta a etapa CORRENTE (e não a primeira), pelo caminho real do
+ * componente.
+ * ========================================================================== */
+describe('🏆 o campeonato online na tela (PR 3.5.4)', () => {
+  const SEED_CAL = 555_001;
+  const SEEDS = [900_001, 900_002, 900_003];
+  const etapasAbertas = etapasDaSala(dataset, draftConcluido, SEED_CAL, SEEDS, 5);
+
+  it('🔴 monta a etapa CORRENTE (a última aberta), não a primeira', () => {
+    // 🔒 PRÉ-CONDIÇÃO: as pistas das etapas 0 e 2 têm que ser DIFERENTES,
+    // senão a asserção não discrimina nada — o calendário sorteia sem repetir,
+    // mas isso é propriedade de outra função e aqui tem que ser conferido.
+    expect(etapasAbertas, 'PRÉ-CONDIÇÃO: 3 etapas abertas').toHaveLength(3);
+    expect(
+      etapasAbertas[0].pista.nome,
+      'PRÉ-CONDIÇÃO: pistas distinguíveis',
+    ).not.toBe(etapasAbertas[2].pista.nome);
+
+    const html = renderizarOnline({
+      etapas: etapasAbertas,
+      etapaCorrente: 2,
+      classificacao: [],
+      calendario: [],
+    });
+
+    // A tela de grid nomeia a pista. Se a indexação caísse na etapa 0 — que é
+    // o que acontece com `key` ausente, ou indexando por um cursor errado — o
+    // nome seria o da PRIMEIRA pista.
+    expect(html).toContain(etapasAbertas[2].pista.nome);
+    expect(html).not.toContain(etapasAbertas[0].pista.nome);
+  });
+
+  /**
+   * 🔒 O ramo sem etapa: `etapaCorrente` é `-1` e `etapas[-1]` é `undefined`.
+   * A tela **não pode** montar corrida nenhuma — tem que cair no resumo.
+   * Sem esta asserção, um `etapas[etapaCorrente]` sem guarda passaria
+   * `undefined` como `corrida` e o `FluxoCorrida` explodiria em render.
+   */
+  it('🔒 0(t): etapaCorrente -1 cai no resumo, sem montar corrida', () => {
+    const html = renderizarOnline({ etapas: [], etapaCorrente: -1, calendario: [] });
+    expect(html).toContain('Draft concluído');
   });
 });
 

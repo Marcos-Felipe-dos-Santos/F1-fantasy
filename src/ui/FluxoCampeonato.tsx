@@ -30,6 +30,7 @@ import { FluxoCorrida } from './FluxoCorrida';
 import { nomeJogador } from './loadout-view';
 import { PainelCalendario } from './PainelCalendario';
 import { PainelCampeonato } from './PainelCampeonato';
+import { Podio } from './Podio';
 
 interface FluxoCampeonatoProps {
   state: DraftState;
@@ -38,14 +39,20 @@ interface FluxoCampeonatoProps {
   onReiniciar: () => void;
 }
 
-/** Nome de exibição do jogador; cai no id se não achar (mesmo padrão das outras telas). */
-function nomeDoJogador(state: DraftState, jogadorId: string): string {
+/**
+ * Nome de exibição do jogador; cai no id se não achar (mesmo padrão das outras telas).
+ *
+ * **Exportada no PR 3.5.4** para o campeonato ONLINE (`FluxoOnline`) usar a
+ * mesma função — duplicar as duas linhas lá faria as duas telas divergirem no
+ * dia em que o formato do nome mudar.
+ */
+export function nomeDoJogador(state: DraftState, jogadorId: string): string {
   const jogador = state.jogadores.find((j) => j.id === jogadorId);
   return jogador ? nomeJogador(jogador) : jogadorId;
 }
 
 /** Nome da pista pra exibição; cai no id se o dataset não a tiver (save de outro dataset). */
-function nomeDaPista(pistaId: string | undefined): string | null {
+export function nomeDaPista(pistaId: string | undefined): string | null {
   if (pistaId === undefined) return null;
   return dataset.pistasById.get(pistaId)?.nome ?? pistaId;
 }
@@ -67,28 +74,16 @@ export function FluxoCampeonato({
   // Fim de temporada: o cursor passou da última etapa.
   if (campeonatoConcluido(campeonato)) {
     const finais = classificacaoApos(campeonato, totalCorridas);
-    const podio = finais.slice(0, 3);
     return (
       <div className="tela-fim-campeonato">
         <h2>🏆 Fim do campeonato</h2>
 
         {/* Pódio antes da tabela: é o desfecho, e o que o jogador quer ver
-            primeiro. A ordem 2º-1º-3º é a do pódio real, com o campeão ao
-            centro e mais alto — a classe governa a altura no CSS. */}
-        <ol className="podio">
-          {[podio[1], podio[0], podio[2]].map((linha, posicaoVisual) =>
-            linha === undefined ? null : (
-              <li
-                key={linha.jogadorId}
-                className={`podio__lugar podio__lugar--${[2, 1, 3][posicaoVisual]}`}
-              >
-                <span className="podio__medalha">{['🥈', '🥇', '🥉'][posicaoVisual]}</span>
-                <span className="podio__nome">{nomeDoJogador(state, linha.jogadorId)}</span>
-                <span className="podio__pontos">{linha.pontos} pts</span>
-              </li>
-            ),
-          )}
-        </ol>
+            primeiro. A marcação mora em `Podio.tsx` desde o PR 3.5.4 — o
+            campeonato ONLINE desenha o mesmo pódio, e a cópia que existia aqui
+            era o vetor de divergência que o próprio comentário de lá nomeava
+            (aviso A3 da revisão). */}
+        <Podio state={state} classificacao={finais} />
 
         <PainelCampeonato
           state={state}

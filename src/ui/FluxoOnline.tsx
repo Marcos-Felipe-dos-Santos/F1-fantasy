@@ -15,8 +15,14 @@
  */
 
 import { useEffect, useState, type ReactNode } from 'react';
+import type { DraftState, LinhaClassificacao } from '../engine/types';
+import type { EtapaDoCalendario } from './fluxo-campeonato';
 import type { EscolhaDraft } from '../engine/types';
 import { FluxoCorrida } from './FluxoCorrida';
+import { nomeDaPista } from './FluxoCampeonato';
+import { Podio } from './Podio';
+import { PainelCalendario } from './PainelCalendario';
+import { PainelCampeonato } from './PainelCampeonato';
 import { TelaDraft } from './TelaDraft';
 import { TelaLobby } from './TelaLobby';
 import { TelaPeca } from './TelaPeca';
@@ -42,30 +48,23 @@ export function FluxoOnline({ sala, onVoltar }: FluxoOnlineProps) {
   const online = useSalaOnline(sala);
   const [nome, setNome] = useState('');
   /**
-   * 🏁 O jogador clicou "Ir pra corrida" (PR 4/4). Mora AQUI, e não em
-   * `ConteudoOnline`, pelo mesmo motivo de `nome`: aquele componente tem
-   * retornos antecipados antes de qualquer hook, e um `useState` lá dentro
-   * quebraria a ordem dos hooks entre renders.
+   * 🗑️ **O `naCorrida` MORREU no PR 3.5.4, e com ele o limite que ele criava.**
    *
-   * ⚠️ **LIMITE CONHECIDO — F5 no meio da corrida volta pro resumo.** Este é
-   * estado local, não vem do servidor; recarregar a página o perde e o jogador
-   * clica de novo. Aceitável porque a corrida é DETERMINÍSTICA: rever é rever
-   * exatamente a mesma corrida, não sortear outra. Persistir isso exigiria
-   * campo novo no protocolo para uma conveniência, não para uma correção.
+   * Era um `useState` local que guardava "o jogador clicou Ir pra corrida"
+   * (PR 4/4) — e, por ser local, **o F5 no meio da corrida devolvia o jogador
+   * ao resumo**. No campeonato isso deixaria de ser inconveniência e viraria
+   * defeito: com N etapas, recarregar no meio da etapa 3 jogaria o jogador de
+   * volta a uma tela que não sabe em que etapa ele está.
+   *
+   * 🔒 **A tela agora é DERIVADA DO SNAPSHOT** (`online.etapas` /
+   * `online.etapaCorrente`), que é a mesma propriedade que faz as etapas
+   * sobreviverem ao F5 desde o 3.5.3: o servidor publica as seeds abertas, o
+   * cliente recompõe. Nada de estado local para perder.
    */
-  const [naCorrida, setNaCorrida] = useState(false);
   return (
     <>
       <BannerDivergencia divergencia={online.cliente.divergencia} />
-      <ConteudoOnline
-        online={online}
-        nome={nome}
-        setNome={setNome}
-        naCorrida={naCorrida}
-        onIrParaCorrida={() => setNaCorrida(true)}
-        sala={sala}
-        onVoltar={onVoltar}
-      />
+      <ConteudoOnline online={online} nome={nome} setNome={setNome} sala={sala} onVoltar={onVoltar} />
     </>
   );
 }
@@ -116,16 +115,12 @@ function ConteudoOnline({
   online,
   nome,
   setNome,
-  naCorrida,
-  onIrParaCorrida,
   sala,
   onVoltar,
 }: {
   online: ReturnType<typeof useSalaOnline>;
   nome: string;
   setNome: (nome: string) => void;
-  naCorrida: boolean;
-  onIrParaCorrida: () => void;
   sala: string;
   onVoltar: () => void;
 }) {
@@ -207,34 +202,77 @@ function ConteudoOnline({
   const escolher = (escolha: EscolhaDraft) => online.escolher(escolha);
 
   if (draft.fase === 'concluido') {
-    const corrida = online.corrida;
+    const etapa = online.etapas[online.etapaCorrente];
 
-    // 🏁 A CORRIDA ONLINE (PR 4/4). `{ modo: 'pronta', corrida }` passa a
-    // corrida JÁ COMPUTADA por `corridaDaSala` — a MESMA referência que
-    // alimentou o hash de divergência em `useSalaOnline`. Esta tela não pode
-    // preparar corrida nenhuma: duas trilhas, cada lado correto isoladamente e
-    // a composição errada, é a classe de bug do PR 8.4, e `npm test` não
-    // pegaria. `contrato-corrida-online.test.ts` varre isso estruturalmente.
-    if (naCorrida && corrida !== null) {
+    // 🏆 O CAMPEONATO ONLINE (PR 3.5.4) — o caminho normal de toda sala criada
+    // por um worker 3.5.1+.
+    //
+    // `{ modo: 'pronta', corrida: etapa }` passa a etapa JÁ COMPUTADA por
+    // `etapasDaSala` — a MESMA referência que alimentou o hash em
+    // `useSalaOnline` (ver `alvoDoAtestado`). Esta tela não prepara corrida
+    // nenhuma: duas trilhas, cada lado correto isoladamente e a composição
+    // errada, é a classe de bug do PR 8.4, e `npm test` não pegaria.
+    if (etapa !== undefined) {
+      const k = online.etapaCorrente;
+      // `nEtapas` do SNAPSHOT, não `etapas.length`: o total é quantas etapas o
+      // campeonato TEM, e `etapas` só traz as abertas até agora. Usar o
+      // comprimento aqui faria a tabela dizer "1 de 1" na primeira corrida.
+      const total = publica.nEtapas;
       return (
         <>
           <AvisoDeFechamento concluidaEm={publica.concluidaEm} />
           <FluxoCorrida
+            // 🔒 **A `key` NÃO É DETALHE — é o que faz a etapa nova ser uma
+            // corrida nova.** Sem ela o `useState` de `useCorrida` (que só
+            // roda o inicializador na MONTAGEM) mantém a corrida da etapa
+            // anterior, e o jogador corre a etapa 1 cinco vezes enquanto a
+            // tabela pontua as cinco etapas certas — a classe de bug do 8.4,
+            // com a agravante de que **nada acusa**: o hash sai correto (ele
+            // vem de `etapas[k]`, não da tela) e a cerca do contrato conta
+            // sítios textuais, não remontagem. Lição literal de
+            // `FluxoCampeonato.tsx`, onde a mesma linha existe pelo mesmo
+            // motivo. **O portão desta linha é o VISUAL, não um teste.**
+            key={`etapa-${k}`}
             state={draft}
-            fonte={{ modo: 'pronta', corrida }}
+            fonte={{ modo: 'pronta', corrida: etapa }}
             onChegouAoResultado={online.atestarFimDaCorrida}
             rotuloReiniciar="← Voltar ao início"
             onReiniciar={onVoltar}
+            extraResultado={
+              <ResumoDaEtapaOnline
+                state={draft}
+                etapa={k}
+                totalEtapas={total}
+                classificacao={online.classificacao}
+                calendario={online.calendario}
+              />
+            }
           />
         </>
       );
     }
 
-    // 🔒 `mostrarIrParaCorrida={corrida !== null}`: o draft pode concluir ANTES
-    // de a `seedCorrida` chegar num snapshot — são mensagens diferentes —, e
-    // nessa janela não há corrida pra entregar. Prometer a corrida e não ter o
-    // que mostrar é o mesmo achado da revisão que manteve o botão escondido
-    // desde o 3.3; o que mudou no PR 4 é que agora existe destino.
+    // Draft concluído e NENHUMA etapa aberta. Mostrar o resumo do draft é a
+    // resposta honesta — e **sem botão de corrida**, porque não há destino:
+    // quando (e se) a etapa abrir, o ramo acima assume sozinho, sem clique.
+    //
+    // ⚠️ **A redação anterior dizia "existe uma janela curta sem etapa", e isso
+    // é falso em dois sentidos (aviso A1 da revisão, medido).**
+    //
+    // 1. Para sala v2 saudável a janela provavelmente **nem existe**:
+    //    `seedCorrida` e `seedsAbertas` estão atrás do MESMO portão
+    //    (`draft.fase === 'concluido'`, `src/net/sala.ts`), então chegam no
+    //    mesmo snapshot.
+    // 2. Para três classes de sala este ramo é **PERMANENTE**, não uma janela:
+    //    sala **legado** (`seedCalendario === null`), sala **corrompida**
+    //    (`seedsAbertas: []`, pendência 0(t)) e `nEtapas` sem formato
+    //    correspondente (pendência 0(w)). Nas três, `etapasDaSala` devolve `[]`
+    //    para sempre e o jogador fica aqui até a sala expirar.
+    //
+    // 🔑 **É beco sem saída COM saída** — o botão "← Voltar ao início" existe —,
+    // e é o comportamento certo: sem seed publicada não há corrida que os 22
+    // possam derivar igual, e inventar uma seria pior. Sala legado só existe
+    // persistida de antes do 3.5.1, e toda sala nova nasce com `N_ETAPAS_CURTA`.
     return (
       <>
         <AvisoDeFechamento concluidaEm={publica.concluidaEm} />
@@ -242,8 +280,7 @@ function ConteudoOnline({
           state={draft}
           visibilidade="craque"
           onReiniciar={onVoltar}
-          onIrParaCorrida={onIrParaCorrida}
-          mostrarIrParaCorrida={corrida !== null}
+          mostrarIrParaCorrida={false}
           rotuloReiniciar="← Voltar ao início"
         />
       </>
@@ -293,6 +330,92 @@ function ConteudoOnline({
       erro={online.ultimoErro}
       onEscolher={escolher}
     />
+  );
+}
+
+/**
+ * 🏆 O que aparece ABAIXO do resultado de cada etapa online (PR 3.5.4):
+ * tabela acumulada, calendário e — na última — o pódio.
+ *
+ * 🔑 **É um componente EXPORTADO, e não JSX inline no `extraResultado`, por
+ * causa do PORTÃO VISUAL.** O `extraResultado` só renderiza sob
+ * `fase === 'resultado'` (`FluxoCorrida.tsx:80-87`), e o render estático nasce
+ * em `'grid'` e nada o move dali — então o preview **não consegue** chegar
+ * nesta parte da tela pelo `FluxoOnline`. A alternativa seria o preview
+ * remontar esta composição por conta própria, e aí ele passaria a mostrar uma
+ * cópia que pode divergir do que o jogo desenha: **um preview que mente sobre
+ * o que está mostrando**, que é a lição do 3.4.1. Exportando, o preview
+ * renderiza ESTE componente — o mesmo que o jogo usa.
+ */
+export function ResumoDaEtapaOnline({
+  state,
+  etapa,
+  totalEtapas,
+  classificacao,
+  calendario,
+}: {
+  state: DraftState;
+  etapa: number;
+  totalEtapas: number;
+  classificacao: LinhaClassificacao[];
+  calendario: EtapaDoCalendario[];
+}) {
+  const ehUltima = etapa + 1 >= totalEtapas;
+  return (
+    <>
+      {ehUltima && <PodioOnline state={state} classificacao={classificacao} />}
+      <PainelCampeonato
+        state={state}
+        classificacao={classificacao}
+        // `etapa + 1` = `etapas.length`: a tabela mostrada no fim da corrida
+        // INCLUI a etapa que o jogador acabou de ver.
+        corridasFeitas={etapa + 1}
+        totalCorridas={totalEtapas}
+        concluido={ehUltima}
+        // 🔒 **`null` de propósito: no online quem avança é a BARREIRA do
+        // servidor, nunca um botão.** Quando a etapa seguinte abre, o snapshot
+        // cresce, `etapaCorrente` anda e a `key` do `FluxoCorrida` remonta a
+        // tela sozinha. Um botão aqui prometeria um controle que o jogador não
+        // tem — o mesmo raciocínio que recusou o status na barreira do 4/4.
+        onProximaCorrida={null}
+        nomeProximaPista={ehUltima ? null : nomeDaPista(calendario[etapa + 1]?.pistaId)}
+      />
+      {/* O calendário vem do hook já anotado, com `etapasVistas = etapas.length`
+          — correto AQUI porque este bloco só existe na fase de resultado. Ver
+          o docblock de `calendarioDaSala`. */}
+      <PainelCalendario state={state} etapas={calendario} />
+    </>
+  );
+}
+
+/**
+ * 🏆 O pódio do campeonato online (PR 3.5.4) — o desfecho, no fim da ÚLTIMA
+ * etapa.
+ *
+ * Mesma marcação e mesmas classes do pódio offline (`FluxoCampeonato`),
+ * inclusive a ordem visual **2º-1º-3º**, que é a do pódio real: o campeão ao
+ * centro e mais alto, com a altura vindo da classe no CSS. Reusar a marcação é
+ * o ponto — dois pódios com CSS próprio divergiriam no primeiro ajuste de
+ * estilo.
+ *
+ * ⚠️ **Aparece dentro do `extraResultado` da última etapa, não numa tela
+ * própria.** No offline há uma tela de fim de campeonato porque lá o cursor é
+ * do jogador; aqui trocar a tela quando `concluidaEm` chega **arrancaria da
+ * corrida** quem ainda estivesse assistindo — a barreira pode fechar por
+ * timeout enquanto alguém vê o replay.
+ */
+function PodioOnline({
+  state,
+  classificacao,
+}: {
+  state: DraftState;
+  classificacao: LinhaClassificacao[];
+}) {
+  return (
+    <div className="tela-fim-campeonato">
+      <h2>🏆 Fim do campeonato</h2>
+      <Podio state={state} classificacao={classificacao} />
+    </div>
   );
 }
 
