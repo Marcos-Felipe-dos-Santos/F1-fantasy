@@ -8,20 +8,32 @@
 
 ## Estado atual
 
-**Última medição (2026-08-23, na `main` PÓS-MERGE do 3.5.3 — `922bdd0` —, medida na `main` e não
-herdada da branch):** `npm test` **1565/64** em **8 rodadas seguidas**, **`npm run test:party`
-10/10**, typecheck **0** nos três projetos, eslint **0**, build **0**.
-⚠️ **Uma leva ANTERIOR de 8 rodadas, no mesmo commit, teve 1 vermelho na rodada 1** (1564/1565) —
-rodada **com leitura de arquivos do projeto em paralelo**, que é o gatilho da 0(v). O nome do teste
-**não foi capturado** (o filtro da medição descartou a linha), então ele não pode ser atribuído à
-0(v) por medição, só por plausibilidade. A leva limpa que vale (8/8) foi rodada **sem nada
-concorrente**. 🔑 **Medição de portão instável se faz com a saída INTEIRA salva por rodada** — filtro
-que guarda só o placar joga fora justamente o dado que discrimina 0(v) de regressão.
+**Última medição (2026-08-23, na branch `pr-3.5.4-ui-campeonato` — `7c5efa9` —, pós-revisão):**
+`npm test` **1592/64**, **`npm run test:party` 10/10**, typecheck **0** nos três projetos, eslint **0**, build **0**.
+`VERSAO_APP` **3.4.2 → 3.4.3 — BUMP OBRIGATÓRIO** (bloqueante C1 da revisão exigiu). `balance-harness`
+não se aplica — zero arquivo de `src/engine/` além de `versao.ts`. 🔑 **Medição de portão instável se faz com
+a saída INTEIRA salva por rodada** — filtro que guarda só o placar joga fora o dado que discrimina 0(v) de regressão.
+
+*(Medição anterior, 2026-08-23, na `main` PÓS-MERGE do 3.5.3 — `922bdd0` —, medida na `main` e não
+herdada da branch):* `npm test` **1565/64** em **8 rodadas seguidas**, **`npm run test:party` 10/10**,
+typecheck **0** nos três projetos, eslint **0**, build **0**. `VERSAO_APP` **3.4.2**.
+⚠️ **Uma leva ANTERIOR de 8 rodadas, no MESMO commit, teve 1 vermelho na rodada 1** (1564/1565) —
+rodada **com leitura de arquivos do projeto em paralelo**, que é o gatilho da 0(v). **O nome do teste
+não foi capturado** (o filtro da medição descartou a linha), então ele **não pode ser atribuído à
+0(v) por medição, só por plausibilidade**. A leva limpa que vale (8/8) foi rodada sem nada
+concorrente. ⚠️ Esta ressalva foi **APAGADA pela atualização de documentação do 3.5.4 e restaurada
+aqui**: ela é o FATO medido, e a lição que sobrou no lugar dela (a linha do "🔑" acima) é só a
+conclusão. **Conclusão sem o fato que a gerou não se verifica depois.**
 
 *(Medição anterior, PR 3.5.3, 2026-08-21, na branch `pr-3.5.3-cliente-multietapa`, pós-revisão e
 pós-conserto do bloqueante C1):* `npm test` **1565/64**, **`npm run test:party` 10/10**, typecheck
 **0** nos três projetos, eslint **0**, build **0**. `VERSAO_APP` **3.4.2** (sem bump — medido: o
 digest não foi tocado e nenhum rótulo novo nasceu).
+
+*(Medição anterior, PR 3.5.2, 2026-08-20, na branch `pr-3.5.2-cursor-por-etapa`):* `npm test`
+**1544/64**, **`npm run test:party` 10/10**, typecheck **0** nos três projetos, eslint **0**, build
+**0**. `VERSAO_APP` **3.4.2** (sem bump — o digest não foi tocado).
+⚠️ **`VERSAO_ESTADO_SALA` subiu de 1 para 2** — ver a §Onde parei.
 ⚠️ **O `npm test` deste projeto tem uma corrida de I/O entre duas cercas e pode falhar por
 escalonamento — pendência 0(v), medida e PRÉ-EXISTENTE.** A parcela introduzida pelo 3.5.3 foi
 FECHADA NA RAIZ no proprio PR (8 rodadas seguidas a 1565/1565), mas **um vermelho em `contrato-ausente.test.ts` num PR que
@@ -233,6 +245,18 @@ também no `HISTORICO.md`, pelo registro). **Não reabrir sem o dev:**
 - 🔒 **A barreira NÃO ganha status na tela — decisão do dev** (PR 4/4). "Aguardando jogadores
   terminarem…" foi RECUSADO por afirmar um bloqueio que não existe (a barreira do 3/4 é a versão
   fraca e não segura ninguém). O `AvisoDeFechamento` cobre o único prazo real.
+- 🔒 **A `key` remonta a tela no instante em que a barreira fecha a etapa — decisão do dev (3.5.4, C2 bloqueante).** A barreira fecha assim que o último elegível atesta, sem atraso, então tabela/calendário/pódio
+  podem durar milissegundos e quem assiste pode ser arrancado da corrida. Palavras do dev: *"o remount
+  imediato é o custo da invariante 'mesma referência alimenta hash e tela'. No online o servidor
+  controla o avanço; qualquer buffer cria janela de divergência."*
+  🔒 **NÃO HOUVE CONSERTO, e é isso que a decisão diz.** O comportamento fica como está. Qualquer
+  buffer (tela ficando atrás do cursor, contagem regressiva antes de remontar) afrouxaria a
+  invariante de "a MESMA referência alimenta hash e tela" para "a mesma função alimenta os dois" —
+  por isso é decisão do dev e não conserto de passagem. **Não reabrir sem ele.**
+  ⚠️ **O bump de `VERSAO_APP` para 3.4.3 NÃO tem relação com esta decisão** — a redação anterior
+  desta linha dizia que ele era "o conserto" do C2, e é falso: o bump consertou o **C1**, que é
+  outro bloqueante (dois BUILDS diferentes na mesma sala). Corrigido no lugar, porque um registro
+  que atribui um conserto ao bloqueante errado faz a próxima pessoa acreditar que o C2 foi tratado.
 
 ### Portões, riscos e heranças da FASE 3 (valem para a fase INTEIRA, não só para a corrida online)
 
@@ -268,6 +292,25 @@ dependência).
 
 
 ## Onde parei
+
+**🏆 PR 3.5.4 — UI DO CAMPEONATO ONLINE: CÓDIGO COMPLETO E VERDE em 2026-08-23**, na branch
+**`pr-3.5.4-ui-campeonato`** (`cca90e1` + `2d859b5` + `7c5efa9`).
+**Sem merge, sem push, sem tag** — aguardando aprovação do dev.
+✅ **PORTÃO VISUAL APROVADO PELO DEV em 2026-08-23:** `preview/campeonato-online.html` (arquivo novo).
+**Medido:** `npm test` **1592/64** (era 1565/64), `npm run test:party` **10/10**
+(inalterado — o PR não toca `party/`), typecheck **0** nos três projetos, eslint **0**, build **0**.
+**`VERSAO_APP` 3.4.2 → 3.4.3 — BUMP OBRIGATÓRIO**, e **contraria a regra do digest de propósito.**
+O digest de `versao.test.ts` cobre `src/engine/**`, `src/data/**`, `cliente.ts`, `hash-draft.ts` —
+nenhum deles foi tocado. O PR vive inteiro em `src/ui/`. O bloqueante C1 da revisão obrigou o bump:
+o cliente 3.5.3 atesta corrida avulsa sem o campo `etapa`; servidor preenche `etapa ?? cursor`;
+hashes diferem por construção (decisão D6: seed crua × `seedDaEtapa`) e `alarmado` não volta atrás
+⇒ banner de divergência permanentemente aceso se os dois builds compartilham sala. Handshake de
+`VERSAO_APP` era a única coisa que impedia isso.
+**`balance-harness` não rodado, e dito:** zero arquivo de `src/engine/` além de `versao.ts` (constante).
+
+Detalhe completo: `HISTORICO.md` §"PR 3.5.4".
+
+---
 
 **🏆 PR 3.5.3 — CLIENTE MULTIETAPA: CÓDIGO COMPLETO E VERDE em 2026-08-21**, na branch
 **`pr-3.5.3-cliente-multietapa`** (`cffe699` + `c64b8b4` + `01689a5` + `d478617` + `92bcee7` + `e48a5fc`).
@@ -361,9 +404,11 @@ memória, E a causa RAIZ consertada nos dois pontos da janela. **8 rodadas segui
 medido contra a base:** em `3f54436` as duas cercas juntas já falham **1-2 testes**. Virou a
 pendência **0(v)**.
 
-⬅️ **ABERTO, decisão do dev: o aviso A2 da revisão** — o cliente fixa `'curta'` (5) e o teto de
-LEITURA de `nEtapas` no servidor é `[1, 10]` (`sala.ts:324`, contra `seedsEtapas.length`). Virou a
-pendência **0(w)**.
+✅ **FECHADA EM 3.5.4 — decisão do dev (A2 da revisão do 3.5.3):** o cliente fixa `'curta'` (5) e o teto de
+LEITURA de `nEtapas` no servidor é `[1, 10]` (`sala.ts:324`, contra `seedsEtapas.length`). Caminho (1):
+formato **sai de `sala.nEtapas`**, com portão `seedCalendario === null` ANTES do lookup, e **lookup é TOTAL**
+(devolve `null`, nunca lança). O lookup total é o que fecha de verdade — teto de leitura `[1, 10]`,
+não `{5, 10}`, então um lookup que lançasse teria MOVIDO a pendência, não fechado. Pendência **0(w)**.
 
 **🏁 CORRIDA ONLINE — ENCERRADA. Os quatro PRs feitos (2026-08-12 a 2026-08-17) e o ✅ PORTÃO VISUAL
 DO 4/4 APROVADO PELO DEV em 2026-08-18.** Não há nada pendente na corrida online.

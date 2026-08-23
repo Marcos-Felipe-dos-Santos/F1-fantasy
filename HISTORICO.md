@@ -2283,6 +2283,77 @@ no cliente. **Dois caminhos, nenhum escolhido:** derivar o formato de `sala.nEta
 portão `seedCalendario === null` ANTES, porque sala legado publica `nEtapas: 1`, que não existe em
 `N_ETAPAS`), ou o hook capturar e expor pelo canal de erro que já tem.
 
+## PR 3.5.4 — UI do campeonato online (2026-08-23, `cca90e1` + `2d859b5` + `7c5efa9`) — ALTO RISCO
+
+Branch `pr-3.5.4-ui-campeonato`, base `922bdd0` (pós-merge do 3.5.3). **Sem merge, sem push, sem tag.**
+
+**O escopo do 3.5.4 herda do 3.5.3 mais do que o plano previa**, por decisão do dev após achado de código: além dos **painéis e do portão visual**, ele entrega o **`key={'etapa-'+k}`**, a **remoção do `naCorrida`** e o **atestado por etapa** — as três são a mesma solda e separá-las produz hash de uma etapa com a tela de outra (a forma exata do bug do 8.4, ver `ESTADO.md` §onde parei).
+
+**Medido:** `npm test` **1592/64** (era 1565/64), `npm run test:party` **10/10** (inalterado — não toca `party/`), typecheck **0** nos três projetos, eslint **0**, build **0**. **`VERSAO_APP` 3.4.2 → 3.4.3 — BUMP OBRIGATÓRIO**, e contraria a regra do digest de propósito: o bloqueante C1 da revisão obrigou. **`balance-harness` não rodado:** zero arquivo de `src/engine/` além de `versao.ts`.
+
+### Decisão do dev que mudou o plano (antes de escrever código)
+
+Rastreado no código: `useCorrida` semeia o `useState` de `fonte` UMA vez; atestado sai por mudança de REFERÊNCIA de `corrida`; `corrida-concluida` não carrega `etapa` (vem do cursor do servidor). Sem o remount, atestar `etapa: etapaAtual` produz **hash da etapa k com a tela da etapa 0** — mesmo bug do 8.4, produzido **dentro do PR cuja cerca existe para preveni-lo**, e `contrato-corrida-online.test.ts` não pegaria (conta sítios textuais, não remount). **Opção (A):** derivação PURA — o **3.5.3** entrega funções puras + cercas + testes; a fiação inteira vai para o **3.5.4**. É a única das três opções apresentadas em que o estado divergente **nunca existe**. Opção (C) — seguir o plano à risca — foi descartada explicitamente: deixaria divergência hash↔tela conhecida na `main` entre dois PRs. **Veredito do dev (2026-08-21): opção (A).**
+
+### O que o 3.5.4 entrega
+
+- **Funções puras novas em `src/ui/corrida-online.ts`:** `formatoDeNEtapas` (lookup reverso de `N_ETAPAS`, total), `etapaCorrenteDaSala` (`etapas.length - 1`), `calendarioDaSala` (calendário inteiro anotado com `etapasVistas` como fronteira do spoiler), `alvoDoAtestado` (qual balde de hash recebe a corrida, campeonato sobre avulsa).
+- **`etapasDaSala` ganhou 5º parâmetro `nEtapas`** e deriva o formato do snapshot. Invariante obrigatória para o próximo PR: indexar por `etapas.length - 1`, **nunca por `sala.etapaAtual`** (ver pendência 0(t) no 3.5.3).
+- **`FluxoOnline.tsx`:** `naCorrida` REMOVIDO (tela deriva do snapshot, F5 não perde corrida), `key={'etapa-'+k}` no `FluxoCorrida`, `ResumoDaEtapaOnline` exportado (tabela + calendário + pódio no `extraResultado`).
+- **Atestado de hash por etapa:** o comando `hash` passou a levar `etapa: k` e o hash sai de `etapas[k]` — a MESMA referência que vai à tela. O campo `etapa` já existia no protocolo desde o 3.5.2; `corrida-concluida` continua SEM campo (o servidor grava no balde do cursor dele — pendência 0(x)).
+- **`src/ui/Podio.tsx` novo:** pódio virou componente compartilhado entre offline e online.
+- **Cercas:** as quatro funções novas em `PERMITIDOS` no PR que as cria; cercas textuais para a `key` do `FluxoCorrida` em `FluxoOnline.tsx`, para a morte do `naCorrida` (allowlist: só `App.tsx`, o fluxo OFFLINE, pode tê-lo) e para o `PainelCalendario` só dentro do `extraResultado`.
+
+### Achado de método próprio — `alvoDoAtestado`
+
+Sem precedência de campeonato sobre avulsa, o cliente mandaria dois hashes ao mesmo balde (confundindo as duas semânticas de seed). Virou função pura com M6 vermelha validando o caminho.
+
+### A REVISÃO REPROVOU NA PRIMEIRA PASSADA — DOIS bloqueantes (C1 e C2)
+
+- **C1 (bloqueante, MEDIDO):** O cliente 3.5.3 atesta corrida avulsa **sem o campo `etapa`**; servidor preenche com `etapa ?? cursor`; hashes diferem por construção (decisão D6: seed crua × `seedDaEtapa`) e `alarmado` não volta atrás ⇒ banner de divergência permanentemente errado se os dois clientes dividem sala. Handshake de `VERSAO_APP` era a única coisa que impedia. Conserto: **BUMP para 3.4.3**, que trava os **dois BUILDS DO CLIENTE** fora da mesma sala (o servidor não tem `VERSAO_APP` — quem faz o handshake é cliente contra sala). O digest não cobre `src/ui/`, então o teste permitiria a versão parada — o bump **contradiz a regra do digest de propósito** (ver `ESTADO.md` §Onde parei).
+  🔑 **A lição que fica maior que o PR:** o digest vigia quem **CALCULA** o resultado, e o 3.5.4 mostrou que **mudar QUANDO/COMO se ATESTA divide uma partida do mesmo jeito** — sem tocar em nada que ele vigie. Um PR só de `src/ui/` que mude a forma do atestado precisa do bump, e **o teste não vai lembrar por você**.
+
+- **C2 (bloqueante NÃO consertado — 🔒 DECISÃO EXPLÍCITA DO DEV, 2026-08-23, e é DECISÃO, não pendência):** a `key={'etapa-'+k}` **remonta a tela no instante em que a barreira do servidor fecha a etapa**, e a barreira fecha assim que o último elegível atesta, **sem atraso nenhum** (`avaliarBarreiraDaCorrida`). Consequências rastreadas no código: a tabela, o calendário e o pódio — o deliverable do PR — podem durar **milissegundos** para quem atesta por último, e pelo caminho do `TIMEOUT_FIM_DE_CORRIDA_MS` quem ainda **assiste** a corrida é arrancado no meio dela. No offline existe botão "Próxima corrida" + 5 s de auto-avanço; no online não há nada entre chegar ao resultado e ser remontado.
+  **Palavras do dev:** *"o remount imediato é o custo da invariante 'mesma referência alimenta hash e tela'. No online o servidor controla o avanço; qualquer buffer cria janela de divergência."*
+  🔒 **Fica como está, e o motivo é a invariante:** qualquer buffer (tela ficando atrás do cursor, contagem regressiva) afrouxaria "a MESMA referência alimenta hash e tela" para "a mesma função alimenta os dois". **Não é pendência — é comportamento esperado, decidido.** ⚠️ E **não foi o bump que o resolveu**: o bump é do C1, que é outro bloqueante.
+
+### TABELA DE MUTAÇÕES — 7 mutações + 1 M4 refeita
+
+- **M1** (vencedor deixa de depender de `disputada`, spoiler): VERMELHA, 1 falhou/30, tsc limpo.
+- **M2** (`etapas.length - 1` → `etapas.length`): VERMELHA, 3 falharam/41, tsc limpo.
+- **M3** (calendário volta ao `'curta'` fixo): VERMELHA, 1 falhou/31, tsc limpo.
+- **M4 (portão `seedCalendario === null` removido):** **INVÁLIDA — compilação TS2345**, que a regra travada diz **NÃO CONTAR** como baseline. **Descoberta:** o que protege esse caso é o TIPO, não o teste. (A redação anterior desta linha chamava isto de "terceira instância" e citava `M-guarda-classif` e `MR` — afirmação NÃO verificada, removida: aquelas duas são sobre outra coisa.) Substituída por:
+- **M4'** (`formatoDeNEtapas` deixa de ser total, lança): VERMELHA, 3 falharam/31, tsc limpo.
+- **M5** (calendário da tela com outro formato que o das etapas): VERMELHA, 3 falharam/31, tsc limpo.
+- **M6** (avulsa passa na frente do campeonato): VERMELHA, 2 falharam/31, tsc limpo.
+- **M7** (a `key` some): VERMELHA **só na cerca textual**, 1 falhou/49 — o render estático não a pega, confirmando que a `key` não tem baseline comportamental.
+
+Todas revertidas com `git hash-object` conferido.
+
+### Avisos da revisão — todos atendidos
+
+**A1** (o comentário afirmava "janela curta sem etapa"; medido: para **três** classes de sala — legado, corrompida (0(t)) e `nEtapas` sem formato — o ramo é **PERMANENTE**, não janela; e para sala v2 saudável ele provavelmente nem existe, porque `seedCorrida` e `seedsAbertas` saem no mesmo snapshot). **A2** (cerca nova: `PainelCalendario` só dentro do `extraResultado` — defesa anti-spoiler era estrutural, sem guarda automatizada). **A3** (pódio estava DUPLICADO enquanto comentário afirmava reusar — extraído para `Podio.tsx`). **A4** (quatro mudanças lógicas num PR — registrado, não consertado).
+
+### Achados de MÉTODO desta sessão — registrados porque valem além do PR
+
+1. **Medição de portão instável:** a primeira rodada perdeu o nome do teste falho porque o filtro guardava só o placar — 1 vermelho numa leva de 8 não pôde ser atribuído à 0(v). Medição de portão instável se faz com a **saída INTEIRA salva por rodada**, não filtragem por palavra-chave.
+2. **Echo incondicional em tabela de mutações:** o `echo "[tsc limpo]"` das três primeiras linhas era incondicional — rótulo que afirmava mais do que conferia, dentro da própria tabela que existe para não afirmar sem conferir.
+3. **Allowlist vem da CERCA, não de palpite:** as quatro entradas novas de `PERMITIDOS` foram escritas à mão por SIMETRIA (as quatro com `corrida-online.ts` incluso) e **a cerca reprovou duas** — `calendarioDaSala` e `alvoDoAtestado` são DEFINIDAS lá e não são CHAMADAS lá, e `referenciaDe` mede referência, não definição. Terceira direção da mesma lição (após `namespaces-seed.ts` no 3.5.3 e `calendarioSorteado` no aviso A2): **simetria estética não é evidência.**
+4. **Primeira versão da cerca do `naCorrida` estava errada:** exigia `[]`, mas `App.tsx` tem um `naCorrida` **próprio** do fluxo offline que é legítimo. Virou allowlist.
+5. **Preview gerado ≠ conferido:** nasceu com 1500px e escondia `PainelCalendario` atrás de scroll do iframe — repetição literal do defeito do PR 4/4. **Artefato não verificado não conta.** Alturas medidas no navegador agora.
+
+### ✅ PENDÊNCIA 0(w) FECHADA
+
+Caminho (1): formato sai de `sala.nEtapas`, com portão `seedCalendario === null` ANTES do lookup, e lookup é TOTAL (devolve `null`, nunca lança). O lookup total é o que fecha: teto de leitura `[1, 10]`, não `{5, 10}`, então lookup que lançasse teria **MOVIDO** a pendência, não fechado.
+
+### ✅ PORTÃO VISUAL APROVADO PELO DEV (2026-08-23)
+
+Arquivo novo: `preview/campeonato-online.html` (não sobrescreve `preview/campeonato.html` do 8.3, cujo veredito segue aberto). Palavras do dev: *"Seções 1 e 2 em pistas diferentes, tabela crescendo, vencedor da etapa 3 oculto, pódio na última etapa sem tela própria."*
+
+**Sequência da Fase 3:** 3.5.1 ✅ → 3.5.2 ✅ → 3.5.3 ✅ → 3.5.4 ✅ → PR C → Fase 3 encerrada.
+
+---
+
 ## CORRIDA ONLINE — o plano aprovado (movido do `ESTADO.md` em 2026-08-18)
 
 > 📦 **Movido, não resumido.** Este texto vivia na §"🏁 CORRIDA ONLINE — o plano aprovado" do
