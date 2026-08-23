@@ -136,6 +136,11 @@ function retornoFalso(cliente: EstadoCliente, extras: Partial<Retorno> = {}): Re
     inexistente: false,
     ultimoErro: null,
     corrida: null,
+    // PR 3.5.3: as etapas do campeonato online. Vazias aqui de propósito —
+    // este arquivo testa o ramo da corrida AVULSA, que é quem alimenta a tela
+    // e o hash até o 3.5.4 ligar as etapas.
+    etapas: [],
+    classificacao: [],
     entrar: () => {},
     definirPronto: () => {},
     iniciar: () => {},

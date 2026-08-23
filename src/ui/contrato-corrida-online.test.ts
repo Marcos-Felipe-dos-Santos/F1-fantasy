@@ -183,13 +183,86 @@ function referenciaDe(fonteSemComentarios: string, nomeFn: string): boolean {
  *   a pista pra um cabeçalho com a seed errada e mostrar pista diferente da
  *   hasheada — mesma família de risco, outra porta. Só `corrida-online.ts`
  *   (dentro de `corridaDaSala`) pode chamá-la.
+ * - `corridaDaSala` ganhou um SEGUNDO sítio no 3.5.3: `corrida-online.ts`,
+ *   onde `etapasDaSala` a chama uma vez por etapa aberta. **Não é
+ *   afrouxamento** — são dois sítios com dono declarado (a corrida avulsa no
+ *   hook, as etapas no módulo puro), cada um travado em UMA chamada exata
+ *   pelo bloqueante 2 abaixo. Um terceiro arquivo continua reprovando.
+ * - 🔴 **`etapasDaSala` e `classificacaoDaSala` entraram por BLOQUEANTE da
+ *   revisão (C1), e a lacuna foi MEDIDA:** com elas fora da allowlist, um
+ *   painel do 3.5.4 chamando `etapasDaSala` direto deixava esta cerca
+ *   **verde, 26/26** — nenhum dos nomes vigiados aparece, porque todos ficam
+ *   atrás da indireção. Ponto de entrada público que computa corrida online
+ *   entra aqui **no PR que o cria**, nunca no seguinte.
+ * - 🔒 **`seedDaEtapa` entrou no 3.5.3 — cerca NOVA, não relaxamento de
+ *   nenhuma.** ⚠️ **O que ela mede, dito com precisão** (aviso A4 da revisão;
+ *   a redação anterior afirmava mais): ela garante **UMA COSTURA SÓ** entre a
+ *   seed publicada e a simulação — ninguém além destes arquivos chama a
+ *   função. Ela **NÃO** pega quem derivar por fora sem citá-la: um
+ *   `deriveSeed(seed, \`camp:${pistaId}:online\`)` num arquivo novo passa
+ *   aqui **e** no registro de namespaces (o prefixo capturado é `camp`, que
+ *   está registrado). Contra ESSE caminho quem defende é o teste de
+ *   conformidade bit a bit contra `simularEtapa`, não esta varredura.
+ *   Os dois primeiros arquivos
+ *   são pré-existentes (medidos por `grep`, não herdados do plano): a engine
+ *   a declara e a usa em `simularCampeonato`, e `FluxoCampeonato.tsx` a chama
+ *   na etapa offline. As menções em `fluxo-corrida.ts`, `persistencia.ts` e
+ *   `net/sala.ts` são só COMENTÁRIO, e `semComentarios` as remove.
+ * - 🔴 **`namespaces-seed.ts` entrou na lista por MEDIÇÃO, contrariando o que
+ *   este bloco dizia antes de a cerca rodar.** O `grep` mostrava a linha 36
+ *   e ela foi classificada como "registro, não código"; a cerca discordou. O
+ *   nome está dentro de uma STRING (`dono: '… (seedDaEtapa)'`), e
+ *   `semComentarios` remove comentário, não literal — `referenciaDe` não
+ *   distingue string de código, e não deveria mesmo: um acesso computado
+ *   `obj['seedDaEtapa']` também mora numa string, e é indireção de verdade.
+ *   A entrada é o registro do DONO do rótulo `camp:`, o oposto de um segundo
+ *   caminho de derivação. **Fica listada; o preço é uma linha aqui, e a
+ *   alternativa — editar a string do registro para escapar da cerca — seria
+ *   mexer em produção para a conveniência do teste.**
  */
 const PERMITIDOS: Record<string, string[]> = {
   prepararCorrida: ['src/ui/useCorrida.ts', 'src/ui/corrida-online.ts'],
   simularCorrida: ['src/engine/campeonato.ts', 'src/ui/fluxo-corrida.ts'],
   simularQuali: ['src/engine/campeonato.ts', 'src/ui/fluxo-corrida.ts'],
-  corridaDaSala: ['src/ui/useSalaOnline.ts'],
+  corridaDaSala: ['src/ui/corrida-online.ts', 'src/ui/useSalaOnline.ts'],
   pistaSorteada: ['src/ui/corrida-online.ts'],
+  seedDaEtapa: [
+    'src/engine/campeonato.ts',
+    'src/engine/namespaces-seed.ts',
+    'src/ui/FluxoCampeonato.tsx',
+    'src/ui/corrida-online.ts',
+  ],
+  etapasDaSala: ['src/ui/useSalaOnline.ts'],
+  classificacaoDaSala: ['src/ui/useSalaOnline.ts'],
+  // 🔴 **A METADE DO CALENDÁRIO, que a primeira rodada de cercas esqueceu**
+  // (aviso A2 da segunda passada). O docblock de `etapasDaSala` declara que a
+  // etapa k é o PAR `(seedsAbertas[k], calendario[k])` — o PR cercou a metade
+  // da SEED (`seedDaEtapa`) e deixou a do CALENDÁRIO livre.
+  //
+  // Por que a lacuna é real e não simetria estética: `etapasDaSala` expõe **só
+  // as etapas abertas**, e o 3.5.4 precisa do calendário INTEIRO (inclusive as
+  // pistas fechadas) para desenhar o `PainelCalendario` — lista que **não sai
+  // do hook**. A saída óbvia é chamar `calendarioSorteado` dentro do painel; se
+  // ele passar `'completa'`, ou pegar a seed de outra fonte, **o calendário
+  // exibido diverge das pistas efetivamente corridas e NADA acusa**: o hash
+  // cobre a corrida, não o calendário, e a conformidade contra `simularEtapa`
+  // não olha painel nenhum. Mesmo argumento que pôs `pistaSorteada` aqui.
+  //
+  // ⚠️ **Esta entrada é FROUXA e é honesto dizer:** são 4 arquivos
+  // pré-existentes. O que ela pega é o cenário que importa — **arquivo NOVO**
+  // do 3.5.4 derivando calendário por conta própria.
+  //
+  // 🔑 **A lista saiu da CERCA, não de `grep`, e a diferença apareceu:** um
+  // `grep -l` acusa também `pista-sorteada.ts` e dois arquivos de `src/net/`,
+  // mas nos três a menção é só COMENTÁRIO, e `semComentarios` a remove. Foi o
+  // teste que deu a lista certa — a mesma lição do 3.5.3 sobre
+  // `namespaces-seed.ts`, agora na direção oposta.
+  calendarioSorteado: [
+    'src/engine/campeonato.ts',
+    'src/ui/App.tsx',
+    'src/ui/corrida-online.ts',
+    'src/ui/fluxo-campeonato.ts',
+  ],
 };
 
 describe('a varredura enxerga os arquivos de verdade (anti-vacuidade)', () => {
@@ -215,6 +288,12 @@ describe('a varredura enxerga os arquivos de verdade (anti-vacuidade)', () => {
 
     const useSalaOnlineFonte = readFileSync(join(AQUI, 'useSalaOnline.ts'), 'utf8');
     expect(chamadasDe(useSalaOnlineFonte, 'corridaDaSala')).toBeGreaterThan(0);
+
+    // PR 3.5.3: a cerca nova de `seedDaEtapa` tem que enxergar os dois sítios
+    // legítimos, senão ela passaria por não encontrar nada em lugar nenhum.
+    expect(chamadasDe(corridaOnlineFonte, 'seedDaEtapa')).toBeGreaterThan(0);
+    const fluxoCampeonatoFonte = readFileSync(join(AQUI, 'FluxoCampeonato.tsx'), 'utf8');
+    expect(chamadasDe(fluxoCampeonatoFonte, 'seedDaEtapa')).toBeGreaterThan(0);
   });
 
   it('`chamadasDe` NÃO conta a própria declaração da função (anti-falso-positivo)', () => {
@@ -314,6 +393,77 @@ describe('ALLOWLIST em src/{engine,net,ui}: quem pode REFERENCIAR cada função'
       expect(referenciadores).toContain('src/ui/__sabotagem_alias.ts');
     } finally {
       unlinkSync(sabotagem);
+    }
+  });
+
+  it('🔴 SABOTAGEM: o arquivo NOVO do 3.5.4 que deriva as etapas por conta própria reprova (PR 3.5.3)', () => {
+    // 🔴 **BLOQUEANTE C1 DA REVISÃO, e ele era real — medido, não lido.** A
+    // primeira versão deste PR pôs `etapasDaSala`/`classificacaoDaSala` em
+    // produção SEM entrada na allowlist. Medido com um `PainelFuga.tsx`
+    // sintético na árvore chamando `etapasDaSala`: esta cerca ficava
+    // **VERDE, 26/26** — o arquivo não referencia nenhum dos nomes vigiados,
+    // porque todos ficam ATRÁS da indireção. Era o cenário literal da
+    // sabotagem `__sabotagem_corrida_dupla` entrando por uma porta nova:
+    // duas listas de etapas com referências diferentes, a tela lendo uma e o
+    // atestado a outra — a classe de bug do 8.4, que é a tese do arquivo.
+    //
+    // 🔒 **Cerca criada no MESMO PR da tentação, de propósito.** O 3.5.4 é
+    // quem vai desenhar a tabela e o calendário, e a tentação exata é chamar
+    // `etapasDaSala` direto no painel em vez de receber a lista já computada
+    // por `useSalaOnline`. Escrita depois, seria moldada pela tentação.
+    //
+    // 🔑 **Um arquivo só para as TRÊS cercas novas, e isso não é economia de
+    // digitação:** cada sabotagem que grava em `src/ui/` abre uma janela em
+    // que outra suíte varrendo a mesma árvore em paralelo pode falhar. A
+    // janela é PRÉ-EXISTENTE e está medida (ver a dívida registrada no
+    // `ESTADO.md`); somar um arquivo por cerca a alargaria de graça.
+    const sabotagem = join(AQUI, '__sabotagem_etapas_dupla.tsx');
+    writeFileSync(
+      sabotagem,
+      [
+        "import { classificacaoDaSala, etapasDaSala } from './corrida-online';",
+        "import { seedDaEtapa } from '../engine/campeonato';",
+        "import { dataset } from './dataset-app';",
+        'export function PainelFuga({ draft, seedCal, abertas }: { draft: any; seedCal: number; abertas: number[] }) {',
+        '  const etapas = etapasDaSala(dataset, draft, seedCal, abertas);',
+        '  const tabela = classificacaoDaSala(etapas, draft);',
+        '  return <p>{tabela.length + seedDaEtapa(seedCal, "x")}</p>;',
+        '}',
+        '',
+      ].join('\n'),
+      'utf8',
+    );
+    // 🔴 **UMA varredura só, e o arquivo sai do disco IMEDIATAMENTE depois.**
+    // A primeira versão deste teste varria a árvore SEIS vezes (uma por
+    // asserção) com o arquivo de sabotagem em disco, e isso derrubou o
+    // `npm test`: `contrato-ausente.test.ts` percorre `src/ui/` com
+    // `readdirSync`/`statSync` em paralelo, e um arquivo que some no meio do
+    // passeio faz o `statSync` estourar. Foi observado como **2 testes
+    // vermelhos em `contrato-ausente.test.ts`**, num PR que não toca nada do
+    // ausente. Ler o disco uma vez e assertar em memória fecha a janela para
+    // o tamanho das outras sabotagens.
+    let fontes: { caminho: string; semCom: string }[];
+    try {
+      fontes = arquivosDeProducao().map((arquivo) => ({
+        caminho: relativo(arquivo),
+        semCom: semComentarios(readFileSync(arquivo, 'utf8')),
+      }));
+    } finally {
+      unlinkSync(sabotagem);
+    }
+
+    const referenciadoresDe = (nomeFn: string): string[] =>
+      fontes
+        .filter(({ semCom }) => referenciaDe(semCom, nomeFn))
+        .map(({ caminho }) => caminho)
+        .sort();
+
+    for (const nomeFn of ['etapasDaSala', 'classificacaoDaSala', 'seedDaEtapa']) {
+      expect(
+        referenciadoresDe(nomeFn),
+        `a cerca de "${nomeFn}" não pegou o arquivo de fuga — é o bloqueante C1 voltando`,
+      ).not.toEqual([...PERMITIDOS[nomeFn]].sort());
+      expect(referenciadoresDe(nomeFn)).toContain('src/ui/__sabotagem_etapas_dupla.tsx');
     }
   });
 
@@ -428,6 +578,80 @@ describe('BLOQUEANTE 2: contagem EXATA — nunca duas computações no mesmo arq
   it('`prepararCorrida` é chamada exatamente 1 vez em `corrida-online.ts`', () => {
     const fonte = readFileSync(join(AQUI, 'corrida-online.ts'), 'utf8');
     expect(chamadasMax(fonte, 'prepararCorrida')).toBe(1);
+  });
+
+  it('`corridaDaSala` é chamada exatamente 1 vez em `corrida-online.ts` (PR 3.5.3)', () => {
+    // O sítio das ETAPAS, dentro de `etapasDaSala`. A allowlist acima permite o
+    // arquivo; esta contagem impede que ele ganhe uma SEGUNDA computação — por
+    // exemplo, um ramo "recomputar a etapa corrente" ao lado do `map`, que
+    // devolveria uma referência diferente da que entrou na lista e da que o
+    // hash vai atestar no 3.5.4. Mesmo defeito do bloqueante 2, uma porta
+    // adiante — o mesmo raciocínio que trouxe `useCorrida.ts` pra cá.
+    const fonte = readFileSync(join(AQUI, 'corrida-online.ts'), 'utf8');
+    expect(
+      chamadasMax(fonte, 'corridaDaSala'),
+      'só `etapasDaSala` pode computar etapa aqui, e uma vez só (dentro do `map`)',
+    ).toBe(1);
+  });
+
+  it('`etapasDaSala` e `classificacaoDaSala` são chamadas exatamente 1 vez em `useSalaOnline.ts`', () => {
+    // 🔴 **O conserto do bloqueante C1 fechou QUEM chama, e não QUANTAS VEZES —
+    // e a allowlist, sozinha, nunca fechou a segunda pergunta.** Este arquivo
+    // já documenta essa distinção para `useCorrida.ts`, logo abaixo; aqui ela
+    // vale para a superfície NOVA do 3.5.3.
+    //
+    // Modo de falha concreto, e é a tentação óbvia do 3.5.4: um segundo
+    // `useMemo` "da etapa corrente" no mesmo hook chama `etapasDaSala` de novo
+    // e devolve um array com conteúdo IDÊNTICO e REFERÊNCIA diferente. A
+    // allowlist passa (mesmo arquivo aprovado), o typecheck passa, e a tela
+    // renderiza uma lista enquanto o atestado de hash carrega a outra — a
+    // classe de bug do 8.4, entrando pelo arquivo que a cerca já aprovou.
+    const fonte = readFileSync(join(AQUI, 'useSalaOnline.ts'), 'utf8');
+    expect(
+      chamadasMax(fonte, 'etapasDaSala'),
+      'uma segunda derivação das etapas neste arquivo = duas listas com referências diferentes; a tela lê uma e o hash atesta a outra',
+    ).toBe(1);
+    expect(chamadasMax(fonte, 'classificacaoDaSala')).toBe(1);
+  });
+
+  it('🔴 SABOTAGEM: duplicar a chamada de `etapasDaSala` em `useSalaOnline.ts` reprova', () => {
+    // Em memória, como as demais sabotagens de contagem.
+    const original = readFileSync(join(AQUI, 'useSalaOnline.ts'), 'utf8');
+    const sabotado = original.replace(
+      'return etapasDaSala(',
+      'return etapasDaSala(dataset, cliente.draft, null, []) ?? etapasDaSala(',
+    );
+    expect(sabotado, 'a substituição de texto não encontrou o alvo — o teste não provaria nada').not.toBe(
+      original,
+    );
+    expect(chamadasMax(sabotado, 'etapasDaSala')).not.toBe(1);
+  });
+
+  it('🔴 SABOTAGEM: duplicar a chamada de `classificacaoDaSala` em `useSalaOnline.ts` reprova', () => {
+    // O par da sabotagem acima — a contagem de `classificacaoDaSala` tinha
+    // asserção e não tinha demonstração (sugestão da segunda passada).
+    const original = readFileSync(join(AQUI, 'useSalaOnline.ts'), 'utf8');
+    const sabotado = original.replace(
+      '? [] : classificacaoDaSala(etapas, cliente.draft)),',
+      '? [] : classificacaoDaSala(etapas, cliente.draft) ?? classificacaoDaSala(etapas, cliente.draft)),',
+    );
+    expect(sabotado, 'a substituição de texto não encontrou o alvo — o teste não provaria nada').not.toBe(
+      original,
+    );
+    expect(chamadasMax(sabotado, 'classificacaoDaSala')).not.toBe(1);
+  });
+
+  it('🔴 SABOTAGEM: duplicar a chamada de `corridaDaSala` em `corrida-online.ts` reprova', () => {
+    // Em memória, pelo mesmo motivo das outras sabotagens de contagem.
+    const original = readFileSync(join(AQUI, 'corrida-online.ts'), 'utf8');
+    const sabotado = original.replace(
+      'return corridaDaSala(dataset, draft, seed, pistaId);',
+      'return corridaDaSala(dataset, draft, seed, pistaId) ?? corridaDaSala(dataset, draft, seed, pistaId);',
+    );
+    expect(sabotado, 'a substituição de texto não encontrou o alvo — o teste não provaria nada').not.toBe(
+      original,
+    );
+    expect(chamadasMax(sabotado, 'corridaDaSala')).not.toBe(1);
   });
 
   it('`prepararCorrida` é chamada exatamente 1 vez em `useCorrida.ts`', () => {

@@ -34,8 +34,13 @@ import { hashDoDraft } from '../net/hash-draft';
 import { hashDaCorrida } from '../net/hash-corrida';
 import { RODADA_COMPLETA } from '../net/tipos';
 import { VERSAO_APP } from '../engine/versao';
-import type { EscolhaDraft } from '../engine/types';
-import { corridaDaSala, type CorridaPreparada } from './corrida-online';
+import type { EscolhaDraft, LinhaClassificacao } from '../engine/types';
+import {
+  classificacaoDaSala,
+  corridaDaSala,
+  etapasDaSala,
+  type CorridaPreparada,
+} from './corrida-online';
 import { dataset } from './dataset-app';
 import { storageDoNavegador } from './storage-app';
 
@@ -72,6 +77,55 @@ export interface UseSalaOnline {
    * docblock de `corrida-online.ts` pra tese completa.
    */
   corrida: CorridaPreparada | null;
+  /**
+   * 🏆 As etapas ABERTAS do campeonato online, derivadas do snapshot (PR 3.5.3).
+   *
+   * `[]` enquanto o draft não conclui e em sala legado. Cresce quando o cursor
+   * do servidor anda: `etapas[k]` é a etapa k.
+   *
+   * 🔒 **A ETAPA CORRENTE É `etapas.length - 1`, NUNCA `sala.etapaAtual` — e a
+   * redação anterior desta linha dizia que os dois "dizem o mesmo", o que a
+   * pendência 0(t) torna FALSO.** Numa sala `corrompida` o snapshot se
+   * autocontradiz: sai `etapaAtual: 4` com `seedsAbertas: []`. Derivando de
+   * `seedsAbertas`, este código devolve `[]` e não trava; indexando por
+   * `etapaAtual`, o 3.5.4 leria `etapas[4]` de uma lista vazia e a 0(t)
+   * voltaria como tela quebrada. **Invariante que o 3.5.4 tem que preservar.**
+   *
+   * ⚠️ **NADA CONSOME ISTO AINDA, e é de propósito (recorte do 3.5.3).** A tela
+   * e o atestado de hash continuam ligados em `corrida` acima — a corrida
+   * AVULSA — exatamente como no 3.5.2. Ligar a tela às etapas exige o
+   * `key={'etapa-'+k}` no `FluxoCorrida` (sem ele o `useState` de `useCorrida`
+   * mantém a corrida anterior) e o atestado por etapa; as duas coisas andam
+   * JUNTAS, porque atestar o hash da etapa k com a tela mostrando a etapa 0 é a
+   * classe de bug do 8.4 — a mesma que este arquivo existe para evitar. **É o
+   * 3.5.4 que as liga, no PR que tem portão visual.**
+   *
+   * 🔴 **"Nada consome" é verdade sobre CONSUMO e falso sobre EXECUÇÃO** (aviso
+   * A1 da revisão). `useMemo` roda o corpo quando as dependências mudam, leia
+   * alguém o retorno ou não — então, a partir do merge, a derivação roda em
+   * todo cliente de toda sala. Duas consequências, ditas como são: o custo
+   * medido (mediana **0,6 ms**, pior **1,8 ms**, para 22 carros × 5 etapas) é
+   * gasto na main thread **agora**, não adiado para o 3.5.4; e o `throw` de
+   * `etapasDaSala` para snapshot incoerente já pode cair **em render** neste
+   * PR, não no seguinte. Ver a ressalva de `nEtapas` no docblock de
+   * `etapasDaSala`.
+   */
+  etapas: CorridaPreparada[];
+  /**
+   * 🏆 A classificação acumulada das etapas ABERTAS (PR 3.5.3), pela mesma
+   * `acumularClassificacao` do offline.
+   *
+   * `[]` exatamente quando `etapas` é `[]` — e isso é garantido pela GUARDA do
+   * `useMemo`, **não** pela função pura, que com lista de etapas vazia devolve
+   * **uma linha zerada por jogador**, não lista vazia. Ver o bloco do aviso A1
+   * na implementação; a versão anterior deste comentário afirmava o mesmo sem
+   * que a guarda existisse, e a tabela crescia durante o draft.
+   *
+   * 🔒 **O 3.5.4 pode gatear por `classificacao.length` COM SEGURANÇA por causa
+   * dessa guarda** — mas gatear por `etapas.length` continua sendo o mais
+   * direto, porque é ele que diz se existe corrida para pontuar.
+   */
+  classificacao: LinhaClassificacao[];
   /**
    * 🏁 "Terminei a corrida" — alimenta a BARREIRA DO FIM (PR 3/4).
    *
@@ -224,6 +278,70 @@ export function useSalaOnline(sala: string): UseSalaOnline {
   }, [cliente.draft, cliente.sala?.seedCorrida]);
 
   /**
+   * 🏆 AS ETAPAS DO CAMPEONATO ONLINE (PR 3.5.3) — derivação PURA do snapshot.
+   *
+   * Toda a lógica mora em `etapasDaSala` (`corrida-online.ts`), e este `useMemo`
+   * é casca fina em cima dela. **Não é estilo:** o projeto não tem
+   * `jsdom`/`@testing-library`, então nada que more dentro deste hook pode ser
+   * alcançado por teste — e o 3.5.2 acabou de pagar caro pela lição de que
+   * baseline que não alcança a guarda não é baseline. O pareamento
+   * `seedsAbertas[k]` ↔ `calendario[k]`, que é o coração deste PR, fica do lado
+   * puro justamente para que as mutações possam ser vistas vermelhas.
+   *
+   * 🔴 **`chaveSeedsAbertas` (string) na lista de dependências, e NÃO o array.**
+   * `cliente.sala` é reconstruído a cada snapshot que chega do servidor, então
+   * `seedsAbertas` é um array NOVO a cada mensagem, mesmo sem nenhuma etapa ter
+   * aberto. Depender da referência recomputaria 5 etapas × 22 carros a cada
+   * broadcast — inclusive durante o draft dos outros. A chave por VALOR muda
+   * exatamente quando o conteúdo muda, que é o gatilho pretendido (`join(',')`
+   * é injetivo sobre uint32: `toString` nunca produz vírgula).
+   *
+   * ⚠️ **ISTO NÃO FECHA A PENDÊNCIA 0(j), e a redação anterior desta linha
+   * dizia que fechava.** A 0(j) é sobre a estabilidade de REFERÊNCIA de
+   * `cliente.draft` entre re-sincronizações sem evento novo — rastreada à mão
+   * em `sincronizarDraft`, **sem asserção própria**, porque não há jsdom para
+   * observar o hook. E `cliente.draft` está aqui nas dependências, **por
+   * referência**: a chave por valor conserta a instabilidade do ARRAY, não a
+   * do DRAFT. **A 0(j) segue aberta.**
+   * 🔴 **E este `useMemo` AUMENTA o que ela custa:** antes, uma troca espúria
+   * de identidade de `cliente.draft` custava um atestado reenviado; agora
+   * custa também **5 corridas × 22 carros recomputadas a cada snapshot**.
+   */
+  const chaveSeedsAbertas = (cliente.sala?.seedsAbertas ?? []).join(',');
+  const etapas = useMemo<CorridaPreparada[]>(() => {
+    if (cliente.draft === null || cliente.draft.fase !== 'concluido') return [];
+    return etapasDaSala(
+      dataset,
+      cliente.draft,
+      cliente.sala?.seedCalendario ?? null,
+      cliente.sala?.seedsAbertas ?? [],
+    );
+    // `cliente.sala?.seedsAbertas` é LIDA aqui mas não entra nas dependências —
+    // quem a representa é `chaveSeedsAbertas`, pelo motivo acima. O projeto não
+    // usa `react-hooks/exhaustive-deps` (medido em `eslint.config.js`), então
+    // isto é decisão explícita, não regra silenciada.
+  }, [cliente.draft, cliente.sala?.seedCalendario, chaveSeedsAbertas]);
+
+  /**
+   * 🔒 **UMA guarda só, e ela mora na função PURA** (aviso A1 da segunda passada
+   * da revisão). Este `useMemo` só checa `null`; quem garante `[]` com o draft
+   * em andamento é `classificacaoDaSala`, onde a regra tem mutação vermelha ao
+   * lado. A primeira versão do conserto duplicou a guarda aqui e a **mutação
+   * que a apagava sobreviveu a tudo** — sem jsdom, guarda dentro do hook é
+   * inalcançável por teste. Duplicar também criaria duas respostas para a mesma
+   * pergunta, que é a forma da pendência 0(t).
+   *
+   * ⚠️ **Comentário nenhum aqui pode escrever o nome de uma função vigiada
+   * seguido de parêntese:** `chamadasMax` toma o MÁXIMO entre a fonte crua e a
+   * sem-comentários, então isso derruba a contagem exata do contrato. Aconteceu
+   * na primeira versão deste bloco — a cerca funcionando como ela mesma avisa.
+   */
+  const classificacao = useMemo<LinhaClassificacao[]>(
+    () => (cliente.draft === null ? [] : classificacaoDaSala(etapas, cliente.draft)),
+    [etapas, cliente.draft],
+  );
+
+  /**
    * 🔴 ATESTADO DE HASH DA CORRIDA (PR 2/4) — mesmo detector do draft, agora
    * sobre `corrida`. Mesmo molde do efeito acima: mora num efeito separado
    * (não dentro de um updater de `setState`, pelo mesmo motivo do StrictMode
@@ -338,6 +456,8 @@ export function useSalaOnline(sala: string): UseSalaOnline {
     encerrada: cliente.encerrada,
     inexistente: cliente.erros.includes('sala-inexistente'),
     corrida,
+    etapas,
+    classificacao,
     atestarFimDaCorrida,
   };
 }

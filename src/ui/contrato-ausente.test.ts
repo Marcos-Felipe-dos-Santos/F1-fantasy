@@ -51,17 +51,73 @@ function semComentarios(fonte: string): string {
     .replace(/(^|[^:])\/\/[^\r\n]*/g, '$1');
 }
 
-/** Anda na árvore inteira, não só no primeiro nível. */
+/**
+ * 🔴 **TOLERA ARQUIVO QUE SOME NO MEIO DA CAMINHADA — e isso NÃO é defensividade
+ * gratuita: sem essa guarda o `npm test` falhava ~50% das vezes** (medido em 6
+ * rodadas seguidas: 3 vermelhas), sempre AQUI, e sempre num PR que não toca nada
+ * do ausente.
+ *
+ * A causa é estrutural e continuará existindo: `contrato-corrida-online.test.ts`
+ * **grava e apaga** arquivos de sabotagem dentro de `src/ui/` para provar que as
+ * allowlists reprovam arquivo novo — é o desenho daquelas cercas, não um
+ * descuido —, e o vitest roda os arquivos de teste **em paralelo**. Entre o
+ * `readdirSync` e o `statSync` a sabotagem alheia pode ter sido apagada, e aí o
+ * `statSync` lança `ENOENT`.
+ *
+ * 🔒 **O `catch` é ESTREITO de propósito: só `ENOENT`.** Qualquer outro erro de
+ * I/O continua estourando — engolir tudo transformaria uma pasta ilegível em
+ * "varredura vazia", que é a vacuidade que estas cercas existem para não ter.
+ *
+ * ⚠️ **A PRIMEIRA VERSÃO DESTE BLOCO DIZIA QUE `readFileSync` NÃO PRECISAVA DO
+ * MESMO TRATAMENTO** — *"quem sumiu no `statSync` nunca chega lá"* — **e era
+ * falso, medido:** com a guarda só aqui, o `npm test` continuou falhando, e o
+ * erro capturado foi
+ * `ENOENT ... open 'src\ui\__sabotagem_etapas_dupla.tsx'`, **na LEITURA**. A
+ * janela existe nos DOIS pontos: entre `readdirSync` e `statSync`, e entre
+ * `statSync` e `readFileSync`. Por isso existe `lerFonte` logo abaixo, e por
+ * isso este parágrafo foi corrigido no lugar em vez de contradito adiante.
+ *
+ * ⚠️ Registrado como pendência **0(v)** no `ESTADO.md`: um portão que passa por
+ * sorte de escalonamento é risco, não detalhe.
+ */
 function tsRecursivo(dir: string, incluirTestes: boolean): string[] {
   return readdirSync(dir).flatMap((nome) => {
     const caminho = join(dir, nome);
+    let ehDiretorio: boolean;
+    try {
+      ehDiretorio = statSync(caminho).isDirectory();
+    } catch (erro) {
+      if ((erro as { code?: string }).code === 'ENOENT') return [];
+      throw erro;
+    }
     // RECURSIVO de propósito: a primeira versão parava no primeiro nível e
     // degradaria em silêncio no dia em que alguém criasse `src/ui/online/`.
-    if (statSync(caminho).isDirectory()) return tsRecursivo(caminho, incluirTestes);
+    if (ehDiretorio) return tsRecursivo(caminho, incluirTestes);
     if (!/\.tsx?$/.test(nome)) return [];
     if (!incluirTestes && /\.test\.tsx?$/.test(nome)) return [];
     return [caminho];
   });
+}
+
+/**
+ * Lê a fonte de um arquivo que a varredura acabou de listar, tolerando **só**
+ * `ENOENT` — a sabotagem de outra suíte que foi apagada entre a listagem e a
+ * leitura (ver o docblock de `tsRecursivo`). Devolve `''`, que não casa com
+ * nenhum dos padrões vigiados.
+ *
+ * 🔒 **Devolver `''` é seguro para ESTAS cercas e não seria para todas:** aqui
+ * todas as asserções perguntam *"algum arquivo CONTÉM o padrão proibido?"*, e um
+ * arquivo que não existe mais não pode conter nada. Uma cerca que perguntasse
+ * *"todo arquivo contém X"* precisaria de outro tratamento — o `''` a faria
+ * passar por vacuidade.
+ */
+function lerFonte(caminho: string): string {
+  try {
+    return readFileSync(caminho, 'utf8');
+  } catch (erro) {
+    if ((erro as { code?: string }).code === 'ENOENT') return '';
+    throw erro;
+  }
 }
 
 function arquivosDaUi(): string[] {
@@ -150,7 +206,7 @@ describe('a UI não pode ter um SEGUNDO caminho de escolha do ausente', () => {
 
   it('nenhum arquivo de UI importa `escolherBot`', () => {
     const culpados = arquivosDaUi().filter((arquivo) =>
-      /\bescolherBot\b/.test(semComentarios(readFileSync(arquivo, 'utf8'))),
+      /\bescolherBot\b/.test(semComentarios(lerFonte(arquivo))),
     );
     expect(
       culpados,
@@ -163,7 +219,7 @@ describe('a UI não pode ter um SEGUNDO caminho de escolha do ausente', () => {
     // cliente. Se a UI a chamasse, teria de decidir QUANDO — e é aí que dois
     // clientes passam a divergir, mesmo usando a mesma função.
     const culpados = arquivosDaUi().filter((arquivo) =>
-      /\bescolhaDoAusente\b/.test(semComentarios(readFileSync(arquivo, 'utf8'))),
+      /\bescolhaDoAusente\b/.test(semComentarios(lerFonte(arquivo))),
     );
     expect(culpados, `só o cliente resolve ausente:\n${culpados.join('\n')}`).toEqual([]);
   });
@@ -185,7 +241,7 @@ describe('a UI não pode ter um SEGUNDO caminho de escolha do ausente', () => {
       'src/ui/contrato-ausente.test.ts',
     ].sort();
     const usam = arquivosDoProjeto()
-      .filter((a) => /\bescolherBot\b/.test(readFileSync(a, 'utf8')))
+      .filter((a) => /\bescolherBot\b/.test(lerFonte(a)))
       .map(relativo)
       .sort();
     expect(usam).toEqual(permitidos);
@@ -196,7 +252,7 @@ describe('a UI não pode ter um SEGUNDO caminho de escolha do ausente', () => {
     // Chamá-la com o id de um AUSENTE seria um segundo caminho de decisão sem
     // citar nenhum nome proibido. A UI escolhe por CLIQUE; nada mais.
     const culpados = arquivosDaUi().filter((arquivo) =>
-      /\bescolhaPadrao\b/.test(semComentarios(readFileSync(arquivo, 'utf8'))),
+      /\bescolhaPadrao\b/.test(semComentarios(lerFonte(arquivo))),
     );
     expect(culpados.map(relativo), 'a UI decide por clique, não por heurística').toEqual([]);
   });
@@ -207,7 +263,7 @@ describe('a UI não pode ter um SEGUNDO caminho de escolha do ausente', () => {
     // divergência que este arquivo existe para impedir — e não dispararia
     // nenhum dos outros testes, porque não cita nome proibido nenhum.
     const culpados = arquivosDaUi().filter((arquivo) =>
-      aridadesDe(semComentarios(readFileSync(arquivo, 'utf8')), 'sincronizarDraft').some(
+      aridadesDe(semComentarios(lerFonte(arquivo)), 'sincronizarDraft').some(
         (n) => n > 2,
       ),
     );
@@ -218,7 +274,7 @@ describe('a UI não pode ter um SEGUNDO caminho de escolha do ausente', () => {
     // `Math.random` na UI do online é caminho direto pra divergência: basta
     // que ele influencie qualquer coisa que vire comando.
     const culpados = arquivosDaUi().filter((arquivo) =>
-      /Math\s*\.\s*random/.test(semComentarios(readFileSync(arquivo, 'utf8'))),
+      /Math\s*\.\s*random/.test(semComentarios(lerFonte(arquivo))),
     );
     expect(culpados, `use o RNG semeado da engine:\n${culpados.join('\n')}`).toEqual([]);
   });
