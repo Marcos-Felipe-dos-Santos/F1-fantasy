@@ -263,6 +263,9 @@ Cada jogador é representado por um **capacete estilizado** na pista.
 - **Editor simples:** padrão base (listras, split, chamas, estrelas…) + paleta de cores.
 - **Presets clássicos:** capacetes evocando épocas/estilos famosos ("amarelo Brasil", "vermelho clássico", "azul-e-branco retrô") — inspiração, não cópia.
 - Questões de direito de imagem/marca estão em apuração (§14.2). O design é agnóstico a nome.
+  ⚠️ **CORRIGIDO em 2026-08-24, pela medição:** "agnóstico a nome" vale para **o design dos
+  capacetes** (presets evocam época/estilo, não copiam), mas **NÃO para a engine** — ver §14.2 e o
+  inventário medido em `ESTADO.md` §"Onde parei" → "INVENTÁRIO DOS NOMES REAIS".
 
 ---
 
@@ -292,7 +295,8 @@ A corrida é **determinística por seed**. O servidor nunca transmite os 22 carr
 ## 14. Riscos
 
 1. **Volume de dados + Modo Cego.** Notas de 1950-2025 = milhares de valores (agora incluindo estrategista e pit por equipe/ano). Plano: gerar com IA, ancoradas em fatos verificáveis, com spot-check manual. Script de balanceamento obrigatório.
-2. **Direito de imagem.** Nomes reais e liveries são risco jurídico. Em apuração. Engine agnóstica a nome.
+2. **Direito de imagem.** Nomes reais e liveries são risco jurídico. ⚠️ **Deixou de estar "em apuração": com a decisão de DEPLOY PÚBLICO (2026-08-24) virou BLOQUEADOR** — a distribuição é o fato jurídico, e ela independe de o repositório ser privado.
+   🔴 **"Engine agnóstica a nome" é FALSO, e a correção veio da medição de 2026-08-24** (registrada em `ESTADO.md` §"Onde parei" → "INVENTÁRIO DOS NOMES REAIS", que é onde estão os números). A engine não *interpreta* nome, mas nome **não é rótulo descartável**: os ids de piloto trazem o sobrenome embutido; o nome da equipe é metade da chave composta `equipe::ano` (`src/engine/dataset.ts:270`), é lookup que **lança** (`src/engine/draft-utils.ts:73`) e entra **literalmente na string hasheada** do protocolo online (`src/net/hash-draft.ts:68`). Trocar o dataset força bump de `VERSAO_APP` pelo digest.
 3. **Peça forte quebrando o jogo.** Se o bônus da peça for maior que a diferença entre carro top e mediano, a peça decide sozinha. Mitigação: balance-harness + risco técnico calibrado.
 4. **Variância de sorte nos 5 sorteios.** Um jogador pode cair 5 vezes em equipes fracas. Mitigação: medir no balance-harness se a "sorte total" domina o resultado; se sim, aumentar peso da peça icônica ou dos atributos de piloto.
 5. **Trapaça no cliente.** Simulação no cliente = brecha. Casual ok; ranking competitivo exige validação no servidor. Fica pra depois.

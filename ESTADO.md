@@ -109,6 +109,15 @@ celular o endereço `Network` da LAN que ele imprime (hoje `http://192.168.0.13:
   devolve **404** para esse repo, enquanto `git ls-remote` autenticado funciona.
   Com a MIT no repositório, abrir o código deixou de ter o problema do "todos os direitos
   reservados" — mas **abrir segue sendo decisão do dev**, e o motivo do §14.2 não mudou.
+  🔴 **ATUALIZADO em 2026-08-24 — O DEV DECIDIU DEPLOY PÚBLICO, e isso MUDA O STATUS DOS NOMES
+  REAIS: eles deixaram de ser pendência e viraram BLOQUEADOR.** O parágrafo acima fica porque
+  descreve corretamente o repositório (que segue privado, e a evidência do 404 segue valendo); o
+  que envelheceu é o *raciocínio*: enquanto o alvo era jogar local e o repo era privado, nome real
+  era risco contido. **Com o jogo servido publicamente, a distribuição é o fato jurídico**, e ela
+  independe de o código estar aberto ou fechado. **Não há mais o caminho "adiar o §14.2".**
+  ⚠️ **Ler junto com o inventário medido em 2026-08-24** (§Onde parei): a frase do
+  **`F1_Fantasy_GDD.md:265` e `:295` — "Engine agnóstica a nome" — é MEIA-VERDADE, medida**, e o
+  custo de trocar o dataset não é o que essa frase sugere.
   ✅ **Os dois portões visuais foram FECHADOS em 2026-08-07** (silhuetas 10/10, paleta aprovada), o
   que removeu o motivo que segurava o trabalho da 7.7+ fora da `main` — merge feito em 2026-08-08.
   **Nenhuma tag foi criada para este merge.** Se for criar, só DEPOIS do merge na main (já é o caso).
@@ -300,6 +309,61 @@ dependência).
 
 
 ## Onde parei
+
+**📏 DUAS MEDIÇÕES DE AUDITORIA — FECHADAS em 2026-08-24.** Nenhum diff de produção; o resultado é
+o registro abaixo. **A numeração C1/C2/C3 é do audit e NÃO existe neste arquivo** — por isso o item
+que sobrou aberto entra na numeração de cá, como pendência **0(y)**.
+
+✅ **C3 (limite de 22 jogadores) É FALSO POSITIVO DO AUDIT — REFUTADO POR MEDIÇÃO** (precedente do
+3.5.2 e do S1 da 0(s), logo abaixo). O audit alegava guarda ausente. **Medido, os três elos:**
+- **A guarda EXISTE:** `src/net/sala.ts:500` — `if (estado.jogadores.length >= QTD_JOGADORES)
+  return recusar(estado, 'sala-cheia');`, com `QTD_JOGADORES = 22`.
+- **O teste EXISTE e assere IDENTIDADE, não só valor:** `src/net/sala.test.ts:178-185` ("recusa a
+  23ª entrada") enche a sala, confere `humano-22` no último slot, e fecha com
+  `expect(r.estado).toBe(cheia)` — **`.toBe`, referência**, o que prova que a recusa não devolve
+  estado novo. É a mesma força de asserção que refutou o S1 da 0(s).
+- **A COMPOSIÇÃO foi verificada**, que era o buraco real a descartar: `reduzirSala` tem **2 sítios
+  de produção**, e ambos são construção **imutável** — não há caminho que acrescente jogador
+  contornando o redutor.
+
+🔴 **O ACHADO ADJACENTE QUE SAIU DA MEDIÇÃO, e este é REAL: a guarda protege o ROSTER, não as
+CONEXÕES.** `QTD_JOGADORES` limita quem entra na lista de jogadores via comando `entrar`; **socket
+aberto que nunca manda `entrar` não é limitado por nada.** Virou a pendência **0(y)** e **continua
+ABERTA** — ver lá, e ler junto com o bloqueante C1 da 0(s), que é o mesmo mecanismo de socket
+quieto visto do outro lado.
+
+---
+
+📋 **INVENTÁRIO DOS NOMES REAIS — MEDIDO em 2026-08-24, e ele CORRIGE uma frase do projeto.**
+Motivo da medição: o dev decidiu **deploy público** (ver §Estado atual), então nome real virou
+bloqueador.
+
+🔑 **"Engine agnóstica a nome" (`F1_Fantasy_GDD.md:265` e `:295`) é MEIA-VERDADE.** É verdade que a
+engine não *interpreta* nome; é falso que nome seja rótulo descartável. **Medido:**
+- **Os ids SÃO os nomes.** **1.542 ids de piloto com sobrenome embutido** no esquema de id.
+  ⚠️ *Este número e o de arquivos abaixo foram medidos na SESSÃO ANTERIOR e **não** re-medidos em
+  2026-08-24 — a releitura do dataset foi recusada por permissão. Entram rotulados, não como
+  medição desta sessão.*
+- **O nome da equipe é CHAVE**, em três camadas: unicidade validada em `src/engine/dataset.ts:270`
+  (⚠️ **e é chave COMPOSTA `equipe::ano`, não chave primária só de nome** — a redação que recebi
+  dizia "chave primária"; o que o código faz é `const chave = \`${equipe}::${ano}\`` com assert de
+  duplicata sobre o par); **lookup que LANÇA** em `src/engine/draft-utils.ts:73`
+  (`encontrarEquipeAno`, `throw` na linha 75); e **insumo do hash** em **`src/net/hash-draft.ts:68`**
+  — `refs.map((r) => \`${r.equipe}@${r.ano}\`)`, ou seja **o nome da equipe entra literalmente na
+  string hasheada**. ⚠️ **Correção de âncora: o arquivo é `src/net/hash-draft.ts`, NÃO
+  `src/engine/`.**
+- **33 arquivos citam nome real fora de comentário** — **6 produção, 24 teste, 3 preview** —, dos
+  quais **só 2 são app real**. *(mesma ressalva de proveniência acima.)*
+- **O `balance-harness` quebra por EXCEÇÃO**, não por número errado: `scripts/balance.ts` procura
+  `'Red Bull'` 2023 com literal na **linha 50** e lança na **linha 52**
+  (`loadoutForte: equipe/ano "Red Bull" 2023 não encontrado no dataset`). ⚠️ **Correção de âncora:
+  a linha é 50/52, não 48.** Há outros literais de nome no mesmo arquivo (linhas 43, 47).
+- **Troca de dataset força BUMP de `VERSAO_APP`** pelo digest, que cobre `src/data/**`.
+
+⚠️ **A frase do GDD segue no lugar até o dev decidir** — corrigi-la é edição em `F1_Fantasy_GDD.md`,
+proposta separadamente e não embutida aqui.
+
+---
 
 **🏁 CONSERTO DA 0(s) — CONCLUÍDO em 2026-08-23**, na branch **`fix-0s-sala-zumbi`**
 (`5f5f2f3` + `5bfa90b`). ALTO RISCO (netcode). **Diff de produção: um `else if` de três linhas** em
@@ -1270,6 +1334,27 @@ casca deixa de ser terra sem teste; a opção conhecida é `@cloudflare/vitest-p
    mesmo motivo do `hash` — cliente antigo não pode virar `comando-invalido` na janela de deploy) e
    o servidor ignora em silêncio quem atesta etapa ≠ cursor. **Ler junto com a 0(u2)**, que é a
    assimetria irmã no `hash` (etapa FUTURA é aceita e escreve balde adiantado).
+   (y) 🔴 **NOVA (medição de auditoria, 2026-08-24) — A GUARDA DE 22 PROTEGE O ROSTER, NÃO AS
+   CONEXÕES. Socket aberto que nunca manda `entrar` não é limitado por nada.** É o **item C2 do
+   audit**, e é o único dos três que sobreviveu à medição — o C3 foi refutado (ver §Onde parei).
+   **O que foi medido:** `src/net/sala.ts:500` recusa a 23ª entrada com `sala-cheia`, e o teste de
+   `src/net/sala.test.ts:178-185` o fixa por identidade. Mas `QTD_JOGADORES` governa o array
+   `estado.jogadores`, que só cresce pelo comando **`entrar`**. **Um cliente que abre o WebSocket e
+   fica calado nunca toca esse array** — logo nunca encontra a guarda.
+   🔑 **NÃO é achado novo do audit: é a GENERALIZAÇÃO do mecanismo que o bloqueante C1 da 0(s) já
+   documentou**, visto do outro lado. Palavras de lá: *"`onConnect`/`onMessage` **recusam** o
+   cliente, mas o socket só é fechado quando ele **manda** alguma coisa — um cliente conectado e
+   **quieto** segue contado em `getConnections()`."* **Ler as duas juntas:** a 0(s) mostra que
+   socket quieto **conta** em `getConnections()`; a 0(y) mostra que ele **não conta** no roster. É
+   a mesma assimetria — contado pelo transporte, invisível para a lógica de sala — e por isso as
+   duas se movem juntas.
+   🔒 **Obrigação para quem for fechar a 0(y):** limitar conexões mexe em `getConnections()`, que é
+   exatamente o insumo da guarda `vazioDesde !== null` instalada pelo C1 da 0(s). **Fechar a 0(y)
+   sem re-verificar a 0(s) reabre o zumbi de sala corrompida.** O par `MD` + anti-vacuidade de
+   `party/alarme.test.ts` é o baseline que tem que continuar verde.
+   ⚠️ **Ganha urgência com o deploy público** (§Estado atual): sala privada entre amigos não é alvo;
+   endpoint público sem teto de conexão é. **Não medido:** qual o teto real do Durable Object nem
+   qual o custo de um socket ocioso. **É decisão do dev, e é PR próprio.**
 1. **Abertas pelo 7.8:** (a) o `BotaoTema` é um botão discreto no canto do `app-shell` — posição e
    forma **não passaram por veredito de arte**; (b) `erro` (salmão `#FF7B85`) e `raridadeProibido`
    (`#FF4757`) continuam sendo dois vermelhos ao lado do vermelho da marca — não foi mexido porque
