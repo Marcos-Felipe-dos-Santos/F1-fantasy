@@ -332,8 +332,40 @@ export class Sala extends Server<Env> {
     // e `encerrar` ficam de fora de propósito — a sala corrompida precisa
     // continuar podendo MORRER pela carência de vazio, senão vira zumbi que
     // recusa todo mundo e nunca libera o código.
+    //
+    // 🔴 **ATÉ O CONSERTO DA 0(s), O PARÁGRAFO ACIMA ERA PROMESSA QUE ESTE
+    // CÓDIGO NÃO CUMPRIA — e o `else` abaixo é o que o torna verdadeiro.**
+    // A pendência 0(s) foi exatamente o buraco entre a intenção e o efeito:
+    // `registrarConexoes` produz um objeto NOVO com `vazioDesde = agora`, mas
+    // quem PERSISTE é o `aplicar`, e ele só era chamado no ramo jogável. Numa
+    // sala corrompida o campo nunca chegava ao storage, o tique seguinte relia
+    // `null`, e `agora - agora = 0` para sempre: **a carência de vazio nunca
+    // começava a correr.** Suspeitado por leitura em 2026-08-19, CONFIRMADO
+    // por execução no PR C (`party/alarme.test.ts`, três tiques).
+    //
+    // 🔑 **A nuance que a medição acrescentou, e que o conserto respeita:** não
+    // era "toda sala corrompida vira zumbi". Uma sala corrompida cujo
+    // `vazioDesde` JÁ estava gravado sempre morreu normalmente — é o teste MD.
+    // O zumbi era só quem se corrompia **enquanto ainda tinha conexões**, o
+    // caso em que o campo precisaria ser escrito pela primeira vez. Por isso o
+    // conserto é persistir o registro de conexões, e **não** encurtar a vida da
+    // sala corrompida: um `encerrar()` incondicional aqui mataria também o caso
+    // que já funcionava.
+    //
+    // ⚠️ **Sem amplificação de escrita, e isso é medido, não suposto:**
+    // `registrarConexoes` preserva a IDENTIDADE do estado quando
+    // `vazio === jaVazio`, e `aplicar` só grava quando a referência muda. Logo
+    // o `else` grava **uma vez**, na transição para vazio, e fica mudo nos
+    // tiques seguintes.
+    //
+    // 🔒 **Por que aqui e não logo depois do `registrarConexoes`** (a forma
+    // simétrica, considerada e descartada): lá a escrita aconteceria também na
+    // sala que `decidirVida` vai encerrar no mesmo tique, e o gate deixaria de
+    // ser o único ponto que decide o que fazer com a sala não jogável.
     if (this.jogavel(atualizado)) {
       await this.aplicar(aoPassarOTempo(atualizado, agora, PRAZO_TURNO_MS));
+    } else {
+      await this.aplicar({ estado: atualizado, envios: [] });
     }
     await this.ctx.storage.setAlarm(agora + INTERVALO_TIQUE_MS);
   }
