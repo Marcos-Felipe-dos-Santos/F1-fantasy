@@ -360,6 +360,52 @@ engine não *interpreta* nome; é falso que nome seja rótulo descartável. **Me
 - **33 arquivos citam nome real fora de comentário** — **6 produção, 24 teste, 3 preview** —, dos
   quais **só 2 são app real**. ⚠️ *A ressalva de proveniência CONTINUA VALENDO SÓ PARA ESTES
   NÚMEROS: medidos na SESSÃO ANTERIOR, **não** re-medidos. Entram rotulados, não como medição.*
+  🔴 **APOSENTADO em 2026-08-24 (3ª sessão) — e o motivo NÃO é "não foi re-medido": é que ele
+  NÃO É RE-MENSURÁVEL.** O dev pediu para fechar a ressalva de proveniência ("ou re-meça, ou marque
+  como não-medido"). Tentei re-medir e a tentativa produziu um terceiro achado: **a sessão que gerou
+  o 33/6/2 nunca registrou o MÉTODO** — qual lista de nomes, qual universo de arquivos, como
+  comentário foi tratado. Sem isso o número não é falsificável: qualquer contagem nova diverge dele
+  sem que se possa dizer qual das duas está errada. **É a lição própria do projeto aplicada a um
+  número meu:** *"Conclusão sem o fato que a gerou não se verifica depois."* **Não use 33/6/2 para
+  decisão nenhuma.** O que vale está nos dois blocos abaixo, cada um com o método embutido.
+  ⚠️ **Os três substitutos NÃO são "o 33 corrigido"** — medem coisas diferentes e não se somam.
+  Isto agora são **CINCO** contagens convivendo neste inventário; ver o 🔑 da medição de custo.
+
+  📏 **SUBSTITUTO 1 — literal de nome de EQUIPE em arquivo-fonte rastreado: 15 arquivos.**
+  **Método (é ele que faz a medida valer):** universo de nomes = os **105** `equipe` distintos de
+  `equipe-anos.json` (só agregado, nenhuma leitura integral); universo de arquivos = `git ls-files`
+  filtrado a `.ts/.tsx/.mjs/.js` **fora de `src/data/`** = **166 arquivos**; "cita" = o nome dentro
+  de aspas, com fronteira não-alfanumérica (para `'Lotus'` não casar dentro de `'Lotus-Climax'`),
+  em linha que não é comentário. **Resultado: 1 script-fonte (`scripts/balance.ts:50`), 1
+  informativo (`scripts/dataset-report.ts:162`), 1 fixture de engine
+  (`src/engine/draft-test-fixtures.ts:22`), 1 preview-test, 11 testes.**
+  ⚠️ **`preview/` está FORA deste universo por construção — não é rastreado pelo git** (`git ls-files
+  preview/` devolve vazio). Os "3 preview" do número aposentado **não podiam** aparecer aqui.
+  🔑 **E isto NÃO é erro da contagem nº 3 logo abaixo — é MÉTRICA DIFERENTE.** A nº 3 declara o
+  universo dela como "em disco, fora de `node_modules`, `scripts/cache/` e `src/fixtures/`", então
+  `preview/golden.test.ts` e `preview/zebra.test.ts` entram nela **corretamente**; a nº 4 usa
+  `git ls-files` e por isso não pode contê-los. **As duas estão certas.** Registro a distinção
+  porque quase escrevi aqui que a nº 3 estava errada — que é exatamente o defeito que esta sessão
+  passou inteira diagnosticando: **contagem com método diferente não corrige outra, só difere dela.**
+
+  🔴 **SUBSTITUTO 2 — a métrica por SOBRENOME/`driverId` é INUTILIZÁVEL, e isto é um achado.**
+  Tentei a passada que faltava (ids slugados + sobrenomes, que o substituto 1 é cego a ver) e ela
+  devolveu **83 arquivos / 25 "produção"** — **lixo, por colisão com palavra comum**: **`button` é
+  sobrenome real (Jenson Button)**, então todo `<button>` do React casa; e **`sala` é um `driverId`
+  real**, então `src/net/` inteiro casa. **Não corrigi a lista de exclusão para salvar o número** —
+  registro a métrica como reprovada, porque uma allowlist escolhida a dedo até o número ficar
+  bonito é exatamente o vício que produziu o 33. 🔑 **Provável causa-raiz do 33 original.**
+
+  🟢 **SUBSTITUTO 3 — O QUE INTERESSA, e é BINÁRIO: MEDIDO NO BUNDLE, não inferido.**
+  `npm run build` (exit 0) → `dist/assets/index-C10zYSkb.js`, **831 KB**. Contagem de presença:
+  **105/105 nomes de equipe · 1.542/1.542 ids de piloto · 353/353 nomes exibidos de piloto.**
+  Amostras de ocorrência: `Ferrari` 152×, `McLaren` 127×, `Red Bull` 44×, `Schumacher` 31×,
+  `Verstappen` 18×, `Senna` 12×, `Fangio` 7×, `red-bull-2023` 6×.
+  🔑 **Isto SUBSTITUI o "só 2 são app real" por algo que não depende de classificar arquivo.**
+  A pergunta "quantos arquivos são app real" era um **proxy** para "o que é servido ao público"; o
+  proxy tinha o defeito de exigir julgamento (foi ele que errou: `draft-test-fixtures.ts` não tem
+  sufixo `.test` e um classificador ingênuo o chama de produção). **O bundle responde direto: o
+  dataset real vai INTEIRO, 100%.** Nenhum arquivo precisa ser classificado para saber isso.
   🔑 **A medição de custo abaixo NÃO os re-mede** — ela conta outra coisa (quem **importa** o
   dataset, 22 arquivos), e as duas contagens não se somam nem se substituem. Mas um achado dela
   **incide** sobre o "só 2 são app real": `src/ui/dataset-app.ts` importa o dataset real e é
@@ -372,6 +418,21 @@ engine não *interpreta* nome; é falso que nome seja rótulo descartável. **Me
 
 ⚠️ **A frase do GDD segue no lugar até o dev decidir** — corrigi-la é edição em `F1_Fantasy_GDD.md`,
 proposta separadamente e não embutida aqui.
+✅ **FECHADO em 2026-08-24 (3ª sessão) — a frase do GDD JÁ ESTAVA corrigida, e a correção era de
+outra coisa.** O dev pediu para corrigir `F1_Fantasy_GDD.md:265` e `:295`; medido, os dois sítios
+**já tinham sido corrigidos** pelo commit `1df89dc` (a 1ª sessão de nomes) e já apontavam para este
+inventário. **Duas correções REAIS saíram da conferência, e nenhuma era a pedida:**
+- ⚠️ **Âncora: é `:299`, não `:295`.** Mesma família das cinco correções de âncora já registradas
+  neste inventário — o ditado envelheceu 4 linhas.
+- 🔴 **CONTRADIÇÃO ENTRE OS DOIS DOCUMENTOS, e o GDD é que estava errado.** O GDD dizia
+  **"FALSO"**; este arquivo (`:341`) diz **"MEIA-VERDADE"**. **"FALSO" excede a medição que o
+  próprio GDD citava**, e a diferença é material para o plano de troca: é justamente porque a
+  engine **não interpreta** nome que as notas sobrevivem ao rename e o veredito de custo deu 🟢.
+  **Corrigido no GDD para MEIA-VERDADE**, com a razão junto. 🔑 **Foi a conferência de um item já
+  feito que achou o erro** — item marcado como pronto e não conferido contra sua fonte é a mesma
+  família do "artefato não verificado não conta como verificado".
+- ➕ **Acrescentado ao GDD §14.2:** a medição do BUNDLE (substituto 3, acima), porque o §14.2 é
+  onde o risco jurídico mora e ele estava argumentando por cadeia de import, não por medida.
 
 ---
 
@@ -432,15 +493,94 @@ foi **quem IMPORTA `src/data/equipe-anos.json`** (`import … from '…/data/equ
   `persistencia`, `pista-camadas`, `suavizacao`, `tracados`);
 - **1 de PRODUÇÃO**: `src/ui/dataset-app.ts` — ver a linha própria abaixo;
 - **1 avulso**: `tmp-medir-save.ts` na raiz, **não rastreado pelo git**.
+  ✅ **RESOLVIDO em 2026-08-24 (3ª sessão) a pedido do dev — pode APAGAR. Quatro elos verificados:**
+  **(1) PROVENIÊNCIA — não é sobra das medições de 2026-08-24.** `mtime` **2026-08-07 13:47**, e
+  ele é ignorado desde o commit **`897121f`** (`chore: ignora scripts tmp-*`), da mesma data. Ele
+  **antecede as três sessões** do trabalho de nomes. ⚠️ **O que NÃO consigo provar: a autoria.**
+  O `.gitignore:22` o chama de "script descartável **do dev**" e o `HISTORICO.md:2962` diz o mesmo,
+  mas **os dois textos foram escritos pelo Claude, não pelo dev** — são a mesma alegação repetida,
+  não duas fontes. `mtime` não prova autor. **O que fica provado é a data, não a mão.**
+  **(2) ESTÁ QUEBRADO — verificado por mim nesta sessão, não herdado.** `criarDraft`
+  (`src/engine/draft.ts:38`) tem `assert(jogadores.length === 22)` e `:45-48` exige `perfilBot` em
+  bot; o arquivo passa **4 jogadores `tipo: 'bot'` sem `perfilBot`** (`:13-21`). Lança nas duas
+  guardas. Confere com o que o `HISTORICO.md:2962` já registrava.
+  **(3) É SUPERADO — o resultado que ele buscava já está registrado:** `HISTORICO.md:464` e
+  `:2773` (**16,39 KB na curta = 0,32% de uma quota de 5 MB**, por draft REAL resolvido por bots).
+  **(4) NINGUÉM O IMPORTA** — é raiz, ignorado, e não entra em `tsconfig`/`vitest`.
+  🔑 **Ele importa o dataset real** (`./src/data/equipe-anos.json`), então aparece na contagem nº 3
+  do inventário. **Apagá-lo faz a nº 3 cair de 22 para 21** — registrado para a contagem não parecer
+  divergente na próxima sessão. **Apagar é decisão do dev; nada foi apagado por mim.**
 Os dois arquivos ditados **existem** na lista; o que é falso é a **EXCLUSIVIDADE**. A superfície de
 teste real é **20, não 2**.
 🔑 **Três contagens distintas convivem neste inventário e NÃO se somam:** "cita nome real" (33),
 "é app real" (2) e "importa o dataset" (22). Só a terceira é medição desta sessão. Registrado
 porque a confusão entre elas é o que produziu o "só 2" — e é a mesma lição do 3.5.3, quando a
 lista da allowlist saiu da CERCA e não do `grep`, na direção oposta.
+🔴 **ATUALIZADO em 2026-08-24 (3ª sessão) — agora são CINCO, e duas MORRERAM.** À lista acima
+somam-se "literal de nome de EQUIPE em fonte rastreado" (**15**, com método) e "presença no
+BUNDLE" (**105/1.542/353, ou seja 100%**). **Estado de cada uma:**
+
+| # | contagem | valor | estado |
+|---|---|---|---|
+| 1 | cita nome real (sem método registrado) | 33 / 6 / 2 | 🔴 **APOSENTADA — não re-mensurável** |
+| 2 | é "app real" | 2 | 🔴 **APOSENTADA — proxy, superada pela nº 5** |
+| 3 | importa `equipe-anos.json` | 22 (20 teste · 1 prod · 1 avulso) | ✅ vale (medida, com método) |
+| 4 | literal de nome de EQUIPE em fonte rastreado | 15 | ✅ vale (medida, com método) |
+| 5 | presença no BUNDLE servido | 105/105 · 1.542/1.542 · 353/353 | ✅ **é a que decide o deploy** |
+🔑 **Para a decisão de deploy público, só a nº 5 importa.** As outras dizem quanto TRABALHO a troca
+dá; a nº 5 diz qual é o RISCO hoje, e ela é binária — não depende de classificar arquivo nenhum.
 
 ✅ **A fixture confere EXATAMENTE o ditado**: `src/fixtures/dataset-semente/` tem **22 entradas / 10
 nomes de equipe distintos / 44 ids de piloto**, contra **771 / 105 / 1.542** do dataset real.
+
+---
+
+🔴 **SUPERFÍCIE DE NOME REAL QUE NENHUMA MEDIÇÃO ANTERIOR COBRIU — medida em 2026-08-24 (3ª sessão).**
+Todo o inventário até aqui tratou "nome real" como **piloto + equipe**, porque foi de
+`equipe-anos.json` que ele partiu. **Os outros dois arquivos de `src/data/` também têm nome real**, e
+um deles muda a FORMA do plano de troca. **Método:** casar os 105 nomes de equipe e os 353 nomes de
+piloto (agregados de `equipe-anos.json`) contra o texto de `pecas.json` e `pistas.json` — arquivos de
+5 KB e 2 KB, consultados por filtro, sem leitura integral.
+
+🔑 **`src/data/pecas.json` — 10 das 24 peças nomeiam uma inovação REAL, no id E no nome exibido:**
+`peca-efeito-solo-lotus-79` · `peca-duplo-difusor-brawn` · `peca-difusor-soprado-redbull` ·
+`peca-f-duct-mclaren` · `peca-amortecedor-massa-renault` · `peca-suspensao-ativa-fw15` (Williams) ·
+`peca-seis-rodas-tyrrell-p34` · `peca-das-mercedes` · `peca-freio-direcao-mclaren` ·
+`peca-carro-ventoinha-brabham-bt46b`.
+🔴 **É um problema DIFERENTE do dos pilotos, em três eixos, e é por isso que fica registrado:**
+- **Escala inverte o argumento:** são **10 itens**, não 1.542. Curar à mão é trivial; o problema
+  **não é volume**.
+- **Exposição é MAIOR por item:** cada uma nomeia uma inovação específica **por equipe + número de
+  modelo** (BT46B, P34, FW15, Lotus 79). É mais pontudo que um sobrenome numa lista.
+- 🔑 **O rótulo NÃO é descartável aqui — e este é o ponto que separa das notas.** O veredito 🟢 de
+  custo vale porque as notas são números e o nome não entra em conta nenhuma. **Peça é o
+  contrário:** o catálogo é conteúdo de DESIGN (GDD), e "Seis rodas Tyrrell P34" renomeado perde a
+  referência, que é o apelo. Trocar peça é decisão de **produto**, não de pipeline.
+- ⚠️ **E `pecas.json` NÃO é derivado:** não sai de `agregar-fatos.ts` → `derivar-notas.ts`, é curado
+  à mão. **Qualquer solução na camada do pipeline não o alcança** — tem de entrar no plano por
+  outra porta.
+
+🔑 **`src/data/pistas.json` — as 10 são circuitos reais, mas só 2 carregam marca/pessoa.**
+**8 são TOPÔNIMOS** (Monza, Spa-Francorchamps, Imola, Suzuka, Interlagos, Silverstone, Mônaco,
+Nürburgring GP-Strecke) — são LUGARES. **2 não são:** `pista-red-bull-ring` (marca) e
+`pista-montreal`, exibida como "Montreal (Gilles Villeneuve)" (pessoa).
+🔑 **Isto abre um corte cirúrgico que o plano deve pesar:** renomear **2** em vez de 10 tocaria
+muito menos a pendência **0(z)** (degradação silenciosa de traçado) e `docs/img/silhuetas.svg`,
+que é VERSIONADA. **A parte jurídica é decisão do dev; o que está medido é só o custo técnico.**
+
+⚠️ **A FIXTURE TAMBÉM TEM NOME REAL, e isso é auto-referente:**
+`src/fixtures/dataset-semente/equipe-anos.json` (Ferrari, McLaren, Williams, Schumacher, Prost,
+Senna) **e `pecas.json` da fixture** (McLaren, Williams). **A fixture é o artefato que existe para
+ser lido com segurança** (regra inviolável do `CLAUDE.md`) — se a troca não a cobrir, a próxima
+sessão volta a ler nome real justamente no arquivo criado para evitar isso.
+
+🔴 **O DATASET REAL ESTÁ NO HISTÓRICO DO GIT — 5 commits tocam `src/data/equipe-anos.json`.**
+**Trocar o dataset daqui pra frente NÃO remove os nomes do histórico:** `git log`/`git show`
+continuam servindo-os. Hoje o repo é privado (§Estado atual, evidência do 404), então não é risco
+ativo; vira risco se o código abrir algum dia.
+🔑 **Isto NÃO muda a ordem do roadmap** — o bundle servido é o risco imediato e é o que a troca
+resolve. **Muda a definição de "pronto":** existe um item SEPARADO — reescrever histórico ou aceitar
+o resíduo — que é **decisão do dev** e que não deve ser resolvido de passagem dentro do PR de troca.
 
 🔴 **O ACHADO QUE MAIS IMPORTA PARA O DEPLOY PÚBLICO — código de PRODUÇÃO importa o dataset real.**
 `src/ui/dataset-app.ts` importa `../data/equipe-anos.json` e é consumido por `src/ui/App.tsx:16`.

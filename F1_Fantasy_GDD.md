@@ -262,7 +262,8 @@ Cada jogador é representado por um **capacete estilizado** na pista.
 
 - **Editor simples:** padrão base (listras, split, chamas, estrelas…) + paleta de cores.
 - **Presets clássicos:** capacetes evocando épocas/estilos famosos ("amarelo Brasil", "vermelho clássico", "azul-e-branco retrô") — inspiração, não cópia.
-- Questões de direito de imagem/marca estão em apuração (§14.2). O design é agnóstico a nome.
+- Questões de direito de imagem/marca **deixaram de estar "em apuração"** (§14.2: com o deploy
+  público de 2026-08-24 viraram BLOQUEADOR). O design **dos capacetes** é agnóstico a nome.
   ⚠️ **CORRIGIDO em 2026-08-24, pela medição:** "agnóstico a nome" vale para **o design dos
   capacetes** (presets evocam época/estilo, não copiam), mas **NÃO para a engine** — ver §14.2 e o
   inventário medido em `ESTADO.md` §"Onde parei" → "INVENTÁRIO DOS NOMES REAIS".
@@ -296,7 +297,9 @@ A corrida é **determinística por seed**. O servidor nunca transmite os 22 carr
 
 1. **Volume de dados + Modo Cego.** Notas de 1950-2025 = milhares de valores (agora incluindo estrategista e pit por equipe/ano). Plano: gerar com IA, ancoradas em fatos verificáveis, com spot-check manual. Script de balanceamento obrigatório.
 2. **Direito de imagem.** Nomes reais e liveries são risco jurídico. ⚠️ **Deixou de estar "em apuração": com a decisão de DEPLOY PÚBLICO (2026-08-24) virou BLOQUEADOR** — a distribuição é o fato jurídico, e ela independe de o repositório ser privado.
-   🔴 **"Engine agnóstica a nome" é FALSO, e a correção veio da medição de 2026-08-24** (registrada em `ESTADO.md` §"Onde parei" → "INVENTÁRIO DOS NOMES REAIS", que é onde estão os números). A engine não *interpreta* nome, mas nome **não é rótulo descartável**: os ids de piloto trazem o sobrenome embutido; o nome da equipe é metade da chave composta `equipe::ano` (`src/engine/dataset.ts:270`), é lookup que **lança** (`src/engine/draft-utils.ts:73`) e entra **literalmente na string hasheada** do protocolo online (`src/net/hash-draft.ts:68`). Trocar o dataset força bump de `VERSAO_APP` pelo digest.
+   🔴 **"Engine agnóstica a nome" é MEIA-VERDADE, e a correção veio da medição de 2026-08-24** (registrada em `ESTADO.md` §"Onde parei" → "INVENTÁRIO DOS NOMES REAIS", que é onde estão os números). A engine não *interpreta* nome, mas nome **não é rótulo descartável**: os ids de piloto trazem o sobrenome embutido; o nome da equipe é metade da chave composta `equipe::ano` (`src/engine/dataset.ts:270`), é lookup que **lança** (`src/engine/draft-utils.ts:73`) e entra **literalmente na string hasheada** do protocolo online (`src/net/hash-draft.ts:68`). Trocar o dataset força bump de `VERSAO_APP` pelo digest.
+   ⚠️ **"MEIA-VERDADE", não "FALSO" — corrigido em 2026-08-24 (2ª passada).** A redação anterior desta linha dizia FALSO, e isso **excede a medição que ela própria cita**: o `ESTADO.md:341` diz MEIA-VERDADE, e a distinção é a que importa para o plano de troca — porque a engine de fato **não interpreta** nome, os NÚMEROS (notas) sobrevivem a um rename, e é isso que torna a troca de dataset barata. Chamar a frase de "FALSO" sugere que a troca mexe no balanceamento; ela não mexe (medição de custo, `ESTADO.md` §"CUSTO DE TROCAR PARA DATASET FICTÍCIO", veredito 🟢).
+   🔴 **E o que a frase esconde está MEDIDO NO BUNDLE, não inferido (2026-08-24):** `npm run build` e `grep` sobre `dist/assets/index-*.js` (831 KB) acham **105/105 nomes de equipe, 1.542/1.542 ids de piloto e 353/353 nomes exibidos de piloto**. O dataset real vai **inteiro** para o artefato servido — não é risco de código-fonte, é risco de distribuição.
 3. **Peça forte quebrando o jogo.** Se o bônus da peça for maior que a diferença entre carro top e mediano, a peça decide sozinha. Mitigação: balance-harness + risco técnico calibrado.
 4. **Variância de sorte nos 5 sorteios.** Um jogador pode cair 5 vezes em equipes fracas. Mitigação: medir no balance-harness se a "sorte total" domina o resultado; se sim, aumentar peso da peça icônica ou dos atributos de piloto.
 5. **Trapaça no cliente.** Simulação no cliente = brecha. Casual ok; ranking competitivo exige validação no servidor. Fica pra depois.
