@@ -332,8 +332,64 @@ export class Sala extends Server<Env> {
     // e `encerrar` ficam de fora de propósito — a sala corrompida precisa
     // continuar podendo MORRER pela carência de vazio, senão vira zumbi que
     // recusa todo mundo e nunca libera o código.
+    //
+    // 🔴 **ATÉ O CONSERTO DA 0(s), O PARÁGRAFO ACIMA ERA PROMESSA QUE ESTE
+    // CÓDIGO NÃO CUMPRIA — e o `else` abaixo é o que o torna verdadeiro.**
+    // A pendência 0(s) foi exatamente o buraco entre a intenção e o efeito:
+    // `registrarConexoes` produz um objeto NOVO com `vazioDesde = agora`, mas
+    // quem PERSISTE é o `aplicar`, e ele só era chamado no ramo jogável. Numa
+    // sala corrompida o campo nunca chegava ao storage, o tique seguinte relia
+    // `null`, e `agora - agora = 0` para sempre: **a carência de vazio nunca
+    // começava a correr.** Suspeitado por leitura em 2026-08-19, CONFIRMADO
+    // por execução no PR C (`party/alarme.test.ts`, três tiques).
+    //
+    // 🔑 **A nuance que a medição acrescentou, e que o conserto respeita:** não
+    // era "toda sala corrompida vira zumbi". Uma sala corrompida cujo
+    // `vazioDesde` JÁ estava gravado sempre morreu normalmente — é o teste MD.
+    // O zumbi era só quem se corrompia **enquanto ainda tinha conexões**, o
+    // caso em que o campo precisaria ser escrito pela primeira vez. Por isso o
+    // conserto é persistir o registro de conexões, e **não** encurtar a vida da
+    // sala corrompida: um `encerrar()` incondicional aqui mataria também o caso
+    // que já funcionava.
+    //
+    // 🔴 **A GUARDA `vazioDesde !== null` NÃO É REDUNDANTE — sem ela o conserto
+    // reintroduz o zumbi pela direção OPOSTA. Foi bloqueante de revisão.**
+    //
+    // `registrarConexoes` muda o campo nas DUAS direções: grava `agora` quando
+    // a sala fica vazia e **`null`** quando deixa de estar. Um `else` que
+    // persistisse os dois sentidos gravaria `vazioDesde: null` de forma durável
+    // sempre que houvesse conexão contada no tique — e numa sala corrompida
+    // isso é fácil: `onConnect`/`onMessage` RECUSAM o cliente, mas o socket só
+    // é fechado quando ele **manda** alguma coisa; um cliente conectado e
+    // quieto continua em `getConnections()`. O efeito seria: sala corrompida
+    // que antes morria no primeiro tique quieto passa a ter a carência
+    // REINICIADA a cada reconexão, para sempre.
+    //
+    // 🔑 **É exatamente o caso que a nuance da 0(s) manda preservar** — sala
+    // corrompida com `vazioDesde` já gravado sempre morreu normalmente (teste
+    // MD), e o conserto quase o quebrou pelo lado oposto ao que se temia.
+    // Persistir **só a direção que INICIA o relógio** conserta a 0(s) e deixa
+    // a inércia anterior intacta na direção que o zeraria.
+    //
+    // 🔒 E é o certo semanticamente: uma sala corrompida recusa todo mundo, seu
+    // único destino legítimo é morrer, então conexão contada não pode comprar
+    // sobrevida para ela.
+    //
+    // ⚠️ **Sem amplificação de escrita, e agora a frase é verdadeira nas duas
+    // direções:** `registrarConexoes` preserva a IDENTIDADE quando
+    // `vazio === jaVazio` e `aplicar` só grava quando a referência muda, então
+    // o `else` grava **uma vez**, na transição para vazio, e fica mudo depois.
+    // (A redação anterior afirmava isso como "medido" cobrindo só metade dos
+    // casos — aviso A1 da mesma revisão.)
+    //
+    // 🔒 **Por que aqui e não logo depois do `registrarConexoes`** (a forma
+    // simétrica, considerada e descartada): lá a escrita aconteceria também na
+    // sala que `decidirVida` vai encerrar no mesmo tique, e o gate deixaria de
+    // ser o único ponto que decide o que fazer com a sala não jogável.
     if (this.jogavel(atualizado)) {
       await this.aplicar(aoPassarOTempo(atualizado, agora, PRAZO_TURNO_MS));
+    } else if (atualizado.sala.vazioDesde !== null) {
+      await this.aplicar({ estado: atualizado, envios: [] });
     }
     await this.ctx.storage.setAlarm(agora + INTERVALO_TIQUE_MS);
   }

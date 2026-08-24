@@ -8,7 +8,12 @@
 
 ## Estado atual
 
-**Última medição (2026-08-23, na branch `pr-c-gate-alarm` — PR C do spike):** `npm test`
+**Última medição (2026-08-23, na branch `fix-0s-sala-zumbi` — conserto da 0(s), pós-revisão):**
+`npm test` **1592/64** em **3 rodadas**, **`npm run test:party` 19/19** (era 16/16), typecheck **0**
+nos três projetos, eslint **0**, build **0**. `VERSAO_APP` **3.4.3** (inalterado — o diff de
+produção é um `else if` na casca, e o digest não cobre `party/`).
+
+*(Medição anterior, 2026-08-23, na branch `pr-c-gate-alarm` — PR C do spike):* `npm test`
 **1592/64** em **3 rodadas** (INALTERADO, e é o resultado correto: o arquivo novo mora em `party/`,
 fora do `include` do `npm test` — mesmo precedente do PR B), **`npm run test:party` 16/16**
 (era 10/10), typecheck **0** nos três projetos, eslint **0**, build **0**. `VERSAO_APP` **3.4.3**
@@ -296,6 +301,45 @@ dependência).
 
 ## Onde parei
 
+**🏁 CONSERTO DA 0(s) — CONCLUÍDO em 2026-08-23**, na branch **`fix-0s-sala-zumbi`**
+(`5f5f2f3` + `5bfa90b`). ALTO RISCO (netcode). **Diff de produção: um `else if` de três linhas** em
+`party/sala.ts`. **Medido:** `npm test` **1592/64** em 3 rodadas, `npm run test:party` **19/19**
+(era 18/18), typecheck **0**, eslint **0**, build **0**. Detalhe: `HISTORICO.md` §"conserto da 0(s)".
+
+✅ **A 0(s) está FECHADA** — a sala corrompida volta a morrer pela carência de vazio. Ver a pendência
+para a cadeia e para a nuance.
+
+🔴 **A REVISÃO REPROVOU NA PRIMEIRA PASSADA, e o bloqueante era uma REGRESSÃO que eu introduzi.**
+O conserto persistia `registrarConexoes` nas **duas** direções, e a direção `vazio → não-vazio`
+grava `vazioDesde: null`. Com um cliente conectado e **quieto** (o socket só fecha quando ele manda
+algo), a carência reiniciava a cada tique: **o caso do teste MD, que sempre funcionou, seria
+quebrado pelo lado oposto ao que se temia.** Conserto: a guarda `vazioDesde !== null`.
+🔑 **A causa de o furo passar é estrutural e vale além deste PR: nenhum teste de `party/` abria
+socket.** Todo o harness rodava com zero conexões, então a direção não-vazia não tinha cobertura.
+Fechada com `tiqueComConexoes`, que injeta **só o contador** de conexões.
+
+📊 **BASELINE + 3 MUTAÇÕES, todas VERMELHAS, tabela rodada DUAS vezes** (a segunda contra o código
+final), sempre com `tsc` limpo e `git hash-object` conferindo cada reversão:
+- **Baseline vermelho**, na ordem certa: a sonda da 0(s) foi **INVERTIDA** (`toBeNull` →
+  `not.toBeNull`) e vista vermelha **contra o `party/sala.ts` intacto**, ANTES de o conserto
+  existir. Inverter e consertar no mesmo passo daria verde que não prova nada.
+- **M-else** (conserto revertido): 3 falharam / 19 · **M-estado** (`aplicar({ estado })`, persiste o
+  objeto sem o campo novo): 3 falharam / 19 — **é a que sobreviveria a uma revisão por leitura** ·
+  **M-guarda** (a guarda do C1 removida): 1 falhou / 19.
+
+🔴 **ERRO MEU, E É REINCIDÊNCIA DO QUE O PROJETO JÁ CATALOGOU:** rodei uma mutação com a guarda
+**ainda não commitada**, e o `git checkout --` da reversão **apagou o conserto**. É a repetição
+literal da lição do 3.5.3 — **reversão de mutação sobre trabalho não commitado se faz por CÓPIA**.
+Reescrevi, **commitei antes** de voltar a mutar, e as rodadas finais saíram com a árvore limpa.
+
+✅ **ACHADO DE REVISÃO REFUTADO POR MEDIÇÃO (precedente do 3.5.2).** A sugestão S1 dizia que a
+identidade de `registrarConexoes` "não está fixada por teste nenhum" e que os testes "asseveram
+valores, nunca a referência". **Falso, medido:** `src/net/ciclo-de-vida.test.ts:163-174` já a fixa
+com `.toBe()` nas duas direções, com timestamps explícitos — não depende de relógio. Rodado
+isolado: verde. **Não implementada.**
+
+---
+
 **🏁 PR C DO SPIKE — GATE DO `alarm()`: CONCLUÍDO em 2026-08-23**, na branch **`pr-c-gate-alarm`**
 (`99afde0`). **Último PR do spike, e o primeiro do projeto a assertar sobre o RELÓGIO da casca.**
 **Medido:** `npm run test:party` **16/16** (era 10/10), `npm test` **1592/64 INALTERADO** em 3
@@ -556,12 +600,16 @@ casca um bug que o PR C teria pego**, puxar o C para a frente em vez de seguir a
 nasce na única parte da casca ainda sem cobertura, e a **pendência 0(s)** — suspeita de sala-zumbi —
 segue **não confirmada**, porque quem a confirmaria é o harness que o C constrói.
 
-**🔢 SEQUÊNCIA ATÉ FECHAR A FASE 3 (atualizada em 2026-08-23, no PR C):**
-**~~3.5.2~~ ✅ → ~~3.5.3~~ ✅ → ~~3.5.4~~ ✅ → ~~PR C~~ ✅ → CONSERTO DA 0(s) → Fase 3 encerrada.**
-🔴 **O passo do CONSERTO DA 0(s) É NOVO, e ele existe porque o PR C mediu.** A pendência era
-suspeita por LEITURA desde 2026-08-19 e ficou **CONFIRMADA por execução** — ver a 0(s) na lista de
-pendências. **A Fase 3 não fecha antes dele:** é bug de produção conhecido, na casca, e o próprio
-plano do spike previu esse conserto como "PR curto e com baseline próprio".
+**🔢 SEQUÊNCIA ATÉ FECHAR A FASE 3 (atualizada em 2026-08-23, no conserto da 0(s)):**
+**~~3.5.2~~ ✅ → ~~3.5.3~~ ✅ → ~~3.5.4~~ ✅ → ~~PR C~~ ✅ → ~~CONSERTO DA 0(s)~~ ✅ →
+⬅️ Fase 3 PRONTA PARA SER ENCERRADA.**
+🛑 **A FASE 3 NÃO ESTÁ ENCERRADA — encerrá-la é DECISÃO DO DEV, e ela não foi tomada.** Todos os
+passos planejados estão feitos; o que falta é o veredito, não trabalho. **Não marcar como encerrada
+sem ele.**
+🔴 *(Registro do passo que acabou de fechar:)* **o CONSERTO DA 0(s) foi um passo NOVO, criado porque
+o PR C mediu.** A pendência era suspeita por LEITURA desde 2026-08-19, ficou **CONFIRMADA por
+execução** no PR C e foi **RESOLVIDA** em 2026-08-23 — ver a 0(s) na lista de pendências. A Fase 3
+não podia fechar antes dele: era bug de produção conhecido, na casca.
 🔒 **O 3.5.4 herda MAIS do que o plano previa**, por decisão do dev no 3.5.3 (opção A): além dos
 painéis e do portão visual, ele leva o **`key={'etapa-'+k}`**, a remoção do **`naCorrida`** e o
 **atestado por etapa** — as três são a mesma solda, e separá-las produz hash de uma etapa com a tela
@@ -1006,7 +1054,31 @@ casca deixa de ser terra sem teste; a opção conhecida é `@cloudflare/vitest-p
    Hoje é inconsistência de tese, não vazamento: `cursorPublicavel` clampa e o servidor nunca grava
    outro tipo. Mas **o cursor é justamente o campo que governa quantos segredos saem no fio** —
    quando o 3.5.2 o fizer se mover, trazê-lo para dentro do discriminante.
-   (s) 🔴 **CONFIRMADA POR MEDIÇÃO no PR C (2026-08-23) — BUG DE PRODUÇÃO REAL: sala corrompida
+   (s) ✅ **RESOLVIDA em 2026-08-23** (branch `fix-0s-sala-zumbi`) — o `alarm()` passou a persistir
+   o registro de conexões também no ramo NÃO JOGÁVEL, com uma guarda. `party/alarme.test.ts` cobre
+   a regressão, a cadeia até `decidirVida` e as duas direções de `registrarConexoes`.
+   🔒 **A NUANCE FOI RESPEITADA, e é o que quase se perdeu:** continua NÃO sendo "toda sala
+   corrompida morre". Sala corrompida com `vazioDesde` já gravado sempre morreu normalmente (teste
+   MD), e MD + a anti-vacuidade dele seguem **verdes** — foi essa dupla que provou que o caso antigo
+   não foi quebrado.
+   🔴 **BLOQUEANTE C1 DA REVISÃO — o conserto quebrava esse caso pelo lado OPOSTO ao que se temia, e
+   passou perto de entrar.** `registrarConexoes` mexe no campo nas **DUAS** direções: grava `agora`
+   quando a sala fica vazia e **`null`** quando deixa de estar. A primeira versão do conserto
+   persistia as duas. Numa sala corrompida isso é alcançável: `onConnect`/`onMessage` **recusam** o
+   cliente, mas o socket só é fechado quando ele **manda** alguma coisa — um cliente conectado e
+   **quieto** segue contado em `getConnections()`. Efeito: a sala corrompida que morria no primeiro
+   tique quieto passaria a ter a carência **REINICIADA a cada tique**. O zumbi voltaria como "sala
+   corrompida com um cliente quieto nunca morre".
+   🔒 **A guarda, e é o coração do conserto:** `else if (atualizado.sala.vazioDesde !== null)` —
+   persiste **só a direção que INICIA o relógio**, e deixa a inércia de antes do conserto intacta na
+   direção que o zeraria. Semanticamente é o certo: uma sala corrompida recusa todo mundo, seu único
+   destino legítimo é morrer, então conexão contada não pode comprar sobrevida para ela.
+   ⚠️ **A lacuna de cobertura que deixou o furo passar, e ela é estrutural:** **nenhum teste de
+   `party/` abria socket**, então o arquivo inteiro rodava com `quantasConexoes() === 0` e a direção
+   não-vazia não tinha asserção nenhuma. Fechada com `tiqueComConexoes`, que injeta **só o contador**
+   — todo o resto do `alarm()` continua sendo o de produção.
+   *(Texto do diagnóstico, preservado — ele descreve o bug que foi consertado:)*
+   🔴 **CONFIRMADA POR MEDIÇÃO no PR C (2026-08-23) — BUG DE PRODUÇÃO REAL: sala corrompida
    com `vazioDesde: null` NUNCA MORRE.** Deixou de ser suspeita: `party/alarme.test.ts` executa a
    casca no `workerd` e mede o storage.
    **O que foi medido, e como:** fixture de sala corrompida (`seedsEtapas` removida, `versaoSala`

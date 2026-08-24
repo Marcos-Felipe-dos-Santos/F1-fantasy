@@ -2283,6 +2283,65 @@ no cliente. **Dois caminhos, nenhum escolhido:** derivar o formato de `sala.nEta
 portão `seedCalendario === null` ANTES, porque sala legado publica `nEtapas: 1`, que não existe em
 `N_ETAPAS`), ou o hook capturar e expor pelo canal de erro que já tem.
 
+## Conserto da 0(s) — a sala corrompida volta a morrer (2026-08-23, `5f5f2f3` + `5bfa90b`) — ALTO RISCO
+
+Branch `fix-0s-sala-zumbi`, base `87c3e1a`. **Diff de produção: um `else if` de três linhas** em `party/sala.ts` (mais comentários). Netcode ⇒ ALTO RISCO ⇒ fluxo completo, com `senior-reviewer`.
+
+**Medido:** `npm test` **1592/64** em 3 rodadas, `npm run test:party` **19/19** (era 16/16), typecheck **0**, eslint **0**, build **0**.
+
+### O bug
+
+Em `alarm()`, `registrarConexoes` produz um estado NOVO com `vazioDesde = agora`, mas quem PERSISTE é `aplicar()`, e ele só era chamado no ramo jogável. Numa sala corrompida o campo nunca chegava ao storage, o tique seguinte relia `null`, e `agora - agora = 0` para sempre: **a carência de vazio nunca começava a correr**, e a sala recusava todo mundo sem nunca liberar o código de 6 dígitos.
+
+### 🔑 A nuance, e ela governou o conserto inteiro
+
+**NÃO era "toda sala corrompida vira zumbi".** Sala corrompida com `vazioDesde` já gravado sempre morreu normalmente — teste MD. O zumbi era **só** quem se corrompia **enquanto ainda tinha conexões**, o caso em que o campo precisaria ser escrito pela primeira vez. Por isso o conserto é *persistir o registro de conexões*, e **não** encerrar a sala corrompida: um `encerrar()` incondicional mataria também o caso que já funcionava.
+
+### 🔴 BLOQUEANTE C1 — o conserto quebrava esse caso pelo lado OPOSTO
+
+A primeira versão persistia `registrarConexoes` **nas duas direções**. E `registrarConexoes` grava `agora` quando a sala fica vazia **e `null` quando deixa de estar**. Numa sala corrompida a segunda direção é fácil de alcançar: `onConnect`/`onMessage` **recusam** o cliente, mas `recusar()` só roda quando ele **manda** alguma coisa — um cliente conectado e **quieto** segue contado em `getConnections()`.
+
+Efeito: a sala corrompida que morria no primeiro tique quieto passaria a ter a carência **REINICIADA a cada tique**. O zumbi voltaria como *"sala corrompida com um cliente quieto nunca morre"* — atingindo justamente o caso que a nuance mandava preservar.
+
+🔒 **A guarda:** `} else if (atualizado.sala.vazioDesde !== null) {` — persiste **só a direção que INICIA o relógio**; a direção que o zeraria mantém a inércia de antes do conserto. Semanticamente é o certo: sala corrompida recusa todo mundo, seu único destino legítimo é morrer, então conexão contada não pode comprar sobrevida.
+
+### 🔴 C2 — a lacuna estrutural que deixou o furo passar
+
+**Nenhum teste de `party/` abria socket.** O harness inteiro rodava com `quantasConexoes() === 0`, então a direção não-vazia — onde C1 mora — não tinha asserção nenhuma. Não foi descuido: era o desenho do harness.
+
+Fechada com **`tiqueComConexoes`**, que injeta **só o contador de conexões** e deixa `registrarConexoes`, `decidirVida`, o gate e o `aplicar` sendo os de produção. A alternativa (subir WebSocket real com `SELF.fetch`) era infraestrutura nova e puxaria escopo; trocar uma função — a entrada exata do cenário — é a injeção mínima.
+
+### 📊 Tabela — baseline + 3 mutações, DUAS passadas cada
+
+Todas com `tsc` limpo (vermelho **comportamental**) e `git hash-object` conferindo cada reversão.
+
+| # | Mutação | 1ª passada | Contra o código final |
+|---|---|---|---|
+| **Baseline** | a sonda invertida contra o `party/sala.ts` **intacto** | 🔴 1 falhou / 16 | — |
+| **M-else** | o conserto revertido (não persiste) | 🔴 3 falharam / 18 | 🔴 3 falharam / 19 |
+| **M-estado** | `aplicar({ estado })` — persiste o objeto **sem** o campo novo | 🔴 3 falharam / 18 | 🔴 3 falharam / 19 |
+| **M-guarda** | a guarda do C1 removida | 🔴 1 falhou / 19 | 🔴 1 falhou / 19 |
+
+🔑 **A ordem do baseline não era negociável.** A sonda da 0(s), criada no PR C, **afirmava o bug** (`toBeNull()`). Consertar quebraria o teste. Então ela foi **invertida primeiro** e vista vermelha contra o código intacto — inverter e consertar no mesmo passo daria um verde que não prova nada. Isso é diferente do portão de mutação, que veio depois.
+
+🔑 **M-estado é a que mais vale:** mantém a chamada no lugar e persiste o objeto errado. Sobreviveria a uma revisão por leitura; só a execução a pega.
+
+### Testes novos
+
+- **CADEIA FECHADA** — o `vazioDesde` **escrito pelo alarme** é envelhecido além da carência e o tique seguinte mata a sala. Diferente de MD, onde o campo vem da fixture: sem isto, o conserto poderia gravar um valor que ninguém consome.
+- **ESTABILIDADE** — o campo é gravado uma vez e não se move nos tiques seguintes. É **segurança**, não performance: se `registrarConexoes` não preservasse identidade, a carência reiniciaria a cada 5 s.
+- **C1** — com conexão contada, o tique não pode zerar o `vazioDesde`; e sem o cliente, o tique seguinte mata a sala.
+
+### Achados de método
+
+1. 🔴 **Reincidência da lição do 3.5.3, cometida por mim:** rodei uma mutação com a guarda **não commitada**, e o `git checkout --` da reversão **apagou o conserto**. **Reversão de mutação sobre trabalho não commitado se faz por CÓPIA.** Reescrevi, commitei antes de voltar a mutar, e as rodadas finais saíram com a árvore limpa. O `alarme.test.ts` sobreviveu porque o checkout foi num arquivo só — o estrago foi delimitado por acaso, não por método.
+2. ✅ **Achado de revisão REFUTADO por medição (precedente do 3.5.2).** A sugestão **S1** afirmava que a identidade de `registrarConexoes` "não está fixada por teste nenhum" e que os testes "asseveram valores, nunca a referência". **Falso:** `src/net/ciclo-de-vida.test.ts:163-174` já a fixa com `.toBe()` nas duas direções, com timestamps explícitos, sem depender de relógio. Rodado isolado: verde. **Não implementada.** Achado de revisão obtido por LEITURA tem taxa de erro conhecida e também entra medido.
+3. Avisos **A1** (a frase "sem amplificação de escrita" cobria só uma das duas direções e vinha selada como "medido") e **A2** (o docstring do CONTRASTE descrevia um papel que o teste perdeu na inversão) foram atendidos.
+
+**Sequência da Fase 3:** 3.5.1 ✅ → 3.5.2 ✅ → 3.5.3 ✅ → 3.5.4 ✅ → PR C ✅ → **conserto da 0(s) ✅** → 🛑 **Fase 3 PRONTA para ser encerrada — encerrar é decisão do dev, e não foi tomada.**
+
+---
+
 ## PR C do spike — gate do `alarm()` (2026-08-23, `99afde0`) — BAIXO RISCO
 
 Branch `pr-c-gate-alarm`, base `e0be1bd`. **Zero diff de produção** — `party/sala.ts` byte a byte igual ao da `main`. É o que sustenta o rótulo BAIXO RISCO e o `senior-reviewer` pulado; o portão "mutação vista vermelha, uma a uma" valeu do mesmo jeito.

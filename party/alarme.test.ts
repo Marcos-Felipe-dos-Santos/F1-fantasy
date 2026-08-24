@@ -51,7 +51,17 @@
  *   achado do PR A é que ela nunca foi necessária, e teste e produção rodam sob
  *   a MESMA configuração de compat. Não ligar "por conveniência".
  *
- * 🔒 **Zero diff de produção.** É o que sustenta o rótulo BAIXO RISCO deste PR.
+ * 🔒 **O PR C que criou este arquivo tinha zero diff de produção** — era o que
+ * sustentava o rótulo BAIXO RISCO dele.
+ *
+ * ⚠️ **ISSO DEIXOU DE VALER PARA O ARQUIVO em 2026-08-23, e a linha anterior
+ * dizia o contrário.** O PR do **conserto da 0(s)** mexeu em `party/sala.ts`
+ * (netcode ⇒ ALTO RISCO ⇒ revisão e mutação), e trouxe este arquivo junto: a
+ * sonda da 0(s) **foi INVERTIDA** — passou de "registro o bug" (`toBeNull`)
+ * para "exijo o conserto" (`not.toBeNull`) —, e entraram a CADEIA FECHADA e a
+ * estabilidade do `vazioDesde`. A inversão foi vista **vermelha contra o
+ * `party/sala.ts` intacto** antes de o conserto existir; sem essa ordem, o
+ * verde não provaria nada.
  */
 import { env, evictAllDurableObjects, reset, runInDurableObject } from 'cloudflare:test';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -195,6 +205,42 @@ function tique(nome: string): Promise<void> {
 }
 
 /**
+ * Um tique com `quantasConexoes()` devolvendo `quantas` — a única forma de
+ * exercitar a direção **não-vazia** de `registrarConexoes` neste harness.
+ *
+ * 🔴 **Por que a injeção existe, e por que ela é a injeção MÍNIMA.** O
+ * bloqueante C1 da revisão nasceu justamente aqui: **nenhum teste de `party/`
+ * abre socket**, então o arquivo inteiro rodava com zero conexões e a direção
+ * `vazio → não-vazio` — onde o conserto da 0(s) quase reintroduziu o zumbi —
+ * não tinha cobertura nenhuma. Não é descuido: é que o harness nunca abriu
+ * WebSocket.
+ *
+ * A alternativa seria subir um WebSocket de verdade (`SELF.fetch` com
+ * `Upgrade`), infraestrutura que este PR não tem e que puxaria escopo. Trocar
+ * **o contador**, e só ele, deixa `alarm()` inteiro rodando pelo caminho real:
+ * `registrarConexoes`, `decidirVida`, o gate e o `aplicar` são os de produção.
+ * O que se finge é uma coisa só — quantas conexões existem —, que é exatamente
+ * a entrada do cenário.
+ *
+ * ⚠️ Restaura o método no `finally`: a instância sobrevive entre chamadas
+ * dentro do mesmo teste, e um contador mentiroso vazando para o tique seguinte
+ * daria um verde que não significa nada.
+ */
+function tiqueComConexoes(nome: string, quantas: number): Promise<void> {
+  type ComContador = { quantasConexoes: () => number };
+  return runInDurableObject(stubDaSala(nome), async (sala) => {
+    const alvo = sala as unknown as ComContador;
+    const original = alvo.quantasConexoes;
+    alvo.quantasConexoes = () => quantas;
+    try {
+      await sala.alarm();
+    } finally {
+      alvo.quantasConexoes = original;
+    }
+  });
+}
+
+/**
  * Grava a fixture e despeja a instância ANTES do tique.
  *
  * 🔑 O evict não é zelo: `carregar()` devolve `this.estado` quando ele não é
@@ -327,7 +373,7 @@ describe('🔒 o gate cobre SÓ o `aoPassarOTempo` — a sala corrompida ainda M
   });
 });
 
-describe('🟠 SONDA DA PENDÊNCIA 0(s) — a sala corrompida com `vazioDesde: null` chega a morrer?', () => {
+describe('🔴 REGRESSÃO DA 0(s) — a sala corrompida com `vazioDesde: null` TEM que chegar a morrer', () => {
   /**
    * 🟠 **A pendência 0(s), aberta em 2026-08-19 por LEITURA e nunca confirmada
    * por execução** — porque quem a confirmaria é exatamente este harness.
@@ -370,19 +416,35 @@ describe('🟠 SONDA DA PENDÊNCIA 0(s) — a sala corrompida com `vazioDesde: n
       throw new Error('a sala morreu nos três tiques — a fixture não modela a 0(s)');
     }
 
-    // 🔴 **A ASSERÇÃO É O REGISTRO DO COMPORTAMENTO MEDIDO, não um desejo.**
-    // Se `vazioDesde` continua `null` depois do tique, a 0(s) está CONFIRMADA:
-    // o relógio de morte não começou, e não começará em tique nenhum.
+    // 🔴 **ESTA ASSERÇÃO FOI INVERTIDA NO PR DO CONSERTO, e a inversão é o
+    // baseline vermelho — não um ajuste de teste.**
+    //
+    // Enquanto a 0(s) era bug aberto, este teste afirmava `toBeNull()`: ele
+    // REGISTRAVA o defeito medido (o `vazioDesde` nunca era persistido, logo o
+    // relógio de morte nunca começava). Agora ele afirma o comportamento
+    // CERTO. A ordem importou e está registrada: a inversão foi escrita e
+    // vista **vermelha contra o `party/sala.ts` intacto** ANTES de o conserto
+    // existir. Inverter e consertar no mesmo passo daria um verde que não
+    // prova nada — é a família de defeito que este projeto catalogou seis
+    // vezes.
     expect(
       depois.sala.vazioDesde,
-      'a 0(s) foi REFUTADA: o `vazioDesde` foi persistido, então a carência de vazio corre normalmente',
-    ).toBeNull();
+      'a 0(s) VOLTOU: o `vazioDesde` não foi persistido, então o relógio de morte nunca começa e a sala corrompida vira zumbi',
+    ).not.toBeNull();
   });
 
   /**
-   * 🔒 O CONTRASTE que dá sentido à sonda acima: na sala SÃ o mesmo tique
-   * PERSISTE o `vazioDesde`, porque `aplicar()` roda. Sem este par, "continuou
-   * null" não distinguiria a 0(s) de "o tique não faz nada em sala nenhuma".
+   * 🔒 O que este teste guarda HOJE: que o **caminho jogável** continua
+   * persistindo o `vazioDesde`, e que o `else` do conserto não mexeu nele.
+   *
+   * ⚠️ **O PAPEL DELE MUDOU NO PR DO CONSERTO, e a redação anterior descrevia
+   * o papel antigo** (aviso A2 da revisão). Enquanto a sonda acima afirmava
+   * `toBeNull()`, este teste era o CONTRASTE que a tornava conclusiva: sem ele,
+   * "continuou null" não distinguiria o bug de um harness em que nada persiste.
+   * Depois da inversão, os dois afirmam `not.toBeNull()` e essa discriminação
+   * acabou — um harness quebrado derrubaria os dois juntos. Ele continua útil,
+   * mas por outro motivo, e documentação que descreve um papel que o teste não
+   * tem mais é dívida pior do que teste ausente.
    */
   it('🔒 CONTRASTE: na sala SÃ, o mesmo tique PERSISTE o `vazioDesde`', async () => {
     const agora = Date.now();
@@ -402,5 +464,145 @@ describe('🟠 SONDA DA PENDÊNCIA 0(s) — a sala corrompida com `vazioDesde: n
       depois.sala.vazioDesde,
       'nem na sala sã o `vazioDesde` foi persistido: o contraste da 0(s) não se sustenta',
     ).not.toBeNull();
+  });
+
+  /**
+   * 🔴 **A CADEIA FECHADA — o que separa "o campo é persistido" de "a sala
+   * agora MORRE".**
+   *
+   * O teste acima prova que o `vazioDesde` passou a chegar ao storage. Não
+   * prova que o valor gravado **serve para alguma coisa**. Aqui a cadeia
+   * inteira é exercitada: o campo é escrito **pelo próprio `alarm()`**, depois
+   * envelhecido além da carência, e o tique seguinte tem que matar a sala.
+   *
+   * 🔑 **É diferente de MD, e a diferença é o ponto.** Em MD o `vazioDesde`
+   * vem da FIXTURE — ele prova que `decidirVida` funciona, e funcionava antes
+   * do conserto também. Aqui ele vem do ALARME, que é justamente o que a 0(s)
+   * impedia. Sem este teste, o conserto poderia gravar um valor que ninguém
+   * consome e tudo continuaria verde.
+   *
+   * ⚠️ Envelhecer o campo à mão em vez de esperar 2 minutos de relógio real: o
+   * que se mede é a cadeia, não a paciência do `CARENCIA_VAZIO_MS`.
+   */
+  it('🔴 CADEIA FECHADA: o `vazioDesde` que o ALARME gravou faz a sala morrer na carência', async () => {
+    const agora = Date.now();
+    const base = exigirCorrompida(corromper(salaComDraftEmAndamento(agora)));
+    const fixture: EstadoServidor = {
+      ...base,
+      sala: { ...base.sala, vazioDesde: null, concluidaEm: null },
+    };
+
+    await prepararEDisparar('alarme-0s-cadeia', fixture);
+
+    // 1º elo: o alarme gravou o campo (é o conserto da 0(s)).
+    const gravado = await lerEstadoPersistido('alarme-0s-cadeia');
+    if (gravado === undefined) throw new Error('a sala morreu cedo demais — a fixture não modela');
+    const escritoPeloAlarme = gravado.sala.vazioDesde;
+    expect(
+      escritoPeloAlarme,
+      'pré-condição: sem o campo gravado pelo alarme não há cadeia para fechar',
+    ).not.toBeNull();
+
+    // 2º elo: envelhece ESSE valor além da carência e tica de novo.
+    await runInDurableObject(stubDaSala('alarme-0s-cadeia'), (_sala, ctx) =>
+      ctx.storage.put('estado', {
+        ...gravado,
+        sala: { ...gravado.sala, vazioDesde: escritoPeloAlarme! - 3 * 60_000 },
+      }),
+    );
+    await evictAllDurableObjects();
+    await tique('alarme-0s-cadeia');
+
+    expect(
+      await lerEstadoPersistido('alarme-0s-cadeia'),
+      'a sala NÃO morreu: o `vazioDesde` que o alarme gravou não está alimentando `decidirVida` — o conserto grava um valor que ninguém consome',
+    ).toBeUndefined();
+  });
+
+  /**
+   * 🔴 **A DIREÇÃO OPOSTA — bloqueante C1 da revisão, e o teste que faltava.**
+   *
+   * `registrarConexoes` mexe no campo nos DOIS sentidos: grava `agora` quando a
+   * sala fica vazia e **`null`** quando deixa de estar. A primeira versão do
+   * conserto persistia os dois, e isso **quebrava o caso que já funcionava**:
+   * uma sala corrompida com o `vazioDesde` já gravado — que sempre morreu
+   * normalmente (teste MD) — passava a ter a carência REINICIADA a cada tique
+   * com conexão contada. Numa sala corrompida isso é fácil de acontecer:
+   * `onConnect`/`onMessage` recusam o cliente, mas o socket só é fechado quando
+   * ele **manda** alguma coisa; um cliente conectado e quieto segue contado.
+   *
+   * 🔑 **O zumbi voltaria pelo lado oposto ao que se temia** — não por "sala
+   * corrompida nunca morre", mas por "sala corrompida com um cliente quieto
+   * nunca morre". A guarda `vazioDesde !== null` no `else` é o que impede.
+   */
+  it('🔴 C1: com CONEXÃO contada, o tique NÃO pode zerar o `vazioDesde` da sala corrompida', async () => {
+    const agora = Date.now();
+    const base = exigirCorrompida(corromper(salaComDraftEmAndamento(agora)));
+    // Vazia há 3 min: JÁ passou da carência. É a fixture de MD — o caso que
+    // sempre funcionou e que o conserto não pode quebrar.
+    const vazioAntigo = agora - 3 * 60_000;
+    const fixture: EstadoServidor = {
+      ...base,
+      sala: { ...base.sala, vazioDesde: vazioAntigo, concluidaEm: null },
+    };
+
+    await gravar('alarme-c1', fixture);
+    await evictAllDurableObjects();
+
+    // Tique COM um cliente contado: `registrarConexoes` produz `vazioDesde: null`.
+    await tiqueComConexoes('alarme-c1', 1);
+
+    const depois = await lerEstadoPersistido('alarme-c1');
+    if (depois === undefined) {
+      // Morrer aqui também é aceitável — o que não pode é sobreviver com o
+      // relógio zerado. Se morreu, a propriedade está garantida com folga.
+      return;
+    }
+    expect(
+      depois.sala.vazioDesde,
+      'o tique com conexão ZEROU o `vazioDesde` da sala corrompida: a carência reinicia a cada reconexão e a sala nunca morre — o zumbi de volta pela direção oposta',
+    ).toBe(vazioAntigo);
+
+    // E o desfecho: sem o cliente, o tique seguinte tem que matá-la.
+    await tique('alarme-c1');
+    expect(
+      await lerEstadoPersistido('alarme-c1'),
+      'a sala corrompida não morreu no tique seguinte: o caso do teste MD foi quebrado pelo conserto',
+    ).toBeUndefined();
+  });
+
+  /**
+   * 🔒 **O `vazioDesde` gravado NÃO PODE ser reescrito a cada tique — e isto é
+   * SEGURANÇA, não performance.**
+   *
+   * Se `registrarConexoes` não preservasse a identidade do estado quando nada
+   * muda, o `else` do conserto regravaria `vazioDesde = agora` em todo tique.
+   * A carência de vazio **nunca venceria**, e o conserto teria trocado um
+   * zumbi por outro — com o agravante de parecer consertado. O que segura isso
+   * é `vazio === jaVazio ⇒ mesma referência` (`registrarConexoes`), e este
+   * teste é o que amarra essa propriedade ao conserto.
+   *
+   * Efeito colateral bom: é também a prova de que não há amplificação de
+   * escrita no Durable Object — `aplicar` só grava quando a referência muda.
+   */
+  it('🔒 o `vazioDesde` é gravado UMA vez e não se move nos tiques seguintes', async () => {
+    const agora = Date.now();
+    const base = exigirCorrompida(corromper(salaComDraftEmAndamento(agora)));
+    const fixture: EstadoServidor = {
+      ...base,
+      sala: { ...base.sala, vazioDesde: null, concluidaEm: null },
+    };
+
+    await prepararEDisparar('alarme-0s-estavel', fixture);
+    const primeiro = (await lerEstadoPersistido('alarme-0s-estavel'))?.sala.vazioDesde;
+    expect(primeiro, 'pré-condição: o primeiro tique tem que gravar o campo').not.toBeNull();
+
+    await tique('alarme-0s-estavel');
+    await tique('alarme-0s-estavel');
+
+    expect(
+      (await lerEstadoPersistido('alarme-0s-estavel'))?.sala.vazioDesde,
+      'o `vazioDesde` se moveu entre tiques: a carência reinicia a cada 5 s e a sala nunca morre — o zumbi de volta por outra porta',
+    ).toBe(primeiro);
   });
 });
