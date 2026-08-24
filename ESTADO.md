@@ -8,7 +8,13 @@
 
 ## Estado atual
 
-**Última medição (2026-08-23, na branch `pr-3.5.4-ui-campeonato` — `7c5efa9` —, pós-revisão):**
+**Última medição (2026-08-23, na branch `pr-c-gate-alarm` — PR C do spike):** `npm test`
+**1592/64** em **3 rodadas** (INALTERADO, e é o resultado correto: o arquivo novo mora em `party/`,
+fora do `include` do `npm test` — mesmo precedente do PR B), **`npm run test:party` 16/16**
+(era 10/10), typecheck **0** nos três projetos, eslint **0**, build **0**. `VERSAO_APP` **3.4.3**
+(inalterado — **zero diff de produção** neste PR).
+
+*(Medição anterior, 2026-08-23, na branch `pr-3.5.4-ui-campeonato` — `7c5efa9` —, pós-revisão):*
 `npm test` **1592/64**, **`npm run test:party` 10/10**, typecheck **0** nos três projetos, eslint **0**, build **0**.
 `VERSAO_APP` **3.4.2 → 3.4.3 — BUMP OBRIGATÓRIO** (bloqueante C1 da revisão exigiu). `balance-harness`
 não se aplica — zero arquivo de `src/engine/` além de `versao.ts`. 🔑 **Medição de portão instável se faz com
@@ -38,11 +44,8 @@ digest não foi tocado e nenhum rótulo novo nasceu).
 escalonamento — pendência 0(v), medida e PRÉ-EXISTENTE.** A parcela introduzida pelo 3.5.3 foi
 FECHADA NA RAIZ no proprio PR (8 rodadas seguidas a 1565/1565), mas **um vermelho em `contrato-ausente.test.ts` num PR que
 não toca o ausente é sintoma disso, não regressão** — reproduzir antes de caçar bug.
-
-*(Medição anterior, PR 3.5.2, 2026-08-20, na branch `pr-3.5.2-cursor-por-etapa`):* `npm test`
-**1544/64**, **`npm run test:party` 10/10**, typecheck **0** nos três projetos, eslint **0**, build
-**0**. `VERSAO_APP` **3.4.2** (sem bump — o digest não foi tocado).
-⚠️ **`VERSAO_ESTADO_SALA` subiu de 1 para 2** — ver a §Onde parei.
+⚠️ **A medição do 3.5.2 estava DUPLICADA aqui (dois blocos idênticos), sobra da atualização de
+documentação do 3.5.4. A segunda cópia foi removida no PR C** — o bloco acima é o que fica.
 
 *(Medição anterior, PR B do spike, 2026-08-19, na `main` pós-merge):* `npm test` **1516/63**,
 **`npm run test:party` 8/8** (novo portão desde o PR A — era 5/5 lá), typecheck app **0**, typecheck
@@ -293,6 +296,49 @@ dependência).
 
 ## Onde parei
 
+**🏁 PR C DO SPIKE — GATE DO `alarm()`: CONCLUÍDO em 2026-08-23**, na branch **`pr-c-gate-alarm`**
+(`99afde0`). **Último PR do spike, e o primeiro do projeto a assertar sobre o RELÓGIO da casca.**
+**Medido:** `npm run test:party` **16/16** (era 10/10), `npm test` **1592/64 INALTERADO** em 3
+rodadas — e inalterado é o resultado CERTO: o arquivo mora em `party/`, fora do `include`
+(precedente do PR B). typecheck **0**, eslint **0**, build **0**. **Zero diff de produção**
+(`party/sala.ts` byte a byte igual ao da `main`), o que sustenta o rótulo BAIXO RISCO e o
+`senior-reviewer` pulado. Detalhe completo: `HISTORICO.md` §"PR C".
+
+🔴 **O ACHADO QUE MAIS IMPORTA: a pendência 0(s) está CONFIRMADA por execução** — e o harness ainda
+**refinou o diagnóstico** que a leitura tinha. Sala corrompida com `vazioDesde: null` não persiste o
+campo em tique nenhum (medido em TRÊS tiques), então o relógio de morte nunca começa; mas sala
+corrompida com o `vazioDesde` **já gravado** morre normalmente. **O zumbi é só quem se corrompe
+enquanto ainda tinha conexões.** Ver a pendência 0(s) para a nuance inteira — ela muda o que o
+conserto pode fazer.
+
+📊 **MB e MD, as duas VERMELHAS, e a tabela foi rodada DUAS VEZES** (a segunda contra o código
+final, pela lição do 3.5.2 de que mutação sobrevive justo na rodada intermediária), sempre com
+`tsc` limpo e `git hash-object` conferindo cada reversão:
+- **MB** (o gate vira condição sempre verdadeira): **2 falharam / 16**, nas duas passadas. Derruba o
+  teste do gate **e a sonda da 0(s)** — coerente, e é evidência a favor do diagnóstico: sem o gate,
+  `aplicar()` volta a rodar e o `vazioDesde` passa a ser persistido.
+- **MD** (o gate sobe para o topo do `alarm()`): **1 falhou / 16**, nas duas passadas.
+
+🔑 **A PRÉ-CONDIÇÃO QUE LANÇA SE PAGOU NA PRIMEIRA EXECUÇÃO.** `exigirCorrompida()` — no molde do
+`seedsDe` do PR B — pegou que o teste MB tinha **esquecido de chamar `corromper()`**: a fixture era
+uma sala SÃ. Sem ela, o cenário teria rodado errado e o baseline teria sido reportado sem exercitar
+a guarda — a sexta instância do 3.5.2 dentro do PR que existe para fechá-la.
+
+🛑 **A ARMADILHA DE VACUIDADE ERA REAL E FOI MEDIDA ANTES DE ESCREVER:** `criarSala`
+(`src/net/sala.ts`) grava `vazioDesde: agora`, então envelhecer todos os timestamps de uma vez —
+o jeito óbvio de fazer um turno vencer — faria `decidirVida` DESTRUIR a sala antes do gate, deixando
+MB verde e a mutação de MB verde junto. Por isso a fixture nasce com o relógio real e só três campos
+são sobrescritos: `vazioDesde: null`, `concluidaEm: null` (a **segunda** porta de `encerrar`) e
+`iniciadoEm` envelhecido. ⚠️ O campo `iniciadoEm` tem que EXISTIR: o consumidor lê
+`iniciadoEm[id] ?? agora`, então campo ausente **não expira** e o teste passaria por vacuidade.
+
+🔴 **DOIS DESLIZES DE MÉTODO MEUS, registrados porque são reincidência:** o `npm run lint | tail`
+encadeado com `&&` **mascarou um erro de lint real** (`no-unused-vars`) e o commit saiu com ele —
+é o mesmo defeito do `echo "[tsc limpo]"` incondicional do 3.5.4, duas sessões seguidas. **Portão se
+lê pelo `exit code`, nunca pela cauda da saída.** Consertado no mesmo PR (por `amend`).
+
+---
+
 **🏆 PR 3.5.4 — UI DO CAMPEONATO ONLINE: CÓDIGO COMPLETO E VERDE em 2026-08-23**, na branch
 **`pr-3.5.4-ui-campeonato`** (`cca90e1` + `2d859b5` + `7c5efa9`).
 **Sem merge, sem push, sem tag** — aguardando aprovação do dev.
@@ -510,8 +556,12 @@ casca um bug que o PR C teria pego**, puxar o C para a frente em vez de seguir a
 nasce na única parte da casca ainda sem cobertura, e a **pendência 0(s)** — suspeita de sala-zumbi —
 segue **não confirmada**, porque quem a confirmaria é o harness que o C constrói.
 
-**🔢 SEQUÊNCIA ATÉ FECHAR A FASE 3 (atualizada em 2026-08-21):**
-**~~3.5.2~~ ✅ → ~~3.5.3~~ ✅ → 3.5.4 → PR C → Fase 3 encerrada.**
+**🔢 SEQUÊNCIA ATÉ FECHAR A FASE 3 (atualizada em 2026-08-23, no PR C):**
+**~~3.5.2~~ ✅ → ~~3.5.3~~ ✅ → ~~3.5.4~~ ✅ → ~~PR C~~ ✅ → CONSERTO DA 0(s) → Fase 3 encerrada.**
+🔴 **O passo do CONSERTO DA 0(s) É NOVO, e ele existe porque o PR C mediu.** A pendência era
+suspeita por LEITURA desde 2026-08-19 e ficou **CONFIRMADA por execução** — ver a 0(s) na lista de
+pendências. **A Fase 3 não fecha antes dele:** é bug de produção conhecido, na casca, e o próprio
+plano do spike previu esse conserto como "PR curto e com baseline próprio".
 🔒 **O 3.5.4 herda MAIS do que o plano previa**, por decisão do dev no 3.5.3 (opção A): além dos
 painéis e do portão visual, ele leva o **`key={'etapa-'+k}`**, a remoção do **`naCorrida`** e o
 **atestado por etapa** — as três são a mesma solda, e separá-las produz hash de uma etapa com a tela
@@ -956,10 +1006,26 @@ casca deixa de ser terra sem teste; a opção conhecida é `@cloudflare/vitest-p
    Hoje é inconsistência de tese, não vazamento: `cursorPublicavel` clampa e o servidor nunca grava
    outro tipo. Mas **o cursor é justamente o campo que governa quantos segredos saem no fio** —
    quando o 3.5.2 o fizer se mover, trazê-lo para dentro do discriminante.
-   (s) 🟠 **NOVA (planejamento do spike, 2026-08-19) — SUSPEITA DE BUG DE PRODUÇÃO: sala corrompida
-   com `vazioDesde: null` pode NUNCA MORRER.** Achado por LEITURA de `party/sala.ts:268-306` pelo
-   `fable-architect`; **não confirmado por execução** — é exatamente por não haver como executar a
-   casca que ele não foi confirmado. Cadeia: (1) `carregar()` devolve o estado com
+   (s) 🔴 **CONFIRMADA POR MEDIÇÃO no PR C (2026-08-23) — BUG DE PRODUÇÃO REAL: sala corrompida
+   com `vazioDesde: null` NUNCA MORRE.** Deixou de ser suspeita: `party/alarme.test.ts` executa a
+   casca no `workerd` e mede o storage.
+   **O que foi medido, e como:** fixture de sala corrompida (`seedsEtapas` removida, `versaoSala`
+   mantida — a corrupção real de reidratação), `vazioDesde: null`, `concluidaEm: null`, 0 conexões.
+   Depois de **TRÊS tiques** de `alarm()`, o `vazioDesde` **continua `null` no storage**. Três e não
+   um de propósito: um tique só provaria "não persistiu desta vez", e a pendência afirma "nunca
+   persiste, então o relógio de morte nunca começa". **Contraste medido no mesmo arquivo:** na sala
+   **sã**, o MESMO tique **persiste** o `vazioDesde`. É o par que separa o bug de "o tique não faz
+   nada em sala nenhuma".
+   🔑 **A MEDIÇÃO ACRESCENTOU UMA NUANCE QUE A LEITURA DE 2026-08-19 NÃO TINHA, e ela muda o
+   diagnóstico: NÃO é "toda sala corrompida vira zumbi".** O teste **MD** do mesmo arquivo mostra o
+   oposto — sala corrompida com o `vazioDesde` **já gravado** (vazia há mais de 2 min antes de ser
+   corrompida) **MORRE normalmente** no tique. O zumbi é **só** o caso em que a sala se corrompe
+   **enquanto ainda tinha conexões**: aí o `vazioDesde` precisaria ser ESCRITO pela primeira vez, e
+   é essa escrita que nunca acontece. **Quem for consertar precisa desta distinção** — um conserto
+   que faça "sala corrompida sempre morrer" muda também o caso que hoje já funciona.
+   *(Texto original do achado por LEITURA, preservado — a cadeia estava certa:)* Achado por LEITURA
+   de `party/sala.ts:268-306` pelo `fable-architect`; **não confirmado por execução** à época — era
+   exatamente por não haver como executar a casca. Cadeia: (1) `carregar()` devolve o estado com
    `vazioDesde: null`; (2) `registrarConexoes` produz `atualizado` com `vazioDesde = agora`, num
    objeto NOVO; (3) `decidirVida`: `agora - agora = 0 < CARENCIA_VAZIO_MS` ⇒ segue; (4) `jogavel` é
    **false** ⇒ **`aplicar()` nunca é chamado** ⇒ `atualizado` nunca é persistido e `this.estado`
@@ -967,12 +1033,18 @@ casca deixa de ser terra sem teste; a opção conhecida é `@cloudflare/vitest-p
    **Consequência: uma sala que se corrompe ENQUANTO AINDA TINHA CONEXÕES vira o zumbi exato que o
    comentário de `party/sala.ts:299-302` afirma que a posição do gate impede** — recusa todo mundo e
    nunca libera o código.
-   🔒 **DECISÃO DO DEV (2026-08-19): reportar, NÃO consertar dentro do spike** — "zero diff de
-   produção" é restrição que aquele PR se impõe e mantém. **Se o PR C confirmar que é bug, o conserto
-   entra ANTES do 3.5.2, como PR curto e com baseline próprio.** ⚠️ É caminho que o **3.5.1 acabou de
-   criar** (sala corrompida só existe desde o discriminante), então não é dívida velha.
-   💡 Se confirmar, é também **o argumento mais forte a favor da dependência**: o harness achou o que
-   a leitura não achou.
+   🔒 **DECISÃO DO DEV (2026-08-19, REAFIRMADA em 2026-08-23): reportar, NÃO consertar dentro do
+   spike** — "zero diff de produção" é o que sustenta o rótulo BAIXO RISCO do PR C e o
+   `senior-reviewer` pulado. **O conserto é PR PRÓPRIO, curto e com baseline próprio**, e é o
+   passo que agora antecede o encerramento da Fase 3 (ver a §SEQUÊNCIA). ⚠️ Palavras do dev ao
+   reafirmar: *"mudar isso sem revisão é o atalho que este projeto já pagou caro."*
+   ⚠️ A redação de 2026-08-19 dizia que o conserto "entra ANTES do 3.5.2" — **envelheceu**: o PR C
+   foi adiado para depois do 3.5.4, então o conserto vem depois dele. Corrigido aqui em vez de
+   contradito noutro arquivo.
+   ⚠️ É caminho que o **3.5.1 criou** (sala corrompida só existe desde o discriminante), então não é
+   dívida velha.
+   ✅ **E o palpite se confirmou: é o argumento mais forte a favor da dependência do spike** — o
+   harness achou (mediu, e refinou o diagnóstico) o que a leitura só suspeitou.
    (t) 🟠 **NOVA (3.5.2, 2026-08-20) — A INVARIANTE DO SNAPSHOT DEIXOU DE SER LOCAL: ele pode se
    AUTOCONTRADIZER quando a sala é `corrompida`.** Achado ao trazer o cursor para dentro do
    discriminante (pendência 0(r)); **registrado por decisão do dev, NÃO consertado no 3.5.2.**

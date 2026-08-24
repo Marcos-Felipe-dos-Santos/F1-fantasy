@@ -2283,6 +2283,62 @@ no cliente. **Dois caminhos, nenhum escolhido:** derivar o formato de `sala.nEta
 portão `seedCalendario === null` ANTES, porque sala legado publica `nEtapas: 1`, que não existe em
 `N_ETAPAS`), ou o hook capturar e expor pelo canal de erro que já tem.
 
+## PR C do spike — gate do `alarm()` (2026-08-23, `99afde0`) — BAIXO RISCO
+
+Branch `pr-c-gate-alarm`, base `e0be1bd`. **Zero diff de produção** — `party/sala.ts` byte a byte igual ao da `main`. É o que sustenta o rótulo BAIXO RISCO e o `senior-reviewer` pulado; o portão "mutação vista vermelha, uma a uma" valeu do mesmo jeito.
+
+**Medido:** `npm run test:party` **16/16** (era 10/10), `npm test` **1592/64 INALTERADO** em 3 rodadas, typecheck **0**, eslint **0**, build **0**. ⚠️ O `npm test` inalterado é o resultado **correto**, não um teste que deixou de rodar: o arquivo mora em `party/`, fora do `include` — mesmo precedente do PR B, que mediu 1516/63 inalterado e disse por quê.
+
+### O que passa a ser coberto
+
+A guarda que o 3.5.1 pôs no relógio do Durable Object (aviso A2 daquela revisão): numa sala **corrompida** o tique não pode chamar `aoPassarOTempo`, porque ela **resolve turnos vencidos**. Sem a guarda, ninguém conseguia conectar nem mandar comando naquela sala e mesmo assim **o draft se jogava inteiro sozinho**, num lugar que jogador nenhum podia ver. Até aqui essa guarda não tinha nenhuma asserção que a executasse — `party/` só tinha o sorteio (PR B) e o smoke (PR A).
+
+`party/alarme.test.ts`, 6 testes: MB, a anti-vacuidade de MB, MD, a anti-vacuidade de MD, a sonda da 0(s) e o contraste dela.
+
+### 🛑 A armadilha de vacuidade — medida ANTES de escrever, e ela ditou metade do arquivo
+
+Em `alarm()`, `decidirVida` pode chamar `encerrar()` **antes** de o gate ser alcançado. Envelhecer todos os timestamps de uma vez — o jeito óbvio de fazer um turno vencer — faria `vazioDesde` estourar `CARENCIA_VAZIO_MS`, a sala seria DESTRUÍDA e `aoPassarOTempo` nunca rodaria: **teste verde, gate nunca exercitado**, com a mutação de MB verde junto.
+
+**Medido, não suposto:** `criarSala` (`src/net/sala.ts`) grava `vazioDesde: agora`. Por isso a fixture nasce com o relógio **real** e só três campos são sobrescritos cirurgicamente — `vazioDesde: null` (com 0 conexões, `registrarConexoes` grava `agora` e `agora - agora = 0` ⇒ a sala sobrevive até o gate), `concluidaEm: null` (a **segunda** porta de `encerrar`, que sem isto traria a armadilha de volta) e `draft.iniciadoEm[*]` envelhecido. ⚠️ O `iniciadoEm` tem que **existir**: o consumidor lê `iniciadoEm[id] ?? agora`, então campo ausente **não expira**.
+
+### 📊 Tabela de mutações — MB e MD, DUAS passadas cada
+
+Rodadas duas vezes: a primeira contra a versão inicial do teste, a segunda **contra o código final**, depois de a sonda da 0(s) ser fortalecida de um para três tiques. É a lição do 3.5.2 — mutação sobrevive justamente na rodada intermediária. Todas com `tsc` limpo (vermelho **comportamental**, nunca de compilação) e `git hash-object` conferindo cada reversão.
+
+| Mutação | Alvo | `tsc` | 1ª passada | Contra o código final |
+|---|---|---|---|---|
+| **MB** | o gate vira `if (atualizado !== null)` — sempre verdadeiro | limpo | 🔴 2 falharam / 16 | 🔴 2 falharam / 16 |
+| **MD** | `if (!this.jogavel(atualizado)) return;` antes do `decidirVida` | limpo | 🔴 1 falhou / 16 | 🔴 1 falhou / 16 |
+
+**MB derruba o teste do gate E a sonda da 0(s)** — coerente, e é evidência a favor do diagnóstico: sem o gate, `aplicar()` volta a rodar e o `vazioDesde` passa a ser persistido. **MD derruba só o teste de MD**, que é o esperado: ele existe para provar que o gate **não** cobre `decidirVida` — a sala corrompida precisa continuar podendo morrer, senão vira zumbi que recusa todo mundo e nunca libera o código.
+
+🔑 Escolha de alvo deliberada: MB troca a **condição** por algo sempre-verdadeiro e não-constante em vez de apagar o `if` — alvo de **uma linha** (o script de mutação quebrou duas vezes em alvo multilinha por CRLF, no 3.5.4) e sem risco de `no-constant-condition`.
+
+### 🔴 A pendência 0(s) — CONFIRMADA, e o diagnóstico REFINADO
+
+Suspeita por leitura desde 2026-08-19, nunca confirmada porque quem a confirmaria era este harness.
+
+- **Corrompida, `vazioDesde: null`, após TRÊS tiques:** o campo continua **`null`** no storage. Três e não um de propósito — um tique só provaria "não persistiu desta vez", e a pendência afirma "nunca persiste, então o relógio de morte nunca começa".
+- **Contraste, sala sã, mesmo tique:** o `vazioDesde` vem **preenchido**. É o par que separa o bug de "o tique não faz nada em sala nenhuma".
+
+🔑 **A nuance que a medição acrescentou, e a leitura não tinha: NÃO é "toda sala corrompida vira zumbi".** O teste **MD** mostra o oposto — sala corrompida com o `vazioDesde` **já gravado** morre normalmente. O zumbi é **só** o caso em que a sala se corrompe **enquanto ainda tinha conexões**, quando o campo precisaria ser escrito pela primeira vez. **Quem for consertar precisa dessa distinção:** um conserto que faça "sala corrompida sempre morrer" muda também o caso que hoje já funciona.
+
+🔒 **Não consertado aqui, por decisão do dev reafirmada nesta sessão** — mexer em `party/sala.ts` é netcode ⇒ ALTO RISCO ⇒ revisão + mutação, dentro de um PR autorizado sem elas. Palavras do dev: *"mudar isso sem revisão é o atalho que este projeto já pagou caro."* O conserto vira **PR próprio**, e passa a anteceder o encerramento da Fase 3.
+
+### Achados de método
+
+1. 🔑 **A pré-condição que LANÇA se pagou na primeira execução.** `exigirCorrompida()` — no molde do `seedsDe` do PR B — pegou que o teste MB tinha **esquecido de chamar `corromper()`**: a fixture era uma sala SÃ. Sem ela o cenário teria rodado errado e o baseline seria reportado sem exercitar a guarda — a sexta instância do 3.5.2, dentro do PR que existe para fechá-la. **É o argumento concreto a favor de "lançar, não `expect`" em pré-condição.**
+2. 🔴 **`npm run lint | tail` encadeado com `&&` MASCAROU um erro de lint real** (`no-unused-vars` num descarte de desestruturação), e o commit saiu com ele. É o mesmo defeito do `echo "[tsc limpo]"` incondicional do 3.5.4 — **duas sessões seguidas**. **Portão se lê pelo `exit code`, nunca pela cauda da saída.** Consertado por `amend` no mesmo PR.
+3. **A regra do projeto contra afrouxar cerca por conveniência foi aplicada:** o `no-unused-vars` foi resolvido trocando o descarte por `delete` numa cópia, e não desligando a regra para uma linha de teste.
+
+### O que continua descoberto (a pendência 9 segue 🟡, não ✅)
+
+`onMessage`, `onClose`, `encerrar`, CORS e a propriedade RPC-vs-HTTP seguem sem cobertura. **A cerca textual de M5/M6 PERMANECE** — seeds derivadas por índice também são distintas entre si, então nenhuma asserção comportamental pega M5, nunca. Quem apagar a cerca citando "agora tem cobertura de verdade" reabre o buraco.
+
+**Sequência da Fase 3 depois deste PR:** 3.5.1 ✅ → 3.5.2 ✅ → 3.5.3 ✅ → 3.5.4 ✅ → **PR C ✅** → conserto da 0(s) → Fase 3 encerrada.
+
+---
+
 ## PR 3.5.4 — UI do campeonato online (2026-08-23, `cca90e1` + `2d859b5` + `7c5efa9`) — ALTO RISCO
 
 Branch `pr-3.5.4-ui-campeonato`, base `922bdd0` (pós-merge do 3.5.3). **Sem merge, sem push, sem tag.**
