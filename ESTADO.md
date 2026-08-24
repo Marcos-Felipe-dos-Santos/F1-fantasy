@@ -446,7 +446,12 @@ e `derivarNotasEquipe` (`:584`) computam sobre **pools de percentil chaveados po
 `constructorId`**. O nome exibido e o slug do id **não entram em conta nenhuma** — trocar o dataset
 move os rótulos, não as notas. É esta linha que sustenta o veredito verde.
 
-✅ **A normalização é UMA SÓ, num arquivo só, em 3 sítios.**
+✅ **A normalização é UMA SÓ, num arquivo só, em 4 SÍTIOS.**
+⚠️ **CORREÇÃO 2026-08-24 (4ª sessão): eram 3 no registro, são 4. O que faltava é `:705`** — ver o
+bullet novo no fim desta lista. Mesma família das seis correções de âncora deste inventário, mas com
+consequência de PLANO, não só de referência: foi este sítio ausente que ditou a FORMA do portão
+(varredura de TEXTO, não caminhada por CAMPO). **Enumeração de campo já falhou uma vez aqui; é
+isso que a torna a abordagem errada.**
 ⚠️ **CORREÇÃO DE ÂNCORA — o arquivo é `scripts/derivar-notas.ts`, NÃO `scripts/agregar-fatos.ts`.**
 As três linhas ditadas conferem, mas **naquele** arquivo; `idsDaEquipeAno` **não existe** em
 `agregar-fatos.ts` (medido: zero ocorrência no repo fora de `derivar-notas.ts`). Mesma família das
@@ -456,6 +461,11 @@ duas correções de âncora do inventário acima. Os sítios:
   `` piloto: (driverId) => `${base}-piloto-${driverId}` ``.
 - **`:691-692`** — `nome: titularesDaEquipe[0|1].nome`, o nome exibido do piloto.
 - **`:698`** — `equipe: equipe.nome`, o nome exibido da equipe.
+- 🔴 **`:705` — o SÍTIO QUE FALTAVA:** o campo `nome` do estrategista é montado interpolando
+  **o nome da equipe** numa string, em tempo de construção, uma por equipe-ano (771).
+  ✅ Verificado materializado na fixture: `src/fixtures/dataset-semente/equipe-anos.json:27` traz
+  "Estrategista Red Bull 2023". **Qualquer anonimização que mapeie apenas campos ENUMERADOS deixa
+  "Estrategista Ferrari 2004" no bundle** — e foi isso que ditou a varredura de texto cru.
 
 ✅ **Hash do protocolo: INÓCUO entre builds.** O nome da equipe entra literalmente na string hasheada
 (`src/net/hash-draft.ts:68`, ver inventário), e mesmo assim não vira divergência, por dois elos
@@ -605,6 +615,105 @@ equipe, tudo que quebra, quebra alto (o `throw` do `balance.ts:50`). No de pista
 hardcoded e **LANÇA** se faltar ⇒ rename de pista quebra o **harness** alto. **Mas ela não toca o
 caminho silencioso** (`tracadoDaPista` + `TelaInicio.tsx:94`), que é o da TELA. **O risco continua
 aberto** — quem ler isto como "o harness cobre" reabre o buraco.
+
+---
+
+🔑 **`deriveSeed` NUNCA consome id de dataset — MEDIDO em 2026-08-24 (4ª sessão), e isso FORTALECE
+o veredito verde.** Método: enumerados os 100% dos sítios de produção de `deriveSeed(` em `src/`
+(`grep`, excluindo `.test.`). Os rótulos dinâmicos consomem **`jogadorId`** (`corrida.ts:187`,
+`quali.ts:61`, `draft.ts:69` e `:108`), **`botId`** (`bots.ts:104`, `:144`) ou **`pistaId`**
+(`campeonato.ts:39`). **Nenhum** consome id de piloto/chassi/motor/estrategista/pit/peça, nem nome
+de equipe. Registro de namespaces: `src/engine/namespaces-seed.ts:33-44`.
+🟢 **Consequência 1 — o veredito de custo SOBE.** Não é só "as notas sobrevivem ao rename": **a
+corrida inteira é idêntica bit a bit**. E isso é PROVÁVEL mecanicamente — rodar a mesma seed nos
+dois datasets e comparar `ResultadoCorrida` numérico. A prova deixa de depender de comparar notas.
+🔴 **Consequência 2 — renomear PISTA é mudança de COMPORTAMENTO, não rename.**
+`src/engine/campeonato.ts:38-39` deriva a seed da etapa a partir do id da pista. Trocar o id muda a
+seed da etapa, muda a corrida simulada, invalida golden de etapa e reprova a impressão digital em
+`retomarCampeonato` (`src/ui/persistencia.ts:332`, que re-simula e valida antes de devolver).
+**Isto reclassifica o "corte cirúrgico" de barato para ALTO RISCO com baseline vermelho** — e é o
+motivo declarado do veredito T2 abaixo.
+
+✅ **Nada em `src/` importa `scripts/`** (medido, grep limpo). Logo `scripts/derived/*.json` — que
+seguem RASTREADOS e com nome real, por desenho — **não alcançam o bundle**. É o que libera a camada
+escolhida no plano (anonimizar pós-derivação) sem reintroduzir o vazamento por outra porta.
+
+✅ **Save NÃO corrompe, DESCARTA — medido.** `src/ui/persistencia.ts:314`: versão de formato
+divergente devolve o motivo `versao-incompativel`. **O custo de id novo não é "quebra saves": é bump
+de UMA LINHA** (`:42`) e campeonato em andamento descartado limpo. `Loadout` guarda
+`pecaId`/`pilotoId`/`chassiId` (`src/engine/types.ts:206-214`), então peça invalida save igual.
+
+✅ **Bijeção medida, e é ela que torna a tabela segura:** `constructorId` **105 ↔ 105** nomes e
+`driverId` **353 ↔ 353** nomes, 1:1 nos dois níveis (agregado de `scripts/derived/fatos-agregados.json`).
+A tabela de nomes fictícios tem exatamente **458 entradas** e a unicidade de `equipe::ano`
+(`src/engine/dataset.ts:270`) sobrevive **por construção**.
+
+## 🔒 NOMES FICTÍCIOS — DECISÕES DO DEV, TRAVADAS em 2026-08-24. Não reabrir sem ele.
+
+🔒 **DECISÃO P — APROVADA: as 10 peças perdem a marca E o código de modelo, mantêm a inovação.**
+`Efeito solo` · `Duplo difusor` · `Difusor soprado` · `F-duct` · `Amortecedor de massa` ·
+`Suspensão ativa` · `Seis rodas` · `DAS` · `Freio-direção` · `Carro-ventoinha`. **Ids mudam junto.**
+Palavras do dev: o sabor sobrevive; a marca não era o que fazia graça — a inovação era.
+🔑 **A razão de tirar TAMBÉM o código de modelo, e ela é contraintuitiva:** P34 é a designação de
+produto da Tyrrell, FW15 da Williams, BT46B da Brabham. **Manter P34 tirando Tyrrell trocaria o
+identificador por um MAIS pontudo, não menos.** Quem for poupar a referência no futuro vai propor
+exatamente isso — está registrado aqui para ser recusado com o motivo.
+
+🔒 **DECISÃO T — T1 ENTRA, T2 ADIADA COM O CUSTO NOMEADO (não é recusa).**
+- ✅ **T1 — `pistas.json`, Montreal (Gilles Villeneuve) vira apenas Montreal.** Só o nome exibido; **o
+  id `pista-montreal` NÃO muda**, já é topônimo. Zero engine, zero seed, zero 0(z). É de graça.
+- ⏸️ **T2 — `pista-red-bull-ring` FICA FORA desta trilha. ADIADA, reavaliar quando a trilha
+  principal fechar.** Motivo do dev, textual: `seedDaEtapa` consome id de pista, então é **mudança de
+  comportamento, não rename** — e a **0(z) inteira** teria de ser consertada junto: fallback que não
+  lança (`src/ui/tracados.ts:613`), cerca que fica VERDE em rename coordenado
+  (`src/ui/tracados.test.ts:63-67`), non-null assertion no `src/ui/TelaInicio.tsx:94`, e
+  `docs/img/silhuetas.svg` VERSIONADA envelhecendo sem portão vermelho.
+  🔑 **O custo, nomeado para a reavaliação não recomeçar do zero:** baseline vermelho obrigatório;
+  harness com **delta esperado NÃO-ZERO** (ao contrário da troca de equipes, que exige delta ZERO —
+  o contraste é o sinal que discrimina); cerca de traçado trocada por **lista commitada dos 10 ids**;
+  `silhuetas.svg` regerada e commitada; golden de etapa e saves invalidados.
+  `scripts/balance.ts:289-293` e a constante `PISTA_CORRIDA_ID` (`src/ui/fluxo-corrida.ts:28`) **não**
+  são atingidos por este rename — a superfície é menor do que a 0(z) sugere, mas não é zero.
+- ✅ **CONTRA renomear as outras 9 — dev e arquiteto de acordo, sem hesitação.** O teste cego
+  **10/10** já provou que **a GEOMETRIA carrega a identificação, não o rótulo**. Renomear Monza
+  desenhando o traçado exato de Monza compra ~nada e paga a 0(z) inteira. Se um dia se quiser
+  anonimizar circuito, a unidade de trabalho é **nome MAIS geometria** — é uma FASE, não um rename.
+
+🔒 **DECISÃO H — (a): ACEITAR O RESÍDUO DO HISTÓRICO. Repo privado. Decisão consciente.**
+🔴 **"PRONTO PARA DEPLOY" NÃO INCLUI O HISTÓRICO DO GIT, e isso é ESCOLHA, não esquecimento.**
+5 commits tocam `src/data/equipe-anos.json`; `git log`/`git show` seguem servindo nome real depois da
+troca. **A troca purga o BUNDLE — que é a superfície de distribuição de que a decisão de deploy
+depende — e não o histórico.** Quem ler "nomes fictícios entregues" e concluir "o repo está limpo"
+está errado, e é para isso que esta linha existe.
+- ❌ **(b) reescrever histórico está DESCARTADA.** Motivo do dev: invalida **todas as SHAs citadas**
+  no `ESTADO.md` e `HISTORICO.md` (`1873925`, `897121f`, `922bdd0`, `7c5efa9`, `ae1727c`) — **o dano
+  documental neste projeto é grande demais**. Some-se que é proibida sem autorização explícita.
+- 📌 **(c) fica REGISTRADA como a saída SE o código abrir um dia:** espelho público a partir de árvore
+  achatada, preservando o repo privado e todas as citações internas de SHA intactas.
+⚠️ **ACOPLAMENTO a saber antes de qualquer reavaliação da H:** o universo do portão e a referência da
+prova diferencial vivem em `scripts/derived/*.json` **rastreados e com nome real**. Tirar nome real do
+repo por completo exige mover os dois para caminho gitignored — e aí **a prova diferencial deixa de
+ser reproduzível num clone limpo**. Não desrastrear `scripts/derived/` sem tratar isso.
+🔒 **MITIGAÇÃO ADOTADA pelo dev, para essa migração custar UMA LINHA:** `scripts/caminhos-dataset.ts`
+reexporta o caminho de saída de `derivar-notas.ts:169` e o de `agregar-fatos.ts:67`; **o portão, o
+`anonimizar` e o teste diferencial importam SÓ dele**, nunca os originais direto. Entra no PR 1.
+
+✅ **PLANO APROVADO pelo dev em 2026-08-24 — 7 PRs.** Ordem: **1** portão (cerca de contagem exata) ·
+**2** funil de literais (refactor verde→verde) · **3** peças despidas + T1 (`VERSAO_FORMATO` 1→2) ·
+**4** tabela de 458 (nada consome) · **5** `anonimizar.ts` + diferencial (`src/data/` intocado) ·
+**6** **A TROCA**, ALTO RISCO (`VERSAO_FORMATO` 2→3 + `VERSAO_APP` + digest) · **7** fixture e
+baseline a ZERO.
+🔑 **Peças foram para o PR 3 (não para o fim) DE PROPÓSITO:** aprovadas, deixam de ser decisão
+pendente e viram 10 itens sem efeito de simulação — e fazem o baseline do portão **cair antes do PR
+grande**. **Cerca cujo número nunca se mexeu é cerca não exercitada.**
+🔒 **DOIS PORTÕES DE PROVA que não podem ser afrouxados no PR 6:** (1) o diferencial precisa da
+**CLÁUSULA ANTI-VACUIDADE** — afirmar que os dois arquivos **NÃO** são idênticos e que TODO `equipe`,
+`pilotos[].nome`, `id` e `estrategista.nome` DIFERE, senão o teste passa se `anonimizar` degenerar
+numa cópia; (2) `npm run balance` diffado contra captura do PR 2 com **delta ZERO nos números**, e o
+diff tem de ser **LIDO**, não só ter exit 0.
+🔴 **`dist/` OBSOLETO É O ÚNICO RISCO QUE REALIZA O DANO COM TODO O CÓDIGO CORRETO.** `dist/` é
+gitignored e existe em disco. **Deploy a partir de um `dist/` velho embarca os nomes reais e NENHUM
+teste falha.** "Rebuildar antes do deploy" entra na definição de pronto.
 
 ---
 
