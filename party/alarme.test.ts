@@ -434,9 +434,17 @@ describe('🔴 REGRESSÃO DA 0(s) — a sala corrompida com `vazioDesde: null` T
   });
 
   /**
-   * 🔒 O CONTRASTE que dá sentido à sonda acima: na sala SÃ o mesmo tique
-   * PERSISTE o `vazioDesde`, porque `aplicar()` roda. Sem este par, "continuou
-   * null" não distinguiria a 0(s) de "o tique não faz nada em sala nenhuma".
+   * 🔒 O que este teste guarda HOJE: que o **caminho jogável** continua
+   * persistindo o `vazioDesde`, e que o `else` do conserto não mexeu nele.
+   *
+   * ⚠️ **O PAPEL DELE MUDOU NO PR DO CONSERTO, e a redação anterior descrevia
+   * o papel antigo** (aviso A2 da revisão). Enquanto a sonda acima afirmava
+   * `toBeNull()`, este teste era o CONTRASTE que a tornava conclusiva: sem ele,
+   * "continuou null" não distinguiria o bug de um harness em que nada persiste.
+   * Depois da inversão, os dois afirmam `not.toBeNull()` e essa discriminação
+   * acabou — um harness quebrado derrubaria os dois juntos. Ele continua útil,
+   * mas por outro motivo, e documentação que descreve um papel que o teste não
+   * tem mais é dívida pior do que teste ausente.
    */
   it('🔒 CONTRASTE: na sala SÃ, o mesmo tique PERSISTE o `vazioDesde`', async () => {
     const agora = Date.now();
