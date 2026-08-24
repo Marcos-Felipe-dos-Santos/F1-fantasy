@@ -352,11 +352,35 @@ export class Sala extends Server<Env> {
     // sala corrompida: um `encerrar()` incondicional aqui mataria também o caso
     // que já funcionava.
     //
-    // ⚠️ **Sem amplificação de escrita, e isso é medido, não suposto:**
-    // `registrarConexoes` preserva a IDENTIDADE do estado quando
-    // `vazio === jaVazio`, e `aplicar` só grava quando a referência muda. Logo
-    // o `else` grava **uma vez**, na transição para vazio, e fica mudo nos
-    // tiques seguintes.
+    // 🔴 **A GUARDA `vazioDesde !== null` NÃO É REDUNDANTE — sem ela o conserto
+    // reintroduz o zumbi pela direção OPOSTA. Foi bloqueante de revisão.**
+    //
+    // `registrarConexoes` muda o campo nas DUAS direções: grava `agora` quando
+    // a sala fica vazia e **`null`** quando deixa de estar. Um `else` que
+    // persistisse os dois sentidos gravaria `vazioDesde: null` de forma durável
+    // sempre que houvesse conexão contada no tique — e numa sala corrompida
+    // isso é fácil: `onConnect`/`onMessage` RECUSAM o cliente, mas o socket só
+    // é fechado quando ele **manda** alguma coisa; um cliente conectado e
+    // quieto continua em `getConnections()`. O efeito seria: sala corrompida
+    // que antes morria no primeiro tique quieto passa a ter a carência
+    // REINICIADA a cada reconexão, para sempre.
+    //
+    // 🔑 **É exatamente o caso que a nuance da 0(s) manda preservar** — sala
+    // corrompida com `vazioDesde` já gravado sempre morreu normalmente (teste
+    // MD), e o conserto quase o quebrou pelo lado oposto ao que se temia.
+    // Persistir **só a direção que INICIA o relógio** conserta a 0(s) e deixa
+    // a inércia anterior intacta na direção que o zeraria.
+    //
+    // 🔒 E é o certo semanticamente: uma sala corrompida recusa todo mundo, seu
+    // único destino legítimo é morrer, então conexão contada não pode comprar
+    // sobrevida para ela.
+    //
+    // ⚠️ **Sem amplificação de escrita, e agora a frase é verdadeira nas duas
+    // direções:** `registrarConexoes` preserva a IDENTIDADE quando
+    // `vazio === jaVazio` e `aplicar` só grava quando a referência muda, então
+    // o `else` grava **uma vez**, na transição para vazio, e fica mudo depois.
+    // (A redação anterior afirmava isso como "medido" cobrindo só metade dos
+    // casos — aviso A1 da mesma revisão.)
     //
     // 🔒 **Por que aqui e não logo depois do `registrarConexoes`** (a forma
     // simétrica, considerada e descartada): lá a escrita aconteceria também na
@@ -364,7 +388,7 @@ export class Sala extends Server<Env> {
     // ser o único ponto que decide o que fazer com a sala não jogável.
     if (this.jogavel(atualizado)) {
       await this.aplicar(aoPassarOTempo(atualizado, agora, PRAZO_TURNO_MS));
-    } else {
+    } else if (atualizado.sala.vazioDesde !== null) {
       await this.aplicar({ estado: atualizado, envios: [] });
     }
     await this.ctx.storage.setAlarm(agora + INTERVALO_TIQUE_MS);
