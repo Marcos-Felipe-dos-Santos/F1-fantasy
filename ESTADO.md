@@ -341,9 +341,14 @@ bloqueador.
 🔑 **"Engine agnóstica a nome" (`F1_Fantasy_GDD.md:265` e `:295`) é MEIA-VERDADE.** É verdade que a
 engine não *interpreta* nome; é falso que nome seja rótulo descartável. **Medido:**
 - **Os ids SÃO os nomes.** **1.542 ids de piloto com sobrenome embutido** no esquema de id.
-  ⚠️ *Este número e o de arquivos abaixo foram medidos na SESSÃO ANTERIOR e **não** re-medidos em
-  2026-08-24 — a releitura do dataset foi recusada por permissão. Entram rotulados, não como
-  medição desta sessão.*
+  ✅ **RE-MEDIDO em 2026-08-24 (medição de custo, logo abaixo) e CONFERE.** A ressalva que estava
+  aqui — *"medido na SESSÃO ANTERIOR, não re-medido, a releitura do dataset foi recusada por
+  permissão"* — está **FECHADA para este número**. Contagem desta sessão, direto de
+  `src/data/equipe-anos.json` (só agregados saíram, nenhuma leitura integral): **771 entradas
+  equipe-ano · 105 nomes de equipe distintos · 1.542 ids de piloto distintos** — e 1.542 = 771 × 2
+  titulares, **zero colisão**.
+  ⚠️ **A ressalva NÃO caiu para o número de ARQUIVOS** — ela era compartilhada pelos dois números, e
+  só um foi re-medido. Ver o item dos 33, abaixo.
 - **O nome da equipe é CHAVE**, em três camadas: unicidade validada em `src/engine/dataset.ts:270`
   (⚠️ **e é chave COMPOSTA `equipe::ano`, não chave primária só de nome** — a redação que recebi
   dizia "chave primária"; o que o código faz é `const chave = \`${equipe}::${ano}\`` com assert de
@@ -353,7 +358,12 @@ engine não *interpreta* nome; é falso que nome seja rótulo descartável. **Me
   string hasheada**. ⚠️ **Correção de âncora: o arquivo é `src/net/hash-draft.ts`, NÃO
   `src/engine/`.**
 - **33 arquivos citam nome real fora de comentário** — **6 produção, 24 teste, 3 preview** —, dos
-  quais **só 2 são app real**. *(mesma ressalva de proveniência acima.)*
+  quais **só 2 são app real**. ⚠️ *A ressalva de proveniência CONTINUA VALENDO SÓ PARA ESTES
+  NÚMEROS: medidos na SESSÃO ANTERIOR, **não** re-medidos. Entram rotulados, não como medição.*
+  🔑 **A medição de custo abaixo NÃO os re-mede** — ela conta outra coisa (quem **importa** o
+  dataset, 22 arquivos), e as duas contagens não se somam nem se substituem. Mas um achado dela
+  **incide** sobre o "só 2 são app real": `src/ui/dataset-app.ts` importa o dataset real e é
+  consumido por `src/ui/App.tsx:16`, ou seja **os 1.542 nomes vão no bundle de produção**.
 - **O `balance-harness` quebra por EXCEÇÃO**, não por número errado: `scripts/balance.ts` procura
   `'Red Bull'` 2023 com literal na **linha 50** e lança na **linha 52**
   (`loadoutForte: equipe/ano "Red Bull" 2023 não encontrado no dataset`). ⚠️ **Correção de âncora:
@@ -362,6 +372,99 @@ engine não *interpreta* nome; é falso que nome seja rótulo descartável. **Me
 
 ⚠️ **A frase do GDD segue no lugar até o dev decidir** — corrigi-la é edição em `F1_Fantasy_GDD.md`,
 proposta separadamente e não embutida aqui.
+
+---
+
+📏 **CUSTO DE TROCAR PARA DATASET FICTÍCIO — MEDIDO em 2026-08-24.**
+🟢 **VEREDITO: o custo é BAIXO e o balanceamento SOBREVIVE.** Continuação direta do inventário
+acima — lá ficou provado que nome **não** é rótulo descartável; aqui está medido **quanto** custa
+trocá-lo. **Nenhum diff de produção; o resultado é este registro.**
+
+✅ **Os NÚMEROS são independentes do rótulo.** `derivarNotasPiloto` (`scripts/derivar-notas.ts:482`)
+e `derivarNotasEquipe` (`:584`) computam sobre **pools de percentil chaveados por `driverId` /
+`constructorId`**. O nome exibido e o slug do id **não entram em conta nenhuma** — trocar o dataset
+move os rótulos, não as notas. É esta linha que sustenta o veredito verde.
+
+✅ **A normalização é UMA SÓ, num arquivo só, em 3 sítios.**
+⚠️ **CORREÇÃO DE ÂNCORA — o arquivo é `scripts/derivar-notas.ts`, NÃO `scripts/agregar-fatos.ts`.**
+As três linhas ditadas conferem, mas **naquele** arquivo; `idsDaEquipeAno` **não existe** em
+`agregar-fatos.ts` (medido: zero ocorrência no repo fora de `derivar-notas.ts`). Mesma família das
+duas correções de âncora do inventário acima. Os sítios:
+- **`:623-631` — `idsDaEquipeAno`**, e **é aqui que o nome vira id**:
+  `` const base = `${slug(constructorId)}-${ano}` `` e daí `chassi`/`motor`/`estrategista`/`pit` +
+  `` piloto: (driverId) => `${base}-piloto-${driverId}` ``.
+- **`:691-692`** — `nome: titularesDaEquipe[0|1].nome`, o nome exibido do piloto.
+- **`:698`** — `equipe: equipe.nome`, o nome exibido da equipe.
+
+✅ **Hash do protocolo: INÓCUO entre builds.** O nome da equipe entra literalmente na string hasheada
+(`src/net/hash-draft.ts:68`, ver inventário), e mesmo assim não vira divergência, por dois elos
+medidos: **(1)** o handshake de `VERSAO_APP` já separa — `src/net/servidor-sala.ts:780`
+(`const versaoConfere = versaoDaSala === undefined || versaoDoCliente === versaoDaSala;`), com recusa
+`versao-divergente` em `:789` e `:891`; **(2)** o digest cobre `src/data/**` ⇒ **trocar o dataset
+FORÇA o bump**, então dois builds com datasets diferentes não compartilham sala. Dentro de uma sala,
+todos rodam o mesmo dataset ⇒ hash consistente por construção.
+
+✅ **`balance-harness`: o baseline depende dos NÚMEROS, não do nome.** Os dois lookups de
+`scripts/balance.ts` se comportam de formas opostas, e as duas são boas notícias:
+- **`:50` quebra ALTO, com `throw` em `:52`** — `.find((e) => e.equipe === 'Red Bull' && e.ano ===
+  2023)`, literal. ✅ âncora conferida (a correção "50/52, não 48" do inventário está certa).
+- **`loadoutsParadas` (`:219`) é round-trip auto-consistente e IMUNE a rename** — ✅ o ditado está
+  certo, e a razão é medível: os specs vêm de `selecionarPilotosParadas(dataset)` (`:296`),
+  derivados do próprio dataset, então o `.find` sempre acha e o `throw` de `:221` é **inalcançável**.
+
+⚠️ **CORREÇÃO — DOIS itens SAEM da coluna "quebra ALTO com throw":**
+- **`scripts/dataset-report.ts:162` NÃO lança.** `encontrarEquipe` (`:150-152`) é `.find()` puro; o
+  chamador imprime `'(não encontrado)'`, e o bloco é rotulado **no próprio código** (`:155`):
+  `--- Spot-checks (informativo — não falha o script) ---`. **É degradação SILENCIOSA, não ruidosa**
+  — muda de coluna, não some.
+- **`scripts/alavancas.ts` não tem nome real nenhum** (medido: zero literal). O docblock com
+  "McLaren 1988 e outros" é do **`dataset-report.ts:17-22`**, e a lista de pares está em `:212-214`
+  — **mesmo arquivo do item acima, e igualmente informativo.**
+🔑 **Sobra UM sítio que quebra ALTO no caminho de EQUIPE: `scripts/balance.ts:50/52`.**
+
+⚠️ **CORREÇÃO — "só 2 arquivos tocam as 771" é FALSO, e a métrica tem que vir junto.** O que eu medi
+foi **quem IMPORTA `src/data/equipe-anos.json`** (`import … from '…/data/equipe-anos.json'`, fora de
+`node_modules`, `scripts/cache/` e `src/fixtures/`): **22 arquivos**, decompostos —
+- **20 de TESTE**: os 4 do par balance/alavancas (`alavancas.test.ts`, `alavancas.balance.test.ts`,
+  `balance.test.ts`, `balance.balance.test.ts`), 6 `scripts/preview-*.preview.test.ts`,
+  `preview/golden.test.ts`, `preview/zebra.test.ts`, `src/engine/dataset-live.test.ts` e **7 de
+  `src/ui/*.test.ts`** (`campeonato-render`, `corrida-online-render`, `fluxo-campeonato`,
+  `persistencia`, `pista-camadas`, `suavizacao`, `tracados`);
+- **1 de PRODUÇÃO**: `src/ui/dataset-app.ts` — ver a linha própria abaixo;
+- **1 avulso**: `tmp-medir-save.ts` na raiz, **não rastreado pelo git**.
+Os dois arquivos ditados **existem** na lista; o que é falso é a **EXCLUSIVIDADE**. A superfície de
+teste real é **20, não 2**.
+🔑 **Três contagens distintas convivem neste inventário e NÃO se somam:** "cita nome real" (33),
+"é app real" (2) e "importa o dataset" (22). Só a terceira é medição desta sessão. Registrado
+porque a confusão entre elas é o que produziu o "só 2" — e é a mesma lição do 3.5.3, quando a
+lista da allowlist saiu da CERCA e não do `grep`, na direção oposta.
+
+✅ **A fixture confere EXATAMENTE o ditado**: `src/fixtures/dataset-semente/` tem **22 entradas / 10
+nomes de equipe distintos / 44 ids de piloto**, contra **771 / 105 / 1.542** do dataset real.
+
+🔴 **O ACHADO QUE MAIS IMPORTA PARA O DEPLOY PÚBLICO — código de PRODUÇÃO importa o dataset real.**
+`src/ui/dataset-app.ts` importa `../data/equipe-anos.json` e é consumido por `src/ui/App.tsx:16`.
+**Os 1.542 nomes reais vão no bundle**, não ficam confinados em teste. É load-bearing para o
+bloqueador dos nomes reais (§Estado atual): trocar o dataset **não é** mexer só em fixture de teste.
+
+🔴 **O RISCO SILENCIOSO ESTÁ NAS PISTAS, NÃO NAS EQUIPES — virou a pendência 0(z).** No caminho de
+equipe, tudo que quebra, quebra alto (o `throw` do `balance.ts:50`). No de pista, não:
+- **`tracadoDaPista` NÃO lança:** `TRACADOS_POR_PISTA[pistaId] ?? TRACADO_GENERICO`
+  (**`src/ui/tracados.ts:613`** — ⚠️ âncora completada: é **`src/ui/`**, não `src/engine/`). Id sem
+  par **degrada para a silhueta genérica em SILÊNCIO**.
+- **A cerca não pega rename COORDENADO:** `src/ui/tracados.test.ts:63-67` itera `dataset.pistas` e
+  exige `TRACADOS_POR_PISTA[pista.id]` definido. Pega divergência **entre** `pistas.json` e o mapa;
+  **fica VERDE se os dois lados forem renomeados juntos** — e deixa obsoletos o `preview-redesenho`
+  e `docs/img/silhuetas.svg`, **que é VERSIONADA** (§Estado atual).
+- **`src/ui/TelaInicio.tsx:94`** tem non-null assertion **no caminho de FALLBACK**:
+  `dataset.pistasById.get(pistaId) ?? dataset.pistasById.get(PISTA_CORRIDA_ID)!`, com
+  `PISTA_CORRIDA_ID = 'pista-monza'` (`src/ui/fluxo-corrida.ts:28`). ✅ as duas âncoras conferidas.
+  Renomear sem atualizar a constante dá **`undefined!` justo no ramo que existe para salvar o caso.**
+🟡 **MITIGAÇÃO PARCIAL, medida por mim e AUSENTE do ditado — e ela NÃO fecha o risco:**
+`medirParadasExtras` (`scripts/balance.ts:289-293`) tem `pista-monza`/`pista-spa`/`pista-suzuka`
+hardcoded e **LANÇA** se faltar ⇒ rename de pista quebra o **harness** alto. **Mas ela não toca o
+caminho silencioso** (`tracadoDaPista` + `TelaInicio.tsx:94`), que é o da TELA. **O risco continua
+aberto** — quem ler isto como "o harness cobre" reabre o buraco.
 
 ---
 
@@ -1355,6 +1458,29 @@ casca deixa de ser terra sem teste; a opção conhecida é `@cloudflare/vitest-p
    ⚠️ **Ganha urgência com o deploy público** (§Estado atual): sala privada entre amigos não é alvo;
    endpoint público sem teto de conexão é. **Não medido:** qual o teto real do Durable Object nem
    qual o custo de um socket ocioso. **É decisão do dev, e é PR próprio.**
+   (z) 🔴 **NOVA (medição de custo do dataset fictício, 2026-08-24) — RENOMEAR PISTA DEGRADA EM
+   SILÊNCIO.** É o único risco que sobrou aberto da medição; todo o resto dela deu verde (ver
+   §Onde parei). **A numeração é minha, atribuída nesta sessão** pelo mesmo precedente da 0(y) —
+   conferido que `0(z)` estava livre; `0(x)` também está, e aparece **pulado** no arquivo, não
+   ocupado por mim.
+   **O que foi medido, os três elos:** `tracadoDaPista` (`src/ui/tracados.ts:613`) devolve
+   `TRACADOS_POR_PISTA[pistaId] ?? TRACADO_GENERICO` — **não lança**, degrada para a silhueta
+   genérica; a cerca de `src/ui/tracados.test.ts:63-67` compara `pistas.json` **contra** o mapa e
+   por isso **fica verde num rename coordenado nos dois lados**; e `src/ui/TelaInicio.tsx:94` tem
+   `?? dataset.pistasById.get(PISTA_CORRIDA_ID)!` com `PISTA_CORRIDA_ID = 'pista-monza'`
+   (`src/ui/fluxo-corrida.ts:28`) — **`undefined!` no ramo de fallback**.
+   🔑 **É a família do "artefato que não foi verificado não conta como verificado", agora na
+   CERCA**: o teste afirma acoplamento entre duas fontes e não afirma nada sobre o **conteúdo** de
+   nenhuma das duas. Mesmo defeito que o projeto já catalogou cinco vezes na Fase 3.
+   🟡 **Mitigação PARCIAL medida, que NÃO fecha a pendência:** `scripts/balance.ts:289-293`
+   (`medirParadasExtras`) lança se `pista-monza`/`pista-spa`/`pista-suzuka` sumirem — o **harness**
+   quebra alto. **O caminho da TELA segue silencioso**, e é o que importa aqui.
+   ⚠️ **Dano colateral do rename silencioso:** `preview-redesenho` e **`docs/img/silhuetas.svg`, que
+   é VERSIONADA**, ficam obsoletos sem nenhum portão vermelho (§Estado atual manda regerar e
+   commitar a grade quando um traçado muda — mas nada obriga).
+   **Conserto natural, quando vier:** cerca que assere os ids de pista **por valor literal**, não por
+   acoplamento entre as duas fontes, e trocar a non-null assertion de `TelaInicio.tsx:94` por erro
+   explícito. **Só se aplica se o dev decidir trocar o dataset — é PR próprio e nada foi mexido.**
 1. **Abertas pelo 7.8:** (a) o `BotaoTema` é um botão discreto no canto do `app-shell` — posição e
    forma **não passaram por veredito de arte**; (b) `erro` (salmão `#FF7B85`) e `raridadeProibido`
    (`#FF4757`) continuam sendo dois vermelhos ao lado do vermelho da marca — não foi mexido porque
