@@ -1185,10 +1185,21 @@ está limpo" está errado — esta linha existe para impedir essa leitura.
   agora; é o caminho já escolhido para quando a pergunta voltar.
 
 ✅ **PLANO DE 7 PRs — APROVADO pelo dev, começando pelo PORTÃO.**
-⚠️ **O que está travado é ISTO: são 7 PRs e o primeiro é o portão.** O **detalhamento PR a PR não
-foi ditado pelo dev** e portanto **não é decisão travada** — quem for executar propõe o recorte dos
-7 e confirma com ele. **Não tratar nenhuma lista de 7 itens encontrada em commit revertido como
-aprovada.**
+🔒 **A ORDEM É TRAVADA, ditada pelo dev em 2026-08-25:**
+**1** portão · **2** funil de literais · **3** peças despidas + T1 · **4** tabela de nomes ·
+**5** `anonimizar` + diferencial · **6** A TROCA · **7** fixture e baseline a zero.
+⚠️ **ATUALIZADO em 2026-08-25 — a redação anterior desta linha ficou MEIO-FALSA e por isso foi
+corrigida no lugar, não contradita noutro arquivo.** Ela dizia que "o detalhamento PR a PR não foi
+ditado pelo dev": **a ORDEM passou a ser ditada** (acima) e é travada; o que **segue não travado**
+é o **conteúdo interno de cada PR**. **A distinção importa** — quem ler a versão antiga ao lado do
+plano novo não saberia qual das duas governa, que é exatamente o modo de falha que este arquivo já
+pagou várias vezes.
+📋 **O detalhamento PR a PR está em `PLANOS_ATIVOS.md` §"NOMES FICTÍCIOS — o plano dos 7 PRs"**,
+escrito em 2026-08-25 **e rotulado lá como proposta**, não como decisão travada. **Quatro itens
+dependem do dev** e estão reunidos numa tabela no fim daquela seção — o maior deles é **quem
+inventa os 458 nomes fictícios e com que critério**, que é decisão de produto.
+🔴 **Não tratar nenhuma lista de 7 itens encontrada no commit revertido (`e1db1c9`) como aprovada.**
+O plano novo não a reaproveitou: onde precisou de número, mediu.
 
 ## Decisões travadas da PALETA (7.8 — ✅ APROVADA pelo dev, não reabrir sem ele)
 

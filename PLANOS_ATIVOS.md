@@ -25,6 +25,11 @@
   A/B/C, os baselines MA/**MC**/MB/MD (MR disqualificada por medição). **EM ANDAMENTO — PR A e PR B
   FEITOS e mergeados na `main` em 2026-08-19; o PR C foi ADIADO pelo dev em 2026-08-20 para DEPOIS
   do 3.5.4.** Sequência: **3.5.2 → 3.5.3 → 3.5.4 → PR C → Fase 3 encerrada.**
+- **§NOMES FICTÍCIOS — o plano dos 7 PRs** — o portão, o funil, as peças + T1, a tabela, o
+  `anonimizar` + diferencial, A TROCA, a fixture. **NÃO COMEÇADO — o PR 1 é o próximo.**
+  ⚠️ **A ORDEM é decisão travada do dev; o DETALHAMENTO de cada PR é proposta minha**, e **4 itens
+  dependem dele** (tabela ao fim da seção). ⚠️ **Único plano deste arquivo que NÃO veio do
+  `ESTADO.md`** — nasceu aqui, em 2026-08-25.
 
 ---
 
@@ -639,4 +644,201 @@ estabeleceu que `ctx.storage.put` grava **V8-serializado** na `_cf_KV` — foi p
   assim `estadoDasSeeds` reprova no `Array.isArray` ⇒ sala **`corrompida`, recusando todo mundo**.
   A legenda *"exatamente o que M1 produz: objeto indexado"* em `campeonato-online.test.ts` foi
   corrigida pelo PR B — o caso de teste continua válido, a legenda é que estava errada.
+
+---
+
+## 🎭 NOMES FICTÍCIOS — o plano dos 7 PRs (registrado em 2026-08-25)
+
+> 📌 **PROVENIÊNCIA, e ela é dupla — ler antes de tratar qualquer linha daqui como aprovada.**
+> **A ORDEM dos 7 PRs é do dev**, ditada em 2026-08-25, e está travada no `ESTADO.md`
+> §"NOMES FICTÍCIOS — DECISÕES DO DEV". **O DETALHAMENTO de cada PR abaixo é MEU**, reconstruído a
+> partir das decisões travadas (P/T/H) e das medições registradas — **não foi ditado pelo dev e não
+> é decisão travada.** Cada PR traz explícito o que ainda **depende dele**.
+> ⚠️ **Nada aqui foi copiado do `e1db1c9`** (revertido em `ca53059` por gravar aprovações que nunca
+> existiram). Onde este plano precisou de um número, ele foi **medido nesta sessão** ou citado do
+> registro que já traz o método. **Uma afirmação daquele commit foi REFUTADA ao medir** — ver
+> "as duas medições novas", logo abaixo.
+> ⚠️ **Exceção declarada ao cabeçalho deste arquivo** (linha 16, *"tudo abaixo é movido íntegro do
+> `ESTADO.md`"*): esta seção **nasceu aqui**, não foi movida. É o primeiro plano escrito direto
+> neste arquivo.
+
+### 🔴 AS DUAS MEDIÇÕES NOVAS DESTA SESSÃO — e as duas mudam o plano
+
+**📏 MEDIÇÃO 1 — `deriveSeed` CONSOME, SIM, nome de equipe e id de dataset: pelo `hashDoDraft`.**
+**Método:** enumerados os sítios de produção de `deriveSeed(` em `src/` (`grep`, fora de `.test.`) e
+lida a carga de cada hash. **Resultado, e ele se divide em dois:**
+- ✅ **Nenhuma seed que alimenta a SIMULAÇÃO consome nome de dataset.** Os rótulos dinâmicos
+  consomem `jogadorId` (`corrida.ts:187`, `quali.ts:61`, `draft.ts:69`, `:108`), `botId`
+  (`bots.ts:104`, `:144`), `pistaId` (`campeonato.ts:39`) ou literal fixo (`'bots'`, `'calendario'`,
+  `'corrida:clima'`, `'draft:ordem-peca'`).
+- 🔴 **Mas o `hashDoDraft` consome os dois.** `src/net/hash-draft.ts:109-110` faz
+  `deriveSeed(0, 'online:hash-draft:a:' + carga)`, e a `cargaCanonica` inclui
+  **`${r.equipe}@${r.ano}`** (`:68`) **e os ids de loadout** — `pilotoId`, `chassiId`, `motorId`,
+  `estrategistaId`, `pitId`, `pecaId` (`:64-66`).
+- ✅ **E o `hashDaCorrida` NÃO consome nenhum dos dois:** a carga dele é `pistaId`, `jogadorId`,
+  `posicao`, `status`, `tempoTotal` e `historicoVoltas` (`src/net/hash-corrida.ts`,
+  `cargaCanonica`).
+🔑 **Isto REFUTA a afirmação do `e1db1c9`** de que *"`deriveSeed` NUNCA consome id de dataset, 100%
+dos sítios de produção enumerados"* — e ela era load-bearing lá, usada para concluir "a corrida
+inteira é idêntica bit a bit". **A conclusão certa é mais estreita e continua boa:** a **simulação**
+é invariante à troca; o **hash do draft** não é, e muda por desenho.
+🟢 **E o plano GANHA com a refutação, porque ela entrega o instrumento de prova do PR 6 pronto:**
+`hashDaCorrida` **tem de ficar IDÊNTICO** antes/depois da troca, na mesma seed, e `hashDoDraft`
+**tem de DIFERIR**. O segundo é a **cláusula anti-vacuidade de graça** — se os dois hashes baterem,
+o `anonimizar` degenerou em cópia.
+
+**📏 MEDIÇÃO 2 — o save GUARDA os ids, então trocar id invalida save, e o mecanismo já existe.**
+**Método:** `src/ui/persistencia.ts` valida `ehLoadoutValido` com `pilotoId`…`pecaId` (`:144-154`) e
+o docblock (`:5-8`) diz que a entrada persistida é `seed` + `DraftState` — **de onde saem os
+loadouts**. **O portão de formato já existe:** `VERSAO_FORMATO = 1` (`:42`), e `:314-315` devolve
+`versao-incompativel`. 🔑 **O custo de id novo não é "quebra saves em silêncio": é bump de UMA
+LINHA**, e save antigo é descartado limpo. Vale para **peça (PR 3)** e para **piloto/chassi/motor/
+estrategista/pit (PR 6)** — os dois mexem em id.
+
+### O que este plano NÃO reabre
+
+🔒 As decisões **P** (as 10 peças perdem marca e código de modelo, ids mudam junto), **T1**
+(Montreal), **T2 adiada** e **H (a)** (aceitar o resíduo do histórico) estão travadas no `ESTADO.md`
+e são **insumo, não pauta**. **Renomear as outras 9 pistas está fora** — o teste cego 10/10 provou
+que a geometria carrega a identificação.
+
+### Os 7 PRs
+
+**1. PORTÃO — a cerca que conta nome real, com o universo declarado DENTRO do teste.**
+- **O que:** teste novo que varre o repositório procurando os nomes reais e falha se a contagem
+  passar de um teto commitado. **O baseline nasce no número de hoje** e daí em diante só encolhe.
+- 🔒 **VARREDURA DE TEXTO CRU, NUNCA CAMINHADA POR CAMPO.** É o sítio `derivar-notas.ts:705` que
+  dita isto: o nome da equipe está **dentro de uma string interpolada**
+  (`Estrategista ${equipe.nome} ${season}`), não num campo próprio. **Enumeração de campo já falhou
+  aqui uma vez** — foram três sessões contando 3 sítios de normalização quando eram 4.
+- 🔒 **O UNIVERSO ENTRA ESCRITO NO TESTE.** Foi a ausência de método registrado que aposentou a
+  contagem 33/6/2 como não-falsificável; e está medido no `ESTADO.md` que a contagem nº 3 (em disco,
+  menos `node_modules`/`scripts/cache`/`src/fixtures`) e a nº 4 (`git ls-files`) **divergem
+  legitimamente**, por terem universos diferentes. Cerca sem universo escrito repete o 33.
+- 🔒 **ANTI-VACUIDADE OBRIGATÓRIA:** o teste tem de provar que **acha** nome real (asserção sobre um
+  literal conhecido), senão uma varredura quebrada passa como "zero ocorrências".
+- ⚠️ **PENDENTE DO DEV — qual universo o portão mede.** Recomendo os **dois, em camadas**:
+  **(a)** cerca sobre **fonte rastreada** (`git ls-files`, `.ts/.tsx/.mjs/.js` fora de `src/data/`),
+  rodando em todo `npm test` — barata, mas é **proxy**, e proxy foi o que aposentou a contagem nº 2;
+  **(b)** verificação sobre o **BUNDLE**, que é a contagem nº 5 e a única que decide o deploy — cara
+  demais para o `npm test` (exige `npm run build`), então entra como passo do PR 6 e da definição de
+  pronto. **Se o dev quiser só uma das duas, é decisão dele.**
+- **Risco:** BAIXO (arquivo de teste novo, zero diff de produção).
+
+**2. FUNIL DE LITERAIS — refactor verde→verde, nenhum comportamento muda.**
+- **O que:** os literais de nome real espalhados em `scripts/` passam a sair de **um sítio só**.
+  Alvos medidos: **`scripts/balance.ts:50`** — `.find((e) => e.equipe === 'Red Bull' && e.ano ===
+  2023)`, com `throw` em `:52`; e **`scripts/dataset-report.ts:162`**, que **não lança** (o
+  `encontrarEquipe` de `:150-152` é `.find()` puro, e o bloco é rotulado no próprio código, `:155`,
+  como *"informativo — não falha o script"*) — **degradação SILENCIOSA, e é a que mais interessa
+  funilar.**
+- 🔑 **Por que ANTES da troca:** com o funil, o PR 6 troca **um** literal em vez de caçá-los; e o
+  contraste "um quebra alto, o outro degrada em silêncio" deixa de existir.
+- **Portão:** `npm test` inalterado + **`npm run balance` com `--reporter=verbose`** devolvendo os
+  **mesmos números** — é refactor, então **delta ZERO é a asserção**.
+- **Risco:** BAIXO (sem mudança de comportamento). ⚠️ Toca o harness, então o `balance` roda.
+
+**3. PEÇAS DESPIDAS + T1 — o primeiro PR que mexe em `src/data/`.**
+- **O que:** as 10 peças da decisão P perdem marca e código de modelo, **no nome e no id**; e
+  `pistas.json` troca `"Montreal (Gilles Villeneuve)"` por `"Montreal"` — só o nome exibido, com
+  `"id": "pista-montreal"` **intocado** (conferido em `pistas.json:93-94`).
+- 🔴 **ALTO RISCO pela letra do `CLAUDE.md`** — `src/data/` não tem isenção por tamanho de diff.
+  **Não estou rebaixando:** o diff é pequeno e curado à mão, mas a regra classifica assim, e
+  classificação se anuncia antes de começar, não se negocia depois.
+- 🔑 **`pecas.json` NÃO É DERIVADO — é curado à mão** (medido). **Nenhuma solução na camada do
+  pipeline o alcança**, e é por isso que ele tem PR próprio em vez de entrar na troca do dataset.
+- **Dois bumps obrigatórios, os dois medidos:** `VERSAO_FORMATO` (`persistencia.ts:42`), porque
+  `pecaId` está no save; e **`VERSAO_APP`**, porque o digest cobre `src/data/**`.
+- ⚠️ **PENDENTE DO DEV — as 10 strings de id.** A decisão P trava os **nomes** e o fato de que "os
+  ids mudam junto"; **não trava o formato do id**. A derivação óbvia é tirar o sufixo de marca
+  (`peca-efeito-solo-lotus-79` → `peca-efeito-solo`), e é o que proponho — mas id é dado
+  **persistido**, então as 10 strings se confirmam antes de escrever.
+- 🔑 **É de propósito que as peças venham ANTES da troca grande:** elas fazem o baseline do portão
+  do PR 1 **cair pela primeira vez**, com um diff pequeno e reversível. **Cerca cujo número nunca
+  se mexeu é cerca não exercitada.**
+
+**4. TABELA DE NOMES FICTÍCIOS — arquivo novo que ninguém consome ainda.**
+- **O que:** a tabela `nome real → nome fictício`, **sem nenhum consumidor**. Entra sozinha para
+  poder ser lida e corrigida sem quebrar nada.
+- **Tamanho derivado das medições:** **105** nomes de equipe + **353** nomes exibidos de piloto =
+  **458** entradas; a bijeção é 1:1 nos dois níveis (105↔105, 353↔353), então a unicidade de
+  `equipe::ano` (`src/engine/dataset.ts:270`) sobrevive **por construção**. ⚠️ **A aritmética é
+  derivada de números medidos; a DECISÃO de fazer uma tabela de 458 linhas é proposta minha.**
+- ⚠️ **PENDENTE DO DEV, e é o maior item aberto do plano: QUEM inventa os 458 nomes, e com que
+  critério.** É decisão de **produto** (sabor do jogo), da mesma natureza da decisão P — não de
+  pipeline. **Não escrevo nome nenhum sem isso.**
+- **Risco:** BAIXO (nada importa o arquivo ainda).
+
+**5. `anonimizar.ts` + TESTE DIFERENCIAL — a máquina, com `src/data/` INTOCADO.**
+- **O que:** o script que aplica a tabela sobre o dataset derivado, e o teste que compara os dois
+  lados. **`src/data/` não é tocado neste PR** — é o ensaio antes da troca.
+- 🔒 **A PROVA sai da MEDIÇÃO 1 acima:** mesma seed, dataset real × dataset anonimizado ⇒
+  **`hashDaCorrida` IDÊNTICO** (a simulação não vê nome) **e `hashDoDraft` DIFERENTE** (ele consome
+  `${equipe}@${ano}` e os ids de loadout). **A segunda metade É a cláusula anti-vacuidade** — se os
+  dois hashes baterem, `anonimizar` virou cópia e o teste tem de ficar vermelho.
+- 🔒 **Assertar também que TODO `equipe`, `pilotos[].nome`, `id` e `estrategista.nome` DIFERE** — e
+  o `estrategista.nome` está nessa lista **por causa do `:705`**, que é justamente o campo que uma
+  implementação por caminhada de campo esqueceria.
+- 🔴 **AQUI ENTRA A CÓPIA MANUAL, e é a medição com mais chance de morder na execução.**
+  `src/data/equipe-anos.json` é **cópia byte a byte** de `scripts/derived/equipe-anos.derivado.json`
+  (mesmo `git hash-object`), **nenhum script faz a cópia**, e **nada falha se os dois divergirem**.
+  Este PR tem de dizer, explicitamente, **sobre qual artefato o `anonimizar` roda** e **em que
+  momento a cópia acontece** — senão o PR 6 herda um passo manual sem guarda bem no meio da troca.
+- ⚠️ **PENDENTE DO DEV:** transformar essa cópia em script/cerca, **ou** mantê-la manual e
+  documentada. Não decido sozinho; a medição só diz que hoje **não existe guarda**.
+- **Risco:** BAIXO no diff (script + teste, `src/data/` intocado) — **mas é este PR que define se o
+  6 é seguro.**
+
+**6. A TROCA — `src/data/` passa a ser fictício.**
+- 🔴 **ALTO RISCO, sem discussão:** `src/data/` + balanceamento + o que vai no bundle.
+- **Portões, e nenhum é opcional:**
+  - **Baseline vermelho primeiro** (regra de mudança de lógica do `CLAUDE.md`).
+  - **`npm run balance` com `--reporter=verbose`, DELTA ZERO nos números**, e o diff **LIDO**, não
+    só `exit 0`. 🔑 **Delta zero é PREVISÍVEL mecanicamente, não esperança:** as notas computam
+    sobre pools de percentil chaveados por `driverId`/`constructorId`, e o rótulo não entra em conta
+    nenhuma (`derivar-notas.ts:482`, `:584`). **Delta ≠ 0 é bandeira vermelha, não ruído.**
+    ⚠️ **O contraste que discrimina:** um rename de **pista** daria delta ≠ 0 (a seed da etapa
+    muda) — é exatamente por isso que a T2 ficou de fora desta trilha.
+  - **Bump de `VERSAO_APP`** (o digest cobre `src/data/**`) **e de `VERSAO_FORMATO`** (os ids de
+    piloto/chassi/motor/estrategista/pit estão no save).
+  - **O portão do PR 1 cai para perto de zero** — e é aqui que ele prova que serve para algo.
+- ✅ **O hash do protocolo não vira divergência entre builds**, e isso já estava medido: o handshake
+  de `VERSAO_APP` (`servidor-sala.ts:780`, recusa em `:789` e `:891`) separa builds, e o digest
+  força o bump. Dentro de uma sala, todos rodam o mesmo dataset ⇒ hash consistente por construção.
+
+**7. FIXTURE E BASELINE A ZERO — o PR que fecha o círculo.**
+- **O que:** `src/fixtures/dataset-semente/` também troca — ela tem **Ferrari, McLaren, Williams,
+  Schumacher, Prost, Senna**, e o `pecas.json` dela tem McLaren e Williams (medido) — e o teto do
+  portão do PR 1 desce ao número final.
+- 🔑 **Por que a fixture não pode ficar de fora:** ela é **o artefato que existe para ser lido com
+  segurança** (regra inviolável do `CLAUDE.md` §"Leitura de `src/data/`"). Deixá-la com nome real
+  faz a próxima sessão voltar a ler nome real **justamente no arquivo criado para evitar isso**.
+
+### Riscos do plano
+
+🔴 **`dist/` OBSOLETO É O ÚNICO RISCO QUE REALIZA O DANO COM TODO O CÓDIGO CORRETO — e ele existe
+AGORA, medido nesta sessão.** `dist/` é gitignored (`.gitignore:2`) **e está em disco**, com
+`dist/assets/index-C10zYSkb.js` — **exatamente o arquivo da contagem nº 5**, aquele em que foram
+medidos 105/105 nomes de equipe, 1.542/1.542 ids de piloto e 353/353 nomes exibidos. **Deploy a
+partir desse `dist/`, depois da troca, embarca os nomes reais e NENHUM teste falha.**
+🔒 **"Rebuildar antes do deploy" entra na definição de pronto do PR 6.**
+
+🟠 **A cópia manual `derived → src/data/` (PR 5).** Repetida aqui porque é o passo sem guarda no
+meio do PR de maior risco.
+
+🟠 **`pecas.json` é curado à mão** — nenhuma automação do pipeline o alcança, e é por isso que ele
+tem PR próprio (3) em vez de entrar na troca (6).
+
+⚪ **O que este plano explicitamente NÃO resolve:** o **histórico do git** (decisão H (a): resíduo
+aceito, repo privado) e a **pendência 0(z)** (rename de pista degrada em silêncio), que só seria
+tocada se a T2 voltar.
+
+### Pendências do dev, reunidas
+
+| PR | o que depende dele |
+|---|---|
+| 1 | qual universo o portão mede — fonte rastreada, bundle, ou os dois em camadas |
+| 3 | as 10 strings de **id** de peça (o nome está travado; o formato do id, não) |
+| 4 | **quem inventa os 458 nomes fictícios, e com que critério** — decisão de produto |
+| 5 | a cópia `derived → src/data/` vira script/cerca, ou fica manual e documentada |
 
