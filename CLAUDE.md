@@ -95,12 +95,39 @@ falsa no efeito: **`Bash` É ferramenta de escrita** (`>`, `>>`, heredoc, `git c
 "somente leitura" que tem `Bash` na lista não é somente leitura.
 
 - **Portanto a regra proíbe o ATO, não deduz da lista de ferramentas.** "O subagente não tem como
-  escrever" é premissa falsa e não pode sustentar nada. `doc-writer` e `junior-dev` têm
-  `Write`/`Edit` **e** `Bash`; `fable-architect`, `scout` e `senior-reviewer` têm `Bash`. **Todos
-  conseguem escrever e commitar se quiserem.** O que os impede é esta regra, não o desenho.
+  escrever" é premissa falsa e não pode sustentar nada — foi falsa neste projeto, medida.
 - 🔒 **Autodeclaração de capacidade de subagente NÃO é evidência.** Nem dele sobre si mesmo, nem
   minha sobre ele. Se importa saber se algo foi escrito, olha-se `git status` / `git diff` —
   mesma família do "artefato que não foi verificado não conta como verificado".
+- ⚠️ **`permissionMode: plan` NÃO segurou.** `.claude/agents/fable-architect.md:6` já trazia
+  `permissionMode: plan` quando o `e1db1c9` foi escrito e commitado. São dois fatos conferidos (a
+  linha está lá; o commit existiu); **por qual caminho a escrita passou, eu NÃO sei e não registro
+  palpite.** O que fica é a consequência: **não tratar `permissionMode: plan` como portão.**
+
+### Quem foi IMPOSSIBILITADO por configuração e quem ainda DEPENDE da regra (2026-08-25)
+
+**A distinção importa e por isso está escrita:** três dos cinco papéis agora não conseguem escrever
+nem que queiram; os outros dois conseguem, e para eles a regra é a única coisa que segura. Ler a
+lista errada é achar que o problema está resolvido para todo mundo.
+
+🔒 **IMPOSSIBILITADOS POR CONFIGURAÇÃO — `Bash` REMOVIDO em 2026-08-25 (decisão do dev):**
+`fable-architect`, `scout` e `senior-reviewer`. Os três são papéis de **leitura**; nenhum tinha
+`Write`/`Edit`, e o `Bash` era a porta pela qual a ocorrência nº 3 passou. Ficaram com
+`Read, Grep, Glob`. **Para eles a regra virou impossibilidade, não obediência.**
+- ⚠️ **Custo assumido, e é real: o `senior-reviewer` não roda mais `git diff` sozinho.** O corpo
+  dele foi reescrito na MESMA mudança — a sessão principal produz o `--stat` e os diffs por arquivo
+  e passa no pedido. **Papel instruído a rodar comando que não tem ferramenta para rodar é a
+  armadilha da §"o `doc-writer` NÃO APAGA"**, e teria sido criada aqui se só o cabeçalho mudasse.
+- ⚠️ **Custo menor, também assumido:** o `jq` com filtro da §"Leitura de `src/data/`" deixou de
+  estar disponível para esses três. Eles usam `src/fixtures/dataset-semente/`; consulta ao dataset
+  real passa a ser pedida à sessão principal.
+
+🔓 **AINDA DEPENDEM DA REGRA — mantêm `Write`, `Edit` e `Bash`:** `doc-writer` e `junior-dev`.
+**É intencional: o papel deles é ESCREVER**, e tirar a ferramenta os inutilizaria. **As ocorrências
+nº 1 e nº 2 foram os dois do `doc-writer`** — ou seja, o papel com mais histórico de estrago é
+justamente o que não dá para fechar por configuração. **Para estes dois, o único portão é a
+auditoria da sessão principal antes do commit.** Quem for afrouxar o fluxo deles ("é só doc",
+"é baixo risco") está mexendo exatamente onde não há rede.
 
 ---
 
@@ -133,6 +160,10 @@ documentação do projeto somada. **Uma única leitura dele estoura a sessão in
 - **Para consultar um dado específico:** `jq` ou `grep` **com filtro**, retornando só o registro
   procurado (ex.: `jq '.[] | select(.equipe=="Ferrari" and .ano==2004)' src/data/equipe-anos.json`).
   Nunca o arquivo inteiro, nunca `jq '.'`.
+  ⚠️ **Desde 2026-08-25 o `jq` NÃO está disponível para `fable-architect`, `scout` e
+  `senior-reviewer`** — eles perderam o `Bash` (ver §"NENHUM SUBAGENTE COMMITA"). A ferramenta
+  `Grep` com filtro continua valendo para eles; **consulta que exija `jq` se pede à sessão
+  principal**, que devolve só o registro.
 - **No `git diff`:** se `src/data/*.json` aparecer no diff, reportar **só a contagem de linhas
   alteradas** (`--stat`), jamais o conteúdo.
 
