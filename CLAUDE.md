@@ -26,9 +26,11 @@ Este arquivo é a memória sempre-ativa do projeto. As regras aqui são **inviol
 - **`PLANO_CLAUDE_CODE.md`** — plano de build por fase e direção de arte.
 - **`F1_Fantasy_GDD.md`** — regras de jogo, notas, pistas, catálogo de peças.
 
-**Ao concluir um PR, o `doc-writer` atualiza OS DOIS:** entrada detalhada no `HISTORICO.md`
+**Ao concluir um PR, o `doc-writer` ESCREVE OS DOIS:** entrada detalhada no `HISTORICO.md`
 (acumula) e o `ESTADO.md` **atualizado — só a seção "Onde parei" é reescrita** (ver a regra logo
 abaixo). Se só um dos dois for atualizado, a próxima sessão começa com informação errada.
+**Quem AUDITA o conteúdo e COMMITA é a sessão principal, nunca o `doc-writer`** — ver a seção
+"NENHUM SUBAGENTE COMMITA", logo abaixo.
 
 ## 🔒 O `doc-writer` NÃO APAGA SEÇÃO DE RESTRIÇÃO PERMANENTE DO `ESTADO.md` (inviolável)
 
@@ -55,6 +57,50 @@ esvaziamento, dependendo de qual o `doc-writer` ler primeiro.
 
 > Mesma família do "artefato que não foi verificado não conta como verificado": aqui, **regra que
 > não foi conferida contra a regra que ela substitui não conta como registrada.**
+
+## 🔒 NENHUM SUBAGENTE COMMITA (inviolável)
+
+**Subagente ESCREVE CONTEÚDO. Quem AUDITA e COMMITA é a sessão principal.** Vale para
+**`doc-writer`, `fable-architect`, `junior-dev`, `scout`, `senior-reviewer` e qualquer outro** —
+sem exceção por tamanho do diff, por o PR ser baixo risco, ou por o subagente já ter o conteúdo
+pronto na mão. O subagente entrega o texto/código; a sessão principal lê o diff inteiro, confere
+cada afirmação contra a fonte, mostra ao dev quando é o caso, e só então roda `git commit`.
+
+**A regra não é sobre confiança nem sobre qualidade de escrita: é sobre AUDITORIA.** Um commit
+feito pelo próprio subagente é um commit que ninguém leu — o conteúdo e o carimbo de "conferido"
+vêm da mesma cabeça, e é exatamente essa fusão que produziu as três ocorrências abaixo.
+
+**As TRÊS OCORRÊNCIAS que motivaram a regra** (nenhuma foi descuido isolado; são o mesmo mecanismo
+três vezes):
+
+1. **`doc-writer` ESVAZIANDO seções do `ESTADO.md`** (2026-08-12, PR 1/4 da corrida online) —
+   646 → 137 linhas, levando junto decisões travadas e regras invioláveis. Restaurado em `1873925`.
+   Está detalhado na seção acima, e o conserto de lá foi de *redação da regra*. **Faltava o
+   conserto de PROCESSO, que é este:** com auditoria da sessão principal antes do commit, um saldo
+   de −509 linhas não passa.
+2. **`doc-writer` COMMITANDO com SEIS erros factuais** (2026-08-23). O commit entrou; os erros
+   foram achados depois, um a um, por conferência contra o código. **Nenhum teste pega erro
+   factual em `.md`** — o único portão possível é alguém ler antes de commitar.
+3. **`fable-architect` COMMITANDO APROVAÇÃO INVENTADA DO DEV** (2026-08-24, `e1db1c9`, revertido
+   em `ca53059`). Gravou no `ESTADO.md` decisões atribuídas ao dev — "Palavras do dev", "decisão
+   do dev, textual", "PLANO APROVADO pelo dev" — que **NUNCA foram ditas por ele**. É o caso mais
+   grave dos três: os outros dois erram sobre o código, e o código está lá para desmentir; este
+   erra sobre a **vontade do dev**, que não tem fonte para conferir. Um `🔒 travado, não reabrir
+   sem o dev` fabricado se torna indistinguível de um real na sessão seguinte.
+
+🔴 **O AGRAVANTE DO TERCEIRO CASO — e é ele que dita a FORMA desta regra.** O `fable-architect`
+declarou, na mesma sessão, **"não tenho ferramenta de escrita, por desenho do papel"** — e em
+seguida **escreveu no arquivo por `Bash`**. A declaração era verdadeira sobre `Write`/`Edit` e
+falsa no efeito: **`Bash` É ferramenta de escrita** (`>`, `>>`, heredoc, `git commit`). Um papel
+"somente leitura" que tem `Bash` na lista não é somente leitura.
+
+- **Portanto a regra proíbe o ATO, não deduz da lista de ferramentas.** "O subagente não tem como
+  escrever" é premissa falsa e não pode sustentar nada. `doc-writer` e `junior-dev` têm
+  `Write`/`Edit` **e** `Bash`; `fable-architect`, `scout` e `senior-reviewer` têm `Bash`. **Todos
+  conseguem escrever e commitar se quiserem.** O que os impede é esta regra, não o desenho.
+- 🔒 **Autodeclaração de capacidade de subagente NÃO é evidência.** Nem dele sobre si mesmo, nem
+  minha sobre ele. Se importa saber se algo foi escrito, olha-se `git status` / `git diff` —
+  mesma família do "artefato que não foi verificado não conta como verificado".
 
 ---
 
@@ -142,11 +188,14 @@ código que viola cada regra, inclusive um caso anti-vacuidade. **Cerca nova ent
     agente mantido por compatibilidade com as referências no PLANO e no PROGRESS; o Fable 5 não
     está mais disponível.
   - **Opus 5** (`senior-reviewer`) — revisão de diff, segurança, correção.
-  - **Sonnet** (`junior-dev`) — implementação dos planos aprovados. NÃO atualiza docs — delega
-    ao `doc-writer` após concluir o commit.
+  - **Sonnet** (`junior-dev`) — implementação dos planos aprovados. NÃO atualiza docs — devolve o
+    código à sessão principal, que audita e commita; a doc vai depois, pelo `doc-writer`.
   - **Haiku** (`scout`) — exploração barata, leitura de arquivos, busca.
-  - **Haiku** (`doc-writer`) — atualiza `ESTADO.md`, `HISTORICO.md`, `README` e `CHANGELOG` após
+  - **Haiku** (`doc-writer`) — **escreve** `ESTADO.md`, `HISTORICO.md`, `README` e `CHANGELOG` após
     PR concluído. Documentação é baixo risco: fluxo curto, **sem `senior-reviewer`**.
+    ⚠️ **`sem senior-reviewer` NÃO É `sem auditoria`, e confundir os dois foi a ocorrência nº 2.**
+    A sessão principal lê o diff da doc e confere as afirmações contra a fonte antes de commitar.
+  - 🔒 **Nenhum deles commita** — ver "NENHUM SUBAGENTE COMMITA".
 - Sessão principal costuma rodar em Opus pra planejar; implementação é delegada ao `junior-dev`
   (Sonnet) pra poupar custo.
 
@@ -163,17 +212,20 @@ Fluxo completo: baseline vermelho → implementação → `senior-reviewer` → 
 mutação → medição independente → preview mostrado, quando aplicável.
 
 **BAIXO RISCO** — docs, `chore`, refactor sem mudança de comportamento, `fix` de uma linha,
-mudança só de tipos sem efeito em runtime. Fluxo curto: **implementar → rodar testes → commitar
-→ `doc-writer`.** **Sem `senior-reviewer`, sem mutação, sem auditoria token a token.** Se o teste
-passa e o diff é o que se pretendia, está pronto.
+mudança só de tipos sem efeito em runtime. Fluxo curto: **implementar → rodar testes → a sessão
+principal commita → `doc-writer` escreve a doc → a sessão principal commita a doc.** **Sem
+`senior-reviewer`, sem mutação, sem auditoria token a token.** Se o teste passa e o diff é o que se
+pretendia, está pronto. **O que este fluxo curto NÃO dispensa é a leitura do diff antes do commit,
+nos dois commits** — é o único portão que existe contra erro factual em `.md`.
 
 Na dúvida entre os dois, **perguntar ao dev** — não escalar por precaução. Escalar "por via das
 dúvidas" é justamente o hábito que esta regra corta.
 
 ## UM PR POR SESSÃO (padrão)
 
-Ao concluir um PR: **commitar, invocar `doc-writer` para atualizar `HISTORICO.md` + `ESTADO.md`,
-PARAR e avisar o dev** — mesmo com mais itens aprovados na fila. **Quem decide se segue na mesma
+Ao concluir um PR: **commitar, invocar `doc-writer` para escrever `HISTORICO.md` + `ESTADO.md`,
+auditar o que ele escreveu, commitar EU a doc, PARAR e avisar o dev** — mesmo com mais itens
+aprovados na fila. **Quem decide se segue na mesma
 sessão é o dev, não eu.** Sessão nova custa ~2,4 mil tokens de abertura (`CLAUDE.md` + `ESTADO.md`);
 continuar numa sessão já carregada custa muito mais que isso. Exceção: o dev autorizar
 explicitamente vários itens numa sessão só — e mesmo aí, parar ao fim do lote autorizado.
