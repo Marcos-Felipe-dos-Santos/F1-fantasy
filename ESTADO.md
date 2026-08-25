@@ -446,7 +446,9 @@ e `derivarNotasEquipe` (`:584`) computam sobre **pools de percentil chaveados po
 `constructorId`**. O nome exibido e o slug do id **não entram em conta nenhuma** — trocar o dataset
 move os rótulos, não as notas. É esta linha que sustenta o veredito verde.
 
-✅ **A normalização é UMA SÓ, num arquivo só, em 3 sítios.**
+✅ **A normalização é UMA SÓ, num arquivo só, em 4 SÍTIOS.**
+📏 **CORREÇÃO 2026-08-25 — o registro dizia 3; são 4. O que faltava é `:705`**, o bullet novo no fim
+desta lista. **Isto é MEDIÇÃO, não veredito**: método no próprio bullet.
 ⚠️ **CORREÇÃO DE ÂNCORA — o arquivo é `scripts/derivar-notas.ts`, NÃO `scripts/agregar-fatos.ts`.**
 As três linhas ditadas conferem, mas **naquele** arquivo; `idsDaEquipeAno` **não existe** em
 `agregar-fatos.ts` (medido: zero ocorrência no repo fora de `derivar-notas.ts`). Mesma família das
@@ -456,6 +458,18 @@ duas correções de âncora do inventário acima. Os sítios:
   `` piloto: (driverId) => `${base}-piloto-${driverId}` ``.
 - **`:691-692`** — `nome: titularesDaEquipe[0|1].nome`, o nome exibido do piloto.
 - **`:698`** — `equipe: equipe.nome`, o nome exibido da equipe.
+- 📏 **`:705` — O SÍTIO QUE FALTAVA (medido em 2026-08-25).** O campo `nome` do estrategista é
+  **montado por interpolação**, em tempo de construção:
+  `` nome: `Estrategista ${equipe.nome} ${season}` `` — o nome da equipe entra dentro de uma string,
+  não como campo próprio. **Método:** linha lida direto em `scripts/derivar-notas.ts:703-706`;
+  contagem por agregado sobre `src/data/equipe-anos.json` (nenhuma leitura integral) —
+  **771 entradas · 771 `estrategista.nome` presentes · 771 distintos**, ou seja **um por equipe-ano,
+  sem buraco**; e materialização conferida na fixture,
+  `src/fixtures/dataset-semente/equipe-anos.json:27` → `"Estrategista Red Bull 2023"`.
+  🔑 **O que a medição implica (e é implicação, não veredito):** anonimização que percorra apenas
+  campos **enumerados** não alcança este — o nome está dentro do valor, não na chave. Uma abordagem
+  por varredura de **texto** o alcança; uma por caminhada de **campo** só o alcança se alguém tiver
+  lembrado dele. **Qual abordagem adotar é decisão de plano, e não está decidida aqui.**
 
 ✅ **Hash do protocolo: INÓCUO entre builds.** O nome da equipe entra literalmente na string hasheada
 (`src/net/hash-draft.ts:68`, ver inventário), e mesmo assim não vira divergência, por dois elos
@@ -532,6 +546,39 @@ dá; a nº 5 diz qual é o RISCO hoje, e ela é binária — não depende de cla
 
 ✅ **A fixture confere EXATAMENTE o ditado**: `src/fixtures/dataset-semente/` tem **22 entradas / 10
 nomes de equipe distintos / 44 ids de piloto**, contra **771 / 105 / 1.542** do dataset real.
+
+📏 **MEDIÇÃO 2026-08-25 — `seedDaEtapa` CONSOME id de pista.** **Método:** leitura direta de
+`src/engine/campeonato.ts:38-39`, que é
+`export function seedDaEtapa(seedBase: number, pistaId: string)` devolvendo
+`` deriveSeed(seedBase, `camp:${pistaId}`) ``. O id da pista entra **literalmente na string
+hasheada**. O docblock acima da função (`:29-37`) já registrava que o formato `camp:${pistaId}` é
+literal e que trocar o **prefixo** muda todas as seeds derivadas; **a medição de agora é o outro
+lado da mesma frase: trocar o `pistaId` faz o mesmo.**
+🔑 **O que isso implica, e é implicação de MEDIÇÃO, não veredito:** renomear **id** de pista não é
+rename de rótulo — muda a seed da etapa e portanto a corrida simulada. **Nome exibido não passa por
+aqui**, o que é por que a T1 (`Montreal`, id intocado) é gratuita e o id do Red Bull Ring não é.
+⚠️ **Esta medição NÃO decide nada sozinha** — o que decidiu foi a §"NOMES FICTÍCIOS — DECISÕES DO
+DEV" (T2 adiada). Registrado separado de propósito: **medição e veredito não moram na mesma linha.**
+
+📏 **MEDIÇÃO 2026-08-25 — `src/data/equipe-anos.json` é CÓPIA MANUAL do derivado, e NENHUM script
+faz a cópia.** **Método, três elos:**
+- **São byte a byte idênticos.** `git hash-object` devolve **o mesmo `7c47fa0f`** para
+  `scripts/derived/equipe-anos.derivado.json` e `src/data/equipe-anos.json`; `cmp` entre os dois sai
+  **exit 0**. (Nenhuma leitura de conteúdo — só hash e comparação.)
+- **Nada escreve em `src/data/`.** Varredura de `writeFileSync`/`renameSync` em `scripts/*.ts`
+  (fora de teste): os três escritores são `fetch-f1-data.ts:282-283`, `agregar-fatos.ts:803-804` e
+  `derivar-notas.ts:755-756` — e o destino deste último é `OUTPUT_PATH_PADRAO`, sob
+  `DERIVED_DIR_PADRAO` (`:168`), isto é **`scripts/derived/`**. Nenhum `copyFile` no repo.
+  Os `npm scripts` também não têm passo de cópia (`dataset:fetch`/`fatos`/`notas`/`report`).
+- **É por desenho, e está escrito no código:** `scripts/derivar-notas.ts:8` — *"o output é STAGING
+  (o swap pra `src/data/` é o PR 4.5)"*. O swap **foi** um PR manual: `8d2493a`.
+🔑 **A consequência medida: não existe guarda.** Rodar `npm run dataset:notas` atualiza **só**
+`scripts/derived/`; se `src/data/` divergir do derivado, **nenhum teste falha e nada avisa** — a
+identidade de hoje é resultado de alguém ter copiado certo, não de um portão. **Ambos os arquivos
+são rastreados** (`git ls-files scripts/derived/` devolve os dois `.json`).
+⚠️ **Isto é o estado medido, não um pedido de conserto.** Se a trilha dos nomes fictícios for
+gerar dataset novo, ela herda este passo manual — quem planejar decide se o transforma em script,
+em cerca, ou em nada. **Nada foi alterado.**
 
 ---
 
