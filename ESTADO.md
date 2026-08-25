@@ -478,6 +478,21 @@ medidos: **(1)** o handshake de `VERSAO_APP` já separa — `src/net/servidor-sa
 `versao-divergente` em `:789` e `:891`; **(2)** o digest cobre `src/data/**` ⇒ **trocar o dataset
 FORÇA o bump**, então dois builds com datasets diferentes não compartilham sala. Dentro de uma sala,
 todos rodam o mesmo dataset ⇒ hash consistente por construção.
+📏 **ESCOPO AMPLIADO em 2026-08-25 — a CONCLUSÃO não muda; o que muda é contra o que ela foi
+verificada.** Esta linha foi medida contra uma carga **estreita**: só `${equipe}@${ano}`. **Medido
+agora, a carga do `hashDoDraft` inclui TAMBÉM os seis ids de loadout** —
+`pilotoId`, `chassiId`, `motorId`, `estrategistaId`, `pitId`, `pecaId` (`src/net/hash-draft.ts:64-66`,
+consumidos em `:109-110`). **Isso importa porque a decisão P muda `pecaId` já no PR 3**, ou seja o
+hash do draft se move ANTES da troca de dataset — caso que a redação acima não cobria.
+✅ **Re-medido no escopo largo e continua INÓCUO:** `src/engine/versao.test.ts:96` põe **todo `.json`
+de `src/data/`** no digest (`arquivosDe(src/data, (n) => n.endsWith('.json'))`), então **o PR 3
+(`pecas.json`) força o bump exatamente como o PR 6**, e o handshake separa os builds nos dois casos.
+🔑 **O desenho já antecipava esta classe:** o digest inclui `hash-draft.ts` em `FONTES_DE_NET`
+(`:89`) pelo motivo escrito em `:85-87` — mudança no formato do hash faria "cliente velho e novo
+hashearem estados IDÊNTICOS de formas diferentes, **alarme falso imediato**". **Mudar a CARGA é o
+mesmo risco que mudar o FORMATO**, e o mesmo portão cobre os dois.
+⚠️ **Registrado aqui, e não só no plano, porque conclusão herdada de um escopo mais estreito é
+afirmação não conferida** — a mesma regra que obriga corrigir a linha antiga junto com a nova.
 
 ✅ **`balance-harness`: o baseline depende dos NÚMEROS, não do nome.** Os dois lookups de
 `scripts/balance.ts` se comportam de formas opostas, e as duas são boas notícias:
