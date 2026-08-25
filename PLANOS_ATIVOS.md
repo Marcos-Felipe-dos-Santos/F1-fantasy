@@ -704,7 +704,36 @@ que a geometria carrega a identificação.
 
 ### Os 7 PRs
 
-**1. PORTÃO — a cerca que conta nome real, com o universo declarado DENTRO do teste.**
+**1. PORTÃO — ✅ FEITO em 2026-08-25.** `scripts/portao-nomes-reais.test.ts` +
+`scripts/caminhos-dataset.ts`. **Medido:** `npm test` **1603/65** (era 1592/64), typecheck **0**,
+eslint **0**. **BAIXO RISCO** — zero diff de comportamento. **5 mutações, todas VERMELHAS**,
+revertidas **por cópia** (o arquivo ainda não estava commitado — lição do 3.5.3) e cada reversão
+conferida por `git hash-object`.
+🔑 **BASELINE MEDIDO — 9.522 ocorrências em 6 arquivos**, universo de **909 agulhas**
+(916 − 7 deduplicadas: `brabham`, `mclaren`, `hill`, `prost`, `stewart`, `surtees`, `fittipaldi`
+foram piloto **E** construtor). Números por arquivo no `BASELINE` do próprio teste.
+🔑 **DOIS DESVIOS MEUS EM RELAÇÃO AO HANDOFF, os dois medidos e declarados:**
+- **Os IDs entraram no universo, além dos nomes exibidos.** O handoff dizia "105/353"; medido, um
+  portão só de nomes exibidos é **cego a `red-bull-2023-piloto-fangio`**, porque o id é o nome
+  slugado e minúsculo e a varredura é sensível a caixa. **Mutação M4 confirma:** tirar os ids deixa
+  `pistas.json` **verde** e derruba só 5 dos 11. O universo continua saindo de
+  `fatos-agregados.json` e a anti-vacuidade continua sendo 105/353 — agora em quatro campos.
+- **Fronteira não-alfanumérica nos dois lados.** Sem ela a métrica é o **substituto 2 reprovado**
+  renascendo: `rb` (Red Bull) casa dentro de `Nürburgring` e `pistas.json` acusava **4 ids
+  fantasma** em vez de 0; `sala`, `hall`, `massa`, `pace` e `gene` são driverIds reais que colidem
+  com palavra comum. **Não entrou allowlist** — a sobre-contagem conhecida (`massa` em
+  `peca-amortecedor-massa-renault`, 2 por arquivo de peças) fica **contada e registrada**, porque
+  portão que sobre-conta é seguro e o que sub-conta mente.
+🔑 **O PAR ANTI-VACUIDADE TEM AS DUAS METADES LOAD-BEARING, e isso foi medido, não suposto:**
+**M5** (carregador devolve vazio) derruba a asserção **105/353**, mas **M2** (a união deduplicada
+vira `[]`) **NÃO a derruba** — quem pega M2 é a asserção das **909**. São modos de falha diferentes;
+apagar qualquer uma das duas deixa um buraco.
+⚠️ **O QUE O PORTÃO NÃO COBRE, escrito no docstring dele:** código-fonte `.ts`/`.tsx` (é o PR 2),
+o **bundle** (é o PR 6 e a definição de pronto) e `scripts/derived/` (é o próprio universo — contar
+lá seria circular). **Quem ler este teste verde e concluir "não há nome real no repo" está errado.**
+
+*(Plano original do PR 1, preservado:)*
+**PORTÃO — a cerca que conta nome real, com o universo declarado DENTRO do teste.**
 - **O que:** teste novo que varre o repositório procurando os nomes reais e falha se a contagem
   passar de um teto commitado. **O baseline nasce no número de hoje** e daí em diante só encolhe.
 - 🔒 **VARREDURA DE TEXTO CRU, NUNCA CAMINHADA POR CAMPO.** É o sítio `derivar-notas.ts:705` que
@@ -823,8 +852,10 @@ medidos 105/105 nomes de equipe, 1.542/1.542 ids de piloto e 353/353 nomes exibi
 partir desse `dist/`, depois da troca, embarca os nomes reais e NENHUM teste falha.**
 🔒 **"Rebuildar antes do deploy" entra na definição de pronto do PR 6.**
 
-🟠 **A cópia manual `derived → src/data/` (PR 5).** Repetida aqui porque é o passo sem guarda no
-meio do PR de maior risco.
+🟢 **A cópia manual `derived → src/data/` — RESOLVIDA POR DECISÃO em 2026-08-25: vira script.** O
+`anonimizar.ts` do PR 5 passa a fazer a escrita e o passo manual morre ali; o destino já está
+declarado em `scripts/caminhos-dataset.ts` (`PUBLICADO_EQUIPE_ANOS`). **Segue listado como risco
+até o PR 5 existir** — hoje a cópia continua manual e sem guarda.
 
 🟠 **`pecas.json` é curado à mão** — nenhuma automação do pipeline o alcança, e é por isso que ele
 tem PR próprio (3) em vez de entrar na troca (6).
@@ -835,10 +866,25 @@ tocada se a T2 voltar.
 
 ### Pendências do dev, reunidas
 
-| PR | o que depende dele |
-|---|---|
-| 1 | qual universo o portão mede — fonte rastreada, bundle, ou os dois em camadas |
-| 3 | as 10 strings de **id** de peça (o nome está travado; o formato do id, não) |
-| 4 | **quem inventa os 458 nomes fictícios, e com que critério** — decisão de produto |
-| 5 | a cópia `derived → src/data/` vira script/cerca, ou fica manual e documentada |
+| PR | o que depende dele | resposta do dev (2026-08-25) |
+|---|---|---|
+| 1 | qual universo o portão mede | ✅ `scripts/derived/fatos-agregados.json`, lido pela constante única de `scripts/caminhos-dataset.ts` |
+| 3 | as 10 strings de **id** de peça | ✅ derivadas do nome despido, **mesmo esquema atual, sem esquema novo**: `peca-f-duct-mclaren` → `peca-f-duct` |
+| 4 | quem inventa os 458 nomes e com que critério | ✅ critério abaixo; **amostra de 20 ao dev ANTES de commitar as 458** |
+| 5 | a cópia `derived → src/data/` | ✅ **vira script** — o `anonimizar.ts` do PR 5 faz a escrita e o passo manual morre ali |
+
+🔒 **DECISÕES DO DEV DE 2026-08-25 — as quatro pendências acima estão FECHADAS. Não reabrir.**
+
+- **PR 1 — universo:** `fatos-agregados.json` via `scripts/caminhos-dataset.ts`. ✅ **FEITO** — ver
+  o bloco do PR 1 acima.
+- **PR 3 — ids de peça:** derivados do nome despido, **mesmo esquema de hoje**. Exemplo travado pelo
+  dev: `peca-f-duct-mclaren` → `peca-f-duct`. **Nada de esquema novo de id.**
+- 🔒 **PR 4 — critério dos 458 nomes, palavras do dev:** *"nomes plausíveis de equipe e piloto de
+  automobilismo, sem semelhança com nome real, sem trocadilho com marca"*. **A cerca de
+  quase-marca valida.** 🛑 **E o PR 4 tem portão de aprovação próprio: amostra de 20 mostrada ao
+  dev ANTES de commitar as 458.** Não é sugestão — é a condição de entrega do PR.
+- 🔒 **PR 5 — a cópia manual MORRE ali.** `anonimizar.ts` passa a escrever em `src/data/`, e o
+  destino já está declarado em `scripts/caminhos-dataset.ts` (`PUBLICADO_EQUIPE_ANOS`, criado no
+  PR 1 justamente para isso). **Some a medição "cópia byte a byte sem guarda nenhuma"** — que era o
+  risco 🟠 listado acima.
 

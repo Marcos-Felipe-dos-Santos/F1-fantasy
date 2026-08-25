@@ -157,16 +157,22 @@ export function slug(s: string): string {
 // o valor (já encolhido, se aplicável) é NEGADO antes de ranquear.
 
 import { mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { dirname } from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { DERIVED_DIR, EQUIPE_ANOS_DERIVADO } from './caminhos-dataset.ts';
 import type { BucketFatos, EquipeAnoFatos, FatosAgregados, TitularAnoFatos } from './agregar-fatos.ts';
 import { cmpStr, OUTPUT_PATH_PADRAO as FATOS_PATH_PADRAO } from './agregar-fatos.ts';
 import { PRIMEIRA_TEMPORADA_PITSTOPS } from './fetch-f1-data.ts';
 import { CHU_OVERRIDES, ULT_OVERRIDES } from './overrides-curados.ts';
 import type { NotasChassi, NotasMotor, NotasPiloto } from '../src/engine/types.ts';
 
-export const DERIVED_DIR_PADRAO = join(dirname(fileURLToPath(import.meta.url)), 'derived');
-export const OUTPUT_PATH_PADRAO = join(DERIVED_DIR_PADRAO, 'equipe-anos.derivado.json');
+/**
+ * ⚠️ Reexportados de `./caminhos-dataset.ts` desde o PR 1 da trilha do dataset
+ * fictício — antes o caminho de `derived/` estava duplicado aqui e em
+ * `agregar-fatos.ts`. Os NOMES ficam, então nenhum consumidor mudou.
+ */
+export const DERIVED_DIR_PADRAO = DERIVED_DIR;
+export const OUTPUT_PATH_PADRAO = EQUIPE_ANOS_DERIVADO;
 
 /** Faixa comprimida do CALL/SANGF (estrategista) — decisão do plano aprovado. */
 export const FAIXA_CALL: readonly [number, number] = [35, 80];

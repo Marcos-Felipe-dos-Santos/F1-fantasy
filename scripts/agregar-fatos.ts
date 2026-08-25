@@ -50,7 +50,8 @@
 
 import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { pathToFileURL } from 'node:url';
+import { DERIVED_DIR, FATOS_AGREGADOS } from './caminhos-dataset.ts';
 import { mapearStatus, statusEhConhecido, statusEhLargada, type CategoriaStatus } from './status-map.ts';
 import { CACHE_DIR_PADRAO, PRIMEIRA_TEMPORADA, PRIMEIRA_TEMPORADA_PITSTOPS, ULTIMA_TEMPORADA } from './fetch-f1-data.ts';
 import { lookupBucket, type BucketCircuito } from './circuit-buckets.ts';
@@ -63,8 +64,14 @@ const INDY_CIRCUIT_ID = 'indianapolis';
 const INDY_PRIMEIRA_TEMPORADA = 1950;
 const INDY_ULTIMA_TEMPORADA = 1960;
 
-export const DERIVED_DIR_PADRAO = join(dirname(fileURLToPath(import.meta.url)), 'derived');
-export const OUTPUT_PATH_PADRAO = join(DERIVED_DIR_PADRAO, 'fatos-agregados.json');
+/**
+ * ⚠️ Reexportados de `./caminhos-dataset.ts` desde o PR 1 da trilha do dataset
+ * fictício. Antes, o `join(dirname(fileURLToPath(...)), 'derived')` estava
+ * duplicado aqui e em `derivar-notas.ts` — duas definições que precisavam
+ * concordar. Os NOMES ficam, então nenhum consumidor mudou.
+ */
+export const DERIVED_DIR_PADRAO = DERIVED_DIR;
+export const OUTPUT_PATH_PADRAO = FATOS_AGREGADOS;
 
 // ---------------------------------------------------------------------------
 // Tipos do envelope MRData crus (subset usado — mesmo formato do PR 4.1).
