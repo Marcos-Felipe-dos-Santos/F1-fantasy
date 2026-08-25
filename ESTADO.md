@@ -1091,6 +1091,58 @@ deixou de ser inalcançável — tem seletor, encadeia corridas, salva e retoma)
 6. **Decisão de arte ainda aberta:** o `88/40%` da zebra (seção própria abaixo) — não foi tocado
    pela aprovação dos portões.
 
+## 🔒 NOMES FICTÍCIOS — DECISÕES DO DEV, ditadas em 2026-08-25. Não reabrir sem ele.
+
+📌 **PROVENIÊNCIA, e ela é parte da decisão.** Estas três decisões foram **ditadas pelo dev em
+2026-08-25**, nesta sessão, e transcritas por mim. Fica registrado que o commit `e1db1c9`
+(2026-08-24) já havia gravado três vereditos **com o mesmo assunto** atribuindo-os ao dev — "Palavras
+do dev", "decisão do dev, textual", "PLANO APROVADO pelo dev" — **sem que ele os tivesse dito**; foi
+revertido em `ca53059`. 🔑 **O conteúdo de lá coincidir em parte com o que o dev decidiu de fato NÃO
+o torna retroativamente válido** — aprovação inventada que por acaso acerta continua não sendo
+aprovação, e é por isso que a proveniência entra escrita aqui em vez de o texto ser reaproveitado.
+Regra de processo que saiu daí: `CLAUDE.md` §"NENHUM SUBAGENTE COMMITA".
+
+🔒 **DECISÃO P — APROVADA. As 10 peças perdem a MARCA e o CÓDIGO DE MODELO, mantêm a INOVAÇÃO.**
+
+    Efeito solo · Duplo difusor · Difusor soprado · F-duct · Amortecedor de massa ·
+    Suspensão ativa · Seis rodas · DAS · Freio-direção · Carro-ventoinha
+
+**Os ids mudam junto** — não é troca só de rótulo exibido.
+
+🔒 **DECISÃO T — T1 ENTRA; T2 ADIADA (adiada, não recusada).**
+- ✅ **T1 — `src/data/pistas.json`: `"Montreal (Gilles Villeneuve)"` → `"Montreal"`.** **Só o nome
+  exibido; o id NÃO é tocado.** ✅ âncoras conferidas nesta sessão: o par está em `pistas.json:93-94`,
+  `"id": "pista-montreal"` / `"nome": "Montreal (Gilles Villeneuve)"`. **Entra na trilha.**
+- ⏸️ **T2 — `pista-red-bull-ring` fica FORA desta trilha. ADIADA; reavaliar quando a trilha
+  principal fechar.** **Motivo do dev: `seedDaEtapa` consome id de pista**, então trocar o id **é
+  mudança de COMPORTAMENTO, não rename** — e por isso exigiria **consertar a pendência 0(z) inteira
+  junto**. ✅ âncora conferida nesta sessão: `src/engine/campeonato.ts:38-39` —
+  `export function seedDaEtapa(seedBase: number, pistaId: string)` devolvendo
+  `deriveSeed(seedBase, \`camp:${pistaId}\`)`. A 0(z) está registrada na §"Onde parei" (degradação
+  silenciosa de traçado); **o motivo acima é auto-suficiente e não depende dela para se entender.**
+- ✅ **CONTRA renomear as outras 9 pistas.** **O teste cego 10/10 provou que a GEOMETRIA carrega a
+  identificação**, não o rótulo — ver §"OS DOIS PORTÕES VISUAIS". Renomear compra ~nada e paga o
+  custo inteiro.
+
+🔒 **DECISÃO H — (a): ACEITAR O RESÍDUO DO HISTÓRICO. Repo privado.**
+🔴 **"PRONTO PARA DEPLOY" NÃO INCLUI O HISTÓRICO DO GIT — e isso é DECISÃO CONSCIENTE do dev, não
+esquecimento.** A troca de dataset limpa o que é distribuído; `git log`/`git show` seguem servindo
+nome real. ✅ **Medido nesta sessão:** **5 commits** tocam `src/data/equipe-anos.json` (`a7d54bb`,
+`a711b38`, `bc60799`, `8d2493a`, `916ec41`). Quem ler "nomes fictícios entregues" e concluir "o repo
+está limpo" está errado — esta linha existe para impedir essa leitura.
+- ❌ **(b) reescrever o histórico está DESCARTADA.** Motivo do dev: **invalida todas as SHAs citadas
+  no `ESTADO.md` e no `HISTORICO.md`** — e este projeto cita SHA o tempo todo (`1873925`, `ca53059`,
+  `922bdd0`, `897121f`, `e1db1c9`…). O dano documental é maior que o ganho.
+- 📌 **(c) REGISTRADA como a saída SE o código abrir um dia:** espelho público **a partir de árvore
+  achatada**, preservando o repo privado e as citações internas de SHA intactas. Não é o plano de
+  agora; é o caminho já escolhido para quando a pergunta voltar.
+
+✅ **PLANO DE 7 PRs — APROVADO pelo dev, começando pelo PORTÃO.**
+⚠️ **O que está travado é ISTO: são 7 PRs e o primeiro é o portão.** O **detalhamento PR a PR não
+foi ditado pelo dev** e portanto **não é decisão travada** — quem for executar propõe o recorte dos
+7 e confirma com ele. **Não tratar nenhuma lista de 7 itens encontrada em commit revertido como
+aprovada.**
+
 ## Decisões travadas da PALETA (7.8 — ✅ APROVADA pelo dev, não reabrir sem ele)
 
 - 🔒 **Os três acentos da marca são IDÊNTICOS nos dois modos onde são PREENCHIMENTO.** Onde a cor
