@@ -8,7 +8,20 @@
 
 ## Estado atual
 
-**Última medição (2026-08-23, na branch `fix-0s-sala-zumbi` — conserto da 0(s), pós-revisão):**
+**Última medição (2026-08-25, na `main` — PR 2 da trilha de nomes fictícios, `50bda11`):**
+`npm test` **1603/65** em **2 rodadas pós-mudança** — **INALTERADO em relação ao PR 1 (`fc6fb6a`),
+que já media 1603/65**; foi o PR 1 que subiu de 1592/64, não este. **`npm run test:party` 19/19**,
+typecheck **0** nos três projetos, eslint **0**, build **0**.
+⚠️ **`VERSAO_APP` fica em 3.4.3, mas NÃO porque o digest ficou parado — ele MUDOU.**
+`src/engine/draft-test-fixtures.ts` mora em `src/engine/` e **não** tem sufixo `.test.ts`, então
+entra no escopo do digest: `9dccd150` → **`96c4f6b1`**, colado em `src/engine/versao.test.ts:36`.
+**O não-bump é o caso "Não" que o próprio `versao.test.ts` descreve** — o arquivo é consumido só por
+`bots.test.ts` e `draft.test.ts`, zero efeito em runtime.
+✅ **Bundle byte a byte INALTERADO, medido pelo hash de conteúdo do chunk:** `index-C10zYSkb.js`,
+o **mesmo** registrado no inventário de nomes reais (§Onde parei) — o que também confirma que os
+105/1.542/353 daquela contagem seguem valendo.
+
+*(Medição anterior, 2026-08-23, na branch `fix-0s-sala-zumbi` — conserto da 0(s), pós-revisão):*
 `npm test` **1592/64** em **3 rodadas**, **`npm run test:party` 19/19** (era 16/16), typecheck **0**
 nos três projetos, eslint **0**, build **0**. `VERSAO_APP` **3.4.3** (inalterado — o diff de
 produção é um `else if` na casca, e o digest não cobre `party/`).
@@ -1746,6 +1759,28 @@ casca deixa de ser terra sem teste; a opção conhecida é `@cloudflare/vitest-p
    **Conserto natural, quando vier:** cerca que assere os ids de pista **por valor literal**, não por
    acoplamento entre as duas fontes, e trocar a non-null assertion de `TelaInicio.tsx:94` por erro
    explícito. **Só se aplica se o dev decidir trocar o dataset — é PR próprio e nada foi mexido.**
+   🔴 **(aa) ABERTA — A JANELA ENTRE O PR 6 E O PR 7 (medida no PR 2, 2026-08-25).**
+   🔒 **Decisão do dev, 2026-08-25: NÃO se decide agora — o caminho se escolhe no PR 5.** Não
+   bloqueia nada antes disso; os PRs 3, 4 e 5 não tocam neste ponto.
+   **Medido:** os 7 arquivos que importam `src/fixtures/referencias-dataset.ts` **não leem todos o
+   mesmo dataset**, e a trilha troca cada dataset num PR diferente:
+   - `scripts/balance.ts`, `alavancas.test.ts`, `balance.test.ts` → leem `src/data/` → **trocam no PR 6**
+   - `src/engine/corrida.test.ts` e `draft-test-fixtures.ts` (via `bots.test.ts`/`draft.test.ts`)
+     → leem `src/fixtures/dataset-semente/` → **trocam no PR 7**
+   - `scripts/dataset-report.ts`, `derivar-notas.test.ts` → leem `scripts/derived/` → **nunca trocam**
+     (o derivado segue com nome real por desenho, como o portão do PR 1 já registra)
+   🔑 **`RED_BULL_2023` é consumido pelos TRÊS.** Entre o PR 6 e o PR 7 existe uma janela em que
+   `src/data/` já é fictício e a fixture ainda é real — e **uma constante só não serve os dois
+   lados**. Nessa janela o `.find` do lado não-trocado deixa de achar: `balance.ts:52` **lançaria**
+   (ruidoso, bom) e `dataset-report.ts` imprimiria `'(não encontrado)'` (**silencioso, ruim**).
+   **Os dois caminhos, nenhum escolhido:** (A) particionar o módulo por dataset antes do PR 6;
+   (B) fazer o PR 6 e o PR 7 no mesmo PR.
+   ⚠️ **O funil NÃO criou esta janela** — ela existia igual com os literais espalhados por 7
+   arquivos, e nada a apontava. O que o PR 2 fez foi torná-la visível.
+   ⚠️ **Item menor da mesma pendência, e é o INVERSO do que parece:** `draft-test-fixtures.ts` está
+   no escopo do digest, mas **`src/fixtures/referencias-dataset.ts` NÃO está** — ou seja, **mudar
+   uma constante lá dentro não faz o digest subir**. Zero efeito hoje (é literal de teste, e o hash
+   do bundle prova), mas quem executar o PR 6/7 precisa saber.
 1. **Abertas pelo 7.8:** (a) o `BotaoTema` é um botão discreto no canto do `app-shell` — posição e
    forma **não passaram por veredito de arte**; (b) `erro` (salmão `#FF7B85`) e `raridadeProibido`
    (`#FF4757`) continuam sendo dois vermelhos ao lado do vermelho da marca — não foi mexido porque

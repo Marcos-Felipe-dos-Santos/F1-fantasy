@@ -2469,6 +2469,155 @@ Arquivo novo: `preview/campeonato-online.html` (não sobrescreve `preview/campeo
 
 ---
 
+## NOMES FICTÍCIOS — PR 2: funil de literais `equipe/ano` (2026-08-25, `50bda11` + `23ae516`) — BAIXO RISCO
+
+**Base:** `fc6fb6a` (PR 1 da trilha, o portão). **Plano:** `PLANOS_ATIVOS.md` §"NOMES FICTÍCIOS".
+
+### O que o PR fez
+
+Criou **`src/fixtures/referencias-dataset.ts`** e fez **44 sítios em 7 arquivos** importarem dele
+em vez de repetir o literal. **Nenhum valor mudou** — é refactor verde→verde.
+
+⚠️ **O módulo NÃO contém os 105 nomes de equipe nem os 353 ids de piloto, e NÃO deriva nada de
+`fatos-agregados.json`.** Ele guarda **~24 constantes `{ equipe, ano }` escritas à mão** — só os
+pares que algum código de fato usa para localizar uma entrada. Os 105/353 são o universo do
+**portão** (PR 1), que é outra coisa. Confundir os dois inverteria a regra central do módulo,
+logo abaixo.
+
+Arquivos tocados: `scripts/balance.ts`, `scripts/dataset-report.ts`, `scripts/alavancas.test.ts`,
+`scripts/balance.test.ts`, `scripts/derivar-notas.test.ts`, `src/engine/corrida.test.ts`,
+`src/engine/draft-test-fixtures.ts` e `src/engine/versao.test.ts` (só o digest).
+
+### 🔒 O módulo guarda LITERAIS e nunca resolve do dataset
+
+Derivar as constantes do dataset transformaria `scripts/balance.ts:50` no `loadoutsParadas`
+(`:219`) — round-trip auto-consistente, `throw` de `:221` **inalcançável**, **imune a rename**,
+como o inventário já mediu. O plano nomeia `balance.ts:50` como o **canário** que o PR 6 precisa
+ver quebrar. **Um canário que se conserta sozinho não é canário.**
+
+### A medição, com o método (é ele que faz a medida valer)
+
+- **Universo de agulhas:** os **105 `equipes[].nome`** de `scripts/derived/fatos-agregados.json` —
+  a mesma fonte do portão, lida pela mesma constante. **Só nomes de equipe**; ids de piloto não
+  entraram nesta medição (o escopo do PR é `equipe/ano`).
+- **Universo de arquivos:** `git ls-files` filtrado a `.ts/.tsx/.mjs/.js`, fora de `src/data/` e
+  `scripts/derived/` = **168 arquivos**.
+- **Contador:** o `contarComFronteira` do portão, sobre **texto cru**.
+- **ANTES: 18 arquivos / 80 sítios-linha. DEPOIS: 14 / 58**, dos quais **22 são o próprio módulo**.
+  **Arquivos que fazem LOOKUP de `equipe/ano`: 7 → 1.**
+
+🔑 **O funil não reduz o total de literais no repositório — ele os CONCENTRA.** 80 → 58 é o
+efeito de tirar a repetição; o que mudou de verdade é que o lookup saiu de 7 arquivos para 1.
+
+🔴 **ACHADO DE MÉTODO — uma passada MINHA foi descartada, e o registro fica.** A primeira
+varredura exigia **aspa adjacente** ao nome (`'Ferrari'`) e devolveu **12 arquivos**. É
+**sub-contagem**: nome dentro de string maior não casa — `derivar-notas.ts:705`
+(`` `Estrategista ${equipe.nome} ${season}` ``) renascido como heurística de varredura, a mesma
+armadilha que o portão do PR 1 documenta. A medida válida é a de texto cru, e é ela acima.
+**Isso explica por que o número do plano estava baixo.**
+⚠️ **NÃO se compara com o "substituto 1" (15 arquivos) do `ESTADO.md`:** universo diferente
+(166 vs 168 — os 2 a mais são `caminhos-dataset.ts` e `portao-nomes-reais.test.ts`, criados no
+PR 1) e método diferente. **Contagem com método diferente não corrige outra, só difere dela.**
+
+### O que ficou de fora, e cada um por um motivo
+
+- 🔒 **`scripts/portao-nomes-reais.test.ts:213-222`** — o literal **É** a cláusula anti-vacuidade
+  do PR 1. Funilar destruiria o teste.
+- 🔒 **DECISÃO DO DEV, 2026-08-25 — os ORÁCULOS PINADOS ficam literais:**
+  `scripts/balance.test.ts:38-43` e `src/ui/fluxo-draft-golden.test.ts:61-65`. São asserções de
+  **SAÍDA** contra o dataset real, não entradas de lookup; o comentário do primeiro já dizia que
+  re-pinar exige "decisão CONSCIENTE do dev". Perguntado se o Grupo B entrava, o dev respondeu
+  **"só o Grupo A"**. O PR 6 os toca à mão, visíveis no diff.
+  ⚠️ **O `balance.test.ts:38-43` foi classificado por mim como alvo e reclassificado ao ler o
+  código** — a leitura mostrou que era `toEqual` sobre a saída de `selecionarPilotosParadas`.
+- **`src/engine/types.test.ts`** — fixtures sintéticas, com ids (`'chassi-redbull-rb19-2023'`) e
+  notas inventados. Não tocam o dataset.
+- **`scripts/overrides-curados.ts`** — casa por `stewart`/`surtees`/`emerson_fittipaldi`, que são
+  **`driverId`**, não nome de equipe. Mesma sobre-contagem conhecida do `massa` no PR 1.
+- **`'Red Bull Ring'`** (`preview-redesenho`) é nome de **PISTA**; `preview-paleta` é rótulo em
+  HTML; e três casos são nome de equipe em **prosa** (título de `it(...)`).
+
+### Onde o módulo mora — decidido por medição do grafo de imports
+
+`scripts/` → `src/` **já acontece** (`scripts/alavancas.test.ts:11`); `src/` → `scripts/` tinha
+**zero ocorrências**. Criar a primeira inverteria a direção do grafo, e `caminhos-dataset.ts`
+importa `node:path`/`node:url`, que não podem entrar em `src/`. Daí `src/fixtures/`, que já é o
+lugar do artefato de dataset seguro de ler.
+✅ **Nenhuma cerca do `eslint.config.js` foi tocada** — um `.ts` em `src/fixtures/` não casa em
+nenhum padrão dos blocos `src/engine/**` (`:25`) nem `src/net/**` (`:93`). **A lição do PR 3.2
+("separar regra APAGA a regra") não se aplica: nenhuma regra foi separada nem redefinida.**
+
+### Portões — todos medidos
+
+- **`npm test` 1603/65**, em 2 rodadas pós-mudança. **INALTERADO em relação ao PR 1**, que já
+  media 1603/65 — foi o PR 1 que subiu de 1592/64. `npm run test:party` **19/19**.
+- **Portão de nomes: baseline INALTERADO** (9.522 em 6 arquivos), 11/11 verdes.
+- **`npm run balance`: saída IDÊNTICA.** 🔑 **O filtro de ruído foi estabelecido por MEDIÇÃO, não
+  por julgamento:** duas rodadas do **mesmo** commit `fc6fb6a`, sem alteração nenhuma, divergem em
+  **13 linhas**, e todas são de **4 formas** — `NNNms` no fim da linha, `Start at`, `Duration` e o
+  bloco `npm notice`. **Nenhum número do harness divergiu.** Filtrando só essas 4 formas, BEFORE,
+  BEFORE2 e AFTER têm o mesmo `sha256` (`e62fe729406e6bcb…`). Escolher o filtro depois de ver o
+  AFTER seria a "allowlist até o número ficar bonito" que aposentou a contagem 33/6/2.
+- **`npm run dataset:report`: 255 linhas, `sha256` idêntico (`c509049b0ea9dce58b7b…`), SEM filtro
+  nenhum** — duas rodadas no mesmo commit já dão saída igual.
+  🔑 **Esta medição existe porque `dataset-report.ts` levou 13 dos 44 sítios, incluindo a única
+  reescrita estrutural do PR** (`encontrarEquipe` de 3 para 2 parâmetros, a lista de tuplas virando
+  `SPOT_CHECKS_BUCKETS`, o novo `rotulo()`) — **e nenhum teste do `npm test` o executa.** O
+  typecheck só prova que compila. É justamente o arquivo que **degrada em silêncio**.
+  **Anti-vacuidade conferida:** os 9 sítios funilados imprimem valor real (`McLaren 1988 AERO: 93`,
+  `Red Bull 2011: aero=94 …`) e há **zero** ocorrências de `'(não encontrado)'`.
+- **typecheck 0, eslint 0, build 0.** Chunk `index-C10zYSkb.js` — **o mesmo hash de conteúdo**
+  registrado no inventário ⇒ **bundle byte a byte inalterado**.
+
+### `VERSAO_APP` fica em 3.4.3 — e o motivo NÃO é digest parado
+
+⚠️ **O digest MUDOU: `9dccd150` → `96c4f6b1`**, colado em `src/engine/versao.test.ts:36`.
+`src/engine/draft-test-fixtures.ts` mora em `src/engine/` e **não** tem sufixo `.test.ts`, então
+entra no escopo do digest **apesar de ser fixture só de teste** — é o mesmo defeito de
+classificação que o inventário já registrava ("um classificador ingênuo o chama de produção").
+**O não-bump é o caso "Não" que o próprio `versao.test.ts` descreve:** o arquivo é consumido só
+por `bots.test.ts` e `draft.test.ts` (medido), zero efeito em runtime — cola-se o digest sem bumpar.
+
+### O segundo commit (`23ae516`) — a docstring do portão
+
+O portão dizia: *"⚠️ **CÓDIGO-FONTE está FORA.** Este portão NÃO mede `.ts`/`.tsx`, e portanto NÃO
+cobre literais como o `'Red Bull'` de `scripts/balance.ts:50`. Isso é o PR 2 (funil de literais)."*
+**Lê como se o PR 2 fosse fechar essa cobertura — e ele não fechou.** O PR 2 **concentrou** os
+literais; **cerca sobre código-fonte ele não criou**: um `.find((e) => e.equipe === 'Red Bull')`
+novo entraria amanhã sem nenhum teste falhar. A docstring foi corrigida para dizer isso, com o
+número pós-funil (14 arquivos / 58 sítios, 22 no próprio módulo).
+
+### Capturas do BEFORE — guardadas, e GITIGNORED por decisão do dev
+
+`E:\projetos\F1 fantasy\preview\medicoes-pr2\`, com `LEIA-ME.md` trazendo **a receita do filtro**
+(que vale tanto quanto os arquivos: captura cujo filtro não foi registrado não é comparável
+depois), o levantamento e o script de medição.
+🔒 **Decisão do dev, 2026-08-25: NÃO commitar no repositório — ficam gitignored.**
+⚠️ **Consequência aceita:** `preview/` persiste em disco mas não no histórico; se a máquina do dev
+trocar, o BEFORE some e o PR 6 terá de regerá-lo a partir de `fc6fb6a`.
+
+### Pendência aberta
+
+A **janela entre o PR 6 e o PR 7** (os consumidores do módulo leem três datasets diferentes, que
+trocam em PRs diferentes) está registrada como item **(aa)** nas Pendências ATIVAS do `ESTADO.md`.
+🔒 **Decisão do dev: escolher o caminho no PR 5.**
+
+### Fluxo
+
+**BAIXO RISCO** — refactor sem mudança de comportamento. **Sem `senior-reviewer`**, conforme a
+regra de rigor proporcional. Um arquivo novo, 8 tocados. Fluxo: implementar → portões → a sessão
+principal commita o código → doc → a sessão principal commita a doc.
+⚠️ **A doc do `doc-writer` foi DESCARTADA e reescrita pela sessão principal.** A auditoria antes
+do commit encontrou **23 erros factuais** no texto entregue — entre eles uma **citação fabricada**
+da docstring do portão, a afirmação de que o módulo contém "105 nomes e 353 ids derivados de
+`fatos-agregados.json`" (que **inverte a regra central** do módulo), "nenhum arquivo do digest foi
+tocado" (o digest mudou), "filtro com `grep -v` em 13 padrões" (são 4 padrões; 13 é o número de
+linhas) e "seis meses atrás foram adicionados arquivos" (inventado — os 2 arquivos são do PR 1,
+do dia anterior). **É a ocorrência nº 2 do `CLAUDE.md` repetida**, e o portão que a pegou foi o
+único que existe: alguém ler o diff antes de commitar.
+
+---
+
 ## CORRIDA ONLINE — o plano aprovado (movido do `ESTADO.md` em 2026-08-18)
 
 > 📦 **Movido, não resumido.** Este texto vivia na §"🏁 CORRIDA ONLINE — o plano aprovado" do
