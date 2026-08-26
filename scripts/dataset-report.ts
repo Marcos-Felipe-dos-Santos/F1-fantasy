@@ -35,6 +35,14 @@ import type { FatosAgregados } from './agregar-fatos.ts';
 import { OUTPUT_PATH_PADRAO as FATOS_PATH_PADRAO } from './agregar-fatos.ts';
 import type { EquipeAnoDerivado } from './derivar-notas.ts';
 import { ajusteBucket, CAP_AJUSTE_BUCKET, OUTPUT_PATH_PADRAO as DERIVADO_PATH_PADRAO } from './derivar-notas.ts';
+import type { RefEquipeAno } from '../src/fixtures/referencias-dataset.ts';
+import {
+  FERRARI_2004,
+  MCLAREN_1988,
+  MINARDI_1995,
+  RED_BULL_2012,
+  SPOT_CHECKS_BUCKETS,
+} from '../src/fixtures/referencias-dataset.ts';
 
 // ---------------------------------------------------------------------------
 // Extração de atributos — 1 valor por entidade (piloto/equipe) com o ano.
@@ -147,8 +155,13 @@ function encontrarPiloto(derivado: readonly EquipeAnoDerivado[], driverIdSuffix:
   return entrada?.pilotos.find((p) => p.id.endsWith(`piloto-${driverIdSuffix}`));
 }
 
-function encontrarEquipe(derivado: readonly EquipeAnoDerivado[], equipeNome: string, ano: number) {
-  return derivado.find((e) => e.equipe === equipeNome && e.ano === ano);
+function encontrarEquipe(derivado: readonly EquipeAnoDerivado[], ref: RefEquipeAno) {
+  return derivado.find((e) => e.equipe === ref.equipe && e.ano === ref.ano);
+}
+
+/** Rótulo `"<equipe> <ano>"` das linhas de spot-check. */
+function rotulo(ref: RefEquipeAno): string {
+  return `${ref.equipe} ${ref.ano}`;
 }
 
 function imprimirSpotChecks(derivado: readonly EquipeAnoDerivado[]): void {
@@ -159,20 +172,20 @@ function imprimirSpotChecks(derivado: readonly EquipeAnoDerivado[]): void {
     console.log(`Senna ${ano} QUALI: ${senna ? senna.notas.quali : '(não encontrado)'}`);
   }
 
-  const mclaren1988 = encontrarEquipe(derivado, 'McLaren', 1988);
-  console.log(`McLaren 1988 AERO: ${mclaren1988 ? mclaren1988.chassi.notas.aero : '(não encontrado)'}`);
+  const mclaren1988 = encontrarEquipe(derivado, MCLAREN_1988);
+  console.log(`${rotulo(MCLAREN_1988)} AERO: ${mclaren1988 ? mclaren1988.chassi.notas.aero : '(não encontrado)'}`);
 
-  const ferrari2004 = encontrarEquipe(derivado, 'Ferrari', 2004);
-  console.log(`Ferrari 2004 AERO: ${ferrari2004 ? ferrari2004.chassi.notas.aero : '(não encontrado)'}`);
+  const ferrari2004 = encontrarEquipe(derivado, FERRARI_2004);
+  console.log(`${rotulo(FERRARI_2004)} AERO: ${ferrari2004 ? ferrari2004.chassi.notas.aero : '(não encontrado)'}`);
 
-  const minardi1995 = encontrarEquipe(derivado, 'Minardi', 1995);
-  console.log(`Minardi 1995 AERO: ${minardi1995 ? minardi1995.chassi.notas.aero : '(não encontrado)'}`);
+  const minardi1995 = encontrarEquipe(derivado, MINARDI_1995);
+  console.log(`${rotulo(MINARDI_1995)} AERO: ${minardi1995 ? minardi1995.chassi.notas.aero : '(não encontrado)'}`);
 
   const verstappen2023 = encontrarPiloto(derivado, 'max_verstappen', 2023);
   console.log(`Verstappen 2023 RIT: ${verstappen2023 ? verstappen2023.notas.rit : '(não encontrado)'}`);
 
-  const redbull2012 = encontrarEquipe(derivado, 'Red Bull', 2012);
-  console.log(`Red Bull 2012 PIT_TEMPO: ${redbull2012 ? redbull2012.pit.notas.pitTempo : '(não encontrado)'}`);
+  const redbull2012 = encontrarEquipe(derivado, RED_BULL_2012);
+  console.log(`${rotulo(RED_BULL_2012)} PIT_TEMPO: ${redbull2012 ? redbull2012.pit.notas.pitTempo : '(não encontrado)'}`);
 }
 
 // ---------------------------------------------------------------------------
@@ -206,21 +219,14 @@ function imprimirDistribuicaoBuckets(fatos: FatosAgregados): void {
 
 function imprimirSpotChecksBuckets(derivado: readonly EquipeAnoDerivado[]): void {
   console.log('\n--- Spot-checks AERO/MEC/MOTOR (informativo — não falha o script) ---');
-  const casos: Array<[string, number]> = [
-    ['Red Bull', 2011],
-    ['Mercedes', 2015],
-    ['McLaren', 2015],
-    ['Ferrari', 2004],
-    ['McLaren', 1988],
-  ];
-  for (const [nome, ano] of casos) {
-    const e = encontrarEquipe(derivado, nome, ano);
+  for (const ref of SPOT_CHECKS_BUCKETS) {
+    const e = encontrarEquipe(derivado, ref);
     if (!e) {
-      console.log(`${nome} ${ano}: (não encontrado)`);
+      console.log(`${rotulo(ref)}: (não encontrado)`);
       continue;
     }
     console.log(
-      `${nome} ${ano}: aero=${e.chassi.notas.aero} mec=${e.chassi.notas.mec} motor=${e.motor.notas.motor} (base carro=${e.chassi.notas.ppeso})`,
+      `${rotulo(ref)}: aero=${e.chassi.notas.aero} mec=${e.chassi.notas.mec} motor=${e.motor.notas.motor} (base carro=${e.chassi.notas.ppeso})`,
     );
   }
 }

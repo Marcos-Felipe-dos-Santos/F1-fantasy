@@ -8,6 +8,7 @@
  */
 
 import type { Dataset } from './dataset';
+import { RED_BULL_2023 } from '../fixtures/referencias-dataset';
 import type { DraftState, Jogador, ProgressoJogador } from './types';
 
 export function stateManual(
@@ -19,7 +20,10 @@ export function stateManual(
   const sorteiosPadrao: Record<string, DraftState['sorteios'][string]> = {};
   for (const id of jogadorIds) {
     progressoPadrao[id] = { rodada: 1, slots: {} };
-    sorteiosPadrao[id] = Array(5).fill({ equipe: 'Red Bull', ano: 2023 });
+    sorteiosPadrao[id] = Array(5).fill({
+      equipe: RED_BULL_2023.equipe,
+      ano: RED_BULL_2023.ano,
+    });
   }
   return {
     seed: overrides.seed ?? 1,

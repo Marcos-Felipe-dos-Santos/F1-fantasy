@@ -9,6 +9,12 @@
 
 import { describe, expect, it } from 'vitest';
 import { criarDataset } from '../src/engine/dataset';
+import type { RefEquipeAno } from '../src/fixtures/referencias-dataset';
+import {
+  ALFA_ROMEO_1951,
+  RENAULT_2006,
+  WILLIAMS_2022,
+} from '../src/fixtures/referencias-dataset';
 import equipeAnosReal from '../src/data/equipe-anos.json';
 import pecasReal from '../src/data/pecas.json';
 import pistasReal from '../src/data/pistas.json';
@@ -32,9 +38,9 @@ import {
 const dataset = criarDataset(equipeAnosReal, pecasReal, pistasReal);
 const tabela = criarTabelaPercentis(dataset);
 
-function loadoutDe(equipe: string, ano: number, jogadorId: string, pecaId = 'peca-composto-macio'): Loadout {
-  const ea = dataset.equipeAnos.find((e) => e.equipe === equipe && e.ano === ano);
-  if (!ea) throw new Error(`loadoutDe: equipe/ano "${equipe}" ${ano} não encontrado`);
+function loadoutDe(ref: RefEquipeAno, jogadorId: string, pecaId = 'peca-composto-macio'): Loadout {
+  const ea = dataset.equipeAnos.find((e) => e.equipe === ref.equipe && e.ano === ref.ano);
+  if (!ea) throw new Error(`loadoutDe: equipe/ano "${ref.equipe}" ${ref.ano} não encontrado`);
   return {
     jogadorId,
     pilotoId: ea.pilotos[0].id,
@@ -86,7 +92,7 @@ describe('amarração com o PR 6.3: medirCenario(baseline) == medirDominanciaDra
 describe('lastro de sucesso: cancelamento algébrico exato', () => {
   it('scoreCorridaPista do clone == (1-f) * original; scoreCarroPista inalterado (loadout sem peça em rit)', () => {
     const pista = dataset.pistasById.get('pista-monza')!;
-    const loadout = loadoutDe('Williams', 2022, 'jogador-lastro');
+    const loadout = loadoutDe(WILLIAMS_2022, 'jogador-lastro');
     const f = 0.07;
 
     const scoreCorridaOriginal = scoreCorridaPista(dataset, loadout, pista);
@@ -125,7 +131,7 @@ describe('lastro de sucesso: cancelamento algébrico exato', () => {
       pecasById: new Map(dataset.pecasById).set(pecaRit.id, pecaRit),
     };
     const pista = dataset.pistasById.get('pista-monza')!;
-    const loadout = loadoutDe('Williams', 2022, 'jogador-lastro-peca-rit', pecaRit.id);
+    const loadout = loadoutDe(WILLIAMS_2022, 'jogador-lastro-peca-rit', pecaRit.id);
     const f = 0.12;
 
     const scoreCorridaOriginal = scoreCorridaPista(datasetComPecaRit, loadout, pista);
@@ -148,7 +154,7 @@ describe('lastro de sucesso: cancelamento algébrico exato', () => {
 
   it('lança se o lastro empurrar rit pra negativo (falha alta, nunca silenciosa)', () => {
     const pista = dataset.pistasById.get('pista-monza')!;
-    const loadout = loadoutDe('Williams', 2022, 'jogador-lastro-absurdo');
+    const loadout = loadoutDe(WILLIAMS_2022, 'jogador-lastro-absurdo');
     expect(() => clonarPilotoComLastro(dataset, loadout, pista, 50)).toThrow(/rit negativo/);
   });
 });
@@ -258,7 +264,7 @@ describe('fatoresLastroDaClassificacao: forma da penalidade', () => {
 describe('dataset derivado é lido de verdade (pilotosById, não o array pilotos)', () => {
   it('resolverCarro lê o rit penalizado do clone e o dataset original não é mutado', () => {
     const pista = dataset.pistasById.get('pista-spa')!;
-    const loadout = loadoutDe('Alfa Romeo', 1951, 'jogador-derivado');
+    const loadout = loadoutDe(ALFA_ROMEO_1951, 'jogador-derivado');
     const f = 0.05;
 
     const ritOriginal = dataset.pilotosById.get(loadout.pilotoId)!.notas.rit;
@@ -281,7 +287,7 @@ describe('dataset derivado é lido de verdade (pilotosById, não o array pilotos
 
 describe('pit de meio de temporada: escolhe o slot mais fraco', () => {
   it('troca exatamente o slot de menor percentil (percentis conhecidos, construídos à mão)', () => {
-    const loadout = loadoutDe('Williams', 2022, 'jogador-pit-fraco');
+    const loadout = loadoutDe(WILLIAMS_2022, 'jogador-pit-fraco');
     const tabelaFake: TabelaPercentis = {
       piloto: new Map([[loadout.pilotoId, 0.9]]),
       chassi: new Map([[loadout.chassiId, 0.8]]),
@@ -313,7 +319,7 @@ describe('pit de meio de temporada: escolhe o slot mais fraco', () => {
     // confirmou que aquele teste passava mesmo com o bug). Aqui só a peça
     // ATUAL tem cópia restante; com o filtro correto (exclui `atual`),
     // `disponiveis` fica vazio e a função tem que lançar.
-    const loadout = loadoutDe('Williams', 2022, 'jogador-pool-vazio', 'peca-composto-macio');
+    const loadout = loadoutDe(WILLIAMS_2022, 'jogador-pool-vazio', 'peca-composto-macio');
     const tabelaFake: TabelaPercentis = {
       piloto: new Map([[loadout.pilotoId, 0.9]]),
       chassi: new Map([[loadout.chassiId, 0.8]]),
@@ -334,9 +340,9 @@ describe('pit de meio de temporada: escolhe o slot mais fraco', () => {
 describe('pit de meio de temporada: exatamente 1 troca por jogador, determinístico por seed', () => {
   it('mesma seed => mesmo resultado; seeds diferentes => resultado diferente em pelo menos 1 jogador', () => {
     const loadouts = [
-      loadoutDe('Williams', 2022, 'p1'),
-      loadoutDe('Alfa Romeo', 1951, 'p2'),
-      loadoutDe('Renault', 2006, 'p3'),
+      loadoutDe(WILLIAMS_2022, 'p1'),
+      loadoutDe(ALFA_ROMEO_1951, 'p2'),
+      loadoutDe(RENAULT_2006, 'p3'),
     ];
     const copiasRestantes: Record<string, number> = Object.fromEntries(dataset.pecas.map((p) => [p.id, 2]));
     for (const l of loadouts) copiasRestantes[l.pecaId] -= 1;
@@ -399,7 +405,7 @@ describe('pit de meio de temporada: pool de peças fecha', () => {
 
 describe('forcaCombinada', () => {
   it('lança se pistas for vazio (falha alta)', () => {
-    const loadout = loadoutDe('Williams', 2022, 'jogador-forca');
+    const loadout = loadoutDe(WILLIAMS_2022, 'jogador-forca');
     expect(() => forcaCombinada(dataset, loadout, [])).toThrow(/vazio/);
   });
 });

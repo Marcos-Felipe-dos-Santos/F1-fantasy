@@ -3,6 +3,7 @@ import { criarDataset } from './dataset';
 import equipeAnosReal from '../fixtures/dataset-semente/equipe-anos.json';
 import pecasReal from '../fixtures/dataset-semente/pecas.json';
 import pistasReal from '../fixtures/dataset-semente/pistas.json';
+import { GRID_12_EQUIPES_DISTINTAS } from '../fixtures/referencias-dataset';
 import type { Loadout } from './types';
 import { simularQuali } from './quali';
 import { CORRIDA_CONFIG, simularCorrida } from './corrida';
@@ -80,24 +81,11 @@ function loadoutMercedes(overrides: Partial<Loadout> = {}): Loadout {
 }
 
 /** 12 loadouts de equipes distintas (dataset tem 22 equipe/anos), pra teste de pontuação FIA com >10 carros. */
-const equipesDistintas: [string, number][] = [
-  ['Red Bull', 2023],
-  ['Ferrari', 2023],
-  ['Mercedes', 2023],
-  ['McLaren', 2023],
-  ['Aston Martin', 2023],
-  ['Williams', 2023],
-  ['Ferrari', 2004],
-  ['Williams', 2004],
-  ['McLaren', 2004],
-  ['Renault', 2004],
-  ['Sauber', 2004],
-  ['Minardi', 2004],
-];
+const equipesDistintas = GRID_12_EQUIPES_DISTINTAS;
 
 function loadoutsGrande(): Loadout[] {
-  return equipesDistintas.map(([equipe, ano], idx) => {
-    const ea = dataset.equipeAnos.find((e) => e.equipe === equipe && e.ano === ano)!;
+  return equipesDistintas.map((ref, idx) => {
+    const ea = dataset.equipeAnos.find((e) => e.equipe === ref.equipe && e.ano === ref.ano)!;
     return {
       jogadorId: `p${idx + 1}`,
       pilotoId: ea.pilotos[0].id,

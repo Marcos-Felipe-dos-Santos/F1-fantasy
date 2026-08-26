@@ -16,6 +16,8 @@ import { CORRIDA_CONFIG } from '../src/engine/corrida';
 import { resolverCarro } from '../src/engine/carro';
 import { createRng, deriveSeed } from '../src/engine/rng';
 import type { Loadout } from '../src/engine/types';
+import type { RefEquipeAno } from '../src/fixtures/referencias-dataset';
+import { ALFA_ROMEO_1951, WILLIAMS_2022 } from '../src/fixtures/referencias-dataset';
 import {
   loadoutForte,
   rankMedio,
@@ -146,9 +148,9 @@ describe('spearman', () => {
  * atualizar `scoreCarroPista`, este teste quebra.
  */
 describe('scoreCarroPista sincronizado com a fórmula real de quali.ts (guard-rail)', () => {
-  function loadoutDe(equipe: string, ano: number, jogadorId: string): Loadout {
-    const ea = dataset.equipeAnos.find((e) => e.equipe === equipe && e.ano === ano);
-    if (!ea) throw new Error(`loadoutDe: equipe/ano "${equipe}" ${ano} não encontrado no dataset`);
+  function loadoutDe(ref: RefEquipeAno, jogadorId: string): Loadout {
+    const ea = dataset.equipeAnos.find((e) => e.equipe === ref.equipe && e.ano === ref.ano);
+    if (!ea) throw new Error(`loadoutDe: equipe/ano "${ref.equipe}" ${ref.ano} não encontrado no dataset`);
     return {
       jogadorId,
       pilotoId: ea.pilotos[0].id,
@@ -177,13 +179,13 @@ describe('scoreCarroPista sincronizado com a fórmula real de quali.ts (guard-ra
   it('reconstrói EXATAMENTE o tempo de quali da engine (trava a réplica da fórmula contra drift)', () => {
     const loadouts = [
       loadoutForte(dataset, 'forte'),
-      loadoutDe('Williams', 2022, 'williams-2022'),
-      loadoutDe('Alfa Romeo', 1951, 'alfa-1951'),
+      loadoutDe(WILLIAMS_2022, 'williams-2022'),
+      loadoutDe(ALFA_ROMEO_1951, 'alfa-1951'),
       // Peça que MEXE em atributo de quali: a `peca-composto-macio` usada nos
       // demais não toca nenhum atributo da fórmula, então o caminho
       // `resolverCarro` -> bônus de peça (que a medição real exercita) ficava
       // sem cobertura — segundo achado da mutação na revisão do PR 6.3.
-      { ...loadoutDe('Williams', 2022, 'williams-peca'), pecaId: 'peca-efeito-solo-lotus-79' },
+      { ...loadoutDe(WILLIAMS_2022, 'williams-peca'), pecaId: 'peca-efeito-solo-lotus-79' },
     ];
     const pistas = [
       dataset.pistasById.get('pista-monza')!,
@@ -235,7 +237,7 @@ describe('scoreCarroPista sincronizado com a fórmula real de quali.ts (guard-ra
 
   it('scoreCorridaPista difere de scoreCarroPista exatamente pelo termo do piloto', () => {
     const pista = dataset.pistasById.get('pista-monza')!;
-    const loadout = loadoutDe('Williams', 2022, 'williams-2022');
+    const loadout = loadoutDe(WILLIAMS_2022, 'williams-2022');
     const carro = resolverCarro(dataset, loadout);
 
     expect(CORRIDA_CONFIG.pesoCarro).toBe(QUALI_CONFIG.pesoCarro);

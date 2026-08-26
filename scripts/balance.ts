@@ -20,6 +20,7 @@
  */
 
 import type { Dataset } from '../src/engine/dataset';
+import { RED_BULL_2023 } from '../src/fixtures/referencias-dataset';
 import { deriveSeed } from '../src/engine/rng';
 import { QUALI_CONFIG, simularQuali } from '../src/engine/quali';
 import { resolverCarro } from '../src/engine/carro';
@@ -47,9 +48,13 @@ export interface TaxaVitoriaPole {
  * piloto principal — Verstappen em Red Bull 2023).
  */
 export function loadoutForte(dataset: Dataset, jogadorId: string): Loadout {
-  const ea = dataset.equipeAnos.find((e) => e.equipe === 'Red Bull' && e.ano === 2023);
+  const ea = dataset.equipeAnos.find(
+    (e) => e.equipe === RED_BULL_2023.equipe && e.ano === RED_BULL_2023.ano,
+  );
   if (!ea) {
-    throw new Error('loadoutForte: equipe/ano "Red Bull" 2023 não encontrado no dataset');
+    throw new Error(
+      `loadoutForte: equipe/ano "${RED_BULL_2023.equipe}" ${RED_BULL_2023.ano} não encontrado no dataset`,
+    );
   }
   return {
     jogadorId,
