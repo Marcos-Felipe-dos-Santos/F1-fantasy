@@ -41,10 +41,20 @@
  * daria 100% por construção e não mediria nada. Ele segue com nome real por
  * desenho; quem o anonimiza é o PR 5, na escrita para `src/data/`.
  *
- * ⚠️ **CÓDIGO-FONTE está FORA.** Este portão NÃO mede `.ts`/`.tsx`, e portanto
- * NÃO cobre literais como o `'Red Bull'` de `scripts/balance.ts:50`. Isso é o
- * PR 2 (funil de literais). **Quem ler este teste verde e concluir "não há nome
- * real no repo" está errado** — ele responde "quanto nome real há nos DADOS".
+ * ⚠️ **CÓDIGO-FONTE está FORA, e o PR 2 NÃO fechou isso.** Este portão não mede
+ * `.ts`/`.tsx`, e segue sem medir depois do PR 2 (`50bda11`).
+ *
+ * O que o PR 2 fez foi **CONCENTRAR** os literais de `equipe/ano` em
+ * `src/fixtures/referencias-dataset.ts` — 44 sítios espalhados por 7 arquivos
+ * saíram de lá. **O que ele NÃO fez foi criar cerca sobre código-fonte:** nada
+ * impede que um `.find((e) => e.equipe === 'Red Bull')` novo apareça amanhã, e
+ * nenhum teste falharia. Medido em 2026-08-25, pós-funil: ainda há **14
+ * arquivos-fonte / 58 sítios-linha** citando nome de equipe, dos quais 22 são o
+ * próprio módulo de referência — os demais são oráculos pinados, fixtures
+ * sintéticas, prosa e a anti-vacuidade deste arquivo.
+ *
+ * **Quem ler este teste verde e concluir "não há nome real no repo" está
+ * errado** — ele responde "quanto nome real há nos DADOS", e só isso.
  *
  * ⚠️ **O BUNDLE está FORA.** A medição que decide o deploy é sobre `dist/`
  * (contagem nº 5 do inventário), e exige `npm run build` — caro demais para
