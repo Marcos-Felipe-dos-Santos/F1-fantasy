@@ -1223,7 +1223,7 @@ está limpo" está errado — esta linha existe para impedir essa leitura.
 
 ✅ **PLANO DE 7 PRs — APROVADO pelo dev, começando pelo PORTÃO.**
 🔒 **A ORDEM É TRAVADA, ditada pelo dev em 2026-08-25:**
-**1** portão · **2** funil de literais · **3** ✅ peças despidas + T1 (e501b97, ⚠️ portão visual ABERTO) · **4** tabela de nomes ·
+**1** portão · **2** funil de literais · **3** ✅ peças despidas + T1 (`e501b97`, **portão visual APROVADO pelo dev em 2026-08-27**) · **4** tabela de nomes ·
 **5** `anonimizar` + diferencial · **6** A TROCA · **7** fixture e baseline a zero.
 ⚠️ **ATUALIZADO em 2026-08-25 — a redação anterior desta linha ficou MEIO-FALSA e por isso foi
 corrigida no lugar, não contradita noutro arquivo.** Ela dizia que "o detalhamento PR a PR não foi
@@ -1791,6 +1791,10 @@ casca deixa de ser terra sem teste; a opção conhecida é `@cloudflare/vitest-p
    uma constante lá dentro não faz o digest subir**. Zero efeito hoje (é literal de teste, e o hash
    do bundle prova), mas quem executar o PR 6/7 precisa saber.
    (ab) 🔴 **NOVA (PR 3 da trilha de nomes fictícios, 2026-08-27) — `npm run preview` sai com exit 1 por quebra PRÉ-EXISTENTE.** `scripts/preview-corrida-online.preview.test.ts` falha em `FluxoOnline.tsx:205` (`online.etapas[online.etapaCorrente]`, `TypeError`), porque o mock de `useSalaOnline` não declara `etapas` nem `etapaCorrente` — campos que o `FluxoOnline` passou a ler no **3.5.4**. Nenhum dos dois arquivos está no diff do PR 3 (prova de que a quebra é pré-existente); `preview/corrida-online.html` em disco é de **17/08**, anterior ao 3.5.4. Só apareceu porque o bloqueante do `docs/img/silhuetas.svg` (revisão do PR 3) obrigou a rodar `npm run preview`, coisa que ninguém fazia desde o 3.5.4. ⚠️ **Consequência que interessa: `npm run preview` é o comando que a definição de pronto §5 exige para QUALQUER PR com portão visual, e hoje ele sai 1** — quem o rodar vai ver vermelho que não é dele. **O conserto provável são os dois campos faltando no mock, dentro do próprio gerador**; não foi feito, é decisão do dev se entra em PR próprio ou fica aqui.
+   (ac) 🔴 **NOVA (achado da revisão do PR 3, registrada em 2026-08-27 por decisão do dev — NÃO consertada) — save antigo perde o botão "Continuar campeonato" SEM MENSAGEM.** `carregarCampeonato` devolve `{ ok: false, motivo }` com quatro motivos distinguíveis (`ausente`, `json-invalido`, `shape-invalido`, `versao-incompativel` — `src/ui/persistencia.ts:94`), e o único chamador **joga o `motivo` fora**: `App.tsx:121`, `return carga.ok ? carga.save : null` (bloco `118-122`). ⚠️ **Correção de âncora: é `:121` dentro de `118-122`, não `119-123`** — conferido nesta sessão.
+   🔑 **O call site SEMPRE foi assim; o que mudou foi a probabilidade de disparar.** Enquanto `VERSAO_FORMATO` valeu 1 desde sempre, `versao-incompativel` era ramo morto na prática. **O bump 1 → 2 do PR 3 é a primeira vez que ele dispara de verdade** — e dispara para todo jogador que tenha um campeonato em andamento.
+   🔴 **Com DEPLOY PÚBLICO (decisão de 2026-08-24, §Estado atual), o efeito deixa de ser teórico:** o jogador abre o jogo, o botão "Continuar campeonato" simplesmente **não está mais lá**, sem nada que diga por quê nem que o save foi descartado de propósito. Não é perda de dado silenciosa (o save cai limpo, que é o comportamento correto e desejado) — **é perda de EXPLICAÇÃO.**
+   📌 **Decisão do dev: consertar antes do deploy é chamada dele.** Registrado sem conserto a pedido dele. O conserto natural é o `App` passar a distinguir `versao-incompativel` dos demais motivos e dizer ao jogador que a versão do jogo mudou; o custo é UI nova, não lógica.
 1. **Abertas pelo 7.8:** (a) o `BotaoTema` é um botão discreto no canto do `app-shell` — posição e
    forma **não passaram por veredito de arte**; (b) `erro` (salmão `#FF7B85`) e `raridadeProibido`
    (`#FF4757`) continuam sendo dois vermelhos ao lado do vermelho da marca — não foi mexido porque

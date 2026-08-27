@@ -2530,9 +2530,15 @@ As 10 peças:
 5. ⚠️ **`draft.test.ts:338` NÃO ficou vermelho e deveria.** Id fantasma passa liso num teste que usa id como chave. Id atualizado; fragilidade continua.
 6. **Efeito colateral do bump `VERSAO_FORMATO` 1→2:** quem tiver save pré-PR deixa de ver botão "Continuar campeonato" sem mensagem — `App.tsx:119-123` descarta o `motivo` de `carregarCampeonato`. Call site sempre foi assim; este PR é a **primeira vez que dispara de verdade**. Não foi consertado; é decisão do dev.
 
-### 🛑 Portão visual — ABERTO
+### ✅ Portão visual — APROVADO PELO DEV em 2026-08-27
 
-O gerador novo `scripts/preview-pecas.preview.test.ts` existe, roda e escreve `preview/pecas.html`. **Mas EU NÃO consegui abrir e olhar:** extensão do Chrome falha em injetar script para screenshot. Testado em três cenários — página nova, `divergencia.html` (preview antigo já aprovado), e página trivial — com falha em todos, logo é permissão para `127.0.0.1`, não o servidor. **Pela regra do 3.4.1 ("preview não olhado não vai pro dev"), o item 5 da definição de pronto segue ABERTO.** Aguarda veredito do dev.
+**Veredito: APROVADO.** O catálogo despido passou — as 24 peças renderizadas pelo `CardPeca` real, nos modos Craque e Cego e nos dois temas, com as 10 da decisão P destacadas e o nome antigo riscado ao lado. Artefato: `preview/pecas.html`, gerado por `scripts/preview-pecas.preview.test.ts`.
+
+🔑 **QUEM CONFERIU FOI O DEV, NÃO EU — e isso fica dito, porque a regra distingue as duas coisas.** A definição de pronto §5 pede o preview **aberto por mim**, conferido e só então apresentado. **Eu não consegui abrir:** a extensão do Chrome falhou em injetar script para screenshot. Diagnosticado em três cenários, e é o terceiro que fecha o diagnóstico — falhou na página nova, falhou no `divergencia.html` (preview antigo, já aprovado noutro PR) e **falhou também numa página de controle trivial**, logo é permissão da extensão para `127.0.0.1` e **não** defeito da página nem do padrão de iframe.
+
+⚠️ **Portanto o item "gerado ≠ conferido" do 3.4.1 foi cumprido pelo DEV e não por mim.** O que o registro pode afirmar é o veredito dele; o que ele **não** pode afirmar é que a página passou por dois pares de olhos. **Registrado assim de propósito:** um PR futuro que leia "portão visual aprovado" e conclua que a conferência dupla aconteceu estaria errado — foi simples, não dupla, por limitação de ferramenta declarada na hora.
+
+📌 **O que sobrou disso como trabalho:** rodar `npm run preview` para gerar o artefato expôs a quebra pré-existente do 3.5.4, que virou a pendência **(ab)** e foi consertada logo em seguida, na mesma sessão.
 
 ### Fluxo
 
