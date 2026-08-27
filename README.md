@@ -8,7 +8,7 @@
 [![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev/)
 [![Vite](https://img.shields.io/badge/Vite-7-646CFF?logo=vite&logoColor=white)](https://vite.dev/)
 [![Vitest](https://img.shields.io/badge/Vitest-4-6E9F18?logo=vitest&logoColor=white)](https://vitest.dev/)
-[![testes](https://img.shields.io/badge/testes-1094%20passando-brightgreen)](#-como-rodar)
+[![testes](https://img.shields.io/badge/testes-1603%20%2B%2019%20passando-brightgreen)](#-como-rodar)
 [![simulação](https://img.shields.io/badge/simula%C3%A7%C3%A3o-determin%C3%ADstica%20por%20seed-orange)](#-destaques-t%C3%A9cnicos)
 [![licença MIT](https://img.shields.io/badge/licen%C3%A7a-MIT-blue)](LICENSE)
 
@@ -87,6 +87,14 @@ aparecem; no Cego, não._
 | ------------- | ---------------------------------------------------------------------- |
 | 👤 **Single** | Você + 21 bots                                                         |
 | 👥 **Local**  | 2 a 4 jogadores humanos no mesmo dispositivo + bots completando o grid |
+| 🌐 **Online** | Sala por código de 6 dígitos, até 22 jogadores, bots completando o grid |
+
+No **Online**, o anfitrião cria a sala, compartilha o link e o draft acontece ao vivo nas duas
+pontas. A corrida roda **no cliente de cada jogador** e o servidor só coordena — é o determinismo
+por seed que torna isso possível. Dar F5 no meio do draft devolve você ao mesmo lugar; fechar a aba
+e voltar em **até 2 minutos** também. Quem ficar parado perde a vez por inatividade e o jogo segue
+sem travar. Ver **[Como rodar](#-como-rodar)** e
+**[docs/jogar-em-rede.md](docs/jogar-em-rede.md)** para jogar do celular ou pela rede local.
 
 | Formato                      | Etapas                           |
 | ---------------------------- | -------------------------------- |
@@ -165,7 +173,10 @@ src/engine/   TypeScript puro — draft, notas, quali, corrida, campeonato, RNG.
               + seed, sai resultado. Sem estado global, sem I/O.
 src/ui/       React. Consome a engine, jamais reimplementa regra de jogo.
 src/data/     JSON puro: equipe/anos, pistas, peças. Sem lógica.
-src/net/      Camada de rede (planejada) — isola o online do resto.
+src/net/      Camada de rede — o redutor PURO da sala (mesma disciplina da
+              engine: entra estado + comando, sai estado novo). Isola a rede.
+party/        A casca do Durable Object: WebSocket, storage e o relógio. É a
+              única parte com I/O — e por isso roda numa suíte à parte.
 ```
 
 A engine roda em Node sem navegador nenhum. É por isso que o harness consegue simular centenas de
@@ -185,10 +196,17 @@ A grade acima não é um print: é gerada a partir da **mesma função de geomet
 corrida usa** (`pathDaVolta`), por `npm run preview` — se o traçado mudar no jogo, muda aqui
 também. Regerar é um comando, não um trabalho de captura.
 
-### ✅ 1094 testes
+### ✅ 1603 + 19 testes, em duas suítes
 
-Em 36 arquivos, cobrindo engine e UI. Mudança de lógica de simulação neste projeto começa por um
-**teste que falha** capturando o comportamento pretendido — só depois vem a implementação.
+**1603 testes em 65 arquivos** (`npm test`) cobrindo engine, UI e o redutor de rede, mais
+**19 testes em 3 arquivos** (`npm run test:party`) que rodam a casca do Durable Object dentro do
+`workerd` de verdade.
+
+**São duas suítes de propósito, e rodar só uma deixa metade do projeto sem portão:** `party/` roda
+num runtime diferente, com config própria, fora do `include` do `npm test`.
+
+Mudança de lógica de simulação neste projeto começa por um **teste que falha** capturando o
+comportamento pretendido — só depois vem a implementação.
 
 ---
 
@@ -201,12 +219,37 @@ npm install
 npm run dev      # http://localhost:5173
 ```
 
+Isso basta para o **Single**, o **Local** e os dois formatos de campeonato.
+
+### Pro modo Online, dois terminais
+
+```bash
+# terminal 1 — o worker/Durable Object da sala
+npm run sala     # 127.0.0.1:8787
+
+# terminal 2 — o app
+npm run dev      # http://localhost:5173
+```
+
+Abra `http://localhost:5173/`, escolha **Online → Criar sala**, copie o link e cole numa segunda
+aba (ou mande pra outra pessoa). Quando todos marcarem "Estou pronto", o anfitrião começa o draft.
+
+> ⚠️ **Duas abas do MESMO navegador compartilham o `localStorage`**, e portanto o token da sala —
+> a segunda aba reentra como o primeiro jogador. Para testar sozinho, use **outro navegador ou uma
+> janela anônima**. Não afeta jogo real, onde cada pessoa está na própria máquina.
+
+Para jogar do celular ou pela rede local, troque o terminal 2 por `npm run dev:rede` e siga o
+**[guia de rede](docs/jogar-em-rede.md)** (firewall, túnel, diagnóstico).
+
 ### Scripts
 
 | Comando              | O que faz                                                                                                               |
 | -------------------- | ----------------------------------------------------------------------------------------------------------------------- |
 | `npm run dev`        | Sobe o servidor de desenvolvimento (Vite)                                                                               |
-| `npm test`           | Roda a suíte completa (1094 testes)                                                                                     |
+| `npm run dev:rede`   | Idem, exposto na rede local — pra abrir do celular                                                                      |
+| `npm run sala`       | Sobe o worker/Durable Object do modo Online (`wrangler`, em `127.0.0.1:8787`)                                            |
+| `npm test`           | Suíte principal — 1603 testes (engine, UI, `src/net/`)                                                                  |
+| `npm run test:party` | Suíte da casca do Durable Object — 19 testes, roda no `workerd`                                                          |
 | `npm run test:watch` | Testes em modo watch                                                                                                    |
 | `npm run build`      | `tsc --noEmit` + build de produção                                                                                      |
 | `npm run typecheck`  | Só a checagem de tipos                                                                                                  |
@@ -230,15 +273,21 @@ Só é necessário pra **regerar** o dataset — o resultado já está versionad
 
 ## 🛠️ Stack
 
-| Camada               | Tecnologia                                            |
-| -------------------- | ----------------------------------------------------- |
-| Engine               | **TypeScript** puro, sem dependência de UI            |
-| Front-end            | **React 19** + **Vite 7** + SVG                       |
-| Testes               | **Vitest 4**                                          |
-| Online _(planejado)_ | **PartyKit** — Durable Objects na borda da Cloudflare |
+| Camada    | Tecnologia                                                              |
+| --------- | ----------------------------------------------------------------------- |
+| Engine    | **TypeScript** puro, sem dependência de UI                              |
+| Front-end | **React 19** + **Vite 7** + SVG                                         |
+| Testes    | **Vitest 4** + **@cloudflare/vitest-pool-workers** (a suíte do `party/`) |
+| Online    | **partyserver** + **wrangler** — Durable Objects na borda da Cloudflare  |
 
-No modelo online planejado, a corrida roda no cliente e o servidor só coordena — o determinismo por
-seed é justamente o que permite esse desenho.
+Cada sala é um **Durable Object isolado**. A corrida roda **no cliente** e o servidor só coordena —
+o determinismo por seed é justamente o que permite esse desenho: o servidor não precisa simular
+nada, e nem sequer carrega o dataset.
+
+> 📌 **Foi `partykit` no papel, é `partyserver` no código.** A troca é deliberada: o pacote
+> `partykit` está sem release desde 2025-09, enquanto o `partyserver` segue publicando no mesmo
+> monorepo da Cloudflare. O princípio do primeiro dia não mudou — sala = Durable Object isolado —,
+> só o CLI (`partykit dev` → `wrangler dev`).
 
 ---
 
