@@ -15,6 +15,42 @@
  * Mostra os DOIS temas, pela regra travada da paleta (7.8).
  *
  * Roda por `npm run preview` (config separada), fora do `npm test`.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * 🔧 **CONSERTADO EM 2026-08-27 — pendência 0(ab). O arquivo estava QUEBRADO
+ * desde o 3.5.4 e ninguém tinha notado, porque `npm run preview` não roda no
+ * `npm test` e ninguém o rodou desde então.**
+ *
+ * O mock de `useSalaOnline` não declarava `etapas` nem `etapaCorrente`, campos
+ * que o `FluxoOnline` passou a ler no 3.5.4 — `TypeError` em render, e
+ * `npm run preview` saindo **exit 1 inteiro**. Isso importa além deste arquivo:
+ * `npm run preview` é o comando que a definição de pronto §5 exige de
+ * **qualquer** PR com portão visual, então todo PR seguinte veria um vermelho
+ * que não era dele.
+ *
+ * 🔴 **CONSERTAR A EXECUÇÃO EXPÔS QUE O CONTEÚDO TINHA ENVELHECIDO — e é o
+ * achado maior.** O 3.5.4 **removeu o caminho que este preview foi escrito para
+ * mostrar**, e nada acusou:
+ * - `online.corrida` **não é mais lido** pelo `FluxoOnline` (medido: zero
+ *   leitura no componente). O mock continua passando `corrida` e o valor é
+ *   **inerte**.
+ * - O botão **"Ir pra corrida" não aparece mais neste caminho**:
+ *   `mostrarIrParaCorrida={false}` é **fixo** no único call site
+ *   (`FluxoOnline.tsx:283`).
+ * - Logo as seções 1 e 2 originais — *"o botão APARECE"* e *"a GUARDA … a única
+ *   diferença é o botão"* — passaram a renderizar **exatamente a mesma tela,
+ *   sem botão nenhum**. A seção 2 virou vacuosa e a 1 virou falsa. **Foram
+ *   fundidas numa só, honesta.**
+ * - E a guarda `expect(pagina).toContain('Ir pra corrida')` **passava casando
+ *   com o TÍTULO da seção 1**, não com o botão. Ver a nota nas asserções.
+ *
+ * ⚠️ **LACUNA DE COBERTURA ASSUMIDA, e ela é do 3.5.4, não deste conserto:**
+ * este preview **não mostra o caminho de campeonato online**, que é o normal de
+ * toda sala criada por worker 3.5.1+ (`FluxoOnline.tsx:216-253`). Mostrá-lo
+ * exige alimentar o mock com `etapas` NÃO vazio **mais** `classificacao` e
+ * `calendario`, que o `ResumoDaEtapaOnline` consome — é cobertura NOVA, não
+ * conserto, e por isso ficou fora deste PR curto. **Registrado para não passar
+ * por esquecimento.**
  */
 
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
@@ -131,6 +167,20 @@ function telaOnline(extras: Partial<Retorno> = {}): string {
     inexistente: false,
     ultimoErro: null,
     corrida: null,
+    /**
+     * 🔧 **OS DOIS CAMPOS QUE FALTAVAM — conserto da pendência 0(ab),
+     * 2026-08-27.** Sem eles `FluxoOnline.tsx:205` fazia
+     * `online.etapas[online.etapaCorrente]` sobre `undefined` e o gerador
+     * inteiro morria com `TypeError`, derrubando `npm run preview` para exit 1.
+     *
+     * 🔑 **`etapaCorrente` é `-1` porque a invariante é `etapas.length - 1`**
+     * (docblock de `useSalaOnline`), **não** `0`. Com lista vazia, `-1` é o
+     * valor que a produção realmente produziria, e `etapas[-1]` é `undefined` —
+     * que é justamente o ramo desta tela. Pôr `0` daria o mesmo `undefined` por
+     * acidente e deixaria o mock mentindo sobre a produção.
+     */
+    etapas: [],
+    etapaCorrente: -1,
     entrar: () => {},
     definirPronto: () => {},
     iniciar: () => {},
@@ -150,28 +200,19 @@ describe('preview da corrida online', () => {
   it('escreve preview/corrida-online.html com as telas nos dois temas', () => {
     const secoes = [
       {
-        titulo: '1. Fim do draft online — o botão "Ir pra corrida" APARECE',
+        titulo: '1. Fim do draft online, SEM etapa aberta — o beco sem saída com saída',
         // 🔑 Alturas MEDIDAS no navegador (`body.scrollHeight` de cada iframe),
-        // não estimadas. A primeira versão usava 620px e o botão — que é a
-        // mudança central do PR — ficava atrás do scroll INTERNO do iframe: o
-        // preview existia e escondia justamente o que veio mostrar. Mesma
+        // não estimadas. A primeira versão usava 620px e o botão — que era a
+        // mudança central do PR 4/4 — ficava atrás do scroll INTERNO do iframe:
+        // o preview existia e escondia justamente o que veio mostrar. Mesma
         // família do defeito do 3.4.1, e igualmente só pegável abrindo.
         altura: 1240,
         nota:
-          'É a mudança central do PR. Até o 3/4 este resumo terminava sem saída: o botão ficava ' +
-          'escondido de propósito, porque prometer a corrida e devolver o jogador à tela inicial ' +
-          'seria pior que botão nenhum. Agora existe destino. O botão fica no fim da tela, abaixo ' +
-          'da grade dos 22.',
-        html: telaOnline({ corrida }),
-      },
-      {
-        titulo: '2. A GUARDA — o mesmo resumo sem a corrida disponível',
-        altura: 1240,
-        nota:
-          'O draft pode concluir ANTES de a seedCorrida chegar num snapshot: são mensagens ' +
-          'diferentes. Nessa janela o botão NÃO aparece, porque não haveria corrida pra entregar. ' +
-          'Compare com a seção 1 — a única diferença é o botão.',
-        html: telaOnline({ corrida: null }),
+          'TelaResumo com mostrarIrParaCorrida={false} — que é fixo no call site (FluxoOnline:283). ' +
+          'É o que a produção desenha quando o draft concluiu e etapasDaSala devolveu []: sala ' +
+          'legado, sala corrompida (0(t)) ou nEtapas sem formato (0(w)). Para essas três classes o ' +
+          'ramo é PERMANENTE, não uma janela. A saída é o "← Voltar ao início".',
+        html: telaOnline({}),
       },
       {
         titulo: `3. A corrida — grid de largada em ${corrida.pista.nome}`,
@@ -311,7 +352,26 @@ ${blocos('light')}
 
     // Guardas: sem isto o arquivo existiria e o dev olharia uma página que não
     // mostra o que promete.
-    expect(pagina).toContain('Ir pra corrida');
+    /**
+     * 🔴 **A GUARDA ANTERIOR ERA VACUOSA E FOI TROCADA (0(ab), 2026-08-27).**
+     * Era `expect(pagina).toContain('Ir pra corrida')`, e ela passava casando
+     * com o **título da seção 1** — que continha a frase —, não com o botão
+     * renderizado. **Media a prosa da página, não o dado.** Depois do 3.5.4 o
+     * botão não existe mais neste caminho (`mostrarIrParaCorrida={false}` é fixo
+     * em `FluxoOnline.tsx:283`), e a guarda velha teria continuado verde para
+     * sempre, afirmando exatamente o que deixou de ser verdade.
+     * 🔑 É a mesma família do `>F-duct McLaren<` que casou na linha "era:" do
+     * preview das peças, no mesmo dia. **Guarda tem de ancorar em MARCAÇÃO.**
+     */
+    // `tela-resumo__acoes` é o contêiner dos botões (`TelaResumo.tsx:73`): prova
+    // que a TelaResumo renderizou de fato, e é onde o botão estaria se existisse.
+    expect(pagina).toContain('tela-resumo__acoes');
+    expect(pagina).toContain('← Voltar ao início'); // a saída do beco existe
+    // 🔒 ANTI-VACUIDADE AO CONTRÁRIO: o botão do caminho antigo tem de estar
+    // AUSENTE da marcação. `onIrParaCorrida` é o único handler dele
+    // (`TelaResumo.tsx:75`) e some junto quando `mostrarIrParaCorrida` é false.
+    // Sem esta linha, o botão poderia voltar sem que nada avisasse.
+    expect(pagina).not.toContain('>Ir pra corrida<');
     expect(pagina).toContain(corrida.pista.nome);
     expect(pagina).toContain('a corrida é a mesma'); // o texto ramificado do banner
     // Dentro do `srcdoc` as aspas viram `&quot;` — checar a forma ESCAPADA é o
