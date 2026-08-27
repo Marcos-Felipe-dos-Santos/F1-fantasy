@@ -2469,6 +2469,49 @@ Arquivo novo: `preview/campeonato-online.html` (não sobrescreve `preview/campeo
 
 ---
 
+## PR (ab) — `npm run preview` volta a sair 0 (2026-08-27, `9e18704`) — BAIXO RISCO
+
+**Base:** `bb034c3` (fechamento do PR 3). **Origem:** pendência **0(ab)**, aberta no PR 3 e fechada aqui por decisão do dev, no mesmo dia e na mesma sessão.
+
+### O defeito
+
+`scripts/preview-corrida-online.preview.test.ts` tinha um mock de `useSalaOnline` **sem `etapas` e sem `etapaCorrente`** — campos que o `FluxoOnline.tsx:205` passou a ler no **3.5.4**. `online.etapas[online.etapaCorrente]` sobre `undefined` dava `TypeError` em render e derrubava **`npm run preview` inteiro para exit 1**.
+
+🔑 **Estava quebrado desde o 3.5.4 e ninguém notou, porque `npm run preview` não roda no `npm test` e ninguém o rodou desde então.** Quem tropeçou foi o **PR 3**, ao gerar o preview das peças para o portão visual.
+
+🔴 **Por que consertar agora e não depois:** `npm run preview` é o comando que a **definição de pronto §5** exige de **qualquer** PR com portão visual. Enquanto vermelho, todo PR seguinte veria um vermelho que não era dele — e o custo de diagnosticar isso recai sobre quem menos tem contexto para fazê-lo.
+
+### O conserto
+
+`etapas: []` e `etapaCorrente: **-1**`. 🔑 **O `-1` não é detalhe:** a invariante documentada em `useSalaOnline` é `etapas.length - 1`, e com lista vazia é isso que a produção produziria. **`0` daria o mesmo `undefined` por ACIDENTE** e deixaria o mock afirmando algo falso sobre a produção.
+
+### 🔴 O achado maior: consertar a EXECUÇÃO expôs que o CONTEÚDO tinha envelhecido
+
+**O 3.5.4 removeu o caminho que este preview existia para mostrar, e nada acusou.** Medido:
+- **`online.corrida` não é mais lido** pelo `FluxoOnline` — zero leitura no componente. O mock segue passando `corrida` e o valor é **inerte**.
+- **O botão "Ir pra corrida" não aparece mais neste caminho:** `mostrarIrParaCorrida={false}` é **fixo** no único call site (`FluxoOnline.tsx:283`).
+- Logo as seções **1** (*"o botão APARECE"*) e **2** (*"a GUARDA … a única diferença é o botão"*) renderizavam **a mesma tela, sem botão nenhum**. A 1 virou **falsa**, a 2 virou **vacuosa**. Fundidas numa só, honesta, descrevendo o ramo que de fato renderiza (o "beco sem saída com saída", permanente para sala legado, corrompida e `nEtapas` sem formato).
+
+🔑 **E a guarda do arquivo era VACUOSA:** `expect(pagina).toContain('Ir pra corrida')` passava **casando com o TÍTULO da seção 1**, não com o botão renderizado — **guarda que mede a prosa da própria página**. Trocada por âncora de **marcação** (`tela-resumo__acoes`) mais um `not.toContain` do botão como guarda de regressão.
+✅ **Prova medida de que a antiga era vacuosa:** removido o título, `"Ir pra corrida"` aparece **0 vezes em qualquer forma** no HTML gerado.
+🔑 **Mesma família do `>F-duct McLaren<`** que casou na linha "era:" do preview das peças, **no mesmo dia** — duas guardas de preview medindo a legenda em vez do desenho.
+
+### ⚠️ Lacuna assumida, e ela é do 3.5.4
+
+Este preview **não mostra o caminho de campeonato online**, que é o normal de toda sala criada por worker 3.5.1+ (`FluxoOnline.tsx:216-253`). Mostrá-lo exige `classificacao` e `calendario` no mock — **cobertura NOVA, não conserto**, e por isso ficou fora deste PR curto. Registrado no arquivo e no `ESTADO.md`.
+
+### Portões
+
+`npm run preview` **exit 0, 11/11** (era exit 1). `npm test` **1603/65**. `npm run test:party` **19/19**. typecheck **0**. eslint **0**. build **0**. **Zero código de produção tocado** — um arquivo de preview.
+
+📏 **Ocorrência da 0(v) capturada COM NOME, e é a primeira vez.** Uma rodada deu **1 vermelho em `src/ui/contrato-ausente.test.ts`** (1602/1603) num PR que não encosta no ausente; **três rodadas seguintes, 1603/1603**. O `ESTADO.md` previa exatamente este arquivo como sintoma da 0(v), e a ocorrência anterior **não pôde ser atribuída por medição porque o nome do teste se perdera no filtro**. Aqui a saída inteira foi guardada por rodada — a lição do próprio arquivo, aplicada e confirmada.
+
+### Nota de processo
+
+**Esta documentação foi escrita pela sessão principal, não pelo `doc-writer`.** Motivo declarado: a entrada é curta e, nesta mesma sessão, a auditoria do `doc-writer` custou mais que a redação — ele entregou o PR 3 classificado como "BAIXO RISCO … sem `senior-reviewer`", o que era falso nas duas pontas. **A regra que isso NÃO afrouxa é a da auditoria:** o diff da doc foi lido antes do commit, como sempre.
+
+---
+
 ## NOMES FICTÍCIOS — PR 3: peças despidas + T1 (2026-08-27, `e501b97`) — 🔴 ALTO RISCO
 
 **Base:** `50bda11` (PR 2, funil de literais). **Plano:** `PLANOS_ATIVOS.md` §"NOMES FICTÍCIOS — o plano dos 7 PRs".
