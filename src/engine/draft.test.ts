@@ -335,7 +335,7 @@ describe('humano no meio da fila da rodada 6 (§3, §12)', () => {
       'peca-asa-flexivel',
     ];
     // peca-esgotavel não existe no dataset real — troca por uma id real do catálogo.
-    const idEsgotavel = 'peca-das-mercedes';
+    const idEsgotavel = 'peca-das';
     const copiasRestantes = Object.fromEntries(dataset.pecas.map((p) => [p.id, 0]));
     for (const id of [idEsgotavel, ...pecasComCopia.slice(1)]) {
       copiasRestantes[id] = 1;

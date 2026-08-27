@@ -102,8 +102,8 @@ describe('simularQuali', () => {
   });
 
   it('peça que afeta a fórmula (aero) rende tempo estritamente menor que peça que não afeta (freio)', () => {
-    const comAero = loadoutRedBull({ pecaId: 'peca-duplo-difusor-brawn' });
-    const semEfeito = loadoutRedBull({ pecaId: 'peca-seis-rodas-tyrrell-p34' }); // alvo: freio, fora da fórmula de quali.
+    const comAero = loadoutRedBull({ pecaId: 'peca-duplo-difusor' });
+    const semEfeito = loadoutRedBull({ pecaId: 'peca-seis-rodas' }); // alvo: freio, fora da fórmula de quali.
     const resultadoComAero = simularQuali(dataset, [comAero], pistaMonaco, 55);
     const resultadoSemEfeito = simularQuali(dataset, [semEfeito], pistaMonaco, 55);
     expect(resultadoComAero.grid[0].tempo).toBeLessThan(resultadoSemEfeito.grid[0].tempo);
@@ -131,7 +131,7 @@ describe('simularQuali', () => {
           motorId: 'mercedes-2023-motor',
           estrategistaId: 'mercedes-2023-estrategista',
           pitId: 'mercedes-2023-pit',
-          pecaId: 'peca-das-mercedes',
+          pecaId: 'peca-das',
         },
       ];
       const resultado = simularQuali(dataset, loadouts, pistaMonza, 42);

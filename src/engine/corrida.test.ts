@@ -75,7 +75,7 @@ function loadoutMercedes(overrides: Partial<Loadout> = {}): Loadout {
     motorId: 'mercedes-2023-motor',
     estrategistaId: 'mercedes-2023-estrategista',
     pitId: 'mercedes-2023-pit',
-    pecaId: 'peca-das-mercedes',
+    pecaId: 'peca-das',
     ...overrides,
   };
 }
@@ -342,7 +342,7 @@ describe('simularCorrida', () => {
       let eventosComum = 0;
       for (let seed = 0; seed < totalSeeds; seed++) {
         const loadouts = [
-          loadoutRedBull({ jogadorId: 'proibida', pecaId: 'peca-suspensao-ativa-fw15' }),
+          loadoutRedBull({ jogadorId: 'proibida', pecaId: 'peca-suspensao-ativa' }),
           loadoutRedBull({ jogadorId: 'comum', pecaId: 'peca-composto-macio' }),
         ];
         const grid = simularQuali(dataset, loadouts, pistaMonza, seed);
@@ -366,7 +366,7 @@ describe('simularCorrida', () => {
       let achado: { evento: import('./types').EventoCorrida } | null = null;
       for (let seed = 0; seed < totalSeeds; seed++) {
         const loadouts = [
-          loadoutRedBull({ jogadorId: 'proibida', pecaId: 'peca-suspensao-ativa-fw15' }),
+          loadoutRedBull({ jogadorId: 'proibida', pecaId: 'peca-suspensao-ativa' }),
         ];
         const grid = simularQuali(dataset, loadouts, pistaMonza, seed);
         const resultado = simularCorrida(dataset, loadouts, pistaMonza, grid, seed);
@@ -654,7 +654,7 @@ describe('simularCorrida', () => {
       let achado: ReturnType<typeof simularCorrida> | null = null;
       for (let seed = 0; seed < totalSeeds; seed++) {
         const loadouts = [
-          loadoutRedBull({ jogadorId: 'proibida', pecaId: 'peca-suspensao-ativa-fw15' }),
+          loadoutRedBull({ jogadorId: 'proibida', pecaId: 'peca-suspensao-ativa' }),
         ];
         const grid = simularQuali(dataset, loadouts, pistaMonza, seed);
         const resultado = simularCorrida(dataset, loadouts, pistaMonza, grid, seed);

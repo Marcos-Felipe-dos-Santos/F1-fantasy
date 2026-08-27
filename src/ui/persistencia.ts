@@ -38,8 +38,16 @@ import { iniciarCampeonato } from './fluxo-campeonato';
  * Versão do SHAPE do save (não da engine — ver doc do módulo). Bump manual
  * sempre que um campo obrigatório de `SaveCampeonato`/`DraftState` for
  * adicionado/removido/renomeado de um jeito que quebre saves antigos.
+ *
+ * 📈 **1 → 2 no PR 3 da trilha de nomes fictícios (2026-08-27).** As 10 peças
+ * despidas trocaram de **id**, e `pecaId` é campo obrigatório de `Loadout`
+ * (`types.ts`), que o save persiste dentro do `DraftState`. Save gravado antes
+ * do PR carrega ids que não existem mais no dataset — `ehLoadoutValido` os
+ * aceitaria pela FORMA (são strings, e é só isso que ele checa) e o jogo
+ * quebraria depois, no lookup. **Com o bump, o save antigo cai limpo em
+ * `versao-incompativel`.**
  */
-export const VERSAO_FORMATO = 1;
+export const VERSAO_FORMATO = 2;
 
 /** Chave única do save do modo Campeonato no `localStorage`. */
 export const CHAVE_SAVE = 'f1-fantasy:campeonato';

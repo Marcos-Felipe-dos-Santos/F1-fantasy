@@ -17,7 +17,7 @@ import { CardPeca } from './componentes';
 import { dataset } from './dataset-app';
 import { pecaVisivel } from './visibilidade';
 
-const pecaProibida = dataset.pecasById.get('peca-suspensao-ativa-fw15');
+const pecaProibida = dataset.pecasById.get('peca-suspensao-ativa');
 const pecaComum = dataset.pecasById.get('peca-asa-flexivel');
 
 if (!pecaProibida || !pecaComum) {

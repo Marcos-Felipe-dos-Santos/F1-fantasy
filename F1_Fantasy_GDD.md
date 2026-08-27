@@ -161,17 +161,25 @@ Cada jogador leva **1 peça** = **bônus fixo em 1 ou mais habilidades** (+X num
 
 ### Catálogo por categoria
 
+> 📉 **DESPIDO NO PR 3 da trilha de nomes fictícios (2026-08-27), pela decisão P
+> do dev** (`ESTADO.md` §NOMES FICTÍCIOS): **as 10 peças abaixo perderam a marca
+> e o código de modelo e mantiveram a INOVAÇÃO** — é a inovação que carrega a
+> graça da peça, não o fabricante. **Os ids mudaram junto**, derivados do nome
+> despido no mesmo esquema (`peca-f-duct-mclaren` → `peca-f-duct`).
+> ⚠️ **"Turbo modo-quali BMW anos 80" NÃO está entre as 10 e mantém a marca** —
+> ficou fora da decisão P. **"Peças despidas" não é "zero marca nas peças".**
+
 **Aerodinâmica**
-- Efeito solo Lotus 79 → AERO
-- Duplo difusor Brawn → AERO
-- Difusor soprado Red Bull → MEC
-- F-duct McLaren → MOTOR (reta)
+- Efeito solo → AERO
+- Duplo difusor → AERO
+- Difusor soprado → MEC
+- F-duct → MOTOR (reta)
 - Asa flexível → AERO
 
 **Chassi / Suspensão**
-- Amortecedor de massa Renault → MEC
-- Suspensão ativa Williams FW15 ☠️ → AERO + MEC
-- Seis rodas Tyrrell P34 → FREIO
+- Amortecedor de massa → MEC
+- Suspensão ativa ☠️ → AERO + MEC
+- Seis rodas → FREIO
 
 **Motor**
 - Turbo modo-quali BMW anos 80 ☠️ → MOTOR
@@ -179,12 +187,12 @@ Cada jogador leva **1 peça** = **bônus fixo em 1 ou mais habilidades** (+X num
 - Escapamento Coanda → MEC
 
 **Pneu / Freio / Direção**
-- DAS Mercedes → QUALI + PNEU
+- DAS → QUALI + PNEU
 - Blown axle → FREIO
-- Freio-direção McLaren ☠️ → MEC
+- Freio-direção ☠️ → MEC
 
 **Gambiarras**
-- Carro-ventoinha Brabham BT46B ☠️ → MEC
+- Carro-ventoinha ☠️ → MEC
 - DRS destravado ☠️ → MOTOR
 
 **Roubos & Polêmicas**
@@ -228,7 +236,7 @@ O campeonato nunca para. O pior é uma corrida ruim.
 | Nürburgring (GP-Strecke) | Técnica, Mercedes Arena lenta, freadas pesadas, clima do Eifel | 🟡 Média | Médio |
 | Imola | Técnica, histórica | 🔴 Difícil | Médio |
 | Red Bull Ring | Curta, freadas e retas, premia ULT | 🟢 Fácil | Baixo |
-| Montreal (Gilles Villeneuve) | Stop-and-go, freada pesada, Muro dos Campeões | 🟢 Fácil | Alto |
+| Montreal | Stop-and-go, freada pesada, Muro dos Campeões | 🟢 Fácil | Alto |
 
 Cada pista tem: pesos de AERO / MEC / MOTOR, dificuldade de ultrapassagem, chance de chuva, **desgaste de pneu** (define quantas paradas a pista naturalmente exige), nº de voltas (10-15).
 
@@ -300,6 +308,7 @@ A corrida é **determinística por seed**. O servidor nunca transmite os 22 carr
    🔴 **"Engine agnóstica a nome" é MEIA-VERDADE, e a correção veio da medição de 2026-08-24** (registrada em `ESTADO.md` §"Onde parei" → "INVENTÁRIO DOS NOMES REAIS", que é onde estão os números). A engine não *interpreta* nome, mas nome **não é rótulo descartável**: os ids de piloto trazem o sobrenome embutido; o nome da equipe é metade da chave composta `equipe::ano` (`src/engine/dataset.ts:270`), é lookup que **lança** (`src/engine/draft-utils.ts:73`) e entra **literalmente na string hasheada** do protocolo online (`src/net/hash-draft.ts:68`). Trocar o dataset força bump de `VERSAO_APP` pelo digest.
    ⚠️ **"MEIA-VERDADE", não "FALSO" — corrigido em 2026-08-24 (2ª passada).** A redação anterior desta linha dizia FALSO, e isso **excede a medição que ela própria cita**: o `ESTADO.md:341` diz MEIA-VERDADE, e a distinção é a que importa para o plano de troca — porque a engine de fato **não interpreta** nome, os NÚMEROS (notas) sobrevivem a um rename, e é isso que torna a troca de dataset barata. Chamar a frase de "FALSO" sugere que a troca mexe no balanceamento; ela não mexe (medição de custo, `ESTADO.md` §"CUSTO DE TROCAR PARA DATASET FICTÍCIO", veredito 🟢).
    🔴 **E o que a frase esconde está MEDIDO NO BUNDLE, não inferido (2026-08-24):** `npm run build` e `grep` sobre `dist/assets/index-*.js` (831 KB) acham **105/105 nomes de equipe, 1.542/1.542 ids de piloto e 353/353 nomes exibidos de piloto**. O dataset real vai **inteiro** para o artefato servido — não é risco de código-fonte, é risco de distribuição.
+   📉 **PROGRESSO PARCIAL — PR 3 da trilha, 2026-08-27:** as **peças** e o nome exibido de **Montreal** foram despidos (§7), e o portão dos nomes reais caiu de **9.522 para 9.486**. ⚠️ **Isso NÃO move o parágrafo acima:** os 105/1.542/353 vivem em `equipe-anos.json`, que este PR não tocou. **O bloqueador continua de pé** até o PR 6 (a troca do dataset).
 3. **Peça forte quebrando o jogo.** Se o bônus da peça for maior que a diferença entre carro top e mediano, a peça decide sozinha. Mitigação: balance-harness + risco técnico calibrado.
 4. **Variância de sorte nos 5 sorteios.** Um jogador pode cair 5 vezes em equipes fracas. Mitigação: medir no balance-harness se a "sorte total" domina o resultado; se sim, aumentar peso da peça icônica ou dos atributos de piloto.
 5. **Trapaça no cliente.** Simulação no cliente = brecha. Casual ok; ranking competitivo exige validação no servidor. Fica pra depois.

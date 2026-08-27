@@ -81,9 +81,22 @@
  * Se o número incomoda, corrige-se o DADO, não a lista.
  *
  * 📌 **Sobre-contagem conhecida, registrada em vez de excluída:** `massa` é
- * driverId real (Felipe Massa) e casa em `peca-amortecedor-massa-renault`, onde
- * "massa" é a palavra portuguesa. São 2 ocorrências por arquivo de peças. Fica
- * contado. Um portão que sobre-conta é seguro; um que sub-conta mente.
+ * driverId real (Felipe Massa) e casa em `peca-amortecedor-massa` (era
+ * `peca-amortecedor-massa-renault` antes do PR 3), onde "massa" é a palavra
+ * portuguesa. São 2 ocorrências por arquivo de peças — o nome exibido
+ * "Amortecedor de massa" e o id. Fica contado. Um portão que sobre-conta é
+ * seguro; um que sub-conta mente.
+ * 🔑 **Depois do PR 3 elas são as ÚNICAS AGULHAS que sobraram nos arquivos de
+ * peças**, ou seja o 2 do baseline é 100% sobre-contagem. **Não se corrige
+ * baixando o número:** a linha acima proíbe allowlist, e o dado está no estado
+ * que a decisão P pediu.
+ * 🔴 **"Portão em 2" NÃO É "peças sem marca", e a diferença é estrutural.**
+ * `peca-turbo-modo-quali-bmw` / "Turbo modo-quali BMW anos 80" **ficou fora da
+ * decisão P e mantém a marca** — e este portão **não consegue vê-la**: o
+ * universo de agulhas traz `BMW Sauber` / `bmw_sauber`, nunca `BMW` sozinho
+ * (medido em 2026-08-27 contra `fatos-agregados.json`). **Cegueira do universo,
+ * não limpeza do dado.** Quem ler o 2 como "não há mais marca em peça" repete o
+ * erro que este arquivo inteiro existe para evitar.
  *
  * 📛 **Este teste LÊ `src/data/*.json` — em bytes, para contar, NUNCA
  * imprimindo o conteúdo.** A saída de falha é limitada a 5 amostras
@@ -102,21 +115,50 @@ const ESPERADO_IDS_PILOTO = 353;
 const ESPERADO_AGULHAS_DEDUPLICADAS = 909;
 
 /**
- * 🔒 BASELINE COMMITADO — contagem EXATA por arquivo, medida em 2026-08-25.
+ * 🔒 BASELINE COMMITADO — contagem EXATA por arquivo.
  *
  * **Atualizar este bloco é ato deliberado, e é o ponto do portão.** Cada PR da
- * trilha derruba números daqui: o PR 3 (peças + T1) mexe em `pecas.json` e
- * `pistas.json`; o PR 6 (a troca) derruba `src/data/equipe-anos.json`; o PR 7
- * derruba a fixture. **Baixar um número sem que o dado tenha mudado é fraudar
- * a medição.**
+ * trilha derruba números daqui: o PR 6 (a troca) derruba
+ * `src/data/equipe-anos.json`; o PR 7 derruba `equipe-anos.json` da fixture.
+ * **Baixar um número sem que o dado tenha mudado é fraudar a medição.**
+ *
+ * 📉 **MOVIDO PELA PRIMEIRA VEZ NO PR 3 (peças despidas + T1), 2026-08-27:**
+ * total **9522 → 9486 (−36)**. Quatro linhas mudaram, as outras duas não.
+ *
+ *   | arquivo            | era | virou | o que saiu                          |
+ *   |--------------------|-----|-------|-------------------------------------|
+ *   | `pecas.json` (×2)  |  19 |     2 | marca e código de modelo das 10 peças |
+ *   | `pistas.json` (×2) |   2 |     1 | `(Gilles Villeneuve)` do Montreal    |
+ *
+ * ⚠️ **A fixture entrou no PR 3, não no PR 7 — desvio do `PLANOS_ATIVOS.md`
+ * aprovado pelo dev em 2026-08-27.** Motivo: `peca-suspensao-ativa-fw15` é
+ * referenciado contra o dataset REAL (`card-peca-cego.test.ts`,
+ * `visibilidade.test.ts`) **e** contra a FIXTURE (`corrida.test.ts`); trocar um
+ * lado só deixaria duas grafias vivas do mesmo id durante os PRs 3–6. **O PR 7
+ * segue dono de `src/fixtures/dataset-semente/equipe-anos.json` (243).**
+ *
+ * 🔑 **O 2 que sobra em cada `pecas.json` é 100% sobre-contagem de `massa`** —
+ * ver a nota de sobre-contagem acima. O dado está limpo; o número não desce.
+ * 🔑 **O 1 que sobra em cada `pistas.json` é a agulha `Red Bull` casando no NOME
+ * EXIBIDO `"Red Bull Ring"` — NÃO no id.** Medido: o id é `pista-red-bull-ring`
+ * (minúsculo, com hífen) e o `constructorId` é `red_bull` (com sublinhado);
+ * `contarComFronteira` é sensível a caixa e nenhum dos dois casa com a agulha
+ * `Red Bull`. **A pista inteira está fora da trilha pela decisão T2**
+ * (`ESTADO.md` §NOMES FICTÍCIOS), e é por isso que o nome fica.
+ * ⚠️ **A razão da T2 — "trocar id de pista muda `seedDaEtapa`, logo é mudança
+ * de COMPORTAMENTO" — explica por que o ID não pode mudar, e NÃO explica este
+ * 1**, que é nome exibido e poderia mudar sozinho, exatamente como a T1 fez com
+ * o Montreal. **Registrado assim de propósito:** a redação anterior desta linha
+ * dizia que o 1 vinha do id, e mandaria a próxima sessão concluir que ele é
+ * intocável por determinismo. Ele é intocável por DECISÃO, que é outra coisa.
  */
 const BASELINE: ReadonlyArray<readonly [string, number]> = [
   ['src/data/equipe-anos.json', 9237],
-  ['src/data/pecas.json', 19],
-  ['src/data/pistas.json', 2],
+  ['src/data/pecas.json', 2],
+  ['src/data/pistas.json', 1],
   ['src/fixtures/dataset-semente/equipe-anos.json', 243],
-  ['src/fixtures/dataset-semente/pecas.json', 19],
-  ['src/fixtures/dataset-semente/pistas.json', 2],
+  ['src/fixtures/dataset-semente/pecas.json', 2],
+  ['src/fixtures/dataset-semente/pistas.json', 1],
 ];
 
 /** Resolve o nome relativo (POSIX, estável entre plataformas) para o caminho real. */

@@ -129,10 +129,16 @@ export type AtributoAlvo = keyof NotasPiloto | keyof NotasChassi | keyof NotasMo
 
 /**
  * Peça icônica (§7). `atributosAlvo` é array porque há peças de 2 atributos
- * (ex.: suspensão ativa Williams FW15 → AERO+MEC; DAS Mercedes → QUALI+PNEU;
- * controle de tração escondido Benetton 1994 → LARG+MEC). `bonus`/`risco`
- * numéricos explícitos nos dados — o balance-harness ajusta valores, não
- * tipos (§7-§8).
+ * (ex.: "Suspensão ativa" → AERO+MEC; "DAS" → QUALI+PNEU; "Controle de tração
+ * escondido" → LARG+MEC). `bonus`/`risco` numéricos explícitos nos dados — o
+ * balance-harness ajusta valores, não tipos (§7-§8).
+ *
+ * 📌 Os dois primeiros perderam marca e código de modelo no PR 3 da trilha de
+ * nomes fictícios (decisão P). ⚠️ O terceiro **nunca se chamou "controle de
+ * tração escondido Benetton 1994"** — era erro deste docblock, achado ao
+ * conferi-lo contra `pecas.json` durante aquele PR. **Corrigido no lugar**, e
+ * não só porque "Benetton" é marca real: prosa que cita um nome inexistente
+ * manda a próxima pessoa procurar no dataset uma peça que não está lá.
  */
 export interface Peca {
   id: string;

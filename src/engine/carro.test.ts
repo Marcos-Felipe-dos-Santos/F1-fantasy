@@ -53,9 +53,9 @@ describe('resolverCarro', () => {
     expect(carro.piloto.rit).toBe(pilotoOriginal.notas.rit);
   });
 
-  it('aplica o bônus de uma peça de 1 atributo de chassi (peca-duplo-difusor-brawn → aero)', () => {
+  it('aplica o bônus de uma peça de 1 atributo de chassi (peca-duplo-difusor → aero)', () => {
     const chassiOriginal = dataset.chassisById.get('redbull-2023-chassi')!;
-    const carro = resolverCarro(dataset, loadoutBase({ pecaId: 'peca-duplo-difusor-brawn' }));
+    const carro = resolverCarro(dataset, loadoutBase({ pecaId: 'peca-duplo-difusor' }));
     expect(carro.chassi.aero).toBe(chassiOriginal.notas.aero + 7);
     expect(carro.chassi.mec).toBe(chassiOriginal.notas.mec);
   });
@@ -67,9 +67,9 @@ describe('resolverCarro', () => {
     expect(carro.motor.confMotor).toBe(motorOriginal.notas.confMotor);
   });
 
-  it('aplica o bônus de uma peça de 2 atributos (peca-das-mercedes → quali + pneu), sem clamp em 99', () => {
+  it('aplica o bônus de uma peça de 2 atributos (peca-das → quali + pneu), sem clamp em 99', () => {
     const pilotoOriginal = dataset.pilotosById.get('redbull-2023-piloto-verstappen')!;
-    const carro = resolverCarro(dataset, loadoutBase({ pecaId: 'peca-das-mercedes' }));
+    const carro = resolverCarro(dataset, loadoutBase({ pecaId: 'peca-das' }));
     expect(carro.piloto.quali).toBe(pilotoOriginal.notas.quali + 11);
     expect(carro.piloto.pneu).toBe(pilotoOriginal.notas.pneu + 11);
     // Verstappen já tem quali 95; +11 estoura 99 de propósito (nota efetiva, não clampada).
@@ -99,7 +99,7 @@ describe('resolverCarro', () => {
 
   it('não muta as notas do dataset', () => {
     const snapshotAntes = JSON.stringify(dataset.pilotosById.get('redbull-2023-piloto-verstappen'));
-    resolverCarro(dataset, loadoutBase({ pecaId: 'peca-das-mercedes' }));
+    resolverCarro(dataset, loadoutBase({ pecaId: 'peca-das' }));
     const snapshotDepois = JSON.stringify(
       dataset.pilotosById.get('redbull-2023-piloto-verstappen'),
     );

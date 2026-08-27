@@ -95,10 +95,10 @@ export const pecaSimplesFixture: Peca = {
   risco: 0,
 };
 
-// Peça de 2 atributos, raridade proibida (§7: Suspensão ativa Williams FW15).
+// Peça de 2 atributos, raridade proibida (§7: Suspensão ativa).
 export const pecaDuplaFixture: Peca = {
-  id: 'peca-suspensao-ativa-fw15',
-  nome: 'Suspensão ativa Williams FW15',
+  id: 'peca-suspensao-ativa',
+  nome: 'Suspensão ativa',
   categoria: 'Chassi / Suspensão',
   raridade: 'proibido',
   atributosAlvo: ['aero', 'mec'],

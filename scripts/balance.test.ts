@@ -185,7 +185,7 @@ describe('scoreCarroPista sincronizado com a fórmula real de quali.ts (guard-ra
       // demais não toca nenhum atributo da fórmula, então o caminho
       // `resolverCarro` -> bônus de peça (que a medição real exercita) ficava
       // sem cobertura — segundo achado da mutação na revisão do PR 6.3.
-      { ...loadoutDe(WILLIAMS_2022, 'williams-peca'), pecaId: 'peca-efeito-solo-lotus-79' },
+      { ...loadoutDe(WILLIAMS_2022, 'williams-peca'), pecaId: 'peca-efeito-solo' },
     ];
     const pistas = [
       dataset.pistasById.get('pista-monza')!,

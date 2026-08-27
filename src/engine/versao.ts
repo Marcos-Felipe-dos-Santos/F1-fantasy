@@ -48,5 +48,30 @@
  * partida do mesmo jeito**, sem tocar em nada que o digest vigia. Um PR só de
  * `src/ui/` que mude a FORMA do atestado precisa deste bump, e o teste **não
  * vai lembrar por você**.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * 📈 **3.4.3 → 3.4.4 no PR 3 da trilha de nomes fictícios (2026-08-27).**
+ *
+ * O digest cobre todo `.json` de `src/data/` e o PR renomeia 10 peças **no id**,
+ * não só no rótulo. **Bump OBRIGATÓRIO, e é o caso "Sim" descrito acima:**
+ * `pecaId` entra na carga do `hashDoDraft` (`src/net/hash-draft.ts:64-66`),
+ * então cliente velho e novo hasheariam loadouts equivalentes de formas
+ * diferentes — alarme falso de divergência dentro da mesma sala. O handshake
+ * separa os dois builds.
+ *
+ * ⚠️ **O `hashDoDraft` NÃO é o único consumidor do id de peça — ele também
+ * DESEMPATA escolha de bot** (`src/engine/bots.ts:63`: `proximo.id < atual.id`,
+ * sobre o valor `bonus - 0.5 * risco`, que empata muito). **Renomear id de peça
+ * PODE, em geral, mudar o que um bot escolhe.**
+ * ✅ **Neste PR não mudou, e por razão estrutural, não por sorte:** os 10
+ * renames são TRUNCAMENTOS de sufixo e nenhum outro id do catálogo começa por
+ * um dos 10 prefixos novos ⇒ a ordem lexicográfica de todo par é preservada; e
+ * o array de `pecas.json` não foi reordenado (o `--stat` fecha em 40 linhas =
+ * 10 peças × 2 campos × add/remove), então a entrada do `shuffle` de
+ * `revelarPecasParaJogador` é posicionalmente idêntica.
+ * 🔴 **O que NÃO existe é rede:** nenhum teste fixa escolha de peça de bot
+ * contra o dataset real — `src/ui/fluxo-draft-golden.test.ts` pina `ordemPeca`,
+ * perfis e sorteios, e não a peça. **Um rename futuro que criasse empate
+ * passaria em silêncio.** Achado da revisão do PR 3; registrado, não consertado.
  */
-export const VERSAO_APP = '3.4.3';
+export const VERSAO_APP = '3.4.4';

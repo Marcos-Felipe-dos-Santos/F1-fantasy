@@ -529,7 +529,7 @@ const TRACADO_RED_BULL_RING: TracadoImutavel = [
   { x: 748, y: 404 },
 ];
 /**
- * Montreal / Gilles Villeneuve (4,361 km) — HORÁRIO. Polígono muito estreito e
+ * Montreal (4,361 km) — HORÁRIO. Polígono muito estreito e
  * alongado, porque a ilha artificial impõe isso: quase não há curvas amplas, e o
  * padrão dominante é reta → freada → reta. O lado da bacia olímpica é
  * notavelmente retilíneo e é ele que dá a leitura de "estreito e comprido";
