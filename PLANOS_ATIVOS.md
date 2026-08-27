@@ -767,7 +767,7 @@ lá seria circular). **Quem ler este teste verde e concluir "não há nome real 
   **mesmos números** — é refactor, então **delta ZERO é a asserção**.
 - **Risco:** BAIXO (sem mudança de comportamento). ⚠️ Toca o harness, então o `balance` roda.
 
-**3. PEÇAS DESPIDAS + T1 — o primeiro PR que mexe em `src/data/`.**
+**3. ✅ PEÇAS DESPIDAS + T1 — o primeiro PR que mexe em `src/data/` (e501b97, ⚠️ portão visual ABERTO).**
 - **O que:** as 10 peças da decisão P perdem marca e código de modelo, **no nome e no id**; e
   `pistas.json` troca `"Montreal (Gilles Villeneuve)"` por `"Montreal"` — só o nome exibido, com
   `"id": "pista-montreal"` **intocado** (conferido em `pistas.json:93-94`).
@@ -836,9 +836,11 @@ lá seria circular). **Quem ler este teste verde e concluir "não há nome real 
   força o bump. Dentro de uma sala, todos rodam o mesmo dataset ⇒ hash consistente por construção.
 
 **7. FIXTURE E BASELINE A ZERO — o PR que fecha o círculo.**
-- **O que:** `src/fixtures/dataset-semente/` também troca — ela tem **Ferrari, McLaren, Williams,
-  Schumacher, Prost, Senna**, e o `pecas.json` dela tem McLaren e Williams (medido) — e o teto do
-  portão do PR 1 desce ao número final.
+- **O que:** `src/fixtures/dataset-semente/equipe-anos.json` (243 ocorrências) também troca — ela
+  tem **Ferrari, McLaren, Williams, Schumacher, Prost, Senna** — e o teto do portão do PR 1 desce
+  ao número final. ⚠️ **`src/fixtures/dataset-semente/pecas.json` JÁ foi trocado no PR 3** — ela
+  entrou cedo pela **decisão de plano: evitar duas grafias vivas do mesmo id durante os PRs 3–6.**
+  (Ver `HISTORICO.md` §"NOMES FICTÍCIOS — PR 3" e `src/fixtures/referencias-dataset.ts:50-73`.)
 - 🔑 **Por que a fixture não pode ficar de fora:** ela é **o artefato que existe para ser lido com
   segurança** (regra inviolável do `CLAUDE.md` §"Leitura de `src/data/`"). Deixá-la com nome real
   faz a próxima sessão voltar a ler nome real **justamente no arquivo criado para evitar isso**.

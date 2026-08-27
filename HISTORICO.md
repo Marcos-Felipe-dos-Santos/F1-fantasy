@@ -2469,6 +2469,81 @@ Arquivo novo: `preview/campeonato-online.html` (não sobrescreve `preview/campeo
 
 ---
 
+## NOMES FICTÍCIOS — PR 3: peças despidas + T1 (2026-08-27, `e501b97`) — 🔴 ALTO RISCO
+
+**Base:** `50bda11` (PR 2, funil de literais). **Plano:** `PLANOS_ATIVOS.md` §"NOMES FICTÍCIOS — o plano dos 7 PRs".
+
+### O que o PR fez
+
+**Decisão P, aprovada pelo dev em 2026-08-25:** as 10 peças perdem **marca e código de modelo**, mantêm **inovação**. Os ids mudam junto. **Decisão T1, aprovada:** `src/data/pistas.json` — `"Montreal (Gilles Villeneuve)"` → `"Montreal"`, **só o nome exibido; id intocado.**
+
+As 10 peças:
+- Efeito solo Lotus 79 → Efeito solo · `peca-efeito-solo-lotus-79` → `peca-efeito-solo`
+- Duplo difusor Brawn → Duplo difusor · `peca-duplo-difusor-brawn` → `peca-duplo-difusor`
+- Difusor soprado Red Bull → Difusor soprado · `peca-difusor-soprado-redbull` → `peca-difusor-soprado`
+- F-duct McLaren → F-duct · `peca-f-duct-mclaren` → `peca-f-duct`
+- Amortecedor de massa Renault → Amortecedor de massa · `peca-amortecedor-massa-renault` → `peca-amortecedor-massa`
+- Suspensão ativa Williams FW15 → Suspensão ativa · `peca-suspensao-ativa-fw15` → `peca-suspensao-ativa`
+- Seis rodas Tyrrell P34 → Seis rodas · `peca-seis-rodas-tyrrell-p34` → `peca-seis-rodas`
+- DAS Mercedes → DAS · `peca-das-mercedes` → `peca-das`
+- Freio-direção McLaren → Freio-direção · `peca-freio-direcao-mclaren` → `peca-freio-direcao`
+- Carro-ventoinha Brabham BT46B → Carro-ventoinha · `peca-carro-ventoinha-brabham-bt46b` → `peca-carro-ventoinha`
+
+**Portão dos nomes reais:** 9.522 → 9.486 (−36). **Primeiro PR que move a baseline.**
+
+📋 **Medições finais (verificadas):**
+
+| arquivo | era | virou |
+|---|---|---|
+| `src/data/pecas.json` | 19 | 2 |
+| `src/data/pistas.json` | 2 | 1 |
+| `src/fixtures/dataset-semente/pecas.json` | 19 | 2 |
+| `src/fixtures/dataset-semente/pistas.json` | 2 | 1 |
+| os dois `equipe-anos.json` | 9.237 / 243 | inalterados |
+
+**Os dois resíduos, e eles importam mais que o número:**
+- **O 2 de cada `pecas.json` é a agulha `massa`** — Felipe Massa é `driverId` real, e ela casa duas vezes: no nome exibido "Amortecedor de massa" e no id `peca-amortecedor-massa`, onde "massa" é a palavra portuguesa. Sobre-contagem conhecida, que o docstring do portão manda deixar **contada** e para a qual **proíbe allowlist**.
+- **O 1 de cada `pistas.json` é a agulha `Red Bull` casando no NOME EXIBIDO `"Red Bull Ring"` — não no id.** Medido: `pista-red-bull-ring` é minúsculo com hífen, o `constructorId` é `red_bull` com sublinhado, e a contagem é sensível a caixa. A pista está fora da trilha pela **decisão T2**. ⚠️ A razão da T2 (*"trocar id de pista muda `seedDaEtapa`"*) explica por que o **id** não muda e **não explica este 1**, que é nome exibido e poderia mudar sozinho — ele é intocável por **decisão**, não por determinismo.
+
+🔴 **"PORTÃO EM 2" NÃO É "PEÇAS SEM MARCA", e a diferença é estrutural.** `peca-turbo-modo-quali-bmw` / "Turbo modo-quali BMW anos 80" **ficou fora da decisão P e mantém a marca**, e o portão **não consegue vê-la**: o universo de agulhas traz `BMW Sauber` / `bmw_sauber`, **nunca `BMW` sozinho** (medido contra `scripts/derived/fatos-agregados.json`). **Cegueira do universo, não limpeza do dado.**
+
+**Portões:** `npm test` **1603/65** (inalterado — o gerador novo `scripts/preview-pecas.preview.test.ts` vive em `scripts/` e roda por `npm run preview`). `npm run test:party` **19/19**. typecheck **0** nos três projetos. eslint **0**. build **0**.
+
+**`npm run balance`: DELTA ZERO**, sha256 do filtrado **idêntico** antes e depois — `e62fe729406e6bcb0b1514ac8e337a00a5c5ed5c01c7e2e00ae0195786c0b9fc`. 🔑 **Método, e a ordem dele é o que faz a medida valer:** o BEFORE foi capturado **no HEAD desta sessão** (não reaproveitado do PR 2) e **confirmou-se que a receita de filtro do PR 2 — 4 padrões / 13 linhas — ainda reproduz o `sha256` daquela captura** ANTES de comparar com o AFTER. Validar a receita depois de ver o resultado seria escolher o filtro até o número ficar bonito.
+
+**`npm run dataset:report`: byte a byte idêntico** (`c509049b0ea9dce58b7b…`).
+
+**Bumps:** `VERSAO_FORMATO` **1 → 2** (`src/ui/persistencia.ts`) e `VERSAO_APP` **3.4.3 → 3.4.4** com digest **`96c4f6b1` → `bb6c419d`** (`src/engine/versao.test.ts:36`).
+
+**Bundle:** amostras dos 10 ids antigos = **0** ocorrências; `"Montreal (Gilles Villeneuve)"` = **0**. Restam **4** `"Gilles Villeneuve"` que são o **piloto** (Ferrari 1978-81) — PR 6.
+
+### Desvio de plano aprovado pelo dev nesta sessão
+
+**A fixture entrou no PR 3, não no PR 7.** Motivo: `peca-suspensao-ativa-fw15` era referenciado contra o dataset **real** (testes em `src/`) **e** contra a **fixture** (testes em `corrida.test.ts`), e trocar um lado só deixaria **duas grafias vivas do mesmo id** durante os PRs 3–6 — modo de falha registrado em `src/fixtures/referencias-dataset.ts:50-73`. **O PR 7 segue dono de `src/fixtures/dataset-semente/equipe-anos.json` (243 ocorrências).**
+
+### Achados de revisão — registrados como observações do método
+
+1. 🔴 **`docs/img/silhuetas.svg` é RASTREADO e não tinha T1.** Gerado de `src/data/pistas.json` por `scripts/gerar-silhuetas-readme.preview.test.ts` e embutido no `README.md:177` — o nome real que a T1 acabara de remover seguia na **primeira tela do repositório**. Achado pelo `senior-reviewer` e **conferido pela sessão principal nos três elos antes de agir**: o rótulo estava mesmo lá (`silhuetas.svg:113`), o arquivo **é rastreado** (`git ls-files`) e o `README.md:177` o embute. Regerado por `npm run preview` no próprio PR; **o diff é uma linha, só o rótulo** — nenhuma geometria mudou. 🔑 **A lição: a medição do BUNDLE não cobre `docs/`** — são superfícies diferentes, e **artefato gerado-E-versionado precisa de regeração explícita**, senão o dado novo e o artefato publicado divergem em silêncio.
+2. 🔴 **`npm run preview` sai com exit 1 por quebra PRÉ-EXISTENTE, não deste PR.** `scripts/preview-corrida-online.preview.test.ts` falha em `FluxoOnline.tsx:205` (`online.etapas[online.etapaCorrente]`, `TypeError`), porque o mock de `useSalaOnline` não declara `etapas` nem `etapaCorrente` — campos que o `FluxoOnline` passou a ler no **3.5.4**. Nenhum dos dois arquivos está no diff (prova de pré-existência); `preview/corrida-online.html` em disco é de **17/08**. **Registrado como pendência ATIVA nova (ab)** no `ESTADO.md`, não marcado como resolvido.
+3. ⚠️ **O id de peça desempata escolha de bot (`src/engine/bots.ts:63`, `proximo.id < atual.id`).** Neste PR nada mudou por razão **estrutural**: os renames são truncamentos de sufixo, nenhum outro id começa pelos 10 prefixos, array não reordenado. Mas **não há rede**: nenhum teste fixa escolha de bot contra dataset real. Registrado em `src/engine/versao.ts`.
+4. ⚠️ **`src/engine/types.ts` citava "controle de tração escondido Benetton 1994"** — nome que **nunca existiu** em `pecas.json`. Erro pré-existente de docblock. Corrigido.
+5. ⚠️ **`draft.test.ts:338` NÃO ficou vermelho e deveria.** Id fantasma passa liso num teste que usa id como chave. Id atualizado; fragilidade continua.
+6. **Efeito colateral do bump `VERSAO_FORMATO` 1→2:** quem tiver save pré-PR deixa de ver botão "Continuar campeonato" sem mensagem — `App.tsx:119-123` descarta o `motivo` de `carregarCampeonato`. Call site sempre foi assim; este PR é a **primeira vez que dispara de verdade**. Não foi consertado; é decisão do dev.
+
+### 🛑 Portão visual — ABERTO
+
+O gerador novo `scripts/preview-pecas.preview.test.ts` existe, roda e escreve `preview/pecas.html`. **Mas EU NÃO consegui abrir e olhar:** extensão do Chrome falha em injetar script para screenshot. Testado em três cenários — página nova, `divergencia.html` (preview antigo já aprovado), e página trivial — com falha em todos, logo é permissão para `127.0.0.1`, não o servidor. **Pela regra do 3.4.1 ("preview não olhado não vai pro dev"), o item 5 da definição de pronto segue ABERTO.** Aguarda veredito do dev.
+
+### Fluxo
+
+🔴 **ALTO RISCO, e a classificação foi anunciada pelo dev ANTES de começar** — `src/data/` não tem isenção por tamanho de diff (`CLAUDE.md` §"RIGOR PROPORCIONAL AO RISCO"). **Fluxo completo, todo ele executado:** baseline vermelho → implementação → **`senior-reviewer`** → portões → `doc-writer` → auditoria e commit pela sessão principal.
+
+⚠️ **CORREÇÃO DE AUDITORIA (sessão principal, antes de commitar esta doc).** A versão que o `doc-writer` entregou classificava este PR como **"BAIXO RISCO … Sem `senior-reviewer`"**, nas duas pontas da entrada. **As duas afirmações eram falsas**, e não do mesmo jeito: a classificação contradiz a instrução explícita do dev na abertura da sessão, e o "sem `senior-reviewer`" registra como PULADO um portão que **rodou e foi o que achou o bloqueante do `silhuetas.svg`**. 🔑 **É a ocorrência nº 2 da §"NENHUM SUBAGENTE COMMITA" tentando acontecer de novo** — erro factual em `.md`, que nenhum teste pega e só a leitura do diff antes do commit intercepta. **Registrado em vez de apagado** porque a regra existe justamente por isto.
+
+**Baseline vermelho, visto antes de qualquer conserto: 8 arquivos / 24 testes** — o portão (4), `versao.test.ts` (digest), `card-peca-cego.test.ts` e `visibilidade.test.ts` (dataset real), `balance.test.ts`, `carro.test.ts`, `corrida.test.ts` e `quali.test.ts` (fixture).
+
+---
+
 ## NOMES FICTÍCIOS — PR 2: funil de literais `equipe/ano` (2026-08-25, `50bda11` + `23ae516`) — BAIXO RISCO
 
 **Base:** `fc6fb6a` (PR 1 da trilha, o portão). **Plano:** `PLANOS_ATIVOS.md` §"NOMES FICTÍCIOS".

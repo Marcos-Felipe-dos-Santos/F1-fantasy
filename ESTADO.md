@@ -8,7 +8,16 @@
 
 ## Estado atual
 
-**Última medição (2026-08-25, na `main` — PR 2 da trilha de nomes fictícios, `50bda11`):**
+**Última medição (2026-08-27, na `main` — PR 3 da trilha de nomes fictícios, `e501b97`):**
+`npm test` **1603/65** (inalterado — o novo gerador vive em `scripts/` e roda por `npm run preview`).
+**`npm run test:party` 19/19**, typecheck **0** nos três projetos, eslint **0**, build **0**.
+**`VERSAO_FORMATO` 1 → 2, `VERSAO_APP` 3.4.3 → 3.4.4 — BUMP OBRIGATÓRIO** (digest de dados mudou).
+Digest novo: **`96c4f6b1` → `bb6c419d`** (`src/engine/versao.test.ts:36`).
+**`npm run balance`: DELTA ZERO**, sha256 do filtrado **idêntico** antes e depois — `e62fe729406e6bcb0b1514ac8e337a00a5c5ed5c01c7e2e00ae0195786c0b9fc`.
+**Bundle:** amostras dos 10 ids antigos = **0**; os 4 "Gilles Villeneuve" que sobraram são o piloto (PR 6).
+✅ **Portão dos nomes reais: 9.522 → 9.486 (−36). PRIMEIRO PR que move a baseline.**
+
+*(Medição anterior, 2026-08-25, na `main` — PR 2 da trilha de nomes fictícios, `50bda11`):*
 `npm test` **1603/65** em **2 rodadas pós-mudança** — **INALTERADO em relação ao PR 1 (`fc6fb6a`),
 que já media 1603/65**; foi o PR 1 que subiu de 1592/64, não este. **`npm run test:party` 19/19**,
 typecheck **0** nos três projetos, eslint **0**, build **0**.
@@ -1214,7 +1223,7 @@ está limpo" está errado — esta linha existe para impedir essa leitura.
 
 ✅ **PLANO DE 7 PRs — APROVADO pelo dev, começando pelo PORTÃO.**
 🔒 **A ORDEM É TRAVADA, ditada pelo dev em 2026-08-25:**
-**1** portão · **2** funil de literais · **3** peças despidas + T1 · **4** tabela de nomes ·
+**1** portão · **2** funil de literais · **3** ✅ peças despidas + T1 (e501b97, ⚠️ portão visual ABERTO) · **4** tabela de nomes ·
 **5** `anonimizar` + diferencial · **6** A TROCA · **7** fixture e baseline a zero.
 ⚠️ **ATUALIZADO em 2026-08-25 — a redação anterior desta linha ficou MEIO-FALSA e por isso foi
 corrigida no lugar, não contradita noutro arquivo.** Ela dizia que "o detalhamento PR a PR não foi
@@ -1781,6 +1790,7 @@ casca deixa de ser terra sem teste; a opção conhecida é `@cloudflare/vitest-p
    no escopo do digest, mas **`src/fixtures/referencias-dataset.ts` NÃO está** — ou seja, **mudar
    uma constante lá dentro não faz o digest subir**. Zero efeito hoje (é literal de teste, e o hash
    do bundle prova), mas quem executar o PR 6/7 precisa saber.
+   (ab) 🔴 **NOVA (PR 3 da trilha de nomes fictícios, 2026-08-27) — `npm run preview` sai com exit 1 por quebra PRÉ-EXISTENTE.** `scripts/preview-corrida-online.preview.test.ts` falha em `FluxoOnline.tsx:205` (`online.etapas[online.etapaCorrente]`, `TypeError`), porque o mock de `useSalaOnline` não declara `etapas` nem `etapaCorrente` — campos que o `FluxoOnline` passou a ler no **3.5.4**. Nenhum dos dois arquivos está no diff do PR 3 (prova de que a quebra é pré-existente); `preview/corrida-online.html` em disco é de **17/08**, anterior ao 3.5.4. Só apareceu porque o bloqueante do `docs/img/silhuetas.svg` (revisão do PR 3) obrigou a rodar `npm run preview`, coisa que ninguém fazia desde o 3.5.4. ⚠️ **Consequência que interessa: `npm run preview` é o comando que a definição de pronto §5 exige para QUALQUER PR com portão visual, e hoje ele sai 1** — quem o rodar vai ver vermelho que não é dele. **O conserto provável são os dois campos faltando no mock, dentro do próprio gerador**; não foi feito, é decisão do dev se entra em PR próprio ou fica aqui.
 1. **Abertas pelo 7.8:** (a) o `BotaoTema` é um botão discreto no canto do `app-shell` — posição e
    forma **não passaram por veredito de arte**; (b) `erro` (salmão `#FF7B85`) e `raridadeProibido`
    (`#FF4757`) continuam sendo dois vermelhos ao lado do vermelho da marca — não foi mexido porque
