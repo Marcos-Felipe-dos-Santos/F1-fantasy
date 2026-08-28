@@ -27,3 +27,8 @@ tmp-*
 # Estado local do `wrangler dev` (cache do workerd, storage do Durable Object).
 # Regenerado a cada execucao; nada aqui deve ser versionado.
 .wrangler/
+
+# Atalhos do Windows. Sao ponteiros para caminhos da maquina do dev (`Imagens.lnk`
+# apontava para `C:\Users\marcos\Pictures`) — nao funcionam em outra maquina e nao
+# tem nada a ver com o projeto. Entrou no staging por acidente em 2026-08-27.
+*.lnk
