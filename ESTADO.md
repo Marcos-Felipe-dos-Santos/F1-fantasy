@@ -1,7 +1,9 @@
 # ESTADO — F1 Fantasy
 
 > **Leia este arquivo PRIMEIRO em toda sessão nova.** É curto de propósito.
-> **Planos de fase ATIVOS: `PLANOS_ATIVOS.md`** (Fase 3, 3.5 campeonato online, spike da casca) —
+> **Planos de fase em `PLANOS_ATIVOS.md`** (~~Fase 3, 3.5 campeonato online, spike da casca~~ —
+> ⚠️ **os três encerraram: a FASE 3 ESTÁ ENCERRADA desde 2026-08-27**, ver §"FASE 3 ENCERRADA"; o
+> que segue **ATIVO ali é a trilha de NOMES FICTÍCIOS**, §"NOMES FICTÍCIOS — o plano dos 7 PRs") —
 > consulte **o plano que interessa**, nunca inteiro. Histórico por PR: `HISTORICO.md` (fases 6-7 e o
 > que foi arquivado daqui) e `HISTORICO_ARQUIVO.md` (fases 0-5). Não leia nenhum dos três inteiro.
 > Plano de build e direção de arte: `PLANO_CLAUDE_CODE.md`. Regras de jogo: `F1_Fantasy_GDD.md`.
@@ -236,12 +238,74 @@ vai assistir estragaria a corrida. **Tem teste dedicado, e é o mais importante 
 🔒 **A silhueta da miniatura reusa `pathDaVolta`**, a mesma geometria da tela de corrida. Foi ela que
 tirou 10/10 no teste cego; redesenhar à mão na miniatura jogaria isso fora.
 
-## 🌐 FASE 3 — ONLINE: obrigações retidas (o plano está no `PLANOS_ATIVOS.md`)
+## 🌐 FASE 3 — ONLINE: ✅ ENCERRADA (as obrigações retidas seguem valendo)
 
 > 📦 **O plano da fase e a sequência de PRs 3.0 → 3.5 foram MOVIDOS em 2026-08-19** →
-> **`PLANOS_ATIVOS.md` §"FASE 3 — ONLINE"** (íntegro, nada resumido). **Este bloco é a RETENÇÃO:**
-> as decisões travadas e regras invioláveis que obrigam trabalho FUTURO e por isso se leem toda
-> sessão. **Cabeçalho não prova pertencimento — foi lendo o conteúdo que estas linhas ficaram.**
+> **`PLANOS_ATIVOS.md` §"FASE 3 — ONLINE"**, que era o arquivo dos planos **ATIVOS** (íntegro, nada
+> resumido). ⚠️ **Desde 2026-08-28 aquele plano NÃO é mais ativo — a fase encerrou**; o texto segue
+> lá, e **mover ou arquivar é decisão do dev**, proposta ao fim desta seção. **Este bloco é a
+> RETENÇÃO:** as decisões travadas e regras invioláveis que obrigam trabalho FUTURO e por isso se
+> leem toda sessão. **Cabeçalho não prova pertencimento — foi lendo o conteúdo que estas linhas
+> ficaram.**
+
+### ✅ FASE 3 ENCERRADA — decisão DITADA PELO DEV (datada por ele 2026-08-27, registrada em 2026-08-28)
+
+📌 **PROVENIÊNCIA, e ela é parte do registro** (mesma disciplina da §"NOMES FICTÍCIOS — DECISÕES DO
+DEV", escrita depois do `e1db1c9`, que gravou aprovações que nunca existiram): **o dev ditou este
+encerramento nesta sessão, em palavras dele, datando-o 2026-08-27.** O registro entra em
+**2026-08-28**. **Os dois fatos ficam; não escolhi entre eles.**
+
+**O que o dev ditou, TEXTUAL e sem corte** (o trecho inteiro, não uma costura de frases — elidir
+enquanto se rotula "textual" é o defeito que esta seção existe para não repetir):
+> *"DECISÃO: a Fase 3 ESTÁ ENCERRADA. Ditada por mim agora, 2026-08-27. Todos os PRs da sequência
+> foram entregues (3.5.1 → 3.5.2 → 3.5.3 → 3.5.4 → PR C → conserto da 0(s)), todos mergeados, todos
+> com portões verdes."*
+
+🔒 **Isto FECHA a divergência que este arquivo carregava:** a §SEQUÊNCIA dizia *"⬅️ Fase 3 PRONTA
+PARA SER ENCERRADA"* e logo abaixo *"🛑 A FASE 3 NÃO ESTÁ ENCERRADA — encerrá-la é DECISÃO DO DEV, e
+ela não foi tomada"*. **A decisão foi tomada.** A redação antiga foi **riscada no lugar**, não
+apagada — ver lá.
+
+🔴 **ENCERRADA NÃO QUER DIZER SEM DÍVIDA — a lista abaixo é DO DEV, ditada junto com o encerramento.**
+Ele nomeou, como o que fica ABERTO apesar do encerramento:
+
+| item | onde está | em uma linha |
+|---|---|---|
+| **pendência 9 em 🟡** | §Pendências, item 9 | `party/` com cobertura PARCIAL: `onMessage`/`onClose`/`encerrar`/CORS/RPC-vs-HTTP seguem sem teste |
+| **0(t)** | §Pendências 0(t) | o snapshot pode se AUTOCONTRADIZER em sala `corrompida`; 3 caminhos, nenhum escolhido |
+| **0(u2)** | §Pendências 0(u) | guarda de etapa ASSIMÉTRICA — `etapa > cursor` escreve balde FUTURO e pré-queima o alarme |
+| **0(u3)** | §Pendências 0(u) | blip de rede de 3 s tira o jogador dos elegíveis e a sala anda sem ele |
+| **0(u4)** | §Pendências 0(u) | baldes com chave antiga ficam órfãos numa sala 3.4/3.5.1 reidratada |
+| **0(u5)** | §Pendências 0(u) | cliente antigo atestando na virada de etapa pode gerar alarme falso residual |
+| **0(u6)** | §Pendências 0(u) | `versaoSala` é o único campo persistido SEM checagem de forma |
+| **0(x)** | §Pendências 0(x) | `corrida-concluida` não carrega `etapa`; o atrasado atesta a etapa do SERVIDOR |
+| **0(y)** | §Pendências 0(y) | a guarda de 22 protege o ROSTER, não as CONEXÕES — socket quieto não é limitado |
+| **0(z)** | §Pendências 0(z) | renomear pista degrada em SILÊNCIO (a cerca compara duas fontes, não o conteúdo) |
+| **0(aa)** | §Pendências 0(aa) | a janela entre o PR 6 e o PR 7 da trilha de nomes fictícios |
+| **0(ab)** | §Pendências 0(ab) | ⚠️ **ver a ressalva medida logo abaixo** |
+| **0(ac)** | §Pendências 0(ac) | save antigo perde "Continuar campeonato" SEM MENSAGEM |
+| **0(q) + 0(u1)** | §Pendências 0(q) e 0(u) | **o par do DEPLOY**: os dois lados sobem no MESMO deploy, com o `wrangler` ANTES do `vite` |
+
+⚠️ **RESSALVA MEDIDA SOBRE A 0(ab), registrada em vez de "corrigida" em silêncio.** O dev nomeou a
+**0(ab)** na lista; **este arquivo a registra como ✅ FECHADA em 2026-08-27, no commit `9e18704`**
+(`npm run preview` voltou a sair 0, 11/11) — ver a 0(ab) na §Pendências. **Não reabri a pendência e
+não corrigi a lista do dev:** as duas coisas seriam a ocorrência nº 3 do `CLAUDE.md` com o sinal
+invertido. O que segue aberto naquele sítio é a **lacuna assumida do 3.5.4** que o próprio
+fechamento declarou: *"aquele preview não mostra o caminho de campeonato online — mostrá-lo exige
+`classificacao` e `calendario` no mock; é cobertura NOVA, não conserto."* 🛑 **Pergunta ao dev,
+aberta: era essa a dívida que ele quis listar, ou a 0(ab) deve reabrir?**
+
+⚠️ **A lista acima é a DO DEV e eu não a completei — mas registro o que está MEDIDO no arquivo:**
+seguem marcadas como abertas, e **não foram nomeadas por ele**, as pendências **0(a)** (`montarJogadores`
+duplicado), **0(g)**, **0(h)**, **0(i)** (`seedMestre` de 32 bits, enumerável), **0(j)**, **0(l)**,
+**0(m)**, **0(n)**, **0(o)** (assimetria de postura) e **0(v)** (a corrida de I/O do `npm test`).
+**Isto não as promove nem as rebaixa** — é a diferença entre "o dev listou" e "o arquivo registra",
+e ela fica visível de propósito. 🔑 **0(i) e 0(o) andam JUNTAS** e esperam o mesmo PR de alargamento
+de entropia, como já está travado na 0(o).
+
+📌 **PROPOSTA AO DEV (não executada — encolher/mover documentação é decisão dele, `CLAUDE.md`
+§"o `doc-writer` NÃO APAGA"):** com a fase encerrada, o §"FASE 3 — ONLINE" do `PLANOS_ATIVOS.md`
+deixou de ser plano ATIVO e caberia no `HISTORICO.md`. **Nada foi movido.**
 
 **Decisão (a) — o alvo NÃO é mais PartyKit.** É **`partyserver` + `wrangler`**, rodando como Durable
 Object comum num projeto Workers. O princípio do dia 1 fica intacto (**sala = DO isolado**); só o CLI
@@ -1069,10 +1133,22 @@ segue **não confirmada**, porque quem a confirmaria é o harness que o C constr
 
 **🔢 SEQUÊNCIA ATÉ FECHAR A FASE 3 (atualizada em 2026-08-23, no conserto da 0(s)):**
 **~~3.5.2~~ ✅ → ~~3.5.3~~ ✅ → ~~3.5.4~~ ✅ → ~~PR C~~ ✅ → ~~CONSERTO DA 0(s)~~ ✅ →
-⬅️ Fase 3 PRONTA PARA SER ENCERRADA.**
-🛑 **A FASE 3 NÃO ESTÁ ENCERRADA — encerrá-la é DECISÃO DO DEV, e ela não foi tomada.** Todos os
-passos planejados estão feitos; o que falta é o veredito, não trabalho. **Não marcar como encerrada
-sem ele.**
+~~⬅️ Fase 3 PRONTA PARA SER ENCERRADA.~~ ✅ **FASE 3 ENCERRADA.**
+✅ **O VEREDITO VEIO — ditado pelo dev, datado por ele 2026-08-27, registrado nesta sessão de
+2026-08-28.** ~~🛑 **A FASE 3 NÃO ESTÁ ENCERRADA — encerrá-la é DECISÃO DO DEV, e ela não foi
+tomada.** Todos os passos planejados estão feitos; o que falta é o veredito, não trabalho. **Não
+marcar como encerrada sem ele.**~~
+🔒 **A linha riscada acima estava CERTA quando foi escrita e ficou FALSA quando o dev decidiu — por
+isso é riscada aqui, no lugar, e não contradita noutro parágrafo.** É a mesma regra do `CLAUDE.md`
+§"o `doc-writer` NÃO APAGA": afirmação nova ao lado da antiga contraditória devolve o estrago,
+dependendo de qual o próximo leitor achar primeiro.
+📌 **Proveniência e âncora — os dois fatos, sem escolher entre eles:** o dev ditou o encerramento
+**nesta sessão**, datando-o **2026-08-27**; o registro entra em **2026-08-28**. ⚠️ **Correção de
+âncora: o pedido citou `ESTADO.md:1004`, e o sítio da divergência é este bloco (`:1070-1075` antes
+desta edição).** A `:1004` fala de `estadoDasSeeds` e nada tem com a Fase 3. Mesma família das
+correções de âncora já registradas neste arquivo.
+📋 **A lista do que fica ABERTO apesar do encerramento está na §"FASE 3 ENCERRADA"**, no bloco da
+Fase 3 mais acima.
 🔴 *(Registro do passo que acabou de fechar:)* **o CONSERTO DA 0(s) foi um passo NOVO, criado porque
 o PR C mediu.** A pendência era suspeita por LEITURA desde 2026-08-19, ficou **CONFIRMADA por
 execução** no PR C e foi **RESOLVIDA** em 2026-08-23 — ver a 0(s) na lista de pendências. A Fase 3
@@ -1229,9 +1305,14 @@ deixou de ser inalcançável — tem seletor, encadeia corridas, salva e retoma)
 
 ## SEQUÊNCIA — o que sobrou
 
-**🔢 ATÉ FECHAR A FASE 3 (atualizado em 2026-08-20, decisão do dev que adiou o PR C do spike):**
-**3.5.2 → 3.5.3 → 3.5.4 → PR C → Fase 3 encerrada.** O PR C é o gate do `alarm()` e foi
-**reposicionado** para o fim, não cancelado — motivo e gatilho de reavaliação na §"Onde parei".
+**🔢 ~~ATÉ FECHAR A FASE 3~~ — SEQUÊNCIA CUMPRIDA (atualizado em 2026-08-20, decisão do dev que
+adiou o PR C do spike; ✅ RISCADA em 2026-08-28, no encerramento da fase):**
+**~~3.5.2 → 3.5.3 → 3.5.4 → PR C → Fase 3 encerrada.~~** Os quatro passos foram entregues, mais o
+**conserto da 0(s)** que o PR C obrigou. O PR C era o gate do `alarm()` e foi **reposicionado** para
+o fim, não cancelado — motivo e gatilho de reavaliação na §"Onde parei".
+✅ **A FASE 3 ESTÁ ENCERRADA desde 2026-08-27 (decisão ditada pelo dev). Ver a §"FASE 3 ENCERRADA"**,
+no bloco da Fase 3 lá em cima, para a proveniência e para a **lista do que fica aberto apesar do
+encerramento** — encerrada não quer dizer sem dívida.
 
 **Os portões visuais saíram desta lista: os dois foram aprovados em 2026-08-07.**
 **O teste do online foi FECHADO no PR 3.3.4 com todos os quatro casos validados pelo dev.**
@@ -1240,8 +1321,10 @@ deixou de ser inalcançável — tem seletor, encadeia corridas, salva e retoma)
 1. ✅ **A CORRIDA ONLINE — OS QUATRO PRs FEITOS E O PORTÃO VISUAL DO 4/4 APROVADO PELO DEV
    (2026-08-18). ITEM ENCERRADO.** Plano dos 4 PRs no `HISTORICO.md`; o da fase, em `PLANOS_ATIVOS.md` §"FASE 3". `b67ec2b`, `8a8088a`,
    `50906af`, `44d0dc8`+`8489b6f`. **A corrida online está fechada** — nada de código nem de veredito
-   pendente nela. O que fecha a Fase 3 agora é o **3.5 campeonato online**, cujo plano está aprovado
-   e registrado em `PLANOS_ATIVOS.md` §"3.5 CAMPEONATO ONLINE".
+   pendente nela. ~~O que fecha a Fase 3 agora é o **3.5 campeonato online**, cujo plano está aprovado
+   e registrado em `PLANOS_ATIVOS.md` §"3.5 CAMPEONATO ONLINE".~~
+   ✅ **ATUALIZADO em 2026-08-28: o 3.5 campeonato online FOI ENTREGUE (3.5.1 → 3.5.4) e a FASE 3
+   ESTÁ ENCERRADA** — ditado pelo dev, ver a §"FASE 3 ENCERRADA".
 2. ⬅️ **VEREDITO do dev sobre `preview/campeonato.html`** (as três telas do 8.3) — segue aberto.
 4. **PR de INFRA — DESTRAVADO pela aprovação das silhuetas.** Era "pré-requisito caso as silhuetas
    fossem aprovadas"; com o 10/10, **deixa de ser pré-requisito e vira consolidação**: restrições
@@ -1402,8 +1485,13 @@ medido e custos residuais estão na **pendência 9**.
   a propriedade RPC-vs-HTTP seguem **sem nenhum teste**, e o **gate do `alarm()` (aviso A2) também**
   — ele é o PR C, que **não foi feito**. O 3.5.2 põe o cursor exatamente ali.
   ➡️ **ATUALIZAÇÃO 2026-08-20:** o PR C foi **adiado por decisão do dev** para **depois do 3.5.4**
-  (sequência **3.5.2 → 3.5.3 → 3.5.4 → PR C → Fase 3 encerrada**). Enquanto ele não vier, **este
-  parágrafo é a descrição corrente do risco, não histórico** — e o 3.5.2 abre ciente disso.
+  (sequência **3.5.2 → 3.5.3 → 3.5.4 → PR C → Fase 3 encerrada**). ~~Enquanto ele não vier, **este
+  parágrafo é a descrição corrente do risco, não histórico** — e o 3.5.2 abre ciente disso.~~
+  ➡️ **ATUALIZAÇÃO 2026-08-28 (encerramento da Fase 3 ditado pelo dev — ver a §"FASE 3 ENCERRADA"):
+  o PR C FOI FEITO** (`party/alarme.test.ts`, 2026-08-23), então a sentença riscada acima envelheceu.
+  🔒 **O que NÃO envelheceu, e é o que fica valendo:** `onMessage`, `onClose`, `encerrar`, CORS e a
+  propriedade RPC-vs-HTTP **seguem sem teste**. É por isso que a **pendência 9 ficou em 🟡 e não em
+  ✅** no encerramento — encerrada não quer dizer sem dívida.
   ⚠️ **CORREÇÃO MEDIDA EM 2026-08-20 — a redação anterior deste item era FALSA e por isso foi
   corrigida aqui, não só contradita abaixo.** Ela dizia: *"o 3.5.2 exercita `onMessage` (é por onde o
   atestado da barreira chega e o cursor anda), então a lacuna de `onMessage` encolhe como efeito

@@ -17,16 +17,31 @@
 
 ## Índice
 
+> ✅ **ATUALIZAÇÃO DO ÍNDICE em 2026-08-28 — A FASE 3 ESTÁ ENCERRADA** (decisão ditada pelo dev,
+> datada por ele 2026-08-27; proveniência e a lista do que fica aberto no `ESTADO.md`
+> §"FASE 3 ENCERRADA"). **Os três primeiros planos abaixo DEIXARAM de ser ativos.** Os rótulos
+> antigos ficam riscados, não apagados. **Nada foi movido daqui** — arquivar é decisão do dev, e a
+> proposta está registrada no `ESTADO.md`.
+
 - **§FASE 3 — ONLINE: o plano aprovado** — decisões (a)/(b)/(c) e a sequência de PRs 3.0 → 3.5.
-  **EM ANDAMENTO.**
+  ~~**EM ANDAMENTO.**~~ ✅ **ENCERRADO** (2026-08-27, decisão do dev).
 - **§3.5 CAMPEONATO ONLINE — o plano aprovado** — `B-indep`, o fatiamento em 4 PRs, o CORTE 3.5-F,
-  a cerca textual de M5/M6. **EM ANDAMENTO — o 3.5.1 está feito.**
+  a cerca textual de M5/M6. ~~**EM ANDAMENTO — o 3.5.1 está feito.**~~ ✅ **ENCERRADO — 3.5.1 a
+  3.5.4 entregues e mergeados.**
 - **§SPIKE + COBERTURA DA CASCA — o plano aprovado** — `@cloudflare/vitest-pool-workers`, os 3 PRs
-  A/B/C, os baselines MA/**MC**/MB/MD (MR disqualificada por medição). **EM ANDAMENTO — PR A e PR B
+  A/B/C, os baselines MA/**MC**/MB/MD (MR disqualificada por medição). ~~**EM ANDAMENTO — PR A e PR B
   FEITOS e mergeados na `main` em 2026-08-19; o PR C foi ADIADO pelo dev em 2026-08-20 para DEPOIS
-  do 3.5.4.** Sequência: **3.5.2 → 3.5.3 → 3.5.4 → PR C → Fase 3 encerrada.**
+  do 3.5.4.** Sequência: **3.5.2 → 3.5.3 → 3.5.4 → PR C → Fase 3 encerrada.**~~
+  ✅ **ENCERRADO — os TRÊS PRs feitos e mergeados** (o C em 2026-08-23), mais o **conserto da 0(s)**
+  que o PR C obrigou. ⚠️ **A pendência 9 fica em 🟡, não em ✅:** `onMessage`/`onClose`/`encerrar`/
+  CORS seguem sem teste. Ver `ESTADO.md` §Pendências, item 9.
 - **§NOMES FICTÍCIOS — o plano dos 7 PRs** — o portão, o funil, as peças + T1, a tabela, o
-  `anonimizar` + diferencial, A TROCA, a fixture. **NÃO COMEÇADO — o PR 1 é o próximo.**
+  `anonimizar` + diferencial, A TROCA, a fixture. ~~**NÃO COMEÇADO — o PR 1 é o próximo.**~~
+  🏆 **O ÚNICO PLANO ATIVO DESTE ARQUIVO. PRs 1, 2, 3 e 4 FEITOS e commitados na `main`
+  (`fc6fb6a`, `50bda11`, `e501b97`, `cbe2bbc`); o PR 5 (`anonimizar` + diferencial) é o próximo.**
+  ⚠️ *(Esta linha é a correção de uma afirmação FALSA — o índice dizia "não começado" com quatro PRs
+  entregues. Corrigida junto porque prosa falsa vizinha da que se está corrigindo é a ocorrência
+  nº 2 do `CLAUDE.md`, e nenhum teste pega erro factual em `.md`.)*
   ⚠️ **A ORDEM é decisão travada do dev; o DETALHAMENTO de cada PR é proposta minha**, e **4 itens
   dependem dele** (tabela ao fim da seção). ⚠️ **Único plano deste arquivo que NÃO veio do
   `ESTADO.md`** — nasceu aqui, em 2026-08-25.
