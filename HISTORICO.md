@@ -2469,6 +2469,64 @@ Arquivo novo: `preview/campeonato-online.html` (não sobrescreve `preview/campeo
 
 ---
 
+## PR DE ÂNCORAS — as quatro citações de `derivar-notas.ts` (2026-08-28) — BAIXO RISCO
+
+**Base:** `517e787` (arquivamento do §FASE 3). **Escopo:** só comentário e prosa. **Zero diff de
+runtime.** Doc escrita pela sessão principal, como os três PRs anteriores.
+
+**Motivo de ser AGORA, palavras do dev:** *"o PR 6 vai citar âncoras dessa região, e começar com
+quatro citações erradas no repo é convite para propagar mais uma. É o mesmo argumento que fez o (ab)
+vir antes do PR 4."* — consertar o instrumento antes de usá-lo.
+
+### As quatro âncoras, re-medidas
+
+| sítio em `scripts/derivar-notas.ts` | citado como | **medido em 2026-08-28** |
+|---|---|---|
+| `idsDaEquipeAno` | `:623-631` | **`:637-646`** |
+| `nome: titularesDaEquipe[0\|1].nome` | `:691-692` | **`:705-706`** |
+| `equipe: equipe.nome` | `:698` | **`:712`** |
+| `` nome: `Estrategista ${equipe.nome} ${season}` `` | `:705` | **`:719`** |
+
+### 🔴 A armadilha que isto desarma é pior que "número velho"
+
+**O `:705` antigo aponta HOJE para uma linha REAL e ERRADA:** a `:705` é agora
+`nome: titularesDaEquipe[0].nome` — **o sítio do PILOTO**. Quem seguisse a citação encontraria
+código plausível, do assunto certo (normalização de nome exibido), e concluiria estar no sítio do
+estrategista. 🔑 **Âncora podre que aponta para o vazio se denuncia sozinha; esta não se
+denunciava** — e o sítio do estrategista é justamente o que "três sessões contando 3 quando eram 4"
+já deixou passar uma vez.
+
+🔑 **A deriva NÃO é do PR 5**, e isso está medido: o `:698` não bate nem somando o deslocamento de
+**+8** que a exportação de `idsDaEquipeAno` causou (698 + 8 = 706 ≠ **712**). **Era anterior à trilha
+inteira**; o PR 5 apenas a tornou visível ao mexer no arquivo.
+
+### Os quatro sítios corrigidos
+
+`scripts/portao-nomes-reais.test.ts:75` (a razão MEDIDA do método do portão — o sítio mais caro de
+estar errado, porque é o que justifica "varredura de texto cru, nunca caminhada por campo") ·
+`PLANOS_ATIVOS.md` §NOMES FICTÍCIOS (a mesma 🔒) · `HISTORICO.md`, no achado de método do PR 2 ·
+`ESTADO.md`, na lista dos 4 sítios de normalização — onde as **outras três** âncoras irmãs também
+estavam erradas e foram corrigidas junto, por coerência: consertar uma e deixar as vizinhas
+quebradas é pior do que não mexer.
+
+### ⚠️ O que quase entrou errado, e foi pego na conferência do diff
+
+Um `replace` literal de `:705` → `:719` também acertou **a linha que DESCREVE a deriva** — *"a
+citação `derivar-notas.ts:705` aparecia em quatro sítios e já estava desatualizada"* —, virando o
+absurdo *"`:719` … já estava desatualizado"*. **Reescrito à mão nos dois arquivos.**
+🔑 **A lição: `sed` sobre prosa que fala do próprio número é armadilha.** A substituição mecânica não
+distingue *usar* a âncora de *falar sobre* ela.
+
+### Portões
+
+`npm test` **1638/67 — INALTERADO**, e inalterado é o resultado CERTO: nenhuma linha de runtime foi
+tocada. typecheck **0**, eslint **0**. Cada uma das seis âncoras novas foi conferida contra o fonte
+por `sed -n "<n>p"`, uma a uma.
+⚠️ **`preview/medicoes-pr2/LEVANTAMENTO-PR2.md` também cita `:705` e ficou de fora** — `preview/` é
+gitignored, não é rastreado pelo git e não faz parte do repositório.
+
+---
+
 ## NOMES FICTÍCIOS — PR 5: `anonimizar.ts` + teste diferencial (2026-08-28, `3d5f105`) — MÉDIO RISCO
 
 **Base:** `fa1bdc6` (o commit de docs que encerrou a Fase 3). **Plano:** `PLANOS_ATIVOS.md`
@@ -2649,9 +2707,9 @@ arquivo —, e foram corrigidas no commit de documentação.
 🔑 **A lição operacional: acrescentar comentário em arquivo muito citado É mudança de âncora.** Este
 projeto já registrou cinco correções de âncora; esta é a primeira em que a causa foi identificada
 como *o próprio diff que as invalidou*, e não como descuido de leitura.
-⚠️ **NÃO houve varredura geral:** `derivar-notas.ts:705` aparece em quatro sítios e **já estava
-desatualizado antes deste PR** (a interpolação nunca esteve em 705). Deriva pré-existente, PR
-próprio.
+⚠️ **NÃO houve varredura geral:** a citação `derivar-notas.ts:705` aparecia em **quatro sítios** e
+**já estava desatualizada antes deste PR** (a interpolação nunca esteve em 705). Deriva
+pré-existente, PR próprio. ✅ **FECHADO no PR de âncoras (2026-08-28), logo abaixo.**
 
 ### As três prosas que passariam a mentir, corrigidas no mesmo PR
 
@@ -2945,7 +3003,7 @@ efeito de tirar a repetição; o que mudou de verdade é que o lookup saiu de 7 
 
 🔴 **ACHADO DE MÉTODO — uma passada MINHA foi descartada, e o registro fica.** A primeira
 varredura exigia **aspa adjacente** ao nome (`'Ferrari'`) e devolveu **12 arquivos**. É
-**sub-contagem**: nome dentro de string maior não casa — `derivar-notas.ts:705`
+**sub-contagem**: nome dentro de string maior não casa — `derivar-notas.ts:719`
 (`` `Estrategista ${equipe.nome} ${season}` ``) renascido como heurística de varredura, a mesma
 armadilha que o portão do PR 1 documenta. A medida válida é a de texto cru, e é ela acima.
 **Isso explica por que o número do plano estava baixo.**

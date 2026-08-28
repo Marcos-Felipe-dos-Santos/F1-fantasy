@@ -361,7 +361,7 @@ lá seria circular). **Quem ler este teste verde e concluir "não há nome real 
 **PORTÃO — a cerca que conta nome real, com o universo declarado DENTRO do teste.**
 - **O que:** teste novo que varre o repositório procurando os nomes reais e falha se a contagem
   passar de um teto commitado. **O baseline nasce no número de hoje** e daí em diante só encolhe.
-- 🔒 **VARREDURA DE TEXTO CRU, NUNCA CAMINHADA POR CAMPO.** É o sítio `derivar-notas.ts:705` que
+- 🔒 **VARREDURA DE TEXTO CRU, NUNCA CAMINHADA POR CAMPO.** É o sítio `derivar-notas.ts:719` que
   dita isto: o nome da equipe está **dentro de uma string interpolada**
   (`Estrategista ${equipe.nome} ${season}`), não num campo próprio. **Enumeração de campo já falhou
   aqui uma vez** — foram três sessões contando 3 sítios de normalização quando eram 4.

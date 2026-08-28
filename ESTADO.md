@@ -537,9 +537,46 @@ não inclui `scripts/derived/`. **Quem move essa linha é o PR 6.**
 (`scripts/nomes-ficticios.test.ts:604` e a entrada do PR 4 no `HISTORICO.md`) e foram **corrigidas no
 mesmo commit de doc**. 🔑 **A lição operacional: acrescentar comentário num arquivo muito citado é
 mudança de âncora**, e este projeto já registrou cinco correções de âncora por não notar isso.
-⚠️ **NÃO saí corrigindo todas as âncoras do repo:** `derivar-notas.ts:705` aparece em quatro sítios e
-**já estava desatualizado antes deste PR** (a interpolação nunca esteve em 705) — é deriva
-pré-existente, não é minha, e mexer nela é PR próprio.
+⚠️ **NÃO saí corrigindo todas as âncoras do repo:** a citação `derivar-notas.ts:705` aparecia em
+quatro sítios e **já estava desatualizada antes deste PR** (a interpolação nunca esteve em 705) — é
+deriva pré-existente, não é minha, e mexer nela é PR próprio.
+✅ **E o PR próprio veio no mesmo dia — é o bloco a seguir.**
+
+**🧭 PR DE ÂNCORAS — CONCLUÍDO e COMMITADO em 2026-08-28**, na `main`. **BAIXO RISCO — só
+comentário, zero diff de runtime.** **Sem push, sem tag.**
+**Motivo de ser AGORA, palavras do dev:** *"o PR 6 vai citar âncoras dessa região, e começar com
+quatro citações erradas no repo é convite para propagar mais uma."* **Mesmo argumento que fez o PR
+(ab) vir antes do PR 4** — consertar o instrumento antes de usá-lo.
+
+**As quatro âncoras de `scripts/derivar-notas.ts`, TODAS RE-MEDIDAS nesta data:**
+
+| sítio | citado como | **medido agora** |
+|---|---|---|
+| `idsDaEquipeAno` | `:623-631` | **`:637-646`** |
+| `nome: titularesDaEquipe[0\|1].nome` | `:691-692` | **`:705-706`** |
+| `equipe: equipe.nome` | `:698` | **`:712`** |
+| `` nome: `Estrategista ${equipe.nome} ${season}` `` | `:705` | **`:719`** |
+
+🔴 **A ARMADILHA QUE ISTO DESARMA, e ela é pior que "número velho": o `:705` antigo APONTA HOJE PARA
+UMA LINHA REAL E ERRADA.** A `:705` é agora `nome: titularesDaEquipe[0].nome` — **o sítio do
+PILOTO**. Quem seguisse a citação encontraria código plausível, do assunto certo (normalização de
+nome), e concluiria que estava no sítio do estrategista. **Âncora podre que aponta para o vazio se
+denuncia sozinha; esta não se denunciava.**
+🔑 **E a deriva NÃO é do PR 5:** o `:698` não bate nem somando o deslocamento de +8 que a exportação
+de `idsDaEquipeAno` causou (698+8 = 706 ≠ 712). **Era anterior à trilha inteira** — o PR 5 só a
+tornou visível ao mexer no arquivo.
+
+**Os quatro sítios corrigidos:** `scripts/portao-nomes-reais.test.ts:75` (a razão MEDIDA do método
+do portão), `PLANOS_ATIVOS.md` §NOMES FICTÍCIOS (a 🔒 "varredura de texto cru"), `HISTORICO.md`
+(achado de método do PR 2) e este arquivo (a lista dos 4 sítios de normalização).
+⚠️ **A troca NÃO foi cega, e isto quase mordeu:** um `replace` literal de `:705` → `:719` também
+acertou **a linha que DESCREVE a deriva** ("`:705` aparece em quatro sítios e já estava
+desatualizado"), transformando-a em absurdo. Pego na conferência do diff e reescrito à mão. **Sed
+sobre prosa que fala do próprio número é armadilha.**
+
+**Medido:** `npm test` **1638/67 — INALTERADO**, e inalterado é o resultado CERTO (nenhuma linha de
+runtime foi tocada). typecheck **0**, eslint **0**. `preview/medicoes-pr2/LEVANTAMENTO-PR2.md`
+também cita `:705` e **ficou de fora por não ser rastreado pelo git** (`preview/` é gitignored).
 
 ---
 
@@ -743,15 +780,19 @@ desta lista. **Isto é MEDIÇÃO, não veredito**: método no próprio bullet.
 As três linhas ditadas conferem, mas **naquele** arquivo; `idsDaEquipeAno` **não existe** em
 `agregar-fatos.ts` (medido: zero ocorrência no repo fora de `derivar-notas.ts`). Mesma família das
 duas correções de âncora do inventário acima. Os sítios:
-- **`:623-631` — `idsDaEquipeAno`**, e **é aqui que o nome vira id**:
+⚠️ **AS QUATRO ÂNCORAS ABAIXO FORAM RE-MEDIDAS E CORRIGIDAS em 2026-08-28** (PR de âncoras). Os
+valores antigos — `:623-631`, `:691-692`, `:698`, `:705` — **estavam todos errados**, e a deriva é
+**anterior** a esta trilha: `:698` já não batia nem somando o deslocamento do PR 5. **Os SÍTIOS
+continuam sendo os mesmos quatro; só os números mudaram.**
+- **`:637-646` — `idsDaEquipeAno`**, e **é aqui que o nome vira id**:
   `` const base = `${slug(constructorId)}-${ano}` `` e daí `chassi`/`motor`/`estrategista`/`pit` +
   `` piloto: (driverId) => `${base}-piloto-${driverId}` ``.
-- **`:691-692`** — `nome: titularesDaEquipe[0|1].nome`, o nome exibido do piloto.
-- **`:698`** — `equipe: equipe.nome`, o nome exibido da equipe.
-- 📏 **`:705` — O SÍTIO QUE FALTAVA (medido em 2026-08-25).** O campo `nome` do estrategista é
+- **`:705-706`** — `nome: titularesDaEquipe[0|1].nome`, o nome exibido do piloto.
+- **`:712`** — `equipe: equipe.nome`, o nome exibido da equipe.
+- 📏 **`:719` — O SÍTIO QUE FALTAVA (medido em 2026-08-25, âncora corrigida em 2026-08-28).** O campo `nome` do estrategista é
   **montado por interpolação**, em tempo de construção:
   `` nome: `Estrategista ${equipe.nome} ${season}` `` — o nome da equipe entra dentro de uma string,
-  não como campo próprio. **Método:** linha lida direto em `scripts/derivar-notas.ts:703-706`;
+  não como campo próprio. **Método:** linha lida direto em `scripts/derivar-notas.ts:719`;
   contagem por agregado sobre `src/data/equipe-anos.json` (nenhuma leitura integral) —
   **771 entradas · 771 `estrategista.nome` presentes · 771 distintos**, ou seja **um por equipe-ano,
   sem buraco**; e materialização conferida na fixture,

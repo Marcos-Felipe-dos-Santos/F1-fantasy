@@ -72,7 +72,7 @@
  * MÉTODO — VARREDURA DE TEXTO CRU, NUNCA CAMINHADA POR CAMPO.
  *
  * O arquivo é lido como uma string só e cada agulha é contada nele. **Não se
- * percorre a estrutura JSON.** A razão é medida: `scripts/derivar-notas.ts:705`
+ * percorre a estrutura JSON.** A razão é medida: `scripts/derivar-notas.ts:719`
  * monta o nome do estrategista por INTERPOLAÇÃO —
  * `` `Estrategista ${equipe.nome} ${season}` `` —, então o nome da equipe vive
  * DENTRO de um valor, não numa chave. Foram três sessões contando "3 sítios de
