@@ -15,12 +15,15 @@
  *
  * 📌 **Por que isto nasce no PR 1 e não no PR 5:** o portão dos nomes reais
  * (`portao-nomes-reais.test.ts`) precisa do caminho do universo, e um portão que
- * define o próprio caminho seria a terceira cópia. O PR 5 (`anonimizar.ts`) é
- * quem passa a ESCREVER em `src/data/` — e ele importa daqui, não redefine.
- * ⚠️ Hoje a publicação `scripts/derived/` → `src/data/` é **cópia manual sem
- * guarda** (medido: os dois arquivos são byte a byte idênticos e nenhum script
- * faz a cópia). `PUBLICADO_EQUIPE_ANOS` existe para que o PR 5 tenha o destino
- * declarado num lugar só quando matar esse passo manual.
+ * define o próprio caminho seria a terceira cópia. ~~O PR 5 (`anonimizar.ts`) é
+ * quem passa a ESCREVER em `src/data/` — e ele importa daqui, não redefine.~~
+ * ⚠️ **CORRIGIDO em 2026-08-28 (decisão do dev):** o PR 5 escreve em
+ * `EQUIPE_ANOS_ANONIMO`, **não** em `src/data/`. Quem escreve em `src/data/` é
+ * o **PR 6**, e ele importa daqui, não redefine.
+ * ⚠️ A publicação `scripts/derived/` → `src/data/` **segue sendo cópia manual
+ * sem guarda** (medido: os dois arquivos são byte a byte idênticos e nenhum
+ * script faz a cópia). `PUBLICADO_EQUIPE_ANOS` existe para que o **PR 6** tenha
+ * o destino declarado num lugar só quando matar esse passo manual.
  */
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -43,10 +46,35 @@ export const FATOS_AGREGADOS = join(DERIVED_DIR, 'fatos-agregados.json');
 /** Dataset derivado — a saída de `derivar-notas.ts` (staging). */
 export const EQUIPE_ANOS_DERIVADO = join(DERIVED_DIR, 'equipe-anos.derivado.json');
 
+/**
+ * Dataset ANONIMIZADO — a saída de `anonimizar.ts` (PR 5). Mesmo shape do
+ * derivado, com equipe/piloto/id/estrategista trocados pela `TABELA_NOMES`.
+ *
+ * 🔒 **NÃO É COMMITADO — decisão do dev, 2026-08-28** (`.gitignore`). O motivo
+ * é o mesmo que fez este arquivo existir: **artefato derivado commitado é a
+ * segunda fonte que precisa concordar com a primeira.** Quem precisar dele roda
+ * `npm run dataset:anonimizar`; o teste diferencial NÃO o lê — opera sobre o
+ * retorno em memória da função pura, para que `npm test` nunca dependa de
+ * artefato gerado.
+ */
+export const EQUIPE_ANOS_ANONIMO = join(DERIVED_DIR, 'equipe-anos.anonimo.json');
+
 /** Dados servidos ao app. É o que entra no bundle. */
 export const DATA_DIR = join(RAIZ, 'src', 'data');
 
-/** Destino da publicação, hoje feita à mão. O PR 5 passa a escrever aqui. */
+/**
+ * Destino da publicação, HOJE AINDA FEITA À MÃO.
+ *
+ * ⚠️ **CORRIGIDO em 2026-08-28: NÃO é o PR 5 que escreve aqui — é o PR 6.**
+ * A redação anterior desta linha dizia "o PR 5 passa a escrever aqui", pela
+ * decisão do dev de 2026-08-25 (`PLANOS_ATIVOS.md`, "a cópia manual MORRE
+ * ali"). **Essa decisão foi SUPERADA pela do dev em 2026-08-28:** o PR 5 lê o
+ * derivado e escreve `EQUIPE_ANOS_ANONIMO`, com `src/data/` **intocado** — ele
+ * é o ensaio, não a troca.
+ * 🔴 **Consequência dita por inteiro, para ninguém ler "morreu no 5": A CÓPIA
+ * MANUAL `derived → src/data/` NÃO MORRE NO PR 5. Ela morre no PR 6**, que é
+ * quem publica. Até lá segue manual e sem guarda.
+ */
 export const PUBLICADO_EQUIPE_ANOS = join(DATA_DIR, 'equipe-anos.json');
 
 /** Fixture pequena e segura de ler inteira (regra do `CLAUDE.md`). */

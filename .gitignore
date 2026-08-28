@@ -4,8 +4,21 @@ coverage/
 .env*
 
 # Cache cru da Jolpica-F1 (PR 4.1) — gigante e reproduzível via
-# `npm run dataset:fetch`; scripts/derived/ (agregados, PR 4.2+) É commitado.
+# `npm run dataset:fetch`; scripts/derived/ (agregados, PR 4.2+) É commitado —
+# ⚠️ COM UMA EXCEÇÃO desde 2026-08-28, logo abaixo. A linha acima ficou como
+# está por ser verdadeira para os dois arquivos que ela descrevia
+# (`fatos-agregados.json` e `equipe-anos.derivado.json`), e a exceção é dita
+# aqui em vez de contradita noutro lugar.
 scripts/cache/
+
+# Dataset ANONIMIZADO (PR 5 da trilha do dataset fictício) — saída de
+# `npm run dataset:anonimizar`. NÃO é commitado, decisão do dev: artefato
+# derivado commitado é a segunda fonte que precisa concordar com a primeira, e
+# matar essa classe de defeito é a razão de `scripts/caminhos-dataset.ts`
+# existir. O teste diferencial (`scripts/anonimizar.test.ts`) NÃO lê este
+# arquivo — opera sobre o retorno em memória da função pura, para que
+# `npm test` nunca dependa de artefato gerado.
+scripts/derived/equipe-anos.anonimo.json
 
 # Referências visuais de terceiros (prints de outros jogos, imagens de apoio à
 # direção de arte). Ficam SÓ na máquina do dev: são obra de terceiros e este

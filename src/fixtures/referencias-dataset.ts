@@ -58,6 +58,15 @@
  * | `src/engine/corrida.test.ts`, `draft-test-fixtures.ts` (via `bots.test.ts` e `draft.test.ts`) | `src/fixtures/dataset-semente/` | **PR 7** |
  * | `scripts/dataset-report.ts`, `derivar-notas.test.ts` | `scripts/derived/` | **nunca** (segue real por desenho) |
  *
+ * ⚠️ **PRECISÃO ACRESCENTADA no PR 5 (2026-08-28), porque a linha "nunca troca"
+ * passou a poder ser mal lida:** o que segue real por desenho é
+ * `equipe-anos.derivado.json`, a ENTRADA do pipeline. Desde o PR 5 existe ao
+ * lado dele um `equipe-anos.anonimo.json` (gitignorado, saída de
+ * `npm run dataset:anonimizar`) que é fictício — mas **nenhum consumidor desta
+ * tabela o lê**, e por isso a coluna "troca em" continua correta como está.
+ * 🔴 **A cópia manual `derived → src/data/` NÃO morreu no PR 5 — ela morre no
+ * PR 6**, que é quem publica. Até lá segue manual e sem guarda.
+ *
  * 🔑 **`RED_BULL_2023` é consumido pelos TRÊS.** Entre o PR 6 e o PR 7 existe
  * uma janela em que `src/data/` já é fictício e a fixture ainda é real — e uma
  * constante só não pode servir os dois lados. **Nessa janela, o `.find` do lado

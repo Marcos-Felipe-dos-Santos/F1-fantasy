@@ -39,7 +39,15 @@
  * ⚠️ **`scripts/derived/` está FORA, e não é esquecimento:** ele É o universo.
  * Contar nome real no arquivo que DEFINE a lista de nomes reais é circular —
  * daria 100% por construção e não mediria nada. Ele segue com nome real por
- * desenho; quem o anonimiza é o PR 5, na escrita para `src/data/`.
+ * desenho; ~~quem o anonimiza é o PR 5, na escrita para `src/data/`.~~
+ * ⚠️ **CORRIGIDO em 2026-08-28 (decisão do dev):** o **PR 5** lê o derivado e
+ * escreve `scripts/derived/equipe-anos.anonimo.json` (gitignorado), com
+ * **`src/data/` INTOCADO** — ele é o ensaio, não a troca. **Quem escreve em
+ * `src/data/` é o PR 6**, e é ele que derruba a linha `src/data/equipe-anos.json`
+ * do `BASELINE` abaixo. 🔴 **A cópia manual `derived → src/data/` NÃO morre no
+ * PR 5: morre no PR 6.**
+ * 📌 **O `BASELINE` deste portão NÃO se move no PR 5**, e é o resultado certo:
+ * a lista de arquivos abaixo é fixa e a saída do `anonimizar` não está nela.
  *
  * ⚠️ **CÓDIGO-FONTE está FORA, e o PR 2 NÃO fechou isso.** Este portão não mede
  * `.ts`/`.tsx`, e segue sem medir depois do PR 2 (`50bda11`).

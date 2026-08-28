@@ -18,6 +18,7 @@
     "dataset:fetch": "node scripts/fetch-f1-data.ts",
     "dataset:fatos": "node scripts/agregar-fatos.ts",
     "dataset:notas": "node scripts/derivar-notas.ts",
+    "dataset:anonimizar": "node scripts/anonimizar.ts",
     "dataset:report": "node scripts/dataset-report.ts",
     "lint": "eslint .",
     "format": "prettier --write .",

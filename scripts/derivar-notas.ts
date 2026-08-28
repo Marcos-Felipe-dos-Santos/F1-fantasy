@@ -626,7 +626,15 @@ function derivarNotasEquipe(
 // em runtime por `verificarColisaoDeIds` mais abaixo, chamado por `main`).
 // ---------------------------------------------------------------------------
 
-function idsDaEquipeAno(constructorId: string, ano: number) {
+/**
+ * 🔒 **EXPORTADA no PR 5 da trilha do dataset fictício, e o motivo é o mesmo do
+ * `caminhos-dataset.ts`:** `scripts/anonimizar.ts` precisa remontar os ids do
+ * dataset anonimizado, e remontá-los lá dentro criaria uma SEGUNDA definição da
+ * forma do id que teria de concordar com esta. É a classe de defeito que este
+ * pipeline já catalogou ("duas listas que precisavam concordar"). **Forma de id
+ * nova entra AQUI, e o anonimizar herda de graça.**
+ */
+export function idsDaEquipeAno(constructorId: string, ano: number) {
   const base = `${slug(constructorId)}-${ano}`;
   return {
     chassi: `${base}-chassi`,
