@@ -359,6 +359,50 @@ Ler as duas juntas — ver `PLANOS_ATIVOS.md` §"3.5 CAMPEONATO ONLINE".
     servidor **não pode** validar conteúdo — não tem dataset.
   - **`nodejs_compat` fora, medido.** Se voltar, tem que vir com o import que a exigiu.
 
+### 🔒 RETIDAS NO ARQUIVAMENTO DO §FASE 3 (2026-08-28) — nove blocos que o cabeçalho levaria junto
+
+> **A regra do aninhamento aplicada, e ela pagou.** O dev nomeou cinco categorias a reter (as
+> invioláveis do 3.1a/3.1b/3.2, os portões do 3.0/3.1b, a herança de config do spike, os riscos
+> aprovados e o "harness headless não é opcional") — **as cinco já estavam neste arquivo**. Lendo o
+> CONTEÚDO do plano, e não o cabeçalho, apareceram **mais nove** 🔒 que **não tinham contrapartida
+> aqui** e obrigam trabalho FUTURO. Estão abaixo, no texto original, antes de o plano ir para o
+> `HISTORICO.md`. **Cabeçalho não prova pertencimento.**
+
+- 🔒 **`seedCalendario` TAMBÉM É SORTEADA, NUNCA DERIVADA** (emenda da sessão principal, aceita pelo
+  dev). Sob 0(i) a `seedMestre` é recomponível desde o lobby, então um calendário derivado dela seria
+  **computável DURANTE o draft** — dá pra escolher peça sabendo as 5 pistas.
+- 🔒 **`seedsAbertas` tem o MESMO portão da `seedCorrida`** (draft concluído). A leitura aplicada é
+  que **seed sem calendário não protege nada** — são 10 pistas, o jogador computa as 10 e escolhe.
+- 🔒 **O rótulo de simulação NÃO muda:** o cliente compõe `seedDaEtapa(seedPublicadaDaEtapa, pistaId)`
+  — **a mesma função e o mesmo rótulo `camp:${pistaId}` do offline**, travado por docblock contra o
+  baseline do `balance-harness`. **Inventar um esquema paralelo é a classe de bug do 8.4.**
+- 🔒 **O cursor avança pela BARREIRA, nunca pelo anfitrião.** Com a sala iniciada, `anfitriaoId` não
+  é reatribuído se o host cair (`sala.ts:216-217` só age em `fase === 'aberta'`), então avanço por
+  host teria modo de falha **"sala encalhada para sempre"**.
+- 🔒 **INVARIANTE OBRIGATÓRIA (herdada do 3.5.3): indexar a etapa corrente por `etapas.length - 1`,
+  NUNCA por `sala.etapaAtual`.** Sob a pendência **0(t)** os dois **não** dizem o mesmo (sala
+  corrompida publica `etapaAtual: 4` com `seedsAbertas: []`), e indexar pelo cursor traz a 0(t) de
+  volta **como tela quebrada**.
+- 🔒 **`N_ETAPAS_CURTA` é duplicado em `src/net/tipos.ts`, com teste de conformidade** contra
+  `N_ETAPAS.curta`. **É duplicação deliberada:** importar de `campeonato.ts` arrastaria
+  `simularQuali`/`simularCorrida`/`dataset.ts` para `src/net/` — e com eles o **JSON de 1 MB**.
+  Quem "limpar" essa duplicata reabre a porta que ela existe para fechar.
+- 🔒 **C3 SEGUE FECHADO desde o 3.3.3** (`POST /parties/sala/000000/criar` → **404**, medido). A rota
+  **não** foi movida para dentro de `/parties/` apesar de isso simplificar o proxy, porque esse
+  acesso aberto é o risco que o C3 bloqueia. **Registrado para que nenhum PR futuro "simplifique" a
+  rota de volta.**
+- 🔒 **Negação se escreve com `includes`, não com lookahead.** Saiu do bloqueante do 3.5.1 (`m`, o
+  lookahead cobre só a 1ª linha — repetição literal do "regex furado na cerca" do 3.2).
+- 🔒 **VERMELHO DE COMPILAÇÃO NÃO CONTA COMO BASELINE VERMELHO.** Teste vermelho porque o campo
+  ainda não existe não prova nada sobre comportamento. **Quem carrega o baseline são as MUTAÇÕES**,
+  aplicadas sobre o código de produção PRONTO e **vistas** vermelhas. ✅ **A regra já se pagou uma
+  vez:** foi por ela que o `MR` do PR B do spike foi desqualificado (`TS2740`, ver a §Onde parei).
+
+🔒 **E uma décima, que é consequência e não regra:** **a independência das seeds em produção é
+sustentada por LEITURA DE CÓDIGO, não por teste** — a cerca de M5/M6 é **textual** e não pega quem a
+contorna. **Qualquer PR que mexa em `party/sala.ts` precisa ser lido com isso em mente.** Ler junto
+com a pendência **9**, que é onde essa lacuna vive.
+
 ### ✅ CORRIDA ONLINE — ENCERRADA. Plano movido para o `HISTORICO.md` em 2026-08-18
 
 Os quatro PRs (`b67ec2b`, `8a8088a`, `50906af`, `44d0dc8`+`8489b6f`) estão feitos e o **portão visual
