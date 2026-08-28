@@ -20,7 +20,7 @@
  */
 
 import type { Dataset } from '../src/engine/dataset';
-import { RED_BULL_2023 } from '../src/fixtures/referencias-dataset';
+import { DATA_RED_BULL_2023 } from '../src/fixtures/referencias-dataset';
 import { deriveSeed } from '../src/engine/rng';
 import { QUALI_CONFIG, simularQuali } from '../src/engine/quali';
 import { resolverCarro } from '../src/engine/carro';
@@ -49,11 +49,11 @@ export interface TaxaVitoriaPole {
  */
 export function loadoutForte(dataset: Dataset, jogadorId: string): Loadout {
   const ea = dataset.equipeAnos.find(
-    (e) => e.equipe === RED_BULL_2023.equipe && e.ano === RED_BULL_2023.ano,
+    (e) => e.equipe === DATA_RED_BULL_2023.equipe && e.ano === DATA_RED_BULL_2023.ano,
   );
   if (!ea) {
     throw new Error(
-      `loadoutForte: equipe/ano "${RED_BULL_2023.equipe}" ${RED_BULL_2023.ano} não encontrado no dataset`,
+      `loadoutForte: equipe/ano "${DATA_RED_BULL_2023.equipe}" ${DATA_RED_BULL_2023.ano} não encontrado no dataset`,
     );
   }
   return {

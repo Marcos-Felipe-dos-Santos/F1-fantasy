@@ -37,11 +37,11 @@ import type { EquipeAnoDerivado } from './derivar-notas.ts';
 import { ajusteBucket, CAP_AJUSTE_BUCKET, OUTPUT_PATH_PADRAO as DERIVADO_PATH_PADRAO } from './derivar-notas.ts';
 import type { RefEquipeAno } from '../src/fixtures/referencias-dataset.ts';
 import {
-  FERRARI_2004,
-  MCLAREN_1988,
-  MINARDI_1995,
-  RED_BULL_2012,
-  SPOT_CHECKS_BUCKETS,
+  DERIVADO_FERRARI_2004,
+  DERIVADO_MCLAREN_1988,
+  DERIVADO_MINARDI_1995,
+  DERIVADO_RED_BULL_2012,
+  DERIVADO_SPOT_CHECKS_BUCKETS,
 } from '../src/fixtures/referencias-dataset.ts';
 
 // ---------------------------------------------------------------------------
@@ -172,20 +172,20 @@ function imprimirSpotChecks(derivado: readonly EquipeAnoDerivado[]): void {
     console.log(`Senna ${ano} QUALI: ${senna ? senna.notas.quali : '(não encontrado)'}`);
   }
 
-  const mclaren1988 = encontrarEquipe(derivado, MCLAREN_1988);
-  console.log(`${rotulo(MCLAREN_1988)} AERO: ${mclaren1988 ? mclaren1988.chassi.notas.aero : '(não encontrado)'}`);
+  const mclaren1988 = encontrarEquipe(derivado, DERIVADO_MCLAREN_1988);
+  console.log(`${rotulo(DERIVADO_MCLAREN_1988)} AERO: ${mclaren1988 ? mclaren1988.chassi.notas.aero : '(não encontrado)'}`);
 
-  const ferrari2004 = encontrarEquipe(derivado, FERRARI_2004);
-  console.log(`${rotulo(FERRARI_2004)} AERO: ${ferrari2004 ? ferrari2004.chassi.notas.aero : '(não encontrado)'}`);
+  const ferrari2004 = encontrarEquipe(derivado, DERIVADO_FERRARI_2004);
+  console.log(`${rotulo(DERIVADO_FERRARI_2004)} AERO: ${ferrari2004 ? ferrari2004.chassi.notas.aero : '(não encontrado)'}`);
 
-  const minardi1995 = encontrarEquipe(derivado, MINARDI_1995);
-  console.log(`${rotulo(MINARDI_1995)} AERO: ${minardi1995 ? minardi1995.chassi.notas.aero : '(não encontrado)'}`);
+  const minardi1995 = encontrarEquipe(derivado, DERIVADO_MINARDI_1995);
+  console.log(`${rotulo(DERIVADO_MINARDI_1995)} AERO: ${minardi1995 ? minardi1995.chassi.notas.aero : '(não encontrado)'}`);
 
   const verstappen2023 = encontrarPiloto(derivado, 'max_verstappen', 2023);
   console.log(`Verstappen 2023 RIT: ${verstappen2023 ? verstappen2023.notas.rit : '(não encontrado)'}`);
 
-  const redbull2012 = encontrarEquipe(derivado, RED_BULL_2012);
-  console.log(`${rotulo(RED_BULL_2012)} PIT_TEMPO: ${redbull2012 ? redbull2012.pit.notas.pitTempo : '(não encontrado)'}`);
+  const redbull2012 = encontrarEquipe(derivado, DERIVADO_RED_BULL_2012);
+  console.log(`${rotulo(DERIVADO_RED_BULL_2012)} PIT_TEMPO: ${redbull2012 ? redbull2012.pit.notas.pitTempo : '(não encontrado)'}`);
 }
 
 // ---------------------------------------------------------------------------
@@ -219,7 +219,7 @@ function imprimirDistribuicaoBuckets(fatos: FatosAgregados): void {
 
 function imprimirSpotChecksBuckets(derivado: readonly EquipeAnoDerivado[]): void {
   console.log('\n--- Spot-checks AERO/MEC/MOTOR (informativo — não falha o script) ---');
-  for (const ref of SPOT_CHECKS_BUCKETS) {
+  for (const ref of DERIVADO_SPOT_CHECKS_BUCKETS) {
     const e = encontrarEquipe(derivado, ref);
     if (!e) {
       console.log(`${rotulo(ref)}: (não encontrado)`);

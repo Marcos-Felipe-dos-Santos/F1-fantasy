@@ -3,7 +3,7 @@ import { criarDataset } from './dataset';
 import equipeAnosReal from '../fixtures/dataset-semente/equipe-anos.json';
 import pecasReal from '../fixtures/dataset-semente/pecas.json';
 import pistasReal from '../fixtures/dataset-semente/pistas.json';
-import { GRID_12_EQUIPES_DISTINTAS } from '../fixtures/referencias-dataset';
+import { FIXTURE_GRID_12_EQUIPES_DISTINTAS } from '../fixtures/referencias-dataset';
 import type { Loadout } from './types';
 import { simularQuali } from './quali';
 import { CORRIDA_CONFIG, simularCorrida } from './corrida';
@@ -81,7 +81,7 @@ function loadoutMercedes(overrides: Partial<Loadout> = {}): Loadout {
 }
 
 /** 12 loadouts de equipes distintas (dataset tem 22 equipe/anos), pra teste de pontuação FIA com >10 carros. */
-const equipesDistintas = GRID_12_EQUIPES_DISTINTAS;
+const equipesDistintas = FIXTURE_GRID_12_EQUIPES_DISTINTAS;
 
 function loadoutsGrande(): Loadout[] {
   return equipesDistintas.map((ref, idx) => {

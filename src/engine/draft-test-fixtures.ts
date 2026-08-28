@@ -8,7 +8,7 @@
  */
 
 import type { Dataset } from './dataset';
-import { RED_BULL_2023 } from '../fixtures/referencias-dataset';
+import { FIXTURE_RED_BULL_2023 } from '../fixtures/referencias-dataset';
 import type { DraftState, Jogador, ProgressoJogador } from './types';
 
 export function stateManual(
@@ -21,8 +21,8 @@ export function stateManual(
   for (const id of jogadorIds) {
     progressoPadrao[id] = { rodada: 1, slots: {} };
     sorteiosPadrao[id] = Array(5).fill({
-      equipe: RED_BULL_2023.equipe,
-      ano: RED_BULL_2023.ano,
+      equipe: FIXTURE_RED_BULL_2023.equipe,
+      ano: FIXTURE_RED_BULL_2023.ano,
     });
   }
   return {

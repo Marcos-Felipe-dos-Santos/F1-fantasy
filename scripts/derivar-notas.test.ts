@@ -17,7 +17,7 @@ import {
 } from './derivar-notas.ts';
 import type { EquipeAnoFatos, FatosAgregados, TitularAnoFatos } from './agregar-fatos.ts';
 import { criarDataset } from '../src/engine/dataset.ts';
-import { MINARDI_1986, RED_BULL_2023 } from '../src/fixtures/referencias-dataset.ts';
+import { DERIVADO_MINARDI_1986, DERIVADO_RED_BULL_2023 } from '../src/fixtures/referencias-dataset.ts';
 import fatosReal from './derived/fatos-agregados.json';
 import pecasReal from '../src/data/pecas.json';
 import pistasReal from '../src/data/pistas.json';
@@ -630,7 +630,7 @@ describe('derivarNotas (fatos reais)', () => {
 
   it('Verstappen na Red Bull 2023 tem ULT=96 e CHU=96 (override curado, não a derivação estatística)', () => {
     const e = derivado.find(
-      (x) => x.equipe === RED_BULL_2023.equipe && x.ano === RED_BULL_2023.ano,
+      (x) => x.equipe === DERIVADO_RED_BULL_2023.equipe && x.ano === DERIVADO_RED_BULL_2023.ano,
     )!;
     expect(e).toBeDefined();
     const verstappen = e.pilotos.find((p) => p.id.endsWith('-piloto-max_verstappen'))!;
@@ -651,7 +651,7 @@ describe('derivarNotas (fatos reais)', () => {
   it('piloto NÃO listado nos overrides mantém o comportamento antigo: ULT derivado intocado, CHU=50, LARG=50', () => {
     // Andrea de Cesaris, Minardi 1986 — titular real fora de ULT_OVERRIDES/CHU_OVERRIDES.
     const e = derivado.find(
-      (x) => x.equipe === MINARDI_1986.equipe && x.ano === MINARDI_1986.ano,
+      (x) => x.equipe === DERIVADO_MINARDI_1986.equipe && x.ano === DERIVADO_MINARDI_1986.ano,
     )!;
     expect(e).toBeDefined();
     const cesaris = e.pilotos.find((p) => p.id.endsWith('-piloto-cesaris'))!;

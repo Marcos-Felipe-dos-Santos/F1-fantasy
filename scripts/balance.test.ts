@@ -17,7 +17,7 @@ import { resolverCarro } from '../src/engine/carro';
 import { createRng, deriveSeed } from '../src/engine/rng';
 import type { Loadout } from '../src/engine/types';
 import type { RefEquipeAno } from '../src/fixtures/referencias-dataset';
-import { ALFA_ROMEO_1951, WILLIAMS_2022 } from '../src/fixtures/referencias-dataset';
+import { DATA_ALFA_ROMEO_1951, DATA_WILLIAMS_2022 } from '../src/fixtures/referencias-dataset';
 import {
   loadoutForte,
   rankMedio,
@@ -179,13 +179,13 @@ describe('scoreCarroPista sincronizado com a fórmula real de quali.ts (guard-ra
   it('reconstrói EXATAMENTE o tempo de quali da engine (trava a réplica da fórmula contra drift)', () => {
     const loadouts = [
       loadoutForte(dataset, 'forte'),
-      loadoutDe(WILLIAMS_2022, 'williams-2022'),
-      loadoutDe(ALFA_ROMEO_1951, 'alfa-1951'),
+      loadoutDe(DATA_WILLIAMS_2022, 'williams-2022'),
+      loadoutDe(DATA_ALFA_ROMEO_1951, 'alfa-1951'),
       // Peça que MEXE em atributo de quali: a `peca-composto-macio` usada nos
       // demais não toca nenhum atributo da fórmula, então o caminho
       // `resolverCarro` -> bônus de peça (que a medição real exercita) ficava
       // sem cobertura — segundo achado da mutação na revisão do PR 6.3.
-      { ...loadoutDe(WILLIAMS_2022, 'williams-peca'), pecaId: 'peca-efeito-solo' },
+      { ...loadoutDe(DATA_WILLIAMS_2022, 'williams-peca'), pecaId: 'peca-efeito-solo' },
     ];
     const pistas = [
       dataset.pistasById.get('pista-monza')!,
@@ -237,7 +237,7 @@ describe('scoreCarroPista sincronizado com a fórmula real de quali.ts (guard-ra
 
   it('scoreCorridaPista difere de scoreCarroPista exatamente pelo termo do piloto', () => {
     const pista = dataset.pistasById.get('pista-monza')!;
-    const loadout = loadoutDe(WILLIAMS_2022, 'williams-2022');
+    const loadout = loadoutDe(DATA_WILLIAMS_2022, 'williams-2022');
     const carro = resolverCarro(dataset, loadout);
 
     expect(CORRIDA_CONFIG.pesoCarro).toBe(QUALI_CONFIG.pesoCarro);
