@@ -8,7 +8,19 @@
 
 ## Estado atual
 
-**Última medição (2026-08-27, na `main` — PR 3 da trilha de nomes fictícios, `e501b97`):**
+**Última medição (2026-08-27, na `main` — PR 4 da trilha de nomes fictícios, `cbe2bbc`):**
+`npm test` **1622/66** em **2 rodadas** (era 1603/65). ⚠️ **SUBIU, e é dito assim de propósito:** os
+**19 testes novos** são os da cerca de quase-marca (`scripts/nomes-ficticios.test.ts`). **Reportar
+"inalterado" aqui seria a conflação que este arquivo já pagou.**
+**`npm run test:party` 19/19**, typecheck **0** nos três projetos, eslint **0**, build **0**.
+**`VERSAO_APP` 3.4.4 e `VERSAO_FORMATO` 2 — SEM BUMP, medido:** nenhum arquivo do digest tocado e
+nenhum id persistido mudou (a tabela ainda não é aplicada a nada). **`balance-harness` não rodado, e
+dito:** zero arquivo de `src/engine/`.
+✅ **Portão dos nomes reais INALTERADO em 9.486** (`9237+2+1+243+2+1`), **confirmado por rodada
+direta, não herdado** — e inalterado é o resultado CERTO: o PR não encosta em `src/data/` nem na
+fixture. **A tabela nova mora em `scripts/`**, fora da lista `BASELINE` do portão.
+
+*(Medição anterior, 2026-08-27, na `main` — PR 3 da trilha de nomes fictícios, `e501b97`):*
 `npm test` **1603/65** (inalterado — o novo gerador vive em `scripts/` e roda por `npm run preview`).
 **`npm run test:party` 19/19**, typecheck **0** nos três projetos, eslint **0**, build **0**.
 **`VERSAO_FORMATO` 1 → 2, `VERSAO_APP` 3.4.3 → 3.4.4 — BUMP OBRIGATÓRIO** (digest de dados mudou).
@@ -338,6 +350,63 @@ dependência).
 
 
 ## Onde parei
+
+**🏆 NOMES FICTÍCIOS — PR 4 (a tabela dos 458): CONCLUÍDO e COMMITADO em 2026-08-27**, na `main`
+(`cbe2bbc`). **BAIXO RISCO.** ✅ **PORTÃO DE APROVAÇÃO PRÓPRIO CUMPRIDO: amostra de 20 APROVADA
+PELO DEV**, com dois ajustes pedidos por ele e aplicados. **Sem push, sem tag.**
+Detalhe completo: `HISTORICO.md` §"NOMES FICTÍCIOS — PR 4".
+📌 **A doc foi escrita pela SESSÃO PRINCIPAL, não pelo `doc-writer` — decisão do dev nesta sessão**
+(mesmo motivo do PR (ab): auditar tem custado mais que redigir). **A auditoria não foi dispensada:**
+o diff foi mostrado ao dev e lido antes do commit.
+
+`scripts/nomes-ficticios.json` (458 entradas: 105 equipes + 353 pilotos) + `scripts/nomes-ficticios.test.ts`
+(a cerca) + `TABELA_NOMES` em `caminhos-dataset.ts`. **NENHUM CONSUMIDOR** — quem a aplica é o
+`anonimizar.ts` do PR 5.
+
+🔒 **REGRAS DE AUTORIA APROVADAS PELO DEV — valem para toda entrada nova nesta tabela:**
+- **Família de construtor mantida, com o MESMO sufixo por fornecedor.** `cooper`/`cooper-climax`/
+  `cooper-brm` → **Kestner / Kestner-Vireo / Kestner-NDK**, e **NDK é também a equipe BRM**.
+  Medido: 17 ids compostos em 7 famílias, 7 sufixos de motor.
+- **Sabor por época**, pela primeira temporada de cada id.
+- **Os 7 que foram piloto E construtor compartilham o nome nas duas pontas** (`brabham` → Danforth
+  como equipe e como sobrenome dos dois pilotos). São as mesmas 7 agulhas deduplicadas do PR 1.
+  **Palavras do dev: "é coerência que o jogo ganha de graça".**
+- **Formato de id preservado, sem esquema novo** (regra travada no PR 3).
+
+🔴 **AS DUAS LACUNAS DA CERCA — não são calibráveis, e é por isso que ficam aqui e não só no código:**
+- **PRIMEIRO NOME DE PILOTO ESTÁ FORA DO UNIVERSO — decisão do dev sobre medição** (197 de 262
+  primeiros nomes aparecem 1× ; agulhá-los inviabiliza a cerca). **Um "Ayrton Vandel" passa VERDE.**
+  🔑 **Regra de autoria ALARGADA pelo dev em 2026-08-27:** não usar como primeiro nome algo que seja
+  **sobrenome real de piloto** — `Gavin Thorncroft` e `Simon Pennington` passaram verdes e foram
+  trocados. *(Palavras do dev: "não é falha da cerca — é da regra de autoria, e ela vale.")*
+- **TOPÔNIMO DA CASA DA EQUIPE REAL é cegueira ESTRUTURAL:** o universo (`fatos-agregados.json`) não
+  tem nome de lugar. `Faentina` (Faenza/Minardi), `Kowloon` (Theodore) e `Aravalli` (Force India)
+  **passaram verdes** e foram trocados **por decisão do dev, não por medição**.
+  *(Palavras do dev: "o objetivo é remover referência, não codificá-la de forma mais sutil.")*
+🔒 **As duas são REGRA DE AUTORIA, e regra de autoria NÃO É CERCA** — nenhum teste as faz valer.
+Quem acrescentar entrada nesta tabela responde por ela na leitura, não no `npm test`.
+
+📏 **TRÊS DESVIOS da definição de distância que o dev tinha assinado — todos medidos, declarados a
+ele ANTES da aprovação da amostra, e aprovados depois.** Aprovar nomes produzidos sob definição
+diferente da assinada seria substituição silenciosa:
+- **Teto 3 no limiar** — a fórmula crua dava 4 em `maxLen 12`, e **o docblock ao lado já dizia 3**.
+- **Piso da substring 4 → 6.** Com 4, `berg`/`hall`/`mass` casavam dentro de sobrenome legítimo
+  (`Vandenberghe` ⊃ `berg`) — **o `rb` em `Nürburgring` um degrau acima**. 📊 Curva medida:
+  **48 / 38 / 36 / 36** para pisos 4/5/6/7 — estabiliza em 6, e o 7 afrouxa de graça.
+- **Substring desligada no candidato NOME COMPLETO** — `gavinthorncroft` continha `gavin`, ou seja
+  **a cerca proibia primeiro nome, que o dev decidiu deixar fora**.
+⚠️ **Efeito colateral REGISTRADO do piso 6:** o conjunto isento de substring não são as 16 agulhas
+de <4 — são **todas as de <6**, isto é **mais 116**. **16 nomes fictícios contêm uma delas**
+(`Fumagalli`⊃`galli`, `Vandenberghe`⊃`berg`, `Malagoli`⊃`lago`). **São morfologia coincidente e o
+dev os julgou um a um** — mas a cerca **não afirma** que estão limpos.
+
+🔑 **FILTRO MECÂNICO TENTADO E REPROVADO, registrado em vez de escondido:** "token que aparece em
+mais de um nome de equipe é genérico" devolve `lotus:6 brabham:6 ford:6 cooper:4 … mclaren:2` — **as
+marcas mais fortes**, por causa dos compostos. **Inverteria a cerca.** Não entrou allowlist; a regra
+do PR 1 vale igual (se o nome incomoda, troca-se o NOME). Mesma família do substituto 2 do
+inventário acima.
+
+---
 
 **📏 DUAS MEDIÇÕES DE AUDITORIA — FECHADAS em 2026-08-24.** Nenhum diff de produção; o resultado é
 o registro abaixo. **A numeração C1/C2/C3 é do audit e NÃO existe neste arquivo** — por isso o item
@@ -1230,8 +1299,9 @@ está limpo" está errado — esta linha existe para impedir essa leitura.
 
 ✅ **PLANO DE 7 PRs — APROVADO pelo dev, começando pelo PORTÃO.**
 🔒 **A ORDEM É TRAVADA, ditada pelo dev em 2026-08-25:**
-**1** portão · **2** funil de literais · **3** ✅ peças despidas + T1 (`e501b97`, **portão visual APROVADO pelo dev em 2026-08-27**) · **4** tabela de nomes ·
-**5** `anonimizar` + diferencial · **6** A TROCA · **7** fixture e baseline a zero.
+**1** portão · **2** funil de literais · **3** ✅ peças despidas + T1 (`e501b97`, **portão visual APROVADO pelo dev em 2026-08-27**) ·
+**4** ✅ tabela de nomes (`cbe2bbc`, **amostra de 20 APROVADA pelo dev em 2026-08-27**) ·
+⬅️ **5** `anonimizar` + diferencial · **6** A TROCA · **7** fixture e baseline a zero.
 ⚠️ **ATUALIZADO em 2026-08-25 — a redação anterior desta linha ficou MEIO-FALSA e por isso foi
 corrigida no lugar, não contradita noutro arquivo.** Ela dizia que "o detalhamento PR a PR não foi
 ditado pelo dev": **a ORDEM passou a ser ditada** (acima) e é travada; o que **segue não travado**

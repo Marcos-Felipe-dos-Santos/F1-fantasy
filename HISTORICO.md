@@ -2469,6 +2469,122 @@ Arquivo novo: `preview/campeonato-online.html` (não sobrescreve `preview/campeo
 
 ---
 
+## NOMES FICTÍCIOS — PR 4: a tabela dos 458 nomes (2026-08-27, `cbe2bbc`) — BAIXO RISCO
+
+**Base:** `f78d718`. **Plano:** `PLANOS_ATIVOS.md` §"NOMES FICTÍCIOS — o plano dos 7 PRs".
+
+### Nota de processo
+
+**Esta documentação foi escrita pela sessão principal, não pelo `doc-writer` — decisão do dev nesta sessão.** Motivo declarado por ele: a entrada é curta e, nas últimas três sessões, auditar o `doc-writer` custou mais que redigir (o precedente está registrado no PR (ab), logo abaixo). **A regra que isso NÃO afrouxa é a da auditoria:** o diff da doc foi mostrado ao dev e lido antes do commit.
+
+### O que o PR fez
+
+Entra `scripts/nomes-ficticios.json` — a tabela `id real → nome fictício`, **105 equipes + 353 pilotos = 458 entradas**, chaveada por `constructorId`/`driverId` — e `scripts/nomes-ficticios.test.ts`, a cerca que a valida. **Nenhum consumidor:** quem a aplica sobre o derivado é o `anonimizar.ts` do PR 5. `caminhos-dataset.ts` ganhou `TABELA_NOMES` (+14 linhas).
+
+🔒 **Chaveada por ID, nunca por nome — decisão do dev**, para a tabela sobreviver a mudança de rótulo a montante.
+
+🔑 **Fica em `scripts/` e o motivo é MECÂNICO, não de gosto:** `src/engine/versao.test.ts:96` põe **todo `.json` de `src/data/`** no digest, então a tabela lá forçaria bump de `VERSAO_APP` por um arquivo que nenhum código de produção consome — e tornaria falsa a classificação de baixo risco.
+
+### O critério, e o que dele é mecanizável
+
+**Palavras do dev (2026-08-25):** *"nomes plausíveis de equipe e piloto de automobilismo, sem semelhança com nome real, sem trocadilho com marca"*.
+
+🔴 **DAS TRÊS EXIGÊNCIAS, A CERCA MECANIZA UMA — a semelhança.** "Plausível" e "sem trocadilho com marca" **não são verificáveis por teste**; são julgamento de quem autora e do dev no portão da amostra. Está escrito no docblock da cerca, porque quem ler a suíte verde e concluir "os 458 estão aprovados" está errado.
+
+✅ **PORTÃO DE APROVAÇÃO PRÓPRIO CUMPRIDO: amostra de 20 (10 equipes + 10 pilotos) APROVADA PELO DEV em 2026-08-27**, com décadas variadas, uma família composta, um acrônimo e o `codigo` ao lado do nome — porque aprovar a amostra é aprovar o id persistido. **Dois ajustes foram pedidos por ele e aplicados** (ver "os cinco nomes trocados", abaixo).
+
+### As regras de autoria aprovadas pelo dev
+
+São o que separa nome fictício de string aleatória, e **são julgamento, não medição**:
+
+- 🔒 **Família de construtor mantida, com o MESMO sufixo por fornecedor.** Medido: **17 ids compostos em 7 famílias** (`cooper`, `lotus`, `brabham`, `matra`, `mclaren`, `march`, `shadow`) e **7 sufixos de motor** (`climax`, `brm`, `ford`, `repco`, `weslake`, `maserati`, `alfa_romeo`). `cooper`/`cooper-climax`/`cooper-brm` → **Kestner / Kestner-Vireo / Kestner-NDK**, e **NDK é também a equipe BRM** — o fornecedor tem um nome só, onde quer que apareça. Sem isso, a história do jogo mostra um time sob três nomes sem relação.
+- 🔒 **Sabor por época, pela primeira temporada de cada id.** Medido: equipes estreiam **18/19/22/13/11/10/9/3** por década (1950→2020); pilotos **46/37/62/61/51/40/42/14**.
+- 🔒 **Os 7 que foram piloto E construtor compartilham o nome nas duas pontas** — são as mesmas 7 agulhas deduplicadas do portão do PR 1 (`brabham`, `mclaren`, `hill`, `prost`, `stewart`, `surtees`, `fittipaldi`). Ex.: o construtor `brabham` e os pilotos `jack_brabham`/`brabham` são todos **Danforth**. **Palavras do dev: "é coerência que o jogo ganha de graça".**
+- **Formato de id preservado, sem esquema novo** (a regra que o dev travou no PR 3): sobrenome minúsculo; `nome_sobrenome` quando dois fictícios compartilham sobrenome, espelhando os **25** casos reais (`michael_schumacher`). **15 famílias** de sobrenome foram espelhadas.
+
+### Como a cerca mede
+
+**Universo:** `fatos-agregados.json` via `caminhos-dataset.ts` — o mesmo do portão do PR 1, por decisão do dev. Normalizado e deduplicado: **825 agulhas** (nome e id de equipe, nome e id de piloto, o **sobrenome tirado do último segmento do `driverId`**, e os tokens 3+ de nome de equipe composto).
+
+🔑 **O sobrenome sai do `driverId`, não de parsear o nome exibido.** O dado já canonicaliza (`michael_schumacher` → `schumacher`); re-derivar por `nome.split(' ').pop()` criaria a segunda lista que precisa concordar com a primeira — a classe de defeito do `vite.config.ts`/`rotas.ts` e da cópia `derived`/`src/data`.
+
+**Normalização:** NFD → sem diacrítico → minúscula → só `[a-z0-9]`.
+
+**Reprova**, com ambos os lados ≥ 4 caracteres: **Levenshtein ≤ `max(1, floor(maxLen/3))` com teto 3**; e **substring nas duas direções**, mas só com agulha de **6+** e só sobre **token**. Agulha < 4 entra só por igualdade exata; acrônimo fictício de 3 letras exige distância ≥ 2 de toda agulha de 3.
+
+### 🔴 TRÊS DESVIOS da definição que o dev tinha aprovado — todos medidos, todos aprovados depois
+
+**A definição assinada era** `max(1, floor(maxLen/3))` com substring em ambas as direções e ambos os lados ≥ 4. **Foi entregue diferente em três pontos, e a divergência foi declarada ao dev antes da aprovação da amostra** — aprovar nomes produzidos sob uma definição diferente da assinada seria substituição silenciosa, a família do *"afirmação de estado só entra medida"*.
+
+1. **TETO 3 no limiar.** A fórmula crua dá **4** em `maxLen 12` e **5** em 17 — e candidato longo é justamente o nome COMPLETO de piloto (12–20 caracteres normalizados). **Medido:** `theoquillard` × `grouillard` saía a distância 4 com limiar 4 e **reprovava — falso positivo puro**. 🔑 **E o docblock da função já dizia "≥9 → 3": o código contradizia o comentário ao lado dele.** Com teto, os verdadeiros positivos seguem de pé (`micaelschumaker` × `michaelschumacher` é distância 3).
+2. **PISO DA SUBSTRING 4 → 6.** Com 4, `berg` (Allen Berg), `hall` (Jim Hall), `mass`, `pace`, `sala` e `gene` — `driverId` reais de 4 letras — casavam dentro de sobrenomes inteiramente legítimos: **`Vandenberghe` reprovava por conter `berg`**. **É o `rb` em `Nürburgring` do PR 1 um degrau acima.** 📊 **Curva medida sobre a tabela inteira: piso 4 → 48 reprovadas · 5 → 38 · 6 → 36 · 7 → 36.** Estabiliza em 6; **piso 7 não compra nada e afrouxa de graça**.
+3. **SUBSTRING DESLIGADA NO CANDIDATO "NOME COMPLETO".** `Gavin Thorncroft` reprovava porque `gavinthorncroft` contém `gavin`, que é `driverId` real — ou seja, **a cerca estava proibindo primeiro nome, que o dev decidiu deixar FORA do universo**. O nome completo entra só por distância, que é o que ele existe para medir (reuso do nome real inteiro, tipo `Ayrton Sena`).
+
+### 🔴 AS DUAS LACUNAS CONHECIDAS DA CERCA — registradas no docblock, as duas por julgamento de autoria
+
+**(1) PRIMEIRO NOME DE PILOTO FICA FORA DO UNIVERSO — decisão do dev sobre medição.** Dos **262** primeiros nomes distintos, **197 aparecem uma única vez**; agulhá-los banaria `alberto`, `maurice`, `graham`, `stirling`, `phil` e, por distância, quase todo primeiro nome europeu plausível. **A cerca ficaria inviável.**
+⚠️ **Consequência escrita: um fictício "Ayrton Vandel" passa VERDE.** O que impede é regra de autoria, e **regra de autoria não é cerca**.
+🔑 **A regra foi ALARGADA pelo dev nesta sessão, por dois casos reais que passaram verdes:** `Gavin Thorncroft` e `Simon Pennington` — `gavin` (Bill Gavin) e `simon` (André Simon) **são `driverId` reais**. **Palavras do dev: "não é falha da cerca — é da regra de autoria, e ela vale."** A regra deixou de ser "não reusar primeiro nome icônico" e passou a ser **não usar como primeiro nome algo que seja sobrenome real de piloto**.
+🟡 **Meia-defesa medida, e é meia:** o nome completo real É agulha, então reusar o primeiro nome do MESMO piloto aproxima o candidato inteiro da agulha inteira e tende a reprovar — foi o que aconteceu com `Ken Tarlton` × `kenwharton`. **Não cobre reusar o primeiro nome de OUTRO piloto**, que é o caso do Gavin.
+
+**(2) TOPÔNIMO DA CASA DA EQUIPE REAL — cegueira ESTRUTURAL, não calibrável.** O universo é `fatos-agregados.json`, que tem nome de equipe, nome de piloto e ids, e **nenhum nome de lugar**. Equipe fictícia batizada com a cidade-sede da equipe real **passa verde**.
+🔑 **Aconteceu três vezes, foi pego por LEITURA e trocado por DECISÃO DO DEV, não por medição:** `Faentina` para a Minardi (sediada em **Faenza**), `Kowloon` para a Theodore (Hong Kong) e `Aravalli` para a Force India. **Nenhuma das três reprovava.** **Palavras do dev: "o objetivo é remover referência, não codificá-la de forma mais sutil"** — por isso as substitutas são sobrenomes inventados, não outros topônimos.
+
+### Os cinco nomes trocados no ajuste do dev (e a sexta entrada, arrastada)
+
+| id real | era | virou | motivo |
+|---|---|---|---|
+| `anderson` | Gavin Thorncroft | **Ewart Thorncroft** | `gavin` é `driverId` real |
+| `brundle` | Simon Pennington | **Aidan Pennington** | `simon` é `driverId` real |
+| `minardi` | Faentina | **Ronzani** | Faenza é a sede da Minardi |
+| `theodore` | Kowloon | **Weyland** | Hong Kong é a sede da Theodore |
+| `force_india` | Aravalli | **Bexmoor** | cordilheira indiana |
+| `racing_point` | Aravalli Crest | **Bexmoor Crest** | ⚠️ **arrastado pela linhagem** |
+
+⚠️ **`racing_point` estava na amostra APROVADA e mudou mesmo assim.** É a mesma marca fictícia na linhagem Force India → Racing Point; trocar só uma ponta traria a alusão de volta pelo outro lado. **Registrado porque é desvio de um item já aprovado, e foi declarado ao dev no momento da troca.**
+🔑 **Nos dois pilotos o SOBRENOME foi mantido** — o problema era o primeiro nome, não ele.
+
+### A cerca provada nas duas direções ANTES dos nomes
+
+**Ordem de execução exigida pelo dev:** cerca contra stub primeiro, vermelha e verde provadas, só depois os 458.
+
+- **VERMELHA:** stub sujo de 6 entradas (`Ferarri`, `Maclaren`, `Maseratti`, `Ayrton Sena`, `Micael Schumaker`, `Juan Fangeo`) — **6/6 reprovadas, cada uma com a agulha certa**.
+- **VERDE:** a metade "tabela LIMPA sintética é ACEITA" — e **ela pegou dois defeitos meus de calibração na primeira execução**, que é exatamente para o que existe. **As duas metades são load-bearing e por motivos diferentes**, no molde do par M2/M5 do portão do PR 1: a suja pega uma cerca que degenerou em `null` sempre; a limpa pega uma que degenerou em "reprova tudo".
+
+🔑 **A FIXTURE "LIMPA" NASCEU SUJA POR ACASO, e está registrado no próprio arquivo:** tinha `Oakmont Racing` (o token `racing` é agulha, vinda de `Racing Point`/`Lotus Racing`) e `Théo Quillard` (distância 3 de `grouillard`, Olivier Grouillard).
+
+### 🔑 O filtro mecânico que eu tentei e REPROVEI, registrado em vez de escondido
+
+`racing`, `team` e `point` são agulhas, então "Oakmont Racing" reprova. **A saída óbvia seria filtrar palavra genérica — e ela é INUTILIZÁVEL, medido:** "token que aparece em mais de um nome de equipe é genérico" devolve `lotus:6 brabham:6 ford:6 cooper:4 brm:4 team:4 … mclaren:2`, ou seja **as marcas mais fortes**, que reaparecem por causa dos compostos. **O filtro inverteria a cerca: soltaria `lotus` e prenderia o resto.**
+🔒 **Não entrou allowlist** — a regra do PR 1 vale igual: se o nome incomoda, troca-se o NOME. ✅ **E o efeito colateral é bom:** as 105 equipes reais são majoritariamente de uma palavra só (**84 de 105**), então marca própria é mais fiel ao dataset que "X Racing".
+
+### O que os testes fixam
+
+- **Bijeção como IGUALDADE DE CONJUNTO**, não contagem: as chaves são exatamente os 105 `constructorId` e os 353 `driverId`. 🔑 **Contagem sozinha passaria com duas chaves com typo** — é a diferença entre "chaveada por id" e "tem 458 linhas".
+- **105/105 e 353/353 nomes distintos**, e o mesmo para os `codigo`.
+- **`slug(codigo)` INJETIVO nos dois pools** — `red_bull` e `red-bull` slugam igual, e o dataset valida id único num conjunto compartilhado (`verificarColisaoDeIds`); a bijeção da tabela não vê essa colisão.
+- **CHARSET do `codigo`** (`^[a-z0-9]+([_-][a-z0-9]+)*$`). 🔑 **No lado piloto é a ÚNICA defesa:** `idsDaEquipeAno` (`derivar-notas.ts:629`) aplica `slug()` no `constructorId` mas **interpola `${driverId}` CRU** — lá o slug nunca roda.
+- **825 agulhas**, asserção própria. Acrescentada na auditoria do diff: **o número estava só na prosa e envelheceria em silêncio** — "conclusão sem o fato que a gerou não se verifica depois".
+- **A cerca sobre a tabela real: zero violações.**
+
+### 🔴 Dois erros meus achados na auditoria do diff, antes do commit
+
+Os dois são da mesma família que este projeto cataloga — **texto que afirma o que não confere**:
+
+1. **A mensagem de falha MENTIA.** Ela mostrava a entrada, não o pedaço que reprovou: *"Ayrton Sena / sena — distância 1 da agulha `ayrtonsenna`"* faz parecer que `sena` está a 1 de `ayrtonsenna`, quando quem reprovou foi o candidato `ayrtonsena`. O campo `candidato` entrou na `Violacao`.
+2. **O docblock afirmava 18 nomes contendo agulha de 4–5 letras; depois das trocas de Gavin/Simon são 16.** Corrigido contra a fonte, re-medido.
+
+⚠️ **Terceira correção, no mesmo lote:** a seção do docblock que registra o buraco das agulhas curtas dizia "menos de 4 caracteres" e estava **subestimando** — depois do piso 6, o conjunto isento de substring são todas as agulhas de **< 6**, ou seja **mais 116** de 4–5 caracteres. **É esse conjunto que admite os 16 nomes**, e é a lacuna que uma sessão futura herda.
+
+### Portões
+
+`npm test` **1622/66** (era **1603/65**) em **2 rodadas**, `npm run test:party` **19/19**, typecheck **0** nos três projetos, eslint **0**, build **0**.
+✅ **PORTÃO DOS NOMES REAIS INALTERADO em 9.486** (`9237+2+1+243+2+1`), **confirmado por rodada direta, não herdado** — e inalterado é o resultado CERTO: o PR não toca `src/data/` nem a fixture.
+⚠️ **A contagem de testes SUBIU, e é dito assim de propósito:** os 19 testes novos são os da cerca. **Reportar "inalterado" aqui seria a conflação que este repositório já pagou.**
+**`balance-harness` não rodado, e dito:** zero arquivo de `src/engine/`, zero mudança de nota. **`VERSAO_APP` e `VERSAO_FORMATO` sem bump, medido:** nenhum arquivo do digest foi tocado e nenhum id persistido mudou — a tabela ainda não é aplicada a nada.
+
+---
+
 ## PR (ab) — `npm run preview` volta a sair 0 (2026-08-27, `9e18704`) — BAIXO RISCO
 
 **Base:** `bb034c3` (fechamento do PR 3). **Origem:** pendência **0(ab)**, aberta no PR 3 e fechada aqui por decisão do dev, no mesmo dia e na mesma sessão.
