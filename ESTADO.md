@@ -10,7 +10,28 @@
 
 ## Estado atual
 
-**Última medição (2026-08-28, na `main` — PR 5 da trilha de nomes fictícios, `3d5f105`):**
+**Última medição (2026-08-28, na `main` — PR de POSICIONAMENTO das referências, `c61b3a7`):**
+`npm test` **1638/67 — INALTERADO**, e inalterado é o resultado CERTO: nenhum teste nasceu e nenhum
+comportamento mudou (o PR renomeia constantes, não muda valor nenhum).
+**`npm run test:party` não rodado, e dito:** zero arquivo de `party/` no diff.
+typecheck **0** nos três projetos, eslint **0** (lido por **exit code**).
+⚠️ **`VERSAO_APP` fica em 3.4.4 e `VERSAO_FORMATO` em 2, mas NÃO porque o digest ficou parado — ele
+MUDOU: `bb6c419d` → `442b210c`**, colado em `src/engine/versao.test.ts:36`.
+`src/engine/draft-test-fixtures.ts` mora em `src/engine/` e **não** tem sufixo `.test.ts`, então
+entra no escopo do digest, e o import renomeado o moveu. **O não-bump é o caso "Não" que o próprio
+`versao.test.ts` descreve** — o arquivo é consumido só por `bots.test.ts` e `draft.test.ts`, zero
+efeito em runtime. **Mesmo precedente do PR 2 (`50bda11`), pelo mesmo arquivo.**
+✅ **`npm run balance`: DELTA ZERO** — sha256 do filtrado **idêntico** ao da captura do PR 2,
+`e62fe729406e6bcb0b1514ac8e337a00a5c5ed5c01c7e2e00ae0195786c0b9fc`, com a **mesma receita de filtro
+de 4 padrões** (`preview/medicoes-pr2/LEIA-ME.md`).
+✅ **`npm run dataset:report`: BYTE A BYTE idêntico** ao do PR 2 — 255 linhas,
+`c509049b0ea9dce58b7b4c7aa4d7331f0760f97fb876fa8755ca55d63205a78c`, zero `'(não encontrado)'`.
+**Rodado de propósito: nenhum teste do `npm test` o executa** e é o caminho que degrada em silêncio.
+✅ **Portão dos nomes reais INALTERADO em 9.486** (`9237+2+1+243+2+1`), **por rodada direta** — e
+inalterado é o CERTO: a lista `BASELINE` só tem os 6 JSON de dados e nenhum foi tocado. **O portão
+não mede `.ts`.**
+
+*(Medição anterior, 2026-08-28, na `main` — PR 5 da trilha de nomes fictícios, `3d5f105`):*
 `npm test` **1638/67** em **3 rodadas** (era 1622/66). ⚠️ **SUBIU, e é dito assim de propósito:** os
 **16 testes novos** são o diferencial (`scripts/anonimizar.test.ts`). **"Inalterado" aqui seria a
 conflação que este arquivo já pagou.**
@@ -299,6 +320,12 @@ Ele nomeou, como o que fica ABERTO apesar do encerramento:
 | **0(ac)** | §Pendências 0(ac) | save antigo perde "Continuar campeonato" SEM MENSAGEM |
 | **0(q) + 0(u1)** | §Pendências 0(q) e 0(u) | **o par do DEPLOY**: os dois lados sobem no MESMO deploy, com o `wrangler` ANTES do `vite` |
 
+✅ **ATUALIZAÇÃO SOBRE A 0(aa) DA TABELA ACIMA — FECHADA em 2026-08-28 (`c61b3a7`), depois de o dev
+ter ditado esta lista.** O módulo foi particionado por origem (caminho (a)); ver a 0(aa) na
+§Pendências. **A linha da tabela NÃO foi editada**, pelo mesmo motivo registrado logo abaixo para a
+0(ab): a lista é do dev, e corrigi-la por conta própria é a ocorrência nº 3 do `CLAUDE.md` com o
+sinal invertido. **O que fecha a pendência é o registro dela, não a linha desta tabela.**
+
 ⚠️ **RESSALVA MEDIDA SOBRE A 0(ab), registrada em vez de "corrigida" em silêncio.** O dev nomeou a
 **0(ab)** na lista; **este arquivo a registra como ✅ FECHADA em 2026-08-27, no commit `9e18704`**
 (`npm run preview` voltou a sair 0, 11/11) — ver a 0(ab) na §Pendências. **Não reabri a pendência e
@@ -476,8 +503,58 @@ dependência).
 
 ## Onde parei
 
-**🏆 NOMES FICTÍCIOS — PR 5 (`anonimizar.ts` + teste diferencial): CONCLUÍDO e COMMITADO em
-2026-08-28**, na `main` (`3d5f105`). **MÉDIO RISCO — rótulo do dev** (o `CLAUDE.md` só define ALTO e
+**🧩 POSICIONAMENTO DAS REFERÊNCIAS — `referencias-dataset.ts` particionado por origem: CONCLUÍDO e
+COMMITADO em 2026-08-28**, na `main` (`c61b3a7`). **BAIXO RISCO — rótulo do dev** (refactor
+verde→verde, nenhum valor mudou). **Sem `senior-reviewer`, sem push, sem tag.**
+Detalhe completo: `HISTORICO.md` §"NOMES FICTÍCIOS — POSICIONAMENTO".
+📌 **A doc foi escrita pela SESSÃO PRINCIPAL, não pelo `doc-writer`** — quinto PR seguido assim, no
+precedente registrado nos blocos abaixo. **A auditoria não foi dispensada:** o diff foi lido antes
+do commit.
+
+🔒 **É o CAMINHO (a) da pendência 0(aa), escolhido pelo dev em 2026-08-28** — particionar o módulo
+por dataset ANTES do PR 6, contra o caminho (b) (fazer 6 e 7 no mesmo PR). **Palavras do dev:**
+*"fazer 6 e 7 juntos junta o ALTO RISCO (`src/data/`, tela, netcode) com o BAIXO (fixture), e o
+portão visual do 6 ficaria misturado com mudança de fixture."* **A 0(aa) fica FECHADA** — ver lá.
+📌 **Este PR não estava no plano dos 7.** Ele nasce da 0(aa), que o PR 2 abriu ao tornar a janela
+visível.
+
+Três blocos, um por origem, com o prefixo **no nome da constante**: **`DATA_*`** (leem `src/data/`,
+trocam no **PR 6**) · **`FIXTURE_*`** (leem `src/fixtures/dataset-semente/`, trocam no **PR 7**) ·
+**`DERIVADO_*`** (leem `scripts/derived/`, **nunca** trocam). Os 7 consumidores passaram a importar
+o bloco da própria origem.
+
+🔑 **O que isso fecha:** `RED_BULL_2023` era **UMA** constante consumida pelos **TRÊS** lados, e
+entre o PR 6 e o PR 7 há uma janela em que `src/data/` já é fictício e a fixture ainda é real.
+Agora **o PR 6 edita SÓ o bloco `DATA_*`**.
+🔑 **A duplicação é o produto, não um resto a limpar:** `Red Bull 2023` está nos três blocos e
+`Ferrari 2004` em dois — origens que hoje coincidem **por acaso** e deixam de coincidir no PR 6.
+**Quem deduplicar reabre a janela.** Está escrito no docblock.
+
+🔴 **O QUE ESTE PR NÃO FAZ, e está dito no código: a partição NÃO é cerca.** Nada impede um arquivo
+que lê a fixture de importar do bloco `DATA_*` — o alinhamento consumidor↔bloco é **convenção
+sustentada por leitura**. **Teste novo não entrou, por decisão do dev** (*"npm test inalterado"*), e
+o custo fica registrado em vez de maquiado. Quem cobre o desalinhamento são os portões do PR 6, que
+já estavam no plano: o `throw` de `balance.ts:52` (ruidoso) e o `npm run dataset:report` com sha256
+(o caminho silencioso). 🔑 **Mesma família de "guarda de escrita sem guarda de leitura não é teto, é
+convenção"** — a diferença é que aqui a convenção está **declarada como tal**.
+
+🔑 **O ACHADO: o digest se moveu num PR verde→verde, e quem pegou foi o `versao.test.ts`.**
+`src/engine/draft-test-fixtures.ts` está no escopo do digest (`EH_FONTE_DE_ENGINE`,
+`src/engine/versao.test.ts:73-74`), então renomear o import dele derrubou a primeira rodada do
+`npm test` em **1637/1638**. **Sem bump de `VERSAO_APP`** — caso "Não", precedente do PR 2.
+**Registrado com destaque porque digest que se move em silêncio num PR rotulado verde→verde é a
+forma exata do que este repositório já pagou.**
+
+⚠️ **ERRO MEU DE MÉTODO, registrado:** comparei o `dataset:report` rodado por `node` direto (251
+linhas) contra a captura do PR 2 feita com `npm run` (255 linhas), e o sha256 divergiu. **A
+divergência era do meu recorte, não do programa.** Refeito com o mesmo comando da captura, saiu byte
+a byte igual. 🔑 **Comparação cujo MÉTODO de captura não bate não mede o que se pensa que mede** —
+mesma lição das cinco contagens do inventário de nomes.
+
+---
+
+**🏆 PR ANTERIOR — NOMES FICTÍCIOS — PR 5 (`anonimizar.ts` + teste diferencial): CONCLUÍDO e
+COMMITADO em 2026-08-28**, na `main` (`3d5f105`). **MÉDIO RISCO — rótulo do dev** (o `CLAUDE.md` só define ALTO e
 BAIXO; rodaram as obrigações que ele listou, **sem `senior-reviewer`**). **Sem push, sem tag.**
 Detalhe completo: `HISTORICO.md` §"NOMES FICTÍCIOS — PR 5".
 📌 **A doc foi escrita pela SESSÃO PRINCIPAL, não pelo `doc-writer` — decisão do dev nesta sessão.**
@@ -2102,9 +2179,31 @@ casca deixa de ser terra sem teste; a opção conhecida é `@cloudflare/vitest-p
    **Conserto natural, quando vier:** cerca que assere os ids de pista **por valor literal**, não por
    acoplamento entre as duas fontes, e trocar a non-null assertion de `TelaInicio.tsx:94` por erro
    explícito. **Só se aplica se o dev decidir trocar o dataset — é PR próprio e nada foi mexido.**
+   ✅ **(aa) FECHADA em 2026-08-28 (`c61b3a7`) — CAMINHO (a), escolhido pelo dev: o módulo foi
+   PARTICIONADO POR ORIGEM antes do PR 6.** Três blocos com prefixo no nome da constante —
+   `DATA_*` (troca no PR 6), `FIXTURE_*` (troca no PR 7), `DERIVADO_*` (nunca troca) — e os 7
+   consumidores importam o bloco da própria origem. **`RED_BULL_2023` deixou de ser uma constante
+   só servindo os três lados**, que era exatamente a janela. Ver a §Onde parei.
+   🔒 **Palavras do dev ao decidir:** *"fazer 6 e 7 juntos junta o ALTO RISCO (`src/data/`, tela,
+   netcode) com o BAIXO (fixture), e o portão visual do 6 ficaria misturado com mudança de fixture.
+   Posicionar as referências antes fecha a janela sem inchar o PR grande."*
+   ⚠️ **O QUE A PARTIÇÃO NÃO FECHA, e por isso não some daqui:** ela **não é cerca**. Nada impede
+   um arquivo que lê a fixture de importar do bloco `DATA_*` — o alinhamento consumidor↔bloco é
+   **convenção sustentada por leitura, não por teste**, e está escrito no docblock do módulo.
+   **Teste novo não entrou, por decisão do dev** (*"npm test inalterado"*). Quem cobre o
+   desalinhamento são os dois portões do PR 6 que já estavam no plano: o `throw` de
+   `balance.ts:52` (ruidoso) e o `npm run dataset:report` com sha256 (o caminho silencioso).
+   ⚠️ **O item menor abaixo — `referencias-dataset.ts` fora do digest — CONTINUA VALENDO e não foi
+   tocado**, exceto por um fato novo que o PR mediu: o CONSUMIDOR `src/engine/draft-test-fixtures.ts`
+   **está** no digest, e renomear o import dele moveu `bb6c419d` → `442b210c`. **São coisas
+   diferentes e as duas ficam registradas.**
+   *(Texto original da pendência, preservado:)*
    🔴 **(aa) ABERTA — A JANELA ENTRE O PR 6 E O PR 7 (medida no PR 2, 2026-08-25).**
-   🔒 **Decisão do dev, 2026-08-25: NÃO se decide agora — o caminho se escolhe no PR 5.** Não
-   bloqueia nada antes disso; os PRs 3, 4 e 5 não tocam neste ponto.
+   ~~🔒 **Decisão do dev, 2026-08-25: NÃO se decide agora — o caminho se escolhe no PR 5.** Não
+   bloqueia nada antes disso; os PRs 3, 4 e 5 não tocam neste ponto.~~
+   ⚠️ **A linha riscada acima envelheceu duas vezes e é riscada NO LUGAR, não contradita ao lado:**
+   o caminho **não** foi escolhido no PR 5 (que saiu com `src/data/` intocado), e sim num PR de
+   posicionamento próprio, depois dele.
    **Medido:** os 7 arquivos que importam `src/fixtures/referencias-dataset.ts` **não leem todos o
    mesmo dataset**, e a trilha troca cada dataset num PR diferente:
    - `scripts/balance.ts`, `alavancas.test.ts`, `balance.test.ts` → leem `src/data/` → **trocam no PR 6**
@@ -2116,8 +2215,9 @@ casca deixa de ser terra sem teste; a opção conhecida é `@cloudflare/vitest-p
    `src/data/` já é fictício e a fixture ainda é real — e **uma constante só não serve os dois
    lados**. Nessa janela o `.find` do lado não-trocado deixa de achar: `balance.ts:52` **lançaria**
    (ruidoso, bom) e `dataset-report.ts` imprimiria `'(não encontrado)'` (**silencioso, ruim**).
-   **Os dois caminhos, nenhum escolhido:** (A) particionar o módulo por dataset antes do PR 6;
-   (B) fazer o PR 6 e o PR 7 no mesmo PR.
+   ~~**Os dois caminhos, nenhum escolhido:** (A) particionar o módulo por dataset antes do PR 6;
+   (B) fazer o PR 6 e o PR 7 no mesmo PR.~~ ✅ **ESCOLHIDO: (A), pelo dev, 2026-08-28 — executado
+   em `c61b3a7`.**
    ⚠️ **O funil NÃO criou esta janela** — ela existia igual com os literais espalhados por 7
    arquivos, e nada a apontava. O que o PR 2 fez foi torná-la visível.
    ⚠️ **Item menor da mesma pendência, e é o INVERSO do que parece:** `draft-test-fixtures.ts` está

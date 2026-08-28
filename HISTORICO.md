@@ -2469,6 +2469,110 @@ Arquivo novo: `preview/campeonato-online.html` (não sobrescreve `preview/campeo
 
 ---
 
+## NOMES FICTÍCIOS — POSICIONAMENTO: `referencias-dataset.ts` particionado por origem (2026-08-28, `c61b3a7`) — BAIXO RISCO
+
+**Base:** `974a92a` (PR de âncoras). **Escopo:** `src/fixtures/referencias-dataset.ts` + os 7
+consumidores + o digest colado em `src/engine/versao.test.ts`. **Refactor verde→verde: nenhum VALOR
+mudou, só os NOMES das constantes.** Doc escrita pela sessão principal, como os quatro PRs
+anteriores. **Sem push, sem tag.**
+
+### A decisão do dev que este PR executa
+
+🔒 **Ditada em 2026-08-28: PR 6 e PR 7 SEPARADOS, com `referencias-dataset.ts` posicionado ANTES.**
+É o **caminho (a)** da pendência **0(aa)** — particionar o módulo por dataset antes do PR 6 —, contra
+o caminho (b), que era fazer 6 e 7 no mesmo PR.
+
+**Motivo, palavras do dev:** *"fazer 6 e 7 juntos junta o ALTO RISCO (`src/data/`, tela, netcode)
+com o BAIXO (fixture), e o portão visual do 6 ficaria misturado com mudança de fixture. Posicionar
+as referências antes fecha a janela sem inchar o PR grande."*
+
+📌 **Este PR não estava no plano dos 7.** Ele nasce da 0(aa), que o PR 2 abriu ao tornar a janela
+visível, e o dev o classificou como **BAIXO RISCO, verde→verde**.
+
+### O que mudou
+
+Três blocos, um por origem, com o prefixo **no nome da constante**:
+
+| bloco | consumidores | dataset que leem | troca em |
+|---|---|---|---|
+| `DATA_*` | `scripts/balance.ts`, `alavancas.test.ts`, `balance.test.ts` | `src/data/` | **PR 6** |
+| `FIXTURE_*` | `src/engine/draft-test-fixtures.ts`, `corrida.test.ts` | `src/fixtures/dataset-semente/` | **PR 7** |
+| `DERIVADO_*` | `scripts/dataset-report.ts`, `derivar-notas.test.ts` | `scripts/derived/` | **nunca** |
+
+🔑 **O que a partição fecha, e é a 0(aa) inteira:** `RED_BULL_2023` era **UMA** constante consumida
+pelos **TRÊS** lados. Entre o PR 6 e o PR 7 existe uma janela em que `src/data/` já é fictício e a
+fixture ainda é real — e uma constante só não serve os dois. Nessa janela o `.find` do lado
+não-trocado deixaria de achar: **`balance.ts:52` lançaria** (ruidoso, bom) e **`dataset-report.ts`
+imprimiria `'(não encontrado)'`** (silencioso, ruim). Com a partição, **o PR 6 edita só o bloco
+`DATA_*`** e os outros dois seguem apontando para o dado que ainda é real.
+
+🔑 **A duplicação é o produto, não um resto a limpar.** `Red Bull 2023` está nos três blocos e
+`Ferrari 2004` em dois. São origens que **hoje coincidem por acaso** e que deixam de coincidir no
+PR 6. Está escrito no docblock: **quem deduplicar reabre a janela.**
+
+### 🔴 O que este PR NÃO faz, e está dito no código
+
+**A partição NÃO é cerca.** Nada impede que um arquivo que lê a fixture importe do bloco `DATA_*` —
+o alinhamento consumidor↔bloco é **convenção sustentada por leitura**, não por teste. **Não entrou
+teste novo, por decisão do dev** (*"npm test inalterado"*), e o custo fica registrado em vez de
+maquiado. Os portões que cobrem o desalinhamento são os do PR 6 e já estavam no plano: o `throw` de
+`balance.ts:52` (ruidoso) e o `npm run dataset:report` com sha256 comparado (que é justamente o que
+cobre o caminho silencioso).
+🔑 **É a mesma família de "guarda de escrita sem guarda de leitura não é teto, é convenção"** (aviso
+3 da 2ª passada do 3.5.2) — a diferença é que aqui a convenção está **declarada como convenção**,
+não vendida como garantia.
+
+### 🔑 O ACHADO QUE QUASE PASSOU EM SILÊNCIO — o digest se moveu num PR verde→verde
+
+`src/engine/draft-test-fixtures.ts` importa `RED_BULL_2023` e **está no escopo do digest de
+`VERSAO_APP`**: mora em `src/engine/`, termina em `.ts` e **não** tem sufixo `.test.ts`, então
+`EH_FONTE_DE_ENGINE` (`src/engine/versao.test.ts:73-74`) o inclui. Renomear o import dele moveu o
+digest **`bb6c419d` → `442b210c`**, e o `npm test` da primeira rodada saiu **1637/1638**, com o
+`versao.test.ts` vermelho.
+
+- **`VERSAO_APP` fica em 3.4.4 — SEM BUMP, e medido.** É o caso **"Não"** que a própria mensagem de
+  falha descreve (*"cole só o digest atual — refactor sem efeito, comentário, tipo"*): o único
+  arquivo do digest tocado é consumido **só** por `bots.test.ts` e `draft.test.ts`, zero efeito em
+  runtime. **Mesmo precedente do PR 2 (`50bda11`), pelo mesmo arquivo.**
+- 🔑 **Registrado com destaque porque um digest que se move em silêncio num PR rotulado verde→verde
+  é a forma exata do que este repositório já pagou.** O `versao.test.ts` foi o portão — não a
+  intuição, não a leitura do diff.
+
+### Medido
+
+| portão | resultado |
+|---|---|
+| `npm test` | **1638/67 — INALTERADO** (após colar o digest) |
+| `npm run typecheck` | **0** nos três projetos |
+| `npm run lint` | **0** (lido por **exit code**, não pela cauda da saída) |
+| `npm run balance` | **DELTA ZERO** — sha256 do filtrado **idêntico** ao do PR 2 |
+| `npm run dataset:report` | **byte a byte idêntico** ao do PR 2, 255 linhas |
+| portão dos nomes reais | **9.486 — INALTERADO** (`9237+2+1+243+2+1`), por rodada direta |
+| `VERSAO_APP` / `VERSAO_FORMATO` | **3.4.4 / 2 — sem bump**, digest `bb6c419d` → `442b210c` |
+
+🔑 **`npm run balance`: `e62fe729406e6bcb0b1514ac8e337a00a5c5ed5c01c7e2e00ae0195786c0b9fc`** — o
+**mesmo** sha256 da captura `balance-AFTER.filtrado.txt` do PR 2, com a **mesma receita de filtro de
+4 padrões** registrada em `preview/medicoes-pr2/LEIA-ME.md`. Delta zero é a asserção de um refactor,
+não um resultado a torcer por.
+
+🔑 **`npm run dataset:report` foi rodado DE PROPÓSITO, e não é zelo: nenhum teste do `npm test` o
+executa.** O `typecheck` só prova que compila. É o arquivo que **degrada em silêncio** — um funil
+quebrado ali imprimiria `'(não encontrado)'` em vez de falhar. **Medido:
+`c509049b0ea9dce58b7b4c7aa4d7331f0760f97fb876fa8755ca55d63205a78c`, idêntico ao `report-AFTER.txt`
+do PR 2, e zero ocorrências de `'(não encontrado)'` na saída.**
+⚠️ **Erro meu de método na primeira tentativa, registrado:** comparei a saída do `node` direto
+(251 linhas) contra uma captura feita com `npm run` (255 linhas) e o sha256 divergiu. **A divergência
+era do meu recorte, não do programa** — a captura do PR 2 inclui o banner do `npm`. Refeito com o
+mesmo comando da captura, saiu byte a byte igual. 🔑 **Comparação cujo MÉTODO de captura não bate
+não mede o que se pensa que mede** — é a mesma lição das cinco contagens do inventário de nomes.
+
+📌 **O portão dos nomes reais INALTERADO é o resultado CERTO, e o motivo é mecânico:** a lista
+`BASELINE` (`portao-nomes-reais.test.ts:163-170`) tem **só os 6 JSON de dados**, e este PR não
+encosta em nenhum deles — nem em `src/data/`, nem na fixture. **O portão não mede `.ts`**, e isso
+está escrito no docstring dele desde o PR 1. **Quem move essa linha é o PR 6.**
+
+---
+
 ## PR DE ÂNCORAS — as quatro citações de `derivar-notas.ts` (2026-08-28) — BAIXO RISCO
 
 **Base:** `517e787` (arquivamento do §FASE 3). **Escopo:** só comentário e prosa. **Zero diff de

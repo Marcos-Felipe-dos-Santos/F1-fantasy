@@ -458,6 +458,12 @@ lá seria circular). **Quem ler este teste verde e concluir "não há nome real 
 
 **6. A TROCA — `src/data/` passa a ser fictício.**
 - 🔴 **ALTO RISCO, sem discussão:** `src/data/` + balanceamento + o que vai no bundle.
+- ✅ **PRÉ-REQUISITO CUMPRIDO em 2026-08-28 (`c61b3a7`), e ele não estava neste plano:** a pendência
+  **0(aa)** (a janela entre o PR 6 e o PR 7) foi fechada pelo **caminho (a)** — `referencias-dataset.ts`
+  particionado por origem, em PR de posicionamento próprio, BAIXO RISCO e verde→verde. **Decisão do
+  dev: PR 6 e PR 7 SEPARADOS**, contra o caminho (b) que era fundi-los. **Consequência prática para
+  este PR: ele edita SÓ o bloco `DATA_*`** do módulo — `FIXTURE_*` é do PR 7 e `DERIVADO_*` não
+  muda. Ver `ESTADO.md` §Onde parei e `HISTORICO.md` §"NOMES FICTÍCIOS — POSICIONAMENTO".
 - **Portões, e nenhum é opcional:**
   - **Baseline vermelho primeiro** (regra de mudança de lógica do `CLAUDE.md`).
   - **`npm run balance` com `--reporter=verbose`, DELTA ZERO nos números**, e o diff **LIDO**, não
