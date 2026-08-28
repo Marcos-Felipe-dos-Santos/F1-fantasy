@@ -1,0 +1,1838 @@
+{
+  "equipes": {
+    "ags": {
+      "codigo": "jlm",
+      "nome": "JLM"
+    },
+    "alfa": {
+      "codigo": "ardenta",
+      "nome": "Ardenta"
+    },
+    "alphatauri": {
+      "codigo": "kaldrix_aquila",
+      "nome": "Kaldrix Aquila"
+    },
+    "alpine": {
+      "codigo": "cimeraie",
+      "nome": "Cimeraie F1"
+    },
+    "arrows": {
+      "codigo": "ashcombe",
+      "nome": "Ashcombe"
+    },
+    "aston_martin": {
+      "codigo": "ardsley_vane",
+      "nome": "Ardsley Vane"
+    },
+    "ats": {
+      "codigo": "otl",
+      "nome": "OTL"
+    },
+    "bar": {
+      "codigo": "nqt",
+      "nome": "NQT"
+    },
+    "benetton": {
+      "codigo": "salviati",
+      "nome": "Salviati"
+    },
+    "bmw_sauber": {
+      "codigo": "rhonwerk_baldern",
+      "nome": "Rhonwerk Baldern"
+    },
+    "brabham": {
+      "codigo": "danforth",
+      "nome": "Danforth"
+    },
+    "brabham-alfa_romeo": {
+      "codigo": "danforth-ardenta",
+      "nome": "Danforth-Ardenta"
+    },
+    "brabham-brm": {
+      "codigo": "danforth-ndk",
+      "nome": "Danforth-NDK"
+    },
+    "brabham-climax": {
+      "codigo": "danforth-vireo",
+      "nome": "Danforth-Vireo"
+    },
+    "brabham-ford": {
+      "codigo": "danforth-corven",
+      "nome": "Danforth-Corven"
+    },
+    "brabham-repco": {
+      "codigo": "danforth-zenrik",
+      "nome": "Danforth-Zenrik"
+    },
+    "brawn": {
+      "codigo": "haldemere",
+      "nome": "Haldemere"
+    },
+    "brm": {
+      "codigo": "ndk",
+      "nome": "NDK"
+    },
+    "brp": {
+      "codigo": "wgx",
+      "nome": "WGX"
+    },
+    "caterham": {
+      "codigo": "belmoor",
+      "nome": "Belmoor"
+    },
+    "connaught": {
+      "codigo": "wraybourne",
+      "nome": "Wraybourne"
+    },
+    "cooper": {
+      "codigo": "kestner",
+      "nome": "Kestner"
+    },
+    "cooper-brm": {
+      "codigo": "kestner-ndk",
+      "nome": "Kestner-NDK"
+    },
+    "cooper-climax": {
+      "codigo": "kestner-vireo",
+      "nome": "Kestner-Vireo"
+    },
+    "cooper-maserati": {
+      "codigo": "kestner-ilvento",
+      "nome": "Kestner-Ilvento"
+    },
+    "dallara": {
+      "codigo": "trentino",
+      "nome": "Trentino"
+    },
+    "eagle-weslake": {
+      "codigo": "ashgrove-halbrook",
+      "nome": "Ashgrove-Halbrook"
+    },
+    "ensign": {
+      "codigo": "padgett",
+      "nome": "Padgett"
+    },
+    "era": {
+      "codigo": "vmr",
+      "nome": "VMR"
+    },
+    "eurobrun": {
+      "codigo": "nordcast",
+      "nome": "Nordcast"
+    },
+    "ferrari": {
+      "codigo": "sarterra",
+      "nome": "Sarterra"
+    },
+    "fittipaldi": {
+      "codigo": "braganca",
+      "nome": "Bragança"
+    },
+    "fondmetal": {
+      "codigo": "ghirlanda",
+      "nome": "Ghirlanda"
+    },
+    "footwork": {
+      "codigo": "stridewell",
+      "nome": "Stridewell"
+    },
+    "force_india": {
+      "codigo": "bexmoor",
+      "nome": "Bexmoor"
+    },
+    "forti": {
+      "codigo": "beltrano",
+      "nome": "Beltrano"
+    },
+    "gordini": {
+      "codigo": "lamotte",
+      "nome": "Lamotte"
+    },
+    "haas": {
+      "codigo": "calloway",
+      "nome": "Calloway F1"
+    },
+    "hesketh": {
+      "codigo": "barrowman",
+      "nome": "Barrowman"
+    },
+    "hill": {
+      "codigo": "aldwych",
+      "nome": "Aldwych"
+    },
+    "honda": {
+      "codigo": "kyodan",
+      "nome": "Kyodan"
+    },
+    "hrt": {
+      "codigo": "cdr",
+      "nome": "CDR"
+    },
+    "hwm": {
+      "codigo": "kdl",
+      "nome": "KDL"
+    },
+    "iso_marlboro": {
+      "codigo": "ostara_corse",
+      "nome": "Ostara Corse"
+    },
+    "jaguar": {
+      "codigo": "ravenscar",
+      "nome": "Ravenscar"
+    },
+    "jordan": {
+      "codigo": "kilkenny",
+      "nome": "Kilkenny"
+    },
+    "lago": {
+      "codigo": "brissac-nemour",
+      "nome": "Brissac-Nemour"
+    },
+    "lancia": {
+      "codigo": "vercelli",
+      "nome": "Vercelli"
+    },
+    "larrousse": {
+      "codigo": "duquesne",
+      "nome": "Duquesne"
+    },
+    "leyton": {
+      "codigo": "merrow_court",
+      "nome": "Merrow Court"
+    },
+    "ligier": {
+      "codigo": "beauvais",
+      "nome": "Beauvais"
+    },
+    "lola": {
+      "codigo": "corvane",
+      "nome": "Corvane"
+    },
+    "lotus-brm": {
+      "codigo": "valcourt-ndk",
+      "nome": "Valcourt-NDK"
+    },
+    "lotus-climax": {
+      "codigo": "valcourt-vireo",
+      "nome": "Valcourt-Vireo"
+    },
+    "lotus-ford": {
+      "codigo": "valcourt-corven",
+      "nome": "Valcourt-Corven"
+    },
+    "lotus_f1": {
+      "codigo": "valcourt_f1",
+      "nome": "Valcourt F1"
+    },
+    "lotus_racing": {
+      "codigo": "valcourt",
+      "nome": "Valcourt"
+    },
+    "manor": {
+      "codigo": "ashworth_volkova",
+      "nome": "Ashworth Volkova"
+    },
+    "march": {
+      "codigo": "kelvedon",
+      "nome": "Kelvedon"
+    },
+    "march-alfa_romeo": {
+      "codigo": "kelvedon-ardenta",
+      "nome": "Kelvedon-Ardenta"
+    },
+    "march-ford": {
+      "codigo": "kelvedon-corven",
+      "nome": "Kelvedon-Corven"
+    },
+    "marussia": {
+      "codigo": "volkova",
+      "nome": "Volkova"
+    },
+    "maserati": {
+      "codigo": "ilvento",
+      "nome": "Ilvento"
+    },
+    "matra": {
+      "codigo": "sereine",
+      "nome": "Sereine"
+    },
+    "matra-ford": {
+      "codigo": "sereine-corven",
+      "nome": "Sereine-Corven"
+    },
+    "mclaren": {
+      "codigo": "ridgeway",
+      "nome": "Ridgeway"
+    },
+    "mclaren-ford": {
+      "codigo": "ridgeway-corven",
+      "nome": "Ridgeway-Corven"
+    },
+    "mercedes": {
+      "codigo": "halbrandt",
+      "nome": "Halbrandt"
+    },
+    "mf1": {
+      "codigo": "qx1",
+      "nome": "QX1"
+    },
+    "minardi": {
+      "codigo": "ronzani",
+      "nome": "Ronzani"
+    },
+    "onyx": {
+      "codigo": "obsidia",
+      "nome": "Obsidia"
+    },
+    "osella": {
+      "codigo": "rapallo",
+      "nome": "Rapallo"
+    },
+    "pacific": {
+      "codigo": "meridian",
+      "nome": "Meridian"
+    },
+    "penske": {
+      "codigo": "halstead",
+      "nome": "Halstead"
+    },
+    "porsche": {
+      "codigo": "rheinstadt",
+      "nome": "Rheinstadt"
+    },
+    "prost": {
+      "codigo": "aubrion",
+      "nome": "Aubrion"
+    },
+    "racing_point": {
+      "codigo": "bexmoor_crest",
+      "nome": "Bexmoor Crest"
+    },
+    "ram": {
+      "codigo": "tvk",
+      "nome": "TVK"
+    },
+    "rb": {
+      "codigo": "vt",
+      "nome": "VT F1"
+    },
+    "red_bull": {
+      "codigo": "kaldrix",
+      "nome": "Kaldrix"
+    },
+    "renault": {
+      "codigo": "charmont",
+      "nome": "Charmont"
+    },
+    "sauber": {
+      "codigo": "baldern",
+      "nome": "Baldern"
+    },
+    "scirocco": {
+      "codigo": "mistrali",
+      "nome": "Mistrali"
+    },
+    "shadow": {
+      "codigo": "rennick",
+      "nome": "Rennick"
+    },
+    "shadow-ford": {
+      "codigo": "rennick-corven",
+      "nome": "Rennick-Corven"
+    },
+    "simca": {
+      "codigo": "rimaux",
+      "nome": "Rimaux"
+    },
+    "simtek": {
+      "codigo": "cardis",
+      "nome": "Cardis"
+    },
+    "spirit": {
+      "codigo": "kindred",
+      "nome": "Kindred"
+    },
+    "spyker": {
+      "codigo": "vandelaar",
+      "nome": "Vandelaar"
+    },
+    "stewart": {
+      "codigo": "callander",
+      "nome": "Callander"
+    },
+    "super_aguri": {
+      "codigo": "nagase",
+      "nome": "Nagase"
+    },
+    "surtees": {
+      "codigo": "hartwell",
+      "nome": "Hartwell"
+    },
+    "team_lotus": {
+      "codigo": "valcourt_works",
+      "nome": "Valcourt Works"
+    },
+    "tecno": {
+      "codigo": "novarra",
+      "nome": "Novarra"
+    },
+    "theodore": {
+      "codigo": "weyland",
+      "nome": "Weyland"
+    },
+    "toleman": {
+      "codigo": "marbeck",
+      "nome": "Marbeck"
+    },
+    "tomaso": {
+      "codigo": "del_vigo",
+      "nome": "Del Vigo"
+    },
+    "toro_rosso": {
+      "codigo": "kaldrix_cadetto",
+      "nome": "Kaldrix Cadetto"
+    },
+    "toyota": {
+      "codigo": "kanzaki",
+      "nome": "Kanzaki"
+    },
+    "tyrrell": {
+      "codigo": "brockham",
+      "nome": "Brockham"
+    },
+    "vanwall": {
+      "codigo": "thornbury",
+      "nome": "Thornbury"
+    },
+    "virgin": {
+      "codigo": "wexley",
+      "nome": "Wexley"
+    },
+    "williams": {
+      "codigo": "pemberley",
+      "nome": "Pemberley"
+    },
+    "wolf": {
+      "codigo": "falkirk",
+      "nome": "Falkirk"
+    },
+    "zakspeed": {
+      "codigo": "wernsdorf",
+      "nome": "Wernsdorf"
+    }
+  },
+  "pilotos": {
+    "adamich": {
+      "codigo": "rescaldi",
+      "nome": "Ottavio Rescaldi"
+    },
+    "alan_brown": {
+      "codigo": "gordon_threlfall",
+      "nome": "Gordon Threlfall"
+    },
+    "albers": {
+      "codigo": "slotboom",
+      "nome": "Jurriaan Slotboom"
+    },
+    "albon": {
+      "codigo": "sirichai",
+      "nome": "Nattapong Sirichai"
+    },
+    "alboreto": {
+      "codigo": "sanguineti",
+      "nome": "Dario Sanguineti"
+    },
+    "alesi": {
+      "codigo": "chambaud",
+      "nome": "Loïc Chambaud"
+    },
+    "alguersuari": {
+      "codigo": "bassegoda",
+      "nome": "Oriol Bassegoda"
+    },
+    "alliot": {
+      "codigo": "maisonneuve",
+      "nome": "Ludovic Maisonneuve"
+    },
+    "allison": {
+      "codigo": "bardsley",
+      "nome": "Cliff Bardsley"
+    },
+    "alonso": {
+      "codigo": "goikoetxea",
+      "nome": "Asier Goikoetxea"
+    },
+    "ambrosio": {
+      "codigo": "vandenberghe",
+      "nome": "Wout Vandenberghe"
+    },
+    "amon": {
+      "codigo": "ranfurly",
+      "nome": "Keith Ranfurly"
+    },
+    "anderson": {
+      "codigo": "thorncroft",
+      "nome": "Ewart Thorncroft"
+    },
+    "andretti": {
+      "codigo": "baccarini",
+      "nome": "Delano Baccarini"
+    },
+    "angelis": {
+      "codigo": "kariatis",
+      "nome": "Stelios Kariatis"
+    },
+    "antonelli": {
+      "codigo": "rovigatti",
+      "nome": "Sebastiano Rovigatti"
+    },
+    "arnoux": {
+      "codigo": "molinier",
+      "nome": "Fabrice Molinier"
+    },
+    "arundell": {
+      "codigo": "loxley",
+      "nome": "Peter Loxley"
+    },
+    "ascari": {
+      "codigo": "baldracchi",
+      "nome": "Renzo Baldracchi"
+    },
+    "attwood": {
+      "codigo": "penhale",
+      "nome": "Richard Penhale"
+    },
+    "badoer": {
+      "codigo": "strozzi",
+      "nome": "Ermanno Strozzi"
+    },
+    "baghetti": {
+      "codigo": "ronchi",
+      "nome": "Giancarlo Ronchi"
+    },
+    "bailey": {
+      "codigo": "prestwich",
+      "nome": "Rowan Prestwich"
+    },
+    "baldi": {
+      "codigo": "sguazzin",
+      "nome": "Livio Sguazzin"
+    },
+    "bandini": {
+      "codigo": "pignatelli",
+      "nome": "Lorenzo Pignatelli"
+    },
+    "barbazza": {
+      "codigo": "danesin",
+      "nome": "Casimiro Danesin"
+    },
+    "barilla": {
+      "codigo": "portanova",
+      "nome": "Amedeo Portanova"
+    },
+    "barrichello": {
+      "codigo": "nogueira",
+      "nome": "Everaldo Nogueira"
+    },
+    "baumgartner": {
+      "codigo": "beregszaszi",
+      "nome": "Zoltán Beregszászi"
+    },
+    "bearman": {
+      "codigo": "wainfleet",
+      "nome": "Rory Wainfleet"
+    },
+    "beaufort": {
+      "codigo": "van_doeveren",
+      "nome": "Willem van Doeveren"
+    },
+    "behra": {
+      "codigo": "fournier",
+      "nome": "Armand Fournier"
+    },
+    "bell": {
+      "codigo": "fairweather",
+      "nome": "Colin Fairweather"
+    },
+    "bellof": {
+      "codigo": "schwanthaler",
+      "nome": "Ulrich Schwanthaler"
+    },
+    "belmondo": {
+      "codigo": "lachance",
+      "nome": "Grégoire Lachance"
+    },
+    "beltoise": {
+      "codigo": "amance",
+      "nome": "Gilbert Amance"
+    },
+    "beretta": {
+      "codigo": "duchene",
+      "nome": "Anselme Duchêne"
+    },
+    "berg": {
+      "codigo": "thackeray",
+      "nome": "Dwight Thackeray"
+    },
+    "berger": {
+      "codigo": "aschenbrenner",
+      "nome": "Toni Aschenbrenner"
+    },
+    "bernard": {
+      "codigo": "marceau",
+      "nome": "Thibault Marceau"
+    },
+    "bernoldi": {
+      "codigo": "tavares",
+      "nome": "Murilo Tavares"
+    },
+    "beuttler": {
+      "codigo": "landsdale",
+      "nome": "Clive Landsdale"
+    },
+    "bianchi": {
+      "codigo": "vireuil",
+      "nome": "Lucien Vireuil"
+    },
+    "bianco": {
+      "codigo": "delvecchio",
+      "nome": "Sergio Delvecchio"
+    },
+    "binder": {
+      "codigo": "pfaffinger",
+      "nome": "Erwin Pfaffinger"
+    },
+    "bira": {
+      "codigo": "varan",
+      "nome": "Somchai Varan"
+    },
+    "blundell": {
+      "codigo": "kenworthy",
+      "nome": "Rhodri Kenworthy"
+    },
+    "boesel": {
+      "codigo": "meirelles",
+      "nome": "Ivan Meirelles"
+    },
+    "bonetto": {
+      "codigo": "trevisan",
+      "nome": "Ugo Trevisan"
+    },
+    "bonnier": {
+      "codigo": "ekstrom",
+      "nome": "Sven Ekström"
+    },
+    "borgudd": {
+      "codigo": "strandberg",
+      "nome": "Åke Strandberg"
+    },
+    "bortoleto": {
+      "codigo": "paranhos",
+      "nome": "Vinícius Paranhos"
+    },
+    "bottas": {
+      "codigo": "rantakari",
+      "nome": "Eemeli Rantakari"
+    },
+    "boullion": {
+      "codigo": "marsollier",
+      "nome": "Ludwig Marsollier"
+    },
+    "bourdais": {
+      "codigo": "delaporte",
+      "nome": "Corentin Delaporte"
+    },
+    "boutsen": {
+      "codigo": "vandermeulen",
+      "nome": "Geert Vandermeulen"
+    },
+    "brabham": {
+      "codigo": "danforth",
+      "nome": "Wesley Danforth"
+    },
+    "brambilla": {
+      "codigo": "fumagalli",
+      "nome": "Ercole Fumagalli"
+    },
+    "brendon_hartley": {
+      "codigo": "kane_ruakura",
+      "nome": "Kane Ruakura"
+    },
+    "brise": {
+      "codigo": "prescott",
+      "nome": "Guy Prescott"
+    },
+    "brooks": {
+      "codigo": "ashdown",
+      "nome": "Colin Ashdown"
+    },
+    "brundle": {
+      "codigo": "pennington",
+      "nome": "Aidan Pennington"
+    },
+    "bruni": {
+      "codigo": "ceccarelli",
+      "nome": "Damiano Ceccarelli"
+    },
+    "bruno_senna": {
+      "codigo": "rafael_vilarinho",
+      "nome": "Rafael Vilarinho"
+    },
+    "bucci": {
+      "codigo": "cerruti",
+      "nome": "Aldo Cerruti"
+    },
+    "bucknum": {
+      "codigo": "kessington",
+      "nome": "Hoyt Kessington"
+    },
+    "buemi": {
+      "codigo": "kobelt",
+      "nome": "Yann Kobelt"
+    },
+    "burgess": {
+      "codigo": "trescott",
+      "nome": "Ian Trescott"
+    },
+    "burti": {
+      "codigo": "quadros",
+      "nome": "Rogério Quadros"
+    },
+    "button": {
+      "codigo": "wetherby",
+      "nome": "Callum Wetherby"
+    },
+    "byrne": {
+      "codigo": "fitzharris",
+      "nome": "Declan Fitzharris"
+    },
+    "caffi": {
+      "codigo": "vallenari",
+      "nome": "Gino Vallenari"
+    },
+    "campos": {
+      "codigo": "zabaleta",
+      "nome": "Iker Zabaleta"
+    },
+    "capelli": {
+      "codigo": "malagoli",
+      "nome": "Dino Malagoli"
+    },
+    "castellotti": {
+      "codigo": "sbarbaro",
+      "nome": "Eugenio Sbarbaro"
+    },
+    "cecotto": {
+      "codigo": "betancur",
+      "nome": "Rómulo Betancur"
+    },
+    "cesaris": {
+      "codigo": "ottaviani",
+      "nome": "Fulvio Ottaviani"
+    },
+    "cevert": {
+      "codigo": "duchamp",
+      "nome": "Laurent Duchamp"
+    },
+    "chandhok": {
+      "codigo": "venkatesh",
+      "nome": "Aditya Venkatesh"
+    },
+    "cheever": {
+      "codigo": "whitlock",
+      "nome": "Sherman Whitlock"
+    },
+    "chiesa": {
+      "codigo": "aeschbacher",
+      "nome": "Silvan Aeschbacher"
+    },
+    "chilton": {
+      "codigo": "fallowfield",
+      "nome": "Digby Fallowfield"
+    },
+    "chiron": {
+      "codigo": "rouvel",
+      "nome": "Émile Rouvel"
+    },
+    "claes": {
+      "codigo": "vanhoof",
+      "nome": "Rudi Vanhoof"
+    },
+    "clark": {
+      "codigo": "rutherglen",
+      "nome": "Malcolm Rutherglen"
+    },
+    "colapinto": {
+      "codigo": "etchegaray",
+      "nome": "Bautista Etchegaray"
+    },
+    "collins": {
+      "codigo": "barclay",
+      "nome": "Roy Barclay"
+    },
+    "comas": {
+      "codigo": "chaumette",
+      "nome": "Bastien Chaumette"
+    },
+    "corrado_fabi": {
+      "codigo": "marino_cordovani",
+      "nome": "Marino Cordovani"
+    },
+    "coulthard": {
+      "codigo": "struthers",
+      "nome": "Ewan Struthers"
+    },
+    "courage": {
+      "codigo": "melbury",
+      "nome": "Rupert Melbury"
+    },
+    "dalmas": {
+      "codigo": "aubusson",
+      "nome": "Frédéric Aubusson"
+    },
+    "daly": {
+      "codigo": "corrigan",
+      "nome": "Fintan Corrigan"
+    },
+    "damon_hill": {
+      "codigo": "bertram_aldwych",
+      "nome": "Bertram Aldwych"
+    },
+    "danner": {
+      "codigo": "kaltenbrunn",
+      "nome": "Norbert Kaltenbrunn"
+    },
+    "davidson": {
+      "codigo": "tarplett",
+      "nome": "Ashley Tarplett"
+    },
+    "de_vries": {
+      "codigo": "de_konink",
+      "nome": "Bram de Konink"
+    },
+    "depailler": {
+      "codigo": "cornuel",
+      "nome": "Yves Cornuel"
+    },
+    "diniz": {
+      "codigo": "cavalheiro",
+      "nome": "Leonardo Cavalheiro"
+    },
+    "donnelly": {
+      "codigo": "mulholland",
+      "nome": "Ciaran Mulholland"
+    },
+    "downing": {
+      "codigo": "stanmore",
+      "nome": "Peter Stanmore"
+    },
+    "dumfries": {
+      "codigo": "craigmyle",
+      "nome": "Angus Craigmyle"
+    },
+    "edwards": {
+      "codigo": "hollingworth",
+      "nome": "Terence Hollingworth"
+    },
+    "elford": {
+      "codigo": "standen",
+      "nome": "Vic Standen"
+    },
+    "emerson_fittipaldi": {
+      "codigo": "ademir_braganca",
+      "nome": "Ademir Bragança"
+    },
+    "ericsson": {
+      "codigo": "lindqvist",
+      "nome": "Alvar Lindqvist"
+    },
+    "ertl": {
+      "codigo": "waldbrunner",
+      "nome": "Sepp Waldbrunner"
+    },
+    "etancelin": {
+      "codigo": "beaupre",
+      "nome": "Gaston Beaupré"
+    },
+    "evans": {
+      "codigo": "tallmadge",
+      "nome": "Rhys Tallmadge"
+    },
+    "fabi": {
+      "codigo": "cordovani",
+      "nome": "Tito Cordovani"
+    },
+    "fabre": {
+      "codigo": "marquant",
+      "nome": "Cyril Marquant"
+    },
+    "fangio": {
+      "codigo": "vandel",
+      "nome": "Óscar Vandel"
+    },
+    "farina": {
+      "codigo": "brenzoni",
+      "nome": "Attilio Brenzoni"
+    },
+    "firman": {
+      "codigo": "ballinderry",
+      "nome": "Eoghan Ballinderry"
+    },
+    "fisher": {
+      "codigo": "crowhurst",
+      "nome": "Miles Crowhurst"
+    },
+    "fisichella": {
+      "codigo": "falcinelli",
+      "nome": "Ruggero Falcinelli"
+    },
+    "fittipaldi": {
+      "codigo": "braganca",
+      "nome": "Cauã Bragança"
+    },
+    "follmer": {
+      "codigo": "vosburgh",
+      "nome": "Grady Vosburgh"
+    },
+    "forini": {
+      "codigo": "trinchieri",
+      "nome": "Remo Trinchieri"
+    },
+    "frentzen": {
+      "codigo": "ohrmann",
+      "nome": "Detlev Ohrmann"
+    },
+    "friesacher": {
+      "codigo": "hagenauer",
+      "nome": "Manuel Hagenauer"
+    },
+    "gabbiani": {
+      "codigo": "perlasca",
+      "nome": "Ilario Perlasca"
+    },
+    "gachot": {
+      "codigo": "verhaeghe",
+      "nome": "Maxime Verhaeghe"
+    },
+    "gaillard": {
+      "codigo": "rouviere",
+      "nome": "Yannick Rouvière"
+    },
+    "galli": {
+      "codigo": "castagno",
+      "nome": "Ivo Castagno"
+    },
+    "ganley": {
+      "codigo": "winstanley",
+      "nome": "Errol Winstanley"
+    },
+    "garde": {
+      "codigo": "blankevoort",
+      "nome": "Sjoerd Blankevoort"
+    },
+    "gardner": {
+      "codigo": "aldersey",
+      "nome": "Frank Aldersey"
+    },
+    "gartner": {
+      "codigo": "hauslmayr",
+      "nome": "Ferdl Hauslmayr"
+    },
+    "gasly": {
+      "codigo": "barancourt",
+      "nome": "Théo Barancourt"
+    },
+    "gavin": {
+      "codigo": "trenholme",
+      "nome": "Bill Trenholme"
+    },
+    "gene": {
+      "codigo": "bonastre",
+      "nome": "Aleix Bonastre"
+    },
+    "gerard": {
+      "codigo": "whitcombe",
+      "nome": "Cyril Whitcombe"
+    },
+    "gethin": {
+      "codigo": "ashwick",
+      "nome": "Peter Ashwick"
+    },
+    "ghinzani": {
+      "codigo": "zamperini",
+      "nome": "Ubaldo Zamperini"
+    },
+    "giacomelli": {
+      "codigo": "torlonia",
+      "nome": "Cesare Torlonia"
+    },
+    "gilles_villeneuve": {
+      "codigo": "real_beauchamp",
+      "nome": "Réal Beauchamp"
+    },
+    "ginther": {
+      "codigo": "fenimore",
+      "nome": "Lyle Fenimore"
+    },
+    "giovinazzi": {
+      "codigo": "petrosino",
+      "nome": "Cosimo Petrosino"
+    },
+    "glock": {
+      "codigo": "wielandt",
+      "nome": "Marvin Wielandt"
+    },
+    "gonzalez": {
+      "codigo": "quintana",
+      "nome": "Ernesto Quintana"
+    },
+    "gounon": {
+      "codigo": "boisselier",
+      "nome": "Aurèle Boisselier"
+    },
+    "graffenried": {
+      "codigo": "rechberg",
+      "nome": "Emil von Rechberg"
+    },
+    "grassi": {
+      "codigo": "ravazzi",
+      "nome": "Danilo Ravazzi"
+    },
+    "grosjean": {
+      "codigo": "vaugrenard",
+      "nome": "Killian Vaugrenard"
+    },
+    "grouillard": {
+      "codigo": "vaugirard",
+      "nome": "Damien Vaugirard"
+    },
+    "guerrero": {
+      "codigo": "restrepo",
+      "nome": "Camilo Restrepo"
+    },
+    "gugelmin": {
+      "codigo": "andrada",
+      "nome": "Vicente Andrada"
+    },
+    "gurney": {
+      "codigo": "colborne",
+      "nome": "Wyatt Colborne"
+    },
+    "gutierrez": {
+      "codigo": "zuniga",
+      "nome": "Ismael Zúñiga"
+    },
+    "hadjar": {
+      "codigo": "benkacem",
+      "nome": "Ilyes Benkacem"
+    },
+    "hailwood": {
+      "codigo": "ashbourne",
+      "nome": "Glenn Ashbourne"
+    },
+    "hakkinen": {
+      "codigo": "lehtimaki",
+      "nome": "Jere Lehtimäki"
+    },
+    "hall": {
+      "codigo": "delacroix",
+      "nome": "Hollis Delacroix"
+    },
+    "hamilton": {
+      "codigo": "calderwood",
+      "nome": "Idris Calderwood"
+    },
+    "harrison": {
+      "codigo": "ashby",
+      "nome": "Douglas Ashby"
+    },
+    "haryanto": {
+      "codigo": "wicaksono",
+      "nome": "Bagus Wicaksono"
+    },
+    "hawthorn": {
+      "codigo": "fenwick",
+      "nome": "Nigel Fenwick"
+    },
+    "heidfeld": {
+      "codigo": "griesbach",
+      "nome": "Torsten Griesbach"
+    },
+    "henton": {
+      "codigo": "cottingham",
+      "nome": "Neville Cottingham"
+    },
+    "herbert": {
+      "codigo": "elderfield",
+      "nome": "Marcus Elderfield"
+    },
+    "hesnault": {
+      "codigo": "vaudray",
+      "nome": "Aurélien Vaudray"
+    },
+    "hill": {
+      "codigo": "aldwych",
+      "nome": "Gerald Aldwych"
+    },
+    "hoffmann": {
+      "codigo": "tancredo",
+      "nome": "Ruy Tancredo"
+    },
+    "hulkenberg": {
+      "codigo": "rungwerth",
+      "nome": "Malte Rungwerth"
+    },
+    "hulme": {
+      "codigo": "waimana",
+      "nome": "Bryce Waimana"
+    },
+    "hunt": {
+      "codigo": "carrington",
+      "nome": "Rufus Carrington"
+    },
+    "ian_scheckter": {
+      "codigo": "pieter_steenkamp",
+      "nome": "Pieter Steenkamp"
+    },
+    "ickx": {
+      "codigo": "vandeputte",
+      "nome": "Thierry Vandeputte"
+    },
+    "inoue": {
+      "codigo": "tsukamoto",
+      "nome": "Masaki Tsukamoto"
+    },
+    "ireland": {
+      "codigo": "kirkbride",
+      "nome": "Rex Kirkbride"
+    },
+    "irvine": {
+      "codigo": "clonakilty",
+      "nome": "Dermot Clonakilty"
+    },
+    "jabouille": {
+      "codigo": "fenouil",
+      "nome": "Gaspard Fenouil"
+    },
+    "jack_brabham": {
+      "codigo": "ronald_danforth",
+      "nome": "Ronald Danforth"
+    },
+    "jarier": {
+      "codigo": "cazalet",
+      "nome": "Olivier Cazalet"
+    },
+    "johansson": {
+      "codigo": "ohlander",
+      "nome": "Mats Öhlander"
+    },
+    "jolyon_palmer": {
+      "codigo": "toby_thornleigh",
+      "nome": "Toby Thornleigh"
+    },
+    "jones": {
+      "codigo": "kirkhope",
+      "nome": "Grant Kirkhope"
+    },
+    "jules_bianchi": {
+      "codigo": "baptiste_vireuil",
+      "nome": "Baptiste Vireuil"
+    },
+    "karthikeyan": {
+      "codigo": "rajagopal",
+      "nome": "Vikram Rajagopal"
+    },
+    "katayama": {
+      "codigo": "ozaki",
+      "nome": "Shunpei Ozaki"
+    },
+    "keegan": {
+      "codigo": "fotheringay",
+      "nome": "Crispin Fotheringay"
+    },
+    "keke_rosberg": {
+      "codigo": "tapio_virtanen",
+      "nome": "Tapio Virtanen"
+    },
+    "kevin_magnussen": {
+      "codigo": "mikkel_kjeldsen",
+      "nome": "Mikkel Kjeldsen"
+    },
+    "klien": {
+      "codigo": "obermoser",
+      "nome": "Fabian Obermoser"
+    },
+    "kling": {
+      "codigo": "osterhagen",
+      "nome": "Karl Osterhagen"
+    },
+    "kobayashi": {
+      "codigo": "shindo",
+      "nome": "Haruto Shindo"
+    },
+    "kovalainen": {
+      "codigo": "nurminen",
+      "nome": "Sauli Nurminen"
+    },
+    "kubica": {
+      "codigo": "wisniewski",
+      "nome": "Marek Wiśniewski"
+    },
+    "kvyat": {
+      "codigo": "volkonsky",
+      "nome": "Timur Volkonsky"
+    },
+    "laffite": {
+      "codigo": "delaunay",
+      "nome": "Bernard Delaunay"
+    },
+    "lammers": {
+      "codigo": "bijleveld",
+      "nome": "Ruud Bijleveld"
+    },
+    "lamy": {
+      "codigo": "quintela",
+      "nome": "Bernardo Quintela"
+    },
+    "larini": {
+      "codigo": "bellagamba",
+      "nome": "Ezio Bellagamba"
+    },
+    "larrauri": {
+      "codigo": "echague",
+      "nome": "Ramiro Echagüe"
+    },
+    "latifi": {
+      "codigo": "ravenshoe",
+      "nome": "Kian Ravenshoe"
+    },
+    "lauda": {
+      "codigo": "hochreiter",
+      "nome": "Anton Hochreiter"
+    },
+    "lawson": {
+      "codigo": "waimarino",
+      "nome": "Fergus Waimarino"
+    },
+    "leclerc": {
+      "codigo": "valbonne",
+      "nome": "Rémy Valbonne"
+    },
+    "leclere": {
+      "codigo": "fontanel",
+      "nome": "Régis Fontanel"
+    },
+    "lehto": {
+      "codigo": "ruotsalainen",
+      "nome": "Kalle Ruotsalainen"
+    },
+    "lennep": {
+      "codigo": "van_rijkel",
+      "nome": "Joost van Rijkel"
+    },
+    "liuzzi": {
+      "codigo": "grisanti",
+      "nome": "Tullio Grisanti"
+    },
+    "lombardi": {
+      "codigo": "panucci",
+      "nome": "Elda Panucci"
+    },
+    "lunger": {
+      "codigo": "whitmore",
+      "nome": "Chase Whitmore"
+    },
+    "macklin": {
+      "codigo": "thistlewood",
+      "nome": "Alec Thistlewood"
+    },
+    "maggs": {
+      "codigo": "bowdler",
+      "nome": "Gareth Bowdler"
+    },
+    "magnussen": {
+      "codigo": "kjeldsen",
+      "nome": "Steen Kjeldsen"
+    },
+    "maldonado": {
+      "codigo": "chirinos",
+      "nome": "Alvaro Chirinos"
+    },
+    "manfred_winkelhock": {
+      "codigo": "lothar_gruberholz",
+      "nome": "Lothar Gruberholz"
+    },
+    "mansell": {
+      "codigo": "fernsby",
+      "nome": "Colin Fernsby"
+    },
+    "manzon": {
+      "codigo": "boussac",
+      "nome": "Henri Boussac"
+    },
+    "mario_andretti": {
+      "codigo": "silvio_baccarini",
+      "nome": "Silvio Baccarini"
+    },
+    "marques": {
+      "codigo": "delgado",
+      "nome": "Wagner Delgado"
+    },
+    "martini": {
+      "codigo": "torregrossa",
+      "nome": "Egidio Torregrossa"
+    },
+    "mass": {
+      "codigo": "rauschert",
+      "nome": "Helmut Rauschert"
+    },
+    "massa": {
+      "codigo": "prado",
+      "nome": "Juscelino Prado"
+    },
+    "matta": {
+      "codigo": "sardinha",
+      "nome": "Juliano Sardinha"
+    },
+    "max_verstappen": {
+      "codigo": "sander_doornbosch",
+      "nome": "Sander Doornbosch"
+    },
+    "mazepin": {
+      "codigo": "tarasenko",
+      "nome": "Yegor Tarasenko"
+    },
+    "mazzacane": {
+      "codigo": "iturralde",
+      "nome": "Nahuel Iturralde"
+    },
+    "mclaren": {
+      "codigo": "ridgeway",
+      "nome": "Owen Ridgeway"
+    },
+    "mcnish": {
+      "codigo": "kilbarchan",
+      "nome": "Struan Kilbarchan"
+    },
+    "merhi": {
+      "codigo": "belaustegui",
+      "nome": "Aitor Belaustegui"
+    },
+    "merzario": {
+      "codigo": "tessari",
+      "nome": "Gianni Tessari"
+    },
+    "michael_schumacher": {
+      "codigo": "klaus_reithoffer",
+      "nome": "Klaus Reithoffer"
+    },
+    "mick_schumacher": {
+      "codigo": "jonas_reithoffer",
+      "nome": "Jonas Reithoffer"
+    },
+    "mieres": {
+      "codigo": "aguirre",
+      "nome": "Roberto Aguirre"
+    },
+    "mitter": {
+      "codigo": "reinbold",
+      "nome": "Gerhard Reinbold"
+    },
+    "modena": {
+      "codigo": "bolzano",
+      "nome": "Terenzio Bolzano"
+    },
+    "montagny": {
+      "codigo": "charpentier",
+      "nome": "Aymeric Charpentier"
+    },
+    "monteiro": {
+      "codigo": "malheiro",
+      "nome": "Duarte Malheiro"
+    },
+    "montermini": {
+      "codigo": "zanotti",
+      "nome": "Fiorello Zanotti"
+    },
+    "montoya": {
+      "codigo": "villamil",
+      "nome": "Andrés Villamil"
+    },
+    "morbidelli": {
+      "codigo": "sperandio",
+      "nome": "Adriano Sperandio"
+    },
+    "moreno": {
+      "codigo": "salgueiro",
+      "nome": "Norberto Salgueiro"
+    },
+    "moss": {
+      "codigo": "crompton",
+      "nome": "Anthony Crompton"
+    },
+    "musso": {
+      "codigo": "roncalli",
+      "nome": "Luigi Roncalli"
+    },
+    "nakajima": {
+      "codigo": "fujisawa",
+      "nome": "Sora Fujisawa"
+    },
+    "nakano": {
+      "codigo": "konishi",
+      "nome": "Tetsuya Konishi"
+    },
+    "nannini": {
+      "codigo": "cardinale",
+      "nome": "Fiorenzo Cardinale"
+    },
+    "nasr": {
+      "codigo": "kurtz",
+      "nome": "Thiago Kurtz"
+    },
+    "nilsson": {
+      "codigo": "hedlund",
+      "nome": "Torbjörn Hedlund"
+    },
+    "norris": {
+      "codigo": "corfield",
+      "nome": "Jasper Corfield"
+    },
+    "ocon": {
+      "codigo": "tremoulet",
+      "nome": "Élouan Trémoulet"
+    },
+    "oliver": {
+      "codigo": "braithwood",
+      "nome": "Clive Braithwood"
+    },
+    "pace": {
+      "codigo": "cavalcanti",
+      "nome": "Nestor Cavalcanti"
+    },
+    "paletti": {
+      "codigo": "bergonzi",
+      "nome": "Sandro Bergonzi"
+    },
+    "palmer": {
+      "codigo": "thornleigh",
+      "nome": "Jeremy Thornleigh"
+    },
+    "panis": {
+      "codigo": "chapuis",
+      "nome": "Sylvère Chapuis"
+    },
+    "pantano": {
+      "codigo": "terragni",
+      "nome": "Alfio Terragni"
+    },
+    "parkes": {
+      "codigo": "harrowgate",
+      "nome": "Mike Harrowgate"
+    },
+    "patrese": {
+      "codigo": "valsecchi",
+      "nome": "Enrico Valsecchi"
+    },
+    "perez": {
+      "codigo": "barragan",
+      "nome": "Ulises Barragán"
+    },
+    "pescarolo": {
+      "codigo": "lascaux",
+      "nome": "Henri Lascaux"
+    },
+    "peterson": {
+      "codigo": "ahlborg",
+      "nome": "Stig Ahlborg"
+    },
+    "petrov": {
+      "codigo": "zolotov",
+      "nome": "Arkady Zolotov"
+    },
+    "phil_hill": {
+      "codigo": "curtis_aldwych",
+      "nome": "Curtis Aldwych"
+    },
+    "piastri": {
+      "codigo": "yarraville",
+      "nome": "Hamish Yarraville"
+    },
+    "pic": {
+      "codigo": "beaugendre",
+      "nome": "Amaury Beaugendre"
+    },
+    "piquet": {
+      "codigo": "fontoura",
+      "nome": "Amilcar Fontoura"
+    },
+    "piquet_jr": {
+      "codigo": "fontoura_filho",
+      "nome": "Aurélio Fontoura Filho"
+    },
+    "pironi": {
+      "codigo": "fontclair",
+      "nome": "Serge Fontclair"
+    },
+    "pirro": {
+      "codigo": "mantegazza",
+      "nome": "Cirillo Mantegazza"
+    },
+    "pizzonia": {
+      "codigo": "mangueira",
+      "nome": "Aluísio Mangueira"
+    },
+    "pollet": {
+      "codigo": "mortemart",
+      "nome": "Jacques Mortemart"
+    },
+    "poore": {
+      "codigo": "tredwell",
+      "nome": "Basil Tredwell"
+    },
+    "prost": {
+      "codigo": "aubrion",
+      "nome": "Gérard Aubrion"
+    },
+    "pryce": {
+      "codigo": "llewelyn",
+      "nome": "Emlyn Llewelyn"
+    },
+    "raikkonen": {
+      "codigo": "peltola",
+      "nome": "Veikko Peltola"
+    },
+    "ralf_schumacher": {
+      "codigo": "dietmar_reithoffer",
+      "nome": "Dietmar Reithoffer"
+    },
+    "ramos": {
+      "codigo": "valentim",
+      "nome": "Nuno Valentim"
+    },
+    "rebaque": {
+      "codigo": "zuloaga",
+      "nome": "Ignacio Zuloaga"
+    },
+    "regazzoni": {
+      "codigo": "zenatello",
+      "nome": "Fausto Zenatello"
+    },
+    "resta": {
+      "codigo": "auchterlonie",
+      "nome": "Fraser Auchterlonie"
+    },
+    "reutemann": {
+      "codigo": "zaldivar",
+      "nome": "Facundo Zaldívar"
+    },
+    "revson": {
+      "codigo": "hathaway",
+      "nome": "Wendell Hathaway"
+    },
+    "ribeiro": {
+      "codigo": "bittencourt",
+      "nome": "Dirceu Bittencourt"
+    },
+    "ricciardo": {
+      "codigo": "kirribilli",
+      "nome": "Jarrah Kirribilli"
+    },
+    "rindt": {
+      "codigo": "steinbruck",
+      "nome": "Konrad Steinbrück"
+    },
+    "rodriguez": {
+      "codigo": "zaragoza",
+      "nome": "Emilio Zaragoza"
+    },
+    "rosa": {
+      "codigo": "zubizarreta",
+      "nome": "Unai Zubizarreta"
+    },
+    "rosberg": {
+      "codigo": "virtanen",
+      "nome": "Onni Virtanen"
+    },
+    "rosier": {
+      "codigo": "aubertin",
+      "nome": "Marcel Aubertin"
+    },
+    "rosset": {
+      "codigo": "menezes",
+      "nome": "Tiago Menezes"
+    },
+    "rothengatter": {
+      "codigo": "oosterbaan",
+      "nome": "Pim Oosterbaan"
+    },
+    "russell": {
+      "codigo": "redmayne",
+      "nome": "Alfie Redmayne"
+    },
+    "sainz": {
+      "codigo": "aranguren",
+      "nome": "Nicolás Aranguren"
+    },
+    "sala": {
+      "codigo": "beascoa",
+      "nome": "Íñigo Beascoa"
+    },
+    "salazar": {
+      "codigo": "errazuriz",
+      "nome": "Eliseo Errázuriz"
+    },
+    "salo": {
+      "codigo": "vaisanen",
+      "nome": "Antero Väisänen"
+    },
+    "salvadori": {
+      "codigo": "havelock",
+      "nome": "Denis Havelock"
+    },
+    "sargeant": {
+      "codigo": "marlowe",
+      "nome": "Beckett Marlowe"
+    },
+    "sato": {
+      "codigo": "munakata",
+      "nome": "Ryohei Munakata"
+    },
+    "satoru_nakajima": {
+      "codigo": "kenji_fujisawa",
+      "nome": "Kenji Fujisawa"
+    },
+    "scheckter": {
+      "codigo": "steenkamp",
+      "nome": "Marius Steenkamp"
+    },
+    "schell": {
+      "codigo": "kessler",
+      "nome": "Warren Kessler"
+    },
+    "schenken": {
+      "codigo": "vogelsang",
+      "nome": "Tim Vogelsang"
+    },
+    "schneider": {
+      "codigo": "rieselbach",
+      "nome": "Hartmut Rieselbach"
+    },
+    "senna": {
+      "codigo": "vilarinho",
+      "nome": "Tadeu Vilarinho"
+    },
+    "serra": {
+      "codigo": "vasconcelos",
+      "nome": "Teo Vasconcelos"
+    },
+    "settember": {
+      "codigo": "tolomei",
+      "nome": "Vance Tolomei"
+    },
+    "shelby": {
+      "codigo": "kinsella",
+      "nome": "Wade Kinsella"
+    },
+    "siffert": {
+      "codigo": "brunnthaler",
+      "nome": "Urs Brunnthaler"
+    },
+    "simon": {
+      "codigo": "bastide",
+      "nome": "Lucien Bastide"
+    },
+    "sirotkin": {
+      "codigo": "ostrovsky",
+      "nome": "Gleb Ostrovsky"
+    },
+    "speed": {
+      "codigo": "kellerman",
+      "nome": "Brady Kellerman"
+    },
+    "spence": {
+      "codigo": "wexcombe",
+      "nome": "Trevor Wexcombe"
+    },
+    "stevens": {
+      "codigo": "ashcroft",
+      "nome": "Freddie Ashcroft"
+    },
+    "stewart": {
+      "codigo": "callander",
+      "nome": "Alistair Callander"
+    },
+    "stohr": {
+      "codigo": "malvezzi",
+      "nome": "Ottorino Malvezzi"
+    },
+    "stommelen": {
+      "codigo": "dietrichs",
+      "nome": "Rolf Dietrichs"
+    },
+    "streiff": {
+      "codigo": "corbeau",
+      "nome": "Sylvain Corbeau"
+    },
+    "stroll": {
+      "codigo": "ballantyne",
+      "nome": "Emory Ballantyne"
+    },
+    "stuck": {
+      "codigo": "wallmeier",
+      "nome": "Jürgen Wallmeier"
+    },
+    "sullivan": {
+      "codigo": "buckhannon",
+      "nome": "Chet Buckhannon"
+    },
+    "surer": {
+      "codigo": "ruegsegger",
+      "nome": "Beat Rüegsegger"
+    },
+    "surtees": {
+      "codigo": "hartwell",
+      "nome": "Neil Hartwell"
+    },
+    "sutil": {
+      "codigo": "neuweiler",
+      "nome": "Falk Neuweiler"
+    },
+    "suzuki": {
+      "codigo": "takamura",
+      "nome": "Hideo Takamura"
+    },
+    "takagi": {
+      "codigo": "ishibashi",
+      "nome": "Yusaku Ishibashi"
+    },
+    "tambay": {
+      "codigo": "beaumanoir",
+      "nome": "Xavier Beaumanoir"
+    },
+    "tarquini": {
+      "codigo": "carpanetto",
+      "nome": "Nevio Carpanetto"
+    },
+    "trevor_taylor": {
+      "codigo": "wallace_grimsby",
+      "nome": "Wallace Grimsby"
+    },
+    "trintignant": {
+      "codigo": "bourguignon",
+      "nome": "Étienne Bourguignon"
+    },
+    "trips": {
+      "codigo": "halstern",
+      "nome": "Dieter von Halstern"
+    },
+    "trulli": {
+      "codigo": "rustichelli",
+      "nome": "Emiliano Rustichelli"
+    },
+    "tsunoda": {
+      "codigo": "amagasaki",
+      "nome": "Riku Amagasaki"
+    },
+    "tuero": {
+      "codigo": "iriarte",
+      "nome": "Gonzalo Iriarte"
+    },
+    "vandoorne": {
+      "codigo": "cuypers",
+      "nome": "Lowie Cuypers"
+    },
+    "vergne": {
+      "codigo": "roquemaurel",
+      "nome": "Tanguy Roquemaurel"
+    },
+    "verstappen": {
+      "codigo": "doornbosch",
+      "nome": "Jorik Doornbosch"
+    },
+    "vettel": {
+      "codigo": "buhlmann",
+      "nome": "Lennart Bühlmann"
+    },
+    "villeneuve": {
+      "codigo": "beauchamp",
+      "nome": "Émile Beauchamp"
+    },
+    "villoresi": {
+      "codigo": "malatesta",
+      "nome": "Piero Malatesta"
+    },
+    "walker": {
+      "codigo": "chalmers",
+      "nome": "Rodney Chalmers"
+    },
+    "warwick": {
+      "codigo": "netherby",
+      "nome": "Roland Netherby"
+    },
+    "watson": {
+      "codigo": "kilbride",
+      "nome": "Desmond Kilbride"
+    },
+    "webber": {
+      "codigo": "corrimal",
+      "nome": "Lachlan Corrimal"
+    },
+    "wehrlein": {
+      "codigo": "steinhauer",
+      "nome": "Jannik Steinhauer"
+    },
+    "wendlinger": {
+      "codigo": "pfeilschifter",
+      "nome": "Ansgar Pfeilschifter"
+    },
+    "wharton": {
+      "codigo": "tarlton",
+      "nome": "Cedric Tarlton"
+    },
+    "whitehead": {
+      "codigo": "standish",
+      "nome": "Geoffrey Standish"
+    },
+    "wilds": {
+      "codigo": "hollinshead",
+      "nome": "Barry Hollinshead"
+    },
+    "wilson": {
+      "codigo": "harkness",
+      "nome": "Reuben Harkness"
+    },
+    "wilson_fittipaldi": {
+      "codigo": "otavio_braganca",
+      "nome": "Otávio Bragança"
+    },
+    "wisell": {
+      "codigo": "norrgard",
+      "nome": "Bertil Norrgard"
+    },
+    "wunderink": {
+      "codigo": "groenveld",
+      "nome": "Wiebe Groenveld"
+    },
+    "wurz": {
+      "codigo": "achleitner",
+      "nome": "Konstantin Achleitner"
+    },
+    "yoong": {
+      "codigo": "kamarul",
+      "nome": "Zaidi Kamarul"
+    },
+    "zanardi": {
+      "codigo": "tagliaferri",
+      "nome": "Massimo Tagliaferri"
+    },
+    "zhou": {
+      "codigo": "liang",
+      "nome": "Wenhao Liang"
+    },
+    "zonta": {
+      "codigo": "pecanha",
+      "nome": "Wilmar Peçanha"
+    }
+  }
+}

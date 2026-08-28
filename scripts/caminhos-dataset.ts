@@ -51,3 +51,17 @@ export const PUBLICADO_EQUIPE_ANOS = join(DATA_DIR, 'equipe-anos.json');
 
 /** Fixture pequena e segura de ler inteira (regra do `CLAUDE.md`). */
 export const FIXTURE_DIR = join(RAIZ, 'src', 'fixtures', 'dataset-semente');
+
+/**
+ * Tabela `id real → nome fictício` (PR 4 da trilha).
+ *
+ * 🔒 **Mora em `scripts/`, e o motivo é MECÂNICO, não de gosto:**
+ * `src/engine/versao.test.ts:96` põe **todo `.json` de `src/data/`** no digest
+ * de `VERSAO_APP`. A tabela em `src/data/` forçaria bump por um arquivo que
+ * nenhum código de produção consome — e o PR 4 não muda nada em runtime.
+ *
+ * 📌 **Ninguém a consome ainda.** Quem a aplica sobre o derivado é o
+ * `anonimizar.ts` do PR 5; ela entra sozinha para poder ser lida e corrigida
+ * sem quebrar nada.
+ */
+export const TABELA_NOMES = join(AQUI, 'nomes-ficticios.json');
