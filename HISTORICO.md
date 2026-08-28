@@ -2469,6 +2469,200 @@ Arquivo novo: `preview/campeonato-online.html` (não sobrescreve `preview/campeo
 
 ---
 
+## NOMES FICTÍCIOS — PR 5: `anonimizar.ts` + teste diferencial (2026-08-28, `3d5f105`) — MÉDIO RISCO
+
+**Base:** `fa1bdc6` (o commit de docs que encerrou a Fase 3). **Plano:** `PLANOS_ATIVOS.md`
+§"NOMES FICTÍCIOS — o plano dos 7 PRs", item 5. **Classificação MÉDIO RISCO é rótulo do dev** —
+o `CLAUDE.md` só define ALTO e BAIXO; na prática rodaram as obrigações que ele mesmo listou (plano
+e baseline mostrados antes, diferencial, seis mutantes), **sem `senior-reviewer`**, porque escalar
+por via das dúvidas é o hábito que a §RIGOR PROPORCIONAL AO RISCO corta.
+
+### Nota de processo
+
+**Esta documentação foi escrita pela SESSÃO PRINCIPAL, não pelo `doc-writer` — decisão do dev nesta
+sessão.** Motivo declarado por ele: *"nas últimas quatro sessões auditá-lo custou mais que redigir, e
+a última rodada teve 23 erros factuais."* É o terceiro PR seguido assim (ver a nota do PR 4 e a do
+PR (ab)). ⚠️ **O que isso NÃO afrouxa é a auditoria:** o diff foi mostrado ao dev e lido antes do
+commit, que é o único portão que existe contra erro factual em `.md`.
+
+### O que o PR fez
+
+    scripts/derived/equipe-anos.derivado.json   (real, entrada)
+         ↓  anonimizar   —   npm run dataset:anonimizar
+    scripts/derived/equipe-anos.anonimo.json    (fictício, saída, GITIGNORADA)
+
+Arquivos novos: **`scripts/anonimizar.ts`** (o script) e **`scripts/anonimizar.test.ts`** (o
+diferencial, 16 testes). `idsDaEquipeAno` virou `export` em `derivar-notas.ts`;
+`caminhos-dataset.ts` ganhou `EQUIPE_ANOS_ANONIMO`; `package.json` ganhou `dataset:anonimizar`.
+
+🔒 **`src/data/` NÃO é tocado — decisão do dev, 2026-08-28**, que **SUPERA** a de 2026-08-25
+(*"PR 5 — a cópia manual MORRE ali; `anonimizar.ts` passa a escrever em `src/data/`"*). A decisão
+antiga foi marcada como superada **no lugar**, em `PLANOS_ATIVOS.md`, não contradita ao lado.
+🔴 **A consequência ficou escrita em quatro sítios de código, e é de propósito, para ninguém ler
+"morreu no 5": A CÓPIA MANUAL `derived → src/data/` NÃO MORRE NESTE PR — morre no PR 6**, que é quem
+publica. Até lá segue manual e sem guarda, exatamente como o `PUBLICADO_EQUIPE_ANOS` registra.
+
+🔒 **A saída NÃO é commitada — decisão do dev.** Palavras dele: *"arquivo derivado commitado é a
+segunda fonte que precisa concordar com a primeira — o defeito que o `caminhos-dataset.ts` existe
+para matar."* Consequência de desenho: **o teste opera sobre o RETORNO EM MEMÓRIA da função pura**,
+nunca sobre o arquivo, então `npm test` não depende de artefato gerado.
+⚠️ A linha do `.gitignore` que dizia *"`scripts/derived/` (agregados, PR 4.2+) É commitado"* passou
+a ter exceção; foi corrigida **no lugar**, não contradita três linhas abaixo.
+
+### 🔑 Como o registro é remapeado: pelo ID, desmontado do próprio registro
+
+A tabela do PR 4 é chaveada por `constructorId`/`driverId`, e **o registro derivado não carrega
+nenhum dos dois** — carrega `equipe` (nome exibido) e os ids compostos. **Duas saídas foram
+descartadas com motivo:**
+
+- **casar por `equipe`** depende de o nome ser único e estável, que é **exatamente a propriedade que
+  este PR destrói do outro lado**;
+- **casar por índice** com `fatos-agregados.json` é alinhamento entre dois arquivos sem nada que o
+  verifique — a mesma família do "duas listas que precisavam concordar".
+
+O que se faz é **desmontar o id**, que o registro já carrega e o loader já valida:
+`chassi.id` = `${slug(constructorId)}-${ano}-chassi` e `piloto.id` = `${base}-piloto-${driverId}`.
+⚠️ **`slug` é lossy** (`red_bull` → `red-bull`), então a volta é por mapa `slug(constructorId) →
+entrada` **com assert de colisão** — medido: **105 slugs distintos para 105 `constructorId`**, mas o
+assert fica, porque o que o torna necessário é a próxima entrada, não a de hoje.
+
+🔒 **A remontagem REUSA `slug` e `idsDaEquipeAno` de `derivar-notas.ts`.** Reescrever `${base}-chassi`
+dentro do `anonimizar` criaria uma **segunda definição da forma do id** que teria de concordar com a
+primeira. **Forma de id nova entra em `derivar-notas.ts` e o `anonimizar` herda de graça.**
+
+### 🔴 O 4º SÍTIO — `estrategista.nome` é RECONSTRUÍDO, nunca traduzido
+
+O campo nasce por **interpolação** em `derivar-notas.ts:719`
+(`` `Estrategista ${equipe.nome} ${season}` ``), não é campo próprio: **é o sítio que uma caminhada
+de campo esquece** — foram três sessões contando "3 sítios de normalização" quando eram 4. O
+`anonimizar` remonta a string com o **mesmo molde**, a partir do nome fictício, e o diferencial
+**assere a consistência com o campo `equipe`**. O mutante `M-estrategista` prova que essa asserção
+tem dentes.
+
+### 🔒 A guarda existente, re-executada sobre a própria saída
+
+`verificarColisaoDeIds` (`derivar-notas.ts:740`) roda no `main` de `derivar-notas`, sobre o
+**derivado**. Este script **não passa por `derivarNotas`**, então contornar a chamada seria contornar
+a guarda — um dataset com ids colidentes quebraria o `idsVistos` único do loader só no consumo. Ela
+é **importada e chamada**, não reimplementada. ⚠️ **A medição de baseline tinha provado "4.626 ids
+distintos" com um `Set` inline, e isso NÃO conta:** `Set` local prova que o arquivo sabe usar `Set`,
+não que a guarda do pipeline aceita a saída. Mesma família do "artefato que não foi verificado".
+
+### O teste diferencial — duas metades, e a segunda é que é o teste
+
+**(a) ESTRUTURAL** — comprimento; ordem (o `ano` bate posicionalmente nos 771); **todas** as notas
+deep-equal (4.626 sítios); a **ordem do par de pilotos**; e `verificarColisaoDeIds` não lançando.
+
+**(b) ANTI-VACUIDADE** — os dois não são idênticos, e **TODO** `equipe` (771), **TODO**
+`pilotos[].nome` (1.542), **TODO** `id` (4.626) e **TODO** `estrategista.nome` (771) **DIFEREM**.
+🔴 **Sem ela, um `anonimizar` que degenerasse em `cp` passaria com louvor na metade (a)** — cópia
+preserva estrutura perfeitamente. `M-cp` mede isso.
+
+**A PROVA** — mesma seed (**20260827**, 22 bots `dificil`, `pista-montreal`, draft `concluido` com
+22 loadouts, os quatro asserídos para a prova não passar por vacuidade):
+
+| | dataset real | dataset anonimizado |
+|---|---|---|
+| **`hashDaCorrida`** | `5c5d79c59c57ed0b` | **`5c5d79c59c57ed0b` — IDÊNTICO** |
+| **`hashDoDraft`** | `9e7f69dc90bc62e6` | **`6dff30f70d22f7d9` — DIFERE** |
+
+O primeiro porque a carga de `hash-corrida.ts` é `pistaId`/`jogadorId`/`posicao`/`status`/
+`tempoTotal`/`voltaMaisRapida.jogadorId`/`historicoVoltas` — nenhum nome nem id de dataset. O segundo
+porque `hash-draft.ts:64-70` consome `${equipe}@${ano}` e os ids de loadout. **A segunda metade é a
+cláusula anti-vacuidade de graça: se os dois hashes baterem, o `anonimizar` virou cópia.**
+
+📛 **Disciplina de saída:** o teste lê ~1 MB e **nunca o imprime** — toda mensagem de falha é
+contagem + no máximo 3 amostras curtas. Mesma regra do `portao-nomes-reais.test.ts`.
+
+### Os seis mutantes — VERMELHOS um a um, revertidos por cópia
+
+Reversão conferida por `git hash-object` (`86d94176…`) **antes e depois de cada um** — a lição do
+3.5.3, aplicada.
+
+| mutante | o que faz | placar | quais asserções caem |
+|---|---|---|---|
+| **M-cp** | devolve a entrada | **7 ✗ / 9 ✓** | ordem-do-par · não-idênticos · `equipe` · `pilotos[].nome` · `id` · `estrategista.nome` · **`hashDoDraft` DIFERE** |
+| **M-estrategista** | `estrategista.nome` não transformado | **2 ✗ / 14 ✓** | `estrategista.nome` difere · **consistência com `equipe`** (saída real: `ardenta-1950-estrategista: "Estrategista Alfa Romeo 1950"`) |
+| **M-parordem** | troca `pilotos[0]`/`pilotos[1]` | **3 ✗ / 13 ✓** | notas deep-equal · ordem-do-par (`#0[0] fangio→brenzoni, esperado vandel`) · **`hashDaCorrida` IDÊNTICO** |
+| **M-ordem** | inverte o array | **4 ✗ / 12 ✓** | `ano` posicional (`#0: 1950→2025`) · notas · ordem-do-par · **`hashDaCorrida` IDÊNTICO** |
+| **M-notas** | `chassi.aero + 1` | **2 ✗ / 14 ✓** | notas (771 sítios) · **`hashDaCorrida` IDÊNTICO** |
+| **M-idreal** | nomes trocados, **ids mantidos reais** | **1 ✗ / 15 ✓** | `TODO id difere` (`3084 ids não mudaram: alfa-1950-chassi · alfa-1950-motor …`) |
+
+🔑 **`M-parordem` é o risco vivo, não um mutante de laboratório:** alguém "melhorando" o script pode
+reordenar o par pelo `driverId` **fictício**, espelhando o `.sort(cmpStr)` de `derivar-notas.ts:696`
+— e trocar os dois pilotos de lugar dentro da equipe, calado.
+
+### 🔴 TRÊS REGISTROS QUE CONTRARIAM O QUE EU TINHA AFIRMADO — e é por isso que estão aqui
+
+**1. O erro do `'media'`: dificuldade INVÁLIDA passou no teste e foi pega pelo `tsc`.**
+A primeira versão do diferencial chamava `atribuirPerfis(..., 'media')`. **`Dificuldade` é
+`'facil' | 'dificil'`** (`src/engine/types.ts:240`) — `'media'` não existe. Em runtime
+`PROPORCAO_PRA_GANHAR['media']` é `undefined`, `rng.next() < undefined` é `false`, e **os 22 bots
+saíam todos `'passeio'`**. O teste **rodava, dava 16/16 verde e hash estável**, porque hash estável é
+exatamente o que um cenário degenerado produz.
+🔑 **É a lição INVERSA da que este projeto vinha catalogando.** As seis instâncias registradas no
+`ESTADO.md` são todas "o teste afirmava o que não conferia" — o teste era o portão que falhou. **Aqui
+o teste estava verde e quem pegou foi o `npm run typecheck`.** O portão foi o `tsc`, não a suíte.
+⚠️ **Consequência registrada, não escondida: os hashes que eu mostrei ao dev no plano estavam
+medidos sob o cenário degenerado** e não são os que estão na tabela acima. Os da tabela foram
+re-medidos depois da correção, e os seis mutantes foram **re-rodados contra o código final** — a
+primeira rodada deles não conta.
+
+**2. Minha previsão sobre `hashDaCorrida` estava ERRADA: a metade que parecia decorativa tem
+dentes.** Eu disse ao dev, no plano, que nenhum mutante atingiria a asserção "`hashDaCorrida`
+IDÊNTICO" sozinho, e que ela seria provada só de raspão. **Três a derrubam: `M-parordem`, `M-ordem`
+e `M-notas`.** A mais interessante é a primeira — **trocar os dois pilotos DENTRO da equipe muda a
+corrida**, o que não é óbvio e é a razão de a ordem do par ser invariante e não estilo.
+✅ **E `M-cp` deixa essa asserção VERDE, corretamente:** cópia preserva a simulação perfeitamente.
+**É por isso que as duas metades não se substituem** — quem pega o `cp` é o `hashDoDraft`.
+
+**3. `M-idreal` mata UMA asserção só.** Trocar os nomes exibidos e **manter os ids reais** é o
+meio-serviço mais provável de todos (e o mais grave: **os ids SÃO os nomes** neste esquema, e é o
+que vai no bundle). Só `TODO id difere` o pega — **ponto único de falha**. **Quem for mexer nesse
+teste precisa saber disto**: afrouxar aquela asserção deixa passar exatamente o defeito que a trilha
+inteira existe para evitar.
+
+### Portões
+
+`npm test` **1638/67 em 3 rodadas** (era 1622/66 — **os 16 novos são deste arquivo**, e dizer
+"inalterado" aqui seria a conflação que o `ESTADO.md` já pagou). `npm run test:party` **19/19**.
+typecheck **0** nos três projetos, eslint **0**, build **0**.
+
+✅ **Portão dos nomes reais INALTERADO em 9.486** (`9237+2+1+243+2+1`), **por rodada direta, não
+herdado** — e inalterado é o resultado CERTO: a lista `BASELINE` é fixa e não inclui
+`scripts/derived/`. Quem move essa linha é o PR 6.
+
+**`VERSAO_APP` 3.4.4 e `VERSAO_FORMATO` 2 — SEM BUMP, e é medido:** nenhum arquivo do digest foi
+tocado (o `src/engine/versao.test.ts` verde é a prova mecânica) e nenhum id persistido mudou.
+**`balance-harness` não rodado, e dito:** zero arquivo de `src/engine/`.
+
+**`src/data/` intocado, medido:** `git diff --stat src/data/` vazio. `git check-ignore` confirma que
+`equipe-anos.anonimo.json` não entra no repo; `npm run dataset:anonimizar` escreveu 771 registros.
+
+### ⚠️ Efeito colateral medido: exportar a função mexeu em ÂNCORAS ALHEIAS
+
+Acrescentar o docblock do `export` empurrou `derivar-notas.ts` em **+8 linhas**:
+`idsDaEquipeAno` 629→**637**, o `.sort(cmpStr)` do par de pilotos 688→**696**, a interpolação do
+estrategista 711→**719** (`verificarColisaoDeIds` ficou em **740**). **Duas citações
+PRÉ-EXISTENTES quebraram** — `scripts/nomes-ficticios.test.ts:604` e a entrada do **PR 4** deste
+arquivo —, e foram corrigidas no commit de documentação.
+🔑 **A lição operacional: acrescentar comentário em arquivo muito citado É mudança de âncora.** Este
+projeto já registrou cinco correções de âncora; esta é a primeira em que a causa foi identificada
+como *o próprio diff que as invalidou*, e não como descuido de leitura.
+⚠️ **NÃO houve varredura geral:** `derivar-notas.ts:705` aparece em quatro sítios e **já estava
+desatualizado antes deste PR** (a interpolação nunca esteve em 705). Deriva pré-existente, PR
+próprio.
+
+### As três prosas que passariam a mentir, corrigidas no mesmo PR
+
+Decisão do dev: *"corrija no mesmo PR. Nenhum teste pega, e prosa errada no arquivo que define a
+regra é pior que prosa errada em doc."* São `portao-nomes-reais.test.ts:42`,
+`caminhos-dataset.ts:18-23` e a tabela de `src/fixtures/referencias-dataset.ts` — as três diziam ou
+sugeriam que o PR 5 escreveria em `src/data/`. Mais a linha do `.gitignore`. **Todas corrigidas no
+lugar, com a redação antiga riscada.**
+
+---
+
 ## NOMES FICTÍCIOS — PR 4: a tabela dos 458 nomes (2026-08-27, `cbe2bbc`) — BAIXO RISCO
 
 **Base:** `f78d718`. **Plano:** `PLANOS_ATIVOS.md` §"NOMES FICTÍCIOS — o plano dos 7 PRs".
@@ -2563,7 +2757,7 @@ São o que separa nome fictício de string aleatória, e **são julgamento, não
 - **Bijeção como IGUALDADE DE CONJUNTO**, não contagem: as chaves são exatamente os 105 `constructorId` e os 353 `driverId`. 🔑 **Contagem sozinha passaria com duas chaves com typo** — é a diferença entre "chaveada por id" e "tem 458 linhas".
 - **105/105 e 353/353 nomes distintos**, e o mesmo para os `codigo`.
 - **`slug(codigo)` INJETIVO nos dois pools** — `red_bull` e `red-bull` slugam igual, e o dataset valida id único num conjunto compartilhado (`verificarColisaoDeIds`); a bijeção da tabela não vê essa colisão.
-- **CHARSET do `codigo`** (`^[a-z0-9]+([_-][a-z0-9]+)*$`). 🔑 **No lado piloto é a ÚNICA defesa:** `idsDaEquipeAno` (`derivar-notas.ts:629`) aplica `slug()` no `constructorId` mas **interpola `${driverId}` CRU** — lá o slug nunca roda.
+- **CHARSET do `codigo`** (`^[a-z0-9]+([_-][a-z0-9]+)*$`). 🔑 **No lado piloto é a ÚNICA defesa:** `idsDaEquipeAno` (`derivar-notas.ts:637`) aplica `slug()` no `constructorId` mas **interpola `${driverId}` CRU** — lá o slug nunca roda.
 - **825 agulhas**, asserção própria. Acrescentada na auditoria do diff: **o número estava só na prosa e envelheceria em silêncio** — "conclusão sem o fato que a gerou não se verifica depois".
 - **A cerca sobre a tabela real: zero violações.**
 

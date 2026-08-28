@@ -150,7 +150,7 @@ describe('🔒 diferencial (a) ESTRUTURAL — o que o anonimizar NÃO pode mexer
 
   it('a ORDEM DO PAR de pilotos é preservada — `pilotos[i]` mapeia o `driverId` de `pilotos[i]`', () => {
     // 🔴 O risco vivo: alguém "melhorando" o script re-ordena o par pelo
-    // driverId FICTÍCIO, espelhando o `.sort(cmpStr)` de `derivar-notas.ts:688`
+    // driverId FICTÍCIO, espelhando o `.sort(cmpStr)` de `derivar-notas.ts:696`
     // — e troca os dois pilotos de lugar dentro da equipe, calado.
     const fora: string[] = [];
     for (let i = 0; i < REAL.length; i++) {
@@ -230,7 +230,7 @@ describe('🔒 diferencial (b) ANTI-VACUIDADE — sem isto, `cp` passa', () => {
   });
 
   it('🔴 O 4º SÍTIO: `estrategista.nome` é CONSISTENTE com `equipe` — a string foi RECONSTRUÍDA', () => {
-    // O campo nasce por INTERPOLAÇÃO (`derivar-notas.ts:711`), não é um campo
+    // O campo nasce por INTERPOLAÇÃO (`derivar-notas.ts:719`), não é um campo
     // próprio — é o sítio que uma caminhada de campo esquece. Se ele for
     // deixado para trás (ou traduzido de forma independente do campo `equipe`),
     // sobra "Estrategista <real> <ano>" ao lado de `equipe: <fictício>`.

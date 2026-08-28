@@ -10,7 +10,20 @@
 
 ## Estado atual
 
-**Última medição (2026-08-27, na `main` — PR 4 da trilha de nomes fictícios, `cbe2bbc`):**
+**Última medição (2026-08-28, na `main` — PR 5 da trilha de nomes fictícios, `3d5f105`):**
+`npm test` **1638/67** em **3 rodadas** (era 1622/66). ⚠️ **SUBIU, e é dito assim de propósito:** os
+**16 testes novos** são o diferencial (`scripts/anonimizar.test.ts`). **"Inalterado" aqui seria a
+conflação que este arquivo já pagou.**
+**`npm run test:party` 19/19**, typecheck **0** nos três projetos, eslint **0**, build **0**.
+**`VERSAO_APP` 3.4.4 e `VERSAO_FORMATO` 2 — SEM BUMP, medido:** nenhum arquivo do digest tocado (o
+`src/engine/versao.test.ts` verde é a prova mecânica) e nenhum id persistido mudou.
+**`balance-harness` não rodado, e dito:** zero arquivo de `src/engine/`.
+✅ **Portão dos nomes reais INALTERADO em 9.486** (`9237+2+1+243+2+1`), **confirmado por rodada
+direta, não herdado** — e inalterado é o CERTO: `src/data/` está intocado (medido: `git diff --stat
+src/data/` vazio) e a saída do `anonimizar` é **gitignorada**, fora da lista `BASELINE`.
+⚠️ **O `tsc` foi o portão que a suíte não foi neste PR** — ver a §Onde parei, o erro do `'media'`.
+
+*(Medição anterior, 2026-08-27, na `main` — PR 4 da trilha de nomes fictícios, `cbe2bbc`):*
 `npm test` **1622/66** em **2 rodadas** (era 1603/65). ⚠️ **SUBIU, e é dito assim de propósito:** os
 **19 testes novos** são os da cerca de quase-marca (`scripts/nomes-ficticios.test.ts`). **Reportar
 "inalterado" aqui seria a conflação que este arquivo já pagou.**
@@ -292,8 +305,12 @@ Ele nomeou, como o que fica ABERTO apesar do encerramento:
 não corrigi a lista do dev:** as duas coisas seriam a ocorrência nº 3 do `CLAUDE.md` com o sinal
 invertido. O que segue aberto naquele sítio é a **lacuna assumida do 3.5.4** que o próprio
 fechamento declarou: *"aquele preview não mostra o caminho de campeonato online — mostrá-lo exige
-`classificacao` e `calendario` no mock; é cobertura NOVA, não conserto."* 🛑 **Pergunta ao dev,
-aberta: era essa a dívida que ele quis listar, ou a 0(ab) deve reabrir?**
+`classificacao` e `calendario` no mock; é cobertura NOVA, não conserto."* ~~🛑 **Pergunta ao dev,
+aberta: era essa a dívida que ele quis listar, ou a 0(ab) deve reabrir?**~~
+✅ **RESPONDIDA PELO DEV em 2026-08-28, e a resposta é a terceira opção:** *"0(ab) fica FECHADA como
+está. O que segue aberto é a lacuna do 3.5.4 — registre como pendência própria, não como reabertura
+da 0(ab)."* **Virou a pendência 0(ad)**, na §Pendências. 🔑 **A distinção não é formalidade:**
+registrar como reabertura daria por não-resolvido um conserto que está medido e verde.
 
 ⚠️ **A lista acima é a DO DEV e eu não a completei — mas registro o que está MEDIDO no arquivo:**
 seguem marcadas como abertas, e **não foram nomeadas por ele**, as pendências **0(a)** (`montarJogadores`
@@ -415,7 +432,74 @@ dependência).
 
 ## Onde parei
 
-**🏆 NOMES FICTÍCIOS — PR 4 (a tabela dos 458): CONCLUÍDO e COMMITADO em 2026-08-27**, na `main`
+**🏆 NOMES FICTÍCIOS — PR 5 (`anonimizar.ts` + teste diferencial): CONCLUÍDO e COMMITADO em
+2026-08-28**, na `main` (`3d5f105`). **MÉDIO RISCO — rótulo do dev** (o `CLAUDE.md` só define ALTO e
+BAIXO; rodaram as obrigações que ele listou, **sem `senior-reviewer`**). **Sem push, sem tag.**
+Detalhe completo: `HISTORICO.md` §"NOMES FICTÍCIOS — PR 5".
+📌 **A doc foi escrita pela SESSÃO PRINCIPAL, não pelo `doc-writer` — decisão do dev nesta sessão.**
+Palavras dele: *"nas últimas quatro sessões auditá-lo custou mais que redigir, e a última rodada teve
+23 erros factuais."* Terceiro PR seguido assim. **A auditoria não foi dispensada:** o diff foi
+mostrado ao dev e lido antes do commit.
+
+`scripts/anonimizar.ts` + `scripts/anonimizar.test.ts` (16 testes). `idsDaEquipeAno` virou `export`;
+`EQUIPE_ANOS_ANONIMO` entrou em `caminhos-dataset.ts`; `npm run dataset:anonimizar` no `package.json`.
+
+🔒 **`src/data/` INTOCADO — decisão do dev, 2026-08-28, que SUPERA a de 2026-08-25** (*"o
+`anonimizar` passa a escrever em `src/data/`"*, `PLANOS_ATIVOS.md`). A antiga foi marcada como
+superada **no lugar**, não contradita ao lado.
+🔴 **E a consequência fica dita, porque ela é o oposto do que o plano prometia: A CÓPIA MANUAL
+`derived → src/data/` NÃO MORREU NO PR 5 — ela morre no PR 6**, que é quem publica. Até lá segue
+manual e sem guarda. Está escrito em quatro sítios de código de propósito.
+🔒 **A saída `equipe-anos.anonimo.json` NÃO é commitada** (decisão do dev: *"artefato derivado
+commitado é a segunda fonte que precisa concordar com a primeira"*). Por isso **o teste opera sobre o
+RETORNO EM MEMÓRIA da função pura** — `npm test` não depende de artefato gerado.
+🔒 **`verificarColisaoDeIds` (`derivar-notas.ts:740`) é RE-EXECUTADA sobre a própria saída**,
+importada e não reimplementada: o `anonimizar` não passa por `derivarNotas`, então contornar a
+chamada seria contornar a guarda existente.
+
+🔑 **A PROVA, mesma seed (20260827, 22 bots `dificil`, `pista-montreal`):**
+**`hashDaCorrida` IDÊNTICO — `5c5d79c59c57ed0b`** (o determinismo sobrevive à troca) e
+**`hashDoDraft` DIFERE — `9e7f69dc90bc62e6` → `6dff30f70d22f7d9`** (a anti-vacuidade). **Se os dois
+baterem, o `anonimizar` virou cópia.**
+
+🔴 **TRÊS REGISTROS DESTE PR QUE CONTRARIAM O QUE EU AFIRMEI — ficam aqui, não só no `HISTORICO.md`:**
+- 🔑 **O erro do `'media'` — e é a LIÇÃO INVERSA da que este arquivo vinha catalogando.** O
+  diferencial chamava `atribuirPerfis(..., 'media')`, e **`Dificuldade` é `'facil' | 'dificil'`**
+  (`src/engine/types.ts:240`). Em runtime `PROPORCAO_PRA_GANHAR['media']` é `undefined`,
+  `rng.next() < undefined` é `false`, e **os 22 bots saíam todos `'passeio'`**. O teste **rodava,
+  dava 16/16 verde e hash estável** — hash estável é o que um cenário degenerado produz.
+  **Quem pegou foi o `npm run typecheck`, não a suíte.** As seis instâncias já registradas aqui são
+  todas "o teste afirmava o que não conferia"; **esta é a primeira em que o portão foi o `tsc`.**
+  ⚠️ **Consequência registrada: os hashes que mostrei ao dev no plano estavam medidos sob o cenário
+  degenerado.** Os de cima foram re-medidos e **os seis mutantes foram re-rodados contra o código
+  final** — a primeira rodada deles não conta.
+- 🔑 **Minha previsão sobre `hashDaCorrida` estava ERRADA.** Eu disse ao dev que nenhum mutante
+  atingiria a asserção "IDÊNTICO" sozinho. **Três a derrubam: `M-parordem`, `M-ordem` e `M-notas`.**
+  A metade que parecia decorativa tem dentes — e `M-parordem` mostra que **trocar os dois pilotos
+  DENTRO da equipe muda a corrida**. ✅ E `M-cp` a deixa VERDE, corretamente: cópia preserva a
+  simulação. **É por isso que as duas metades não se substituem.**
+- 🔴 **`M-idreal` mata UMA asserção só.** Trocar nome exibido e **manter o id real** é o meio-serviço
+  mais provável — e o mais grave, porque **os ids SÃO os nomes** e é o id que vai no bundle. Só
+  `TODO id difere` o pega: **ponto único de falha.** **Quem for mexer nesse teste precisa saber** —
+  afrouxar aquela asserção deixa passar exatamente o defeito que a trilha existe para evitar.
+
+📌 **Portão dos nomes reais INALTERADO em 9.486, e é o resultado certo:** a lista `BASELINE` é fixa e
+não inclui `scripts/derived/`. **Quem move essa linha é o PR 6.**
+
+⚠️ **EFEITO COLATERAL MEDIDO, registrado porque é armadilha recorrente aqui: exportar
+`idsDaEquipeAno` com docblock EMPURROU `derivar-notas.ts` em +8 linhas e invalidou ÂNCORAS ALHEIAS.**
+`idsDaEquipeAno` 629→**637**, o `.sort(cmpStr)` 688→**696**, a interpolação do estrategista
+711→**719**; `verificarColisaoDeIds` ficou em **740**. Duas citações **pré-existentes** quebraram
+(`scripts/nomes-ficticios.test.ts:604` e a entrada do PR 4 no `HISTORICO.md`) e foram **corrigidas no
+mesmo commit de doc**. 🔑 **A lição operacional: acrescentar comentário num arquivo muito citado é
+mudança de âncora**, e este projeto já registrou cinco correções de âncora por não notar isso.
+⚠️ **NÃO saí corrigindo todas as âncoras do repo:** `derivar-notas.ts:705` aparece em quatro sítios e
+**já estava desatualizado antes deste PR** (a interpolação nunca esteve em 705) — é deriva
+pré-existente, não é minha, e mexer nela é PR próprio.
+
+---
+
+**🏆 PR ANTERIOR — NOMES FICTÍCIOS — PR 4 (a tabela dos 458): CONCLUÍDO e COMMITADO em 2026-08-27**, na `main`
 (`cbe2bbc`). **BAIXO RISCO.** ✅ **PORTÃO DE APROVAÇÃO PRÓPRIO CUMPRIDO: amostra de 20 APROVADA
 PELO DEV**, com dois ajustes pedidos por ele e aplicados. **Sem push, sem tag.**
 Detalhe completo: `HISTORICO.md` §"NOMES FICTÍCIOS — PR 4".
@@ -1964,6 +2048,23 @@ casca deixa de ser terra sem teste; a opção conhecida é `@cloudflare/vitest-p
    🔑 **O call site SEMPRE foi assim; o que mudou foi a probabilidade de disparar.** Enquanto `VERSAO_FORMATO` valeu 1 desde sempre, `versao-incompativel` era ramo morto na prática. **O bump 1 → 2 do PR 3 é a primeira vez que ele dispara de verdade** — e dispara para todo jogador que tenha um campeonato em andamento.
    🔴 **Com DEPLOY PÚBLICO (decisão de 2026-08-24, §Estado atual), o efeito deixa de ser teórico:** o jogador abre o jogo, o botão "Continuar campeonato" simplesmente **não está mais lá**, sem nada que diga por quê nem que o save foi descartado de propósito. Não é perda de dado silenciosa (o save cai limpo, que é o comportamento correto e desejado) — **é perda de EXPLICAÇÃO.**
    📌 **Decisão do dev: consertar antes do deploy é chamada dele.** Registrado sem conserto a pedido dele. O conserto natural é o `App` passar a distinguir `versao-incompativel` dos demais motivos e dizer ao jogador que a versão do jogo mudou; o custo é UI nova, não lógica.
+   (ad) 🟠 **NOVA (2026-08-28, por decisão do dev, no encerramento da Fase 3) — `preview/corrida-online.html`
+   NÃO MOSTRA O CAMINHO DE CAMPEONATO ONLINE, que é o normal de toda sala 3.5.1+.**
+   🔑 **É pendência PRÓPRIA, e NÃO é reabertura da 0(ab)** — a distinção é decisão explícita do dev,
+   ditada nesta data. A **0(ab) fica FECHADA** (`9e18704`, `npm run preview` voltou a sair 0, 11/11);
+   o que nasce aqui é a **lacuna assumida que aquele fechamento declarou** e que ele mesmo classificou
+   como *"cobertura NOVA, não conserto"*. **Registrar como reabertura teria dado por não-resolvido um
+   conserto que está medido e verde.**
+   **O que falta, dito por inteiro:** `FluxoOnline.tsx:216-253` é o ramo de campeonato online, e o
+   gerador não o renderiza — mostrá-lo exige `classificacao` e `calendario` no mock de
+   `useSalaOnline`. Enquanto isso, o preview cobre o ramo do "beco sem saída com saída" (sala legado,
+   corrompida, `nEtapas` sem formato) e **nada acusa que o caminho principal está fora**.
+   ⚠️ **Por que importa e não é capricho:** a definição de pronto §5 manda **abrir e OLHAR** o preview
+   antes de mostrar ao dev. Um preview que não desenha o caminho normal faz o portão visual passar
+   sobre o caso raro — a mesma família do 3.4.1 ("o preview mentia sobre o que estava mostrando"),
+   agora por omissão em vez de por cascata errada.
+   🔑 **A lacuna é do 3.5.4, não do PR (ab)** — foi o 3.5.4 que ligou as N etapas na tela sem
+   atualizar o gerador. **Não foi feita, é decisão do dev se entra em PR próprio.**
 1. **Abertas pelo 7.8:** (a) o `BotaoTema` é um botão discreto no canto do `app-shell` — posição e
    forma **não passaram por veredito de arte**; (b) `erro` (salmão `#FF7B85`) e `raridadeProibido`
    (`#FF4757`) continuam sendo dois vermelhos ao lado do vermelho da marca — não foi mexido porque

@@ -828,10 +828,23 @@ lá seria circular). **Quem ler este teste verde e concluir "não há nome real 
   (mesmo `git hash-object`), **nenhum script faz a cópia**, e **nada falha se os dois divergirem**.
   Este PR tem de dizer, explicitamente, **sobre qual artefato o `anonimizar` roda** e **em que
   momento a cópia acontece** — senão o PR 6 herda um passo manual sem guarda bem no meio da troca.
-- ⚠️ **PENDENTE DO DEV:** transformar essa cópia em script/cerca, **ou** mantê-la manual e
-  documentada. Não decido sozinho; a medição só diz que hoje **não existe guarda**.
-- **Risco:** BAIXO no diff (script + teste, `src/data/` intocado) — **mas é este PR que define se o
-  6 é seguro.**
+- ~~⚠️ **PENDENTE DO DEV:** transformar essa cópia em script/cerca, **ou** mantê-la manual e
+  documentada. Não decido sozinho; a medição só diz que hoje **não existe guarda**.~~
+  ✅ **RESPONDIDA em 2026-08-28: MANTIDA MANUAL E DOCUMENTADA neste PR**, e transformada em script
+  só no **PR 6**. O `anonimizar` roda sobre `equipe-anos.derivado.json` e escreve
+  `equipe-anos.anonimo.json` (gitignorado). 🔴 **A cópia manual segue viva e sem guarda até o PR 6** —
+  está escrito em `caminhos-dataset.ts`, `portao-nomes-reais.test.ts`, `referencias-dataset.ts` e no
+  docblock do próprio `anonimizar.ts`, de propósito.
+- ~~**Risco:** BAIXO no diff~~ **MÉDIO RISCO — rótulo do dev, 2026-08-28** (script + teste,
+  `src/data/` intocado) — **mas é este PR que define se o 6 é seguro.**
+- ✅ **FEITO em 2026-08-28** (`3d5f105`). **A previsão do 🔒 acima se confirmou por medição:**
+  `hashDaCorrida` **idêntico** (`5c5d79c59c57ed0b`) e `hashDoDraft` **diferente**
+  (`9e7f69dc90bc62e6` → `6dff30f70d22f7d9`). ⚠️ **Uma afirmação deste plano ficou CURTA:** o texto
+  tratava a metade "IDÊNTICO" como consequência esperada, e **três dos seis mutantes a derrubam**
+  (`M-parordem`, `M-ordem`, `M-notas`) — ela é asserção com dentes, não decoração. Detalhe em
+  `HISTORICO.md` §"NOMES FICTÍCIOS — PR 5".
+  ⚠️ **Correção de âncora: o `estrategista.nome` é interpolado em `derivar-notas.ts:719`, não `:705`**
+  (o `:705` do texto acima envelheceu com o arquivo).
 
 **6. A TROCA — `src/data/` passa a ser fictício.**
 - 🔴 **ALTO RISCO, sem discussão:** `src/data/` + balanceamento + o que vai no bundle.
@@ -869,10 +882,15 @@ medidos 105/105 nomes de equipe, 1.542/1.542 ids de piloto e 353/353 nomes exibi
 partir desse `dist/`, depois da troca, embarca os nomes reais e NENHUM teste falha.**
 🔒 **"Rebuildar antes do deploy" entra na definição de pronto do PR 6.**
 
-🟢 **A cópia manual `derived → src/data/` — RESOLVIDA POR DECISÃO em 2026-08-25: vira script.** O
+~~🟢 **A cópia manual `derived → src/data/` — RESOLVIDA POR DECISÃO em 2026-08-25: vira script.** O
 `anonimizar.ts` do PR 5 passa a fazer a escrita e o passo manual morre ali; o destino já está
 declarado em `scripts/caminhos-dataset.ts` (`PUBLICADO_EQUIPE_ANOS`). **Segue listado como risco
-até o PR 5 existir** — hoje a cópia continua manual e sem guarda.
+até o PR 5 existir** — hoje a cópia continua manual e sem guarda.~~
+🔴 **O RISCO NÃO FOI RESOLVIDO — SEGUE 🟠 ABERTO, e a linha riscada acima é por que ele quase saiu
+da lista sem ter sido tratado.** Decisão do dev de 2026-08-28: **o PR 5 não escreve em `src/data/`**;
+a publicação é o **PR 6**. **O PR 5 existe e foi feito** (`3d5f105`) **e a cópia continua manual e
+sem guarda** — ou seja, a condição de saída que a linha antiga fixava ("até o PR 5 existir") se
+cumpriu **sem** que o risco fosse tratado. **A condição correta é: até o PR 6 publicar.**
 
 🟠 **`pecas.json` é curado à mão** — nenhuma automação do pipeline o alcança, e é por isso que ele
 tem PR próprio (3) em vez de entrar na troca (6).
@@ -888,7 +906,7 @@ tocada se a T2 voltar.
 | 1 | qual universo o portão mede | ✅ `scripts/derived/fatos-agregados.json`, lido pela constante única de `scripts/caminhos-dataset.ts` |
 | 3 | as 10 strings de **id** de peça | ✅ derivadas do nome despido, **mesmo esquema atual, sem esquema novo**: `peca-f-duct-mclaren` → `peca-f-duct` |
 | 4 | quem inventa os 458 nomes e com que critério | ✅ critério abaixo; **amostra de 20 ao dev ANTES de commitar as 458** |
-| 5 | a cópia `derived → src/data/` | ✅ **vira script** — o `anonimizar.ts` do PR 5 faz a escrita e o passo manual morre ali |
+| 5 | a cópia `derived → src/data/` | ~~✅ **vira script** — o `anonimizar.ts` do PR 5 faz a escrita e o passo manual morre ali~~ 🔴 **SUPERADA em 2026-08-28: `src/data/` INTOCADO no PR 5; a cópia manual morre no PR 6.** Ver abaixo |
 
 🔒 **DECISÕES DO DEV DE 2026-08-25 — as quatro pendências acima estão FECHADAS. Não reabrir.**
 
@@ -900,8 +918,20 @@ tocada se a T2 voltar.
   automobilismo, sem semelhança com nome real, sem trocadilho com marca"*. **A cerca de
   quase-marca valida.** 🛑 **E o PR 4 tem portão de aprovação próprio: amostra de 20 mostrada ao
   dev ANTES de commitar as 458.** Não é sugestão — é a condição de entrega do PR.
-- 🔒 **PR 5 — a cópia manual MORRE ali.** `anonimizar.ts` passa a escrever em `src/data/`, e o
+- ~~🔒 **PR 5 — a cópia manual MORRE ali.** `anonimizar.ts` passa a escrever em `src/data/`, e o
   destino já está declarado em `scripts/caminhos-dataset.ts` (`PUBLICADO_EQUIPE_ANOS`, criado no
   PR 1 justamente para isso). **Some a medição "cópia byte a byte sem guarda nenhuma"** — que era o
-  risco 🟠 listado acima.
+  risco 🟠 listado acima.~~
+  🔴 **SUPERADA POR DECISÃO DO DEV EM 2026-08-28 — riscada no lugar, não contradita ao lado.**
+  A decisão nova, dita por ele três vezes: **o PR 5 lê `equipe-anos.derivado.json` e escreve
+  `equipe-anos.anonimo.json`, com `src/data/` INTOCADO.** O PR 5 é o **ensaio**, não a troca.
+  🔴 **Consequência, e ela é o OPOSTO do que a linha riscada prometia: a cópia manual NÃO morreu no
+  PR 5 — ela morre no PR 6**, que é quem publica. **O risco 🟠 acima NÃO sumiu**; segue de pé, com
+  a mesma medição ("cópia byte a byte sem guarda nenhuma"), até o PR 6. Palavras do dev:
+  *"escreva isso explicitamente para ninguém ler 'morreu no 5'."*
+  ➕ **Decisão do dev na mesma data:** `equipe-anos.anonimo.json` **NÃO é commitado** — *"arquivo
+  derivado commitado é a segunda fonte que precisa concordar com a primeira, o defeito que o
+  `caminhos-dataset.ts` existe para matar."* O diferencial opera sobre o **retorno em memória** da
+  função pura; o `npm run dataset:anonimizar` escreve em disco quando alguém precisar.
+  ✅ **PR 5 FEITO em 2026-08-28** (`3d5f105`) — ver `HISTORICO.md` §"NOMES FICTÍCIOS — PR 5".
 

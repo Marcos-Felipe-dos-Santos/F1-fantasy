@@ -601,7 +601,7 @@ describe('🔒 cerca de quase-marca — a tabela', () => {
   });
 
   it('CHARSET do codigo — e no lado piloto ele é a ÚNICA defesa', () => {
-    // `idsDaEquipeAno` (derivar-notas.ts:629) aplica `slug()` no constructorId
+    // `idsDaEquipeAno` (derivar-notas.ts:637) aplica `slug()` no constructorId
     // mas interpola `${driverId}` CRU. No lado piloto o slug nunca roda, então
     // um codigo com espaço ou maiúscula entraria inteiro no id do dataset e
     // nada o normalizaria.

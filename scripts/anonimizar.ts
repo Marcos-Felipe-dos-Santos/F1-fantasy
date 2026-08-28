@@ -54,7 +54,7 @@
  * `caminhos-dataset.ts` existe para matar.
  *
  * 🔴 **O 4º SÍTIO — `estrategista.nome` é RECONSTRUÍDO, nunca mapeado.**
- * Ele nasce por INTERPOLAÇÃO em `derivar-notas.ts:711`
+ * Ele nasce por INTERPOLAÇÃO em `derivar-notas.ts:719`
  * (`` `Estrategista ${equipe.nome} ${season}` ``). Traduzir a string existente
  * (procurar o nome real dentro dela e substituir) deixaria "Estrategista
  * <fictício> <ano>" **inconsistente com o campo `equipe`** no dia em que a
@@ -207,7 +207,7 @@ export function anonimizar(
       motor: { id: ids.motor, notas: reg.motor.notas },
       estrategista: {
         id: ids.estrategista,
-        // 🔴 RECONSTRUÍDO com o mesmo molde de `derivar-notas.ts:711`, nunca
+        // 🔴 RECONSTRUÍDO com o mesmo molde de `derivar-notas.ts:719`, nunca
         // traduzido da string existente. Ver o docblock do topo.
         nome: `Estrategista ${equipe.nome} ${reg.ano}`,
         notas: reg.estrategista.notas,
