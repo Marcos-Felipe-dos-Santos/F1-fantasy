@@ -8,7 +8,7 @@
 [![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev/)
 [![Vite](https://img.shields.io/badge/Vite-7-646CFF?logo=vite&logoColor=white)](https://vite.dev/)
 [![Vitest](https://img.shields.io/badge/Vitest-4-6E9F18?logo=vitest&logoColor=white)](https://vitest.dev/)
-[![testes](https://img.shields.io/badge/testes-1603%20%2B%2019%20passando-brightgreen)](#-como-rodar)
+[![testes](https://img.shields.io/badge/testes-1622%20%2B%2019%20passando-brightgreen)](#-como-rodar)
 [![simulação](https://img.shields.io/badge/simula%C3%A7%C3%A3o-determin%C3%ADstica%20por%20seed-orange)](#-destaques-t%C3%A9cnicos)
 [![licença MIT](https://img.shields.io/badge/licen%C3%A7a-MIT-blue)](LICENSE)
 
@@ -83,10 +83,10 @@ aparecem; no Cego, não._
 
 ### Os modos
 
-| Modo          | Como é                                                                 |
-| ------------- | ---------------------------------------------------------------------- |
-| 👤 **Single** | Você + 21 bots                                                         |
-| 👥 **Local**  | 2 a 4 jogadores humanos no mesmo dispositivo + bots completando o grid |
+| Modo          | Como é                                                                  |
+| ------------- | ----------------------------------------------------------------------- |
+| 👤 **Single** | Você + 21 bots                                                          |
+| 👥 **Local**  | 2 a 4 jogadores humanos no mesmo dispositivo + bots completando o grid  |
 | 🌐 **Online** | Sala por código de 6 dígitos, até 22 jogadores, bots completando o grid |
 
 No **Online**, o anfitrião cria a sala, compartilha o link e o draft acontece ao vivo nas duas
@@ -104,6 +104,12 @@ sem travar. Ver **[Como rodar](#-como-rodar)** e
 
 No campeonato, o calendário é sorteado, cada etapa mostra a miniatura do traçado e a tabela
 acumula entre as corridas — com a variação de posição de cada jogador etapa a etapa.
+
+**Os três formatos valem também no Online, e o trabalho de multiplayer está concluído.** No
+campeonato multiplayer o servidor sorteia uma seed independente por etapa e publica **uma de cada
+vez**, conforme a etapa abre — nunca a seed-mestre. Não é zelo: com a seed base na mão, qualquer
+jogador simularia as corridas futuras no console antes de draftar. Cada etapa só avança quando todos
+os elegíveis atestam o fim da anterior.
 
 <div align="center">
   <img src="docs/img/campeonato.png" alt="Calendário do campeonato completo: 10 etapas com a miniatura de cada traçado" width="820">
@@ -196,9 +202,9 @@ A grade acima não é um print: é gerada a partir da **mesma função de geomet
 corrida usa** (`pathDaVolta`), por `npm run preview` — se o traçado mudar no jogo, muda aqui
 também. Regerar é um comando, não um trabalho de captura.
 
-### ✅ 1603 + 19 testes, em duas suítes
+### ✅ 1622 + 19 testes, em duas suítes
 
-**1603 testes em 65 arquivos** (`npm test`) cobrindo engine, UI e o redutor de rede, mais
+**1622 testes em 66 arquivos** (`npm test`) cobrindo engine, UI e o redutor de rede, mais
 **19 testes em 3 arquivos** (`npm run test:party`) que rodam a casca do Durable Object dentro do
 `workerd` de verdade.
 
@@ -207,6 +213,39 @@ num runtime diferente, com config própria, fora do `include` do `npm test`.
 
 Mudança de lógica de simulação neste projeto começa por um **teste que falha** capturando o
 comportamento pretendido — só depois vem a implementação.
+
+---
+
+## 🚧 Em andamento: o dataset fictício
+
+O jogo usa hoje **nomes reais** de pilotos e equipes. Enquanto o alvo era jogar localmente com o
+repositório fechado, isso era risco contido. **Com deploy público no horizonte, deixou de ser** — e
+a razão é medida, não jurídica-de-corredor: o dataset real **vai inteiro para o bundle servido**.
+Contagem sobre o `dist/` gerado (2026-08-24): **105/105 nomes de equipe, 1.542/1.542 ids de piloto e
+353/353 nomes exibidos**. Não é um resíduo em arquivo de teste; é 100% do dataset, servido.
+
+Está em curso uma trilha de **7 PRs** para trocar o dataset por um fictício. **Quatro estão feitos:**
+
+| PR  | O que                                                                                                 | Estado     |
+| --- | ----------------------------------------------------------------------------------------------------- | ---------- |
+| 1   | **Portão** — conta nome real nos arquivos de dados e falha se a contagem mudar, pra mais ou pra menos | ✅         |
+| 2   | **Funil de literais** — os nomes espalhados em `scripts/` passam a sair de um sítio só                | ✅         |
+| 3   | **Peças despidas** — as 10 peças icônicas perdem marca e código de modelo, mantêm a inovação          | ✅         |
+| 4   | **A tabela** — 458 nomes fictícios (105 equipes + 353 pilotos), chaveados por id                      | ✅         |
+| 5   | `anonimizar.ts` + teste diferencial, com `src/data/` ainda intocado                                   | ⬅️ próximo |
+| 6   | **A troca** — `src/data/` passa a ser fictício                                                        |            |
+| 7   | Fixture e baseline do portão a zero                                                                   |            |
+
+**O portão do PR 1 é o instrumento que torna isso verificável.** Ele mede hoje **9.486 ocorrências**
+de nome real nos arquivos de dados e é uma asserção de igualdade exata: baixar o número sem que o
+dado tenha mudado quebra o teste. O PR 3 o moveu pela primeira vez (9.522 → 9.486).
+
+Duas coisas que a trilha **não** resolve, e ficam ditas: o **histórico do git** continua servindo os
+nomes reais (decisão consciente — reescrever histórico invalidaria as SHAs citadas na documentação
+do projeto), e a **peça `Turbo modo-quali BMW`** ficou fora do escopo do PR 3 e mantém a marca.
+
+Enquanto a troca não acontece, o aviso de projeto de fã abaixo descreve o estado real: os nomes
+aparecem como referência factual a eventos históricos públicos.
 
 ---
 
@@ -247,9 +286,9 @@ Para jogar do celular ou pela rede local, troque o terminal 2 por `npm run dev:r
 | -------------------- | ----------------------------------------------------------------------------------------------------------------------- |
 | `npm run dev`        | Sobe o servidor de desenvolvimento (Vite)                                                                               |
 | `npm run dev:rede`   | Idem, exposto na rede local — pra abrir do celular                                                                      |
-| `npm run sala`       | Sobe o worker/Durable Object do modo Online (`wrangler`, em `127.0.0.1:8787`)                                            |
-| `npm test`           | Suíte principal — 1603 testes (engine, UI, `src/net/`)                                                                  |
-| `npm run test:party` | Suíte da casca do Durable Object — 19 testes, roda no `workerd`                                                          |
+| `npm run sala`       | Sobe o worker/Durable Object do modo Online (`wrangler`, em `127.0.0.1:8787`)                                           |
+| `npm test`           | Suíte principal — 1622 testes (engine, UI, `src/net/`)                                                                  |
+| `npm run test:party` | Suíte da casca do Durable Object — 19 testes, roda no `workerd`                                                         |
 | `npm run test:watch` | Testes em modo watch                                                                                                    |
 | `npm run build`      | `tsc --noEmit` + build de produção                                                                                      |
 | `npm run typecheck`  | Só a checagem de tipos                                                                                                  |
@@ -273,10 +312,10 @@ Só é necessário pra **regerar** o dataset — o resultado já está versionad
 
 ## 🛠️ Stack
 
-| Camada    | Tecnologia                                                              |
-| --------- | ----------------------------------------------------------------------- |
-| Engine    | **TypeScript** puro, sem dependência de UI                              |
-| Front-end | **React 19** + **Vite 7** + SVG                                         |
+| Camada    | Tecnologia                                                               |
+| --------- | ------------------------------------------------------------------------ |
+| Engine    | **TypeScript** puro, sem dependência de UI                               |
+| Front-end | **React 19** + **Vite 7** + SVG                                          |
 | Testes    | **Vitest 4** + **@cloudflare/vitest-pool-workers** (a suíte do `party/`) |
 | Online    | **partyserver** + **wrangler** — Durable Objects na borda da Cloudflare  |
 
