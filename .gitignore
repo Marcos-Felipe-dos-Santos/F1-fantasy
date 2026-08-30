@@ -4,21 +4,23 @@ coverage/
 .env*
 
 # Cache cru da Jolpica-F1 (PR 4.1) — gigante e reproduzível via
-# `npm run dataset:fetch`; scripts/derived/ (agregados, PR 4.2+) É commitado —
-# ⚠️ COM UMA EXCEÇÃO desde 2026-08-28, logo abaixo. A linha acima ficou como
-# está por ser verdadeira para os dois arquivos que ela descrevia
-# (`fatos-agregados.json` e `equipe-anos.derivado.json`), e a exceção é dita
-# aqui em vez de contradita noutro lugar.
+# `npm run dataset:fetch`; scripts/derived/ (agregados, PR 4.2+) É commitado,
+# SEM EXCEÇÃO. ~~⚠️ COM UMA EXCEÇÃO desde 2026-08-28, logo abaixo.~~
+# ⚠️ A exceção era `equipe-anos.anonimo.json`, e **o PR 6 a removeu junto com o
+# arquivo** — a saída do `anonimizar` passou a ser `src/data/`, que é commitado.
+# Riscada no lugar porque prometer uma exceção inexistente manda o leitor
+# procurar uma linha que não existe. Achado da revisão do PR 6.
 scripts/cache/
 
-# Dataset ANONIMIZADO (PR 5 da trilha do dataset fictício) — saída de
-# `npm run dataset:anonimizar`. NÃO é commitado, decisão do dev: artefato
-# derivado commitado é a segunda fonte que precisa concordar com a primeira, e
-# matar essa classe de defeito é a razão de `scripts/caminhos-dataset.ts`
-# existir. O teste diferencial (`scripts/anonimizar.test.ts`) NÃO lê este
-# arquivo — opera sobre o retorno em memória da função pura, para que
-# `npm test` nunca dependa de artefato gerado.
-scripts/derived/equipe-anos.anonimo.json
+# NOTA DO PR 6 (2026-08-28) — `scripts/derived/equipe-anos.anonimo.json` SAIU
+# desta lista porque o arquivo DEIXOU DE EXISTIR. Ele era a saída do PR 5, em
+# que `src/data/` ficava intocado; desde o PR 6 o `anonimizar` escreve DIRETO
+# em `src/data/equipe-anos.json`, que É commitado — é o dado servido.
+# 🔒 O motivo do ignore antigo continua valendo e virou o desenho: **artefato
+# derivado commitado é a segunda fonte que precisa concordar com a primeira.**
+# Por isso a saída é UMA só. Quem for reintroduzir um segundo artefato
+# anonimizado está recriando exatamente o defeito que `caminhos-dataset.ts` e a
+# cerca de `scripts/publicacao.test.ts` existem para matar.
 
 # Referências visuais de terceiros (prints de outros jogos, imagens de apoio à
 # direção de arte). Ficam SÓ na máquina do dev: são obra de terceiros e este
@@ -45,3 +47,11 @@ tmp-*
 # apontava para `C:\Users\marcos\Pictures`) — nao funcionam em outra maquina e nao
 # tem nada a ver com o projeto. Entrou no staging por acidente em 2026-08-27.
 *.lnk
+
+# Escrita atômica da publicação do dataset (PR 6): `anonimizar.ts` grava
+# `src/data/equipe-anos.json.tmp` e faz `rename`. O tmp precisa nascer no MESMO
+# diretório do destino (rename entre dispositivos não é atômico), e `src/data/`
+# é versionado — então um crash entre o `writeFileSync` e o `renameSync`
+# deixaria ~1 MB de JSON solto, colhível por um `git add .`. Achado da revisão
+# do PR 6.
+src/data/*.tmp

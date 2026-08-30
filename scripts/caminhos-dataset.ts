@@ -15,15 +15,22 @@
  *
  * 📌 **Por que isto nasce no PR 1 e não no PR 5:** o portão dos nomes reais
  * (`portao-nomes-reais.test.ts`) precisa do caminho do universo, e um portão que
- * define o próprio caminho seria a terceira cópia. ~~O PR 5 (`anonimizar.ts`) é
- * quem passa a ESCREVER em `src/data/` — e ele importa daqui, não redefine.~~
- * ⚠️ **CORRIGIDO em 2026-08-28 (decisão do dev):** o PR 5 escreve em
- * `EQUIPE_ANOS_ANONIMO`, **não** em `src/data/`. Quem escreve em `src/data/` é
- * o **PR 6**, e ele importa daqui, não redefine.
- * ⚠️ A publicação `scripts/derived/` → `src/data/` **segue sendo cópia manual
- * sem guarda** (medido: os dois arquivos são byte a byte idênticos e nenhum
- * script faz a cópia). `PUBLICADO_EQUIPE_ANOS` existe para que o **PR 6** tenha
- * o destino declarado num lugar só quando matar esse passo manual.
+ * define o próprio caminho seria a terceira cópia.
+ *
+ * ✅ **QUEM ESCREVE EM `src/data/` É O PR 6, e ele JÁ CHEGOU** (2026-08-28):
+ * `anonimizar.ts` publica em `PUBLICADO_EQUIPE_ANOS`, importando daqui em vez de
+ * redefinir. **A cópia manual `scripts/derived/` → `src/data/` MORREU**, e a
+ * ausência de guarda morreu com ela (`scripts/publicacao.test.ts`).
+ * ~~O PR 5 (`anonimizar.ts`) é quem passa a ESCREVER em `src/data/`.~~
+ * ~~CORRIGIDO em 2026-08-28: o PR 5 escreve em `EQUIPE_ANOS_ANONIMO`, não em
+ * `src/data/`; quem escreve é o PR 6.~~
+ * ~~A publicação segue sendo cópia manual sem guarda; `PUBLICADO_EQUIPE_ANOS`
+ * existe para que o PR 6 tenha o destino declarado quando matar esse passo.~~
+ * ⚠️ **As três linhas riscadas descreviam estados que deixaram de existir e são
+ * riscadas NO LUGAR.** A do meio ainda cita `EQUIPE_ANOS_ANONIMO`, um símbolo
+ * que **este arquivo não exporta mais** — mantê-la em presente do indicativo
+ * faria quem parasse no cabeçalho concluir que o passo manual continua vivo.
+ * **Achado da revisão do PR 6.**
  */
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -46,34 +53,46 @@ export const FATOS_AGREGADOS = join(DERIVED_DIR, 'fatos-agregados.json');
 /** Dataset derivado — a saída de `derivar-notas.ts` (staging). */
 export const EQUIPE_ANOS_DERIVADO = join(DERIVED_DIR, 'equipe-anos.derivado.json');
 
-/**
- * Dataset ANONIMIZADO — a saída de `anonimizar.ts` (PR 5). Mesmo shape do
- * derivado, com equipe/piloto/id/estrategista trocados pela `TABELA_NOMES`.
+/*
+ * 🔴 `EQUIPE_ANOS_ANONIMO` FOI REMOVIDO NO PR 6 (2026-08-28) — não é renomeação,
+ * o artefato deixou de existir.
  *
- * 🔒 **NÃO É COMMITADO — decisão do dev, 2026-08-28** (`.gitignore`). O motivo
- * é o mesmo que fez este arquivo existir: **artefato derivado commitado é a
- * segunda fonte que precisa concordar com a primeira.** Quem precisar dele roda
- * `npm run dataset:anonimizar`; o teste diferencial NÃO o lê — opera sobre o
- * retorno em memória da função pura, para que `npm test` nunca dependa de
- * artefato gerado.
+ * No PR 5 ele era a saída do `anonimizar` num mundo em que `src/data/` ficava
+ * intocado. **Desde o PR 6 o `anonimizar` escreve DIRETO em
+ * `PUBLICADO_EQUIPE_ANOS`** (abaixo), e manter os dois destinos recriaria a
+ * própria coisa que este arquivo existe para matar: **duas fontes que precisam
+ * concordar.** Palavras do dev ao decidir: *"escrever nos dois cria duas fontes
+ * que precisam concordar — o defeito que a trilha inteira existe para matar."*
+ *
+ * 🔒 O que garante a concordância agora é **uma cerca, não uma convenção**:
+ * `scripts/publicacao.test.ts` assere `src/data/equipe-anos.json ===
+ * anonimizar(derivado, tabela)`, com anti-vacuidade nas duas metades.
  */
-export const EQUIPE_ANOS_ANONIMO = join(DERIVED_DIR, 'equipe-anos.anonimo.json');
 
 /** Dados servidos ao app. É o que entra no bundle. */
 export const DATA_DIR = join(RAIZ, 'src', 'data');
 
 /**
- * Destino da publicação, HOJE AINDA FEITA À MÃO.
+ * Destino da publicação. ✅ **ESCRITO POR SCRIPT desde o PR 6 (2026-08-28) — a
+ * cópia manual MORREU AQUI.**
  *
- * ⚠️ **CORRIGIDO em 2026-08-28: NÃO é o PR 5 que escreve aqui — é o PR 6.**
- * A redação anterior desta linha dizia "o PR 5 passa a escrever aqui", pela
- * decisão do dev de 2026-08-25 (`PLANOS_ATIVOS.md`, "a cópia manual MORRE
- * ali"). **Essa decisão foi SUPERADA pela do dev em 2026-08-28:** o PR 5 lê o
- * derivado e escreve `EQUIPE_ANOS_ANONIMO`, com `src/data/` **intocado** — ele
- * é o ensaio, não a troca.
- * 🔴 **Consequência dita por inteiro, para ninguém ler "morreu no 5": A CÓPIA
- * MANUAL `derived → src/data/` NÃO MORRE NO PR 5. Ela morre no PR 6**, que é
- * quem publica. Até lá segue manual e sem guarda.
+ * 📉 **O que existia antes, e por quanto tempo:** `src/data/equipe-anos.json`
+ * era **cópia byte a byte** de `equipe-anos.derivado.json` (mesmo
+ * `git hash-object`, medido), **nenhum script fazia a cópia**, e **nada falhava
+ * se os dois divergissem** — a identidade era resultado de alguém ter copiado
+ * certo, não de um portão. Estava assim desde o swap manual `8d2493a`, e **só
+ * foi descoberto quando o PR 5 mediu.**
+ *
+ * 🔒 **DUAS COISAS MORRERAM AQUI, e confundi-las é o risco.** Palavras do dev:
+ * *"trocar um passo manual sem guarda por um script sem guarda não seria ganho
+ * — seria a mesma dívida com nome novo."*
+ * - **O passo manual** morre por `npm run dataset:anonimizar` publicar direto.
+ * - **A ausência de guarda** morre pela cerca `scripts/publicacao.test.ts`, que
+ *   assere `src/data/equipe-anos.json === anonimizar(derivado, tabela)` em todo
+ *   `npm test`. **Sem ela, o script sozinho só automatizaria o mesmo silêncio.**
+ *
+ * ⚠️ **A ENTRADA do pipeline segue REAL por desenho** (`EQUIPE_ANOS_DERIVADO`,
+ * em `scripts/derived/`). O fictício nasce na publicação, não no pipeline.
  */
 export const PUBLICADO_EQUIPE_ANOS = join(DATA_DIR, 'equipe-anos.json');
 

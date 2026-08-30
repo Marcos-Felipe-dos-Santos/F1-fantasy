@@ -46,8 +46,24 @@ import { iniciarCampeonato } from './fluxo-campeonato';
  * aceitaria pela FORMA (são strings, e é só isso que ele checa) e o jogo
  * quebraria depois, no lookup. **Com o bump, o save antigo cai limpo em
  * `versao-incompativel`.**
+ *
+ * 🔴 2 → 3 NO PR 6 (2026-08-28) — A TROCA DO DATASET, e é o mesmo motivo do
+ * bump anterior, agora em escala muito maior: os **cinco ids de loadout**
+ * (`pilotoId`, `chassiId`, `motorId`, `estrategistaId`, `pitId`) mudaram para
+ * TODOS os 771 equipe/anos. Save antigo carrega ids que não existem mais;
+ * `ehLoadoutValido` os aceitaria pela FORMA e o jogo quebraria no lookup.
+ *
+ * 🔴 **E ISTO RE-DISPARA A PENDÊNCIA 0(ac), que NÃO é consertada aqui.**
+ * `carregarCampeonato` distingue quatro motivos, mas `App.tsx:121` faz
+ * `return carga.ok ? carga.save : null` e **joga o `motivo` fora** — então o
+ * jogador com campeonato em andamento simplesmente não encontra mais
+ * "Continuar campeonato", **sem nenhuma mensagem**. Não é perda de dado (o save
+ * cai limpo, que é o comportamento correto); **é perda de EXPLICAÇÃO.**
+ * 📌 **Decisão do dev, registrada em 2026-08-27: consertar antes do deploy é
+ * chamada dele.** Este PR o DIZ em vez de deixar o segundo disparo passar em
+ * silêncio — o primeiro foi o bump 1 → 2 do PR 3.
  */
-export const VERSAO_FORMATO = 2;
+export const VERSAO_FORMATO = 3;
 
 /** Chave única do save do modo Campeonato no `localStorage`. */
 export const CHAVE_SAVE = 'f1-fantasy:campeonato';

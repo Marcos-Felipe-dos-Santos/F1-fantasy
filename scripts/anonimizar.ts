@@ -1,30 +1,39 @@
 /**
- * ANONIMIZAR — PR 5 da trilha do dataset fictício.
+ * ANONIMIZAR — nasceu no PR 5 da trilha do dataset fictício; **publica desde o
+ * PR 6.**
  *
  * Aplica a `TABELA_NOMES` (PR 4, 458 entradas) sobre o dataset DERIVADO e
- * escreve o dataset ANONIMIZADO. **É o ensaio antes da troca, não a troca.**
+ * escreve o dataset servido ao app. ~~**É o ensaio antes da troca, não a
+ * troca.**~~ **Ele É a troca desde o PR 6** — ver o bloco logo abaixo.
  *
  * ─────────────────────────────────────────────────────────────────────────────
- * 🔒 O QUE ESTE PR TOCA, E O QUE NÃO TOCA — decisão do dev, 2026-08-28.
+ * 🔴 ATUALIZADO NO PR 6 (2026-08-28) — ESTE SCRIPT AGORA PUBLICA.
  *
- *   `scripts/derived/equipe-anos.derivado.json`  (real, entrada)
+ *   `scripts/derived/equipe-anos.derivado.json`  (REAL, entrada — segue real)
  *        ↓  anonimizar
- *   `scripts/derived/equipe-anos.anonimo.json`   (fictício, saída, GITIGNORADA)
+ *   `src/data/equipe-anos.json`                  (FICTÍCIO, saída, COMMITADA)
  *
- * **`src/data/` NÃO é tocado.** 🔴 **E a consequência fica dita por inteiro,
- * para ninguém ler "morreu no 5": A CÓPIA MANUAL `derived → src/data/` NÃO
- * MORRE NESTE PR — ela morre no PR 6**, que é quem publica. Até lá ela segue
- * manual e sem guarda, exatamente como o `PUBLICADO_EQUIPE_ANOS` de
- * `caminhos-dataset.ts` registra.
- * ⚠️ Isto **SUPERA** a decisão de 2026-08-25 (`PLANOS_ATIVOS.md`: *"PR 5 — a
- * cópia manual MORRE ali, `anonimizar.ts` passa a escrever em `src/data/`"*).
- * A decisão nova está registrada no lugar da antiga, não ao lado dela.
+ * ~~**`src/data/` NÃO é tocado.** A cópia manual não morre neste PR — ela morre
+ * no PR 6, que é quem publica.~~ ✅ **O PR 6 CHEGOU: `src/data/` é a saída deste
+ * script, e a cópia manual morreu.** A linha riscada descrevia corretamente o
+ * PR 5 e é riscada **no lugar**, não contradita ao lado.
  *
- * 🔒 **A SAÍDA NÃO É COMMITADA** (`.gitignore`), e o motivo é o mesmo que fez
- * `caminhos-dataset.ts` existir: **artefato derivado commitado é a segunda
- * fonte que precisa concordar com a primeira.** O teste diferencial
- * (`anonimizar.test.ts`) opera sobre o **retorno em memória** de `anonimizar`,
- * nunca sobre o arquivo — `npm test` não depende de artefato gerado.
+ * 🔒 **SAÍDA ÚNICA, e é decisão do dev de 2026-08-28.** Não existe mais
+ * `equipe-anos.anonimo.json`. Palavras dele: *"escrever nos dois cria duas
+ * fontes que precisam concordar — o defeito que a trilha inteira existe para
+ * matar."*
+ *
+ * 🔒 **O SCRIPT SOZINHO NÃO BASTARIA, e isto é o coração do PR 6.** Palavras do
+ * dev: *"a cópia manual sem guarda existe há meses e ninguém sabia até o PR 5
+ * medir. Trocar um passo manual sem guarda por um script sem guarda não seria
+ * ganho — seria a mesma dívida com nome novo."* Quem fecha a ausência de guarda
+ * é **`scripts/publicacao.test.ts`**, que assere em todo `npm test` que
+ * `src/data/equipe-anos.json === anonimizar(derivado, tabela)`.
+ *
+ * 📌 **O teste diferencial (`anonimizar.test.ts`) segue operando sobre o RETORNO
+ * EM MEMÓRIA**, não sobre arquivo — ele prova a TRANSFORMAÇÃO. A cerca de
+ * publicação prova o ARTEFATO. São perguntas diferentes e nenhuma substitui a
+ * outra.
  *
  * ─────────────────────────────────────────────────────────────────────────────
  * 🔒 COMO O REGISTRO É REMAPEADO — pelo ID, nunca pelo nome de exibição.
@@ -83,7 +92,7 @@ import {
   verificarColisaoDeIds,
   type EquipeAnoDerivado,
 } from './derivar-notas.ts';
-import { EQUIPE_ANOS_ANONIMO, EQUIPE_ANOS_DERIVADO, TABELA_NOMES } from './caminhos-dataset.ts';
+import { EQUIPE_ANOS_DERIVADO, PUBLICADO_EQUIPE_ANOS, TABELA_NOMES } from './caminhos-dataset.ts';
 
 // ---------------------------------------------------------------------------
 // A tabela do PR 4.
@@ -232,14 +241,14 @@ export function main(): EquipeAnoDerivado[] {
 
   const conteudo = serializarDerivado(anonimo);
   // Escrita atômica (tmp+rename), mesma das outras etapas do pipeline.
-  const tmp = `${EQUIPE_ANOS_ANONIMO}.tmp`;
-  mkdirSync(dirname(EQUIPE_ANOS_ANONIMO), { recursive: true });
+  const tmp = `${PUBLICADO_EQUIPE_ANOS}.tmp`;
+  mkdirSync(dirname(PUBLICADO_EQUIPE_ANOS), { recursive: true });
   writeFileSync(tmp, conteudo);
-  renameSync(tmp, EQUIPE_ANOS_ANONIMO);
+  renameSync(tmp, PUBLICADO_EQUIPE_ANOS);
 
-  console.log(`Escrito: ${EQUIPE_ANOS_ANONIMO}`);
+  console.log(`Publicado: ${PUBLICADO_EQUIPE_ANOS}`);
   console.log(`Equipe/ano anonimizados: ${anonimo.length}`);
-  console.log('src/data/ NÃO foi tocado — a publicação é o PR 6.');
+  console.log('Este arquivo É o dado servido ao app. A cerca de `publicacao.test.ts` trava a igualdade.');
   return anonimo;
 }
 

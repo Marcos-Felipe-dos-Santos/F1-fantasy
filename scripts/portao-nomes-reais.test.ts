@@ -40,14 +40,18 @@
  * Contar nome real no arquivo que DEFINE a lista de nomes reais é circular —
  * daria 100% por construção e não mediria nada. Ele segue com nome real por
  * desenho; ~~quem o anonimiza é o PR 5, na escrita para `src/data/`.~~
- * ⚠️ **CORRIGIDO em 2026-08-28 (decisão do dev):** o **PR 5** lê o derivado e
- * escreve `scripts/derived/equipe-anos.anonimo.json` (gitignorado), com
- * **`src/data/` INTOCADO** — ele é o ensaio, não a troca. **Quem escreve em
- * `src/data/` é o PR 6**, e é ele que derruba a linha `src/data/equipe-anos.json`
- * do `BASELINE` abaixo. 🔴 **A cópia manual `derived → src/data/` NÃO morre no
- * PR 5: morre no PR 6.**
- * 📌 **O `BASELINE` deste portão NÃO se move no PR 5**, e é o resultado certo:
- * a lista de arquivos abaixo é fixa e a saída do `anonimizar` não está nela.
+ * ~~CORRIGIDO em 2026-08-28: o PR 5 lê o derivado e escreve
+ * `equipe-anos.anonimo.json` (gitignorado), com `src/data/` INTOCADO. A cópia
+ * manual NÃO morre no PR 5: morre no PR 6.~~
+ * ✅ **ESTADO DESDE O PR 6 (2026-08-28):** `anonimizar.ts` publica **direto em
+ * `src/data/equipe-anos.json`**; `equipe-anos.anonimo.json` **deixou de
+ * existir** e a cópia manual **morreu**. A entrada (`equipe-anos.derivado.json`)
+ * segue real por desenho, que é o que este bloco explica.
+ * 📌 **O `BASELINE` NÃO se moveu no PR 5** (a lista é fixa e a saída do
+ * `anonimizar` não estava nela) **e MOVEU no PR 6**: a linha
+ * `src/data/equipe-anos.json` foi a **0** — ⚠️ **não foi "derrubada" da lista**,
+ * como a redação anterior dizia; ela continua lá, medindo zero, que é o que faz
+ * a cerca seguir viva. Achado da revisão do PR 6.
  *
  * ⚠️ **CÓDIGO-FONTE está FORA, e o PR 2 NÃO fechou isso.** Este portão não mede
  * `.ts`/`.tsx`, e segue sem medir depois do PR 2 (`50bda11`).
@@ -64,9 +68,15 @@
  * **Quem ler este teste verde e concluir "não há nome real no repo" está
  * errado** — ele responde "quanto nome real há nos DADOS", e só isso.
  *
- * ⚠️ **O BUNDLE está FORA.** A medição que decide o deploy é sobre `dist/`
- * (contagem nº 5 do inventário), e exige `npm run build` — caro demais para
- * rodar em todo `npm test`. Entra como passo do PR 6 e da definição de pronto.
+ * ⚠️ **O BUNDLE está FORA, e CONTINUA fora depois do PR 6.** A medição que
+ * decide o deploy é sobre `dist/` (contagem nº 5 do inventário) e exige
+ * `npm run build` — caro demais para rodar em todo `npm test`.
+ * 🔴 **CORRIGIDO em 2026-08-28: esta linha dizia "entra como passo do PR 6", e
+ * o que o PR 6 fez foi MEDIR À MÃO** (114 ocorrências no bundle, todas
+ * sobre-contagem ou a pista da T2). **Medição manual não é portão: uma
+ * regressão futura em `dist/` passa em silêncio.** Cerca automatizada do bundle
+ * **continua não existindo**, e dizer o contrário faria a próxima sessão
+ * confiar num portão inexistente. Achado da revisão do PR 6.
  *
  * ─────────────────────────────────────────────────────────────────────────────
  * MÉTODO — VARREDURA DE TEXTO CRU, NUNCA CAMINHADA POR CAMPO.
@@ -138,6 +148,37 @@ const ESPERADO_AGULHAS_DEDUPLICADAS = 909;
  *   | `pecas.json` (×2)  |  19 |     2 | marca e código de modelo das 10 peças |
  *   | `pistas.json` (×2) |   2 |     1 | `(Gilles Villeneuve)` do Montreal    |
  *
+ * 📉 **MOVIDO PELA SEGUNDA VEZ NO PR 6 (A TROCA), 2026-08-28:**
+ * total **9486 → 249 (−9237)**. **Uma linha mudou; as outras cinco não.**
+ *
+ *   | arquivo                     | era  | virou | o que saiu                     |
+ *   |-----------------------------|------|-------|--------------------------------|
+ *   | `src/data/equipe-anos.json` | 9237 |     0 | o dataset inteiro virou fictício |
+ *
+ * 🔑 **O ZERO foi PREVISTO antes de ser medido, e a ordem é o que faz a medida
+ * valer.** A previsão saiu da mecânica — a agulha exige fronteira
+ * não-alfanumérica dos dois lados, e a cerca de quase-marca do PR 4 rejeita
+ * coincidência exata — e foi conferida contra a saída do `anonimizar` **antes**
+ * de publicar. **Número que só existe depois do fato não pode ser surpreendido.**
+ *
+ * 🔒 **O QUE SOBRA SÃO 249, E O PR 7 NÃO OS ZERA — o piso é 6.** Quebrado por
+ * arquivo, medido:
+ *
+ *   | arquivo                          | conta | natureza                    | PR 7 |
+ *   |----------------------------------|-------|-----------------------------|------|
+ *   | fixture `equipe-anos.json`       |  243  | nome real de verdade        | → 0  |
+ *   | `pecas.json` (×2)                |  2+2  | **sobre-contagem** de `massa` | fica |
+ *   | `pistas.json` (×2)               |  1+1  | `Red Bull Ring` — **T2 adiada** | fica |
+ *
+ * ⚠️ **Os 4 de `massa` são sobre-contagem sobre dado LIMPO** — a peça perdeu a
+ * marca no PR 3 e o que resta é `"peca-amortecedor-massa"` / `"Amortecedor de
+ * massa"`, a palavra comum colidindo com o `driverId` de Felipe Massa. **O dado
+ * está limpo; o número não desce.** Os 2 de `Red Bull Ring` são resíduo REAL, e
+ * ficam por DECISÃO (T2), não por impossibilidade — ver a nota abaixo.
+ * 🔑 **Registrado ANTES do PR 7 a pedido do dev**, para que o piso seja
+ * explicado e não descoberto depois: *"o que sobrar precisa estar explicado, não
+ * descoberto depois."*
+ *
  * ⚠️ **A fixture entrou no PR 3, não no PR 7 — desvio do `PLANOS_ATIVOS.md`
  * aprovado pelo dev em 2026-08-27.** Motivo: `peca-suspensao-ativa-fw15` é
  * referenciado contra o dataset REAL (`card-peca-cego.test.ts`,
@@ -161,7 +202,7 @@ const ESPERADO_AGULHAS_DEDUPLICADAS = 909;
  * intocável por determinismo. Ele é intocável por DECISÃO, que é outra coisa.
  */
 const BASELINE: ReadonlyArray<readonly [string, number]> = [
-  ['src/data/equipe-anos.json', 9237],
+  ['src/data/equipe-anos.json', 0],
   ['src/data/pecas.json', 2],
   ['src/data/pistas.json', 1],
   ['src/fixtures/dataset-semente/equipe-anos.json', 243],

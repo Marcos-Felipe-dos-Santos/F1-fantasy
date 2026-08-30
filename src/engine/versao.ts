@@ -73,5 +73,18 @@
  * contra o dataset real — `src/ui/fluxo-draft-golden.test.ts` pina `ordemPeca`,
  * perfis e sorteios, e não a peça. **Um rename futuro que criasse empate
  * passaria em silêncio.** Achado da revisão do PR 3; registrado, não consertado.
+ *
+ * 🔴 3.4.4 → 3.4.5 NO PR 6 (2026-08-28) — A TROCA DO DATASET.
+ *
+ * **Este bump NÃO é o caso "refactor sem efeito" do `versao.test.ts`** — é o
+ * oposto dele. `src/data/equipe-anos.json` inteiro mudou (771 registros, 7710
+ * linhas em cada direção): nomes exibidos e **ids** de piloto/chassi/motor/
+ * estrategista/pit. **Dois builds com datasets diferentes não podem compartilhar
+ * sala**, e o handshake de `VERSAO_APP` (`servidor-sala.ts:780`, recusa em `:789`
+ * e `:891`) é a única coisa que impede isso.
+ * 🔑 O `hashDoDraft` consome `${equipe}@${ano}` e os seis ids de loadout
+ * (`hash-draft.ts:64-68`), então cliente velho e novo hasheariam o MESMO estado
+ * de formas diferentes — **alarme falso imediato**, que é literalmente o modo de
+ * falha que o docblock do digest descreve.
  */
-export const VERSAO_APP = '3.4.4';
+export const VERSAO_APP = '3.4.5';

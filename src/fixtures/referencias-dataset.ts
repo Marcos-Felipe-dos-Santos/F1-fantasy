@@ -43,17 +43,27 @@
  * que ainda é real.
  *
  * 🔑 **Consequência aceita: o mesmo par aparece mais de uma vez.**
- * `Red Bull 2023` está nos três blocos e `Ferrari 2004` em dois. **Não é
- * duplicação a ser "limpa"** — é o que separa origens que hoje coincidem por
- * acaso e que deixam de coincidir no PR 6. Quem deduplicar reabre a janela.
+ * O par `Red Bull 2023` estava nos três blocos e `Ferrari 2004` em dois. **Não
+ * é duplicação a ser "limpa"** — é o que separa origens que coincidiam **por
+ * acaso** e que deixaram de coincidir no PR 6.
+ * ✅ **E deixaram mesmo:** desde o PR 6, `DATA_RED_BULL_2023` vale
+ * `Kaldrix 2023` enquanto `FIXTURE_RED_BULL_2023` e `DERIVADO_RED_BULL_2023`
+ * seguem em `Red Bull 2023`. **É a prova de que a partição pagou** — sem ela,
+ * uma constante só não serviria os três lados. Quem deduplicar reabre a janela.
  *
  * ⚠️ **PRECISÃO sobre a coluna "nunca":** o que segue real por desenho é
- * `equipe-anos.derivado.json`, a ENTRADA do pipeline. Desde o PR 5 existe ao
- * lado dele um `equipe-anos.anonimo.json` (gitignorado, saída de
- * `npm run dataset:anonimizar`) que é fictício — mas **nenhum consumidor desta
- * tabela o lê**, e por isso a coluna continua correta como está.
- * 🔴 **A cópia manual `derived → src/data/` NÃO morreu no PR 5 — ela morre no
- * PR 6**, que é quem publica. Até lá segue manual e sem guarda.
+ * `equipe-anos.derivado.json`, a ENTRADA do pipeline — e ele continua sendo a
+ * entrada depois do PR 6. **O fictício nasce na PUBLICAÇÃO, não no pipeline.**
+ * ~~Desde o PR 5 existe ao lado dele um `equipe-anos.anonimo.json`
+ * (gitignorado) que é fictício — mas nenhum consumidor desta tabela o lê.~~
+ * ~~🔴 A cópia manual `derived → src/data/` NÃO morreu no PR 5 — ela morre no
+ * PR 6. Até lá segue manual e sem guarda.~~
+ * ✅ **AS DUAS LINHAS RISCADAS ENVELHECERAM NO PR 6 (2026-08-28), e são riscadas
+ * NO LUGAR:** `equipe-anos.anonimo.json` **deixou de existir** (a saída passou a
+ * ser `src/data/` direto, uma só), e **a cópia manual MORREU** — quem garante a
+ * igualdade agora é `scripts/publicacao.test.ts`, não a convenção.
+ * **Achado da revisão do PR 6:** este bloco tinha ficado para trás enquanto o
+ * resto do arquivo era atualizado.
  *
  * ⚠️ **A PARTIÇÃO NÃO É CERCA, e a distinção importa.** Nada aqui IMPEDE que um
  * arquivo que lê a fixture importe do bloco `DATA_*` — o alinhamento
@@ -83,10 +93,20 @@
  * - **`scripts/portao-nomes-reais.test.ts:213-222`** — o literal `'Ferrari'` lá
  *   É a cláusula anti-vacuidade do portão do PR 1. Funilá-lo destruiria o teste.
  * - **`scripts/balance.test.ts:38-43`** e **`src/ui/fluxo-draft-golden.test.ts:61-65`**
- *   — são **ORÁCULOS pinados** contra o dataset real (asserções de SAÍDA), não
- *   entradas de lookup. O próprio comentário do primeiro diz que re-pinar exige
- *   "decisão CONSCIENTE do dev". **Decisão do dev, 2026-08-25: ficam literais**,
- *   e o PR 6 os toca à mão, visíveis no diff.
+ *   — são **ORÁCULOS pinados** (asserções de SAÍDA), não entradas de lookup. O
+ *   próprio comentário do primeiro diz que re-pinar exige "decisão CONSCIENTE do
+ *   dev". **Decisão do dev, 2026-08-25: ficam literais**, tocados à mão e
+ *   visíveis no diff.
+ *   🔴 **CORRIGIDO NO PR 6 (2026-08-28) — os dois NÃO são do mesmo PR, e a
+ *   redação anterior dizia que sim** (*"contra o dataset real … o PR 6 os toca à
+ *   mão"*). **Medido por ensaio a seco:** trocando `src/data/`,
+ *   `balance.test.ts` fica **vermelho** e `fluxo-draft-golden.test.ts` fica
+ *   **VERDE** — porque ele importa `../fixtures/dataset-semente/equipe-anos.json`
+ *   (linha 19), a FIXTURE. **`balance.test.ts` é PR 6; `fluxo-draft-golden.test.ts`
+ *   é PR 7.**
+ *   🔑 É a mesma família da 0(aa): dois consumidores que parecem o mesmo caso
+ *   lendo datasets diferentes. **Foi o ensaio que separou os dois** — a leitura
+ *   os tinha juntado.
  * - **`src/engine/types.test.ts`** — fixtures sintéticas, com ids e notas
  *   inventados. Não tocam o dataset.
  * - **Nome de equipe em prosa** (nome de teste, comentário) e **`'Red Bull Ring'`**,
@@ -115,13 +135,32 @@ export interface RefEquipeAno {
 // É o ÚNICO bloco que o PR 6 edita.
 // ═══════════════════════════════════════════════════════════════════════════
 
+/**
+ * 🔴 TROCADAS NO PR 6 (2026-08-28) — é a ÚNICA edição de constante da troca, e
+ * é exatamente o que a partição comprou: quatro literais num bloco, em vez de
+ * caçá-los por 7 arquivos.
+ *
+ * A equipe é a MESMA em cada linha, com o nome que a `TABELA_NOMES` lhe dá:
+ *   `red_bull` → Kaldrix · `williams` → Pemberley
+ *   `alfa`     → Ardenta · `renault`  → Charmont
+ *
+ * 🔑 **`DATA_RED_BULL_2023` seguir apontando para a MESMA equipe é decisão do
+ * dev**, não conveniência: o canário existe para quebrar quando o dataset muda,
+ * e trocá-lo por outra equipe no mesmo PR o faria medir outra coisa.
+ * ⚠️ **Os NOMES das constantes ficam com a grafia real** (`DATA_RED_BULL_2023`,
+ * não `DATA_KALDRIX_2023`): são identificadores de código, não dado servido, e
+ * renomeá-los agora torraria a rastreabilidade de todo o histórico da trilha
+ * sem tirar um byte do bundle. **O portão do PR 1 não mede `.ts`** — está no
+ * docstring dele desde o começo.
+ */
+
 /** `scripts/balance.ts:50` (`loadoutForte`) e o canário do PR 6. */
-export const DATA_RED_BULL_2023: RefEquipeAno = { equipe: 'Red Bull', ano: 2023 };
+export const DATA_RED_BULL_2023: RefEquipeAno = { equipe: 'Kaldrix', ano: 2023 };
 
 /** Alavancas e guardas do harness (`alavancas.test.ts`, `balance.test.ts`). */
-export const DATA_WILLIAMS_2022: RefEquipeAno = { equipe: 'Williams', ano: 2022 };
-export const DATA_ALFA_ROMEO_1951: RefEquipeAno = { equipe: 'Alfa Romeo', ano: 1951 };
-export const DATA_RENAULT_2006: RefEquipeAno = { equipe: 'Renault', ano: 2006 };
+export const DATA_WILLIAMS_2022: RefEquipeAno = { equipe: 'Pemberley', ano: 2022 };
+export const DATA_ALFA_ROMEO_1951: RefEquipeAno = { equipe: 'Ardenta', ano: 1951 };
+export const DATA_RENAULT_2006: RefEquipeAno = { equipe: 'Charmont', ano: 2006 };
 
 // ═══════════════════════════════════════════════════════════════════════════
 // BLOCO `DERIVADO_*` — consumidores que leem `scripts/derived/`. NUNCA TROCAM.

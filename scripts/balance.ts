@@ -41,11 +41,15 @@ export interface TaxaVitoriaPole {
 }
 
 /**
- * Carro forte de referência (Red Bull 2023) — idêntico pros dois lados do
- * grid. Resolvido do dataset vivo (nunca ids literais): titular nº1 é
- * `pilotos[0]` da entrada `equipe/ano` (no dataset derivado os titulares vêm
- * ordenados por largadas→points→driverId, então `pilotos[0]` é sempre o
- * piloto principal — Verstappen em Red Bull 2023).
+ * Carro forte de referência — idêntico pros dois lados do grid. O par
+ * `equipe/ano` vem de `DATA_RED_BULL_2023` (`src/fixtures/referencias-dataset.ts`),
+ * **hoje `Kaldrix 2023`**: o PR 6 trocou o dataset servido para nomes fictícios.
+ * Resolvido do dataset vivo (nunca ids literais): titular nº1 é `pilotos[0]` da
+ * entrada `equipe/ano` (no derivado os titulares vêm ordenados por
+ * largadas→points→driverId, então `pilotos[0]` é sempre o piloto principal).
+ * ⚠️ **O nome da CONSTANTE segue com a grafia real** — é identificador de
+ * código, não dado servido. Este docblock dizia "Red Bull 2023 … Verstappen" e
+ * ficou falso no PR 6; achado da revisão.
  */
 export function loadoutForte(dataset: Dataset, jogadorId: string): Loadout {
   const ea = dataset.equipeAnos.find(

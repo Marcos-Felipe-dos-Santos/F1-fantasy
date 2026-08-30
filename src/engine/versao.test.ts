@@ -33,7 +33,7 @@ const RAIZ_SRC = join(AQUI, '..');
  * O digest registrado. **Atualize junto com `VERSAO_APP`** — a mensagem de
  * falha traz o valor novo pronto pra colar.
  */
-const DIGEST_REGISTRADO = '442b210c';
+const DIGEST_REGISTRADO = 'a2b34e13';
 
 /** Hash de string estilo xmur3, igual ao da engine — sem dependência nova. */
 function hashTexto(texto: string): number {
@@ -99,7 +99,24 @@ function digestDoConteudo(): string {
   for (const caminho of [...daEngine, ...doDataset, ...daRede]) {
     // Nome relativo entra junto: renomear arquivo muda o que a engine importa.
     const relativo = caminho.slice(RAIZ_SRC.length).replace(/\\/g, '/');
-    acumulado = hashTexto(`${acumulado}:${relativo}:${hashTexto(readFileSync(caminho, 'utf8'))}`);
+    // 🔴 CRLF → LF é OBRIGATÓRIO, e foi MEDIDO no PR 6 — sem isto o digest
+    // depende do MODO DE CHECKOUT, não do conteúdo.
+    //
+    // O repo roda `core.autocrlf=true` e não tem `.gitattributes`, então
+    // arquivo que o git materializa chega em CRLF e arquivo que um script
+    // escreve chega em LF. Desde o PR 6, `src/data/equipe-anos.json` é ESCRITO
+    // POR SCRIPT (`npm run dataset:anonimizar`) enquanto `pecas.json` e
+    // `pistas.json` seguem vindo de checkout — o digest era MISTO.
+    // **Medido:** o mesmo dado dá `0d9efb33` com o arquivo em LF e `be8578eb`
+    // em CRLF. Ou seja, o primeiro `git clone` ou `git checkout --` deixaria
+    // este teste VERMELHO com a mensagem "MUDOU e VERSAO_APP não acompanhou",
+    // sem que nada tivesse mudado — e a instrução de conserto ("cole só o
+    // digest atual") produziria ping-pong entre as duas máquinas.
+    // 🔑 Mesma tese, e mesma frase, de `scripts/publicacao.test.ts`: **final de
+    // linha é artefato de CHECKOUT, não conteúdo.** Aquele arquivo normalizava
+    // e este não — a contradição foi achada pela revisão do PR 6.
+    const conteudo = readFileSync(caminho, 'utf8').replace(/\r\n/g, '\n');
+    acumulado = hashTexto(`${acumulado}:${relativo}:${hashTexto(conteudo)}`);
   }
   return acumulado.toString(16).padStart(8, '0');
 }
