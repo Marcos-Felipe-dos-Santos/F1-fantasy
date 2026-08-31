@@ -103,9 +103,9 @@ describe('dataset real (PR 1.1)', () => {
   it('índices por id resolvem registros conhecidos', () => {
     const dataset = criarDataset(equipeAnosReal, pecasReal, pistasReal);
     expect(dataset.pistasById.get('pista-monaco')?.nome).toBe('Mônaco');
-    expect(dataset.chassisById.get('ferrari-2004-chassi')?.equipe).toBe('Ferrari');
-    expect(dataset.pilotosById.get('ferrari-2004-piloto-schumacher')?.nome).toBe(
-      'Michael Schumacher',
+    expect(dataset.chassisById.get('sarterra-2004-chassi')?.equipe).toBe('Sarterra');
+    expect(dataset.pilotosById.get('sarterra-2004-piloto-klaus_reithoffer')?.nome).toBe(
+      'Klaus Reithoffer',
     );
     expect(dataset.pecasById.get('peca-bargeboards')?.atributosAlvo).toEqual(['aero']);
   });

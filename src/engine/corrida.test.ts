@@ -14,14 +14,27 @@ const pistaMonza = dataset.pistasById.get('pista-monza')!;
 const pistaSuzuka = dataset.pistasById.get('pista-suzuka')!;
 const pistaInterlagos = dataset.pistasById.get('pista-interlagos')!;
 
+/**
+ * ⚠️ **PR 7 (2026-08-31) — os NOMES destes helpers ficam com a grafia real, e os
+ * ids que eles carregam são FICTÍCIOS.** `loadoutFerrari` monta `sarterra-…`,
+ * `loadoutMinardi` monta `ronzani-…`. **Não é inconsistência esquecida:** é o
+ * mesmo precedente e o mesmo motivo do `DATA_*`/`FIXTURE_*` em
+ * `src/fixtures/referencias-dataset.ts` — identificador de código não é dado
+ * servido, o portão dos nomes reais **não mede `.ts`**, e renomeá-los torraria a
+ * rastreabilidade da trilha sem tirar um byte do bundle.
+ * 🔑 O mapa, para quem for ler os ids: Red Bull → Kaldrix · Ferrari → Sarterra ·
+ * Mercedes → Halbrandt · McLaren → Ridgeway · Williams → Pemberley ·
+ * Aston Martin → Ardsley Vane · Renault → Charmont · Sauber → Baldern ·
+ * Minardi → Ronzani · Benetton → Salviati.
+ */
 function loadoutRedBull(overrides: Partial<Loadout> = {}): Loadout {
   return {
     jogadorId: 'j1',
-    pilotoId: 'redbull-2023-piloto-verstappen',
-    chassiId: 'redbull-2023-chassi',
-    motorId: 'redbull-2023-motor',
-    estrategistaId: 'redbull-2023-estrategista',
-    pitId: 'redbull-2023-pit',
+    pilotoId: 'kaldrix-2023-piloto-sander_doornbosch',
+    chassiId: 'kaldrix-2023-chassi',
+    motorId: 'kaldrix-2023-motor',
+    estrategistaId: 'kaldrix-2023-estrategista',
+    pitId: 'kaldrix-2023-pit',
     pecaId: 'peca-composto-macio',
     ...overrides,
   };
@@ -30,11 +43,11 @@ function loadoutRedBull(overrides: Partial<Loadout> = {}): Loadout {
 function loadoutFerrari(overrides: Partial<Loadout> = {}): Loadout {
   return {
     jogadorId: 'j2',
-    pilotoId: 'ferrari-2023-piloto-leclerc',
-    chassiId: 'ferrari-2023-chassi',
-    motorId: 'ferrari-2023-motor',
-    estrategistaId: 'ferrari-2023-estrategista',
-    pitId: 'ferrari-2023-pit',
+    pilotoId: 'sarterra-2023-piloto-valbonne',
+    chassiId: 'sarterra-2023-chassi',
+    motorId: 'sarterra-2023-motor',
+    estrategistaId: 'sarterra-2023-estrategista',
+    pitId: 'sarterra-2023-pit',
     pecaId: 'peca-composto-macio',
     ...overrides,
   };
@@ -43,25 +56,25 @@ function loadoutFerrari(overrides: Partial<Loadout> = {}): Loadout {
 function loadoutMinardi(jogadorId: string, overrides: Partial<Loadout> = {}): Loadout {
   return {
     jogadorId,
-    pilotoId: 'minardi-2004-piloto-baumgartner',
-    chassiId: 'minardi-2004-chassi',
-    motorId: 'minardi-2004-motor',
-    estrategistaId: 'minardi-2004-estrategista',
-    pitId: 'minardi-2004-pit',
+    pilotoId: 'ronzani-2004-piloto-beregszaszi',
+    chassiId: 'ronzani-2004-chassi',
+    motorId: 'ronzani-2004-motor',
+    estrategistaId: 'ronzani-2004-estrategista',
+    pitId: 'ronzani-2004-pit',
     pecaId: 'peca-composto-macio',
     ...overrides,
   };
 }
 
-/** Pior CONS (44) e CONF_MOTOR (54) do dataset; CONF 52 é quase o piso (o pior é Minardi 1998, 50) — Minardi 1993, Barbazza (§8, incidentes). */
-function loadoutMinardi1993Barbazza(jogadorId: string, overrides: Partial<Loadout> = {}): Loadout {
+/** Pior CONS (44) e CONF_MOTOR (54) do dataset; CONF 52 é quase o piso (o pior é Ronzani 1998, 50) — Ronzani 1993, Danesin (§8, incidentes). */
+function loadoutRonzani1993Danesin(jogadorId: string, overrides: Partial<Loadout> = {}): Loadout {
   return {
     jogadorId,
-    pilotoId: 'minardi-1993-piloto-barbazza',
-    chassiId: 'minardi-1993-chassi',
-    motorId: 'minardi-1993-motor',
-    estrategistaId: 'minardi-1993-estrategista',
-    pitId: 'minardi-1993-pit',
+    pilotoId: 'ronzani-1993-piloto-danesin',
+    chassiId: 'ronzani-1993-chassi',
+    motorId: 'ronzani-1993-motor',
+    estrategistaId: 'ronzani-1993-estrategista',
+    pitId: 'ronzani-1993-pit',
     pecaId: 'peca-composto-macio',
     ...overrides,
   };
@@ -70,11 +83,11 @@ function loadoutMinardi1993Barbazza(jogadorId: string, overrides: Partial<Loadou
 function loadoutMercedes(overrides: Partial<Loadout> = {}): Loadout {
   return {
     jogadorId: 'j4',
-    pilotoId: 'mercedes-2023-piloto-hamilton',
-    chassiId: 'mercedes-2023-chassi',
-    motorId: 'mercedes-2023-motor',
-    estrategistaId: 'mercedes-2023-estrategista',
-    pitId: 'mercedes-2023-pit',
+    pilotoId: 'halbrandt-2023-piloto-calderwood',
+    chassiId: 'halbrandt-2023-chassi',
+    motorId: 'halbrandt-2023-motor',
+    estrategistaId: 'halbrandt-2023-estrategista',
+    pitId: 'halbrandt-2023-pit',
     pecaId: 'peca-das',
     ...overrides,
   };
@@ -277,7 +290,7 @@ describe('simularCorrida', () => {
 
   describe('incidentes (PR 1.5a)', () => {
     it('é determinístico com incidentes: mesma seed ⇒ deep-equal (incluindo eventos)', () => {
-      const loadouts = [loadoutMinardi1993Barbazza('j1'), loadoutRedBull({ jogadorId: 'j2' })];
+      const loadouts = [loadoutRonzani1993Danesin('j1'), loadoutRedBull({ jogadorId: 'j2' })];
       const grid = simularQuali(dataset, loadouts, pistaSuzuka, 123);
       const resultado1 = simularCorrida(dataset, loadouts, pistaSuzuka, grid, 123);
       const resultado2 = simularCorrida(dataset, loadouts, pistaSuzuka, grid, 123);
@@ -289,7 +302,7 @@ describe('simularCorrida', () => {
       let errosFraco = 0;
       let errosForte = 0;
       for (let seed = 0; seed < totalSeeds; seed++) {
-        const loadouts = [loadoutMinardi1993Barbazza('fraco'), loadoutRedBull({ jogadorId: 'forte' })];
+        const loadouts = [loadoutRonzani1993Danesin('fraco'), loadoutRedBull({ jogadorId: 'forte' })];
         const grid = simularQuali(dataset, loadouts, pistaMonza, seed);
         const resultado = simularCorrida(dataset, loadouts, pistaMonza, grid, seed);
         errosFraco += resultado.eventos.filter(
@@ -307,7 +320,7 @@ describe('simularCorrida', () => {
       const totalSeeds = 200;
       let achado: ReturnType<typeof simularCorrida> | null = null;
       for (let seed = 0; seed < totalSeeds; seed++) {
-        const loadouts = [loadoutMinardi1993Barbazza('fraco'), loadoutRedBull({ jogadorId: 'forte' })];
+        const loadouts = [loadoutRonzani1993Danesin('fraco'), loadoutRedBull({ jogadorId: 'forte' })];
         const grid = simularQuali(dataset, loadouts, pistaSuzuka, seed);
         const resultado = simularCorrida(dataset, loadouts, pistaSuzuka, grid, seed);
         const item = resultado.classificacao.find((c) => c.jogadorId === 'fraco')!;
@@ -387,9 +400,9 @@ describe('simularCorrida', () => {
 
     it('eventos ficam ordenados por volta crescente (empate ⇒ jogadorId crescente)', () => {
       const loadouts = [
-        loadoutMinardi1993Barbazza('a'),
-        loadoutMinardi1993Barbazza('b'),
-        loadoutMinardi1993Barbazza('c'),
+        loadoutRonzani1993Danesin('a'),
+        loadoutRonzani1993Danesin('b'),
+        loadoutRonzani1993Danesin('c'),
       ];
       const grid = simularQuali(dataset, loadouts, pistaMonza, 55);
       const resultado = simularCorrida(dataset, loadouts, pistaMonza, grid, 55);
@@ -407,8 +420,8 @@ describe('simularCorrida', () => {
       const totalSeeds = 200;
       for (let seed = 0; seed < totalSeeds; seed++) {
         const loadouts = [
-          loadoutMinardi1993Barbazza('fraco1'),
-          loadoutMinardi1993Barbazza('fraco2'),
+          loadoutRonzani1993Danesin('fraco1'),
+          loadoutRonzani1993Danesin('fraco2'),
           loadoutRedBull({ jogadorId: 'forte' }),
         ];
         const grid = simularQuali(dataset, loadouts, pistaSuzuka, seed);
@@ -633,7 +646,7 @@ describe('simularCorrida', () => {
       const totalSeeds = 200;
       let achado: ReturnType<typeof simularCorrida> | null = null;
       for (let seed = 0; seed < totalSeeds; seed++) {
-        const loadouts = [loadoutMinardi1993Barbazza('fraco'), loadoutRedBull({ jogadorId: 'forte' })];
+        const loadouts = [loadoutRonzani1993Danesin('fraco'), loadoutRedBull({ jogadorId: 'forte' })];
         const grid = simularQuali(dataset, loadouts, pistaSuzuka, seed);
         const resultado = simularCorrida(dataset, loadouts, pistaSuzuka, grid, seed);
         const item = resultado.classificacao.find((c) => c.jogadorId === 'fraco')!;
@@ -763,18 +776,18 @@ describe('simularCorrida', () => {
     });
 
     it('CHU importa: delta chuva−seco de tempoTotal é menor pro piloto de CHU alto do que pro de CHU baixo (mesmo carro)', () => {
-      // Mesma equipe/ano (Red Bull 2023) pros dois — só o piloto muda, então
+      // Mesma equipe/ano (Kaldrix 2023) pros dois — só o piloto muda, então
       // chassi/motor/estrategista/pit ficam idênticos e isolam o efeito de CHU.
       // Nota: o isolamento também depende de a seed 42 não gerar erro-só-na-chuva
-      // (Verstappen e Pérez diferem em CONS, que a chuva multiplica; nesta seed
+      // (os dois pilotos diferem em CONS, que a chuva multiplica; nesta seed
       // os erros seco==molhado, então o delta mede só a penalidade de CHU).
       const loadoutAlto = loadoutRedBull({
         jogadorId: 'alto',
-        pilotoId: 'redbull-2023-piloto-verstappen', // CHU 90
+        pilotoId: 'kaldrix-2023-piloto-sander_doornbosch', // CHU 90
       });
       const loadoutBaixo = loadoutRedBull({
         jogadorId: 'baixo',
-        pilotoId: 'redbull-2023-piloto-perez', // CHU 72
+        pilotoId: 'kaldrix-2023-piloto-barragan', // CHU 72
       });
       const loadouts = [loadoutAlto, loadoutBaixo];
       const pistaMolhada = { ...pistaMonza, chanceChuva: 1 };
@@ -800,7 +813,7 @@ describe('simularCorrida', () => {
       let errosSeco = 0;
       let errosMolhado = 0;
       for (let seed = 0; seed < totalSeeds; seed++) {
-        const loadouts = [loadoutMinardi1993Barbazza('fraco')];
+        const loadouts = [loadoutRonzani1993Danesin('fraco')];
         const pistaSeca = { ...pistaMonza, chanceChuva: 0 };
         const pistaMolhada = { ...pistaMonza, chanceChuva: 1 };
         const grid = simularQuali(dataset, loadouts, pistaMonza, seed);
@@ -865,7 +878,7 @@ describe('simularCorrida', () => {
       const totalSeeds = 200;
       let achado = false;
       for (let seed = 0; seed < totalSeeds; seed++) {
-        const loadouts = [loadoutMinardi1993Barbazza('fraco'), loadoutRedBull({ jogadorId: 'forte' })];
+        const loadouts = [loadoutRonzani1993Danesin('fraco'), loadoutRedBull({ jogadorId: 'forte' })];
         const pistaSeca = { ...pistaSuzuka, chanceChuva: 0 };
         const pistaMolhada = { ...pistaSuzuka, chanceChuva: 1 };
         const grid = simularQuali(dataset, loadouts, pistaSuzuka, seed);

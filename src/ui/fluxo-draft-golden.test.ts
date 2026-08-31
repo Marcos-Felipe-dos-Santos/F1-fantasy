@@ -56,13 +56,28 @@ const PERFIS_GOLDEN: Record<string, 'passeio' | 'praGanhar'> = {
   'bot-21': 'passeio',
 };
 
-/** Os 5 sorteios de equipe/ano do humano 'voce', mesma seed/dificuldade. */
+/**
+ * Os 5 sorteios de equipe/ano do humano 'voce', mesma seed/dificuldade.
+ *
+ * 🔴 **RE-PINADOS NO PR 7 (2026-08-31) — SÓ O RÓTULO, e a distinção é o ponto.**
+ * Os cinco `ano` **não se moveram** e a ORDEM é a mesma: o sorteio devolve o
+ * mesmo registro da fixture, que passou a se chamar outra coisa. Se algum `ano`
+ * tivesse mudado de lugar, seria mudança de COMPORTAMENTO, não de nome — e
+ * este golden é justamente o que separa as duas.
+ *
+ *   Benetton → Salviati · Williams → Pemberley · McLaren → Ridgeway
+ *   Sauber   → Baldern
+ *
+ * 🔒 **Os cinco valores foram DERIVADOS da `TABELA_NOMES` e só então conferidos
+ * contra a saída** — nunca copiados do "Received" do vermelho. É a regra que o
+ * comentário de `scripts/balance.test.ts` impõe e que o PR 6 já pagou uma vez.
+ */
 const SORTEIOS_VOCE_GOLDEN = [
-  { equipe: 'Benetton', ano: 1993 },
-  { equipe: 'Williams', ano: 2023 },
-  { equipe: 'McLaren', ano: 2004 },
-  { equipe: 'Sauber', ano: 2004 },
-  { equipe: 'Williams', ano: 2004 },
+  { equipe: 'Salviati', ano: 1993 },
+  { equipe: 'Pemberley', ano: 2023 },
+  { equipe: 'Ridgeway', ano: 2004 },
+  { equipe: 'Baldern', ano: 2004 },
+  { equipe: 'Pemberley', ano: 2004 },
 ];
 
 describe('golden snapshot: iniciarDraftSingle("demo", "dificil") == main pré-PR 2.1a', () => {

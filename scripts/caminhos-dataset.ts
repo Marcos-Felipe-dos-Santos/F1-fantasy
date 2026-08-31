@@ -100,6 +100,19 @@ export const PUBLICADO_EQUIPE_ANOS = join(DATA_DIR, 'equipe-anos.json');
 export const FIXTURE_DIR = join(RAIZ, 'src', 'fixtures', 'dataset-semente');
 
 /**
+ * O `equipe-anos.json` da fixture. **Fictício desde o PR 7 (2026-08-31).**
+ *
+ * 🔒 **Mora AQUI, e não no `anonimizar-fixture.ts`, por uma razão concreta:** a
+ * cerca permanente (`scripts/fixture-semente.test.ts`) precisa deste caminho, e
+ * o script de migração é **descartável por desenho** — é de uma via, não tem
+ * `npm run`, e some no dia em que alguém limpar migrações já aplicadas. Deixar
+ * a constante lá acoplaria a cerca ao artefato descartável.
+ * 📌 É a regra do topo deste arquivo aplicada: *"caminho novo de dataset entra
+ * AQUI, não num script."* Achado da revisão do PR 7.
+ */
+export const FIXTURE_EQUIPE_ANOS = join(FIXTURE_DIR, 'equipe-anos.json');
+
+/**
  * Tabela `id real → nome fictício` (PR 4 da trilha).
  *
  * 🔒 **Mora em `scripts/`, e o motivo é MECÂNICO, não de gosto:**

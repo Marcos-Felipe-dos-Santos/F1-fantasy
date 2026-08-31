@@ -46,10 +46,21 @@
  * O par `Red Bull 2023` estava nos três blocos e `Ferrari 2004` em dois. **Não
  * é duplicação a ser "limpa"** — é o que separa origens que coincidiam **por
  * acaso** e que deixaram de coincidir no PR 6.
- * ✅ **E deixaram mesmo:** desde o PR 6, `DATA_RED_BULL_2023` vale
+ * ~~✅ **E deixaram mesmo:** desde o PR 6, `DATA_RED_BULL_2023` vale
  * `Kaldrix 2023` enquanto `FIXTURE_RED_BULL_2023` e `DERIVADO_RED_BULL_2023`
- * seguem em `Red Bull 2023`. **É a prova de que a partição pagou** — sem ela,
+ * seguem em `Red Bull 2023`.~~ **É a prova de que a partição pagou** — sem ela,
  * uma constante só não serviria os três lados. Quem deduplicar reabre a janela.
+ * 🔴 **A LINHA RISCADA ENVELHECEU NO PR 7 (2026-08-31), e é riscada NO LUGAR.**
+ * `FIXTURE_RED_BULL_2023` **passou a valer `Kaldrix 2023`** junto com o
+ * `DATA_*`; só o `DERIVADO_*` segue em `Red Bull 2023`, e segue **para sempre**,
+ * porque a entrada do pipeline é real por desenho. **A janela de que ela falava
+ * era a do PR 6 → PR 7, e ela FECHOU.**
+ * ⚠️ Riscada, e não apagada, porque descreve corretamente um estado que existiu
+ * — mas em presente do indicativo ela contradiz o bloco `FIXTURE_*` lá embaixo,
+ * e **qual das duas vale passaria a depender de qual o leitor abrisse primeiro.**
+ * É a segunda vez que este arquivo paga isso: ver o `⚠️` do PR 6, ~15 linhas
+ * abaixo, sobre o bloco que "tinha ficado para trás enquanto o resto do arquivo
+ * era atualizado". Achado da revisão do PR 7.
  *
  * ⚠️ **PRECISÃO sobre a coluna "nunca":** o que segue real por desenho é
  * `equipe-anos.derivado.json`, a ENTRADA do pipeline — e ele continua sendo a
@@ -107,6 +118,17 @@
  *   🔑 É a mesma família da 0(aa): dois consumidores que parecem o mesmo caso
  *   lendo datasets diferentes. **Foi o ensaio que separou os dois** — a leitura
  *   os tinha juntado.
+ *   🔴 **CORRIGIDO NO PR 7 (2026-08-31) — ESTE PARÁGRAFO SUBDIMENSIONOU O PR 7,
+ *   e é riscado no lugar.** Ler "`fluxo-draft-golden.test.ts` é PR 7" como *"o
+ *   que cai no PR 7"* é ler a resposta de outra pergunta: o ensaio do PR 6
+ *   perguntava **"cai no PR 6?"**, e só listou os arquivos que ele tinha na
+ *   mão. **Medido no PR 7, trocando a fixture:** o baseline vermelho é de
+ *   **66 testes em 9 arquivos** — `corrida` 34, `quali` 8, `carro` 7,
+ *   `campeonato` 7, `draft` 5, `bots` 2, `dataset` 1, o portão 1, e
+ *   `fluxo-draft-golden` **1 de 66**. A causa são os **115 sítios-linha** que
+ *   citam id da fixture como literal, e que **este módulo nunca funilou** — ele
+ *   guarda pares `equipe/ano`, nunca ids. Quem orçar o PR 7 pelo parágrafo
+ *   acima orça um arquivo e encontra nove.
  * - **`src/engine/types.test.ts`** — fixtures sintéticas, com ids e notas
  *   inventados. Não tocam o dataset.
  * - **Nome de equipe em prosa** (nome de teste, comentário) e **`'Red Bull Ring'`**,
@@ -204,22 +226,48 @@ export const DERIVADO_SPOT_CHECKS_BUCKETS: readonly RefEquipeAno[] = [
 // `src/engine/draft-test-fixtures.ts`, `src/engine/corrida.test.ts`.
 // ═══════════════════════════════════════════════════════════════════════════
 
+/**
+ * 🔴 TROCADAS NO PR 7 (2026-08-31) — a fixture virou fictícia, e este é o
+ * ÚNICO bloco que o PR edita. **`DATA_*` e `DERIVADO_*` ficam intocados**, que
+ * é exatamente o que a partição comprou.
+ *
+ * A equipe é a MESMA em cada linha, com o nome que a `TABELA_NOMES` lhe dá:
+ *   `red_bull` → Kaldrix   · `ferrari` → Sarterra  · `mercedes` → Halbrandt
+ *   `mclaren`  → Ridgeway  · `aston_martin` → Ardsley Vane
+ *   `williams` → Pemberley · `renault` → Charmont  · `sauber` → Baldern
+ *   `minardi`  → Ronzani
+ *
+ * ⚠️ **Os NOMES das constantes ficam com a grafia real** (`FIXTURE_RED_BULL_2023`,
+ * não `FIXTURE_KALDRIX_2023`), **mesmo precedente e mesmo motivo do `DATA_*` no
+ * PR 6:** são identificadores de código, não dado servido, e renomeá-los
+ * torraria a rastreabilidade da trilha inteira sem tirar um byte do bundle.
+ * **O portão do PR 1 não mede `.ts`.**
+ *
+ * 🔑 **A JANELA ENTRE O PR 6 E O PR 7 FECHOU AQUI.** Desde o PR 6,
+ * `DATA_RED_BULL_2023` valia `Kaldrix 2023` enquanto este bloco seguia em
+ * `Red Bull 2023` — nomes diferentes para a MESMA equipe, cada um servindo o
+ * dataset que ainda era o seu. Agora os dois dizem `Kaldrix`, e `DERIVADO_*`
+ * segue em `Red Bull` **para sempre**, porque a entrada do pipeline é real por
+ * desenho. **Quem deduplicar os três blocos agora reabre a janela** — eles
+ * voltaram a coincidir em VALOR, não em ORIGEM.
+ */
+
 /** `draft-test-fixtures.ts` — o mesmo par que `DATA_RED_BULL_2023`, outra origem. */
-export const FIXTURE_RED_BULL_2023: RefEquipeAno = { equipe: 'Red Bull', ano: 2023 };
+export const FIXTURE_RED_BULL_2023: RefEquipeAno = { equipe: 'Kaldrix', ano: 2023 };
 
 // Grid de 12 equipes distintas (`src/engine/corrida.test.ts:84-95`), para
 // exercitar a pontuação FIA com mais de 10 carros.
-export const FIXTURE_FERRARI_2023: RefEquipeAno = { equipe: 'Ferrari', ano: 2023 };
-export const FIXTURE_MERCEDES_2023: RefEquipeAno = { equipe: 'Mercedes', ano: 2023 };
-export const FIXTURE_MCLAREN_2023: RefEquipeAno = { equipe: 'McLaren', ano: 2023 };
-export const FIXTURE_ASTON_MARTIN_2023: RefEquipeAno = { equipe: 'Aston Martin', ano: 2023 };
-export const FIXTURE_WILLIAMS_2023: RefEquipeAno = { equipe: 'Williams', ano: 2023 };
-export const FIXTURE_FERRARI_2004: RefEquipeAno = { equipe: 'Ferrari', ano: 2004 };
-export const FIXTURE_WILLIAMS_2004: RefEquipeAno = { equipe: 'Williams', ano: 2004 };
-export const FIXTURE_MCLAREN_2004: RefEquipeAno = { equipe: 'McLaren', ano: 2004 };
-export const FIXTURE_RENAULT_2004: RefEquipeAno = { equipe: 'Renault', ano: 2004 };
-export const FIXTURE_SAUBER_2004: RefEquipeAno = { equipe: 'Sauber', ano: 2004 };
-export const FIXTURE_MINARDI_2004: RefEquipeAno = { equipe: 'Minardi', ano: 2004 };
+export const FIXTURE_FERRARI_2023: RefEquipeAno = { equipe: 'Sarterra', ano: 2023 };
+export const FIXTURE_MERCEDES_2023: RefEquipeAno = { equipe: 'Halbrandt', ano: 2023 };
+export const FIXTURE_MCLAREN_2023: RefEquipeAno = { equipe: 'Ridgeway', ano: 2023 };
+export const FIXTURE_ASTON_MARTIN_2023: RefEquipeAno = { equipe: 'Ardsley Vane', ano: 2023 };
+export const FIXTURE_WILLIAMS_2023: RefEquipeAno = { equipe: 'Pemberley', ano: 2023 };
+export const FIXTURE_FERRARI_2004: RefEquipeAno = { equipe: 'Sarterra', ano: 2004 };
+export const FIXTURE_WILLIAMS_2004: RefEquipeAno = { equipe: 'Pemberley', ano: 2004 };
+export const FIXTURE_MCLAREN_2004: RefEquipeAno = { equipe: 'Ridgeway', ano: 2004 };
+export const FIXTURE_RENAULT_2004: RefEquipeAno = { equipe: 'Charmont', ano: 2004 };
+export const FIXTURE_SAUBER_2004: RefEquipeAno = { equipe: 'Baldern', ano: 2004 };
+export const FIXTURE_MINARDI_2004: RefEquipeAno = { equipe: 'Ronzani', ano: 2004 };
 
 /** As 12, na ORDEM original — a ordem alimenta `jogadorId: p1…p12`. */
 export const FIXTURE_GRID_12_EQUIPES_DISTINTAS: readonly RefEquipeAno[] = [

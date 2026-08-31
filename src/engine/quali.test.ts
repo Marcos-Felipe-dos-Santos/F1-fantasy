@@ -10,14 +10,27 @@ const dataset = criarDataset(equipeAnosReal, pecasReal, pistasReal);
 const pistaMonaco = dataset.pistasById.get('pista-monaco')!;
 const pistaMonza = dataset.pistasById.get('pista-monza')!;
 
+/**
+ * ⚠️ **PR 7 (2026-08-31) — os NOMES destes helpers ficam com a grafia real, e os
+ * ids que eles carregam são FICTÍCIOS.** `loadoutFerrari` monta `sarterra-…`,
+ * `loadoutMinardi` monta `ronzani-…`. **Não é inconsistência esquecida:** é o
+ * mesmo precedente e o mesmo motivo do `DATA_*`/`FIXTURE_*` em
+ * `src/fixtures/referencias-dataset.ts` — identificador de código não é dado
+ * servido, o portão dos nomes reais **não mede `.ts`**, e renomeá-los torraria a
+ * rastreabilidade da trilha sem tirar um byte do bundle.
+ * 🔑 O mapa, para quem for ler os ids: Red Bull → Kaldrix · Ferrari → Sarterra ·
+ * Mercedes → Halbrandt · McLaren → Ridgeway · Williams → Pemberley ·
+ * Aston Martin → Ardsley Vane · Renault → Charmont · Sauber → Baldern ·
+ * Minardi → Ronzani · Benetton → Salviati.
+ */
 function loadoutRedBull(overrides: Partial<Loadout> = {}): Loadout {
   return {
     jogadorId: 'j1',
-    pilotoId: 'redbull-2023-piloto-verstappen',
-    chassiId: 'redbull-2023-chassi',
-    motorId: 'redbull-2023-motor',
-    estrategistaId: 'redbull-2023-estrategista',
-    pitId: 'redbull-2023-pit',
+    pilotoId: 'kaldrix-2023-piloto-sander_doornbosch',
+    chassiId: 'kaldrix-2023-chassi',
+    motorId: 'kaldrix-2023-motor',
+    estrategistaId: 'kaldrix-2023-estrategista',
+    pitId: 'kaldrix-2023-pit',
     pecaId: 'peca-composto-macio',
     ...overrides,
   };
@@ -26,11 +39,11 @@ function loadoutRedBull(overrides: Partial<Loadout> = {}): Loadout {
 function loadoutFerrari(overrides: Partial<Loadout> = {}): Loadout {
   return {
     jogadorId: 'j2',
-    pilotoId: 'ferrari-2023-piloto-leclerc',
-    chassiId: 'ferrari-2023-chassi',
-    motorId: 'ferrari-2023-motor',
-    estrategistaId: 'ferrari-2023-estrategista',
-    pitId: 'ferrari-2023-pit',
+    pilotoId: 'sarterra-2023-piloto-valbonne',
+    chassiId: 'sarterra-2023-chassi',
+    motorId: 'sarterra-2023-motor',
+    estrategistaId: 'sarterra-2023-estrategista',
+    pitId: 'sarterra-2023-pit',
     pecaId: 'peca-composto-macio',
     ...overrides,
   };
@@ -39,11 +52,11 @@ function loadoutFerrari(overrides: Partial<Loadout> = {}): Loadout {
 function loadoutMinardi(jogadorId: string, overrides: Partial<Loadout> = {}): Loadout {
   return {
     jogadorId,
-    pilotoId: 'minardi-2004-piloto-baumgartner',
-    chassiId: 'minardi-2004-chassi',
-    motorId: 'minardi-2004-motor',
-    estrategistaId: 'minardi-2004-estrategista',
-    pitId: 'minardi-2004-pit',
+    pilotoId: 'ronzani-2004-piloto-beregszaszi',
+    chassiId: 'ronzani-2004-chassi',
+    motorId: 'ronzani-2004-motor',
+    estrategistaId: 'ronzani-2004-estrategista',
+    pitId: 'ronzani-2004-pit',
     pecaId: 'peca-composto-macio',
     ...overrides,
   };
@@ -126,11 +139,11 @@ describe('simularQuali', () => {
         loadoutMinardi('j3'),
         {
           jogadorId: 'j4',
-          pilotoId: 'mercedes-2023-piloto-hamilton',
-          chassiId: 'mercedes-2023-chassi',
-          motorId: 'mercedes-2023-motor',
-          estrategistaId: 'mercedes-2023-estrategista',
-          pitId: 'mercedes-2023-pit',
+          pilotoId: 'halbrandt-2023-piloto-calderwood',
+          chassiId: 'halbrandt-2023-chassi',
+          motorId: 'halbrandt-2023-motor',
+          estrategistaId: 'halbrandt-2023-estrategista',
+          pitId: 'halbrandt-2023-pit',
           pecaId: 'peca-das',
         },
       ];

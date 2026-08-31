@@ -136,9 +136,14 @@ const ESPERADO_AGULHAS_DEDUPLICADAS = 909;
  * 🔒 BASELINE COMMITADO — contagem EXATA por arquivo.
  *
  * **Atualizar este bloco é ato deliberado, e é o ponto do portão.** Cada PR da
- * trilha derruba números daqui: o PR 6 (a troca) derruba
- * `src/data/equipe-anos.json`; o PR 7 derruba `equipe-anos.json` da fixture.
+ * trilha derrubou números daqui: o PR 6 (a troca) derrubou
+ * `src/data/equipe-anos.json`; o PR 7 derrubou `equipe-anos.json` da fixture.
  * **Baixar um número sem que o dado tenha mudado é fraudar a medição.**
+ * ✅ **A TRILHA ACABOU AQUI: as DUAS linhas que podiam ir a zero foram** — os
+ * dois `equipe-anos.json`, o de `src/data/` no PR 6 e o da fixture no PR 7. O que
+ * resta são os 6 do piso, e nenhum PR futuro os baixa sem mudar uma DECISÃO —
+ * os 4 de `massa` são sobre-contagem sobre dado limpo, e os 2 de `Red Bull
+ * Ring` dependem da T2, hoje adiada.
  *
  * 📉 **MOVIDO PELA PRIMEIRA VEZ NO PR 3 (peças despidas + T1), 2026-08-27:**
  * total **9522 → 9486 (−36)**. Quatro linhas mudaram, as outras duas não.
@@ -161,14 +166,38 @@ const ESPERADO_AGULHAS_DEDUPLICADAS = 909;
  * coincidência exata — e foi conferida contra a saída do `anonimizar` **antes**
  * de publicar. **Número que só existe depois do fato não pode ser surpreendido.**
  *
- * 🔒 **O QUE SOBRA SÃO 249, E O PR 7 NÃO OS ZERA — o piso é 6.** Quebrado por
- * arquivo, medido:
+ * 📉 **MOVIDO PELA TERCEIRA VEZ NO PR 7 (a fixture), 2026-08-31:**
+ * total **249 → 6 (−243). O PISO FOI ATINGIDO.** Uma linha mudou; as outras
+ * cinco não.
+ *
+ *   | arquivo                                       | era | virou | o que saiu        |
+ *   |-----------------------------------------------|-----|-------|-------------------|
+ *   | `src/fixtures/dataset-semente/equipe-anos.json`| 243 |     0 | a fixture inteira |
+ *
+ * 🔒 **OS 6 QUE SOBRAM SÃO O PISO, E ELE FOI REGISTRADO ANTES DO PR 7**, a
+ * pedido do dev — *"o que sobrar precisa estar explicado, não descoberto
+ * depois."* Quebrado por arquivo, medido:
  *
  *   | arquivo                          | conta | natureza                    | PR 7 |
  *   |----------------------------------|-------|-----------------------------|------|
- *   | fixture `equipe-anos.json`       |  243  | nome real de verdade        | → 0  |
+ *   | fixture `equipe-anos.json`       | ~~243~~ **0** | nome real de verdade | ✅ zerado |
  *   | `pecas.json` (×2)                |  2+2  | **sobre-contagem** de `massa` | fica |
  *   | `pistas.json` (×2)               |  1+1  | `Red Bull Ring` — **T2 adiada** | fica |
+ *
+ * 🔴 **6 NÃO É "o repositório está limpo", e o PR 7 não muda isso.** Este portão
+ * mede SEIS ARQUIVOS DE DADOS. Segue fora do escopo: **código-fonte** (`.ts`),
+ * o **bundle** (`dist/`), `scripts/derived/` (que É o universo, real por
+ * desenho) e — descoberto NESTE PR — **qualquer `.md`**. Ver a nota logo abaixo.
+ *
+ * 🔴 **PONTO CEGO ACHADO NO PR 7: O PORTÃO NÃO MEDE `.md`, E ISSO CUSTOU CARO
+ * JUSTAMENTE AQUI.** `src/fixtures/dataset-semente/README.md` citava
+ * `ferrari-2004-piloto-schumacher` e se descrevia como cópia byte-idêntica de
+ * `src/data/`. **O `BASELINE` lista só os seis `.json`** e `caminhoDe` resolve
+ * por nome de arquivo — nada aqui olharia um `.md`. Ou seja: era possível
+ * bater **6** e deixar nome real **no diretório que existe para ser lido com
+ * segurança**, que é a única razão de a fixture entrar neste portão.
+ * **O README foi consertado no PR 7, à mão. A cegueira continua** — quem
+ * acrescentar prosa a `src/data/` ou à fixture não é vigiado por nada.
  *
  * ⚠️ **Os 4 de `massa` são sobre-contagem sobre dado LIMPO** — a peça perdeu a
  * marca no PR 3 e o que resta é `"peca-amortecedor-massa"` / `"Amortecedor de
@@ -183,8 +212,11 @@ const ESPERADO_AGULHAS_DEDUPLICADAS = 909;
  * aprovado pelo dev em 2026-08-27.** Motivo: `peca-suspensao-ativa-fw15` é
  * referenciado contra o dataset REAL (`card-peca-cego.test.ts`,
  * `visibilidade.test.ts`) **e** contra a FIXTURE (`corrida.test.ts`); trocar um
- * lado só deixaria duas grafias vivas do mesmo id durante os PRs 3–6. **O PR 7
- * segue dono de `src/fixtures/dataset-semente/equipe-anos.json` (243).**
+ * lado só deixaria duas grafias vivas do mesmo id durante os PRs 3–6. ~~**O PR 7
+ * segue dono de `src/fixtures/dataset-semente/equipe-anos.json` (243).**~~
+ * ✅ **E FOI: o PR 7 a trocou em 2026-08-31, 243 → 0.** A linha é riscada no
+ * lugar porque o "segue dono" está em presente do indicativo e mandaria a
+ * próxima sessão procurar trabalho que já foi feito.
  *
  * 🔑 **O 2 que sobra em cada `pecas.json` é 100% sobre-contagem de `massa`** —
  * ver a nota de sobre-contagem acima. O dado está limpo; o número não desce.
@@ -205,7 +237,7 @@ const BASELINE: ReadonlyArray<readonly [string, number]> = [
   ['src/data/equipe-anos.json', 0],
   ['src/data/pecas.json', 2],
   ['src/data/pistas.json', 1],
-  ['src/fixtures/dataset-semente/equipe-anos.json', 243],
+  ['src/fixtures/dataset-semente/equipe-anos.json', 0],
   ['src/fixtures/dataset-semente/pecas.json', 2],
   ['src/fixtures/dataset-semente/pistas.json', 1],
 ];

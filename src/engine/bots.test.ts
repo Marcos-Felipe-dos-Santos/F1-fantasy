@@ -28,20 +28,21 @@ function stateComRodada(
 }
 
 describe('bot "pra ganhar" (baseline vermelho, §12)', () => {
-  it('com todos os slots livres, escolhe o componente de maior média de notas (Red Bull 2023)', () => {
+  it('com todos os slots livres, escolhe o componente de maior média de notas (Kaldrix 2023)', () => {
     const state = stateComRodada('bot-1', 1);
     const escolha = escolherBot(state, dataset, 'bot-1');
 
-    // Red Bull 2023 (dados reais): piloto Verstappen média ~90.67, chassi
-    // 89.4, motor 89.0, estrategista 89.0, pit 91.0 — pit é o maior.
+    // Kaldrix 2023 (notas da fixture, inalteradas pelo PR 7): piloto
+    // Sander Doornbosch média ~90.67, chassi 89.4, motor 89.0, estrategista
+    // 89.0, pit 91.0 — pit é o maior.
     expect(escolha).toEqual({ tipo: 'componente', slot: 'pit' });
   });
 
   it('com só 2 slots livres, escolhe o melhor dos 2', () => {
     const state = stateComRodada('bot-1', 4, {
-      pilotoId: 'redbull-2023-piloto-verstappen',
-      estrategistaId: 'redbull-2023-estrategista',
-      pitId: 'redbull-2023-pit',
+      pilotoId: 'kaldrix-2023-piloto-sander_doornbosch',
+      estrategistaId: 'kaldrix-2023-estrategista',
+      pitId: 'kaldrix-2023-pit',
     });
     const escolha = escolherBot(state, dataset, 'bot-1');
 
