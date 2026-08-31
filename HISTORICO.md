@@ -2469,6 +2469,276 @@ Arquivo novo: `preview/campeonato-online.html` (não sobrescreve `preview/campeo
 
 ---
 
+## NOMES FICTÍCIOS — PR 6: A TROCA DO DATASET (2026-08-30, `5036ae8`) — 🔴 ALTO RISCO
+
+**Base:** `62eabb8` (doc do PR de posicionamento). **Plano:** `PLANOS_ATIVOS.md` §"NOMES FICTÍCIOS —
+o plano dos 7 PRs", item 6. **Escopo:** `src/data/equipe-anos.json` (o dado servido), `anonimizar.ts`,
+`caminhos-dataset.ts`, o bloco `DATA_*` de `referencias-dataset.ts`, os dois oráculos de
+`balance.test.ts`, `VERSAO_APP`, `VERSAO_FORMATO`, o digest, o portão dos nomes reais, o `.gitignore`
+e **um arquivo novo: `scripts/publicacao.test.ts`.** **Sem push, sem tag.**
+
+📌 **Doc escrita pela SESSÃO PRINCIPAL, a pedido explícito do dev** — e por uma sessão que **não é a
+que fez o PR**. Consequência assumida e visível em todo este registro: **cada número foi REMEDIDO**,
+não copiado do comentário de código que o descreve. Método e saídas em
+`preview/medicoes-pr6/MEDICOES-DA-DOC.md`. **Uma medição não reproduziu** — está registrada como
+divergência aberta, não harmonizada.
+
+### O que o PR faz
+
+    scripts/derived/equipe-anos.derivado.json  (REAL, entrada — segue real)
+         ↓  npm run dataset:anonimizar
+    src/data/equipe-anos.json                  (FICTÍCIO, saída, COMMITADA)
+
+`equipe-anos.anonimo.json` — o artefato de ensaio do PR 5 — **deixa de existir**, e com ele o
+`EQUIPE_ANOS_ANONIMO` de `caminhos-dataset.ts`. **Saída ÚNICA, decisão do dev:** *"escrever nos dois
+cria duas fontes que precisam concordar — o defeito que a trilha inteira existe para matar."*
+**A ENTRADA do pipeline segue REAL por desenho.** O fictício nasce na publicação.
+
+### 🔒 As DUAS coisas que morreram — e por que confundi-las era o risco
+
+**Palavras do dev:** *"a cópia manual sem guarda existe há meses e ninguém sabia até o PR 5 medir.
+Trocar um passo manual sem guarda por um script sem guarda não seria ganho — seria a mesma dívida
+com nome novo."*
+
+- **O passo manual** morre porque o script publica. `src/data/equipe-anos.json` era **cópia byte a
+  byte** de `equipe-anos.derivado.json` (mesmo `git hash-object`), **nenhum script fazia a cópia**, e
+  **nada falhava se os dois divergissem** — a identidade era resultado de alguém ter copiado certo.
+- **A ausência de guarda** morre por `scripts/publicacao.test.ts`, que assere em todo `npm test`
+  que `src/data/equipe-anos.json === anonimizar(derivado, tabela)`.
+
+🔒 **A cerca não usa `toBe` sobre o conteúdo**, e é regra: um `expect(publicado).toBe(esperado)`
+vermelho mandaria o vitest imprimir **1 MB de diff** — a leitura integral que o `CLAUDE.md` proíbe,
+entrando pela porta da mensagem de erro. `primeiraDivergencia` devolve string vazia quando são
+iguais e, quando não são, **diagnóstico de tamanho fixo** (índice, os dois tamanhos, janela de 60
+caracteres). 🔑 **Portão que só é seguro enquanto passa não é seguro.**
+
+### 🔴 O C1 DA REVISÃO — o digest dependia do MODO DE CHECKOUT, não do conteúdo
+
+**A causa:** `core.autocrlf=true` **sem `.gitattributes`**. Arquivo materializado pelo git chega em
+**CRLF**; arquivo escrito por script chega em **LF**. Desde este PR, `src/data/equipe-anos.json` é
+escrito por script — e passou a conviver, dentro do mesmo digest, com dois arquivos de checkout.
+**Medido no próprio `src/data/`:**
+
+    equipe-anos.json:  CRLF=0      LF-solto=52430   ← escrito por anonimizar.ts
+    pecas.json:        CRLF=218    LF-solto=0       ← checkout
+    pistas.json:       CRLF=102    LF-solto=0       ← checkout
+
+**A medição, reproduzida na sessão da doc** (réplica do `digestDoConteudo()`):
+
+| variante | dataset em LF | dataset em CRLF |
+|---|---|---|
+| **CRU** (antes do conserto) | `0d9efb33` | `be8578eb` |
+| **NORMALIZADO** (o conserto) | **`a2b34e13`** | **`a2b34e13`** |
+
+🔑 **A ANTI-VACUIDADE É A LINHA DE BAIXO, NAS DUAS CÉLULAS.** Conserto medido só no lado LF é
+indistinguível de nenhum conserto. `a2b34e13` está colado em `src/engine/versao.test.ts:36`.
+
+🔴 **O modo de falha evitado, dito por inteiro:** o primeiro `git clone` ou `git checkout --`
+deixaria `versao.test.ts` vermelho com a mensagem *"MUDOU e `VERSAO_APP` não acompanhou"* **sem que
+nada tivesse mudado** — e a instrução de conserto do próprio teste ("cole o digest atual")
+produziria **ping-pong entre duas máquinas**. Vermelho que não é regressão, na cerca que existe para
+detectar regressão.
+
+🔑 **A contradição que denunciou o defeito:** `scripts/publicacao.test.ts`, do mesmo PR, **já**
+normalizava CRLF → LF com a tese escrita no docblock (*"final de linha é artefato de CHECKOUT, não
+conteúdo"*), e `versao.test.ts` **não**. Dois arquivos, mesma tese, comportamentos opostos.
+
+⚠️ **A alternativa NÃO tomada, e é decisão do dev:** pinar `*.json` como LF num `.gitattributes`
+resolveria a CLASSE inteira, mas reescreveria o final de linha do repo todo no próximo checkout.
+**É PR próprio.**
+
+### Os números
+
+- **`npm test` 1642/68** (era 1638/67), 2 rodadas. Os **4 novos** são a cerca de publicação.
+- **`npm run test:party` 19/19** · typecheck **0** (três projetos) · eslint **0** (exit code) ·
+  build **0**.
+- 🔴 **`VERSAO_APP` 3.4.4 → 3.4.5** e **`VERSAO_FORMATO` 2 → 3**, os dois **obrigatórios**. 771
+  registros e os **cinco ids de loadout** mudaram; `hashDoDraft` consome `${equipe}@${ano}` e os seis
+  ids, então cliente velho e novo hasheariam o mesmo estado de formas diferentes — **alarme falso
+  imediato**, o modo de falha que o handshake existe para impedir.
+- **Digest `442b210c` → `a2b34e13`.** ⚠️ **O salto não é só o dado: a FÓRMULA mudou junto** (a
+  normalização). Só o dado, sem normalizar, daria `0d9efb33`.
+- 📉 **Portão dos nomes reais: 9.486 → 249 (−9.237).** Uma linha mudou; as cinco outras não.
+  ⚠️ **A linha `src/data/equipe-anos.json` NÃO saiu da lista `BASELINE`** — continua lá medindo
+  **0**, que é o que mantém a cerca viva. (A redação anterior dizia "derrubada"; corrigida.)
+  🔑 **O zero foi PREVISTO antes de ser medido**, pela mecânica da agulha e da cerca de quase-marca,
+  e conferido contra a saída do `anonimizar` **antes** de publicar.
+  🔒 **O PR 7 não zera os 249 — o piso é 6:** 243 da fixture (→ 0 no PR 7) · 4 de `massa`
+  (sobre-contagem sobre dado limpo) · 2 de `Red Bull Ring` (resíduo real, T2 adiada).
+- 📦 **Bundle: 114** em `dist/assets/index-B0pMOBwk.js` — `button`=57 · `sala`=54 · `massa`=2 ·
+  `Red Bull`=1. ⚠️ **`dist/` inteiro dá 128** (CSS: `shadow`=13, `button`=1). **Contra-prova:**
+  `Ferrari` 152× no derivado → `Sarterra` 152× no publicado e no bundle; `ferrari` 456× →
+  `sarterra` 456×. **Contagem idêntica, rótulo trocado** — é o que separa "anonimizado" de
+  "encolhido".
+  🔴 **O bundle SEGUE SEM PORTÃO.** O docblock dizia *"entra como passo do PR 6"*; o PR mediu **à
+  mão**. Corrigido no lugar: **medição manual não é portão.**
+- ⚠️ **`npm run dataset:report`: 255 linhas, zero `'(não encontrado)'`, sha `c509049b0e…` — byte a
+  byte igual ao do PR 2. E isso NÃO atesta a publicação:** `dataset-report.ts:265-266` lê a
+  **entrada real**, que este PR não toca. **O relatório é cego para `src/data/`.**
+
+### ⚖️ O balance moveu — DELTA ≠ ZERO pela primeira vez na trilha
+
+**40 linhas.** Novo baseline `a0aa98e48d259a4e9ce9752da505331cfcf4ecf6085c51ea053b1f5d6a2aec37`
+(`preview/medicoes-pr6/`), **com a MESMA receita de filtro de 4 padrões do PR 2** — conferido por
+sha256 nesta sessão, junto com o `e62fe729…` do baseline antigo, preservado ao lado para o diff
+continuar reproduzível.
+
+🔑 **O filtro NÃO foi alargado até o sha voltar a bater.** Isso teria escondido o delta em vez de
+explicá-lo — a "allowlist até o número ficar bonito" que este projeto já aposentou uma vez.
+
+✅ **Não é mudança de balanceamento, e isso é MEDIDO, não argumentado:** derivado e publicado,
+despidos de nome e id, dão a **mesma string byte a byte** — 771 registros, 285.271 bytes,
+sha `8eab5ec0237b7e573a10b0cf711e674a2fb3934a635ce6bc90e048a782cdc8eb` dos dois lados.
+
+**O que se moveu:** a 6ª casa do `spearmanMedio`, o `P(pódio fora do top-5)` (7.5% → 7.0% = **1
+campeonato em 200**), o histograma de PNEU e alguns pontos na 2ª casa. **Não se moveram:**
+`spearmanMin`, `spearmanMax`, `pCampeaoTop3Forca` (0.99), todos os intervalos de confiança e as
+colunas de delta das alavancas.
+
+**Causa:** o **desempate lexicográfico por `id`** — pendência **0(ae)**, aberta neste PR. Decisão do
+dev: **caminho (C), aceitar o delta, re-capturar e registrar.**
+
+📌 **`balance.test.ts` re-pinado — 4 linhas mudaram só de rótulo, 2 TROCARAM DE PILOTO.**
+`pneuMedio-min` e `pneuAlto-min` mudaram de equipe/ano inteiro porque o extremo do bucket é **empate
+massivo** (42 pilotos em PNEU 60, 23 em PNEU 81 — contagem idêntica antes e depois). **O PNEU do
+escolhido é o mesmo extremo nos dois mundos.**
+🔒 **Como foi re-pinado, e a ordem importa:** cada valor **derivado de `scripts/nomes-ficticios.json`**
+e só ENTÃO conferido contra a saída. **Copiar o "Received" do vermelho seria o ajuste automático que
+o próprio comentário do teste proíbe.** A primeira redação da nota afirmava que as duas linhas
+trocadas *não* eram deriváveis — **era falso**, e a revisão pegou: o vencedor é o mínimo
+lexicográfico do conjunto de empatados, que sai do dataset real remapeado pela tabela.
+
+### 🧪 A tabela de mutações — a cerca e o diferencial NÃO se substituem
+
+Refeita na sessão da doc; baseline limpo dos dois arquivos **20/20**.
+
+| mutante | diferencial (`anonimizar.test.ts`) | cerca (`publicacao.test.ts`) |
+|---|---|---|
+| **M-cp** — `anonimizar` devolve o derivado | 🔴 7 vermelhos | 🔴 2 vermelhos |
+| **M-parordem** — par `[0,1]` → `[1,0]` | 🔴 3 (inclui `hashDaCorrida`, :325) | 🔴 1 |
+| **M-estrategista** — o nome perde o `${ano}` | 🔴 1 (:245, o 4º sítio) | 🔴 1 (:139) |
+| **M-estrategista + REPUBLICAR** | 🔴 1 (:245) | ✅ **VERDE 4/4** |
+| **M-artefato** — código limpo, artefato mutado | ✅ **VERDE 16/16** | 🔴 1 (:139) |
+
+**Achado 1 — as duas últimas linhas, e são simétricas.** A cerca compara um **artefato fixo no
+disco** contra a função: mutar **e republicar** a devolve ao verde, porque os dois lados passam a
+mentir juntos. O diferencial é propriedade sobre a **transformação** e segue vermelho. Na direção
+oposta, artefato desatualizado com código limpo deixa o diferencial **inteiro verde** e só a cerca
+acusa. 🔑 **Nenhuma cobre o buraco da outra** — a tese do dev, medida.
+
+**Achado 2 — `M-parordem` derruba `hashDaCorrida`, e nenhuma cerca de artefato pegaria isso.**
+Reordenar o par troca as NOTAS de lugar dentro da equipe e a corrida deixa de bater bit a bit. É o
+único mutante que ataca o **determinismo**; quem o pega é a metade do diferencial que roda
+draft+quali+corrida, não a comparação de arquivo.
+
+**Achado 3 — `M-estrategista` é o mais barato e o mais informativo.** Ele **passa** em "TODO
+`estrategista.nome` difere" (o nome mudou mesmo) e só cai no teste do **4º sítio**, que pina a
+interpolação exata `Estrategista ${equipe} ${ano}`. Sem essa asserção específica, uma anonimização
+"quase certa" atravessa o diferencial inteiro. 🔑 **A anti-vacuidade que vale é a mais ESPECÍFICA,
+não a mais numerosa.**
+
+🔒 **Higiene:** `src/data/equipe-anos.json` copiado antes, restaurado depois, conferido por sha256
+(`477bd7e7…`), com `git diff --stat` de volta a `15420 (+7710/−7710)`.
+
+### 🔢 O comparador — o erro de método, e a divergência que fica aberta
+
+**O erro nomeado pela sessão do PR:** um comparador que dá **0/200 por comparar coisa que não podia
+diferir**. A contra-prova está dentro do comparador refeito — **mesmo mundo × mesmo mundo dá 0/200**,
+e um zero desses é indistinguível de um zero informativo se ninguém olhar o que está sendo comparado.
+
+**O método certo é POSICIONAL, nunca por rótulo** (os rótulos mudaram todos): os dois datasets têm os
+mesmos 771 registros na mesma ordem, então todo id resolve para `"<índice>:<papel>"`. Anti-vacuidade:
+**4.626 entradas de cada lado e zero id em comum** entre os dois mundos.
+
+🔴 **A sessão do PR registrou `2 drafts em 200`; a sessão da doc mede `4/200`** (seeds 68, 88, 171 e
+175; `0..199` e `1..200` dão o mesmo). **Os dois números ficam.** O script da sessão do PR não foi
+preservado e escolher entre os dois seria inventar a medição de outra pessoa.
+
+🔒 **A MAGNITUDE É INCERTA; A CLASSE ESTÁ CONFIRMADA — formulação do dev ao fechar o PR.**
+✅ **O MECANISMO reproduz exatamente:** toda divergência é `pilotoN` trocado pelo **companheiro de
+dupla da MESMA equipe/ano**, nunca outro carro — `melhorCandidato` (`src/engine/bots.ts:58-64`)
+desempatando por id. Três das quatro caem no mesmo registro, o esperado de um empate concentrado.
+🔑 **Quem for consertar precisa saber que o número não é o ponto.** "São só 2 (ou 4) em 200" é ler o
+número errado: a frequência depende do recorte medido, do conjunto de seeds e de quantos empates o
+dataset tiver no momento — **nenhum dos três é fixo.** O que a 0(ae) afirma é que **renomeação move
+resultado.** Um conserto que persiga a frequência não conserta nada.
+
+### 🔒 A lição de processo que este PR pagou — ditada pelo dev em 2026-08-30
+
+**Palavras dele:** *"medição cujo script não fica em disco não é reproduzível. Se a captura importa,
+ou o script fica rastreado ou o número não vale."* **Virou convenção no `ESTADO.md` §Convenções.**
+
+**Duas ocorrências, o mesmo mecanismo:** as capturas do `balance` (PR 2 e PR 6) vivem em
+`preview/medicoes-pr*/`, **gitignored** — sobrevivem nesta máquina e **não existem no histórico**,
+então um clone limpo não tem baseline contra o qual comparar, e a receita do filtro está em prosa,
+não em script rastreado. E o **comparador do PR 6 sumiu por inteiro**, que é a razão de `2 × 4` ser
+divergência permanente em vez de diferença de recorte diagnosticável em minutos.
+
+⚠️ **A regra ainda não está cumprida:** o comparador refeito foi preservado em
+`preview/medicoes-pr6/tmp-comparador.test.ts.txt` — **no mesmo domicílio gitignored que a regra
+acabou de reprovar.** Rastreá-lo, junto com a receita do filtro, é **PR próprio e decisão do dev**.
+Dito aqui para a regra não nascer com o primeiro caso violando-a em silêncio.
+
+### 🔎 Os outros achados da revisão que viraram diff
+
+- **`.gitignore`** prometia uma exceção (`equipe-anos.anonimo.json`) para um arquivo que deixou de
+  existir. **Riscada no lugar** — prometer exceção inexistente manda o leitor procurar linha que não
+  há.
+- **`src/data/*.tmp` ignorado.** A escrita atômica (`tmp` + `rename`) agora nasce **dentro de
+  diretório versionado**: um crash entre `writeFileSync` e `renameSync` deixaria ~1 MB de JSON solto,
+  colhível por um `git add .`.
+- **A anti-vacuidade da cerca tinha a metade errada anunciada como load-bearing.** Quem carrega o
+  peso é `derivado.length === 771`; a outra asserção (mesmo comprimento) é quase tautológica —
+  `anonimizar` é um `.map`, o comprimento bate por construção.
+- **`verificarColisaoDeIds` não rodava no `npm test`.** O docblock do `anonimizar.ts` afirmava que a
+  guarda era "re-executada sobre a própria saída" — verdade, mas **só no `main()`**, que
+  `ehExecucaoDireta` barra. Passou a rodar dentro da cerca. **Docblock afirmando mais do que o código
+  sustenta é a classe de defeito que este projeto já pagou seis vezes.**
+- **O docblock de `balance.ts` ficou falso** ("Red Bull 2023 … Verstappen") e foi reescrito. **O NOME
+  da constante fica com a grafia real** (`DATA_RED_BULL_2023`) — identificador de código não é dado
+  servido, e o portão não mede `.ts`.
+- **`balance.test.ts` e `fluxo-draft-golden.test.ts` NÃO são o mesmo caso**, e a doc dizia que sim.
+  **Medido por ensaio a seco:** trocando `src/data/`, o primeiro fica vermelho e o segundo **VERDE**,
+  porque lê a FIXTURE. **É PR 6 e PR 7, respectivamente.** 🔑 Mesma família da 0(aa): dois
+  consumidores que parecem o mesmo caso lendo datasets diferentes — **foi o ensaio que os separou.**
+- ✅ **A partição do PR de posicionamento PAGOU, e há prova:** `DATA_RED_BULL_2023` vale
+  `Kaldrix 2023` enquanto `FIXTURE_RED_BULL_2023` e `DERIVADO_RED_BULL_2023` seguem em
+  `Red Bull 2023`. **Uma constante só não serviria os três lados.** A troca foi **quatro literais num
+  bloco**, em vez de caçá-los por 7 arquivos.
+
+### ✅ Um resíduo que a revisão NÃO pegou — achado na sessão da doc e CONSERTADO no commit da doc
+
+`scripts/anonimizar.test.ts:40-42` justificava operar em memória dizendo *"nunca sobre
+`equipe-anos.anonimo.json` — o arquivo é gitignorado"*. **O arquivo deixou de existir neste PR** e o
+`.gitignore` já não o menciona: a afirmação sobre o retorno em memória seguia verdadeira, mas a
+justificativa ficou órfã, citando símbolo morto.
+
+📌 **Decisão do dev, 2026-08-30 — conserta no commit da DOC, não em PR próprio:** *"é comentário, não
+alarga risco, e prosa que cita símbolo morto é exatamente o que a próxima sessão lê como verdade."*
+**Riscado no lugar**, e o bloco ganhou junto a divisão de trabalho que faltava explicitada: este
+arquivo prova a **TRANSFORMAÇÃO**, `publicacao.test.ts` prova o **ARTEFATO**, e a tabela de mutações
+acima é a medida de que **nenhuma substitui a outra**.
+
+🔑 **Por que ele escapou da revisão, e vale registrar:** os outros cinco arquivos que citavam o
+artefato morto **estavam no diff** do PR e foram lidos por isso. Este **não estava** — a revisão leu
+o que mudou, não o que ficou falso por causa do que mudou. **Diff não é a fronteira do que um PR
+torna mentira.**
+
+### 🔴 O que re-disparou e NÃO foi consertado aqui
+
+**A pendência 0(ac)**, pela segunda vez. `VERSAO_FORMATO` 2 → 3 faz todo save de campeonato em
+andamento cair como `versao-incompativel` — comportamento **correto** —, mas `App.tsx:121` faz
+`return carga.ok ? carga.save : null` e **joga o `motivo` fora**. O jogador simplesmente não encontra
+mais "Continuar campeonato", **sem mensagem**. **Não é perda de dado; é perda de EXPLICAÇÃO.**
+📌 **Decisão do dev, de 2026-08-27: consertar antes do deploy é chamada dele.** O PR 6 o **diz** em
+vez de deixar o segundo disparo passar em silêncio — o primeiro foi o bump 1 → 2 do PR 3.
+
+**Próximo:** **PR 7 — a fixture** (`src/fixtures/dataset-semente/`), que leva o portão de **249 para
+perto de zero** (piso 6). Ele edita o bloco `FIXTURE_*` e deve esperar delta nos oráculos que leem a
+fixture, pela mesma 0(ae).
+
+---
+
 ## NOMES FICTÍCIOS — POSICIONAMENTO: `referencias-dataset.ts` particionado por origem (2026-08-28, `c61b3a7`) — BAIXO RISCO
 
 **Base:** `974a92a` (PR de âncoras). **Escopo:** `src/fixtures/referencias-dataset.ts` + os 7

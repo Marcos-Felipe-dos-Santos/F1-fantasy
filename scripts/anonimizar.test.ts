@@ -37,9 +37,25 @@
  * teste que despeja dataset ao ficar vermelho estoura a sessão que for
  * diagnosticá-lo.
  *
- * 📌 **Opera sobre o RETORNO EM MEMÓRIA de `anonimizar`, nunca sobre
- * `equipe-anos.anonimo.json`** — o arquivo é gitignorado (decisão do dev,
- * 2026-08-28) e `npm test` não pode depender de artefato gerado.
+ * 📌 **Opera sobre o RETORNO EM MEMÓRIA de `anonimizar`, nunca sobre arquivo** —
+ * `npm test` não pode depender de artefato gerado. A afirmação vale igual desde
+ * o PR 6; o que mudou foi a justificativa.
+ * ~~o arquivo `equipe-anos.anonimo.json` é gitignorado (decisão do dev, 2026-08-28)~~
+ * 🔴 **CORRIGIDO em 2026-08-30: `equipe-anos.anonimo.json` DEIXOU DE EXISTIR no
+ * PR 6** (a saída passou a ser `src/data/equipe-anos.json`, que é commitado), e
+ * o `.gitignore` já não o menciona. **Riscado no lugar, não contradito ao lado.**
+ * ⚠️ **Achado na sessão da doc, não na revisão do PR 6** — este bloco ficou para
+ * trás enquanto os outros cinco arquivos eram atualizados. **Prosa que cita
+ * símbolo morto é lida como verdade pela próxima sessão**, que é exatamente por
+ * que a linha não foi só apagada.
+ *
+ * 🔒 **E a divisão de trabalho fica dita, porque as duas se parecem e não são a
+ * mesma:** este arquivo prova a **TRANSFORMAÇÃO** (propriedade sobre a função);
+ * `scripts/publicacao.test.ts` prova o **ARTEFATO** (`src/data/` é a saída de
+ * `anonimizar`). **Nenhuma substitui a outra, e isso está MEDIDO** — ver a
+ * tabela de mutações no `HISTORICO.md` §"NOMES FICTÍCIOS — PR 6": mutar e
+ * REPUBLICAR devolve a cerca ao verde e deixa este teste vermelho; artefato
+ * desatualizado com código limpo faz o inverso.
  */
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';

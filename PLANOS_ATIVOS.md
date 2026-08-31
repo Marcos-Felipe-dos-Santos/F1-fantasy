@@ -457,6 +457,11 @@ lá seria circular). **Quem ler este teste verde e concluir "não há nome real 
   (o `:705` do texto acima envelheceu com o arquivo).
 
 **6. A TROCA — `src/data/` passa a ser fictício.**
+- ✅ **PR 6 FEITO em 2026-08-30** — ver `HISTORICO.md` §"NOMES FICTÍCIOS — PR 6" e `ESTADO.md`
+  §Onde parei. **Portão dos nomes reais 9.486 → 249; bundle 114 (tudo sobre-contagem ou a pista da
+  T2); `VERSAO_APP` 3.4.5 e `VERSAO_FORMATO` 3.** ⚠️ **O `npm run balance` NÃO deu delta zero** —
+  40 linhas, baseline re-capturado, causa registrada na pendência **0(ae)** (desempate lexicográfico
+  por `id`). **O PR 7 deve esperar a mesma classe de delta ao renomear a fixture.**
 - 🔴 **ALTO RISCO, sem discussão:** `src/data/` + balanceamento + o que vai no bundle.
 - ✅ **PRÉ-REQUISITO CUMPRIDO em 2026-08-28 (`c61b3a7`), e ele não estava neste plano:** a pendência
   **0(aa)** (a janela entre o PR 6 e o PR 7) foi fechada pelo **caminho (a)** — `referencias-dataset.ts`

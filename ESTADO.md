@@ -10,7 +10,38 @@
 
 ## Estado atual
 
-**Última medição (2026-08-28, na `main` — PR de POSICIONAMENTO das referências, `c61b3a7`):**
+**Última medição (2026-08-30, na `main` — PR 6 da trilha de nomes fictícios, A TROCA DO DATASET):**
+`npm test` **1642/68** em **2 rodadas** (era 1638/67). ⚠️ **SUBIU, e é dito assim de propósito:** os
+**4 testes novos** são a cerca de publicação (`scripts/publicacao.test.ts`, arquivo novo).
+**`npm run test:party` 19/19**, typecheck **0** nos três projetos, eslint **0** (por exit code),
+build **0** (`dist/assets/index-B0pMOBwk.js`).
+🔴 **`VERSAO_APP` 3.4.4 → 3.4.5 e `VERSAO_FORMATO` 2 → 3 — OS DOIS BUMPS SÃO OBRIGATÓRIOS**, e não
+são o caso "refactor sem efeito": `src/data/equipe-anos.json` mudou inteiro (**771 registros, 7710
+linhas em cada direção**), nomes exibidos **e ids**. Dois builds com datasets diferentes não podem
+compartilhar sala (o `hashDoDraft` consome `${equipe}@${ano}` e os seis ids de loadout), e save
+antigo carrega ids que não existem mais.
+🔑 **Digest `442b210c` → `a2b34e13`** (`src/engine/versao.test.ts:36`). ⚠️ **O salto NÃO é só o dado:
+a FÓRMULA do digest mudou junto** — passou a normalizar CRLF → LF. Ver o C1 na §Onde parei.
+✅ **Portão dos nomes reais: 9.486 → 249 (−9.237).** A linha `src/data/equipe-anos.json` foi a **0**;
+as outras cinco não se moveram. **O piso do PR 7 é 6**, não 0 — quebra no docblock do portão.
+✅ **Bundle medido À MÃO (não há portão): 114** no chunk JS — `button`=57 · `sala`=54 · `massa`=2 ·
+`Red Bull`=1, **tudo sobre-contagem ou a pista da T2**. ⚠️ **`dist/` INTEIRO dá 128** (o CSS soma
+`shadow`=13 de `box-shadow` + `button`=1). **Contra-prova:** `Ferrari` 152× no derivado → `Sarterra`
+152× no publicado e no bundle, contagem idêntica.
+🔴 **`npm run balance`: DELTA ≠ ZERO — 40 linhas, e é a PRIMEIRA vez que o baseline se move.**
+Novo baseline `a0aa98e48d259a4e9ce9752da505331cfcf4ecf6085c51ea053b1f5d6a2aec37`
+(`preview/medicoes-pr6/`), com a **mesma receita de filtro de 4 padrões** — o filtro NÃO foi
+alargado. **Não é mudança de balanceamento:** as notas são byte a byte idênticas (medido, sha
+`8eab5ec0…` dos dois lados despidos de nome/id); o que mudou foi **quem ganha um desempate
+lexicográfico por id**. **Pendência 0(ae).**
+⚠️ **`npm run dataset:report`: 255 linhas, zero `'(não encontrado)'`, sha256 `c509049b0e…` — BYTE A
+BYTE igual ao do PR 2. E isso NÃO é evidência de que a troca foi segura:** `dataset-report.ts:265-266`
+lê `fatos-agregados.json` e `equipe-anos.derivado.json`, **a entrada real, que o PR 6 não toca**. O
+relatório é **cego para `src/data/`**. Rodado e registrado assim para ninguém o ler como portão da
+publicação.
+📄 **Medições refeitas nesta sessão, com método: `preview/medicoes-pr6/MEDICOES-DA-DOC.md`.**
+
+*(Medição anterior, 2026-08-28, na `main` — PR de POSICIONAMENTO das referências, `c61b3a7`):*
 `npm test` **1638/67 — INALTERADO**, e inalterado é o resultado CERTO: nenhum teste nasceu e nenhum
 comportamento mudou (o PR renomeia constantes, não muda valor nenhum).
 **`npm run test:party` não rodado, e dito:** zero arquivo de `party/` no diff.
@@ -503,8 +534,174 @@ dependência).
 
 ## Onde parei
 
-**🧩 POSICIONAMENTO DAS REFERÊNCIAS — `referencias-dataset.ts` particionado por origem: CONCLUÍDO e
-COMMITADO em 2026-08-28**, na `main` (`c61b3a7`). **BAIXO RISCO — rótulo do dev** (refactor
+**🔀 NOMES FICTÍCIOS — PR 6, A TROCA DO DATASET: CONCLUÍDO e COMMITADO em 2026-08-30**, na `main`.
+**ALTO RISCO** — `src/data/`, `VERSAO_APP`, `VERSAO_FORMATO` e o harness de balanceamento.
+**Sem push, sem tag.** Detalhe completo: `HISTORICO.md` §"NOMES FICTÍCIOS — PR 6".
+📌 **A doc foi escrita pela SESSÃO PRINCIPAL, não pelo `doc-writer` — pedido explícito do dev nesta
+sessão.** Sexto PR seguido assim. **A auditoria não foi dispensada:** o diff foi lido e o dev o viu
+antes do commit.
+🔑 **E esta sessão NÃO é a que fez o PR — ela escreve a doc dele.** Por isso **toda afirmação
+numérica abaixo foi REMEDIDA aqui**, não herdada do comentário de código que a descreve
+(`preview/medicoes-pr6/MEDICOES-DA-DOC.md`). Uma delas **não reproduziu** — ver o comparador.
+
+**O que o PR faz, em uma linha:** `npm run dataset:anonimizar` deixa de escrever um artefato de
+ensaio e passa a **publicar direto em `src/data/equipe-anos.json`**; `equipe-anos.anonimo.json`
+deixa de existir; e a igualdade `src/data/ === anonimizar(derivado, tabela)` vira **cerca**
+(`scripts/publicacao.test.ts`, arquivo novo). **A entrada do pipeline segue REAL por desenho** — o
+fictício nasce na publicação.
+
+🔒 **DUAS COISAS MORRERAM, e confundi-las era o risco. Palavras do dev:** *"a cópia manual sem
+guarda existe há meses e ninguém sabia até o PR 5 medir. Trocar um passo manual sem guarda por um
+script sem guarda não seria ganho — seria a mesma dívida com nome novo."* O **passo manual** morre
+pelo script; a **ausência de guarda** morre pela cerca. **São duas.**
+
+---
+
+🔴 **O C1 DA REVISÃO — O DIGEST DEPENDIA DO MODO DE CHECKOUT, NÃO DO CONTEÚDO. É o achado do PR.**
+
+**A causa, medida:** o repo roda `core.autocrlf=true` e **não tem `.gitattributes`**. Arquivo que o
+git materializa chega em **CRLF**; arquivo que um script escreve chega em **LF**. Desde este PR,
+`src/data/equipe-anos.json` é **escrito por script** (52.430 LF, zero CRLF) enquanto `pecas.json`
+(218 CRLF) e `pistas.json` (102 CRLF) seguem vindo de checkout — **o digest era MISTO**.
+
+**A medição, reproduzida nesta sessão, réplica do `digestDoConteudo()`:**
+
+| variante | dataset em LF | dataset em CRLF |
+|---|---|---|
+| **CRU** (antes do conserto) | **`0d9efb33`** | **`be8578eb`** |
+| **NORMALIZADO** (`replace(/\r\n/g,'\n')`) | **`a2b34e13`** | **`a2b34e13`** |
+
+🔑 **A ANTI-VACUIDADE É A LINHA DE BAIXO, E AS DUAS CÉLULAS DELA SÃO O PONTO.** Um conserto medido
+só no lado LF é indistinguível de nenhum conserto. **`a2b34e13` está colado em
+`src/engine/versao.test.ts:36`.**
+🔴 **O modo de falha que isso evitou é preciso:** o primeiro `git clone` ou `git checkout --` deixaria
+`versao.test.ts` **vermelho com a mensagem "MUDOU e `VERSAO_APP` não acompanhou"**, sem nada ter
+mudado — e a instrução de conserto ("cole o digest atual") produziria **ping-pong entre as duas
+máquinas**. Vermelho que não é regressão, na cerca que existe para detectar regressão.
+🔑 **A contradição que a revisão achou:** `scripts/publicacao.test.ts` **já normalizava** e
+`versao.test.ts` **não**. Dois arquivos do mesmo PR com a mesma tese e comportamentos opostos.
+⚠️ **A alternativa — pinar `*.json` como LF num `.gitattributes` — resolveria a CLASSE inteira, mas
+reescreveria final de linha do repo todo no próximo checkout. É PR próprio e DECISÃO DO DEV**, não
+conserto de passagem. **Não foi feito.**
+
+---
+
+📉 **O PORTÃO DOS NOMES REAIS: 9.486 → 249 (−9.237). Segunda vez que a baseline se move.**
+**Uma linha mudou; as outras cinco não** — `src/data/equipe-anos.json` foi de 9.237 a **0**.
+⚠️ **A linha NÃO foi removida da lista `BASELINE`**: continua lá medindo zero, que é o que mantém a
+cerca viva. (A redação anterior do portão dizia "derrubada"; corrigido pela revisão.)
+🔑 **O ZERO FOI PREVISTO ANTES DE SER MEDIDO**, a partir da mecânica (fronteira não-alfanumérica +
+cerca de quase-marca do PR 4) e conferido contra a saída do `anonimizar` **antes** de publicar.
+**Número que só existe depois do fato não pode ser surpreendido.**
+🔒 **O PR 7 NÃO ZERA OS 249 — o piso é 6:** 243 da fixture (viram 0 no PR 7) · **4 de `massa`**
+(sobre-contagem sobre dado LIMPO: `"Amortecedor de massa"` × `driverId` de Felipe Massa) · **2 de
+`Red Bull Ring`** (resíduo REAL, mantido por DECISÃO — T2 adiada). **Registrado ANTES do PR 7 a
+pedido do dev:** *"o que sobrar precisa estar explicado, não descoberto depois."*
+
+📦 **O BUNDLE: 114 — e a quebra é o que faz o número significar alguma coisa.**
+Medido com as mesmas 909 agulhas e o mesmo `contarComFronteira` do portão, sobre
+`dist/assets/index-B0pMOBwk.js`: **`button`=57 · `sala`=54 · `massa`=2 · `Red Bull`=1**.
+Os 111 primeiros são sobre-contagem pura — `<button>` do React e o vocabulário do modo Online contra
+os `driverId` de Jenson Button e Luis Pérez-Sala. **`Ferrari` no bundle = 0.**
+🔑 **CONTRA-PROVA, e ela é o que separa "anonimizado" de "encolhido":** `Ferrari` **152×** no
+derivado → `Sarterra` **152×** no publicado E no bundle. **Contagem idêntica, rótulo trocado.** (Nos
+ids: `ferrari` 456× → `sarterra` 456×.) Sem a contra-prova, "zero Ferrari" também seria o resultado
+de ter perdido registros.
+⚠️ **`dist/` INTEIRO dá 128, não 114** — o CSS soma `shadow`=13 (`box-shadow` × o `constructorId` da
+Shadow) e `button`=1. **Registrado de propósito:** quem medir `dist/` inteiro numa sessão futura acha
+128 e lê regressão onde só há `box-shadow`.
+🔴 **E O BUNDLE CONTINUA SEM PORTÃO.** O docblock do portão dizia *"entra como passo do PR 6"*; o que
+o PR 6 fez foi **medir à mão**. **Medição manual não é portão** — uma regressão futura em `dist/`
+passa em silêncio. Corrigido no lugar, porque dizer o contrário faria a próxima sessão confiar num
+portão inexistente.
+
+---
+
+🧪 **A TABELA DE MUTAÇÕES — e o achado é que A CERCA E O DIFERENCIAL NÃO SE SUBSTITUEM.**
+Refeita nesta sessão. Baseline limpo dos dois arquivos: **20/20**.
+
+| mutante | diferencial (`anonimizar.test.ts`) | cerca (`publicacao.test.ts`) |
+|---|---|---|
+| **M-cp** (`anonimizar` devolve o derivado) | 🔴 7 vermelhos | 🔴 2 vermelhos |
+| **M-parordem** (par `[0,1]` → `[1,0]`) | 🔴 3 (inclui `hashDaCorrida`, :325) | 🔴 1 |
+| **M-estrategista** (nome perde o `${ano}`) | 🔴 1 (:245, o 4º sítio) | 🔴 1 (:139) |
+| **M-estrategista + REPUBLICAR** | 🔴 1 (:245) | ✅ **VERDE 4/4** |
+| **M-artefato** (código limpo, artefato mutado) | ✅ **VERDE 16/16** | 🔴 1 (:139) |
+
+**Achado 1 — as duas últimas linhas, e são SIMÉTRICAS.** A cerca compara um **artefato fixo no
+disco** contra a função: `mutar + republicar` a devolve ao verde, porque os dois lados passam a
+mentir juntos. O diferencial é propriedade sobre a **transformação** e continua vermelho. Na direção
+oposta, artefato desatualizado com código limpo deixa o diferencial **inteiro verde** e só a cerca
+acusa. 🔑 **Nenhuma das duas cobre o buraco da outra — a tese do dev, agora MEDIDA em vez de
+argumentada.**
+**Achado 2 — `M-parordem` derruba `hashDaCorrida` (:325), e nenhuma cerca de artefato pegaria isso.**
+Reordenar o par troca as NOTAS de lugar dentro da equipe e a corrida deixa de bater bit a bit. É o
+único mutante que ataca o **determinismo**, que é a razão da trilha existir; quem o pega é a metade
+do diferencial que roda draft+quali+corrida.
+**Achado 3 — `M-estrategista` passa em "TODO `estrategista.nome` difere" e só cai no 4º sítio**
+(`:245`), que pina a interpolação exata `Estrategista ${equipe} ${ano}`. Sem essa asserção
+específica, uma anonimização "quase certa" atravessa o diferencial inteiro. **A anti-vacuidade que
+vale é a mais ESPECÍFICA, não a mais numerosa.**
+🔒 **Higiene da rodada:** `src/data/equipe-anos.json` foi copiado antes, restaurado depois e
+conferido por sha256 (`477bd7e7…`); o `git diff --stat` voltou a `15420 (+7710/−7710)`.
+
+---
+
+⚖️ **O BALANCE MOVEU — `npm run balance` com DELTA ≠ ZERO pela primeira vez na trilha.**
+**40 linhas**, novo baseline `a0aa98e4…` em `preview/medicoes-pr6/`, **com a MESMA receita de filtro
+de 4 padrões do PR 2**. 🔑 **O filtro NÃO foi alargado até o sha voltar a bater** — isso teria
+escondido o delta em vez de explicá-lo, a "allowlist até o número ficar bonito" que este arquivo já
+aposentou uma vez. **O filtro é o mesmo; o baseline é que mudou, com o porquê registrado.**
+✅ **E NÃO é mudança de balanceamento, medido:** derivado e publicado, despidos de nome e id, dão a
+**mesma string byte a byte** (771 registros, 285.271 bytes, sha `8eab5ec0…` dos dois lados). **Sem
+essa medida, "o delta é só desempate" seria hipótese.** O que mudou é **qual de vários candidatos
+EMPATADOS** ganha um desempate lexicográfico por `id`. **É a pendência 0(ae)**, aberta neste PR.
+📌 **`balance.test.ts` re-pinado: 4 linhas mudaram só de rótulo, 2 TROCARAM DE PILOTO** (empate
+massivo — 42 pilotos em PNEU 60, 23 em PNEU 81, contagem idêntica antes e depois). **Os seis valores
+foram DERIVADOS da tabela de nomes e só então conferidos contra a saída** — copiar o "Received" do
+vermelho é o ajuste automático que o próprio comentário do teste proíbe.
+
+🔢 **O COMPARADOR — o erro de método, e uma DIVERGÊNCIA que fica aberta.**
+O erro que a sessão do PR nomeou: um comparador que dá **0/200 por comparar coisa que não podia
+diferir**. A contra-prova está no comparador refeito — **mesmo mundo × mesmo mundo dá 0/200**, e um
+zero desses é indistinguível de um zero informativo se ninguém olhar o que está sendo comparado.
+**O método certo é POSICIONAL, nunca por rótulo:** os dois datasets têm os mesmos 771 registros na
+mesma ordem, então todo id resolve para `"<índice>:<papel>"` (anti-vacuidade: 4.626 entradas de cada
+lado, **zero id em comum**).
+🔴 **A sessão do PR registrou `2 drafts em 200`; esta sessão mede `4/200`** (seeds 68, 88, 171, 175;
+`0..199` e `1..200` dão o mesmo). **OS DOIS NÚMEROS FICAM.** O script da sessão do PR não foi
+preservado, não sei que recorte ela usou, e escolher entre os dois seria inventar a medição de outra
+pessoa. ✅ **O MECANISMO reproduz exatamente:** toda divergência é `pilotoN` trocado pelo
+**companheiro de dupla da MESMA equipe/ano**, nunca outro carro — bate com `melhorCandidato`
+(`src/engine/bots.ts:58-64`). Três das quatro caem no mesmo registro, o que é o esperado de um
+empate concentrado. **É o mecanismo, não o número, que sustenta a 0(ae).**
+
+---
+
+🔎 **OS ACHADOS DA REVISÃO QUE VIRARAM DIFF** (além do C1): a exceção do `.gitignore` que apontava
+para um arquivo que deixou de existir (riscada no lugar) · `src/data/*.tmp` ignorado, porque a
+escrita atômica agora nasce **dentro de diretório versionado** e um crash entre `writeFileSync` e
+`renameSync` deixaria ~1 MB colhível por `git add .` · a anti-vacuidade da cerca cuja metade
+load-bearing era `derivado.length === 771`, não a que parecia · `verificarColisaoDeIds` que o
+docblock dizia rodar sobre a saída e **só rodava no `main()`** (que `npm test` nunca executa) — agora
+roda na cerca · o docblock de `balance.ts` que ficou falso ("Red Bull 2023 … Verstappen") ·
+`balance.test.ts` e `fluxo-draft-golden.test.ts` que a doc tratava como o mesmo caso e **não são**
+(medido por ensaio a seco: o segundo lê a FIXTURE e fica VERDE — **é PR 7**).
+
+✅ **UM RESÍDUO QUE A REVISÃO NÃO PEGOU, achado nesta sessão e CONSERTADO no commit da doc:**
+`scripts/anonimizar.test.ts:40-42` justificava operar em memória citando `equipe-anos.anonimo.json`,
+que **morreu neste PR**. A afirmação sobre o retorno em memória seguia verdadeira; a justificativa
+ficou órfã. 📌 **Decisão do dev:** *"é comentário, não alarga risco, e prosa que cita símbolo morto é
+exatamente o que a próxima sessão lê como verdade."* Riscado no lugar, com a divisão de trabalho
+explicitada (transformação × artefato).
+🔑 **Por que escapou da revisão:** os outros cinco arquivos que citavam o artefato morto **estavam no
+diff** e foram lidos por isso; este **não estava**. **Diff não é a fronteira do que um PR torna
+mentira.**
+
+---
+
+**🧩 PR ANTERIOR — POSICIONAMENTO DAS REFERÊNCIAS — `referencias-dataset.ts` particionado por
+origem: CONCLUÍDO e COMMITADO em 2026-08-28**, na `main` (`c61b3a7`). **BAIXO RISCO — rótulo do dev** (refactor
 verde→verde, nenhum valor mudou). **Sem `senior-reviewer`, sem push, sem tag.**
 Detalhe completo: `HISTORICO.md` §"NOMES FICTÍCIOS — POSICIONAMENTO".
 📌 **A doc foi escrita pela SESSÃO PRINCIPAL, não pelo `doc-writer`** — quinto PR seguido assim, no
@@ -2250,6 +2447,43 @@ casca deixa de ser terra sem teste; a opção conhecida é `@cloudflare/vitest-p
    agora por omissão em vez de por cascata errada.
    🔑 **A lacuna é do 3.5.4, não do PR (ab)** — foi o 3.5.4 que ligou as N etapas na tela sem
    atualizar o gerador. **Não foi feita, é decisão do dev se entra em PR próprio.**
+   (ae) 🟠 **NOVA (PR 6 da trilha de nomes fictícios, 2026-08-30) — O RESULTADO DEPENDE DO RÓTULO, e
+   não só dos números: DESEMPATE LEXICOGRÁFICO POR `id`.**
+   🔑 **A CLASSE, que é o que importa aqui — o sintoma é só como ela apareceu.** Em pelo menos dois
+   sítios, um empate de valor é resolvido comparando **ids em ordem lexicográfica**. Enquanto os ids
+   forem estáveis isso é determinístico e invisível; **renomear qualquer coisa reembaralha quem
+   ganha**, sem que nenhuma nota mude. É a razão de o `npm run balance` do PR 6 ter dado **delta ≠ 0
+   com as notas byte a byte idênticas** (medido: sha `8eab5ec0…` dos dois datasets despidos de
+   nome/id).
+   **Os dois sítios, medidos:**
+   - **`src/engine/bots.ts:58-64`** (`melhorCandidato`) — *"empate desempata por id em ordem
+     lexicográfica (menor vence)"*. Efeito medido: drafts em que um piloto é trocado pelo
+     **companheiro de dupla da MESMA equipe/ano**, nunca por outro carro.
+   - **`scripts/balance.ts:167`** (`escolherExtremoPneu`) — desempata por `pilotoId` ascendente. Os
+     extremos afetados são **empate massivo: 42 pilotos em PNEU 60 e 23 em PNEU 81**, contagem
+     idêntica antes e depois. Foi o que moveu 2 das 6 linhas pinadas de `balance.test.ts`.
+   🔴 **A MAGNITUDE É INCERTA; A CLASSE ESTÁ CONFIRMADA. Quem for consertar precisa saber que o
+   NÚMERO NÃO É O PONTO** (formulação do dev, 2026-08-30).
+   - **INCERTO — quantos:** a sessão do PR 6 mediu **2 drafts em 200**; a sessão da doc, com
+     comparador POSICIONAL refeito, mede **4/200** (seeds 68, 88, 171, 175; `0..199` e `1..200` dão o
+     mesmo). **O script da primeira medição não foi preservado**, então não há como saber que recorte
+     ela usou. **Os dois números ficam** — escolher entre eles seria inventar a medição de outra
+     pessoa. Método e saída da segunda em `preview/medicoes-pr6/MEDICOES-DA-DOC.md`.
+   - ✅ **CONFIRMADO — o quê:** o mecanismo **reproduz idêntico** nas duas medições. Toda divergência
+     é `pilotoN` trocado pelo **companheiro de dupla da MESMA equipe/ano**, nunca por outro carro, e
+     bate com o desempate de `melhorCandidato`.
+   🔑 **Dimensionar esta pendência por "são só 2 (ou 4) em 200" é ler o número errado.** O que ela
+   afirma é que **renomeação move resultado**; a frequência depende do recorte medido, do conjunto de
+   seeds e de quantos empates o dataset tiver naquele momento — **nenhum dos três é fixo.** Um
+   conserto que persiga a frequência não conserta nada.
+   📌 **Decisão do dev, 2026-08-28: caminho (C) — aceitar o delta, RE-CAPTURAR o baseline e registrar
+   a pendência.** Não houve conserto e não se propõe um aqui: desempate por id é determinístico e
+   legítimo; o que está registrado é que **ele torna o resultado sensível a RENOMEAÇÃO.**
+   ⚠️ **Consequência prática para o PR 7:** ele renomeia a fixture, e **a mesma classe pode mover
+   oráculos que leem `src/fixtures/dataset-semente/`**. Esperar delta ali não é regressão; **não
+   esperar delta é que seria descuido.**
+   🔑 **Ler junto com a 0(z)** (renomear pista degrada em SILÊNCIO): as duas são a mesma família —
+   **rótulo carregando efeito que ninguém declarou.**
 1. **Abertas pelo 7.8:** (a) o `BotaoTema` é um botão discreto no canto do `app-shell` — posição e
    forma **não passaram por veredito de arte**; (b) `erro` (salmão `#FF7B85`) e `raridadeProibido`
    (`#FF4757`) continuam sendo dois vermelhos ao lado do vermelho da marca — não foi mexido porque
@@ -2387,3 +2621,31 @@ arte vai ao dev** — mudar composição sozinho já custou 2 bloqueantes no 7.3
   mão, passar as flags, senão a tabela é engolida.
 - **Nunca ler `src/data/*.json` por completo** (`equipe-anos.json` ≈ 324 mil tokens). Formato:
   `src/fixtures/dataset-semente/`. Consulta: `jq`/`grep` com filtro.
+- 🔒 **MEDIÇÃO CUJO SCRIPT NÃO FICA EM DISCO NÃO É REPRODUZÍVEL — regra ditada pelo dev em
+  2026-08-30, no fechamento do PR 6.** Palavras dele: *"se a captura importa, ou o script fica
+  rastreado ou o número não vale."*
+  **As duas ocorrências que a motivaram, e nenhuma foi descuido isolado — é o mesmo mecanismo:**
+  1. **A captura do `balance` do PR 2** (`e62fe729…`) e a do PR 6 (`a0aa98e4…`) vivem em
+     `preview/medicoes-pr*/`, que é **gitignored**. Sobrevivem nesta máquina; **não existem no
+     histórico**, então um clone limpo não tem baseline nenhum contra o qual comparar. **A receita do
+     filtro está registrada em prosa no `LEIA-ME.md`, não como script rastreado.**
+  2. **O comparador do PR 6** — o script sumiu por inteiro, e por isso a sessão da doc mediu
+     **4/200** onde a sessão do PR tinha medido **2/200**, **sem meio de reconciliar**. Está na
+     pendência **0(ae)**.
+  🔑 **O custo não é o número perdido: é que uma re-medição divergente vira DIVERGÊNCIA PERMANENTE**
+  em vez de bug a achar. Com o script em disco, 2 × 4 seria uma diferença de recorte, diagnosticável
+  em minutos.
+  📌 **O que isso obriga, na prática:** medição que vai virar afirmação em documento entra com o
+  script que a produziu **rastreado no repositório** (`scripts/`, ou `preview/` deixando de ser o
+  único domicílio dela). **Saída em `preview/` continua valendo — o que não pode ficar só lá é o
+  MEIO de refazer a saída.**
+  > Mesma família do **"artefato que não foi verificado não conta como verificado"**: aqui, **medição
+  > que não pode ser refeita não conta como medida** — só como lembrança.
+
+  ⚠️ **A REGRA AINDA NÃO ESTÁ CUMPRIDA, e isso fica dito em vez de subentendido.** O comparador
+  refeito no PR 6 foi preservado como **`preview/medicoes-pr6/tmp-comparador.test.ts.txt`** — ou
+  seja, **em `preview/`, gitignored: exatamente o domicílio que a regra acabou de reprovar.** Foi o
+  melhor que a sessão da doc podia fazer sem alargar o diff de um PR já aprovado. **Rastrear o
+  comparador (e a receita do filtro do `balance`) é PR próprio e decisão do dev.** Regra escrita cujo
+  primeiro caso segue violando-a em silêncio é como a próxima sessão herda a ilusão de que está
+  resolvido.
