@@ -2469,6 +2469,377 @@ Arquivo novo: `preview/campeonato-online.html` (não sobrescreve `preview/campeo
 
 ---
 
+## NOMES FICTÍCIOS — PR 7: A FIXTURE E O PISO DO PORTÃO (2026-08-31, `cd9d5b7`) — 🔴 ALTO RISCO
+
+**Base:** `24e9af4` (doc do PR 6). **Último PR da trilha dos 7.** Sem push, sem tag.
+📌 **Doc escrita pela SESSÃO PRINCIPAL, não pelo `doc-writer`** — sétimo PR seguido assim.
+A auditoria não foi dispensada: o dev viu o diff da doc antes do commit.
+
+**Em uma linha:** `src/fixtures/dataset-semente/equipe-anos.json` passa a ter nomes fictícios
+**preservando as notas byte a byte**, e o portão dos nomes reais chega ao **piso**.
+
+---
+
+### 📉 O PORTÃO: 249 → 6, EXATOS. E o piso foi registrado ANTES do PR.
+
+Uma linha mudou; as outras cinco não. Medido por **réplica independente do contador** (909 agulhas,
+`contarComFronteira`), não só pelo teste verde:
+
+| arquivo | conta | quebra |
+|---|---|---|
+| `src/data/equipe-anos.json` | 0 | |
+| `src/data/pecas.json` | 2 | `massa`=2 |
+| `src/data/pistas.json` | 1 | `Red Bull`=1 |
+| **fixture `equipe-anos.json`** | **0** (era 243) | |
+| fixture `pecas.json` | 2 | `massa`=2 |
+| fixture `pistas.json` | 1 | `Red Bull`=1 |
+| **TOTAL** | **6** | |
+
+🔒 **A ORDEM É O QUE FAZ A MEDIDA VALER.** O piso — **4 de `massa` + 2 de `Red Bull Ring`** — foi
+escrito no docblock do portão **antes do PR 7 existir**, a pedido do dev: *"o que sobrar precisa
+estar explicado, não descoberto depois."* Bateu exatamente. Os 4 de `massa` são **sobre-contagem
+sobre dado LIMPO** (`"Amortecedor de massa"` × o `driverId` de Felipe Massa); os 2 de `Red Bull
+Ring` são resíduo **REAL**, mantidos **por DECISÃO** (T2 adiada), não por impossibilidade.
+
+🔴 **6 não é "o repositório está limpo".** O portão mede seis arquivos de dados. Seguem fora:
+código-fonte, o bundle, `scripts/derived/` (que É o universo) e — **descoberto neste PR** — `.md`.
+
+---
+
+### 🔴 O BASELINE VERMELHO FOI 66, NÃO 1 — a previsão do PR 6 respondia outra pergunta
+
+Trocada só a fixture: **66 vermelhos em 9 arquivos.**
+
+    corrida 34 · quali 8 · carro 7 · campeonato 7 · draft 5 · bots 2 ·
+    fluxo-draft-golden 1 · dataset 1 · portão 1
+
+**Natureza:** 53 são `resolverCarro: pilotoId … não encontrado` e 6 são `encontrarEquipeAno` — são
+falhas de **LOOKUP**, não de valor. A causa são **115 sítios-linha** que citam id da fixture como
+literal, e que `referencias-dataset.ts` **nunca funilou**: ele guarda pares `equipe/ano`, não ids.
+
+🔑 `referencias-dataset.ts` registrava, do PR 6, que `fluxo-draft-golden.test.ts` era "a baixa do
+PR 7". **Verdade, mas era resposta de outra pergunta** — o ensaio do PR 6 perguntava *"cai no PR
+6?"*. Ele é **1 de 66**. Riscado no lugar; quem orçasse o PR pelo parágrafo antigo orçaria um
+arquivo e encontraria nove.
+
+---
+
+### 🔒 RENOMEAR × REGERAR — a decisão do dev, e ela foi MEDIDA antes de tomada
+
+O plano dizia "regerar a fixture a partir do publicado". **A medição mostrou que isso é outra
+coisa:** a fixture **não é recorte de `src/data/`** — é um artefato congelado pré-4.5, com notas de
+2025 e convenção de id própria (`redbull-2023-…` × `red-bull-2023-…`).
+
+Ensaio a seco, os dois candidatos com os 115 literais repontados mecanicamente:
+
+| candidato | `npm test` |
+|---|---|
+| **(C)** renomear, notas preservadas | 66 → **3** |
+| **(B)** regerar de `src/data/` | 66 → **57** — 54 **goldens de VALOR** se movem |
+
+🔒 **O dev escolheu (C), e o argumento que decidiu foi o README da própria fixture**, escrito no PR
+4.4: *"Se algum dia a fixture precisar ser deliberadamente atualizada (ex.: os goldens precisarem
+migrar pra outra base), isso é uma decisão de plano explícita, não um efeito colateral."*
+**(B) é essa migração** — 54 goldens de valor rebaseados dentro de um PR cuja tese é rótulo.
+**Rebasear a fixture segue sendo PR próprio.**
+
+---
+
+### 🔴 A ROTA DE RESOLUÇÃO É LOAD-BEARING: a cadeia de fallback ERRA A PESSOA
+
+`anonimizar.ts` (PR 6) desmonta o **id** do registro, e isso funciona porque o derivado nasce de
+`idsDaEquipeAno`. **A fixture não tem essa propriedade** — `anonimizar()` do PR 6 **lança** sobre
+ela (2 slugs de equipe e 2 `driverId` fora da tabela). Duas saídas foram descartadas:
+
+- **mapa de compatibilidade à mão** (`redbull` → `red_bull`, …) — quatro exceções a dedo, o vício
+  que o portão proíbe no próprio docblock;
+- **cadeia de fallback** (id, senão nome) — duas rotas, e a que falha primeiro decide em silêncio.
+
+🔴 **E a segunda não é só feia: ELA ERRA, MEDIDO.** Um ensaio a seco a usou antes de ser
+descartada. Os ids curtos da fixture são, em dois casos, o `driverId` real **do PAI**:
+
+| fixture | quem ela quer dizer | de quem é o id |
+|---|---|---|
+| `…-piloto-verstappen` | **Max** Verstappen | **Jos** Verstappen |
+| `…-piloto-hill` | **Damon** Hill | **Graham** Hill |
+
+🔑 **O erro seria INVISÍVEL na revisão**, porque a tabela de nomes **preserva o parentesco no
+sobrenome**: "Jorik Doornbosch" no lugar de "Sander Doornbosch", "Gerald Aldwych" no lugar de
+"Bertram Aldwych". **Nada num diff denunciaria.**
+
+✅ **A rota escolhida é ÚNICA: por NOME EXIBIDO contra `fatos-agregados.json`** — a mesma fonte que
+o portão usa como universo. Medido antes de escolher: **22/22 equipes e 44/44 pilotos resolvem,
+zero ambíguos.**
+
+---
+
+### 🧪 A TABELA DE MUTAÇÕES — e o `M-pessoa` VERDE é o achado
+
+Baseline limpo da rodada: **1648/69**. Mutante no registro `[0]` (Kaldrix 2023).
+
+| mutante | cerca de propriedade | portão | goldens | total |
+|---|---|---|---|---|
+| **M-real** (`equipe` → `"Ferrari"`) | 🔴 2 | 🔴 1 | 🔴 8 | 11 |
+| **M-inventado** (`equipe` → `"Foo Bar"`) | 🔴 2 | ✅ **0** | 🔴 8 | 10 |
+| **M-id** (`chassi.id` → `…-chassis`) | 🔴 1 | ✅ 0 | 🔴 53 | 54 |
+| **M-estrategista** (perde o `${ano}`) | 🔴 1 | ✅ 0 | ✅ **0** | 1 |
+| **M-nota** (`rit` 96 → 60) | ✅ **0** | ✅ 0 | 🔴 3 | 3 |
+| **M-pessoa** (fixture **+ literais**) | ✅ 0 | ✅ 0 | ✅ 0 | ✅ **TUDO VERDE** |
+| **M-filtro** (predicado degenerado) | 🔴 1 | — | — | 1 |
+
+**Achado 1 — `M-inventado` prova que a cerca NÃO é redundante com o portão.** `"Foo Bar"` não é
+nome real de F1: o portão passa, a cerca cai. As perguntas são **direcionalmente opostas** — o
+portão diz *"nenhum nome real aparece"*, a cerca diz *"todo nome vem da tabela"*.
+
+**Achado 2 — `M-estrategista` só é pego pela cerca.** Zero goldens caem: o nome do estrategista não
+entra em conta nenhuma. É o 4º sítio, o que uma caminhada por campo esqueceria.
+
+**Achado 3 — `M-nota` é a divisão de trabalho medida.** A cerca fica verde (não olha nota) e os
+goldens caem. Nenhuma cobre o buraco da outra.
+
+🔴 **ACHADO 4 — `M-pessoa` PASSA EM TUDO. É LIMITE HONESTO DECLARADO, NÃO COBERTURA.**
+Trocar Sander Doornbosch (fictício de **Max**) por Jorik Doornbosch (fictício de **Jos**), na
+fixture **e nos literais dos testes ao mesmo tempo** — que é como um defeito no script teria
+entrado —, dá **1648/69 verde**. Cada portão responde certo à sua pergunta; **nenhuma delas é "é a
+pessoa certa?"**: o nome novo vem da tabela (cerca passa), não é nome real (portão passa), e as
+notas não mudam de lugar (goldens passam).
+
+⚠️ **NÃO É HIPÓTESE — O ERRO EXISTIU NESTA TRILHA**, no ensaio descrito acima: 2 dos 44 pilotos
+mapeados para o pai. **Foi pego por MEDIÇÃO durante o PR, não por teste, e nenhum teste o pegaria.**
+🔒 **O que protege é o DESENHO do script** — rota única, sem fallback. **Quem trocar aquela rota
+por uma cadeia reabre o buraco, e a suíte inteira continuará verde.** Está escrito em
+`scripts/fixture-semente.test.ts`, **ao lado da cerca que não o cobre**, e não só no script.
+
+---
+
+### 🔒 A CERCA DO TRIO — proposta da revisão, medida em 43/44, e FORA por decisão do dev
+
+A revisão propôs matar o `M-pessoa` com uma cerca que usa **só artefato já commitado**: inverter a
+`TABELA_NOMES` (nome fictício → id real) e exigir que o trio **`(driverId, constructorId, season)`
+exista em `fatos.titulares`**. `M-pessoa` morreria — `verstappen` (Jos) nunca foi titular de
+`red_bull` em 2023 — e **nenhum nome real entraria no repositório**.
+
+🔴 **Medido ANTES de prometer: 43 de 44.** O trio que falta é **`hakkinen @ mclaren @ 1993`**.
+
+**E não é defeito da migração — é a FIXTURE discordando do DADO.** `fatos-agregados.json` registra
+os titulares da McLaren 1993 como **Andretti (13 largadas) + Senna (16)**; Häkkinen correu só o fim
+daquele ano e o agregado o traz na Lotus em 91-92 e na McLaren **a partir de 1994**. Quem escreveu
+a fixture à mão em 2025 escolheu a dupla **icônica**, não a estatística.
+
+🔒 **DECISÃO DO DEV (2026-08-31): fica FORA, é PR próprio.** Motivo: **cerca que nasce precisando de
+uma exceção a dedo é exatamente o que o portão proíbe** no próprio docblock ("não existe allowlist
+aqui, e não se acrescenta uma"). A tensão fica registrada para quem for decidir.
+
+---
+
+### 🔴 22 IDs DA FIXTURE AGORA COINCIDEM COM `src/data/` CARREGANDO NOTAS DIFERENTES
+
+**É armadilha, e por isso está com destaque e não como nota de rodapé.** `sarterra-2004-chassi`
+existe nos dois arquivos e **não quer dizer a mesma coisa**: na fixture são as notas congeladas de
+2025, em `src/data/` são as derivadas do pipeline.
+
+**Antes do PR 7 isso não podia acontecer, e o motivo era acidental:** a fixture usava convenção de
+id própria (`ferrari-2004-…`, `redbull-2023-…`) que **não colidia** com a do pipeline
+(`red-bull-2023-…`). Passando os dois lados pela mesma `TABELA_NOMES`, os espaços de id
+**convergiram**.
+
+✅ **Não é risco hoje, e isso foi MEDIDO, não suposto:** varredura dos 115 sítios-linha que citam id
+de fixture — **nenhum arquivo carrega os dois datasets**. Lê a fixture: `src/engine/*.test.ts`,
+`src/net/*.test.ts`, `src/ui/*.test.ts`. Lê `src/data/`: `balance.balance.test.ts`,
+`alavancas.balance.test.ts`, `dataset-live.test.ts`, `dataset-app.ts`.
+🔒 **Se um dia precisar cruzar os dois: casar por `equipe`+`ano`, NUNCA por id.** Um teste que
+resolvesse um id da fixture contra o dataset vivo **passaria e mediria a coisa errada**.
+
+---
+
+### ⚖️ O BALANCE NÃO TEVE DELTA — e a previsão veio ANTES da rodada
+
+    sha256 a0aa98e48d259a4e9ce9752da505331cfcf4ecf6085c51ea053b1f5d6a2aec37
+    idêntico ao baseline do PR 6 · diff VAZIO · mesma receita de filtro de 4 padrões
+
+🔑 **O dev previa "a mesma classe de delta da 0(ae), agora pela fixture". A previsão mecânica
+correta era ZERO, e foi dita antes de rodar:** `balance.balance.test.ts:14` e
+`alavancas.balance.test.ts:15` importam **`src/data/`**, nunca a fixture — e o PR 7 não toca
+`src/data/`. **Delta ≠ 0 teria sido bandeira vermelha, não a 0(ae).** Confirmado duas vezes: antes
+e depois dos consertos da revisão.
+
+---
+
+### 🔴 PONTO CEGO: O PORTÃO NÃO MEDE `.md`
+
+`src/fixtures/dataset-semente/README.md` citava `ferrari-2004-piloto-schumacher` e se descrevia como
+"cópia byte-idêntica de `src/data/`". O `BASELINE` lista **só os seis `.json`** e `caminhoDe` resolve
+por nome de arquivo — **nada ali olharia um `.md`**.
+
+**Era possível marcar 6 e deixar nome real no diretório que existe para ser lido com segurança**, que
+é a única razão de a fixture entrar neste portão. Consertado à mão. **A cegueira continua** — quem
+acrescentar prosa a `src/data/` ou à fixture não é vigiado por nada.
+
+---
+
+### Os arquivos novos
+
+- **`scripts/anonimizar-fixture.ts`** — a migração. 🔒 **De UMA VIA, e SEM `npm run`:** rodar sobre
+  a saída **lança** (a resolução é por nome real, e depois da migração não há nome real). Um
+  `npm run` aqui seria o "efeito colateral" que o README da fixture proíbe. Fica como proveniência.
+- **`scripts/fixture-semente.test.ts`** — a cerca de **PROPRIEDADE**. 🔑 **Identidade é impossível
+  aqui:** `publicacao.test.ts` compara `src/data/` com a função porque a **entrada** (o derivado) é
+  commitada e real por desenho; replicar isso exigiria **recommitar a fixture real**, ou seja as 243
+  ocorrências que o PR existe para remover. Para artefato **congelado**, a pergunta certa é outra —
+  `src/data/` é regenerado (risco: divergir da função), a fixture nunca é (risco: alguém editar à
+  mão). Propriedade responde isso sem entrada real.
+- **`scripts/anonimizar-fixture.test.ts`** — o diferencial da função pura, **e ele só existe porque
+  a revisão mediu que os cinco `throw` não tinham teste nenhum**. Universo sintético de 2 entradas.
+
+---
+
+### Achados da revisão que viraram diff
+
+🔴 **Dois BLOQUEANTES, os dois sobre prosa em presente do indicativo:**
+
+1. **`referencias-dataset.ts`** — a frase do PR 6 (*"`FIXTURE_RED_BULL_2023` … segue em `Red Bull
+   2023`"*) virou falsa e passou a **contradizer o bloco novo ~190 linhas abaixo**. Duas leituras do
+   mesmo fato, e **qual vale dependeria de qual o leitor abrisse primeiro** — o mecanismo do
+   `CLAUDE.md` §"o `doc-writer` NÃO APAGA". ⚠️ **Segunda vez neste mesmo arquivo** (a primeira está
+   registrada nele, achado da revisão do PR 6). Riscada no lugar.
+2. **`portao-nomes-reais.test.ts`** — eu escrevi *"as **três** linhas que podiam ir a zero"*. **São
+   duas.** Número errado a quatro linhas de *"baixar um número sem que o dado tenha mudado é fraudar
+   a medição"*.
+
+🟡 **Cinco avisos, todos aceitos:**
+
+- **A anti-vacuidade da cerca testava o MAPA, não o PREDICADO** — `codigoPorNomeDeEquipe.has('Ferrari')`
+  provava que a tabela não degenerou, e **sobrevivia intacta a um `.filter` quebrado**.
+  🔑 **É literalmente o mesmo achado que a revisão do PR 6 fez** em `publicacao.test.ts` ("a
+  anti-vacuidade cuja metade load-bearing não era a que parecia"). Consertado **extraindo o
+  predicado**, para que a cláusula exercite o mesmo caminho e não uma cópia — e a correção foi
+  **verificada por mutação** (`M-filtro`: cai agora, ficaria verde antes).
+- **O laço INTERNO não tinha prendedor** — `flatMap` sobre `pilotos: []` passaria; o tipo é tupla,
+  mas a leitura é `as EquipeAnoDerivado[]` e **cast não valida em runtime**. Agora conta os 44.
+- **`FIXTURE_EQUIPE_ANOS` morava no script de migração** — a cerca **permanente** ficava acoplada ao
+  artefato **descartável**. Movida para `caminhos-dataset.ts`, cuja regra do topo diz exatamente
+  isso: *"caminho novo de dataset entra AQUI, não num script."*
+- **Guarda com nome inventado e tempo errado** — o docblock citava um `assertSemColisao` **que nunca
+  existiu** (a função é `indicePorNome`) e prometia proteção **futura** de um script que nunca mais
+  roda. Corrigido para o que ela fez (lançou zero vezes na migração) e quem protege daqui pra frente.
+- **Falta de unicidade** — o teste de ids comparava cada id ao esperado, então **dois pilotos com o
+  mesmo id passariam**. `verificarColisaoDeIds` importado, mesma guarda que o PR 6 roda do outro lado.
+
+🟢 **Uma decisão minha CONTESTADA e revertida:** eu mantivera `loadoutMinardi1993Barbazza` com grafia
+real, pelo precedente do `DATA_*`. A revisão apontou que ele é **o único identificador que carrega
+nome de PESSOA**, e que o docblock **que este mesmo PR reescreveu** ao lado dele já dizia "Danesin"
+— nome de função e comentário adjacente se contradizendo. Renomeado para `loadoutRonzani1993Danesin`.
+**Os demais helpers (`loadoutFerrari`, `loadoutMinardi`) ficam**, com nota explicando o mapa: são
+identificadores, o portão não mede `.ts`, e renomear tocaria 115 sítios por zero byte de bundle.
+
+---
+
+### 🚨 O ALARME DE SALDO PEGOU UMA PERDA REAL — e a falha é da CONVENÇÃO, não de quem a seguiu
+
+**Ao escrever esta doc, reescrevi a §"Onde parei" do `ESTADO.md` como a convenção manda** (*"só ela
+se reescreve"*). **Saldo: −1108 linhas.** O `CLAUDE.md` obriga a conferir `git diff --stat` e, com
+saldo negativo, olhar o diff linha a linha. Olhei.
+
+🔴 **Sairiam 22 marcadores de restrição. Os quatro amostrados tinham ZERO ocorrências em qualquer
+outro arquivo:**
+
+| marcador | em `HISTORICO.md` | em `PLANOS_ATIVOS.md` |
+|---|---|---|
+| `🔒 DUAS COISAS MORRERAM…` (PR 6) | **0** | **0** |
+| `🔒 REGRAS DE AUTORIA APROVADAS PELO DEV` | **0** | **0** |
+| `➡️ DECISÃO DO DEV (2026-08-20): PR C ADIADO` | **0** | **0** |
+| `🔒 src/data/ INTOCADO … SUPERA a de 2026-08-25` | **0** | **0** |
+
+**Dois deles são decisões TRAVADAS do dev.** Reverti a reescrita: o bloco do PR 7 entrou **antes** do
+conteúdo antigo, que ficou. Saldo final **+213**, com as **16 deleções conferidas uma a uma** — todas
+linhas que eu risquei de propósito.
+
+🔒 **A CAUSA, e é por isso que o conserto foi na REGRA:** a convenção *"só a §Onde parei se
+reescreve"* é segura **apenas quando o conteúdo antigo já foi espelhado no `HISTORICO.md`** — e
+**nada verifica isso automaticamente**. Aqui não tinha sido. **Seguir a regra ao pé da letra
+produzia a perda.** Palavras do dev: *"é falha da convenção, não sua."*
+✅ **Conserto, em `ESTADO.md` §Convenções, no lugar da regra antiga:** antes de reescrever a §"Onde
+parei", **confirmar que o bloco a ser substituído já está no `HISTORICO.md`**; se não estiver, **o
+bloco novo entra ANTES do antigo e o antigo fica**.
+
+🔑 **O ALARME DE SALDO FOI A ÚNICA DEFESA — não havia outra.** Nenhum teste pega perda de prosa,
+o fluxo de doc é de baixo risco e dispensa `senior-reviewer`, e o diff era grande demais para
+alguém notar por leitura. **É a diferença entre esta ocorrência e a de 2026-08-12** (646 → 137
+linhas, restaurado em `1873925`): lá a regra autorizou o esvaziamento e ninguém percebeu na hora;
+aqui a contagem acusou, a conferência confirmou, e a reescrita foi desfeita **antes do commit**.
+⚠️ **Quem for afrouxar o alarme de saldo está removendo o único portão que existe.**
+
+📌 **Efeito colateral aceito: o `ESTADO.md` cresceu para ~2.850 linhas.** Encolher é **decisão do
+dev** e ficou proposta para a sessão de higiene, já separada por ele. **A alavanca que funcionou
+antes foi SEPARAR, não podar** — foi assim que o `PLANOS_ATIVOS.md` nasceu.
+
+---
+
+### 🟠 UM DADO NOVO PARA A PENDÊNCIA 0(v) — o sintoma não é exclusivo de `contrato-ausente.test.ts`
+
+Uma rodada do `npm test` durante a verificação da doc deu **1 vermelho em
+`src/net/cerca-lint.test.ts`** (1658/1659), no teste *"proíbe Math.random, Date.now E
+performance.now"*. **Quatro rodadas seguintes: 1659/1659.** O arquivo isolado: **7/7**.
+
+✅ **Regressão descartada por MEDIÇÃO, não por suposição:** nem o commit de código (`cd9d5b7`) nem o
+de doc tocam **um arquivo sequer** de `src/net/` ou o config do ESLint — conferido por
+`git show --name-only` e `git diff --name-only`.
+
+🔑 **Encaixa na 0(v) e AMPLIA a pendência:** `cerca-lint.test.ts` **roda o ESLint de verdade** sobre
+arquivos que ele grava e apaga — a mesma classe de I/O concorrente que a 0(v) descreve, noutro par
+de cercas. **A redação da pendência nomeava `contrato-ausente.test.ts` como O sintoma; ele é UM
+sintoma.** Atualizada no `ESTADO.md`.
+
+---
+
+### Prosa fora do diff que o PR tornou falsa — 7 sítios, corrigidos no commit da doc
+
+🔑 **"Diff não é a fronteira do que um PR torna mentira"** — lição do PR 6, aplicada por varredura.
+`ESTADO.md` (×4), `PLANOS_ATIVOS.md`, `HISTORICO.md` e `scripts/caminhos-dataset.ts` (este já era
+falso desde o PR 5, e o PR 7 acrescentou mais dois consumidores).
+
+🔴 **O pior deles gerou CONVENÇÃO NOVA: o `ESTADO.md` citava `…/equipe-anos.json:27` →
+`"Estrategista Red Bull 2023"` — âncora de LINHA para dentro de arquivo de DADO.** As duas metades
+morreram de uma vez: o nome (a fixture virou fictícia) **e** a âncora (o arquivo foi de **728 para
+1498 linhas** ao ser regravado). **Segunda vez em três PRs** que uma âncora dessas quebra — a
+primeira foi o `974a92a`. Convenção ditada pelo dev e registrada em `ESTADO.md` §Convenções:
+**prosa não cita número de linha de arquivo de dado; cita o campo ou o registro.**
+
+---
+
+### O diff da fixture: +1474 linhas, e 6× disso é FORMATAÇÃO
+
+728 → 1498 linhas. **O dado é semanticamente idêntico** — estrutura e notas comparadas despidas de
+nome/id dão a mesma string. O inchaço é o `notas`, que estava numa linha só e passou a uma por campo.
+
+✅ **Não é ruído introduzido: é a fixture voltando ao padrão do projeto.** Medido com o prettier — a
+forma **NOVA é `--check` limpa** e a **ORIGINAL não era**. Preservar o formato antigo seria commitar
+um arquivo que o `npm run format` reescreveria na hora seguinte.
+
+---
+
+### Medições
+
+`npm test` **1659/70** em 3 rodadas (era 1642/68). ⚠️ **SUBIU, e é dito assim de propósito:** os
+**+17** são **7** da cerca de propriedade e **10** do diferencial da migração. **"Inalterado" aqui
+seria a conflação que este arquivo já pagou.**
+`npm run test:party` **19/19** · typecheck **0** nos três projetos · eslint **0** (exit code) ·
+build **0**.
+🔑 **Bundle `dist/assets/index-B0pMOBwk.js` — MESMO hash de conteúdo do PR 6.** Confirma por medição
+que nada que chega ao bundle foi tocado; a contagem de 114 do PR 6 **segue valendo sem remedição**,
+porque o artefato é byte a byte o mesmo.
+**Digest `a2b34e13` INALTERADO** → `VERSAO_APP` fica **3.4.5** e `VERSAO_FORMATO` fica **3**.
+`src/fixtures/` está **fora do escopo** de `digestDoConteudo()` (engine + `src/data/*.json` + 2 de
+`src/net/`), e a fixture não é servida ao app nem persistida em save. **Medido, não deduzido** — o
+`versao.test.ts` verde é a prova mecânica.
+📄 **Medições com método: `preview/medicoes-pr7/MEDICOES-DA-DOC.md`** (pasta gitignored).
+⚠️ **Final de linha:** a fixture agora é **LF puro** (CRLF=0), escrita por script num repo com
+`core.autocrlf=true` e sem `.gitattributes` — **mesma classe do C1 do PR 6, sem a consequência**,
+porque `src/fixtures/` não entra no digest e a cerca lê por `JSON.parse`. **Mais um caso para o PR
+de `.gitattributes` que o dev adiou.**
+
+---
+
 ## NOMES FICTÍCIOS — PR 6: A TROCA DO DATASET (2026-08-30, `5036ae8`) — 🔴 ALTO RISCO
 
 **Base:** `62eabb8` (doc do PR de posicionamento). **Plano:** `PLANOS_ATIVOS.md` §"NOMES FICTÍCIOS —
@@ -3304,7 +3675,7 @@ As 10 peças:
 
 ### Desvio de plano aprovado pelo dev nesta sessão
 
-**A fixture entrou no PR 3, não no PR 7.** Motivo: `peca-suspensao-ativa-fw15` era referenciado contra o dataset **real** (testes em `src/`) **e** contra a **fixture** (testes em `corrida.test.ts`), e trocar um lado só deixaria **duas grafias vivas do mesmo id** durante os PRs 3–6 — modo de falha registrado em `src/fixtures/referencias-dataset.ts:50-73`. **O PR 7 segue dono de `src/fixtures/dataset-semente/equipe-anos.json` (243 ocorrências).**
+**A fixture entrou no PR 3, não no PR 7.** Motivo: `peca-suspensao-ativa-fw15` era referenciado contra o dataset **real** (testes em `src/`) **e** contra a **fixture** (testes em `corrida.test.ts`), e trocar um lado só deixaria **duas grafias vivas do mesmo id** durante os PRs 3–6 — modo de falha registrado em `src/fixtures/referencias-dataset.ts:50-73`. ~~**O PR 7 segue dono de `src/fixtures/dataset-semente/equipe-anos.json` (243 ocorrências).**~~ ✅ **E foi dono: trocou em 2026-08-31, 243 → 0 (`cd9d5b7`).** Riscado no lugar — o resto deste bloco é registro histórico correto do PR 3 e fica.
 
 ### Achados de revisão — registrados como observações do método
 

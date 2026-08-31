@@ -120,8 +120,12 @@ export const FIXTURE_EQUIPE_ANOS = join(FIXTURE_DIR, 'equipe-anos.json');
  * de `VERSAO_APP`. A tabela em `src/data/` forçaria bump por um arquivo que
  * nenhum código de produção consome — e o PR 4 não muda nada em runtime.
  *
- * 📌 **Ninguém a consome ainda.** Quem a aplica sobre o derivado é o
+ * ~~📌 **Ninguém a consome ainda.** Quem a aplica sobre o derivado é o
  * `anonimizar.ts` do PR 5; ela entra sozinha para poder ser lida e corrigida
- * sem quebrar nada.
+ * sem quebrar nada.~~
+ * 🔴 **JÁ ERA FALSO DESDE O PR 5, e o PR 7 acrescentou mais dois consumidores.**
+ * Riscado no lugar em 2026-08-31 (achado da revisão do PR 7). Os quatro que a
+ * consomem hoje: `anonimizar.ts`, `publicacao.test.ts`, `anonimizar-fixture.ts`
+ * e `fixture-semente.test.ts`.
  */
 export const TABELA_NOMES = join(AQUI, 'nomes-ficticios.json');

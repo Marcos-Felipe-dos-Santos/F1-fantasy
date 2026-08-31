@@ -484,10 +484,15 @@ lá seria circular). **Quem ler este teste verde e concluir "não há nome real 
   de `VERSAO_APP` (`servidor-sala.ts:780`, recusa em `:789` e `:891`) separa builds, e o digest
   força o bump. Dentro de uma sala, todos rodam o mesmo dataset ⇒ hash consistente por construção.
 
-**7. FIXTURE E BASELINE A ZERO — o PR que fecha o círculo.**
-- **O que:** `src/fixtures/dataset-semente/equipe-anos.json` (243 ocorrências) também troca — ela
+**7. FIXTURE E BASELINE A ZERO — o PR que fecha o círculo. ✅ ENTREGUE em 2026-08-31 (`cd9d5b7`).**
+- **O que:** ~~`src/fixtures/dataset-semente/equipe-anos.json` (243 ocorrências) também troca — ela
   tem **Ferrari, McLaren, Williams, Schumacher, Prost, Senna** — e o teto do portão do PR 1 desce
-  ao número final. ⚠️ **`src/fixtures/dataset-semente/pecas.json` JÁ foi trocado no PR 3** — ela
+  ao número final.~~ ✅ **FEITO: 243 → 0, e o portão desceu a 6, o piso.** Riscado no lugar porque o
+  presente do indicativo mandaria a próxima sessão procurar trabalho concluído.
+  ⚠️ **UM DESVIO DO QUE ESTE ITEM DIZIA, e é decisão do dev de 2026-08-31:** o texto acima ("também
+  troca") foi lido no começo do PR como *regerar a fixture a partir do publicado*. **Medido:** isso
+  derrubaria **54 goldens de VALOR**, porque a fixture NÃO é recorte de `src/data/` — as notas dela
+  são de 2025. O dev escolheu **renomear preservando as notas**. Detalhe no `HISTORICO.md` §PR 7. ⚠️ **`src/fixtures/dataset-semente/pecas.json` JÁ foi trocado no PR 3** — ela
   entrou cedo pela **decisão de plano: evitar duas grafias vivas do mesmo id durante os PRs 3–6.**
   (Ver `HISTORICO.md` §"NOMES FICTÍCIOS — PR 3" e `src/fixtures/referencias-dataset.ts:50-73`.)
 - 🔑 **Por que a fixture não pode ficar de fora:** ela é **o artefato que existe para ser lido com
