@@ -22,7 +22,12 @@
  * (o pool resolve `node:*`) pegam um import acidental — só aquele script pega.
  */
 
-import { routePartykitRequest, Server, type Connection } from 'partyserver';
+import {
+  routePartykitRequest,
+  Server,
+  type Connection,
+  type ConnectionContext,
+} from 'partyserver';
 
 import {
   aoConectar,
@@ -38,6 +43,7 @@ import {
 import { estadoDasSeeds } from '../src/net/sala';
 import { codigoDeBytes, TAMANHO_CODIGO } from '../src/net/codigo-sala';
 import { AMBIENTE_DEV, origemPermitida } from '../src/net/cors';
+import { excedeuTetoDeConexoes } from '../src/net/teto-conexoes';
 import { JANELA_TETO_MS } from '../src/net/rate-limit';
 import { ROTA_CRIAR_SALA } from '../src/net/rotas';
 import { Limite } from './limite';
@@ -260,7 +266,80 @@ export class Sala extends Server<Env> {
     return this.criar(codigo, agora);
   }
 
-  async onConnect(connection: Connection): Promise<void> {
+  /**
+   * Ids de conexões RECUSADAS por política, aguardando o `onClose` que o
+   * próprio `close()` provoca. Ver `recusarPorPolitica` e a saída cedo do
+   * `onClose`.
+   */
+  private recusadas = new Set<string>();
+
+  /**
+   * Recusa por POLÍTICA (origem não autorizada ou teto de conexões estourado) —
+   * e é diferente de `recusar()`, que trata sala inexistente.
+   *
+   * ⚠️ **NÃO É POSSÍVEL RECUSAR ANTES DO `accept()`, e isso é da plataforma,
+   * não escolha.** No `partyserver@0.5.10` o `fetch` do `Server` faz
+   * `accept` → `await this.onConnect(...)` → `new Response(null, {status: 101})`.
+   * Quando o `onConnect` roda, o socket **já foi aceito** e o 101 já está
+   * decidido — **medido: 3 upgrades ⇒ `101 101 101`, inclusive o recusado.**
+   * Rejeitar antes exigiria `onBeforeConnect`, que roda no worker, FORA do DO,
+   * onde `getConnections()` não existe e o teto seria inimplementável.
+   *
+   * 🔒 **Fecha com 4403, na faixa de aplicação (4000-4999).** `1000` é
+   * "fechamento normal" e é o que `recusar()` usa para sala inexistente;
+   * reusá-lo tornaria as duas recusas indistinguíveis para o cliente.
+   * ⚠️ **Limitação conhecida, dita por inteiro: o cliente de hoje NÃO
+   * distingue 4403** — vê um fechamento e entra em "reconectando…". Não
+   * mandamos `{tipo:'erro'}` de propósito: o único código existente que serviria
+   * é `sala-inexistente`, e `src/ui/useSalaOnline.ts:222` **APAGA o token de
+   * reentrada** ao recebê-lo, punindo um jogador legítimo que só bateu no teto.
+   * O conserto é UI e está registrado como pendência.
+   */
+  private recusarPorPolitica(connection: Connection, motivo: string): void {
+    this.recusadas.add(connection.id);
+    connection.close(4403, motivo);
+  }
+
+  async onConnect(connection: Connection, ctx: ConnectionContext): Promise<void> {
+    // 🔒 AS DUAS GUARDAS VÊM ANTES DO `carregar()`, e é o mesmo argumento que o
+    // PR H1 escreveu para pôr o teto de IP antes de sortear código: as duas são
+    // O(1), não leem storage, e checá-las depois seria pagar o custo para então
+    // recusar. Ordem: Origin → teto → estado.
+    //
+    // 🔑 **O `Origin` chega no `ctx.request`, MEDIDO e não suposto.** O
+    // `partyserver` monta `ctx = { request }` com a requisição do upgrade.
+    // Sonda de 2026-09-01: os cabeçalhos chegam intactos, e `null` quando o
+    // cliente não manda nenhum.
+    //
+    // ⚠️ **O QUE A CHECAGEM DE ORIGEM COMPRA AQUI, dito com precisão:** ela
+    // impede uma PÁGINA hospedada noutra origem de abrir a sala no navegador de
+    // quem a visita. **Não impede script nenhum** — `Origin` é cabeçalho, e um
+    // cliente não-navegador o forja ou o omite à vontade. Mesma ressalva que
+    // `src/net/cors.ts` já carrega para o `POST /criar-sala`.
+    // ⚠️ **E ela RECUSA cliente não-navegador quando há allowlist configurada**,
+    // porque `Origin` ausente não está em lista nenhuma. É o caso do
+    // `scripts/smoke-online.mjs:32`, que usa o `WebSocket` global do Node e não
+    // manda `Origin`: hoje sobrevive porque `npm run sala` passa
+    // `ENVIRONMENT:development` com allowlist vazia ⇒ curinga. Contra um deploy
+    // com allowlist real, ele precisa de origem explícita.
+    if (
+      origemPermitida(
+        ctx.request.headers.get('Origin'),
+        this.env.ALLOWED_ORIGINS ?? '',
+        this.env.ENVIRONMENT === AMBIENTE_DEV,
+      ) === null
+    ) {
+      this.recusarPorPolitica(connection, 'origem nao autorizada');
+      return;
+    }
+
+    // 🔒 `>` e não `>=`: a conexão que acabou de chegar JÁ está contada aqui.
+    // Ver `excedeuTetoDeConexoes`, onde a medição está registrada.
+    if (excedeuTetoDeConexoes(this.quantasConexoes())) {
+      this.recusarPorPolitica(connection, 'sala lotada');
+      return;
+    }
+
     const estado = await this.carregar();
     if (estado === null || !this.jogavel(estado)) {
       this.recusar(connection);
@@ -304,6 +383,36 @@ export class Sala extends Server<Env> {
   }
 
   async onClose(connection: Connection): Promise<void> {
+    // ✅ **`close()` NO `onConnect` DISPARA `onClose` — MEDIDO, não suposto.**
+    // Sonda de 2026-09-01: a sequência observada é `["onConnect-recusa",
+    // "onClose"]`. Sem esta linha, todo socket recusado por política
+    // atravessaria `aoDesconectar` + `registrarConexoes` + `aplicar` para um id
+    // que **nunca passou por `aoConectar`**.
+    //
+    // 🔴 **E AQUI VAI A PARTE QUE EU AFIRMEI ERRADO E MEDI DEPOIS — fica
+    // escrita porque a versão falsa quase entrou no lugar dela.** A primeira
+    // redação dizia que a falta desta guarda custava *"uma escrita de storage
+    // POR SOCKET RECUSADO"*. **Falso, e refutado por medição:** com e sem a
+    // guarda, o contador de `put('estado')` dá **`1 → 1`** numa sala com
+    // conexão legítima e **`0 → 0`** numa sala vazia, após 10 recusas em série.
+    // 🔑 **O motivo é uma propriedade que este arquivo já documentava no
+    // `alarm()`:** `registrarConexoes` **preserva a IDENTIDADE** quando
+    // `vazio === jaVazio`, e `aplicar` só grava quando a referência muda. O
+    // caminho da recusa nunca quebra essa igualdade de forma persistente, então
+    // o `onClose` da conexão recusada é **inócuo hoje**.
+    //
+    // 🔒 **A guarda FICA, e o motivo é o que ela é de fato: barreira, não
+    // conserto.** Ela impede que a conexão recusada seja tratada como uma
+    // desconexão real — o que hoje não custa nada e passa a custar assim que
+    // alguém mexer em `registrarConexoes`, no `aoDesconectar` ou no critério de
+    // `aplicar`. **Não a leia como "fechou um bug medido": a mutação M4 (tirar
+    // esta linha) SOBREVIVE à suíte inteira, e isso está registrado na tabela
+    // de mutações em vez de maquiado com um teste que não a pega.**
+    //
+    // 🔒 **`delete` e não só `has`:** o `Set` tem de encolher junto, senão vira
+    // vazamento de memória proporcional ao ataque — o avesso do que um
+    // limitador deve fazer sob pressão.
+    if (this.recusadas.delete(connection.id)) return;
     const estado = await this.carregar();
     if (estado === null) return;
     const agora = Date.now();
