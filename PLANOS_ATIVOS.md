@@ -457,8 +457,8 @@ lá seria circular). **Quem ler este teste verde e concluir "não há nome real 
   (o `:705` do texto acima envelheceu com o arquivo).
 
 **6. A TROCA — `src/data/` passa a ser fictício.**
-- ✅ **PR 6 FEITO em 2026-08-30** — ver `HISTORICO.md` §"NOMES FICTÍCIOS — PR 6" e `ESTADO.md`
-  §Onde parei. **Portão dos nomes reais 9.486 → 249; bundle 114 (tudo sobre-contagem ou a pista da
+- ✅ **PR 6 FEITO em 2026-08-30** — ver `HISTORICO.md` §"NOMES FICTÍCIOS — PR 6" e
+  `HISTORICO.md` §"ARQUIVADO DO `ESTADO.md` em 2026-08-31". **Portão dos nomes reais 9.486 → 249; bundle 114 (tudo sobre-contagem ou a pista da
   T2); `VERSAO_APP` 3.4.5 e `VERSAO_FORMATO` 3.** ⚠️ **O `npm run balance` NÃO deu delta zero** —
   40 linhas, baseline re-capturado, causa registrada na pendência **0(ae)** (desempate lexicográfico
   por `id`). **O PR 7 deve esperar a mesma classe de delta ao renomear a fixture.**
@@ -468,7 +468,7 @@ lá seria circular). **Quem ler este teste verde e concluir "não há nome real 
   particionado por origem, em PR de posicionamento próprio, BAIXO RISCO e verde→verde. **Decisão do
   dev: PR 6 e PR 7 SEPARADOS**, contra o caminho (b) que era fundi-los. **Consequência prática para
   este PR: ele edita SÓ o bloco `DATA_*`** do módulo — `FIXTURE_*` é do PR 7 e `DERIVADO_*` não
-  muda. Ver `ESTADO.md` §Onde parei e `HISTORICO.md` §"NOMES FICTÍCIOS — POSICIONAMENTO".
+  muda. Ver `HISTORICO.md` §"ARQUIVADO DO `ESTADO.md` em 2026-08-31" e `HISTORICO.md` §"NOMES FICTÍCIOS — POSICIONAMENTO".
 - **Portões, e nenhum é opcional:**
   - **Baseline vermelho primeiro** (regra de mudança de lógica do `CLAUDE.md`).
   - **`npm run balance` com `--reporter=verbose`, DELTA ZERO nos números**, e o diff **LIDO**, não

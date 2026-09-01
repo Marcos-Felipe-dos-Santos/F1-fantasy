@@ -4940,3 +4940,892 @@ mudam, leia alguém o retorno ou não. Se `nEtapas` variável entrar (pendência
 
 ---
 
+
+# ARQUIVADO DO `ESTADO.md` em 2026-08-31 (higiene da §"Onde parei")
+
+> Tudo abaixo veio **íntegro, linha por linha**, da §"Onde parei" do `ESTADO.md`, na sessão de
+> higiene autorizada pelo dev em 2026-08-31. **Nada foi resumido e nada foi apagado.** O que era
+> decisão travada **ficou no `ESTADO.md`**, no bloco §"RETIDAS NO ARQUIVAMENTO DA §Onde parei" —
+> regra do aninhamento, mesma aplicada ao §FASE 3 em 2026-08-28.
+>
+> **São 845 linhas**, em dois trechos contíguos do original:
+> - **A trilha de nomes fictícios** — PR 6 (a troca do dataset), o PR de posicionamento das
+>   referências, o PR 5 (`anonimizar.ts`) com o PR de âncoras, e a **narrativa** do PR 4 (a tabela
+>   dos 458).
+> - **Os PRs da Fase 3** — conserto da 0(s), PR C do spike, 3.5.4, 3.5.3, o encerramento da corrida
+>   online, 3.5.1, PR A e **PR B** do spike, e 3.5.2.
+>
+> 🔴 **O QUE NÃO VEIO, e é decisão do dev:** os **quatro relatórios de auditoria e medição** que
+> moravam dentro do bloco do PR 4 — a refutação do C3, o INVENTÁRIO dos nomes reais, o CUSTO DE
+> TROCAR e a SUPERFÍCIE de peças/pistas. **Ficaram no `ESTADO.md`** porque são a **evidência** das
+> pendências **0(y)** e **0(z)**, que seguem abertas. Movê-las faria a próxima sessão reabrir
+> pendência já medida por não achar a medição.
+>
+> 🔑 **POR QUE O MOVE FOI VERBATIM, e não "apagar o que já estava aqui".** A contenção foi **MEDIDA
+> antes de mover**, e desmentiu a suposição de partida: este arquivo já tinha uma seção `###` para
+> quase todo PR do `ESTADO.md`, mas essas entradas foram escritas **À PARTE**, não são cópia — o
+> PR 6 tem 137 linhas lá e ~270 aqui. Sobreposição de 8-gramas: **16,7% no total**, melhor caso
+> **37,8%** (3.5.4), pior **0,4%** (auditoria C3). 🔒 **Cabeçalho casado não é conteúdo espelhado.**
+> Script rastreado: `scripts/medir-contencao-doc.py`.
+>
+> ⚠️ **O `PR B do spike` era o único SEM seção `###` própria aqui** — foi o que a triagem por
+> cabeçalho achou. A medição mostrou que ele não era exceção: **nenhum** dos outros estava espelhado
+> de fato. **Ele só era o caso visível de um problema geral.**
+
+---
+
+## Trecho 1 — a trilha de nomes fictícios (PR 6, posicionamento, PR 5, PR 4)
+
+**🔀 NOMES FICTÍCIOS — PR 6, A TROCA DO DATASET: CONCLUÍDO e COMMITADO em 2026-08-30**, na `main`.
+**ALTO RISCO** — `src/data/`, `VERSAO_APP`, `VERSAO_FORMATO` e o harness de balanceamento.
+**Sem push, sem tag.** Detalhe completo: `HISTORICO.md` §"NOMES FICTÍCIOS — PR 6".
+📌 **A doc foi escrita pela SESSÃO PRINCIPAL, não pelo `doc-writer` — pedido explícito do dev nesta
+sessão.** Sexto PR seguido assim. **A auditoria não foi dispensada:** o diff foi lido e o dev o viu
+antes do commit.
+🔑 **E esta sessão NÃO é a que fez o PR — ela escreve a doc dele.** Por isso **toda afirmação
+numérica abaixo foi REMEDIDA aqui**, não herdada do comentário de código que a descreve
+(`preview/medicoes-pr6/MEDICOES-DA-DOC.md`). Uma delas **não reproduziu** — ver o comparador.
+
+**O que o PR faz, em uma linha:** `npm run dataset:anonimizar` deixa de escrever um artefato de
+ensaio e passa a **publicar direto em `src/data/equipe-anos.json`**; `equipe-anos.anonimo.json`
+deixa de existir; e a igualdade `src/data/ === anonimizar(derivado, tabela)` vira **cerca**
+(`scripts/publicacao.test.ts`, arquivo novo). **A entrada do pipeline segue REAL por desenho** — o
+fictício nasce na publicação.
+
+🔒 **DUAS COISAS MORRERAM, e confundi-las era o risco. Palavras do dev:** *"a cópia manual sem
+guarda existe há meses e ninguém sabia até o PR 5 medir. Trocar um passo manual sem guarda por um
+script sem guarda não seria ganho — seria a mesma dívida com nome novo."* O **passo manual** morre
+pelo script; a **ausência de guarda** morre pela cerca. **São duas.**
+
+---
+
+🔴 **O C1 DA REVISÃO — O DIGEST DEPENDIA DO MODO DE CHECKOUT, NÃO DO CONTEÚDO. É o achado do PR.**
+
+**A causa, medida:** o repo roda `core.autocrlf=true` e **não tem `.gitattributes`**. Arquivo que o
+git materializa chega em **CRLF**; arquivo que um script escreve chega em **LF**. Desde este PR,
+`src/data/equipe-anos.json` é **escrito por script** (52.430 LF, zero CRLF) enquanto `pecas.json`
+(218 CRLF) e `pistas.json` (102 CRLF) seguem vindo de checkout — **o digest era MISTO**.
+
+**A medição, reproduzida nesta sessão, réplica do `digestDoConteudo()`:**
+
+| variante | dataset em LF | dataset em CRLF |
+|---|---|---|
+| **CRU** (antes do conserto) | **`0d9efb33`** | **`be8578eb`** |
+| **NORMALIZADO** (`replace(/\r\n/g,'\n')`) | **`a2b34e13`** | **`a2b34e13`** |
+
+🔑 **A ANTI-VACUIDADE É A LINHA DE BAIXO, E AS DUAS CÉLULAS DELA SÃO O PONTO.** Um conserto medido
+só no lado LF é indistinguível de nenhum conserto. **`a2b34e13` está colado em
+`src/engine/versao.test.ts:36`.**
+🔴 **O modo de falha que isso evitou é preciso:** o primeiro `git clone` ou `git checkout --` deixaria
+`versao.test.ts` **vermelho com a mensagem "MUDOU e `VERSAO_APP` não acompanhou"**, sem nada ter
+mudado — e a instrução de conserto ("cole o digest atual") produziria **ping-pong entre as duas
+máquinas**. Vermelho que não é regressão, na cerca que existe para detectar regressão.
+🔑 **A contradição que a revisão achou:** `scripts/publicacao.test.ts` **já normalizava** e
+`versao.test.ts` **não**. Dois arquivos do mesmo PR com a mesma tese e comportamentos opostos.
+⚠️ **A alternativa — pinar `*.json` como LF num `.gitattributes` — resolveria a CLASSE inteira, mas
+reescreveria final de linha do repo todo no próximo checkout. É PR próprio e DECISÃO DO DEV**, não
+conserto de passagem. **Não foi feito.**
+
+---
+
+📉 **O PORTÃO DOS NOMES REAIS: 9.486 → 249 (−9.237). Segunda vez que a baseline se move.**
+**Uma linha mudou; as outras cinco não** — `src/data/equipe-anos.json` foi de 9.237 a **0**.
+⚠️ **A linha NÃO foi removida da lista `BASELINE`**: continua lá medindo zero, que é o que mantém a
+cerca viva. (A redação anterior do portão dizia "derrubada"; corrigido pela revisão.)
+🔑 **O ZERO FOI PREVISTO ANTES DE SER MEDIDO**, a partir da mecânica (fronteira não-alfanumérica +
+cerca de quase-marca do PR 4) e conferido contra a saída do `anonimizar` **antes** de publicar.
+**Número que só existe depois do fato não pode ser surpreendido.**
+🔒 **O PR 7 NÃO ZERA OS 249 — o piso é 6:** 243 da fixture (viram 0 no PR 7) · **4 de `massa`**
+(sobre-contagem sobre dado LIMPO: `"Amortecedor de massa"` × `driverId` de Felipe Massa) · **2 de
+`Red Bull Ring`** (resíduo REAL, mantido por DECISÃO — T2 adiada). **Registrado ANTES do PR 7 a
+pedido do dev:** *"o que sobrar precisa estar explicado, não descoberto depois."*
+
+📦 **O BUNDLE: 114 — e a quebra é o que faz o número significar alguma coisa.**
+Medido com as mesmas 909 agulhas e o mesmo `contarComFronteira` do portão, sobre
+`dist/assets/index-B0pMOBwk.js`: **`button`=57 · `sala`=54 · `massa`=2 · `Red Bull`=1**.
+Os 111 primeiros são sobre-contagem pura — `<button>` do React e o vocabulário do modo Online contra
+os `driverId` de Jenson Button e Luis Pérez-Sala. **`Ferrari` no bundle = 0.**
+🔑 **CONTRA-PROVA, e ela é o que separa "anonimizado" de "encolhido":** `Ferrari` **152×** no
+derivado → `Sarterra` **152×** no publicado E no bundle. **Contagem idêntica, rótulo trocado.** (Nos
+ids: `ferrari` 456× → `sarterra` 456×.) Sem a contra-prova, "zero Ferrari" também seria o resultado
+de ter perdido registros.
+⚠️ **`dist/` INTEIRO dá 128, não 114** — o CSS soma `shadow`=13 (`box-shadow` × o `constructorId` da
+Shadow) e `button`=1. **Registrado de propósito:** quem medir `dist/` inteiro numa sessão futura acha
+128 e lê regressão onde só há `box-shadow`.
+🔴 **E O BUNDLE CONTINUA SEM PORTÃO.** O docblock do portão dizia *"entra como passo do PR 6"*; o que
+o PR 6 fez foi **medir à mão**. **Medição manual não é portão** — uma regressão futura em `dist/`
+passa em silêncio. Corrigido no lugar, porque dizer o contrário faria a próxima sessão confiar num
+portão inexistente.
+
+---
+
+🧪 **A TABELA DE MUTAÇÕES — e o achado é que A CERCA E O DIFERENCIAL NÃO SE SUBSTITUEM.**
+Refeita nesta sessão. Baseline limpo dos dois arquivos: **20/20**.
+
+| mutante | diferencial (`anonimizar.test.ts`) | cerca (`publicacao.test.ts`) |
+|---|---|---|
+| **M-cp** (`anonimizar` devolve o derivado) | 🔴 7 vermelhos | 🔴 2 vermelhos |
+| **M-parordem** (par `[0,1]` → `[1,0]`) | 🔴 3 (inclui `hashDaCorrida`, :325) | 🔴 1 |
+| **M-estrategista** (nome perde o `${ano}`) | 🔴 1 (:245, o 4º sítio) | 🔴 1 (:139) |
+| **M-estrategista + REPUBLICAR** | 🔴 1 (:245) | ✅ **VERDE 4/4** |
+| **M-artefato** (código limpo, artefato mutado) | ✅ **VERDE 16/16** | 🔴 1 (:139) |
+
+**Achado 1 — as duas últimas linhas, e são SIMÉTRICAS.** A cerca compara um **artefato fixo no
+disco** contra a função: `mutar + republicar` a devolve ao verde, porque os dois lados passam a
+mentir juntos. O diferencial é propriedade sobre a **transformação** e continua vermelho. Na direção
+oposta, artefato desatualizado com código limpo deixa o diferencial **inteiro verde** e só a cerca
+acusa. 🔑 **Nenhuma das duas cobre o buraco da outra — a tese do dev, agora MEDIDA em vez de
+argumentada.**
+**Achado 2 — `M-parordem` derruba `hashDaCorrida` (:325), e nenhuma cerca de artefato pegaria isso.**
+Reordenar o par troca as NOTAS de lugar dentro da equipe e a corrida deixa de bater bit a bit. É o
+único mutante que ataca o **determinismo**, que é a razão da trilha existir; quem o pega é a metade
+do diferencial que roda draft+quali+corrida.
+**Achado 3 — `M-estrategista` passa em "TODO `estrategista.nome` difere" e só cai no 4º sítio**
+(`:245`), que pina a interpolação exata `Estrategista ${equipe} ${ano}`. Sem essa asserção
+específica, uma anonimização "quase certa" atravessa o diferencial inteiro. **A anti-vacuidade que
+vale é a mais ESPECÍFICA, não a mais numerosa.**
+🔒 **Higiene da rodada:** `src/data/equipe-anos.json` foi copiado antes, restaurado depois e
+conferido por sha256 (`477bd7e7…`); o `git diff --stat` voltou a `15420 (+7710/−7710)`.
+
+---
+
+⚖️ **O BALANCE MOVEU — `npm run balance` com DELTA ≠ ZERO pela primeira vez na trilha.**
+**40 linhas**, novo baseline `a0aa98e4…` em `preview/medicoes-pr6/`, **com a MESMA receita de filtro
+de 4 padrões do PR 2**. 🔑 **O filtro NÃO foi alargado até o sha voltar a bater** — isso teria
+escondido o delta em vez de explicá-lo, a "allowlist até o número ficar bonito" que este arquivo já
+aposentou uma vez. **O filtro é o mesmo; o baseline é que mudou, com o porquê registrado.**
+✅ **E NÃO é mudança de balanceamento, medido:** derivado e publicado, despidos de nome e id, dão a
+**mesma string byte a byte** (771 registros, 285.271 bytes, sha `8eab5ec0…` dos dois lados). **Sem
+essa medida, "o delta é só desempate" seria hipótese.** O que mudou é **qual de vários candidatos
+EMPATADOS** ganha um desempate lexicográfico por `id`. **É a pendência 0(ae)**, aberta neste PR.
+📌 **`balance.test.ts` re-pinado: 4 linhas mudaram só de rótulo, 2 TROCARAM DE PILOTO** (empate
+massivo — 42 pilotos em PNEU 60, 23 em PNEU 81, contagem idêntica antes e depois). **Os seis valores
+foram DERIVADOS da tabela de nomes e só então conferidos contra a saída** — copiar o "Received" do
+vermelho é o ajuste automático que o próprio comentário do teste proíbe.
+
+🔢 **O COMPARADOR — o erro de método, e uma DIVERGÊNCIA que fica aberta.**
+O erro que a sessão do PR nomeou: um comparador que dá **0/200 por comparar coisa que não podia
+diferir**. A contra-prova está no comparador refeito — **mesmo mundo × mesmo mundo dá 0/200**, e um
+zero desses é indistinguível de um zero informativo se ninguém olhar o que está sendo comparado.
+**O método certo é POSICIONAL, nunca por rótulo:** os dois datasets têm os mesmos 771 registros na
+mesma ordem, então todo id resolve para `"<índice>:<papel>"` (anti-vacuidade: 4.626 entradas de cada
+lado, **zero id em comum**).
+🔴 **A sessão do PR registrou `2 drafts em 200`; esta sessão mede `4/200`** (seeds 68, 88, 171, 175;
+`0..199` e `1..200` dão o mesmo). **OS DOIS NÚMEROS FICAM.** O script da sessão do PR não foi
+preservado, não sei que recorte ela usou, e escolher entre os dois seria inventar a medição de outra
+pessoa. ✅ **O MECANISMO reproduz exatamente:** toda divergência é `pilotoN` trocado pelo
+**companheiro de dupla da MESMA equipe/ano**, nunca outro carro — bate com `melhorCandidato`
+(`src/engine/bots.ts:58-64`). Três das quatro caem no mesmo registro, o que é o esperado de um
+empate concentrado. **É o mecanismo, não o número, que sustenta a 0(ae).**
+
+---
+
+🔎 **OS ACHADOS DA REVISÃO QUE VIRARAM DIFF** (além do C1): a exceção do `.gitignore` que apontava
+para um arquivo que deixou de existir (riscada no lugar) · `src/data/*.tmp` ignorado, porque a
+escrita atômica agora nasce **dentro de diretório versionado** e um crash entre `writeFileSync` e
+`renameSync` deixaria ~1 MB colhível por `git add .` · a anti-vacuidade da cerca cuja metade
+load-bearing era `derivado.length === 771`, não a que parecia · `verificarColisaoDeIds` que o
+docblock dizia rodar sobre a saída e **só rodava no `main()`** (que `npm test` nunca executa) — agora
+roda na cerca · o docblock de `balance.ts` que ficou falso ("Red Bull 2023 … Verstappen") ·
+`balance.test.ts` e `fluxo-draft-golden.test.ts` que a doc tratava como o mesmo caso e **não são**
+(medido por ensaio a seco: o segundo lê a FIXTURE e fica VERDE — **é PR 7**).
+
+✅ **UM RESÍDUO QUE A REVISÃO NÃO PEGOU, achado nesta sessão e CONSERTADO no commit da doc:**
+`scripts/anonimizar.test.ts:40-42` justificava operar em memória citando `equipe-anos.anonimo.json`,
+que **morreu neste PR**. A afirmação sobre o retorno em memória seguia verdadeira; a justificativa
+ficou órfã. 📌 **Decisão do dev:** *"é comentário, não alarga risco, e prosa que cita símbolo morto é
+exatamente o que a próxima sessão lê como verdade."* Riscado no lugar, com a divisão de trabalho
+explicitada (transformação × artefato).
+🔑 **Por que escapou da revisão:** os outros cinco arquivos que citavam o artefato morto **estavam no
+diff** e foram lidos por isso; este **não estava**. **Diff não é a fronteira do que um PR torna
+mentira.**
+
+---
+
+**🧩 PR ANTERIOR — POSICIONAMENTO DAS REFERÊNCIAS — `referencias-dataset.ts` particionado por
+origem: CONCLUÍDO e COMMITADO em 2026-08-28**, na `main` (`c61b3a7`). **BAIXO RISCO — rótulo do dev** (refactor
+verde→verde, nenhum valor mudou). **Sem `senior-reviewer`, sem push, sem tag.**
+Detalhe completo: `HISTORICO.md` §"NOMES FICTÍCIOS — POSICIONAMENTO".
+📌 **A doc foi escrita pela SESSÃO PRINCIPAL, não pelo `doc-writer`** — quinto PR seguido assim, no
+precedente registrado nos blocos abaixo. **A auditoria não foi dispensada:** o diff foi lido antes
+do commit.
+
+🔒 **É o CAMINHO (a) da pendência 0(aa), escolhido pelo dev em 2026-08-28** — particionar o módulo
+por dataset ANTES do PR 6, contra o caminho (b) (fazer 6 e 7 no mesmo PR). **Palavras do dev:**
+*"fazer 6 e 7 juntos junta o ALTO RISCO (`src/data/`, tela, netcode) com o BAIXO (fixture), e o
+portão visual do 6 ficaria misturado com mudança de fixture."* **A 0(aa) fica FECHADA** — ver lá.
+📌 **Este PR não estava no plano dos 7.** Ele nasce da 0(aa), que o PR 2 abriu ao tornar a janela
+visível.
+
+Três blocos, um por origem, com o prefixo **no nome da constante**: **`DATA_*`** (leem `src/data/`,
+trocaram no **PR 6**) · **`FIXTURE_*`** (leem `src/fixtures/dataset-semente/`, ✅ **trocaram no
+PR 7**, 2026-08-31) · **`DERIVADO_*`** (leem `scripts/derived/`, **nunca** trocam). Os 7 consumidores passaram a importar
+o bloco da própria origem.
+
+🔑 **O que isso fecha:** `RED_BULL_2023` era **UMA** constante consumida pelos **TRÊS** lados, e
+entre o PR 6 e o PR 7 há uma janela em que `src/data/` já é fictício e a fixture ainda é real.
+Agora **o PR 6 edita SÓ o bloco `DATA_*`**.
+🔑 **A duplicação é o produto, não um resto a limpar:** `Red Bull 2023` está nos três blocos e
+`Ferrari 2004` em dois — origens que hoje coincidem **por acaso** e deixam de coincidir no PR 6.
+**Quem deduplicar reabre a janela.** Está escrito no docblock.
+
+🔴 **O QUE ESTE PR NÃO FAZ, e está dito no código: a partição NÃO é cerca.** Nada impede um arquivo
+que lê a fixture de importar do bloco `DATA_*` — o alinhamento consumidor↔bloco é **convenção
+sustentada por leitura**. **Teste novo não entrou, por decisão do dev** (*"npm test inalterado"*), e
+o custo fica registrado em vez de maquiado. Quem cobre o desalinhamento são os portões do PR 6, que
+já estavam no plano: o `throw` de `balance.ts:52` (ruidoso) e o `npm run dataset:report` com sha256
+(o caminho silencioso). 🔑 **Mesma família de "guarda de escrita sem guarda de leitura não é teto, é
+convenção"** — a diferença é que aqui a convenção está **declarada como tal**.
+
+🔑 **O ACHADO: o digest se moveu num PR verde→verde, e quem pegou foi o `versao.test.ts`.**
+`src/engine/draft-test-fixtures.ts` está no escopo do digest (`EH_FONTE_DE_ENGINE`,
+`src/engine/versao.test.ts:73-74`), então renomear o import dele derrubou a primeira rodada do
+`npm test` em **1637/1638**. **Sem bump de `VERSAO_APP`** — caso "Não", precedente do PR 2.
+**Registrado com destaque porque digest que se move em silêncio num PR rotulado verde→verde é a
+forma exata do que este repositório já pagou.**
+
+⚠️ **ERRO MEU DE MÉTODO, registrado:** comparei o `dataset:report` rodado por `node` direto (251
+linhas) contra a captura do PR 2 feita com `npm run` (255 linhas), e o sha256 divergiu. **A
+divergência era do meu recorte, não do programa.** Refeito com o mesmo comando da captura, saiu byte
+a byte igual. 🔑 **Comparação cujo MÉTODO de captura não bate não mede o que se pensa que mede** —
+mesma lição das cinco contagens do inventário de nomes (`ESTADO.md` §"MEDIÇÕES E AUDITORIAS DA
+TRILHA DE NOMES", que ficou lá no arquivamento de 2026-08-31).
+
+---
+
+**🏆 PR ANTERIOR — NOMES FICTÍCIOS — PR 5 (`anonimizar.ts` + teste diferencial): CONCLUÍDO e
+COMMITADO em 2026-08-28**, na `main` (`3d5f105`). **MÉDIO RISCO — rótulo do dev** (o `CLAUDE.md` só define ALTO e
+BAIXO; rodaram as obrigações que ele listou, **sem `senior-reviewer`**). **Sem push, sem tag.**
+Detalhe completo: `HISTORICO.md` §"NOMES FICTÍCIOS — PR 5".
+📌 **A doc foi escrita pela SESSÃO PRINCIPAL, não pelo `doc-writer` — decisão do dev nesta sessão.**
+Palavras dele: *"nas últimas quatro sessões auditá-lo custou mais que redigir, e a última rodada teve
+23 erros factuais."* Terceiro PR seguido assim. **A auditoria não foi dispensada:** o diff foi
+mostrado ao dev e lido antes do commit.
+
+`scripts/anonimizar.ts` + `scripts/anonimizar.test.ts` (16 testes). `idsDaEquipeAno` virou `export`;
+`EQUIPE_ANOS_ANONIMO` entrou em `caminhos-dataset.ts`; `npm run dataset:anonimizar` no `package.json`.
+
+🔒 **`src/data/` INTOCADO — decisão do dev, 2026-08-28, que SUPERA a de 2026-08-25** (*"o
+`anonimizar` passa a escrever em `src/data/`"*, `PLANOS_ATIVOS.md`). A antiga foi marcada como
+superada **no lugar**, não contradita ao lado.
+🔴 **E a consequência fica dita, porque ela é o oposto do que o plano prometia: A CÓPIA MANUAL
+`derived → src/data/` NÃO MORREU NO PR 5 — ela morre no PR 6**, que é quem publica. Até lá segue
+manual e sem guarda. Está escrito em quatro sítios de código de propósito.
+🔒 **A saída `equipe-anos.anonimo.json` NÃO é commitada** (decisão do dev: *"artefato derivado
+commitado é a segunda fonte que precisa concordar com a primeira"*). Por isso **o teste opera sobre o
+RETORNO EM MEMÓRIA da função pura** — `npm test` não depende de artefato gerado.
+🔒 **`verificarColisaoDeIds` (`derivar-notas.ts:740`) é RE-EXECUTADA sobre a própria saída**,
+importada e não reimplementada: o `anonimizar` não passa por `derivarNotas`, então contornar a
+chamada seria contornar a guarda existente.
+
+🔑 **A PROVA, mesma seed (20260827, 22 bots `dificil`, `pista-montreal`):**
+**`hashDaCorrida` IDÊNTICO — `5c5d79c59c57ed0b`** (o determinismo sobrevive à troca) e
+**`hashDoDraft` DIFERE — `9e7f69dc90bc62e6` → `6dff30f70d22f7d9`** (a anti-vacuidade). **Se os dois
+baterem, o `anonimizar` virou cópia.**
+
+🔴 **TRÊS REGISTROS DESTE PR QUE CONTRARIAM O QUE EU AFIRMEI — ficam aqui, não só no `HISTORICO.md`:**
+- 🔑 **O erro do `'media'` — e é a LIÇÃO INVERSA da que este arquivo vinha catalogando.** O
+  diferencial chamava `atribuirPerfis(..., 'media')`, e **`Dificuldade` é `'facil' | 'dificil'`**
+  (`src/engine/types.ts:240`). Em runtime `PROPORCAO_PRA_GANHAR['media']` é `undefined`,
+  `rng.next() < undefined` é `false`, e **os 22 bots saíam todos `'passeio'`**. O teste **rodava,
+  dava 16/16 verde e hash estável** — hash estável é o que um cenário degenerado produz.
+  **Quem pegou foi o `npm run typecheck`, não a suíte.** As seis instâncias já registradas aqui são
+  todas "o teste afirmava o que não conferia"; **esta é a primeira em que o portão foi o `tsc`.**
+  ⚠️ **Consequência registrada: os hashes que mostrei ao dev no plano estavam medidos sob o cenário
+  degenerado.** Os de cima foram re-medidos e **os seis mutantes foram re-rodados contra o código
+  final** — a primeira rodada deles não conta.
+- 🔑 **Minha previsão sobre `hashDaCorrida` estava ERRADA.** Eu disse ao dev que nenhum mutante
+  atingiria a asserção "IDÊNTICO" sozinho. **Três a derrubam: `M-parordem`, `M-ordem` e `M-notas`.**
+  A metade que parecia decorativa tem dentes — e `M-parordem` mostra que **trocar os dois pilotos
+  DENTRO da equipe muda a corrida**. ✅ E `M-cp` a deixa VERDE, corretamente: cópia preserva a
+  simulação. **É por isso que as duas metades não se substituem.**
+- 🔴 **`M-idreal` mata UMA asserção só.** Trocar nome exibido e **manter o id real** é o meio-serviço
+  mais provável — e o mais grave, porque **os ids SÃO os nomes** e é o id que vai no bundle. Só
+  `TODO id difere` o pega: **ponto único de falha.** **Quem for mexer nesse teste precisa saber** —
+  afrouxar aquela asserção deixa passar exatamente o defeito que a trilha existe para evitar.
+
+📌 **Portão dos nomes reais INALTERADO em 9.486, e é o resultado certo:** a lista `BASELINE` é fixa e
+não inclui `scripts/derived/`. **Quem move essa linha é o PR 6.**
+
+⚠️ **EFEITO COLATERAL MEDIDO, registrado porque é armadilha recorrente aqui: exportar
+`idsDaEquipeAno` com docblock EMPURROU `derivar-notas.ts` em +8 linhas e invalidou ÂNCORAS ALHEIAS.**
+`idsDaEquipeAno` 629→**637**, o `.sort(cmpStr)` 688→**696**, a interpolação do estrategista
+711→**719**; `verificarColisaoDeIds` ficou em **740**. Duas citações **pré-existentes** quebraram
+(`scripts/nomes-ficticios.test.ts:604` e a entrada do PR 4 no `HISTORICO.md`) e foram **corrigidas no
+mesmo commit de doc**. 🔑 **A lição operacional: acrescentar comentário num arquivo muito citado é
+mudança de âncora**, e este projeto já registrou cinco correções de âncora por não notar isso.
+⚠️ **NÃO saí corrigindo todas as âncoras do repo:** a citação `derivar-notas.ts:705` aparecia em
+quatro sítios e **já estava desatualizada antes deste PR** (a interpolação nunca esteve em 705) — é
+deriva pré-existente, não é minha, e mexer nela é PR próprio.
+✅ **E o PR próprio veio no mesmo dia — é o bloco a seguir.**
+
+**🧭 PR DE ÂNCORAS — CONCLUÍDO e COMMITADO em 2026-08-28**, na `main`. **BAIXO RISCO — só
+comentário, zero diff de runtime.** **Sem push, sem tag.**
+**Motivo de ser AGORA, palavras do dev:** *"o PR 6 vai citar âncoras dessa região, e começar com
+quatro citações erradas no repo é convite para propagar mais uma."* **Mesmo argumento que fez o PR
+(ab) vir antes do PR 4** — consertar o instrumento antes de usá-lo.
+
+**As quatro âncoras de `scripts/derivar-notas.ts`, TODAS RE-MEDIDAS nesta data:**
+
+| sítio | citado como | **medido agora** |
+|---|---|---|
+| `idsDaEquipeAno` | `:623-631` | **`:637-646`** |
+| `nome: titularesDaEquipe[0\|1].nome` | `:691-692` | **`:705-706`** |
+| `equipe: equipe.nome` | `:698` | **`:712`** |
+| `` nome: `Estrategista ${equipe.nome} ${season}` `` | `:705` | **`:719`** |
+
+🔴 **A ARMADILHA QUE ISTO DESARMA, e ela é pior que "número velho": o `:705` antigo APONTA HOJE PARA
+UMA LINHA REAL E ERRADA.** A `:705` é agora `nome: titularesDaEquipe[0].nome` — **o sítio do
+PILOTO**. Quem seguisse a citação encontraria código plausível, do assunto certo (normalização de
+nome), e concluiria que estava no sítio do estrategista. **Âncora podre que aponta para o vazio se
+denuncia sozinha; esta não se denunciava.**
+🔑 **E a deriva NÃO é do PR 5:** o `:698` não bate nem somando o deslocamento de +8 que a exportação
+de `idsDaEquipeAno` causou (698+8 = 706 ≠ 712). **Era anterior à trilha inteira** — o PR 5 só a
+tornou visível ao mexer no arquivo.
+
+**Os quatro sítios corrigidos:** `scripts/portao-nomes-reais.test.ts:75` (a razão MEDIDA do método
+do portão), `PLANOS_ATIVOS.md` §NOMES FICTÍCIOS (a 🔒 "varredura de texto cru"), `HISTORICO.md`
+(achado de método do PR 2) e este arquivo (a lista dos 4 sítios de normalização).
+⚠️ **A troca NÃO foi cega, e isto quase mordeu:** um `replace` literal de `:705` → `:719` também
+acertou **a linha que DESCREVE a deriva** ("`:705` aparece em quatro sítios e já estava
+desatualizado"), transformando-a em absurdo. Pego na conferência do diff e reescrito à mão. **Sed
+sobre prosa que fala do próprio número é armadilha.**
+
+**Medido:** `npm test` **1638/67 — INALTERADO**, e inalterado é o resultado CERTO (nenhuma linha de
+runtime foi tocada). typecheck **0**, eslint **0**. `preview/medicoes-pr2/LEVANTAMENTO-PR2.md`
+também cita `:705` e **ficou de fora por não ser rastreado pelo git** (`preview/` é gitignored).
+
+---
+
+**🏆 PR ANTERIOR — NOMES FICTÍCIOS — PR 4 (a tabela dos 458): CONCLUÍDO e COMMITADO em 2026-08-27**, na `main`
+(`cbe2bbc`). **BAIXO RISCO.** ✅ **PORTÃO DE APROVAÇÃO PRÓPRIO CUMPRIDO: amostra de 20 APROVADA
+PELO DEV**, com dois ajustes pedidos por ele e aplicados. **Sem push, sem tag.**
+Detalhe completo: `HISTORICO.md` §"NOMES FICTÍCIOS — PR 4".
+📌 **A doc foi escrita pela SESSÃO PRINCIPAL, não pelo `doc-writer` — decisão do dev nesta sessão**
+(mesmo motivo do PR (ab): auditar tem custado mais que redigir). **A auditoria não foi dispensada:**
+o diff foi mostrado ao dev e lido antes do commit.
+
+`scripts/nomes-ficticios.json` (458 entradas: 105 equipes + 353 pilotos) + `scripts/nomes-ficticios.test.ts`
+(a cerca) + `TABELA_NOMES` em `caminhos-dataset.ts`. **NENHUM CONSUMIDOR** — quem a aplica é o
+`anonimizar.ts` do PR 5.
+
+🔒 **REGRAS DE AUTORIA APROVADAS PELO DEV — valem para toda entrada nova nesta tabela:**
+- **Família de construtor mantida, com o MESMO sufixo por fornecedor.** `cooper`/`cooper-climax`/
+  `cooper-brm` → **Kestner / Kestner-Vireo / Kestner-NDK**, e **NDK é também a equipe BRM**.
+  Medido: 17 ids compostos em 7 famílias, 7 sufixos de motor.
+- **Sabor por época**, pela primeira temporada de cada id.
+- **Os 7 que foram piloto E construtor compartilham o nome nas duas pontas** (`brabham` → Danforth
+  como equipe e como sobrenome dos dois pilotos). São as mesmas 7 agulhas deduplicadas do PR 1.
+  **Palavras do dev: "é coerência que o jogo ganha de graça".**
+- **Formato de id preservado, sem esquema novo** (regra travada no PR 3).
+
+🔴 **AS DUAS LACUNAS DA CERCA — não são calibráveis, e é por isso que ficam aqui e não só no código:**
+- **PRIMEIRO NOME DE PILOTO ESTÁ FORA DO UNIVERSO — decisão do dev sobre medição** (197 de 262
+  primeiros nomes aparecem 1× ; agulhá-los inviabiliza a cerca). **Um "Ayrton Vandel" passa VERDE.**
+  🔑 **Regra de autoria ALARGADA pelo dev em 2026-08-27:** não usar como primeiro nome algo que seja
+  **sobrenome real de piloto** — `Gavin Thorncroft` e `Simon Pennington` passaram verdes e foram
+  trocados. *(Palavras do dev: "não é falha da cerca — é da regra de autoria, e ela vale.")*
+- **TOPÔNIMO DA CASA DA EQUIPE REAL é cegueira ESTRUTURAL:** o universo (`fatos-agregados.json`) não
+  tem nome de lugar. `Faentina` (Faenza/Minardi), `Kowloon` (Theodore) e `Aravalli` (Force India)
+  **passaram verdes** e foram trocados **por decisão do dev, não por medição**.
+  *(Palavras do dev: "o objetivo é remover referência, não codificá-la de forma mais sutil.")*
+🔒 **As duas são REGRA DE AUTORIA, e regra de autoria NÃO É CERCA** — nenhum teste as faz valer.
+Quem acrescentar entrada nesta tabela responde por ela na leitura, não no `npm test`.
+
+📏 **TRÊS DESVIOS da definição de distância que o dev tinha assinado — todos medidos, declarados a
+ele ANTES da aprovação da amostra, e aprovados depois.** Aprovar nomes produzidos sob definição
+diferente da assinada seria substituição silenciosa:
+- **Teto 3 no limiar** — a fórmula crua dava 4 em `maxLen 12`, e **o docblock ao lado já dizia 3**.
+- **Piso da substring 4 → 6.** Com 4, `berg`/`hall`/`mass` casavam dentro de sobrenome legítimo
+  (`Vandenberghe` ⊃ `berg`) — **o `rb` em `Nürburgring` um degrau acima**. 📊 Curva medida:
+  **48 / 38 / 36 / 36** para pisos 4/5/6/7 — estabiliza em 6, e o 7 afrouxa de graça.
+- **Substring desligada no candidato NOME COMPLETO** — `gavinthorncroft` continha `gavin`, ou seja
+  **a cerca proibia primeiro nome, que o dev decidiu deixar fora**.
+⚠️ **Efeito colateral REGISTRADO do piso 6:** o conjunto isento de substring não são as 16 agulhas
+de <4 — são **todas as de <6**, isto é **mais 116**. **16 nomes fictícios contêm uma delas**
+(`Fumagalli`⊃`galli`, `Vandenberghe`⊃`berg`, `Malagoli`⊃`lago`). **São morfologia coincidente e o
+dev os julgou um a um** — mas a cerca **não afirma** que estão limpos.
+
+🔑 **FILTRO MECÂNICO TENTADO E REPROVADO, registrado em vez de escondido:** "token que aparece em
+mais de um nome de equipe é genérico" devolve `lotus:6 brabham:6 ford:6 cooper:4 … mclaren:2` — **as
+marcas mais fortes**, por causa dos compostos. **Inverteria a cerca.** Não entrou allowlist; a regra
+do PR 1 vale igual (se o nome incomoda, troca-se o NOME). Mesma família do substituto 2 do
+inventário — ⚠️ **que NÃO está acima, apesar de a redação original dizer isso: o INVENTÁRIO DOS
+NOMES REAIS ficou no `ESTADO.md`** (§"MEDIÇÕES E AUDITORIAS DA TRILHA DE NOMES"), porque é a
+evidência das pendências 0(y)/0(z). Âncora corrigida no arquivamento de 2026-08-31.
+
+---
+
+## Trecho 2 — os PRs da Fase 3 (0(s), PR C, 3.5.4, 3.5.3, corrida online, 3.5.1, A, B, 3.5.2)
+
+**🏁 CONSERTO DA 0(s) — CONCLUÍDO em 2026-08-23**, na branch **`fix-0s-sala-zumbi`**
+(`5f5f2f3` + `5bfa90b`). ALTO RISCO (netcode). **Diff de produção: um `else if` de três linhas** em
+`party/sala.ts`. **Medido:** `npm test` **1592/64** em 3 rodadas, `npm run test:party` **19/19**
+(era 18/18), typecheck **0**, eslint **0**, build **0**. Detalhe: `HISTORICO.md` §"conserto da 0(s)".
+
+✅ **A 0(s) está FECHADA** — a sala corrompida volta a morrer pela carência de vazio. Ver a pendência
+para a cadeia e para a nuance.
+
+🔴 **A REVISÃO REPROVOU NA PRIMEIRA PASSADA, e o bloqueante era uma REGRESSÃO que eu introduzi.**
+O conserto persistia `registrarConexoes` nas **duas** direções, e a direção `vazio → não-vazio`
+grava `vazioDesde: null`. Com um cliente conectado e **quieto** (o socket só fecha quando ele manda
+algo), a carência reiniciava a cada tique: **o caso do teste MD, que sempre funcionou, seria
+quebrado pelo lado oposto ao que se temia.** Conserto: a guarda `vazioDesde !== null`.
+🔑 **A causa de o furo passar é estrutural e vale além deste PR: nenhum teste de `party/` abria
+socket.** Todo o harness rodava com zero conexões, então a direção não-vazia não tinha cobertura.
+Fechada com `tiqueComConexoes`, que injeta **só o contador** de conexões.
+
+📊 **BASELINE + 3 MUTAÇÕES, todas VERMELHAS, tabela rodada DUAS vezes** (a segunda contra o código
+final), sempre com `tsc` limpo e `git hash-object` conferindo cada reversão:
+- **Baseline vermelho**, na ordem certa: a sonda da 0(s) foi **INVERTIDA** (`toBeNull` →
+  `not.toBeNull`) e vista vermelha **contra o `party/sala.ts` intacto**, ANTES de o conserto
+  existir. Inverter e consertar no mesmo passo daria verde que não prova nada.
+- **M-else** (conserto revertido): 3 falharam / 19 · **M-estado** (`aplicar({ estado })`, persiste o
+  objeto sem o campo novo): 3 falharam / 19 — **é a que sobreviveria a uma revisão por leitura** ·
+  **M-guarda** (a guarda do C1 removida): 1 falhou / 19.
+
+🔴 **ERRO MEU, E É REINCIDÊNCIA DO QUE O PROJETO JÁ CATALOGOU:** rodei uma mutação com a guarda
+**ainda não commitada**, e o `git checkout --` da reversão **apagou o conserto**. É a repetição
+literal da lição do 3.5.3 — **reversão de mutação sobre trabalho não commitado se faz por CÓPIA**.
+Reescrevi, **commitei antes** de voltar a mutar, e as rodadas finais saíram com a árvore limpa.
+
+✅ **ACHADO DE REVISÃO REFUTADO POR MEDIÇÃO (precedente do 3.5.2).** A sugestão S1 dizia que a
+identidade de `registrarConexoes` "não está fixada por teste nenhum" e que os testes "asseveram
+valores, nunca a referência". **Falso, medido:** `src/net/ciclo-de-vida.test.ts:163-174` já a fixa
+com `.toBe()` nas duas direções, com timestamps explícitos — não depende de relógio. Rodado
+isolado: verde. **Não implementada.**
+
+---
+
+**🏁 PR C DO SPIKE — GATE DO `alarm()`: CONCLUÍDO em 2026-08-23**, na branch **`pr-c-gate-alarm`**
+(`99afde0`). **Último PR do spike, e o primeiro do projeto a assertar sobre o RELÓGIO da casca.**
+**Medido:** `npm run test:party` **16/16** (era 10/10), `npm test` **1592/64 INALTERADO** em 3
+rodadas — e inalterado é o resultado CERTO: o arquivo mora em `party/`, fora do `include`
+(precedente do PR B). typecheck **0**, eslint **0**, build **0**. **Zero diff de produção**
+(`party/sala.ts` byte a byte igual ao da `main`), o que sustenta o rótulo BAIXO RISCO e o
+`senior-reviewer` pulado. Detalhe completo: `HISTORICO.md` §"PR C".
+
+🔴 **O ACHADO QUE MAIS IMPORTA: a pendência 0(s) está CONFIRMADA por execução** — e o harness ainda
+**refinou o diagnóstico** que a leitura tinha. Sala corrompida com `vazioDesde: null` não persiste o
+campo em tique nenhum (medido em TRÊS tiques), então o relógio de morte nunca começa; mas sala
+corrompida com o `vazioDesde` **já gravado** morre normalmente. **O zumbi é só quem se corrompe
+enquanto ainda tinha conexões.** Ver a pendência 0(s) para a nuance inteira — ela muda o que o
+conserto pode fazer.
+
+📊 **MB e MD, as duas VERMELHAS, e a tabela foi rodada DUAS VEZES** (a segunda contra o código
+final, pela lição do 3.5.2 de que mutação sobrevive justo na rodada intermediária), sempre com
+`tsc` limpo e `git hash-object` conferindo cada reversão:
+- **MB** (o gate vira condição sempre verdadeira): **2 falharam / 16**, nas duas passadas. Derruba o
+  teste do gate **e a sonda da 0(s)** — coerente, e é evidência a favor do diagnóstico: sem o gate,
+  `aplicar()` volta a rodar e o `vazioDesde` passa a ser persistido.
+- **MD** (o gate sobe para o topo do `alarm()`): **1 falhou / 16**, nas duas passadas.
+
+🔑 **A PRÉ-CONDIÇÃO QUE LANÇA SE PAGOU NA PRIMEIRA EXECUÇÃO.** `exigirCorrompida()` — no molde do
+`seedsDe` do PR B — pegou que o teste MB tinha **esquecido de chamar `corromper()`**: a fixture era
+uma sala SÃ. Sem ela, o cenário teria rodado errado e o baseline teria sido reportado sem exercitar
+a guarda — a sexta instância do 3.5.2 dentro do PR que existe para fechá-la.
+
+🛑 **A ARMADILHA DE VACUIDADE ERA REAL E FOI MEDIDA ANTES DE ESCREVER:** `criarSala`
+(`src/net/sala.ts`) grava `vazioDesde: agora`, então envelhecer todos os timestamps de uma vez —
+o jeito óbvio de fazer um turno vencer — faria `decidirVida` DESTRUIR a sala antes do gate, deixando
+MB verde e a mutação de MB verde junto. Por isso a fixture nasce com o relógio real e só três campos
+são sobrescritos: `vazioDesde: null`, `concluidaEm: null` (a **segunda** porta de `encerrar`) e
+`iniciadoEm` envelhecido. ⚠️ O campo `iniciadoEm` tem que EXISTIR: o consumidor lê
+`iniciadoEm[id] ?? agora`, então campo ausente **não expira** e o teste passaria por vacuidade.
+
+🔴 **DOIS DESLIZES DE MÉTODO MEUS, registrados porque são reincidência:** o `npm run lint | tail`
+encadeado com `&&` **mascarou um erro de lint real** (`no-unused-vars`) e o commit saiu com ele —
+é o mesmo defeito do `echo "[tsc limpo]"` incondicional do 3.5.4, duas sessões seguidas. **Portão se
+lê pelo `exit code`, nunca pela cauda da saída.** Consertado no mesmo PR (por `amend`).
+
+---
+
+**🏆 PR 3.5.4 — UI DO CAMPEONATO ONLINE: CÓDIGO COMPLETO E VERDE em 2026-08-23**, na branch
+**`pr-3.5.4-ui-campeonato`** (`cca90e1` + `2d859b5` + `7c5efa9`).
+**Sem merge, sem push, sem tag** — aguardando aprovação do dev.
+✅ **PORTÃO VISUAL APROVADO PELO DEV em 2026-08-23:** `preview/campeonato-online.html` (arquivo novo).
+**Medido:** `npm test` **1592/64** (era 1565/64), `npm run test:party` **10/10**
+(inalterado — o PR não toca `party/`), typecheck **0** nos três projetos, eslint **0**, build **0**.
+**`VERSAO_APP` 3.4.2 → 3.4.3 — BUMP OBRIGATÓRIO**, e **contraria a regra do digest de propósito.**
+O digest de `versao.test.ts` cobre `src/engine/**`, `src/data/**`, `cliente.ts`, `hash-draft.ts` —
+nenhum deles foi tocado. O PR vive inteiro em `src/ui/`. O bloqueante C1 da revisão obrigou o bump:
+o cliente 3.5.3 atesta corrida avulsa sem o campo `etapa`; servidor preenche `etapa ?? cursor`;
+hashes diferem por construção (decisão D6: seed crua × `seedDaEtapa`) e `alarmado` não volta atrás
+⇒ banner de divergência permanentemente aceso se os dois builds compartilham sala. Handshake de
+`VERSAO_APP` era a única coisa que impedia isso.
+**`balance-harness` não rodado, e dito:** zero arquivo de `src/engine/` além de `versao.ts` (constante).
+
+Detalhe completo: `HISTORICO.md` §"PR 3.5.4".
+
+---
+
+**🏆 PR 3.5.3 — CLIENTE MULTIETAPA: CÓDIGO COMPLETO E VERDE em 2026-08-21**, na branch
+**`pr-3.5.3-cliente-multietapa`** (`cffe699` + `c64b8b4` + `01689a5` + `d478617` + `92bcee7` + `e48a5fc`).
+✅ **MERGEADO na `main` em 2026-08-23** (`922bdd0`, `--no-ff`) ✅ **e PUSHADO pelo dev** — **sem tag.**
+⚠️ **CORREÇÃO DE AFIRMAÇÃO DE ESTADO (2026-08-23).** Esta linha dizia *"NÃO mergeado, NÃO pushado,
+sem tag"* e a perna **"NÃO pushado" já era FALSA quando foi escrita**: medido na abertura da sessão
+do 3.5.4, `git ls-remote origin refs/heads/pr-3.5.3-cliente-multietapa` devolvia **`bce5fc8`**,
+idêntico ao `HEAD` local — a **branch** estava no remoto desde o 3.5.3. Só "NÃO mergeado" era
+verdade, e deixou de ser nesta sessão. 🔑 **É a QUARTA ocorrência de "afirmação de estado só entra
+medida" sobre git** (as anteriores estão logo abaixo, no bloco do 3.5.1) — e desta vez o erro não
+foi citar o commit errado, foi **afirmar sobre o remoto sem consultar o remoto**. `git status` diz
+o que a árvore tem, **não** o que o `origin` tem; quem responde isso é `git ls-remote`.
+**Medido:** `npm test` **1565/64** (era 1544/64), `npm run test:party` **10/10**
+(inalterado — não toca `party/`), typecheck **0** nos três projetos, eslint **0**, build **0**.
+**`VERSAO_APP` 3.4.2 sem bump, MEDIDO** (nenhum arquivo do digest tocado, nenhum `deriveSeed` novo).
+**`balance-harness` não rodado, e dito**: rótulo `camp:` intacto, zero arquivo de `src/engine/`.
+Detalhe completo: `HISTORICO.md` §"PR 3.5.3".
+
+🔑 **O RECORTE MUDOU ANTES DE COMEÇAR, por decisão do dev — e o motivo é código, não preferência.**
+O plano punha "atestado por etapa" no 3.5.3 e o `key={'etapa-'+k}` + remoção do `naCorrida` no
+3.5.4. Rastreado no código: `useCorrida` semeia o `useState` de `fonte` UMA vez, o atestado sai por
+mudança de REFERÊNCIA de `corrida`, e `corrida-concluida` não carrega etapa (o balde vem do cursor
+do servidor). Logo, atestar `etapa: etapaAtual` **sem o remount** dá **hash da etapa k com a tela da
+etapa 0** — a forma exata do bug do 8.4, produzida pelo fatiamento, dentro do PR cuja cerca existe
+para impedi-la; e `contrato-corrida-online.test.ts` **não pegaria** (conta sítios textuais, não
+remount). **Veredito do dev: opção (A), derivação PURA.** A fiação inteira vai para o 3.5.4, que tem
+portão visual. A opção de seguir o plano à risca foi descartada explicitamente — deixaria
+divergência conhecida na `main` entre dois PRs.
+
+🔒 **A lógica ficou em módulo PURO (`etapasDaSala`/`classificacaoDaSala` em `corrida-online.ts`), não
+no `useMemo`** — porque **o projeto não tem `jsdom` nem `@testing-library` (medido)** e nada dentro
+do hook é alcançável por mutação. Desvio declarado da letra do dev ("o map mantém a contagem em 1"):
+o sítio único **mudou de arquivo**, não deixou de ser único, e virou testável.
+
+🔴 **A REVISÃO REPROVOU NA PRIMEIRA PASSADA — um bloqueante, confirmado por MEDIÇÃO:**
+- **C1** — `etapasDaSala`/`classificacaoDaSala` nasceram **fora** da allowlist. Medido com um
+  `PainelFuga.tsx` sintético chamando `etapasDaSala`: a cerca ficava **VERDE, 26/26**, porque o
+  arquivo não cita nenhum nome vigiado — **todos ficam atrás da indireção**. 🔑 **Ponto de entrada
+  público que computa corrida online entra na cerca NO PR QUE O CRIA** (o 3.5.4 é quem desenha os
+  painéis, e é lá que a tentação mora).
+- **A3** — a metade **avulsa** das duas semânticas de seed **não tinha baseline**: a mutação
+  `seedDaSimulacao = seedDaEtapa(seed, idDaPista)` deixava a suíte **INTEIRA verde, 1557/1557**,
+  `tsc` e `eslint` limpos. 🔑 **Bifurcação declarada crítica com um lado travado é meia cerca.**
+- **A4/A5 + a meia-frase da 0(t)** — três docblocks que afirmavam mais que o código: a cerca de
+  `seedDaEtapa` garante **uma costura só** e não pega quem derive por fora sem citá-la
+  (`deriveSeed(seed,'camp:X:online')` passa nela e no registro de namespaces); `etapasDaSala` **não
+  olha `draft.fase`** e **LANÇA** em vez de devolver `[]`; e a etapa corrente é
+  **`etapas.length - 1`, NUNCA `sala.etapaAtual`**. **Todos consertados.**
+
+📊 **11 mutações, 0 sobreviventes, tabela RERODADA INTEIRA após os consertos** — todas com `tsc` e
+`eslint` limpos, cada reversão conferida por `git hash-object`: `M-seedcrua` · `M-seed-default` ·
+`M-pista` · `M-indice` · `M-futuras` · `M-throw` · `M-classif` · `M-jogadores` · `M-avulsa` ·
+`M-conta` · `M-guarda-classif`.
+🔴 **`M-guarda-classif` SOBREVIVEU na primeira tentativa, e é o registro que mais importa da 2ª
+passada:** a guarda de fase tinha sido posta dentro do `useMemo`, e **sem jsdom não existe baseline
+possível para código dentro do hook** — apagá-la deixava tudo verde. Movida para a função pura, a
+mesma mutação ficou vermelha. 🔑 **Guarda sem baseline é o defeito que este PR combate, cometido no
+conserto dele** — repetição literal do que o 3.5.2 registrou.
+
+🔁 **A SEGUNDA PASSADA DA REVISÃO voltou SEM BLOQUEANTE, com três avisos — e dois eram sobre os
+consertos da primeira:** **A1** (o docblock dizia que a classificação era `[]` junto com `etapas`;
+medido, na fase de peça ela já devolvia **17 linhas zeradas**, e um painel do 3.5.4 aberto com
+`classificacao.length > 0` mostraria a tabela do campeonato **durante o draft**); **A2**
+(`calendarioSorteado` ficou fora da cerca — o docblock declara a etapa como o PAR
+`(seed, calendario)` e só a metade da seed estava cercada, justo quando o 3.5.4 precisa do
+calendário INTEIRO, que não sai do hook); e **A3** (os números da documentação, que os próprios
+commits de conserto tornaram falsos). **Os três atendidos.**
+⚠️ **A lista da allowlist de `calendarioSorteado` saiu da CERCA, não de `grep`** — `grep -l` acusava
+três arquivos a mais, todos com menção só em comentário. É a lição do `namespaces-seed.ts` na
+direção oposta.
+
+🔑 **A PENDÊNCIA 0(t) MELHOROU — e o 3.5.4 pode desfazer isso sem perceber.** A 0(t) previa que este
+cliente leria `etapaAtual` para indexar o calendário; **ele nunca lê `etapaAtual`**. No caso
+corrompido o snapshot publica `seedsAbertas: []` ⇒ `etapas` é `[]`, sem travar e sem consumir o
+campo autocontraditório. 🔒 **Invariante obrigatória para o 3.5.4: indexar por `etapas.length - 1`,
+nunca por `sala.etapaAtual`.**
+
+🔴 **TRÊS ACHADOS DE MÉTODO desta sessão** (detalhe no `HISTORICO.md`): (1) a asserção de
+**pré-condição** pegou uma seed que colidia com o calendário — `M-pista` sobreviveria por acaso;
+(2) a cerca **contrariou a minha própria medição** sobre `namespaces-seed.ts` (o nome está numa
+STRING, e `semComentarios` remove comentário, não literal); (3) 🔴 **`git checkout --` apagou o PR
+num arquivo** no meio da tabela, porque o alvo era trabalho **não commitado** — a guarda de hash
+acusou na hora e as mutações seguintes disseram `ALVO NAO ENCONTRADO` em vez de darem falso verde.
+**Reversão de mutação sobre trabalho não commitado se faz por CÓPIA.**
+
+🔴 **O PORTÃO PRINCIPAL FICOU VERMELHO POR CAUSA DA SABOTAGEM NOVA, e o conserto está medido.**
+`npm test` caiu com 2 testes de `contrato-ausente.test.ts` — arquivo que o PR não toca. Causa: a
+sabotagem varria a árvore **6×** com o arquivo de fuga em disco, e aquela suíte percorre `src/ui/`
+com `readdirSync`/`statSync` em paralelo. Conserto: **uma varredura só**, apagar, assertar em
+memória, E a causa RAIZ consertada nos dois pontos da janela. **8 rodadas seguidas de `npm test`, 1565/1565 em todas** (a taxa era ~50%). ⚠️ **A janela é PRÉ-EXISTENTE,
+medido contra a base:** em `3f54436` as duas cercas juntas já falham **1-2 testes**. Virou a
+pendência **0(v)**.
+
+✅ **FECHADA EM 3.5.4 — decisão do dev (A2 da revisão do 3.5.3):** o cliente fixa `'curta'` (5) e o teto de
+LEITURA de `nEtapas` no servidor é `[1, 10]` (`sala.ts:324`, contra `seedsEtapas.length`). Caminho (1):
+formato **sai de `sala.nEtapas`**, com portão `seedCalendario === null` ANTES do lookup, e **lookup é TOTAL**
+(devolve `null`, nunca lança). O lookup total é o que fecha de verdade — teto de leitura `[1, 10]`,
+não `{5, 10}`, então um lookup que lançasse teria MOVIDO a pendência, não fechado. Pendência **0(w)**.
+
+**🏁 CORRIDA ONLINE — ENCERRADA. Os quatro PRs feitos (2026-08-12 a 2026-08-17) e o ✅ PORTÃO VISUAL
+DO 4/4 APROVADO PELO DEV em 2026-08-18.** Não há nada pendente na corrida online.
+- PR 1/4 (`b67ec2b`) — seed e pista sorteadas ao fim do draft online. **Medido:** 1412/56.
+- PR 2/4 (`8a8088a`) — uma função só computa a corrida online; mesma referência pra hash e tela (defesa contra bug do 8.4). **Medido:** 1454/60.
+- PR 3/4 (`50906af`) — barreira no fim (versão fraca, não bloqueia ninguém) + `concluidaEm` marca a corrida. **Medido:** 1472/61. **Bloqueante da revisão (reidratação) foi corrigido.**
+- PR 4/4 (`44d0dc8` + `8489b6f`) — **a corrida chega na tela.** Botão "Ir pra corrida" com guarda,
+  `FluxoCorrida` no modo `'pronta'`, resultado com pontuação FIA, atestado da barreira no fim do
+  replay, banner ramificando por escopo. **Medido:** 1480/62, typecheck 0, eslint 0, build 0.
+
+✅ **Veredito do dev sobre `preview\corrida-online.html`: APROVADO (2026-08-18).** Portão fechado.
+
+**🏆 3.5 CAMPEONATO ONLINE — PR 3.5.1 FEITO em 2026-08-18**, na branch
+`pr-3.5.1-seed-por-etapa` (`83a6fde` + `ffdabc1` + `4a4b801`). ✅ **MERGEADO na `main`** (`3308be3`)
+✅ **e PUSHADO** — **sem tag**, como o dev pediu. **`npm test` 1516/63** (era 1480/62), typecheck
+app **0**, typecheck `party/` **0**, eslint **0**, build **0**. Plano em `PLANOS_ATIVOS.md`
+§"3.5 CAMPEONATO ONLINE".
+
+⚠️ **CORREÇÃO DE AFIRMAÇÃO DE ESTADO (2026-08-19).** Linha anterior dizia *"NÃO mergeada, NÃO pushada,
+sem tag — aguardando o dev"* e **estava falsa nas duas primeiras pernas**. Medido em 2026-08-19 com
+HEAD na `main`: `git ls-remote origin refs/heads/main` = `f9d5348`, **idêntico ao `HEAD` local**; `git
+rev-list --left-right --count origin/main...main` = `0 0`. ⚠️ Esta linha citou por um momento um
+`5fca74b` que **não era o `HEAD`** — quarta ocorrência da mesma lição, dentro do próprio bloco que a
+registra. Branch `pr-3.5.1-seed-por-etapa` segue só local (`3282852`), contida na `main`. É a
+terceira ocorrência de **"afirmação de estado só entra medida"** — desta vez sobre git.
+
+🔄 **ESTADO DO GIT REMEDIDO EM 2026-08-19, pós PR A + PR B** (a linha acima descrevia a sessão
+anterior e envelheceu — remedir é obrigação, não zelo):
+`git rev-parse HEAD` = **`aa68690`**, branch **`main`**; `git ls-remote origin refs/heads/main` =
+**`b41deb7`**; `git rev-list --left-right --count origin/main...main` = **`0 6`**.
+**A `main` local está 6 commits À FRENTE do remoto e NADA foi pushado** — os merges do PR A
+(`c798976`) e do PR B (`aa68690`) são locais, **sem tag**, como o dev pediu.
+
+Escopo: `src/net/` + `party/`, sem UI. Implementa `B-indep` (decisão D1): **11 seeds INDEPENDENTES
+sorteadas no DO** (10 etapas + calendário), publicadas uma por etapa quando aquela abre. **O cursor
+ainda NÃO avança** — só etapa 0 sai. `VERSAO_ESTADO_SALA` discrimina sala legado de corrompida;
+`estadoDasSeeds` devolve `legado | ok | corrompida` e casca recusa corrompida.
+- 🔑 **`VERSAO_APP` ficou em 3.4.2 — sem bump, e MEDIDO** (plano dava como certo; digest
+  `src/engine/**` + `src/data/` + `cliente.ts` + `hash-draft.ts` — nenhum tocado; rótulos novos:
+  nenhum em `src/engine/`).
+- 🔴 **A revisão achou UM BLOQUEANTE e ele era real:** `party/` tem cobertura zero. M5 e M6 no sítio
+  real deixavam suíte **inteira verde — 1509/63**. Conserto: **cerca textual** sobre `party/sala.ts`,
+  nasceu com dois defeitos (ambos pegos rodando): regex falso-negativo multilinhas, cheque cego.
+- **6 avisos da revisão aplicados** (A1–A6). Três pendências novas: **0(p)** ✅ **FECHADA 2026-08-19
+  (dev mediu despejo real)**; **0(q)** ordem deploy wrangler antes vite (3.5.2+); **0(r)** `etapaAtual`
+  fora discriminante.
+
+✅ **PENDÊNCIA 0(p) FECHADA em 2026-08-19 — o dev rodou o despejo real.** Sala 420320 pós-3.5.1,
+worker derrubado, reconexão forçando reidratação. **As 11 seeds vieram idênticas**; cinco pré-3.5.1
+em `legado`. Requisitos (a) e (b) do baseline deixam de ser projeto e viram **fato medido**.
+
+**✅ PR A DO SPIKE — VEREDITO DO DEV: GO (2026-08-19).** `@cloudflare/vitest-pool-workers` adotado.
+Commit de código `72b931e`, **MERGEADO na `main` em `c798976`** (`--no-ff`), sem tag, sem push.
+**Três achados que contrariam o plano aprovado** (o valor do spike): (1) `nodejs_compat` **não foi
+necessária** — teste passa SEM flag, então teste e produção rodam sob a MESMA config de compat, e a
+decisão travada do 3.2 fica preservada na substância, não só na letra; (2) compensador `--dry-run`
+era vacuoso — `scripts/checar-casca-sem-node.ts` empacota e **inspeciona o bundle**, e roda dentro do
+`npm run build`; (3) **`isolatedStorage` não existe mais na v0.22** — o storage ATRAVESSA os `it`s;
+substitutos medidos: nome de DO distinto por teste + `reset()` + `evictAllDurableObjects()`.
+**Descoberta crítica:** o `wrangler` do topo precisou ser **PINADO exato (4.120.0)** pra não
+deduplicar para o 4.124.0 que o pool traz. Detalhes em `HISTORICO.md` §"PR A".
+
+**✅ PR B DO SPIKE — FEITO em 2026-08-19.** Commit `ceb2228` na branch `pr-b-cobertura-seeds-casca`,
+**MERGEADO na `main` em `aa68690`** (`--no-ff`), sem tag, sem push. **BAIXO RISCO** (diff de produção
+= 4 linhas de comentário, aprovadas pelo dev), sem `senior-reviewer`.
+🔑 **É o primeiro arquivo do projeto que asserta LÓGICA sobre `party/sala.ts`** (`party/seeds.test.ts`,
+rodando no `workerd`): sorteio dos 11 slots pelo caminho real (`criarSeNova` → `criar`) e reidratação
+pós-`evictAllDurableObjects()` sem re-sorteio.
+**Medido na `main` pós-merge:** `npm test` **1516/63** (inalterado, e correto — a matriz entrou como
+docblock, não como asserção), `npm run test:party` **8/8** (era 5/5 no PR A), typecheck **0** nos
+três projetos, eslint **0**, build **0**.
+🔴 **DOIS ACHADOS QUE DERRUBARAM O PLANO APROVADO, ambos medidos antes de escrever teste:**
+(1) **MR é inutilizável como baseline** — ela derruba a **quarta** exigência da cerca textual
+(`const todas = Array.from(slots)`, que o plano não considerou) **e** dá **TS2740**, vermelho de
+compilação, que não conta. Os dois motivos são independentes.
+(2) 🔑 **Mais grave: NENHUM baseline do plano exigia o `evictAllDurableObjects()`** — MA cai na
+criação, MR também. A metade **reidratação** sairia com **cobertura declarada e não provada**, que é
+a forma exata do defeito do baseline do 3.5.1, dentro do PR que existe para fechá-lo.
+**Conserto aprovado pelo dev: MR sai, entra MC** (`carregar()` deixa de ler o storage) — o vermelho
+dela pousa **DEPOIS** do evict, com as asserções anteriores passando. Baselines **MA** e **MC**
+vistos vermelhos um a um, com a cerca textual **VERDE (36/36)** ao lado, revertidos e verdes de novo.
+✅ **R4 fechado por medição** (ver pendência 0(p)): `Uint32Array` sobrevive ao storage do DO.
+
+**➡️ DECISÃO DO DEV (2026-08-20): PR C ADIADO — abre o 3.5.2 direto.** O **PR C** é o gate do
+`alarm()` (`party/alarme.test.ts`, baselines MB/MD + anti-vacuidade). **Ele não foi cancelado: foi
+REPOSICIONADO para DEPOIS do 3.5.4**, último PR da Fase 3, e **antes de declarar a Fase 3 encerrada**.
+**Motivo registrado pelo dev:** o 3.5.2 vai exercitar `onMessage` de qualquer forma ao testar o
+cursor, e **cobertura defensiva rende mais depois de a lógica existir** — o C escrito hoje seria
+moldado ao código de ontem, e escrito depois é moldado aos bugs reais que a casca revelar.
+⚠️ **A PRIMEIRA METADE DESSE MOTIVO NÃO SE REALIZOU — medido em 2026-08-20, ver a correção na
+§"🟡 RISCO ATIVO".** O 3.5.2 testou o cursor pelo redutor puro (`aoReceber`, em `src/net/`), **não
+por `onMessage`**; `npm run test:party` segue 8/8 e nenhum arquivo de `party/` foi tocado. **A
+decisão de adiar o PR C continua de pé** — a segunda metade do motivo (cobertura moldada aos bugs
+reais) é independente e não foi afetada —, mas o adiamento sai **mais caro do que o registrado**:
+esperava-se herdar `onMessage` de graça, e não se herdou nada.
+🔁 **GATILHO DE REAVALIAÇÃO, travado junto com a decisão:** se o **3.5.2 ou o 3.5.3 revelarem na
+casca um bug que o PR C teria pego**, puxar o C para a frente em vez de seguir a sequência.
+🛑 **O preço aceito, dito por inteiro** (era o argumento contra, e continua verdadeiro): o 3.5.2
+nasce na única parte da casca ainda sem cobertura, e a **pendência 0(s)** — suspeita de sala-zumbi —
+segue **não confirmada**, porque quem a confirmaria é o harness que o C constrói.
+
+**🔢 SEQUÊNCIA ATÉ FECHAR A FASE 3 (atualizada em 2026-08-23, no conserto da 0(s)):**
+**~~3.5.2~~ ✅ → ~~3.5.3~~ ✅ → ~~3.5.4~~ ✅ → ~~PR C~~ ✅ → ~~CONSERTO DA 0(s)~~ ✅ →
+~~⬅️ Fase 3 PRONTA PARA SER ENCERRADA.~~ ✅ **FASE 3 ENCERRADA.**
+✅ **O VEREDITO VEIO — ditado pelo dev, datado por ele 2026-08-27, registrado nesta sessão de
+2026-08-28.** ~~🛑 **A FASE 3 NÃO ESTÁ ENCERRADA — encerrá-la é DECISÃO DO DEV, e ela não foi
+tomada.** Todos os passos planejados estão feitos; o que falta é o veredito, não trabalho. **Não
+marcar como encerrada sem ele.**~~
+🔒 **A linha riscada acima estava CERTA quando foi escrita e ficou FALSA quando o dev decidiu — por
+isso é riscada aqui, no lugar, e não contradita noutro parágrafo.** É a mesma regra do `CLAUDE.md`
+§"o `doc-writer` NÃO APAGA": afirmação nova ao lado da antiga contraditória devolve o estrago,
+dependendo de qual o próximo leitor achar primeiro.
+📌 **Proveniência e âncora — os dois fatos, sem escolher entre eles:** o dev ditou o encerramento
+**nesta sessão**, datando-o **2026-08-27**; o registro entra em **2026-08-28**. ⚠️ **Correção de
+âncora: o pedido citou `ESTADO.md:1004`, e o sítio da divergência é este bloco (`:1070-1075` antes
+desta edição).** A `:1004` fala de `estadoDasSeeds` e nada tem com a Fase 3. Mesma família das
+correções de âncora já registradas neste arquivo.
+📋 **A lista do que fica ABERTO apesar do encerramento está na §"FASE 3 ENCERRADA"**, no bloco da
+Fase 3 mais acima.
+🔴 *(Registro do passo que acabou de fechar:)* **o CONSERTO DA 0(s) foi um passo NOVO, criado porque
+o PR C mediu.** A pendência era suspeita por LEITURA desde 2026-08-19, ficou **CONFIRMADA por
+execução** no PR C e foi **RESOLVIDA** em 2026-08-23 — ver a 0(s) na lista de pendências. A Fase 3
+não podia fechar antes dele: era bug de produção conhecido, na casca.
+🔒 **O 3.5.4 herda MAIS do que o plano previa**, por decisão do dev no 3.5.3 (opção A): além dos
+painéis e do portão visual, ele leva o **`key={'etapa-'+k}`**, a remoção do **`naCorrida`** e o
+**atestado por etapa** — as três são a mesma solda, e separá-las produz hash de uma etapa com a tela
+de outra. Ver a §Onde parei.
+
+**🏆 PR 3.5.2 — CÓDIGO COMPLETO E VERDE em 2026-08-20**, na branch **`pr-3.5.2-cursor-por-etapa`**
+(o commit `wip` `469278f` mais o trabalho desta sessão). **NÃO commitado como final, NÃO mergeado,
+NÃO pushado, sem tag.**
+✅ **ITEM 3 DO `CLAUDE.md` (revisão de ALTO RISCO) FECHADO — em DUAS passadas.** A primeira
+**reprovou** (três bloqueantes). Os consertos foram revisados numa **segunda passada, que voltou SEM
+BLOQUEANTE** e com quatro avisos; **três deles eram sobre o próprio conserto e foram atendidos** —
+ver "A segunda passada" abaixo. Rodar a segunda passada não era zelo: mutação verde prova que o
+conserto FUNCIONA, e não substitui o portão. Barreira e avanço de cursor por etapa, elegíveis recomputados, `concluidaEm` só na última,
+**+ conserto do detector** (campo `etapa`, chave `${escopo}:${etapa}`), **+ os três bloqueantes da
+revisão consertados**. **Medido:** `npm test` **1544/64** (era 1516/63), `npm run test:party`
+**10/10** (era 8/8), typecheck **0**, eslint **0**, build **0**.
+
+🔴 **A REVISÃO REPROVOU O PR NA PRIMEIRA PASSADA — três bloqueantes, e os três se confirmaram por
+MEDIÇÃO, não por leitura.** É o registro que mais importa desta sessão:
+
+- **C1 (substância, código de produção).** `nEtapas` virou campo do estado persistido e ficou **fora
+  do discriminante**, lido por um `??` com default 1 — enquanto `seedsEtapas`, `seedCalendario` e
+  `etapaAtual` já estavam dentro. **Medido em sonda descartável:** sala de 5 etapas que perde o
+  campo na reidratação faz a PRIMEIRA barreira gravar `concluidaEm` (contra `concluidaEm: null` +
+  cursor 1 no controle) — **campeonato de 5 etapas encerrado na etapa 1, em silêncio**; e com o
+  cursor já em 3 a sala vira **`corrompida`** (`etapaAtual fora de [0, 0]: 3`) e recusa todo mundo.
+  🔑 **O bump de `VERSAO_ESTADO_SALA` (1 → 2) era PRÉ-REQUISITO do conserto, não zelo:** com a
+  versão parada, "sala 3.5.1 que legitimamente não tem o campo" e "sala 3.5.2 que o perdeu" são o
+  mesmo objeto e **nenhuma guarda consegue separá-las**. Conserto: versão 2, `nEtapas` em
+  `estadoDasSeeds` sob `versaoSala >= 2`, e default 1 preservado **só** para v1.
+- **C2 e C3 (método).** Aqui o código estava **certo** — o que não existia era prova. **C2:**
+  neutralizar a guarda `if (etapa < cursor)` deixava a suíte **inteira verde, 1531/1531**, incluindo
+  o teste chamado `🔴 BASELINE D1: cliente ATRASADO … é ignorado EM SILÊNCIO`. Ele rodava com o
+  cursor parado em 0, então a condição era `0 < 0` — **a guarda nunca era entrada**, e o silêncio
+  vinha do balde vazio. **C3:** o mutante `atestado.etapa ?? 0` — que o docblock diz que "devolveria
+  o alarme falso inteiro pela porta do conserto" — sobrevivia a tudo, porque nenhum teste mandava
+  atestado sem o campo com o cursor fora do zero.
+
+🔑 **É a SEXTA instância de "o teste afirmava o que não conferia"** (as cinco anteriores estão na
+§Processo), desta vez **dentro do teste rotulado como baseline** da decisão que o PR chama de
+inseparável. **A lição operacional que fica: baseline cujo cenário não ALCANÇA a guarda não é
+baseline.** Os dois testes agora asserem as pré-condições (cursor andou; balde populado com hash
+conflitante) em vez de supô-las, e os dois foram **validados por mutação**.
+
+📊 **TABELA DE MUTAÇÕES — 12 mutações, todas VERMELHAS contra o código final**, e todas com
+`tsc` limpo (vermelho comportamental, nunca de compilação). Ordem em todas: verde → aplica → **vê
+vermelho** → reverte → verde, com `git hash-object` conferindo cada reversão:
+`M-det` 7 · `M-cursor` 22 · `M-anchor` 1 · `M-eleg` 1 · `M-nEtapas` 2 (na casca) · `M-C1` 4 ·
+`M-C1v` (versão volta a 1) 5 · `M-C2` 1 · `M-C3` 1 · `M-A4` 1 · `M-A1` 3 · `M-A3` 1.
+
+🔑 **DUAS MUTAÇÕES SOBREVIVERAM NA RODADA INTERMEDIÁRIA, e as duas eram sobre o conserto que eu
+mesmo tinha acabado de escrever — foi assim que os avisos 1 e 3 da segunda passada saíram de
+"leitura do revisor" para "fato medido".** Registrado porque é o argumento a favor de rodar a tabela
+INTEIRA de novo depois de cada conserto, e não só as mutações novas.
+
+🔴 **ACHADO PRÓPRIO DA SESSÃO, e ele nasceu VERDE — `M-nEtapas`.** Trocar `N_ETAPAS_CURTA` por `1`
+na chamada de `criarServidor` em `party/sala.ts` sobrevivia a **TODOS** os portões: typecheck 0,
+eslint 0, `npm test` 1531/1531, `npm run test:party` 8/8. Medido em duas formas para eliminar o
+colateral: com `1` literal o eslint acusava só o import órfão; com `Math.min(N_ETAPAS_CURTA, 1)`
+**nada acusava nada**. Em produção: campeonato online de UMA etapa, com todo o resto do PR
+funcionando. 🔑 **O parâmetro obrigatório sem default pega a OMISSÃO (não compila) e NÃO pega o
+VALOR ERRADO** — o docblock de `criarSala` podia ser lido como mais forte do que é. **Fechado nesta
+sessão** (aviso A5 da revisão, autorizado pelo dev): `party/seeds.test.ts` ganhou cerca
+comportamental que lê `nEtapas` do estado **persistido** e do **snapshot**, com anti-vacuidade.
+✅ **A segunda propriedade que a revisão dava como descoberta JÁ ESTAVA COBERTA** — refutado por
+mutação: `todas[MAX_ETAPAS] → todas[0]` cai em `party/seeds.test.ts:137`, a asserção de MA do PR B.
+**Achado de revisão também entra medido.**
+
+**🔁 A SEGUNDA PASSADA DA REVISÃO — sem bloqueante, quatro avisos, TRÊS deles sobre o conserto:**
+- 🔴 **Aviso 1 — a guarda do N2 NÃO cobria o caso C1, e o docblock dizia que cobria.** Ela validava
+  a forma do **cursor**; uma sala v2 sem `nEtapas` **com o cursor em 0** tem `nEtapasDaSala` no piso
+  1, `cursorIntegro(0, 1)` verdadeiro, guarda passando — **o modo de falha do C1 intacto dentro da
+  camada pura**, defendido só pelo `jogavel()` da casca, exatamente como antes. **Medido e
+  consertado:** a guarda passou a consultar `estadoDasSeeds`, a MESMA autoridade do discriminante.
+  🔑 **É a classe de defeito que este PR inteiro existe para combater, cometida no conserto dela** —
+  escrever a garantia no comentário não a implementa.
+- 🔴 **Aviso 3 — `nEtapas` tinha guarda de ESCRITA e não de LEITURA.** `criarSala` limitava a
+  `[1, seeds.etapas.length]`, mas um `nEtapas: 999` vindo do storage passava, e `aoReceber` usa
+  `nEtapasDaSala - 1` como teto de `atestadoValido` ⇒ **999 baldes por escopo no Durable Object**,
+  derrubando a propriedade que o próprio PR declara. **Guarda de escrita sem guarda de leitura não
+  é teto, é convenção.** Consertado no discriminante, com anti-vacuidade (`MAX_ETAPAS` continua
+  legítimo).
+- 🔴 **Aviso 4 — dois docblocks que o PRÓPRIO PR falsificou.** `tipos.ts` dizia que `nEtapas` é
+  "fixo em `N_ETAPAS_CURTA`" (deixou de ser: o snapshot publica 1 para sala v1/legado) e que o
+  cursor "no 3.5.1 NÃO avança" (é o PR que o faz avançar); `sala.ts` dizia que `seedsAbertas`
+  devolve "exatamente UM elemento". **Corrigidos no lugar**, não contraditos em outro arquivo.
+- 🟡 **Aviso 2 — `versaoSala` é o único campo persistido sem checagem de FORMA.** `null`, `0`,
+  `NaN` ou string atravessam as duas portas (`=== undefined` falso, `>= 2` falso). **NÃO
+  consertado: é decisão do dev**, porque mexer no caso `undefined` contradiria comportamento já
+  fixado por teste. Registrado como **0(u6)**.
+
+🔴 **E a guarda morta que a tabela pegou:** o cheque de cursor que sobrou ao lado do novo virou
+**inalcançável**, e `M-N2` passou a deixar a suíte inteira verde. **Removido, não documentado** —
+guarda que nenhuma mutação mata é guarda morta, e guarda morta ao lado de um comentário que a
+explica é a próxima afirmação falsa esperando leitor.
+
+**Consertos aplicados nesta sessão, com o escopo que o dev autorizou** (bloqueantes + A5 + A4/N2):
+- **C1** — `VERSAO_ESTADO_SALA = 2`; `nEtapas` no discriminante; default 1 restrito a v1; corrigido
+  o comentário FALSO de `servidor-sala.ts` que afirmava "sem bump — o formato não mudou".
+- **C2/C3** — os dois testes da D1 reescritos para alcançar as guardas de verdade.
+- **A5** — cerca comportamental de `nEtapas` na casca (`party/seeds.test.ts`).
+- **A4** — `criarSala` recusa `nEtapas` fora de `[1, seeds.etapas.length]`, na mesma guarda e pelo
+  mesmo motivo do `throw` da cardinalidade das seeds.
+- **N2** — a barreira deixou de **curar em silêncio** um cursor fora de faixa: `etapaAtual: -3`
+  saía de lá como `1`, transformando sala `corrompida` em íntegra. Agora devolve o mesmo objeto.
+  Preserva sala LEGADO (campo AUSENTE ≠ campo fora de faixa), com anti-vacuidade própria.
+
+⬅️ **AVISOS DA REVISÃO NÃO CONSERTADOS — viraram a pendência 0(u)**, por estarem fora do escopo
+autorizado. **O mais urgente é de DEPLOY, não de merge (A3).**
+
+🔑 **DECISÃO DO DEV (2026-08-20) sobre o gatilho do PR C: o achado `M-nEtapas` NÃO o dispara.** O
+gatilho nomeia o `alarm()`; isto é o caminho de CRIAÇÃO, o valor está certo hoje, e é ausência de
+portão, não bug. **PR C segue depois do 3.5.4.**
+
+🛑 **A OPÇÃO DE ABANDONAR O 3.5 FOI POSTA AO DEV nesta sessão, como o `ESTADO.md` exigia — e ele
+decidiu SEGUIR COM O 3.5** (2026-08-20). A obrigação de visibilidade está cumprida; o texto do
+"o que o abandono custaria" fica abaixo como registro do que foi pesado, não como pergunta aberta.
+
+*Texto original do item, preservado:* **PR 3.5.2** — barreira e avanço de cursor por etapa,
+elegíveis recomputados,
+`concluidaEm` só na última, **+ conserto do detector** (campo `etapa`, chave `${escopo}:${etapa}`).
+🛑 **É no 3.5.2 que o dev pediu para ver, VISÍVEL, a opção de abandonar o 3.5 inteiro** — o corte
+honesto da fase pode ser o próprio 3.5, e é ali que a decisão é barata.
+✅ **CUMPRIDO E DECIDIDO EM 2026-08-20: a opção foi apresentada ao dev na sessão do 3.5.2, com os
+três bloqueantes da revisão já na mesa (o que a tornava mais barata ainda — C2 e C3 evaporariam
+junto com o 3.5, e C1 quase todo). VEREDITO DO DEV: SEGUIR COM O 3.5.** O bloco abaixo fica como
+registro do que foi pesado; **não é mais pergunta aberta**, e reabri-lo é decisão nova do dev.
+🛑 **(Texto do pedido original, preservado.) E É AGORA (2026-08-20): o 3.5.2 é esta sessão.** O pedido
+foi para a opção estar visível **no momento** do 3.5.2, não depois — abandonar o 3.5 custa 3 PRs
+poupados agora (3.5.2 + 3.5.3 + 3.5.4) e custa muito mais depois do 3.5.3. **O que o abandono
+sacrificaria:** o campeonato online inteiro; a corrida online avulsa (encerrada no 4/4) **fica de
+pé sozinha** e a Fase 3 fecharia com ela + o PR C.
+**O que o abandono TAMBÉM dispensa:** o conserto do detector (alarme falso travado a partir da
+etapa 2) — o alarme falso **só existe porque existe etapa 2**, então ele some junto com o 3.5. Não
+é dívida que fica; é trabalho que deixa de ser necessário.
+**O que o abandono NÃO resolve:** as pendências **0(i)** (`seedMestre` de 32 bits, enumerável) e
+**0(o)** (assimetria de postura entre corrida avulsa e campeonato) — elas seguem abertas de
+qualquer jeito, e continuam esperando o PR de alargamento de entropia. ⚠️ Com o 3.5 abandonado,
+0(o) muda de forma (não haveria campeonato online para contrastar com a avulsa), **mas 0(i) não
+muda em nada** — ela é da corrida avulsa, que fica.
+
+**Duas decisões de arte esperando o dev** (nenhuma bloqueia o merge): os dois botões do
+`TelaResumo` são ambos `botao-primario` (pré-existente do offline, agora visível no online); e o
+`FluxoOnline.tsx:218-230` não tem cobertura automática — sem jsdom não há clique.
+
+Concluído antes: Fases 0-2 (engine, Single, Local hotseat, Modo Cego), dataset 1950-2025 (PR 4.x),
+design system arcade (5.1a/b/c), Modo Campeonato (6.1-6.5), Fase 7 até o **7.8**, e a Fase 8 nos
+PRs **8.1** (calendário sorteado), **8.2** (round-trip do save) e **8.4-mínimo** (o campeonato
+deixou de ser inalcançável — tem seletor, encadeia corridas, salva e retoma).
+
