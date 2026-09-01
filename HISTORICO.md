@@ -2469,6 +2469,175 @@ Arquivo novo: `preview/campeonato-online.html` (não sobrescreve `preview/campeo
 
 ---
 
+## `.gitattributes` — O FINAL DE LINHA DEIXA DE DEPENDER DO CHECKOUT (2026-09-01, `ea2c8f4`) — BAIXO RISCO
+
+**Base:** `dfe45e5` (doc do PR 7). Sem push, sem tag.
+📌 **Doc escrita pela SESSÃO PRINCIPAL, não pelo `doc-writer`** — oitavo PR seguido assim.
+A auditoria não foi dispensada: o dev viu o diff da doc antes do commit.
+
+✅ **ESTE PR FECHA A ALTERNATIVA ADIADA NO PR 6.** Aquele PR consertou o C1 normalizando CRLF→LF
+dentro de `versao.test.ts` e registrou, em dois docblocks e no `ESTADO.md`, que pinar o final de
+linha num `.gitattributes` *"resolveria a classe inteira"* mas era **PR próprio e decisão do dev**.
+O dev autorizou em 2026-09-01. 🔒 **As narrativas datadas deste arquivo NÃO foram reescritas —
+decisão do dev:** *"estavam corretas quando foram escritas."* O que foi corrigido no lugar são as
+afirmações **em presente do indicativo** que viviam no código e no `ESTADO.md`.
+
+### O problema medido, e ele era maior do que estava registrado
+
+O C1 do PR 6 descrevia um arquivo escrito por script ao lado de dois vindos de checkout. Medido:
+
+- **CINCO arquivos rastreados são escritos por script**, não dois — `src/data/equipe-anos.json`
+  (`anonimizar.ts`), `src/fixtures/dataset-semente/equipe-anos.json` (`anonimizar-fixture.ts`),
+  `scripts/derived/equipe-anos.derivado.json` (`derivar-notas.ts`),
+  `scripts/derived/fatos-agregados.json` (`agregar-fatos.ts`) e `docs/img/silhuetas.svg`
+  (`gerar-silhuetas-readme.preview.test.ts`). ⚠️ Os dois de `scripts/derived/` estão em CRLF hoje só
+  porque ninguém rodou `dataset:notas`/`fatos` desde o último checkout — rodar vira LF em silêncio.
+- 🔴 **A exposição não é de "arquivos de dado": o escopo do digest são 18 arquivos, hoje 12 CRLF +
+  6 LF.** `draft.ts` (LF) convive com `bots.ts` (CRLF); `hash-draft.ts` (LF) com `cliente.ts`
+  (CRLF). **Qual lado cada um cai é decidido por histórico de EDIÇÃO, não por conteúdo.**
+- 🔑 **É esse número que reprova o recorte `*.json` proposto pelos docblocks: 3 de 18.**
+
+| medida | valor |
+|---|---|
+| índice (`i/`) dos rastreados de texto | **100% LF — 233/233** |
+| working tree desta máquina | **147 CRLF · 86 LF** |
+| clone fresco | **233/233 CRLF** |
+| escopo do digest | **12 CRLF · 6 LF** |
+
+### Zero diff — medido de duas formas independentes, não previsto
+
+Com `core.autocrlf=true` o filtro *clean* já normaliza CRLF→LF na entrada, então LF e CRLF do mesmo
+conteúdo produzem **o mesmo blob**: final de linha **nunca aparece em `git diff` neste repo**.
+
+1. **Sonda não-rastreada no repo real:** criado o `.gitattributes`, `git status` acusou **uma linha,
+   o próprio arquivo novo**. Removido em seguida.
+2. **Clone isolado com o arquivo commitado:** `git status` limpo; `git add --renormalize .` **encena
+   ZERO**; `git checkout-index -f -a` não reescreve; apagar e refazer checkout de `pecas.json` o
+   traz com **266 CR → 0**, e o `git status` continua limpo.
+
+🔴 **A contrapartida virou a pendência 0(af): isto NÃO uniformiza a máquina.** Nada força a
+conversão; o working tree converge **por arquivo**, no re-checkout. Os dois idiomas de conserto
+(`reset --hard`, proibido sem autorização; ou apagar e refazer checkout) reescrevem ~147 arquivos e
+não cabem num PR BAIXO RISCO. **Ficou de fora por decisão do dev.**
+
+### O arquivo que entrou
+
+`* text=auto eol=lf`, mais `*.png binary` e `*.woff2 binary`. **Os binários explícitos saíram de uma
+medição:** com `text=auto` sozinho, `git check-attr eol` devolve **`lf` até para um `.png`** — eles
+só escapam por detecção heurística de conteúdo em tempo de execução. Depois das linhas explícitas,
+`git ls-files --eol` passa a mostrar `attr/-text` para eles, onde antes mostrava `attr/` vazio.
+
+### A cerca: `scripts/cerca-eol.test.ts` (+3 testes)
+
+Assere `git check-attr text eol` sobre as 18 entradas do digest — **atributo, nunca bytes do disco.**
+
+🔒 **O argumento contra a alternativa está escrito junto da cerca, a pedido do dev**, porque é a
+parte que impede alguém de "melhorá-la" depois: um teste *"sem CR nos bytes"* seria **vermelho
+hoje** (12 CRLF no escopo) e o resultado dele dependeria do **modo de checkout** — verde num clone
+fresco, vermelho aqui, com o mesmo conteúdo commitado. **É o próprio defeito, uma camada acima.**
+
+**Matriz de mutação — cada uma cai na asserção que alega cobri-la, nenhuma é redundante:**
+
+| mutação | anti-vac. 1 | anti-vac. 2 | cerca principal |
+|---|---|---|---|
+| **M1** `eol=lf` removido, fica `text=auto` | ✓ | ✓ | **× VERMELHO** |
+| **M2** `.gitattributes` apagado | ✓ | **×** (`unspecified`) | **×** |
+| **M3** linhas `binary` removidas | ✓ | **×** (png volta a `auto`) | ✓ |
+
+🔑 **M1 é o furo que quase passou:** `text=auto` sozinho normaliza o índice e **não** fixa o
+checkout. Uma cerca que asserisse só `text` ficaria verde com a propriedade perdida — por isso ela
+exige **os dois** atributos.
+🔑 **A anti-vacuidade é load-bearing por medição:** como `eol` devolve `lf` para tudo, quem
+discrimina é `text` (`auto` × `unset`). Uma sonda que olhasse só `eol` passaria com o mecanismo
+quebrado.
+
+### 🔴 O erro achado ANTES do commit: `git check-attr` lê o WORKING TREE
+
+A primeira redação da cerca afirmava que ele responde a partir do `.gitattributes` **COMMITADO**.
+**Falso — e desmentido pelo estado do próprio repo naquele instante:** com o arquivo ainda **não
+rastreado**, `git check-attr text` respondia `auto` enquanto `git check-attr --cached text`
+respondia `unspecified`. Sem `--cached`, ele lê o disco.
+
+🔑 **A propriedade real está em OUTRO eixo, e é ela que sustenta a cerca: ATRIBUTO × BYTES**, não
+"commitado × working tree". O `.gitattributes` é o mesmo em toda máquina que tenha o repositório; o
+final de linha com que cada arquivo foi materializado, não.
+🔒 **E ler o working tree é a escolha CERTA — `--cached` seria pior.** Quem governa os checkouts
+desta cópia é o arquivo em disco; quem o apagar localmente quebra os próprios checkouts, e **é isso
+que a cerca deve acusar**. `--cached` ficaria verde nesse cenário, olhando um arquivo que não
+governa mais nada.
+⚠️ **Teria sido afirmação falsa em presente do indicativo, em prosa NOVA, no PR cuja tese é corrigir
+afirmações falsas** — mesma classe que as revisões do PR 6 e do PR 7 pegaram duas vezes cada.
+
+### O que NÃO mudou, e por quê
+
+🔒 **Os dois `replace(/\r\n/g,'\n')` FICAM** (`versao.test.ts`, `publicacao.test.ts`) — **decisão do
+dev, inegociável no PR.** Com o escopo do digest ainda em 12 CRLF + 6 LF, removê-los deixa o digest
+vermelho na hora e re-acopla os testes ao checkout. Mudou só o *porquê* nos comentários.
+
+**As correções no lugar foram PRECISAS, não varridas.** *"Reescreveria o final de linha no próximo
+checkout"* **não era falso** — arquivo re-checkoutado sai mesmo em LF, medido. Falso era o **custo
+implícito**: não há diff, o índice já era LF, `--renormalize` é no-op, e a convergência é gradual.
+*(Precedente do projeto: o GDD dizia "FALSO" onde a medição sustentava "MEIA-VERDADE".)*
+
+### Portões
+
+`npm test` **1662/71** em 3 rodadas (era 1659/70 — os 3 novos são a cerca). `npm run test:party`
+**19/19**. typecheck **0** nos três projetos. eslint **0** por exit code. build **0**, bundle
+`index-B0pMOBwk.js` — **mesmo hash do PR 6 e do PR 7**.
+
+**`VERSAO_APP` fica 3.4.5 e `VERSAO_FORMATO` fica 3 — SEM BUMP, prova mecânica:** `versao.test.ts`
+verde; os dois arquivos editados são `.test.ts` e `scripts/`, fora do escopo do digest, e o
+`.gitattributes` mora na raiz, também fora.
+
+⚠️ **`npm run balance` NÃO rodado, e dito por quê:** zero arquivo de produção de `src/engine/`, e
+`src/data/` byte a byte idêntico em disco. Delta zero por construção. **`npm run preview` também
+não:** nada muda na tela, e o hash do bundle inalterado confirma.
+📌 **Portão dos nomes reais não re-medido à parte:** o `npm test` verde o inclui, o PR não toca
+nenhum dos seis `.json` do `BASELINE`, e ele foi **medido como EOL-invariante** (contagens idênticas
+em LF e CRLF com os bytes diferindo — sonda não-vácua).
+
+### 🔴 A §"Onde parei" do `ESTADO.md` voltou a ACUMULAR
+
+O bloco do PR 7 **não foi arquivado** pela higiene de 2026-08-31 — ela moveu os PRs *anteriores* a
+ele. Contenção medida com o script da própria convenção: **33,0%, 766 shingles órfãos**
+(`python scripts/medir-contencao-doc.py 558 673`).
+
+🔑 **E os marcadores CASAM 1:1 nos dois arquivos** (`A CERCA DO TRIO`,
+`hakkinen @ mclaren @ 1993`, `O PORTÃO NÃO MEDE`…) — **o falso-positivo exato que a §Convenções
+descreve.** Quem conferisse por `grep` de marcador teria concluído "espelhado" e apagado 6 linhas de
+obrigação, **3 delas decisões 🔒 travadas do dev**. Por isso o bloco novo entrou **acima** e o do
+PR 7 **ficou**. A afirmação do `ESTADO.md` de que *"a convenção voltou a ser segura de aplicar"* foi
+**riscada no lugar**: ela vale para o que aquela higiene moveu, não para o bloco do PR 7.
+
+🔴 **A LIÇÃO, e ela tem peso porque é a SEGUNDA MORDIDA desta família — agora sobre a própria
+convenção.** O bloco de 2026-08-31 já dizia "cabeçalho casado não é conteúdo espelhado", e mesmo
+assim a frase que o seguia afirmava segurança que não existia.
+
+- 🔒 **CONFERIR ESPELHAMENTO POR `grep` DE MARCADOR É FALSO-POSITIVO — medido.** Os marcadores casam
+  porque as entradas do `HISTORICO.md` **citam os mesmos nomes** ao narrar o mesmo PR. **Casar
+  rótulo mede que os dois textos falam da mesma coisa; não mede que um CONTÉM o outro.**
+  **Espelhamento se confere medindo CONTEÚDO** — `scripts/medir-contencao-doc.py`, shingles.
+- 🔑 **Mesma classe do §FASE 8, e são as duas pontas do mesmo erro:** lá, **75,4% de cobertura era
+  RETENÇÃO, não redundância** — número alto enganando; aqui, marcador casado enganando.
+- 🔴 **O ALARME DE SALDO NÃO PEGA ESTE CASO, e isso precisa estar dito** porque o alarme é tratado
+  como "o único portão que existe": ele compara **contagem de linhas**, logo cobre **APAGAMENTO**, e
+  **reescrita é SUBSTITUIÇÃO**. Trocar 80 linhas por 80 linhas dá saldo ~zero e passa limpo. Em
+  2026-08-31 o alarme salvou porque a reescrita era muito menor (−1108); **numa reescrita de tamanho
+  parecido ele teria ficado quieto.** Os dois portões cobrem coisas diferentes e nenhum substitui o
+  outro.
+
+🔒 **DECISÃO DO DEV: NÃO ARQUIVAR o bloco do PR 7 agora.** Motivo de método: a convenção só é segura
+**depois** do espelhamento, e **espelhar o PR 7 é trabalho próprio** — ler as 80 linhas, decidir o
+que é retenção, mover verbatim. **Fazer isso de carona num PR de `.gitattributes` é exatamente o que
+a regra existe para impedir.**
+
+📌 **Pendência 10 aberta no `ESTADO.md`:** a cifra *"~19 mil tokens"* de **`HISTORICO.md:8`**, já
+classificada como errada por ~8× e **retirada do `CLAUDE.md`**, segue viva aqui. **Resíduo, não
+decisão** — e é instrução de cabeçalho, não narrativa datada, então corrigi-la não esbarra na
+decisão de não reescrever histórico. **Fora de escopo deste PR; vai no próximo commit de docs.**
+
+---
+
 ## NOMES FICTÍCIOS — PR 7: A FIXTURE E O PISO DO PORTÃO (2026-08-31, `cd9d5b7`) — 🔴 ALTO RISCO
 
 **Base:** `24e9af4` (doc do PR 6). **Último PR da trilha dos 7.** Sem push, sem tag.

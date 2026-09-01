@@ -10,7 +10,31 @@
 
 ## Estado atual
 
-**Última medição (2026-08-31, na `main` — PR 7 da trilha de nomes fictícios, A FIXTURE, `cd9d5b7`):**
+**Última medição (2026-09-01, na `main` — PR do `.gitattributes`, `ea2c8f4`):**
+`npm test` **1662/71** em **3 rodadas** (era 1659/70). ⚠️ **SUBIU, e é dito assim de propósito:** os
+**3 testes novos** são a cerca de final de linha (`scripts/cerca-eol.test.ts`, arquivo novo).
+**`npm run test:party` 19/19**, typecheck **0** nos três projetos, eslint **0** (por exit code),
+build **0**.
+🔑 **`VERSAO_APP` fica 3.4.5 e `VERSAO_FORMATO` fica 3 — SEM BUMP, e a prova é MECÂNICA:**
+`src/engine/versao.test.ts` está verde. Os dois arquivos editados são `.test.ts` e `scripts/`,
+**fora do escopo do digest**, e o `.gitattributes` mora na raiz, também fora.
+🔑 **Bundle `dist/assets/index-B0pMOBwk.js` — MESMO hash de conteúdo do PR 6 e do PR 7.** Nada que
+chega ao bundle foi tocado.
+✅ **ZERO DIFF DE RENORMALIZAÇÃO, medido de duas formas independentes** (sonda não-rastreada no repo
+real + clone isolado): o índice já era **100% LF, 233/233**, então `git add --renormalize .` não
+encena nada. **`git status` ficou limpo antes e depois do commit.**
+⚠️ **`npm run balance` NÃO rodado, e dito por quê:** zero arquivo de produção de `src/engine/`, e
+`src/data/` está **byte a byte idêntico em disco** — nenhum arquivo foi reescrito. Delta zero por
+construção. **`npm run preview` também não:** o PR não muda nada na tela, e o hash do bundle
+inalterado é a confirmação.
+🔴 **A §"Onde parei" voltou a ACUMULAR** — o bloco do PR 7 não estava espelhado (contenção **33,0%**,
+medida). Ver lá.
+📌 **Portão dos nomes reais NÃO re-rodado por medição direta, e é dito:** o `npm test` verde inclui
+`scripts/portao-nomes-reais.test.ts`, e o PR não toca nenhum dos seis `.json` do `BASELINE`.
+**Medido à parte que o portão é EOL-INVARIANTE** (contagens idênticas em LF e CRLF com os bytes
+diferindo — a sonda não é vácua), então ele não podia se mover por este PR.
+
+*(Medição anterior, 2026-08-31, na `main` — PR 7 da trilha de nomes fictícios, A FIXTURE, `cd9d5b7`):*
 `npm test` **1659/70** em **3 rodadas** (era 1642/68). ⚠️ **SUBIU, e é dito assim de propósito:** os
 **17 testes novos** são **7** da cerca de propriedade (`scripts/fixture-semente.test.ts`) e **10** do
 diferencial da migração (`scripts/anonimizar-fixture.test.ts`), os dois arquivos novos.
@@ -557,6 +581,98 @@ dependência).
 ## Onde parei
 
 
+**🔧 `.gitattributes` — O FINAL DE LINHA DEIXA DE DEPENDER DO CHECKOUT: CONCLUÍDO e COMMITADO em
+2026-09-01** (`ea2c8f4`), na `main`. **BAIXO RISCO**, e a classificação é MEDIDA, não presumida: o
+PR não renormaliza arquivo nenhum. **Sem push, sem tag.** Detalhe completo: `HISTORICO.md`
+§"`.gitattributes` — o final de linha".
+📌 **Doc escrita pela SESSÃO PRINCIPAL, não pelo `doc-writer`** — oitavo PR seguido assim, a pedido
+do dev. A auditoria não foi dispensada: o dev viu o diff da doc antes do commit.
+
+**O que o PR faz, em uma linha:** o repo passa a pinar `* text=auto eol=lf`, e uma cerca nova trava
+que toda entrada do digest está pinada — fechando a CLASSE que o C1 do PR 6 tratou como sintoma.
+
+---
+
+📏 **O PROBLEMA, MEDIDO E MAIOR DO QUE ESTAVA REGISTRADO.** O C1 do PR 6 descrevia "um arquivo
+escrito por script ao lado de dois vindos de checkout". **Medido agora:**
+- **São CINCO arquivos rastreados escritos por script**, não dois: `src/data/equipe-anos.json`,
+  `src/fixtures/dataset-semente/equipe-anos.json`, os **dois** de `scripts/derived/` e
+  `docs/img/silhuetas.svg`. ⚠️ **Os dois de `scripts/derived/` estão em CRLF hoje só porque ninguém
+  rodou `dataset:notas`/`fatos` desde o último checkout** — rodar vira LF em silêncio.
+- 🔴 **E a exposição real não é "arquivos de dado": o escopo do digest são 18 arquivos, e hoje eles
+  estão 12 CRLF + 6 LF.** Em `src/engine/` convivem `draft.ts` (LF) e `bots.ts` (CRLF); em
+  `src/net/`, `hash-draft.ts` (LF) e `cliente.ts` (CRLF). **Qual lado cada um cai é decidido por
+  histórico de EDIÇÃO nesta máquina, não por conteúdo.**
+- 🔑 **É esse número que mata a alternativa `*.json` que as duas docblocks propunham: 3 de 18.**
+
+---
+
+✅ **ZERO DIFF, E ISSO FOI MEDIDO DE DUAS FORMAS INDEPENDENTES — não é previsão.**
+O índice já era **100% LF (233/233 rastreados de texto; 4 binários; 3 vazios)**, porque com
+`core.autocrlf=true` o filtro *clean* normaliza CRLF→LF na entrada. **Logo LF e CRLF do mesmo
+conteúdo produzem o MESMO blob, e final de linha NUNCA aparece em `git diff` neste repo.**
+- **(1) sonda não-rastreada no repo real:** criado o `.gitattributes`, `git status` acusou **uma
+  linha — o próprio arquivo novo**. Removido em seguida.
+- **(2) clone isolado com o arquivo commitado:** `git status` limpo, `git add --renormalize .`
+  **encena ZERO**, e apagar+refazer checkout de `pecas.json` o traz com **266 CR → 0**.
+🔴 **A CONTRAPARTIDA HONESTA, e ela vira pendência: isto NÃO uniformiza esta máquina.** Ver **0(af)**.
+
+---
+
+🔒 **OS DOIS `replace(/\r\n/g,'\n')` FICAM — decisão do dev, e não é conservadorismo.**
+Com o escopo do digest ainda em 12 CRLF + 6 LF, **remover a normalização deixa `versao.test.ts`
+vermelho na hora** e re-acopla os dois testes ao modo de checkout — a classe que este PR fecha.
+Mudou só o *porquê* nos comentários.
+
+---
+
+🔒 **A CERCA ASSERE ATRIBUTO, NUNCA BYTES DO DISCO — e o argumento contra a alternativa é o que
+decide, por isso está escrito junto dela** (a pedido do dev). Um teste "sem CR nos bytes" seria
+**vermelho hoje** e o resultado dele dependeria do **modo de checkout** — verde num clone fresco,
+vermelho aqui, com o mesmo conteúdo commitado. **É o próprio defeito, uma camada acima.**
+📊 **Matriz de mutação, cada uma caindo na asserção que alega cobri-la:**
+
+    M1  eol=lf removido (fica só text=auto)  →  cerca principal VERMELHA
+    M2  .gitattributes apagado               →  anti-vacuidade 2 + principal VERMELHAS
+    M3  linhas `binary` removidas            →  anti-vacuidade 2 VERMELHA (png volta a `auto`)
+
+🔑 **M1 é o furo que quase passou:** `text=auto` sozinho normaliza o índice e **não** fixa o
+checkout. Cerca que asserisse só `text` ficaria verde com a propriedade perdida.
+
+---
+
+🔴 **UM ERRO MEU, ACHADO ANTES DO COMMIT — `git check-attr` lê o WORKING TREE, não o commitado.**
+A primeira redação da cerca afirmava que ele responde a partir do `.gitattributes` **COMMITADO**.
+**Falso, e desmentido pelo estado do próprio repo:** com o arquivo ainda **não rastreado**,
+`git check-attr text` respondia `auto` enquanto `git check-attr --cached text` respondia
+`unspecified`. Sem `--cached`, ele lê o disco.
+🔑 **A propriedade real é OUTRO eixo, e é ela que sustenta a cerca: ATRIBUTO × BYTES**, não
+"commitado × working tree". O `.gitattributes` é o mesmo em toda máquina; o final de linha com que
+cada arquivo foi materializado, não.
+🔒 **E ler o working tree é a escolha CERTA — não usar `--cached`.** Quem governa os checkouts desta
+cópia é o arquivo em disco; quem o apagar localmente quebra os próprios checkouts, e **é isso que a
+cerca deve acusar**. `--cached` ficaria verde nesse cenário, olhando um arquivo que não governa mais
+nada.
+⚠️ **Teria sido afirmação falsa em presente do indicativo, em prosa NOVA, no PR cuja tese é corrigir
+afirmações falsas** — a mesma classe que as revisões do PR 6 e do PR 7 pegaram duas vezes cada.
+
+---
+
+🔴 **A §"Onde parei" ACUMULA DE NOVO, e o motivo é MEDIDO.** O bloco do PR 7 **não foi arquivado**
+pela higiene de 2026-08-31 (ela moveu os PRs *anteriores* a ele, escritos antes daquela sessão).
+Contenção medida: **33,0%, 766 shingles órfãos**. **Os marcadores casam 1:1 nos dois arquivos** — o
+falso-positivo exato que a §Convenções descreve. A afirmação do `ESTADO.md` de que "a convenção
+voltou a ser segura de aplicar" foi **riscada no lugar**, logo abaixo.
+
+🔒 **DECISÃO DO DEV (2026-09-01): NÃO ARQUIVAR AGORA — o bloco do PR 7 fica onde está.**
+**Motivo registrado, e ele é de método:** a convenção só é segura **depois** do espelhamento, e
+**espelhar o PR 7 é trabalho PRÓPRIO** — ler as 80 linhas, decidir o que é retenção e mover
+verbatim. **Fazer isso de carona num PR de `.gitattributes` é exatamente o tipo de coisa que a regra
+existe para impedir.** O espelhamento entra quando alguém o fizer como o trabalho dele, não como
+efeito colateral de outro PR.
+
+---
+
 **🏁 NOMES FICTÍCIOS — PR 7, A FIXTURE E O PISO DO PORTÃO: CONCLUÍDO e COMMITADO em 2026-08-31**
 (`cd9d5b7`), na `main`. **ALTO RISCO** — fixture de dados, baseline de portão e goldens da engine.
 **Sem push, sem tag.** Detalhe completo: `HISTORICO.md` §"NOMES FICTÍCIOS — PR 7".
@@ -677,7 +793,22 @@ correção **verificada por mutação**. Detalhe no `HISTORICO.md`.
 > ✅ **A PRÉ-CONDIÇÃO DA CONVENÇÃO ESTÁ CUMPRIDA — e ela NÃO estava antes deste arquivamento.**
 > A §Convenções manda conferir que o bloco a substituir **já está** no `HISTORICO.md` antes de
 > reescrever a §"Onde parei". No PR 7 não estava, e por isso a seção acumulou. **Agora está**, e a
-> convenção volta a ser segura de aplicar.
+> convenção volta a ser segura de aplicar. ~~A §"Onde parei" pode ser reescrita de novo no próximo
+> PR, e o que ela substituir já terá espelho.~~
+>
+> 🔴 **A FRASE RISCADA ACIMA ERA FALSA, e foi MEDIDA como falsa no PR do `.gitattributes`
+> (2026-09-01) — riscada no lugar, não contradita ao lado.** Ela vale para os PRs que ESTE
+> arquivamento moveu; **não vale para o bloco do PR 7**, que foi escrito na mesma sessão da higiene
+> e **não foi arquivado por ela**. Medido com o script da própria convenção: **contenção de 33,0%,
+> 766 shingles órfãos** (`python scripts/medir-contencao-doc.py 558 673`).
+> 🔑 **E os marcadores CASAM 1:1** — `A CERCA DO TRIO`, `hakkinen @ mclaren @ 1993`,
+> `O PORTÃO NÃO MEDE` e outros aparecem nos dois arquivos. **É exatamente o falso-positivo que este
+> mesmo bloco descreve três parágrafos abaixo:** cabeçalho casado não é conteúdo espelhado. Quem
+> conferisse por `grep` de marcador teria concluído "está espelhado" e apagado 6 linhas de
+> obrigação, **3 delas decisões 🔒 travadas do dev** (a cerca do trio fora, o motivo do "exceção a
+> dedo", e RENOMEAR × REGERAR).
+> 🔒 **PORTANTO O BLOCO DO PR 7 FICA, e a §"Onde parei" ACUMULA de novo** — que é o que a convenção
+> manda quando a pré-condição não está cumprida. **Arquivá-lo é decisão do dev.**
 >
 > ⚠️ **A REDAÇÃO ANTERIOR DESTE BLOCO FOI SUBSTITUÍDA, não deixada ao lado.** Ela dizia que a seção
 > *"acumula enquanto o espelhamento não existir"* e que *"arquivar isto é DECISÃO DO DEV"* — as duas
@@ -717,10 +848,24 @@ correção **verificada por mutação**. Detalhe no `HISTORICO.md`.
   guarda existe há meses e ninguém sabia até o PR 5 medir. Trocar um passo manual sem guarda por um
   script sem guarda não seria ganho — seria a mesma dívida com nome novo."* O **passo manual** morre
   pelo script; a **ausência de guarda** morre pela cerca. **São duas.**
-- ⚠️ **`.gitattributes` pinando `*.json` como LF resolveria a CLASSE inteira do C1 do PR 6, mas
+- ~~⚠️ **`.gitattributes` pinando `*.json` como LF resolveria a CLASSE inteira do C1 do PR 6, mas
   reescreveria final de linha do repo todo no próximo checkout. É PR próprio e DECISÃO DO DEV**, não
   conserto de passagem. **Não foi feito.** *(Medido em 2026-08-31: o repo segue sem `.gitattributes`
-  e os `.md` seguem LF puro.)*
+  e os `.md` seguem LF puro.)*~~
+  ✅ **FEITO em 2026-09-01 (`ea2c8f4`), em PR próprio, autorizado pelo dev.** Riscado no lugar
+  porque a última frase — *"o repo segue sem `.gitattributes`"* — passou a ser **falsa dentro da
+  mesma árvore** que agora contém o arquivo. **As outras duas afirmações também não sobreviveram
+  intactas, e a correção é precisa, não varrida:**
+  - 🔴 **`*.json` NÃO resolveria a classe inteira** — o recorte proposto estava errado, medido: o
+    digest lê **18 arquivos e só 3 são `.json`**. Pinar só JSON consertaria **3 de 18** e deixaria
+    os 12 `.ts` de `src/engine/` expostos, que é a maior parte da exposição. **O que entrou pina
+    `*`**, com `*.png`/`*.woff2` explícitos como `binary`.
+  - 🟡 **"Reescreveria o final de linha no próximo checkout" é VERDADE; o que era falso é o CUSTO
+    que a frase sugere.** Arquivo re-checkoutado sai mesmo em LF (medido: `pecas.json`, 266 CR → 0).
+    Mas **não há diff, nunca**: o índice já era **100% LF (233/233 rastreados de texto)**, então
+    `git add --renormalize .` **não encena nada** e `git status` fica limpo — medido de duas formas
+    independentes (sonda não-rastreada no repo real + clone isolado com o arquivo commitado). **A
+    convergência é GRADUAL, por arquivo**, não um varrido só. Ver a pendência **0(af)**.
 - 🔒 **É o CAMINHO (a) da pendência 0(aa), escolhido pelo dev em 2026-08-28** — particionar
   `referencias-dataset.ts` por dataset ANTES do PR 6, contra o caminho (b) (fazer 6 e 7 no mesmo PR).
   **Palavras do dev:** *"fazer 6 e 7 juntos junta o ALTO RISCO (`src/data/`, tela, netcode) com o
@@ -1972,6 +2117,33 @@ casca deixa de ser terra sem teste; a opção conhecida é `@cloudflare/vitest-p
    esperar delta é que seria descuido.**
    🔑 **Ler junto com a 0(z)** (renomear pista degrada em SILÊNCIO): as duas são a mesma família —
    **rótulo carregando efeito que ninguém declarou.**
+   (af) 🟡 **NOVA (PR do `.gitattributes`, 2026-09-01) — O `.gitattributes` NÃO UNIFORMIZA ESTA
+   MÁQUINA: o working tree segue MISTO até que cada arquivo seja re-checkoutado. DECISÃO DO DEV:
+   registrar, NÃO renormalizar neste PR.**
+   **A numeração é minha, atribuída nesta sessão** pelo mesmo precedente da 0(y)/0(z) — conferido
+   que `0(af)` estava livre (última ocupada: `0(ae)`).
+   **O que foi medido, e é o oposto de um problema novo:** entrar com o `.gitattributes` **não
+   renormaliza nada e não produz diff** — o índice já era 100% LF (233/233), `git add --renormalize .`
+   encena zero e `git status` fica limpo. **A consequência é justamente essa: nada força a
+   conversão.** O working tree converge **por arquivo**, conforme cada um for re-checkoutado.
+   **O estado que persiste aqui, medido em 2026-09-01:** 147 arquivos em CRLF e 86 em LF; e **dentro
+   do escopo do digest, 12 CRLF + 6 LF**. Um clone fresco, por contraste, nasce **233/233 em CRLF** e
+   converge para LF conforme os arquivos forem materializados sob os atributos novos.
+   🔒 **É POR ISSO QUE OS DOIS `replace(/\r\n/g,'\n')` NÃO SAEM** (`versao.test.ts`,
+   `publicacao.test.ts`). Enquanto esta pendência estiver aberta, removê-los deixa o digest vermelho
+   **na hora**. Está escrito nos dois docblocks, que é onde a próxima pessoa vai olhar.
+   ⚠️ **Nada quebra hoje por causa disto** — os consumidores que comparam bytes ou já normalizam
+   (digest, cerca de publicação) ou são imunes por construção (portão dos nomes reais, medido como
+   EOL-invariante; as cercas que usam `JSON.parse`). **A pendência é sobre reprodutibilidade**, não
+   sobre defeito ativo: medição feita aqui e medição feita num clone fresco leem bytes diferentes do
+   mesmo conteúdo.
+   🔴 **Os dois idiomas de conserto e por que NENHUM entrou:** `git rm --cached -r . && git reset
+   --hard` — e **`reset --hard` é PROIBIDO sem autorização explícita do dev** (`CLAUDE.md`
+   §Segurança) — ou apagar os rastreados e refazer checkout. **Os dois reescrevem ~147 arquivos em
+   disco** (com `git status` limpo o tempo todo, já que o índice não se move) e **nenhum cabe num PR
+   BAIXO RISCO**. **É PR próprio e decisão do dev.**
+   🔑 **Ler junto com a 0(ae)**: as duas são a mesma família — **estado que não é conteúdo carregando
+   efeito sobre medição** (lá, rótulo movendo desempate; aqui, modo de checkout movendo bytes).
 1. **Abertas pelo 7.8:** (a) o `BotaoTema` é um botão discreto no canto do `app-shell` — posição e
    forma **não passaram por veredito de arte**; (b) `erro` (salmão `#FF7B85`) e `raridadeProibido`
    (`#FF4757`) continuam sendo dois vermelhos ao lado do vermelho da marca — não foi mexido porque
@@ -2040,6 +2212,21 @@ casca deixa de ser terra sem teste; a opção conhecida é `@cloudflare/vitest-p
    sobram e não devem sumir daqui:** o pacote arrasta `miniflare 5.20260815.0-alpha` (**alpha**) e um
    **segundo `wrangler` (4.124.0)** ao lado do `4.120.0` que o `wrangler.jsonc` fixa de propósito
    desde o SPIKE 3.0.
+10. 🟡 **CIFRA OBSOLETA SOBREVIVENDO EM `HISTORICO.md:8` — "~19 mil tokens". PARA O PRÓXIMO COMMIT
+    DE DOCS, por decisão do dev (2026-09-01); NÃO tocada no PR do `.gitattributes`, que é fora de
+    escopo.**
+    ⚠️ **Correção de âncora, e ela importa:** o dev nomeou "`CLAUDE.md`:8" ao decidir; **o sítio é
+    `HISTORICO.md:8`**. No `CLAUDE.md` a cifra **já foi retirada** — é justamente de lá que veio a
+    classificação. Registrado com a âncora certa pela mesma disciplina das seis correções de âncora
+    do §"MEDIÇÕES E AUDITORIAS".
+    **O que está lá:** *"Ler o arquivo inteiro consome ~19 mil tokens e foi por isso que o
+    `ESTADO.md` passou a existir"*. O `CLAUDE.md` §"O que ler em sessão nova" já classificou esse
+    número como **ERRADO por cerca de 8×** (daria 25,6 caracteres por token, que não corresponde a
+    tokenizador nenhum) e o **retirou em vez de atualizar**; a ordem de grandeza real é de
+    **~160 mil tokens**. Medido em 2026-09-01: o arquivo está em **5.973 linhas / 566 KB**.
+    🔑 **Sobreviver aqui é RESÍDUO, não decisão** — a mesma cifra, já reprovada noutro arquivo,
+    seguindo viva neste. **É instrução de cabeçalho, não narrativa datada**, então corrigi-la não
+    esbarra na decisão de não reescrever histórico.
 
 > ✅ Fechadas no 7.7: pendência 1 antiga (Spa fundia asfalto) · espinho de ~180° no vértice #0 de
 > Spa · preview da densidade alvo. Fechada no 7.7.1: Monza sem imagem.
@@ -2134,6 +2321,27 @@ arte vai ao dev** — mudar composição sozinho já custou 2 bloqueantes no 7.3
     que o arquivou cita o que ficou. Foi o caso do §FASE 8 (75,4%), que **não** foi arquivado nesta
     rodada: a leitura mostrou que ele já era a retenção de 2026-08-19, com um item **ainda aberto**
     dentro. **O script tria; quem decide é a leitura.**
+    🔴 **SEGUNDA MORDIDA DESTA FAMÍLIA, em 2026-09-01 — e desta vez ela incidiu sobre A PRÓPRIA
+    CONVENÇÃO.** O bloco acima já dizia "cabeçalho casado não é conteúdo espelhado"; mesmo assim, a
+    afirmação de que *"a convenção voltou a ser segura de aplicar"* foi escrita logo depois e era
+    **falsa para o bloco do PR 7**, que aquela higiene não arquivou. Medido: **contenção 33,0%,
+    766 shingles órfãos**.
+    🔑 **CONFERIR ESPELHAMENTO POR `grep` DE MARCADOR É FALSO-POSITIVO, e agora está medido.** Os
+    marcadores casam **1:1** entre os dois arquivos — `A CERCA DO TRIO`,
+    `hakkinen @ mclaren @ 1993`, `O PORTÃO NÃO MEDE` **todos casam** — porque as entradas do
+    `HISTORICO.md` **citam os mesmos nomes** ao narrar o mesmo PR. **Casar rótulo mede que os dois
+    textos falam da mesma coisa; não mede que um contém o outro.** É a mesma classe do §FASE 8, onde
+    **75,4% de cobertura era RETENÇÃO, não redundância** — as duas pontas do mesmo erro: lá o número
+    alto enganava, aqui o marcador casado engana.
+    🔒 **Espelhamento se confere medindo CONTEÚDO — `scripts/medir-contencao-doc.py`, shingles —
+    NUNCA casando rótulo.**
+    🔴 **E O ALARME DE SALDO NÃO PEGA ESTE CASO. Isto precisa estar dito, porque o alarme é tratado
+    neste arquivo como "o único portão que existe":** ele compara contagem de linhas, então cobre
+    **APAGAMENTO**, e **reescrita é SUBSTITUIÇÃO** — trocar 80 linhas por 80 linhas dá saldo ~zero e
+    passa limpo. **O alarme de saldo e a conferência de espelhamento cobrem coisas diferentes, e
+    nenhum dos dois substitui o outro.** Na ocorrência de 2026-08-31 o alarme salvou porque a
+    reescrita era muito menor que o original (−1108); numa reescrita de tamanho parecido ele teria
+    ficado quieto.
 - 🔒 **VARREDURA DE RETENÇÃO SE FAZ POR FRASE, NUNCA POR EMOJI — medido em 2026-08-31, na higiene
   da §"Onde parei".** Antes de arquivar qualquer bloco deste arquivo, o que **fica** se acha
   varrendo as FRASES que marcam obrigação (`decisão do dev`, `palavras do dev`, `aprovado pelo dev`,
