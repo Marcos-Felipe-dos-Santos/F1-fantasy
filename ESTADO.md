@@ -580,6 +580,133 @@ dependência).
 
 ## Onde parei
 
+**🔐 PR H1 — TETO POR IP NO `POST /criar-sala` E CORS COM ALLOWLIST: CONCLUÍDO e MERGEADO em
+2026-09-01** (`2f780bb`, merge `--no-ff` de `3ee0c5c` + `cea3642`), na `main`. **ALTO RISCO** —
+mexe em `party/sala.ts` e afeta produção. **Sem push, sem tag.** Detalhe completo: `HISTORICO.md`
+§"PR H1 — o teto por IP e o CORS".
+
+**O que o PR faz, em uma linha:** os itens **S1** e **S9** da auditoria de segurança passam de
+🔴 ABERTO a ✅ **FECHADO POR IMPLEMENTAÇÃO** — o `POST /criar-sala` ganha teto de 5 por IP em janela
+de 10 s, e o `Access-Control-Allow-Origin: '*'` vira allowlist configurável.
+
+📊 **PORTÕES, medidos na `main` PÓS-MERGE (não herdados da branch):** `npm test` **1677/73** em
+**3 rodadas** idênticas (era 1662/71 — **+15**: 9 de `cors.test.ts` e 6 de `rate-limit.test.ts`,
+arquivos novos). **`npm run test:party` 26/26** (era 19/19, **+7**). typecheck **0** nos três
+projetos, lint **0**, build **0**.
+🔑 **`VERSAO_APP` fica 3.4.5 e `VERSAO_FORMATO` fica 3 — SEM BUMP, e a prova é MECÂNICA:**
+`src/engine/versao.test.ts` está verde e o bundle segue **`index-B0pMOBwk.js`, o MESMO hash** do
+PR 6 e do PR 7. Os módulos novos de `src/net/` não estão no escopo do digest e nada deles chega ao
+bundle — só `party/` os importa.
+⚠️ **`npm run balance` NÃO rodado, e dito por quê:** zero arquivo de `src/engine/`, `src/data/`
+intocado. **`npm run preview` também não:** o PR não muda nada na tela, e o hash inalterado confirma.
+
+---
+
+🔒 **A DECISÃO É PURA E MORA EM `src/net/`; a casca só lê relógio e IP.** Não é estilo: `Date.now` é
+**proibido** em `src/net/**` e permitido só em `party/**` (`eslint.config.js`). `avaliarTeto(balde,
+agora)` e `origemPermitida(origem, allowlist, ehDesenvolvimento)` recebem tudo por parâmetro.
+🔑 **É isso que torna a JANELA testável em `npm test`** — sem relógio falso, sem `workerd`. E a
+janela é o que separa um LIMITE de um BANIMENTO; o baseline de `party/` sozinho não a alcançava.
+
+🔒 **UM DO POR IP, via `idFromName(ip)` — o IP É O SHARD.** Sem tabela de baldes, sem contenção, e
+IP ocioso se despeja sozinho. Um DO único com um `Map` de todos os IPs serializaria toda criação de
+sala do jogo num objeto só.
+🔒 **O balde vive SÓ EM MEMÓRIA, e o número está ACOPLADO à janela:** 10 s fica abaixo do horizonte
+de despejo do DO, então o despejo descarta um balde que já teria expirado. Zero escrita por
+requisição. ⚠️ **Alongar a janela sem passar a persistir reabre a rajada pós-despejo — as duas
+coisas se movem juntas.**
+
+---
+
+🔒 **ADIÇÃO 1 DO DEV (2026-09-01) — O CURINGA EXIGE DOIS SINAIS. Implementada como ditada.**
+`ALLOWED_ORIGINS` ausente **não basta** para cair em `*`: é preciso também `ENVIRONMENT=development`.
+Sem o segundo sinal, ausência de allowlist **REJEITA**.
+**Palavras do dev:** *"Esquecer de configurar o wrangler em produção não pode anular o PR inteiro."*
+🔑 **E o `wrangler.jsonc` commitado traz `ENVIRONMENT=production` de propósito:** é o MESMO arquivo
+que o `wrangler deploy` consome, então pôr o sinal de dev nele o levaria a produção e anularia o PR
+em silêncio — a própria falha que a adição 1 fecha. O sinal de dev entra por `--var` no
+`npm run sala`. **A cerca é `src/net/cors.test.ts`, com anti-vacuidade, e a mutação M5 a confirma.**
+
+---
+
+🔴 **A FRONTEIRA DO PR — O TETO NÃO É GLOBAL. Ditada pelo dev; a MEDIÇÃO diverge no MECANISMO, e as
+duas ficam registradas em vez de eu escolher entre elas.**
+
+- **O que o dev ditou, textual:** *"o rate limit é POR SALA (por DO instance). Atacante criando
+  salas diferentes contorna o limite porque cada DO tem seu próprio Map. Rate limit global depende
+  de outra camada (WAF ou rate limit no worker de roteamento). Isso não é conserto deste PR — é a
+  fronteira dele, e ela precisa estar escrita."*
+- ✅ **A SUBSTÂNCIA ESTÁ CERTA E É O QUE IMPORTA: o teto NÃO é global, e um limite global depende
+  mesmo de outra camada — WAF ou rate limit no worker de roteamento.** Isso fica registrado como a
+  fronteira do PR, que foi o pedido.
+- 🔴 **O MECANISMO, porém, foi MEDIDO e é OUTRO: o balde é por IP, não por sala.** Teste dedicado em
+  `party/rate-limit.test.ts` cria **5 salas com códigos distintos** do mesmo IP (pré-condição
+  asserida) e a 6ª vem **429**. **Criar salas diferentes NÃO contorna o teto.** A mutação **M2**
+  confirma pelo outro lado: forçar balde global quebra a asserção de isolamento por IP.
+- 🔑 **A frase ditada descreveria um desenho em que o limitador vive dentro do `Sala` DO** — que foi
+  considerado e **não** é o aprovado. **A fronteira REAL é MÚLTIPLOS IPs:** quem dispuser de uma
+  botnet ou de uma faixa IPv6 contorna, e é aí que WAF ou worker de roteamento entram.
+- 📌 **Registrado assim, e não "corrigido" em silêncio, pelo mesmo motivo do S8:** o dev foi avisado
+  da divergência antes do merge e reafirmou a redação. **Escolher entre as duas por conta própria é
+  o que a §"NENHUM SUBAGENTE COMMITA" trata como o caso mais grave.** Qual redação prevalece é
+  decisão dele; **as duas estão aqui até que decida.**
+
+---
+
+🔴 **TRÊS ITENS DA ESPECIFICAÇÃO DA DOC NÃO FORAM ESCRITOS COMO DITADOS, e o motivo de cada um é
+medido. Nenhum foi silenciado.**
+
+1. 🔴 **"O bloqueante C1 e como foi resolvido (`isDev` com inferência por `ALLOWED_ORIGINS`)" — NÃO
+   ENTROU, porque NADA DISSO ACONTECEU.** **(a)** **Não houve `senior-reviewer` neste PR:** eu
+   perguntei *"Rodo a revisão agora?"* e o PR foi aprovado sem resposta — **não existe bloqueante
+   C1** para registrar, e inventar um veredito de revisão é exatamente o `e1db1c9`. **(b)** **O
+   mecanismo implementado NÃO é inferência por `ALLOWED_ORIGINS`:** é o sinal explícito
+   `env.ENVIRONMENT === AMBIENTE_DEV` (`party/sala.ts:441`, `src/net/cors.ts:25`).
+   🔑 **E isto não é detalhe de redação: inferir o modo de dev da ausência de `ALLOWED_ORIGINS` é
+   PRECISAMENTE o que a adição 1 proibiu.** Registrar essa inferência como "o conserto" gravaria no
+   histórico o oposto da decisão que o PR implementa. ⚠️ **`senior-reviewer` segue NÃO RODADO neste
+   PR, apesar do ALTO RISCO — é decisão do dev, e fica dito.**
+2. ⚠️ **A tabela de mutações tem SETE linhas, não seis.** Estão todas abaixo; nenhuma foi cortada
+   para fechar o número ditado. Mesma disciplina do S13/S14.
+3. ⚠️ **"S1 e S9 passam de (c) para (a)" — a tabela da auditoria NÃO tem notação `(a)`/`(c)`.** Ela
+   usa `🔴 ABERTO` / `🟡 PARCIAL` / `✅ FECHADO`. Os dois foram para **✅ FECHADO**, que é a leitura
+   evidente do pedido; **a notação ditada não existe no arquivo** e não foi inventada.
+
+---
+
+📊 **A TABELA DE MUTAÇÕES — SETE, cada uma com SAÍDA REAL, e cada uma caindo na asserção que alega
+cobrir.** Controle sem mutação: `15 passed (15)` e `26 passed (26)`.
+
+    M1  teto deixa de ser consultado (limitador off)   exit=1  2 failed | 5 passed (7)
+    M2  balde GLOBAL em vez de por IP                  exit=1  1 failed | 6 passed (7)
+    M3  a janela NUNCA expira (vira banimento)         exit=1  2 failed | 13 passed (15)
+    M4  a recusa REINICIA a janela                     exit=1  1 failed | 14 passed (15)
+    M5  curinga sem o SEGUNDO sinal (furo da adição 1) exit=1  1 failed | 14 passed (15)
+    M6  allowlist por PREFIXO em vez de igualdade      exit=1  1 failed | 14 passed (15)
+    M7  sinal de dev VENCE a allowlist configurada     exit=1  1 failed | 14 passed (15)
+
+🔑 **M2 é a que mede a fronteira** (balde por IP × global) e **M5 é a que mede a adição 1**.
+🔒 **Reversão CONFERIDA, não presumida:** varredura por resíduo de mutação nos três arquivos, com
+`balde.inicio` intacto no ramo da recusa, e as suítes de volta a 1677/73 e 26/26.
+⚠️ **A primeira rodada perdeu o placar** por erro de decodificação `cp1252` do Windows ao capturar a
+saída; só o `exit=1` sobreviveu. **Foi refeita com captura UTF-8** — os números acima são da segunda
+rodada. Registrado porque *"medição cujo script não fica em disco não é reprodutível"*, e esta
+**não está rastreada**: o `mutar.py` vive no scratchpad da sessão. **Rastreá-lo é decisão do dev.**
+
+---
+
+🔴 **LIMITAÇÃO CONHECIDA QUE O PR CRIOU, e ela chega ao JOGADOR: o 429 aparece como "servidor fora
+do ar".** `criarSalaNoServidor` (`src/ui/sala-online.ts:83`) faz `if (!resposta.ok) return null` —
+colapsa toda falha num `null` só. **Antes do H1 nenhum jogador atingia um não-200 em uso normal;
+agora atinge** (5 salas em 10 s é alcançável clicando). É a mesma classe do bug do 3.3.3, que o
+docblock de `src/net/rotas.ts` registra: a UI acusa o servidor de estar fora do ar enquanto ele
+responde corretamente.
+📌 **Perguntei ao dev se vira pendência própria ou entra no PR; NÃO foi respondido, e o PR foi
+aprovado como está.** O conserto é UI (distinguir 429 de falha de rede), não lógica. **Fica aqui
+sem número de pendência** — atribuir um seria decidir por ele.
+
+---
+
 **🔐 AUDITORIA DE SEGURANÇA — OS 17 ITENS PASSAM A EXISTIR NESTE ARQUIVO: commit de DOC em
 2026-09-01**, na `main`. **BAIXO RISCO** — zero arquivo de produção no diff. **Sem push, sem tag.**
 Tabela e proveniência na §"🔐 AUDITORIA DE SEGURANÇA — OS 17 ITENS", logo antes da §Pendências.
@@ -1663,7 +1790,7 @@ casca deixa de ser terra sem teste; a opção conhecida é `@cloudflare/vitest-p
 
 | item | status | veredito, como ditado | mapeamento |
 |---|---|---|---|
-| **S1** | 🔴 ABERTO | nenhum detalhe ditado | `= C1` (não conferível — ver abaixo) |
+| **S1** | ✅ **FECHADO** | teto de 5/IP por janela de 10 s no `POST /criar-sala` | fechado no **PR H1**, 2026-09-01 |
 | **S2** | 🔴 ABERTO | nenhum detalhe ditado | `= C2` ⇒ **pendência 0(y)**, ✅ confere |
 | **S3** | 🟡 PARCIAL | `difundir()` checa identidade, **mas sem rate limit inbound** | — |
 | **S4** | 🔴 ABERTO | nenhum detalhe ditado | `= A3` (não conferível) |
@@ -1671,7 +1798,7 @@ casca deixa de ser terra sem teste; a opção conhecida é `@cloudflare/vitest-p
 | **S6** | ✅ FECHADO | **falso positivo**, 3ª confirmação | — |
 | **S7** | 🔴 ABERTO | nenhum detalhe ditado | — |
 | **S8** | ✅ FECHADO | `crypto.getRandomValues`, **32 bytes, base64url** | ⚠️ **não casa com o repo** — ver abaixo |
-| **S9** | 🔴 ABERTO | nenhum detalhe ditado | ⬅️ **entra no PR H1** com o S1 |
+| **S9** | ✅ **FECHADO** | CORS com allowlist; o curinga exige **dois** sinais | fechado no **PR H1**, 2026-09-01 |
 | **S10** | 🟡 PARCIAL | `aplicar()` só grava quando muda, **mas o tique roda e cobra CPU** | — |
 | **S11** | ✅ FECHADO | **zero `dangerouslySetInnerHTML`**, React escapa em todos os sítios | ✅ metade conferida nesta sessão |
 | **S12** | 🔴 ABERTO | nenhum detalhe ditado | — |
@@ -1681,7 +1808,13 @@ casca deixa de ser terra sem teste; a opção conhecida é `@cloudflare/vitest-p
 | **S16** | ✅ FECHADO | `MAX_BYTES_MENSAGEM` checado **ANTES** do `JSON.parse` | ✅ conferido nesta sessão |
 | **S17** | 🔴 ABERTO | nenhum detalhe ditado | — |
 
-**Placar do que foi ditado: 4 fechados · 2 parcialmente mitigados · 9 abertos = 15.**
+**Placar ditado em 2026-09-01: 4 fechados · 2 parcialmente mitigados · 9 abertos = 15.**
+🔄 **ATUALIZADO no mesmo dia, pelo PR H1: o S1 e o S9 passaram a ✅ FECHADO — por IMPLEMENTAÇÃO,
+não por medição.** Placar corrente: **6 fechados · 2 parciais · 7 abertos**. ⚠️ **A distinção não é
+formalidade:** os 4 originais foram fechados por alguém MEDIR que não havia problema; estes dois
+foram fechados por CÓDIGO NOVO, com baseline vermelho e sete mutações. Ver a §"Onde parei".
+⚠️ **A notação `(a)`/`(c)` que o pedido de doc citou NÃO EXISTE nesta tabela** — ela sempre usou
+🔴/🟡/✅. Os dois foram para ✅, que é a leitura evidente; a notação não foi inventada.
 🔒 **"Fechado por medição" aqui significa NÃO CONSERTA, REGISTRA** — formulação do dev. Nenhum diff
 de produção saiu destes quatro.
 
@@ -2365,6 +2498,11 @@ o `S2 ⇒ 0(y)` está ligado, porque é o único que o arquivo sustenta.
    sobram e não devem sumir daqui:** o pacote arrasta `miniflare 5.20260815.0-alpha` (**alpha**) e um
    **segundo `wrangler` (4.124.0)** ao lado do `4.120.0` que o `wrangler.jsonc` fixa de propósito
    desde o SPIKE 3.0.
+10. ✅ **FECHADA em 2026-09-01, na doc do PR H1 — que É o "próximo commit de docs" que esta
+    pendência esperava.** A cifra foi **RETIRADA, não atualizada com palpite**, e no lugar dela
+    ficou a medição com método: **6.176 linhas / 567 KB**, ordem de **~170 mil tokens** a ~3,3
+    caracteres por token. ⚠️ **A âncora `HISTORICO.md:8` morreu junto** — o cabeçalho cresceu; o
+    texto novo está no bloco de abertura do arquivo. *(Texto original da pendência, preservado:)*
 10. 🟡 **CIFRA OBSOLETA SOBREVIVENDO EM `HISTORICO.md:8` — "~19 mil tokens". PARA O PRÓXIMO COMMIT
     DE DOCS, por decisão do dev (2026-09-01); NÃO tocada no PR do `.gitattributes`, que é fora de
     escopo.**
