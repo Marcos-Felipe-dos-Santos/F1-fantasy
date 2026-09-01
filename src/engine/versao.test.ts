@@ -102,11 +102,11 @@ function digestDoConteudo(): string {
     // 🔴 CRLF → LF é OBRIGATÓRIO, e foi MEDIDO no PR 6 — sem isto o digest
     // depende do MODO DE CHECKOUT, não do conteúdo.
     //
-    // O repo roda `core.autocrlf=true` e não tem `.gitattributes`, então
-    // arquivo que o git materializa chega em CRLF e arquivo que um script
-    // escreve chega em LF. Desde o PR 6, `src/data/equipe-anos.json` é ESCRITO
-    // POR SCRIPT (`npm run dataset:anonimizar`) enquanto `pecas.json` e
-    // `pistas.json` seguem vindo de checkout — o digest era MISTO.
+    // O repo roda `core.autocrlf=true`, então arquivo que o git materializa
+    // chega em CRLF e arquivo que um script escreve chega em LF. Desde o PR 6,
+    // `src/data/equipe-anos.json` é ESCRITO POR SCRIPT
+    // (`npm run dataset:anonimizar`) enquanto `pecas.json` e `pistas.json`
+    // seguem vindo de checkout — o digest era MISTO.
     // **Medido:** o mesmo dado dá `0d9efb33` com o arquivo em LF e `be8578eb`
     // em CRLF. Ou seja, o primeiro `git clone` ou `git checkout --` deixaria
     // este teste VERMELHO com a mensagem "MUDOU e VERSAO_APP não acompanhou",
@@ -115,6 +115,19 @@ function digestDoConteudo(): string {
     // 🔑 Mesma tese, e mesma frase, de `scripts/publicacao.test.ts`: **final de
     // linha é artefato de CHECKOUT, não conteúdo.** Aquele arquivo normalizava
     // e este não — a contradição foi achada pela revisão do PR 6.
+    //
+    // ⚠️ CORRIGIDO em 2026-09-01: a redação anterior dizia que o repo **"não
+    // tem `.gitattributes`"**. Tinha razão quando foi escrita; **hoje o repo
+    // TEM**, com `* text=auto eol=lf`, e a cerca de `scripts/cerca-eol.test.ts`
+    // trava isso. Corrigido no lugar em vez de contradito noutro arquivo.
+    //
+    // 🔒 E MESMO ASSIM A NORMALIZAÇÃO FICA — não é resíduo a limpar depois.
+    // `.gitattributes` **não renormaliza o working tree**: a convergência é
+    // por arquivo, conforme cada um for re-checkoutado. **Medido em
+    // 2026-09-01, nesta máquina: o escopo deste digest está 12 CRLF + 6 LF.**
+    // Remover o `replace` hoje deixa este teste vermelho na hora, e o
+    // re-acopla ao modo de checkout — que é a classe que o `.gitattributes`
+    // existe para fechar. Ver `ESTADO.md` §Pendências 0(af).
     const conteudo = readFileSync(caminho, 'utf8').replace(/\r\n/g, '\n');
     acumulado = hashTexto(`${acumulado}:${relativo}:${hashTexto(conteudo)}`);
   }

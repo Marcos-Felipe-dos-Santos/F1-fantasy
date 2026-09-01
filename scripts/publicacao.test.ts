@@ -36,7 +36,7 @@
  * PASSARIA POR SORTE.
  *
  * **Medido no PR 6, ao ver este baseline vermelho pela primeira vez:** o repo
- * roda `core.autocrlf=true` e **não tem `.gitattributes`**, então
+ * roda `core.autocrlf=true`, então
  *
  * - arquivo que o **git faz checkout** chega ao working tree em **CRLF** —
  *   `src/data/equipe-anos.json` tinha 52.430 CRLF antes deste PR;
@@ -52,9 +52,27 @@
  * 🔑 **Final de linha é artefato de CHECKOUT, não conteúdo de dataset.** O que
  * esta cerca afirma é sobre o dado; normalizar é o que a faz afirmar isso e não
  * o modo de checkout de quem a rodou.
- * ⚠️ **A alternativa — pinar `*.json` como LF num `.gitattributes`** — resolveria
- * a classe inteira, mas reescreveria final de linha do repo todo no próximo
- * checkout. **É PR próprio e decisão do dev**, não conserto de passagem daqui.
+ * ✅ **A ALTERNATIVA FOI TOMADA em 2026-09-01, em PR próprio — e a redação
+ * anterior dela ficou falsa em duas frentes, por isso é corrigida no lugar.**
+ * Ela dizia: *"pinar `*.json` como LF num `.gitattributes` resolveria a classe
+ * inteira, mas reescreveria final de linha do repo todo no próximo checkout"*.
+ *
+ * - **`*.json` NÃO resolveria a classe inteira.** Medido: o digest de
+ *   `versao.test.ts` lê **18 arquivos e só 3 são `.json`** — pinar só JSON
+ *   consertaria 3 de 18. O arquivo que entrou pina `*`.
+ * - **"Reescreveria o repo todo no próximo checkout" superestima o custo, e a
+ *   parte factual dela é verdadeira.** Um arquivo re-checkoutado sai mesmo em
+ *   LF (medido: `pecas.json`, 266 CR → 0). O que é falso é o custo implícito:
+ *   **não há diff, nunca.** O índice já era 100% LF (233/233), então
+ *   `git add --renormalize .` **não encena nada** e `git status` fica limpo —
+ *   medido de duas formas independentes. A convergência é **gradual, por
+ *   arquivo**, não um varrido só.
+ *
+ * 🔒 **E a normalização abaixo FICA.** `.gitattributes` não renormaliza o
+ * working tree existente: nesta máquina o escopo do digest seguia
+ * **12 CRLF + 6 LF** depois do PR. Remover o `comLf` re-acoplaria esta cerca ao
+ * modo de checkout — a classe que o `.gitattributes` existe para fechar.
+ * Ver `scripts/cerca-eol.test.ts` e `ESTADO.md` §Pendências 0(af).
  *
  * ─────────────────────────────────────────────────────────────────────────────
  * 🔒 ANTI-VACUIDADE, e ela tem DUAS metades load-bearing.

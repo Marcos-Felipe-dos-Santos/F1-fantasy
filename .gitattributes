@@ -1,0 +1,22 @@
+# Final de linha é artefato de CHECKOUT, não conteúdo — e sem esta pinagem o
+# repo materializa CRLF (`core.autocrlf=true`, medido no system gitconfig e no
+# ~/.gitconfig) enquanto todo script escreve LF. O resultado é um working tree
+# MISTO, em que o mesmo dado tem bytes diferentes conforme a máquina.
+#
+# O escopo é `*` de propósito, e isso foi MEDIDO: o digest de `versao.test.ts`
+# lê 18 arquivos e só 3 são `.json`. Pinar apenas `*.json` — a alternativa que
+# as docblocks do PR 6 propunham — consertaria 3 de 18 e deixaria os 12 `.ts`
+# expostos.
+#
+# Entrar com este arquivo NÃO produz diff: o índice já é 100% LF, então
+# `git add --renormalize .` não encena nada e `git status` fica limpo. O
+# working tree converge por arquivo, conforme cada um for re-checkoutado —
+# não num varrido só. Ver `ESTADO.md` §Pendências 0(af).
+* text=auto eol=lf
+
+# Explícito em vez de heurístico. Com `text=auto` sozinho, `git check-attr eol`
+# devolve `lf` também para estes — eles só escapam pela detecção de conteúdo
+# binário em tempo de execução. Depender de heurística para uma fonte `.woff2`
+# é a suposição não verificada que este projeto trata como risco.
+*.png   binary
+*.woff2 binary
