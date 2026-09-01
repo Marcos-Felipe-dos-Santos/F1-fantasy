@@ -168,6 +168,18 @@ function contarConexoes(codigo: string): Promise<number> {
 describe('S2 — teto de CONEXÕES por sala', () => {
   beforeEach(async () => {
     await reset();
+    // 🔒 **O AMBIENTE DE ORIGEM É DECLARADO, NÃO HERDADO — e esta linha nasceu
+    // de um vermelho REAL, não de precaução.** Sem ela, os três casos abaixo
+    // mediam `0` conexões: a guarda do S4 recusava todo socket antes de o teto
+    // ser alcançado, porque o `wrangler.jsonc` traz allowlist vazia +
+    // `ENVIRONMENT=production` (o padrão seguro, que RECUSA).
+    // 🔑 **Foi a PRÉ-CONDIÇÃO ASSERIDA que pegou isso** — um teste que só
+    // cobrasse "não passa de 64" teria ficado VERDE com zero conexões, medindo
+    // a guarda errada. É a SEXTA instância (3.5.2) evitada por construção.
+    // ⚠️ E o `reset()` não restaura `env`: sem declarar aqui, a ordem dos
+    // `describe` decidiria o resultado.
+    env.ALLOWED_ORIGINS = '';
+    env.ENVIRONMENT = 'development';
   });
 
   afterEach(() => {
