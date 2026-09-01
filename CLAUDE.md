@@ -9,7 +9,12 @@ Este arquivo é a memória sempre-ativa do projeto. As regras aqui são **inviol
 
 1. **`CLAUDE.md`** (este arquivo) — regras invioláveis.
 2. **`ESTADO.md`** — estado atual, onde parei, próximo PR, pendências ativas, regras da Fase 7.
-   Curto de propósito (~60 linhas). **É o único documento de estado que se lê por completo.**
+   **É o único documento de estado que se lê por completo.**
+   🔴 **NÃO É MAIS "curto de propósito (~60 linhas)" — essa frase era FALSA e ficou aqui por muito
+   tempo.** Medido em 2026-08-31, **depois** da higiene que arquivou 845 linhas: **2.202 linhas,
+   184 KB**. Antes da higiene eram **2.863**. **A regra de ler por completo continua valendo — o que
+   muda é saber o que ela custa**, e planejar a sessão com esse número na mão em vez de com um "~60"
+   que nunca foi verdade nesta fase do projeto.
 
 **Sob demanda, nunca por completo na abertura:**
 
@@ -18,13 +23,26 @@ Este arquivo é a memória sempre-ativa do projeto. As regras aqui são **inviol
   quando o PR começa**, não em toda sessão. Consultar **o plano que interessa**, nunca inteiro.
   🔒 **O plano mora lá; as OBRIGAÇÕES (decisões travadas, regras invioláveis, pendências) ficaram no
   `ESTADO.md`**, em blocos de retenção. Procurando uma regra inviolável? Está no `ESTADO.md`.
-- **`HISTORICO.md`** — registro detalhado dos PRs das fases **6 e 7** (~19 mil tokens). Consultar
+- **`HISTORICO.md`** — registro detalhado dos PRs das fases **6 e 7**. Consultar
   **o PR que interessa** quando precisar do porquê de uma decisão. Ler inteiro estoura o contexto
   inicial — foi exatamente por isso que o `ESTADO.md` passou a existir.
-- **`HISTORICO_ARQUIVO.md`** — fases **0 a 5**, encerradas (~12 mil tokens). Mesma regra: consulta
-  por PR, nunca leitura completa.
+  ⚠️ **Medido em 2026-08-31: 5.831 linhas, 544 KB** — cresceu 889 linhas na higiene daquele dia, que
+  lhe passou 845 linhas da §"Onde parei". 🔴 **A cifra antiga, "~19 mil tokens", era ERRADA por
+  cerca de 8×** e foi retirada em vez de atualizada: ela não fecha com nenhuma outra medida deste
+  arquivo. **A ordem de grandeza real é de ~160 mil tokens.**
+- **`HISTORICO_ARQUIVO.md`** — fases **0 a 5**, encerradas (~12 mil tokens; **39 KB, e esta cifra
+  CONFERE**). Mesma regra: consulta por PR, nunca leitura completa.
 - **`PLANO_CLAUDE_CODE.md`** — plano de build por fase e direção de arte.
 - **`F1_Fantasy_GDD.md`** — regras de jogo, notas, pistas, catálogo de peças.
+
+🔒 **O MÉTODO, porque número sem método não se verifica depois** (lição do 33/6/2, `ESTADO.md`
+§"MEDIÇÕES E AUDITORIAS"): as cifras acima são **bytes e linhas medidos** — `wc -c`, reproduzível.
+A conversão para tokens usa **~3,3 caracteres por token**, que é a razão implícita nas DUAS âncoras
+que este arquivo já trazia e que batem entre si: `equipe-anos.json` (1 MB ⇒ 324 mil tokens) e
+`HISTORICO_ARQUIVO.md` (39 KB ⇒ 12 mil). **O "~19 mil" do `HISTORICO.md` era o único fora dessa
+razão** — daria 25,6 caracteres por token, o que não corresponde a tokenizador nenhum.
+⚠️ **Token é ESTIMATIVA declarada, não medição:** não há tokenizador neste repositório. **Bytes e
+linhas são o que está medido; quem precisar do número exato roda um tokenizador e corrige aqui.**
 
 **Ao concluir um PR, o `doc-writer` ESCREVE OS DOIS:** entrada detalhada no `HISTORICO.md`
 (acumula) e o `ESTADO.md` **atualizado — só a seção "Onde parei" é reescrita** (ver a regra logo
@@ -257,9 +275,22 @@ dúvidas" é justamente o hábito que esta regra corta.
 Ao concluir um PR: **commitar, invocar `doc-writer` para escrever `HISTORICO.md` + `ESTADO.md`,
 auditar o que ele escreveu, commitar EU a doc, PARAR e avisar o dev** — mesmo com mais itens
 aprovados na fila. **Quem decide se segue na mesma
-sessão é o dev, não eu.** Sessão nova custa ~2,4 mil tokens de abertura (`CLAUDE.md` + `ESTADO.md`);
-continuar numa sessão já carregada custa muito mais que isso. Exceção: o dev autorizar
-explicitamente vários itens numa sessão só — e mesmo aí, parar ao fim do lote autorizado.
+sessão é o dev, não eu.** ~~Sessão nova custa ~2,4 mil tokens de abertura (`CLAUDE.md` +
+`ESTADO.md`); continuar numa sessão já carregada custa muito mais que isso.~~ Exceção: o dev
+autorizar explicitamente vários itens numa sessão só — e mesmo aí, parar ao fim do lote autorizado.
+
+🔴 **A CIFRA DE ABERTURA ESTAVA ERRADA POR ~25×, e ela era o ARGUMENTO desta regra — por isso é
+riscada no lugar, não corrigida em silêncio.** Medido em 2026-08-31: `CLAUDE.md` (~22 KB) +
+`ESTADO.md` (~184 KB) = **~206 KB, da ordem de 60 mil tokens de abertura**, não 2,4 mil. O método
+está na §"O que ler em sessão nova". *(A cifra do `CLAUDE.md` é auto-referente: editar este arquivo
+a move. Por isso vai arredondada, e o que importa é a ordem de grandeza, não o dígito.)*
+⚠️ **A REGRA CONTINUA VALENDO; o que caiu foi a justificativa numérica.** "Abrir sessão nova é
+barato" era o argumento, e ele **não se sustenta mais**: a abertura é cara, e a comparação com
+"continuar numa sessão já carregada" deixou de ser óbvia.
+📌 **Rever o argumento (ou a regra) é DECISÃO DO DEV, e não foi tomada.** Registrado aqui em vez de
+resolvido de passagem, porque trocar o motivo de uma regra inviolável por conta própria é
+exatamente o que o §"NENHUM SUBAGENTE COMMITA" trata como o caso mais grave. **Enquanto o dev não
+decidir, o padrão segue: um PR por sessão.**
 
 ## Definição de "pronto" (por PR)
 
