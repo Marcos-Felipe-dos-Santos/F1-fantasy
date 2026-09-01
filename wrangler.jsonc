@@ -21,6 +21,12 @@
       {
         "name": "Sala",
         "class_name": "Sala"
+      },
+      // O balde do teto de `POST /criar-sala` (PR H1). Um DO por IP, via
+      // `idFromName(ip)` — o IP é o shard, então não há gargalo global.
+      {
+        "name": "Limite",
+        "class_name": "Limite"
       }
     ]
   },
@@ -28,6 +34,31 @@
     {
       "tag": "v1",
       "new_sqlite_classes": ["Sala"]
+    },
+    // 🔒 Classe de DO nova exige tag NOVA. Sem isto o `wrangler deploy` falha —
+    // e falha no DEPLOY, não no teste, que é o pior lugar para descobrir.
+    // `new_sqlite_classes` mesmo o balde vivendo só em memória: a migração
+    // declara a classe, não o uso que ela faz do storage.
+    {
+      "tag": "v2",
+      "new_sqlite_classes": ["Limite"]
     }
-  ]
+  ],
+  // 🔒 OS DOIS VALORES ABAIXO SÃO O PADRÃO SEGURO, E O PADRÃO SEGURO É RECUSAR.
+  // Com `ALLOWED_ORIGINS` vazio e `ENVIRONMENT` diferente de "development", o
+  // `POST /criar-sala` não libera origem nenhuma. É o comportamento certo para
+  // um deploy que esqueceu de configurar — que é a falha mais provável, porque
+  // é a de omissão. Ver `src/net/cors.ts`.
+  //
+  // 🔴 **`ENVIRONMENT` NÃO pode ser "development" aqui.** Este mesmo arquivo é
+  // o que o `wrangler deploy` consome: pôr o sinal de dev na config commitada
+  // o levaria para produção e ANULARIA o PR inteiro, em silêncio. O sinal de
+  // dev entra pela linha de comando, no `npm run sala` — ver o `package.json`.
+  //
+  // O domínio de produção e as origens de túnel/LAN entram em
+  // `ALLOWED_ORIGINS` (aqui ou por `--var`) quando o deploy existir.
+  "vars": {
+    "ALLOWED_ORIGINS": "",
+    "ENVIRONMENT": "production"
+  }
 }

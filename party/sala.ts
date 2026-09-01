@@ -37,7 +37,10 @@ import {
 } from '../src/net/servidor-sala';
 import { estadoDasSeeds } from '../src/net/sala';
 import { codigoDeBytes, TAMANHO_CODIGO } from '../src/net/codigo-sala';
+import { AMBIENTE_DEV, origemPermitida } from '../src/net/cors';
+import { JANELA_TETO_MS } from '../src/net/rate-limit';
 import { ROTA_CRIAR_SALA } from '../src/net/rotas';
+import { Limite } from './limite';
 import {
   MAX_BYTES_MENSAGEM,
   MAX_ETAPAS,
@@ -48,7 +51,29 @@ import {
 
 interface Env {
   Sala: DurableObjectNamespace<Sala>;
+  /** O balde do teto de criação de sala — um DO por IP. Ver `limite.ts`. */
+  Limite: DurableObjectNamespace<Limite>;
+  /**
+   * Origens autorizadas no `POST /criar-sala`, separadas por vírgula. Vem de
+   * `vars` no `wrangler.jsonc` — **nunca literal no código**, porque o domínio
+   * de produção é config de deploy e o caminho de túnel/LAN muda de máquina.
+   */
+  ALLOWED_ORIGINS?: string;
+  /**
+   * O SEGUNDO sinal do curinga de CORS. Só `'development'` o habilita, e só
+   * junto de `ALLOWED_ORIGINS` ausente. Ver `src/net/cors.ts` — existe para
+   * que esquecer de configurar em produção NÃO caia em `*`.
+   */
+  ENVIRONMENT?: string;
 }
+
+/**
+ * 🔒 **A classe do limitador precisa ser exportada DAQUI**, do módulo `main` do
+ * `wrangler.jsonc` — é onde o runtime procura `class_name`. Defini-la em
+ * `limite.ts` e re-exportar mantém este arquivo no tamanho que o docblock do
+ * topo promete ("é fino de propósito") sem quebrar o binding.
+ */
+export { Limite };
 
 /** De quanto em quanto tempo o servidor confere prazos e o ciclo de vida. */
 const INTERVALO_TIQUE_MS = 5_000;
@@ -395,12 +420,55 @@ export class Sala extends Server<Env> {
   }
 }
 
-/** O `POST /criar-sala` pode vir de outra origem — ver `VITE_WS_BASE`. */
-const CABECALHOS_CORS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'content-type',
-};
+/**
+ * Os cabeçalhos de CORS do `POST /criar-sala`, POR REQUISIÇÃO.
+ *
+ * 🔴 **Era uma constante com `Access-Control-Allow-Origin: '*'` até o PR H1.**
+ * Virou função porque a resposta agora depende do `Origin` que chegou e da
+ * configuração do deploy — ver `src/net/cors.ts`, que é onde a regra mora.
+ *
+ * 🔒 **`Vary: Origin` é OBRIGATÓRIO junto do eco**, e não é ornamento: sem ele,
+ * qualquer cache intermediário pode servir a uma origem a resposta liberada
+ * para outra, o que anula a allowlist sem deixar rastro.
+ *
+ * Objeto VAZIO significa recusa — em CORS não existe negação explícita; o
+ * navegador bloqueia justamente na ausência do cabeçalho.
+ */
+function cabecalhosCors(request: Request, env: Env): Record<string, string> {
+  const permitida = origemPermitida(
+    request.headers.get('Origin'),
+    env.ALLOWED_ORIGINS ?? '',
+    env.ENVIRONMENT === AMBIENTE_DEV,
+  );
+  if (permitida === null) return {};
+  return {
+    'Access-Control-Allow-Origin': permitida,
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'content-type',
+    Vary: 'Origin',
+  };
+}
+
+/**
+ * A chave do teto: o IP que a Cloudflare atribuiu à requisição.
+ *
+ * 🔒 **`CF-Connecting-IP` é escrito pela BORDA e sobrescreve o que o cliente
+ * mandar** — é por isso que ele serve de chave e um `X-Forwarded-For` não
+ * serviria (esse o cliente forja à vontade).
+ *
+ * 🔑 **Ausência NÃO rejeita, e a escolha é deliberada.** Atrás da Cloudflare o
+ * cabeçalho está sempre lá; faltar significa caminho anormal — mas rejeitar
+ * quebraria `wrangler dev` em qualquer runtime que não o preencha, e um
+ * limitador que impede o dev de jogar localmente seria removido na primeira
+ * sexta-feira. Cai num balde PRÓPRIO e COMPARTILHADO: continua limitado, sem
+ * contaminar o balde de nenhum IP real.
+ * ⚠️ **O preço, dito por inteiro:** se um dia muitas requisições legítimas
+ * chegarem sem IP, elas dividem um teto só e se atrapalham. Hoje não acontece;
+ * é o modo de falha a vigiar se o worker sair de trás da borda.
+ */
+function chaveDoTeto(request: Request): string {
+  return request.headers.get('CF-Connecting-IP') ?? 'sem-ip';
+}
 
 /** `A3F9C2` — sorteado aqui, na casca, porque `src/net/` não sorteia nada. */
 function sortearCodigo(): string {
@@ -427,21 +495,35 @@ export default {
     // sem isto o escape do 3.3 quebrava em silêncio, e o jogador via só "o
     // servidor está rodando?").
     if (url.pathname === ROTA_CRIAR_SALA && request.method === 'OPTIONS') {
-      return new Response(null, { status: 204, headers: CABECALHOS_CORS });
+      return new Response(null, { status: 204, headers: cabecalhosCors(request, env) });
     }
 
     if (url.pathname === ROTA_CRIAR_SALA && request.method === 'POST') {
       const agora = Date.now();
+      const cors = cabecalhosCors(request, env);
+
+      // O teto ANTES de qualquer trabalho: sortear código e falar com o DO da
+      // sala custa, e um limitador que só age depois de pagar o custo protege
+      // o desfecho e não o recurso. Mesmo espírito do teto de bytes que
+      // responde antes do `JSON.parse` em `onMessage`.
+      const guarda = env.Limite.get(env.Limite.idFromName(chaveDoTeto(request)));
+      if (!(await guarda.consumir(agora))) {
+        return Response.json(
+          { erro: 'muitas-tentativas' },
+          { status: 429, headers: { ...cors, 'Retry-After': String(JANELA_TETO_MS / 1000) } },
+        );
+      }
+
       for (let tentativa = 0; tentativa < TENTATIVAS_CODIGO; tentativa += 1) {
         const codigo = sortearCodigo();
         const stub = env.Sala.get(env.Sala.idFromName(codigo));
         // RPC, não `fetch`: ver o docblock de `criarSeNova`. Uma rota HTTP no
         // DO seria alcançável de fora e deixaria qualquer um escolher o código.
         if (await stub.criarSeNova(codigo, agora)) {
-          return Response.json({ codigo }, { headers: CABECALHOS_CORS });
+          return Response.json({ codigo }, { headers: cors });
         }
       }
-      return Response.json({ erro: 'sem-codigo-livre' }, { status: 503, headers: CABECALHOS_CORS });
+      return Response.json({ erro: 'sem-codigo-livre' }, { status: 503, headers: cors });
     }
 
     return (

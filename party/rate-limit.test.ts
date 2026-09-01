@@ -104,6 +104,34 @@ describe('🔴 BASELINE H1 — S1: rate limit por IP no POST /criar-sala', () =>
   });
 
   /**
+   * 📏 **MEDIÇÃO DIRETA DA FRONTEIRA (adição nº 2 do dev, 2026-09-01).**
+   *
+   * A pergunta: *criar salas DIFERENTES contorna o teto?* Ela seria SIM se o
+   * balde morasse dentro do `Sala` DO — cada sala, um objeto, um balde. Aqui o
+   * balde mora num DO chaveado por **IP** (`idFromName(ip)`, `party/limite.ts`),
+   * e este teste mede a diferença em vez de argumentá-la.
+   *
+   * 🔑 **Cada `POST` cria uma sala NOVA, com código sorteado** — é o único
+   * comportamento que a rota tem. Então asserir que as 6 tentativas do mesmo IP
+   * caem no mesmo teto, com as 5 primeiras devolvendo códigos DISTINTOS, é
+   * exatamente a medição de "salas diferentes não dão baldes diferentes".
+   */
+  it('📏 salas DIFERENTES do mesmo IP NÃO contornam o teto (balde é por IP)', async () => {
+    const ip = '198.51.100.77';
+    const codigos = new Set<string>();
+    for (let i = 0; i < TETO_APROVADO; i += 1) {
+      const r = await criarSala(ip);
+      expect(r.status).toBe(200);
+      codigos.add(((await r.json()) as { codigo: string }).codigo);
+    }
+    // PRÉ-CONDIÇÃO: foram mesmo salas distintas, não a mesma cinco vezes.
+    expect(codigos.size, 'cada POST devia criar uma sala nova').toBe(TETO_APROVADO);
+
+    // E mesmo assim o teto vale — é o que refuta "cada DO tem seu próprio Map".
+    expect((await criarSala(ip)).status).toBe(429);
+  });
+
+  /**
    * ⚠️ **VERDE HOJE, e verde POR VACUIDADE — não é baseline.** Sem limitador
    * tudo devolve 200, então ele passa sem medir nada. A função dele é OUTRA:
    * **continuar verde depois da implementação.** Se ficar vermelho lá, o
