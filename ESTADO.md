@@ -580,6 +580,33 @@ dependência).
 
 ## Onde parei
 
+**🔐 AUDITORIA DE SEGURANÇA — OS 17 ITENS PASSAM A EXISTIR NESTE ARQUIVO: commit de DOC em
+2026-09-01**, na `main`. **BAIXO RISCO** — zero arquivo de produção no diff. **Sem push, sem tag.**
+Tabela e proveniência na §"🔐 AUDITORIA DE SEGURANÇA — OS 17 ITENS", logo antes da §Pendências.
+
+**O que o commit faz, em uma linha:** a medição dos 17 itens (S1–S17), feita em sessão **ANTERIOR** e
+ditada pelo dev nesta, deixa de existir só na conversa. **Nenhum item foi consertado aqui.**
+
+🔴 **A §"Onde parei" ACUMULA de novo, e é a REGRA que manda, não uma escolha:** a pré-condição da
+§Convenções (*"conferir que o bloco a substituir já está no `HISTORICO.md`"*) segue **NÃO cumprida**
+para o bloco do PR 7 — contenção **33,0%**, medida em 2026-09-01 — e o dev decidiu naquela data que
+ele **fica onde está**. Os dois blocos abaixo (`.gitattributes` e PR 7) **não foram tocados**, e o
+saldo de `git diff --stat ESTADO.md` é **positivo**, conferido antes do commit.
+
+🔴 **DUAS LACUNAS ACHADAS AO REGISTRAR, e as duas são do CONTEÚDO ditado, não da redação.** Estão
+detalhadas na seção nova: **(1) S13 e S14 não aparecem em nenhuma das três listas** — o ditado cobre
+**15** dos 17; **(2) a descrição do S8 ("32 bytes, base64url") não corresponde a sítio nenhum medido
+neste repositório.** Nada foi inventado para fechar as duas: ficam registradas como lacunas.
+
+📌 **Doc escrita pela SESSÃO PRINCIPAL, não pelo `doc-writer`.** A auditoria não foi dispensada: o
+dev viu o diff antes do commit.
+
+⬅️ **O QUE VEM A SEGUIR, autorizado pelo dev nesta sessão: PR H1 — S1 + S9**, rate limiting por IP no
+`POST /criar-sala` + CORS restrito. **ALTO RISCO** (mexe em `party/sala.ts` e afeta produção), fluxo
+completo. **O plano e o baseline vão ao dev ANTES da implementação** — é o que ele pediu.
+
+---
+
 
 **🔧 `.gitattributes` — O FINAL DE LINHA DEIXA DE DEPENDER DO CHECKOUT: CONCLUÍDO e COMMITADO em
 2026-09-01** (`ea2c8f4`), na `main`. **BAIXO RISCO**, e a classificação é MEDIDA, não presumida: o
@@ -1609,6 +1636,132 @@ casca deixa de ser terra sem teste; a opção conhecida é `@cloudflare/vitest-p
 2. **Cliente com bundle em cache fica fixo em versão `''` e tranca os atuais com `versao-divergente`.**
    O erro não carrega qual versão a sala espera — jogador não sabe que precisa de F5 forçado.
    Limitação conhecida.
+
+## 🔐 AUDITORIA DE SEGURANÇA — OS 17 ITENS (S1–S17), registrados em 2026-09-01
+
+> 📌 **PROVENIÊNCIA, e ela é parte do registro — ler ANTES da tabela.** Esta seção segue a mesma
+> disciplina da §"NOMES FICTÍCIOS — DECISÕES DO DEV", escrita depois do `e1db1c9` (o commit que
+> gravou aprovações que nunca existiram).
+>
+> - **Quem MEDIU:** uma **sessão ANTERIOR**. **Não fui eu, e nada nesta tabela é medição desta
+>   sessão** — exceto as três linhas explicitamente marcadas `conferido nesta sessão`, abaixo.
+> - **Quem DITOU o registro:** o **dev**, nesta sessão, em **2026-09-01**, com o status item a item.
+> - 🔴 **O MÉTODO NÃO ESTÁ REGISTRADO NESTE REPOSITÓRIO, e isso é MEDIDO.** Antes deste commit,
+>   `S1`–`S17` **não existia em arquivo nenhum**: o `grep` sobre `*.md` devolve apenas o `S1` da
+>   numeração de **sugestão do `senior-reviewer`** (esquema diferente, em `HISTORICO.md:2338` e
+>   `:5561`, citado aqui em `:987` e `:995`). **Não há a lista dos 17, não há critério, não há
+>   script.**
+> - 🔑 **É a situação EXATA do 33/6/2** (§"MEDIÇÕES E AUDITORIAS"): número sem método não é
+>   falsificável — qualquer contagem nova diverge dele sem que se possa dizer qual das duas erra.
+>   **A diferença é de dono e de destino: lá o número era MEU e foi APOSENTADO; aqui é do dev e é
+>   REGISTRADO.** O que não se pode fazer é chamá-lo de medição desta sessão, e não se faz.
+> - 📌 **O que isso OBRIGA, e é decisão do dev:** §Convenções, *"medição cujo script não fica em
+>   disco não é reprodutível"* — se algum destes vereditos for sustentar um PR, o recorte que o
+>   produziu tem de virar rastreado. **Nada foi feito a respeito nesta sessão.**
+
+### A tabela completa
+
+| item | status | veredito, como ditado | mapeamento |
+|---|---|---|---|
+| **S1** | 🔴 ABERTO | nenhum detalhe ditado | `= C1` (não conferível — ver abaixo) |
+| **S2** | 🔴 ABERTO | nenhum detalhe ditado | `= C2` ⇒ **pendência 0(y)**, ✅ confere |
+| **S3** | 🟡 PARCIAL | `difundir()` checa identidade, **mas sem rate limit inbound** | — |
+| **S4** | 🔴 ABERTO | nenhum detalhe ditado | `= A3` (não conferível) |
+| **S5** | 🔴 ABERTO | nenhum detalhe ditado | `= M4` (não conferível) |
+| **S6** | ✅ FECHADO | **falso positivo**, 3ª confirmação | — |
+| **S7** | 🔴 ABERTO | nenhum detalhe ditado | — |
+| **S8** | ✅ FECHADO | `crypto.getRandomValues`, **32 bytes, base64url** | ⚠️ **não casa com o repo** — ver abaixo |
+| **S9** | 🔴 ABERTO | nenhum detalhe ditado | ⬅️ **entra no PR H1** com o S1 |
+| **S10** | 🟡 PARCIAL | `aplicar()` só grava quando muda, **mas o tique roda e cobra CPU** | — |
+| **S11** | ✅ FECHADO | **zero `dangerouslySetInnerHTML`**, React escapa em todos os sítios | ✅ metade conferida nesta sessão |
+| **S12** | 🔴 ABERTO | nenhum detalhe ditado | — |
+| **S13** | ⬜ **NÃO DITADO** | **ausente das três listas** — ver a lacuna 1 | — |
+| **S14** | ⬜ **NÃO DITADO** | **ausente das três listas** — ver a lacuna 1 | — |
+| **S15** | 🔴 ABERTO | nenhum detalhe ditado | `= A4` (não conferível) |
+| **S16** | ✅ FECHADO | `MAX_BYTES_MENSAGEM` checado **ANTES** do `JSON.parse` | ✅ conferido nesta sessão |
+| **S17** | 🔴 ABERTO | nenhum detalhe ditado | — |
+
+**Placar do que foi ditado: 4 fechados · 2 parcialmente mitigados · 9 abertos = 15.**
+🔒 **"Fechado por medição" aqui significa NÃO CONSERTA, REGISTRA** — formulação do dev. Nenhum diff
+de produção saiu destes quatro.
+
+### 🔴 Lacuna 1 — S13 e S14 NÃO FORAM DITADOS. O ditado cobre 15 dos 17.
+
+**Aritmética, e ela é o achado:** fechados `S6 · S8 · S16 · S11` = **4**; parciais `S10 · S3` = **2**;
+abertos `S1 · S2 · S4 · S5 · S7 · S9 · S12 · S15 · S17` = **9**. **4 + 2 + 9 = 15**, e a numeração
+ditada pula exatamente **S13 e S14**.
+
+🔑 **Registrado como lacuna em vez de resolvido de passagem, e o motivo é de regra.** As saídas
+disponíveis eram inventar um status, silenciar os dois, ou renumerar os 15 para fechar em 17 — **as
+três fabricam conteúdo atribuído ao dev**, que é a ocorrência nº 3 do `CLAUDE.md` (o `e1db1c9`).
+**Ficam em branco até ele dizer.**
+📌 **As leituras possíveis, e NENHUMA foi escolhida por mim:** (a) os dois existem e o status não foi
+ditado; (b) a auditoria tem 15 itens e "17" é o rótulo errado; (c) foram fechados antes e saíram da
+lista. **É pergunta ao dev.**
+
+### ⚠️ Lacuna 2 — a descrição do S8 não corresponde a sítio nenhum deste repositório
+
+**MEDIDO NESTA SESSÃO** (isto é medição minha, e por isso entra rotulada). O ditado diz
+`crypto.getRandomValues`, **32 bytes, base64url**. Os três sítios que sorteiam segredo aqui são:
+
+- **o token de reentrada** — `crypto.randomUUID`, **128 bits**, gerado na casca (`party/sala.ts`, no
+  `onMessage`; docblock em `src/net/sala.ts:573`). **Não é `getRandomValues`, não é 32 bytes, não é
+  base64url.**
+- **o código da sala** — `sortearCodigo` (`party/sala.ts:406-409`): `Uint8Array(TAMANHO_CODIGO / 2)`,
+  ou seja **3 bytes**, renderizados em **hex** por `codigoDeBytes`. É `getRandomValues`; **não** são
+  32 bytes nem base64url.
+- **as seeds** — `Uint32Array` (`party/sala.ts:91` e `:114`), a `seedMestre` sendo **um único
+  uint32** — que é a pendência **0(i)**, aberta justamente por ser estreita demais.
+
+🔑 **A discrepância fica registrada, NÃO resolvida — e não é "o dev errou".** Três leituras cabem: o
+S8 pode descrever artefato fora deste repositório; pode descrever um alvo pretendido em vez do
+estado atual; ou o número pode ter envelhecido. **Ancorar o S8 num destes três sítios seria inventar
+a âncora**, que é a classe de erro que este arquivo já corrigiu seis vezes na §"MEDIÇÕES E
+AUDITORIAS". **É pergunta ao dev.**
+🔴 **E ela importa para a decisão, não é preciosismo:** se o S8 fosse o token ou a seed, um
+`✅ FECHADO` entraria em conflito direto com a **0(i)**, que registra 32 bits enumeráveis e segue
+**ABERTA**.
+
+### O que o repositório CONFERE, e o que ele não tem como conferir
+
+✅ **S2 = C2 ⇒ pendência 0(y) — ÚNICO elo do mapeamento que este repositório confirma, e ele bate.**
+O `C2` do audit de 2026-08-24 é *"a guarda de 22 protege o ROSTER, não as CONEXÕES"*, registrado como
+**0(y)** na §Pendências e **ABERTO** lá. O dev lista o **S2 como ABERTO**. **Os dois concordam.**
+
+🔴 **S1 = C1, S4 = A3, S5 = M4, S15 = A4 — NÃO CONFERÍVEIS, e a falta é do arquivo, não do dev.**
+A §"MEDIÇÕES E AUDITORIAS" diz textualmente que *"a numeração C1/C2/C3 é do audit e NÃO existe neste
+arquivo"*, e daquele audit **só o C3 (refutado) e o C2 (⇒ 0(y)) tiveram o conteúdo registrado**. **O
+C1 nunca foi descrito aqui.** De `A3`, `M4` e `A4` não há sequer o esquema de letras registrado.
+⚠️ **Pior que ausente, `C1` é AMBÍGUO neste arquivo:** ele nomeia também o **bloqueante C1 da 0(s)**
+(o zumbi de sala corrompida) e o **C1 do PR 6** (a normalização CRLF do digest) — rótulos de revisões
+diferentes. **Dizer a qual deles o `S1 = C1` se refere exige o dev.**
+
+✅ **S16 — CONFERIDO NESTA SESSÃO, e o veredito procede.** `party/sala.ts:257-264`: `onMessage`
+descarta não-string e o teto `if (message.length > MAX_BYTES_MENSAGEM)` responde **antes** de
+`carregar()` e de qualquer `JSON.parse`, devolvendo `escolha-grande-demais`. O comentário no sítio
+explica o porquê (`MAX_BYTES_ESCOLHA` só age depois de parsear, e só para `escolher`).
+⚠️ **Nuance medida por mim, que NÃO invalida o veredito e por isso entra como nuance:** a comparação
+é sobre **`message.length`** — unidades de código UTF-16, **não bytes**, apesar do nome da constante.
+Para conteúdo não-ASCII o teto real em bytes é **maior** que o nominal (até ~3× em UTF-8). **Continua
+sendo um teto rígido antes do `parse`**, que é o que o S16 afirma; o que não é exato é a unidade.
+**Nada foi mexido.**
+
+✅ **S11 — a METADE mecânica está conferida nesta sessão: `dangerouslySetInnerHTML` dá ZERO** em todo
+o repositório fora de `node_modules` (`.ts`/`.tsx`, incluindo testes e `preview/`), e `innerHTML`
+também não aparece em código de produção.
+⚠️ **A outra metade — *"React escapa em todos os sítios"* — NÃO foi re-medida por mim**, e é uma
+afirmação universal. Fica como ditada, não como conferida. A distinção é a mesma que separa o
+substituto 3 do inventário de nomes (binário, medido no bundle) dos proxies que foram aposentados lá.
+
+### O que esta seção NÃO faz
+
+🔒 **Não vira pendência numerada `0(ag)`…, e isso é deliberado.** A numeração `S` é de outra
+auditoria, e este arquivo tem precedente explícito de que **numeração estrangeira fica estrangeira**
+(o `C2` só virou `0(y)` quando alguém descreveu o conteúdo dele por inteiro aqui). Fundir os 17 na
+§Pendências inventaria um mapeamento que o dev não ditou, e a própria §"MEDIÇÕES E AUDITORIAS" já
+registra que **editar a §Pendências ATIVAS merece PR próprio**.
+📌 **Ligar cada `S` à pendência `0(…)` correspondente é trabalho PRÓPRIO e decisão do dev** — hoje só
+o `S2 ⇒ 0(y)` está ligado, porque é o único que o arquivo sustenta.
 
 ## Pendências ATIVAS
 
