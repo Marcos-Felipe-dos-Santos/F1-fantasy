@@ -2084,7 +2084,7 @@ casca deixa de ser terra sem teste; a opção conhecida é `@cloudflare/vitest-p
 | **S9** | ✅ **FECHADO** | CORS com allowlist; o curinga exige **dois** sinais | fechado no **PR H1**, 2026-09-01 |
 | **S10** | 🟡 PARCIAL | `aplicar()` só grava quando muda, **mas o tique roda e cobra CPU** | — |
 | **S11** | ✅ FECHADO | **zero `dangerouslySetInnerHTML`**, React escapa em todos os sítios | ✅ metade conferida nesta sessão |
-| **S12** | 🔴 ABERTO | nenhum detalhe ditado | — |
+| **S12** | 🟡 **PARCIAL** | reentrada idempotente + `difundir()` só em caminho aceito | **rebaixado em 2026-09-01**, ditado pelo dev — 🔴 **a proveniência NÃO confere e a 2ª metade foi QUALIFICADA por sonda**; ver a ressalva |
 | **S13** | ⬜ **NÃO DITADO** | **ausente das três listas** — ver a lacuna 1 | — |
 | **S14** | ⬜ **NÃO DITADO** | **ausente das três listas** — ver a lacuna 1 | — |
 | **S15** | 🔴 ABERTO | nenhum detalhe ditado | `= A4` (não conferível) |
@@ -2092,6 +2092,71 @@ casca deixa de ser terra sem teste; a opção conhecida é `@cloudflare/vitest-p
 | **S17** | 🔴 ABERTO | nenhum detalhe ditado | — |
 
 **Placar ditado em 2026-09-01: 4 fechados · 2 parcialmente mitigados · 9 abertos = 15.**
+🔄 **ATUALIZADO em 2026-09-01 — o S12 passou de 🔴 ABERTO a 🟡 PARCIAL, por REBAIXAMENTO ditado pelo
+dev. Não houve diff de produção: é registro, não conserto.** Placar corrente: **8 fechados ·
+4 parciais · 3 abertos** (+ S13/S14 não ditados). Aritmética conferida contra a tabela: fechados
+`S1·S2·S4·S6·S8·S9·S11·S16`, parciais `S3·S7·S10·S12`, abertos `S5·S15·S17`.
+
+🔑 **A NOTAÇÃO `(b)` FINALMENTE É DERIVÁVEL — e é a QUARTA vez que ela é pedida.** As três anteriores
+(H1, H2, H3) estão registradas neste arquivo como *"a notação não existe nesta tabela e não foi
+inventada"*. **Desta vez ela não é inventada: é DERIVADA, com duas âncoras.** O pedido do H1 dizia
+*"S1 e S9 passam de (c) para (a)"*, e os dois estavam **🔴 ABERTO** e foram para **✅ FECHADO** ⇒
+`(c) = 🔴` e `(a) = ✅`. Sobra `(b)` para o valor do meio, **🟡 PARCIAL** — e a palavra do dev,
+**"rebaixamento"**, confirma que não é o topo da escala. ⚠️ **A derivação fica escrita justamente
+porque as três recusas anteriores estão escritas:** sem ela, este `(b)` pareceria a inventação que
+as outras três se recusaram a fazer.
+
+🔴 **A PROVENIÊNCIA DITADA NÃO CONFERE COM O ARQUIVO, e isso é MEDIDO — registrado em vez de
+aceito.** O dev atribui a medição ao **PR H2**. **A entrada do H2 no `HISTORICO.md` não a contém:**
+`grep` por `reentrar|idempot|difundir|slot` na faixa da seção (`HISTORICO.md:2666-2889`, do cabeçalho
+do H2 até o `##` seguinte) devolve **zero linhas**. O H2 registra teto de conexões e `Origin`, e nada
+sobre reentrada nem sobre broadcast.
+🔑 **Isto NÃO diz "o dev errou"** — a medição pode ter acontecido na sessão do H2 sem entrar na doc,
+que é exatamente a lacuna que a §"Onde parei" já registrou uma vez ("a medição do PR H1 NUNCA ENTROU
+NESTA SEÇÃO"). **O que não se pode fazer é escrever "medido no PR H2" apoiado num registro que não
+tem a medição** — seria a ocorrência nº 3 do `CLAUDE.md` com o sinal invertido.
+
+✅ **A SUBSTÂNCIA FOI CONFERIDA POR SONDA EXECUTADA NESTA SESSÃO (2026-09-01), não por leitura** — e
+é esta a única medição que este bloco afirma como sua. Sonda pelo redutor real (`criarServidor` +
+`aoReceber`, `src/net/`), sala de 1 jogador:
+
+- ✅ **METADE 1 CONFERE, e com asserção de IDENTIDADE.** `reentrar` repetido na MESMA conexão devolve
+  **a MESMA referência de estado** nas duas vezes (`re1.estado === srv` e
+  `re2.estado === re1.estado`, os dois **verdadeiros**), com **0 broadcasts** e 2 envios dirigidos.
+  O jogador volta ao **mesmo slot** (`humano-01` nas duas reentradas, igual ao do `entrar`), porque a
+  identidade vem do TOKEN, não da conexão. **Mesma força de asserção que refutou o C3 do audit**
+  (`.toBe`, referência) — e referência preservada é o que faz `aplicar` não gravar.
+- 🔴 **METADE 2 É VERDADEIRA DE `identidade`, FALSA DE `conteúdo` — e a diferença é ALCANÇÁVEL.**
+  `pronto: true` mandado DUAS vezes seguidas pelo mesmo jogador é **aceito nas duas** (`erro: null`),
+  devolve **estado com referência NOVA** e **difunde 1 broadcast** na segunda — um snapshot inteiro
+  para todos, sem nada ter mudado no jogo. A causa está medida: `definirPronto` (`src/net/sala.ts`)
+  reconstrói o array com `.map` e `aceitar` embrulha, **sem nenhuma comparação de conteúdo**.
+  🔑 **A formulação exata que o código sustenta é OUTRA:** *`difundir()` só dispara em caminho
+  **ACEITO** — toda recusa preserva a identidade e responde dirigido, e `sincronizar`, `hash`,
+  `quem-sou` e `reentrar` não difundem nunca.* **"Só quando o estado muda" não é o que está
+  implementado**, e escrever a frase sem esta qualificação poria em presente do indicativo uma
+  afirmação que a sonda refuta — a classe que os dois bloqueantes da revisão do PR 7 pegaram.
+
+🔴 **A SONDA ACHOU UM FATO QUE NÃO ESTAVA NO PEDIDO E QUE INCIDE SOBRE O S3: EXISTE `seq` NO
+SNAPSHOT, E ELE AVANÇA EM TODO COMANDO ACEITO.** Os dois snapshots do `pronto` repetido diferem
+**em exatamente um campo** — `"seq":2` contra `"seq":3` —, o resto sai byte a byte igual (378 bytes).
+`aceitar` (`src/net/sala.ts:483`) faz `seq: estado.seq + 1` em toda aceitação, inclusive na que não
+muda conteúdo nenhum.
+🔑 **Consequência DIRETA para o S3, e ela muda o desenho antes de ele existir: coalescência de
+broadcast por igualdade BYTE A BYTE do snapshot seria INERTE** — dois snapshots consecutivos nunca
+são iguais, porque o `seq` sempre andou. **É a mesma classe do "cap de 200 inalcançável" do H3:**
+guarda que nunca dispara, lida meses depois como se protegesse alguma coisa. Qualquer coalescência
+tem de comparar o snapshot **excluindo o `seq`**, e isso é decisão de desenho, não detalhe.
+✅ **E o descarte pelo `seq` no cliente TOLERA buraco:** `src/net/cliente.ts:119` é
+`seq <= seqVisto ⇒ descarta` — **não exige contiguidade**, então suprimir um broadcast não quebra o
+filtro. **Medido no código, e é o elo que torna a coalescência possível.**
+
+⚠️ **O SCRIPT DA SONDA NÃO FICOU RASTREADO — mesmo estado do `mutar.py` do H1, e fica dito.** Ele
+rodou como arquivo temporário em `src/net/`, foi removido, e `git status` está limpo. Pela
+§Convenções (*"medição cujo script não fica em disco não é reprodutível"*), **esta medição está no
+mesmo débito que o H1 registrou**. **Rastreá-la é decisão do dev** — e o sítio natural é o PR H4,
+que mexe exatamente nestes caminhos.
+
 🔄 **ATUALIZADO em 2026-09-01, pelo PR H3: o S7 passou de 🔴 ABERTO a 🟡 PARCIAL — e PARCIAL é o
 veredito exato, não conservadorismo.** Placar corrente: **8 fechados · 3 parciais · 4 abertos**.
 🔴 **A ESPECIFICAÇÃO DA DOC PEDIA `✅` (na notação `(a)`, que não existe aqui) — e o código não
@@ -2205,6 +2270,66 @@ auditoria, e este arquivo tem precedente explícito de que **numeração estrang
 registra que **editar a §Pendências ATIVAS merece PR próprio**.
 📌 **Ligar cada `S` à pendência `0(…)` correspondente é trabalho PRÓPRIO e decisão do dev** — hoje só
 o `S2 ⇒ 0(y)` está ligado, porque é o único que o arquivo sustenta.
+
+## 🔴 DÍVIDA DE PROCESSO — OS TRÊS PRs DE HARDENING FORAM ALTO RISCO E NENHUM TEVE `senior-reviewer`
+
+> 📌 **Registrada em 2026-09-01, por decisão do dev, ao fim do H3.** **Palavras dele, na formulação
+> que governa este bloco:** *"A dívida fica registrada, os PRs não retroagem."*
+> 🔒 **Portanto: isto NÃO reabre H1, H2 nem H3, e não pede revisão retroativa de nada.** É o registro
+> de um portão que a §"Definição de pronto" do `CLAUDE.md` exige e que não foi cumprido três vezes
+> seguidas — para que a próxima sessão saiba disso sem ter que descobrir lendo três blocos.
+
+**O fato, e ele já estava dito em cada PR — o que não existia era a soma.** Os três PRs de hardening
+da auditoria de segurança foram classificados **ALTO RISCO** (os três mexem em `party/sala.ts` e
+afetam produção) e **nenhum dos três passou pelo `senior-reviewer`**, que o `CLAUDE.md`
+§"Definição de pronto" item 3 torna obrigatório para essa classificação:
+
+| PR | item | classificação | `senior-reviewer` | onde já estava dito |
+|---|---|---|---|---|
+| **H1** (`2f780bb`) | S1 + S9 | 🔴 ALTO RISCO | ❌ não rodou | §"Onde parei", bloco do H1 · `HISTORICO.md` §"PR H1" |
+| **H2** (`91322d0`) | S2 + S4 | 🔴 ALTO RISCO | ❌ não rodou | §"Onde parei", bloco do H2 · `HISTORICO.md` §"PR H2" |
+| **H3** (`ca2cfcb`) | S7 (parcial) | 🔴 ALTO RISCO | ❌ não rodou | §"Onde parei", bloco do H3 · `HISTORICO.md` §"PR H3" |
+
+🔴 **A PROVENIÊNCIA DOS TRÊS NÃO É A MESMA, e achatá-la seria perder o que importa.** As três linhas
+acima concordam no FATO e divergem em COMO ele veio a ser:
+
+- **H1 — a pergunta foi FEITA e NÃO foi respondida.** O registro é textual: *"eu perguntei 'Rodo a
+  revisão agora?' e o PR foi aprovado sem resposta"*. **Não é decisão registrada: é ausência de
+  resposta**, e o PR seguiu.
+- **H2 — registrado como DECISÃO do dev:** *"`senior-reviewer` segue NÃO RODADO apesar do ALTO
+  RISCO — decisão do dev, e fica dito."* (assim no `ESTADO.md`; o `HISTORICO.md:2787` traz a mesma
+  frase com um **"é"** a mais. **As duas ficam citadas como estão** — escolher uma redação e
+  apresentá-la como a única seria a inexatidão que esta seção existe para não cometer.)
+- **H3 — registrado SEM atribuição:** *"`senior-reviewer` segue NÃO RODADO apesar do ALTO RISCO — e
+  fica dito, pelo terceiro PR seguido."* **Não diz de quem foi a decisão.**
+
+🔑 **Por que a distinção fica escrita:** atribuir os três a "decisão do dev" uniformizaria uma
+aprovação que, no H1, **não foi dada — foi presumida do silêncio**. Presumir vontade do dev a partir
+de silêncio é a forma branda da ocorrência nº 3 do `CLAUDE.md` (`e1db1c9`), que é o caso que aquele
+arquivo trata como o mais grave justamente porque **erro sobre a vontade do dev não tem fonte contra
+a qual se conferir**.
+
+🔒 **O QUE ESTA DÍVIDA NÃO É.** Não é afirmação de que há defeito nos três PRs, e nada aqui deve ser
+lido assim. **O que cada um teve, medido e registrado:** baseline vermelho visto, tabela de mutações
+com saída real (**7** no H1, **4** no H2 — uma delas SOBREVIVENTE e registrada como tal —, **5** no
+H3), portões medidos na `main` pós-merge e não herdados da branch, e as divergências entre a
+especificação e o código escritas ao lado em vez de silenciadas (3 itens no H1, 3 no H2, 6 no H3).
+🔴 **O que o `senior-reviewer` cobre e NADA disso cobre é o que ele achou nas vezes em que rodou:**
+no PR 7 ele pegou **2 bloqueantes que eram prosa em presente do indicativo virada falsa**, e no PR 3
+da trilha de nomes pegou o `docs/img/silhuetas.svg` **rastreado e com nome real na primeira tela do
+repositório**. **Nenhuma mutação e nenhum portão pega essa classe** — a mesma razão pela qual
+"nenhum teste pega erro factual em `.md`".
+
+📌 **NÃO recebeu número de pendência, e a escolha é declarada em vez de feita em silêncio.** Segue o
+precedente do "429 vira servidor fora do ar" do H1 (*"Fica aqui sem número de pendência — atribuir um
+seria decidir por ele"*): o dev pediu **registrar a dívida**, não abrir item de trabalho, e disse que
+**os PRs não retroagem**. ✅ **Se ele quiser promovê-la, `0(ak)` está LIVRE** — conferido nesta sessão
+(zero ocorrências em `*.md`; a última ocupada é `0(aj)`).
+
+⚠️ **O que fica valendo para o PRÓXIMO PR ALTO RISCO, e é a única consequência operacional deste
+bloco:** com a dívida em três, *"não rodou nos anteriores"* deixa de ser precedente neutro e passa a
+ser o padrão que se está seguindo. **Rodar ou não rodar segue sendo decisão do dev; o que mudou é
+que agora ela é tomada com o número na mão.**
 
 ## Pendências ATIVAS
 
