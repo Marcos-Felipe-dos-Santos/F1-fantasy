@@ -2,9 +2,16 @@ import { defineConfig } from 'vite';
 import { configDefaults } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import { proxyDoWorker } from './src/net/rotas';
+import { pluginCsp } from './scripts/csp';
 
 export default defineConfig({
-  plugins: [react()],
+  /**
+   * 🔒 `pluginCsp` tem `apply: 'build'` — a CSP entra SÓ no `dist/`, e isso é
+   * medido, não preferência: com a meta no `index.html` fonte, o `npm run dev`
+   * renderiza sem estilo nenhum (o Vite serve CSS por `<style>` injetado, que
+   * `style-src 'self'` bloqueia). O porquê inteiro está em `scripts/csp.ts`.
+   */
+  plugins: [react(), pluginCsp()],
   server: {
     /**
      * 🔌 O WORKER É SERVIDO ATRAVÉS DA PORTA DO VITE (PR 3.3.1).

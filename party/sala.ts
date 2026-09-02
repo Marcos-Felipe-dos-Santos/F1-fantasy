@@ -46,6 +46,7 @@ import { AMBIENTE_DEV, origemPermitida } from '../src/net/cors';
 import { excedeuTetoDeConexoes } from '../src/net/teto-conexoes';
 import { JANELA_TETO_MS, type BaldeDeTeto } from '../src/net/rate-limit';
 import { avaliarTetoSincronizar } from '../src/net/teto-sincronizar';
+import { avaliarTetoComandos } from '../src/net/teto-comandos';
 import { ROTA_CRIAR_SALA } from '../src/net/rotas';
 import { Limite } from './limite';
 import {
@@ -303,16 +304,92 @@ export class Sala extends Server<Env> {
    * `comando-invalido` é o `aoReceber`, e engolir aqui o que ele deveria
    * recusar mudaria o protocolo por efeito colateral de um limitador.
    */
-  private recusarSincronizar(mensagem: string, conexaoId: string, agora: number): boolean {
-    let tipo: unknown;
-    try {
-      tipo = (JSON.parse(mensagem) as { tipo?: unknown }).tipo;
-    } catch {
-      return false;
-    }
+  private recusarSincronizar(tipo: unknown, conexaoId: string, agora: number): boolean {
     if (tipo !== 'sincronizar') return false;
     const veredicto = avaliarTetoSincronizar(this.baldesSincronizar.get(conexaoId) ?? null, agora);
     this.baldesSincronizar.set(conexaoId, veredicto.balde);
+    return !veredicto.permitido;
+  }
+
+  /**
+   * O `tipo` da mensagem, sem decidir nada com ele. `undefined` para JSON
+   * inválido ou sem `tipo`.
+   *
+   * 🔒 **UM parse para os DOIS tetos — e isto REDUZIU o custo que o H3 tinha
+   * assumido.** O docblock acima registrava "um `JSON.parse` a mais" como custo
+   * conhecido, porque `recusarSincronizar` parseava por conta própria. Com o S3
+   * precisando do mesmo `tipo` para saber quem isentar, parsear duas vezes
+   * seria pagar três parses por mensagem. Agora é um, aqui, mais o do
+   * `aoReceber`.
+   *
+   * 🔒 **Falha ABERTO: JSON inválido não é problema de teto nenhum.** Quem
+   * responde `comando-invalido` é o `aoReceber`; engolir aqui o que ele deveria
+   * recusar mudaria o protocolo por efeito colateral de um limitador.
+   */
+  private tipoDaMensagem(mensagem: string): unknown {
+    try {
+      return (JSON.parse(mensagem) as { tipo?: unknown }).tipo;
+    } catch {
+      return undefined;
+    }
+  }
+
+  /**
+   * Baldes do teto GERAL de comandos, por conexão (PR H4, item S3).
+   *
+   * 🔒 **Mapa SEPARADO do `baldesSincronizar`, de propósito.** Fundir os dois
+   * faria um `sincronizar` recusado pelo teto do H3 consumir também a cota de
+   * jogo, e a recusa de um limitador viraria insumo do outro — acoplamento que
+   * ninguém escolheu e que nenhum teste apanharia. **É a mesma decisão que a
+   * ORDEM das guardas no `onMessage` implementa** (ver `recusarPorTetoDeComandos`
+   * logo abaixo): separar os mapas e isentar `sincronizar` da contagem são as
+   * duas metades de uma coisa só. Mexer numa sem a outra reabre o acoplamento.
+   *
+   * 🔒 **SÓ EM MEMÓRIA e ENCOLHE no `onClose`** — mesma disciplina do
+   * `baldesSincronizar` e do `recusadas`. Sem o `delete`, este mapa cresceria
+   * com o churn de conexões: um vazamento proporcional ao abuso, que é
+   * exatamente o defeito que um limitador existe para NÃO criar. Foi a mutação
+   * M5 do H3 que provou que essa linha precisa de teste próprio — ela
+   * sobreviveu à suíte inteira na primeira rodada.
+   */
+  private baldesComandos = new Map<string, BaldeDeTeto>();
+
+  /**
+   * Esta conexão estourou o teto de COMANDOS DE JOGO?
+   *
+   * 🔴 **A redação anterior deste docblock dizia "Conta TODA mensagem", e era
+   * FALSA — corrigida no lugar, achado da revisão do H4.** Ela descrevia uma
+   * intenção; o código sempre contou outra coisa. Prosa em presente do
+   * indicativo que não confere com o sítio é a classe que a revisão do PR 7
+   * pegou duas vezes, e ela não vai para a `main`.
+   *
+   * 📏 **O QUE ELE CONTA, exatamente:** mensagem que é **string**, que cabe em
+   * `MAX_BYTES_MENSAGEM` e que **não é `sincronizar`**. Ou seja, o comando de
+   * jogo — o que chega ao `aoReceber`, aceito ou recusado por ele.
+   *
+   * 🔒 **AS TRÊS ISENÇÕES SÃO DELIBERADAS — decisão do dev (2026-09-02), e cada
+   * uma já tem guarda PRÓPRIA antes desta:**
+   * - **frame binário** — rejeitado inteiro em `typeof message !== 'string'`;
+   * - **string acima do teto de bytes** — `MAX_BYTES_MENSAGEM`, que responde
+   *   `escolha-grande-demais`;
+   * - **`sincronizar`** — tem o teto do H3, com janela e rajada próprias.
+   *
+   * 🔑 **O motivo de não somar, nas palavras da decisão:** somar puniria o
+   * jogador legítimo cujo cliente mandou um `sincronizar` seguido de uma
+   * jogada — a recusa de um limitador viraria insumo do outro. **Os três não
+   * ficam sem teto; ficam sob o teto QUE É DELES.**
+   * ⚠️ **A consequência aceita, dita por inteiro:** este teto não é a defesa
+   * contra enxurrada de lixo binário nem de mensagem gigante. Quem for medir a
+   * superfície de flood tem de olhar as três guardas, não só esta.
+   *
+   * ⚠️ **Roda DEPOIS do teto de `sincronizar` e ANTES do `carregar()`.** A
+   * posição é o que IMPLEMENTA as isenções acima — não é detalhe de ordem. E
+   * ficar antes do `carregar()` segue o argumento das outras guardas: é O(1),
+   * não lê storage, e checá-lo depois seria pagar a leitura para descartá-la.
+   */
+  private recusarPorTetoDeComandos(conexaoId: string, agora: number): boolean {
+    const veredicto = avaliarTetoComandos(this.baldesComandos.get(conexaoId) ?? null, agora);
+    this.baldesComandos.set(conexaoId, veredicto.balde);
     return !veredicto.permitido;
   }
 
@@ -334,7 +411,7 @@ export class Sala extends Server<Env> {
    * ⚠️ **Limitação conhecida, dita por inteiro: o cliente de hoje NÃO
    * distingue 4403** — vê um fechamento e entra em "reconectando…". Não
    * mandamos `{tipo:'erro'}` de propósito: o único código existente que serviria
-   * é `sala-inexistente`, e `src/ui/useSalaOnline.ts:222` **APAGA o token de
+   * é `sala-inexistente`, e `src/ui/useSalaOnline.ts:227` **APAGA o token de
    * reentrada** ao recebê-lo, punindo um jogador legítimo que só bateu no teto.
    * O conserto é UI e está registrado como pendência.
    */
@@ -418,7 +495,27 @@ export class Sala extends Server<Env> {
     // real, um erro que ele não sabe tratar — o mesmo raciocínio que manteve o
     // `4403` do H2 sem `{tipo:'erro'}`. O comando seguinte, fora da janela,
     // volta a ser atendido.
-    if (this.recusarSincronizar(message, connection.id, Date.now())) return;
+    const tipo = this.tipoDaMensagem(message);
+    if (this.recusarSincronizar(tipo, connection.id, Date.now())) return;
+    // 🔒 O teto GERAL (S3). Vem depois do de `sincronizar` para que aquele
+    // comando continue governado pela sua própria janela, e antes do
+    // `carregar()` pelo mesmo motivo que ele: é O(1) e não lê storage.
+    //
+    // ⚠️ **RESPONDE, não cala — ao contrário do teto do H3.** Lá o silêncio era
+    // seguro porque o cliente real nunca manda `sincronizar`; aqui os comandos
+    // são os que o jogador manda de verdade, e engolir um `escolher` faria a
+    // jogada sumir enquanto o cronômetro de turno corre. O porquê inteiro está
+    // no docblock de `comandos-demais`, em `src/net/protocolo.ts`.
+    // 🔒 **`sincronizar` NÃO consome a cota de jogo — isenção COMPLETA, decisão
+    // do dev (2026-09-02).** Sair cedo na recusa do H3 não bastava: o
+    // `sincronizar` ACEITO (o primeiro de cada janela) caía aqui e consumia a
+    // cota — exatamente o caso que a decisão nomeia, "um `sincronizar` seguido
+    // de uma jogada". Achado ao escrever a cerca em `party/comandos.test.ts`,
+    // que nasceu VERMELHA por valor.
+    if (tipo !== 'sincronizar' && this.recusarPorTetoDeComandos(connection.id, Date.now())) {
+      connection.send(JSON.stringify({ tipo: 'erro', erro: 'comandos-demais' }));
+      return;
+    }
     const estado = await this.carregar();
     if (estado === null || !this.jogavel(estado)) {
       // Comando em voo de uma conexão que sobreviveu ao reset — ou sala cujas
@@ -469,6 +566,9 @@ export class Sala extends Server<Env> {
     // Fica ANTES da saída cedo das recusadas: um socket recusado por política
     // também pode ter deixado balde para trás.
     this.baldesSincronizar.delete(connection.id);
+    // O balde do teto geral (S3) morre junto, pelo mesmo motivo e no mesmo
+    // lugar — ver o docblock de `baldesComandos`.
+    this.baldesComandos.delete(connection.id);
     if (this.recusadas.delete(connection.id)) return;
     const estado = await this.carregar();
     if (estado === null) return;

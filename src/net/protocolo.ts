@@ -197,6 +197,34 @@ export type ErroSala =
    */
   | 'versao-divergente'
   /**
+   * 🔴 **Teto de comandos inbound estourado nesta conexão** (PR H4, item S3).
+   * `TETO_COMANDOS` por `JANELA_COMANDOS_MS`, por conexão — ver
+   * `src/net/teto-comandos.ts`.
+   *
+   * 🔒 **POR QUE ELE EXISTE EM VEZ DE RECUSA SILENCIOSA, e a distinção é
+   * medida.** O teto do H3 (`sincronizar`) pôde calar porque o cliente real
+   * **nunca manda** aquele comando: engolir não tirava nada de ninguém. Estes
+   * comandos o jogador manda de verdade, e **um `escolher` engolido em silêncio
+   * faz a jogada sumir da tela enquanto o cronômetro de turno corre** — o
+   * jogador perde a vez sem nada que diga por quê. Seria a QUARTA ocorrência da
+   * família que este projeto já catalogou três vezes: o 429 virando "servidor
+   * fora do ar" (H1), o `close(4403)` virando "reconectando…" (0(ah)) e o bug
+   * do 3.3.3 no docblock de `src/net/rotas.ts`.
+   *
+   * 🔒 **E POR QUE UM CÓDIGO NOVO EM VEZ DE REUSAR UM: `sala-inexistente`
+   * APAGA O TOKEN DE REENTRADA** (`src/ui/useSalaOnline.ts`), o que puniria com
+   * perda de identidade um jogador legítimo que só bateu no teto. **Reusar o
+   * código errado é pior que a limitação** — foi o raciocínio que manteve o
+   * `4403` do H2 sem `{tipo:'erro'}`, e aqui ele leva à conclusão oposta,
+   * porque agora existe código próprio.
+   *
+   * ⚠️ **O cliente que não conhecer este código cai no ramo genérico de erro e
+   * NÃO perde o token** — é código novo no fio, então cliente antigo numa
+   * janela de deploy não pode virar `comando-invalido`. Mesma disciplina do
+   * `etapa?` opcional do `hash` (0(x)).
+   */
+  | 'comandos-demais'
+  /**
    * `corrida-concluida` chegou antes de existir corrida (PR 3/4). Cliente
    * legítimo nunca manda isso — só chega a atestar quem já viu `seedCorrida`
    * no snapshot, e ela só sai com o draft concluído. Recusar em vez de
@@ -247,3 +275,29 @@ export type MensagemServidor =
    * virar "reconectando…" para sempre.
    */
   | { tipo: 'sala-encerrada' };
+
+/**
+ * Este erro invalida o token de reentrada guardado no cliente?
+ *
+ * 🔒 **Extraído para cá no PR H4 (S3), e a extração é o ponto — não é
+ * arrumação.** A regra vivia dentro do `aoReceber` de `src/ui/useSalaOnline.ts`,
+ * ou seja **dentro de um hook**, e este projeto já mediu que guarda dentro de
+ * hook **não tem baseline possível**: sem `jsdom` nem `@testing-library`
+ * (medido), nada a renderiza, e a mutação `M-guarda-classif` do 3.5.3
+ * sobreviveu exatamente por isso. Aqui ela é uma função pura com teste.
+ *
+ * 🔴 **A propriedade que esta função existe para travar: `comandos-demais`
+ * responde `false`.** Apagar o token de quem só bateu num rate limit puniria com
+ * **perda de identidade** um jogador legítimo — o mesmo estrago que fez o H2
+ * recusar reusar `sala-inexistente` no `close(4403)` (pendência 0(ah)). A lista
+ * é uma **allowlist do que APAGA**, nunca uma denylist do que preserva: erro
+ * novo no protocolo nasce preservando o token, que é o lado seguro.
+ *
+ * Os dois que apagam, e por quê:
+ * - **`token-invalido`** — o servidor já disse que aquele token não vale;
+ * - **`sala-inexistente`** — o token pertencia a uma sala que não existe mais, e
+ *   insistir com ele só geraria erro a cada reconexão.
+ */
+export function invalidaTokenDeReentrada(erro: ErroSala | ErroDraft): boolean {
+  return erro === 'token-invalido' || erro === 'sala-inexistente';
+}
