@@ -20,6 +20,7 @@
  */
 
 import type { ComandoDraft, ComandoSala, MensagemServidor } from './protocolo';
+import { esperaDaTentativa } from './jitter-reconexao';
 
 /** Estado do socket, do ponto de vista de quem olha a tela. */
 export type EstadoConexao = 'conectando' | 'aberta' | 'reconectando' | 'fechada';
@@ -42,8 +43,33 @@ export interface Conexao {
   estado: () => EstadoConexao;
 }
 
-/** Espera antes de tentar de novo, em ms: 0,5s → 1s → 2s → 4s → 8s (teto). */
-const ESPERAS_MS = [500, 1000, 2000, 4000, 8000];
+/**
+ * O sorteio do jitter — **a única fonte de entropia desta casca**.
+ *
+ * 🔴 **`Math.random` é ERRO DE LINT aqui** (`eslint.config.js`,
+ * `no-restricted-properties` sobre `src/net/**`), e `src/net/cerca-lint.test.ts`
+ * roda o ESLint de verdade para garantir. **A especificação do H4 pedia
+ * `Math.random()` e ela não compila limpo neste diretório.** Afrouxar a cerca
+ * estava fora de questão: separar a regra num bloco novo apagaria em silêncio as
+ * outras proibições do mesmo bloco — o defeito exato do `CLAUDE.md` §"Cerca de
+ * lint: separar regra APAGA a regra".
+ *
+ * ✅ **`crypto.getRandomValues` passa na cerca** (medido: `npx eslint` exit 0) e
+ * é melhor entropia. **Não é `crypto.randomUUID`**, e a diferença importa neste
+ * projeto: `randomUUID` exige contexto seguro, e o jogo é servido em
+ * `http://192.168.0.13:5173` na LAN (`docs/jogar-em-rede.md`).
+ * `getRandomValues` não exige.
+ *
+ * 🔒 **Isto NÃO fura o determinismo que a cerca protege.** O que ela defende é o
+ * REDUTOR — replicado nos 22, onde relógio ou sorteio divergiriam. Este arquivo
+ * é a casca de I/O do cliente: já tem `new WebSocket` e `setTimeout`, e **quando
+ * a reconexão acontece não entra em estado de jogo nenhum**.
+ */
+function sortear(): number {
+  const buf = new Uint32Array(1);
+  crypto.getRandomValues(buf);
+  return buf[0] / 0x1_0000_0000;
+}
 
 /** A URL de uma sala. `partyserver` kebab-caseia o nome do binding: `Sala` → `sala`. */
 export function urlDaSala(base: string, sala: string): string {
@@ -128,7 +154,13 @@ export function abrirConexao(opcoes: OpcoesConexao): Conexao {
     const reagendar = (): void => {
       if (fechadaDeProposito) return;
       mudarPara('reconectando');
-      const espera = ESPERAS_MS[Math.min(tentativa, ESPERAS_MS.length - 1)];
+      // 🔁 A escada COM jitter (S15). Sem ele, 22 clientes que caem juntos
+      // voltam no mesmo instante — a escada é a mesma para todos, então ela
+      // SINCRONIZA a rajada em vez de espalhá-la, e cada volta custa um
+      // `onConnect` mais um `reentrar` que devolve o snapshot inteiro.
+      // A decisão é pura e mora em `jitter-reconexao.ts`; aqui só entra o
+      // sorteio. **O jitter só ADIA, nunca antecipa** — ver o docblock de lá.
+      const espera = esperaDaTentativa(tentativa, sortear());
       tentativa += 1;
       timer = setTimeout(conectar, espera);
     };

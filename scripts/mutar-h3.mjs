@@ -21,8 +21,12 @@ const MUTACOES = [
     id: 'M1',
     desc: 'teto deixa de ser consultado (limitador off)',
     arquivo: CASCA,
-    de: "if (this.recusarSincronizar(message, connection.id, Date.now())) return;",
-    para: "void this.recusarSincronizar(message, connection.id, Date.now());",
+    // ⚠️ ALVO ATUALIZADO PELO H4: `recusarSincronizar` passou a receber o `tipo`
+    // já parseado (um parse serve os dois tetos). O sítio e a propriedade são
+    // os mesmos; só a assinatura mudou. Script que aponta para string morta
+    // imprime "ALVO NÃO ENCONTRADO" e a tabela do H3 deixaria de ser refazível.
+    de: "if (this.recusarSincronizar(tipo, connection.id, Date.now())) return;",
+    para: "void this.recusarSincronizar(tipo, connection.id, Date.now());",
     suite: 'party',
   },
   {

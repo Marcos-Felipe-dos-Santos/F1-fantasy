@@ -29,6 +29,7 @@ import {
   sincronizarDraft,
   type EstadoCliente,
 } from '../net/cliente';
+import { invalidaTokenDeReentrada } from '../net/protocolo';
 import type { ComandoDraft, ComandoSala } from '../net/protocolo';
 import { hashDoDraft } from '../net/hash-draft';
 import { hashDaCorrida } from '../net/hash-corrida';
@@ -214,13 +215,13 @@ export function useSalaOnline(sala: string): UseSalaOnline {
             // Sem persistência o jogo continua; só não sobrevive a um F5.
           }
         }
-        // `sala-inexistente` também invalida o token guardado: ele pertencia a
-        // uma sala que não existe mais, e insistir com ele só geraria erro a
-        // cada reconexão.
-        if (
-          mensagem.tipo === 'erro' &&
-          (mensagem.erro === 'token-invalido' || mensagem.erro === 'sala-inexistente')
-        ) {
+        // 🔒 A REGRA SAIU DAQUI no PR H4 (S3) — vive em
+        // `invalidaTokenDeReentrada`, pura e com teste. Guarda dentro de hook
+        // não tem baseline possível neste projeto (sem jsdom, medido), e foi
+        // assim que `M-guarda-classif` sobreviveu no 3.5.3.
+        // 🔴 O que a extração trava: `comandos-demais` NÃO apaga o token —
+        // apagá-lo puniria com perda de identidade quem só bateu num rate limit.
+        if (mensagem.tipo === 'erro' && invalidaTokenDeReentrada(mensagem.erro)) {
           tokenRef.current = null;
           try {
             storage?.removeItem(chaveToken(sala));
