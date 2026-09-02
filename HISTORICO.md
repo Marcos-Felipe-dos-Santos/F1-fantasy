@@ -2482,6 +2482,229 @@ Arquivo novo: `preview/campeonato-online.html` (não sobrescreve `preview/campeo
 
 ---
 
+## PR H2 — TETO DE CONEXÕES E ORIGIN NO `onConnect` (2026-09-01, `91322d0`) — 🔴 ALTO RISCO
+
+**Base:** `a7c0fec` (doc do H1). Merge `--no-ff` de `9cc7d83` (baseline) + `d23c6c4`
+(implementação). **Sem push, sem tag.** Segundo PR de hardening da auditoria.
+
+**Fecha, por IMPLEMENTAÇÃO, os itens `S2` e `S4`.** Antes dele, `onConnect` aceitava conexão sem
+contar quantas já existiam e sem olhar o `Origin` do upgrade.
+
+### Portões, medidos na `main` PÓS-MERGE (não herdados da branch)
+
+`npm test` **1677/73** em **3 rodadas idênticas** — **INALTERADO**, e inalterado é o resultado
+CERTO: os casos novos moram em `party/`, fora do `include` do `npm test` (mesmo precedente do PR B
+do spike). **`npm run test:party` 33/33** (era 26/26, **+7**). typecheck **0** nos três projetos,
+lint **0**, build **0**.
+
+🔑 **`VERSAO_APP` fica 3.4.5 e `VERSAO_FORMATO` fica 3 — SEM BUMP, e a prova é MECÂNICA:**
+`src/engine/versao.test.ts` está verde dentro do `npm test`, e o bundle saiu
+**`dist/assets/index-B0pMOBwk.js` — o MESMO hash de conteúdo** do PR 6, do PR 7 e do H1. Nada que
+chega ao bundle foi tocado: `src/net/teto-conexoes.ts` só é importado por `party/`.
+⚠️ **`npm run balance` NÃO rodado, e dito por quê:** zero arquivo de `src/engine/`, `src/data/`
+intocado. **`npm run preview` também não:** o PR não muda nada na tela, e o hash inalterado confirma.
+
+📊 **Contagem de `test:party`, dita com precisão:** 26 → 33 é **+7**. `party/conexoes.test.ts` entrou
+no baseline com **7 casos**; um oitavo (o do bloqueante C1) foi escrito durante a implementação e
+**REMOVIDO na mesma sessão**, por ser vacuoso — ver a seção do C1, abaixo.
+⚠️ **A abertura da sessão citou `test:party 25/25` e `npm test 1686/73`; os valores medidos na
+`main` eram `26/26` e `1677/73`.** Registrado porque contagem herdada sem medição é o que este
+arquivo já pagou várias vezes.
+
+---
+
+### As duas guardas, e por que as duas vêm ANTES do `carregar()`
+
+Ordem no `onConnect`: **Origin → teto → `carregar()`/`jogavel()` → caminho feliz**. As duas são
+O(1) e não leem storage; checá-las depois seria pagar o custo para então recusar. **É o mesmo
+argumento que o H1 escreveu** para pôr o teto de IP antes de sortear código, e o mesmo do teto de
+bytes que responde antes do `JSON.parse` em `onMessage`.
+
+🔒 **S2 — o teto conta o TRANSPORTE, não o roster, e é isso que ataca a 0(y).** `QTD_JOGADORES`
+governa `estado.jogadores`, array que só cresce pelo comando `entrar`; **socket que abre e fica
+calado nunca toca esse array**, logo nunca encontra aquela guarda. `getConnections()` é a única
+contagem que ele alcança. Há caso dedicado com **84 sockets que nunca mandam `entrar`**.
+
+🔒 **O PISO do teto é MEDIDO; o número 64 é POLÍTICA.** Durante um F5 o mesmo jogador ocupa DOIS
+sockets transitoriamente, então abaixo de `2 × 22 = 44` uma sala cheia se tranca sozinha numa onda
+de recarga — o limitador virando o problema.
+⚠️ **Nenhuma justificativa de plataforma está atrelada a 64, de propósito:** a 0(y) registra
+*"Não medido: qual o teto real do Durable Object nem qual o custo de um socket ocioso"*, e **isso
+continua verdadeiro depois deste PR**.
+
+🔒 **`>` e não `>=`, e a diferença foi MEDIDA.** No `partyserver@0.5.10` o `accept` acontece ANTES
+do `await this.onConnect(...)`, então **a conexão corrente já está contada** quando a guarda roda.
+Sonda: o 1º, o 2º e o 3º socket leem `1`, `2`, `3`. Com `>=` o teto efetivo seria 63.
+
+🔒 **S4 reusa `origemPermitida` e `AMBIENTE_DEV` do H1, sem duplicar.** O `Origin` chega em
+`ctx.request.headers` — `ConnectionContext = { request: Request }`, medido: os cabeçalhos chegam
+intactos e `null` quando ausentes. **A adição 1 do dev (o curinga exige DOIS sinais) vale igual no
+WebSocket**, com caso próprio.
+
+---
+
+### 🔴 O QUE A CHECAGEM DE ORIGEM NÃO COMPRA — e o cliente que ela recusa
+
+⚠️ **No caminho WS, `Origin` impede uma PÁGINA hospedada noutra origem de abrir a sala no navegador
+de quem a visita. NÃO impede script nenhum** — é cabeçalho, e cliente não-navegador o forja ou o
+omite à vontade. Mesma ressalva que `src/net/cors.ts` já carrega para o `POST /criar-sala`.
+
+🔴 **E ela RECUSA cliente não-navegador quando há allowlist configurada**, porque `Origin` ausente
+não está em lista nenhuma. **O sítio real é `scripts/smoke-online.mjs:32`**, que usa o `WebSocket`
+global do Node. Hoje sobrevive porque `npm run sala` passa `ENVIRONMENT:development` com allowlist
+vazia ⇒ curinga; contra um deploy com allowlist real, precisa de origem explícita.
+⚠️ **Correção de âncora feita no planejamento:** a suspeita inicial apontava `src/net/harness.ts` e
+`scripts/dois-clientes.mjs`. **Medido: o `harness.ts` é in-memory e não abre WebSocket nenhum**
+(*"Não simula o WebSocket literal — simula tudo o que ele faz de ruim"*), e
+`scripts/dois-clientes.mjs` **não existe neste repositório** (vive no spike). O único cliente
+não-navegador real é o `smoke-online.mjs`.
+
+---
+
+### 🔴 O "BLOQUEANTE C1" — o que CONFERE, o que é IMPOSSÍVEL e o que foi REFUTADO
+
+**O dev ditou assim:** *"close() depois de super.onConnect() dispara onClose → registrarConexoes
+para conexão não contada. Fix: rejeitar ANTES do super.onConnect() com server.close(4403)"*.
+**As três partes tiveram destinos diferentes, e nenhuma foi silenciada.**
+
+1. ✅ **CONFERE, e é o achado que valeu o registro: `close()` no `onConnect` DISPARA `onClose`.**
+   Medido por sonda: a sequência observada é `["onConnect-recusa", "onClose"]`. Sem tratamento, todo
+   socket recusado atravessaria `aoDesconectar` + `registrarConexoes` + `aplicar` para um id que
+   **nunca passou por `aoConectar`**. **O `4403` também entrou como ditado.**
+
+2. 🔴 **IMPOSSÍVEL COMO DESCRITO — "rejeitar ANTES do `super.onConnect()`" não existe nesta
+   arquitetura.** `Sala.onConnect` **não chama `super.onConnect()`** (a implementação base do
+   `partyserver` é vazia: `onConnect(connection, ctx) {}`) e não há variável `server`. **O `accept`
+   acontece no `fetch` do `Server`, ANTES de o `onConnect` ser chamado** — quando o nosso código
+   roda, o socket já foi aceito e a resposta **101 já está decidida** (medido: 3 upgrades ⇒
+   `101 101 101`, inclusive o recusado). Rejeitar antes exigiria `onBeforeConnect`, que roda no
+   worker, **FORA do DO**, onde `getConnections()` não existe e o teto do S2 seria inimplementável.
+   **O que entrou é a forma que este runtime permite:** marcar o id num `Set` e **sair cedo no
+   `onClose`**.
+
+3. 🔴 **REFUTADO POR MEDIÇÃO — o dano descrito NÃO se materializa, e a afirmação errada foi MINHA
+   antes de ser medida.** A primeira redação do docblock dizia que a falta da saída cedo custava
+   *"uma escrita de storage POR SOCKET RECUSADO"*. **Falso:** o contador de `put('estado')` após 10
+   recusas em série dá **`1 → 1`** numa sala com conexão legítima e **`0 → 0`** numa sala vazia —
+   **idêntico com e sem a guarda.**
+   🔑 **O motivo é uma propriedade que `party/sala.ts` já documentava no `alarm()`:**
+   `registrarConexoes` **preserva a IDENTIDADE** quando `vazio === jaVazio`, e `aplicar` só grava
+   quando a referência muda. O caminho da recusa nunca quebra essa igualdade.
+   🔒 **A guarda FICA, como BARREIRA e não como conserto** — ela impede que a conexão recusada seja
+   tratada como desconexão real, o que hoje não custa nada e passa a custar assim que alguém mexer
+   em `registrarConexoes`, `aoDesconectar` ou no critério de `aplicar`.
+
+🔴 **E O TESTE QUE EU ESCREVI PARA ELA ERA VACUOSO — foi a MUTAÇÃO que pegou, não a leitura.** Um
+oitavo caso (*"recusa em série não escreve estado"*) foi escrito, ficou **verde**, e a mutação
+**M4 sobreviveu a ele**. **Teste vacuoso é pior que teste nenhum** — o projeto catalogou essa classe
+seis vezes —, então ele **foi REMOVIDO** e a mutação está registrada como **SOBREVIVENTE** na tabela
+abaixo, em vez de maquiada.
+
+⚠️ **PROVENIÊNCIA, e ela importa: NÃO HOUVE `senior-reviewer` NESTE PR.** O "C1" não é numeração de
+revisão — **foi apontado pelo DEV e medido por mim**. Chamá-lo de bloqueante de revisão registraria
+um veredito que não existiu, que é a ocorrência nº 3 do `CLAUDE.md` (`e1db1c9`).
+⚠️ **`senior-reviewer` segue NÃO RODADO apesar do ALTO RISCO — é decisão do dev, e fica dito.**
+
+---
+
+### 📊 A TABELA DE MUTAÇÕES — QUATRO, e uma delas SOBREVIVE
+
+**Controle sem mutação: `33 passed (33)`.** Script **RASTREADO** em `scripts/mutar-h2.mjs`.
+
+    M1  teto deixa de ser consultado (limitador off)   exit=1  2 failed | 31 passed (33)
+    M2  o teto vira >= em vez de > (off-by-one)        exit=1  2 failed | 31 passed (33)
+    M3  Origin deixa de ser consultado (guarda off)    exit=1  2 failed | 31 passed (33)
+    M4  a saída cedo do onClose some                   exit=0  33 passed (33)  <- SOBREVIVE
+
+🔴 **M4 SOBREVIVE, e está na tabela por isso, não apesar disso.** É a consequência direta do item 3
+acima: a guarda não tem efeito observável pelos portões de hoje. **Precedente idêntico no projeto:**
+a M5 do 3.5.1, registrada como *"SEGUE INDETECTÁVEL COMPORTAMENTALMENTE, PARA SEMPRE"*.
+
+🔴 **M2 NÃO CAI NA ASSERÇÃO QUE EU ALEGAVA — e isso foi corrigido no lugar.** O contrato do harness
+dizia que ela cobria *"a anti-vacuidade de S2"*. **Medido: a anti-vacuidade SOBREVIVE a M2** — com
+`>=` e teto 64, a 63ª conexão ainda vê `63 < 64` e entra. Quem pega o off-by-one são os **dois
+baselines**, que medem exatamente 64.
+🔑 **Foi por isso que o harness passou a listar os NOMES dos testes que caem.** Com só o `exit=1`,
+uma mutação que derruba o teste errado é indistinguível de uma que derruba o certo — e a alegação
+falsa teria sobrevivido.
+
+🔒 **Reversão CONFERIDA, não presumida:** o harness restaura os arquivos por **bytes** (não por
+edição inversa) num `finally`, e imprime `git status --porcelain` no fim. Saída limpa de resíduo.
+
+🔒 **O SCRIPT FICA RASTREADO, e isto cumpre uma regra que estava aberta.** O `ESTADO.md` §Convenções
+registra, desde 2026-08-30: *"se a captura importa, ou o script fica rastreado ou o número não
+vale"* — e registrava também que **o primeiro caso seguia violando-a em silêncio** (o `mutar.py` do
+H1 ficou no scratchpad). **Este é o primeiro harness de mutação rastreado do projeto.**
+
+---
+
+### O baseline, e os dois vermelhos que ele pegou pelo motivo errado
+
+**`party/conexoes.test.ts`: 4 vermelhos por VALOR + 3 anti-vacuidade verdes.**
+
+🔴 **A ASSERÇÃO NÃO PODE SER O STATUS, e é medição que decide isso** — o `partyserver` devolve
+**101 sempre**. Um baseline que cobrasse `403` seria vermelho para sempre contra um alvo que o
+runtime não permite atingir. **O que se assere é o EFEITO: a conexão não permanece em
+`getConnections()`.** E o efeito é imediato — `close()` no `onConnect` deixa a contagem em **0**, o
+que é justamente o que **impede o teto de se autotrancar**.
+
+🔴 **DUAS VEZES o baseline ficou vermelho PELO MOTIVO ERRADO, e as duas foram pegas pela
+PRÉ-CONDIÇÃO ASSERIDA** — a lição da SEXTA instância (3.5.2) pagando-se duas vezes no mesmo arquivo:
+
+1. **Sem `accept()` no lado cliente, abrir 64 sockets deixava 21 contados** (84 → 72, 63 → 52,
+   variando por rodada): a ponta não aceita era descartada pelo runtime. Sem a pré-condição, o
+   arquivo teria passado por baseline sem nunca alcançar o teto.
+2. **Depois da implementação, os três casos de S2 mediam `0` conexões** — a guarda nova do S4
+   recusava todo socket antes de o teto ser alcançado, porque o `wrangler.jsonc` traz allowlist
+   vazia + `ENVIRONMENT=production` (o padrão seguro, que RECUSA). **Os casos de S2 passaram a
+   DECLARAR o ambiente de origem**, em vez de herdá-lo.
+
+⚠️ **`reset()` não restaura `env`** — sem declaração explícita em cada `describe`, a ORDEM dos
+blocos decidiria o resultado.
+
+✅ **O gate de tipos também se pagou:** declarar só `Sala` na augmentação de `Cloudflare.Env` fez o
+`tsc` reprovar os quatro sítios que escrevem `ALLOWED_ORIGINS`/`ENVIRONMENT` (`TS2339`). E
+declará-los **obrigatórios** quebrava a produção (`TS2344`/`TS2345`), porque o `Env` de
+`party/sala.ts` os tem como opcionais — **o teste descreve o ambiente, não pode redefini-lo.**
+
+---
+
+### 🔴 O QUE ESTE PR NÃO FAZ — o teto BALIZA a 0(y), não a fecha
+
+⚠️ **Nada fecha um socket que conecta e nunca fala.** A carência de vazio só corre com
+`getConnections()` em zero, e um socket quieto a mantém não-vazia para sempre; `PRAZO_TURNO_MS` não
+o alcança porque quem nunca mandou `entrar` não é jogador. **Depois deste teto, bastam 64 sockets
+quietos para trancar os 22 jogadores reais fora da sala E mantê-la imortal.**
+🔑 **O ataque fica mais BARATO em número e mais LIMITADO em dano** — de 32k sockets para 64 —, mas
+não desaparece. O conserto de fundo é um **timeout de socket ocioso**, que **não entrou**: virou a
+pendência **0(ag)**. Escrever "0(y) fechada" seria a afirmação em presente do indicativo que as
+revisões dos PRs 6 e 7 pegaram duas vezes cada.
+
+⚠️ **O S1 NÃO PROTEGE ESTE CAMINHO — a premissa do pedido foi REFUTADA por medição.** O pedido dizia
+que *"se o fetch handler já rejeitou por rate limit, o onConnect não deveria ser alcançável"*.
+**Medido: com o IP já em `429` no `POST /criar-sala`, 30 upgrades de WebSocket seguidos deram `101`
+— todos.** Os caminhos são disjuntos: o teto do H1 vive dentro de
+`if (pathname === ROTA_CRIAR_SALA && method === 'POST')`; o upgrade vai para `/parties/…` e cai em
+`routePartykitRequest`, sem tocar o limitador. **Há um sentido trivial em que a frase é verdadeira**
+— para aquele mesmo POST, o 429 retorna antes de tudo —, e ele não protege o `onConnect`.
+🔑 **A consequência construtiva: o teto de conexões carrega o peso inteiro.** Onde o S1 ajuda é no
+cenário adjacente — atacante cunha códigos e enche as próprias salas —, ali limitado a 5 salas por
+10 s por IP.
+
+---
+
+### A recusa que o jogador vê — limitação conhecida
+
+🔒 **`close(4403)`, na faixa de aplicação (4000-4999)**, e não `1000`, que é o que `recusar()` usa
+para sala inexistente — reusá-lo tornaria as duas recusas indistinguíveis.
+⚠️ **O cliente de hoje NÃO distingue 4403:** vê um fechamento e entra em "reconectando…". **Nenhum
+`{tipo:'erro'}` é mandado, de propósito** — o único código existente que serviria é
+`sala-inexistente`, e `src/ui/useSalaOnline.ts:222` **APAGA o token de reentrada** ao recebê-lo,
+punindo um jogador legítimo que só bateu no teto. **É a mesma classe do "429 vira servidor fora do
+ar" que o H1 registrou.** Virou a pendência **0(ah)**.
+
+---
+
 ## PR H1 — O TETO POR IP E O CORS COM ALLOWLIST (2026-09-01, `2f780bb`) — 🔴 ALTO RISCO
 
 **Base:** `73caed3` (doc dos 17 itens). Merge `--no-ff` de `cea3642` (baseline) + `3ee0c5c`
