@@ -44,7 +44,8 @@ import { estadoDasSeeds } from '../src/net/sala';
 import { codigoDeBytes, TAMANHO_CODIGO } from '../src/net/codigo-sala';
 import { AMBIENTE_DEV, origemPermitida } from '../src/net/cors';
 import { excedeuTetoDeConexoes } from '../src/net/teto-conexoes';
-import { JANELA_TETO_MS } from '../src/net/rate-limit';
+import { JANELA_TETO_MS, type BaldeDeTeto } from '../src/net/rate-limit';
+import { avaliarTetoSincronizar } from '../src/net/teto-sincronizar';
 import { ROTA_CRIAR_SALA } from '../src/net/rotas';
 import { Limite } from './limite';
 import {
@@ -274,6 +275,48 @@ export class Sala extends Server<Env> {
   private recusadas = new Set<string>();
 
   /**
+   * Baldes do teto de `sincronizar`, por conexão (PR H3, item S7).
+   *
+   * 🔒 **SÓ EM MEMÓRIA — nunca no `ctx.storage`, e isso é o ponto.** O comando
+   * que este teto limita é justamente o que devolve o snapshot inteiro; gravar
+   * um balde por comando trocaria amplificação de LEITURA por amplificação de
+   * ESCRITA, que `alarm()` e `registrarAtestado` já nomeiam como "barata de
+   * explorar". A janela de 2 s fica muito abaixo do horizonte de despejo do DO,
+   * então perder o balde num despejo é indistinguível de ele ter expirado.
+   *
+   * 🔒 **O mapa ENCOLHE no `onClose`** — mesma disciplina do `delete` no
+   * `recusadas` logo acima. Sem isso ele seria um vazamento proporcional ao
+   * churn de conexões: exatamente o defeito que este PR existe para não criar.
+   */
+  private baldesSincronizar = new Map<string, BaldeDeTeto>();
+
+  /**
+   * O comando é um `sincronizar` que deve ser RECUSADO por teto?
+   *
+   * ⚠️ **Faz um `JSON.parse` que o `aoReceber` refará.** É custo conhecido e
+   * aceito: a alternativa seria mudar a assinatura de `aoReceber` para receber
+   * o comando já parseado, o que arrastaria o redutor puro e os testes dele
+   * para dentro deste PR. A entrada já está limitada a `MAX_BYTES_MENSAGEM`
+   * pela guarda de cima, então o parse extra é O(8 KiB) no pior caso.
+   *
+   * 🔒 **Falha ABERTO: JSON inválido não é problema deste teto.** Quem responde
+   * `comando-invalido` é o `aoReceber`, e engolir aqui o que ele deveria
+   * recusar mudaria o protocolo por efeito colateral de um limitador.
+   */
+  private recusarSincronizar(mensagem: string, conexaoId: string, agora: number): boolean {
+    let tipo: unknown;
+    try {
+      tipo = (JSON.parse(mensagem) as { tipo?: unknown }).tipo;
+    } catch {
+      return false;
+    }
+    if (tipo !== 'sincronizar') return false;
+    const veredicto = avaliarTetoSincronizar(this.baldesSincronizar.get(conexaoId) ?? null, agora);
+    this.baldesSincronizar.set(conexaoId, veredicto.balde);
+    return !veredicto.permitido;
+  }
+
+  /**
    * Recusa por POLÍTICA (origem não autorizada ou teto de conexões estourado) —
    * e é diferente de `recusar()`, que trata sala inexistente.
    *
@@ -366,6 +409,16 @@ export class Sala extends Server<Env> {
       connection.send(JSON.stringify({ tipo: 'erro', erro: 'escolha-grande-demais' }));
       return;
     }
+    // 🔒 O teto de `sincronizar` vem ANTES do `carregar()`, e é o mesmo
+    // argumento das duas guardas do `onConnect`: ele é O(1), não lê storage, e
+    // checá-lo depois seria pagar a leitura para então descartá-la — que é
+    // justamente o custo que este teto existe para não pagar.
+    // ⚠️ **Recusa em SILÊNCIO, de propósito.** Responder `{tipo:'erro'}` daria
+    // ao atacante uma resposta por comando (barato, mas não zero) e, no cliente
+    // real, um erro que ele não sabe tratar — o mesmo raciocínio que manteve o
+    // `4403` do H2 sem `{tipo:'erro'}`. O comando seguinte, fora da janela,
+    // volta a ser atendido.
+    if (this.recusarSincronizar(message, connection.id, Date.now())) return;
     const estado = await this.carregar();
     if (estado === null || !this.jogavel(estado)) {
       // Comando em voo de uma conexão que sobreviveu ao reset — ou sala cujas
@@ -412,6 +465,10 @@ export class Sala extends Server<Env> {
     // 🔒 **`delete` e não só `has`:** o `Set` tem de encolher junto, senão vira
     // vazamento de memória proporcional ao ataque — o avesso do que um
     // limitador deve fazer sob pressão.
+    // O balde morre com a conexão — ver o docblock de `baldesSincronizar`.
+    // Fica ANTES da saída cedo das recusadas: um socket recusado por política
+    // também pode ter deixado balde para trás.
+    this.baldesSincronizar.delete(connection.id);
     if (this.recusadas.delete(connection.id)) return;
     const estado = await this.carregar();
     if (estado === null) return;
