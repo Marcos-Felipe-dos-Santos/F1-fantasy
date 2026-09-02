@@ -2482,6 +2482,242 @@ Arquivo novo: `preview/campeonato-online.html` (não sobrescreve `preview/campeo
 
 ---
 
+## PR H4 — CSP, JITTER E TETO DE COMANDOS (2026-09-02, `0705ff6`) — 🔴 ALTO RISCO
+
+**Merge `--no-ff` de `2b924f6`, na `main`. Sem push, sem tag.** Três itens da auditoria de segurança
+num PR só: **S5** (CSP), **S15** (jitter de reconexão) e **S3** (rate limit inbound).
+✅ **É o PRIMEIRO dos quatro PRs de hardening a ter `senior-reviewer`** — ver a §"DÍVIDA DE
+PROCESSO" no `ESTADO.md`, que registra os três anteriores sem ele.
+
+📊 **PORTÕES, medidos na `main` PÓS-MERGE:** `npm test` **1713/1713** em **3 rodadas idênticas**,
+78 arquivos (era 1683/74). **`npm run test:party` 42/42** (era 36/36). typecheck **0** nos três
+projetos, lint **0**, build **0**, `npm run preview` **0** (11/11).
+🔴 **Bundle `index-B0pMOBwk.js` → `index-UkRE1HGe.js`** — primeira vez na série que ele se move.
+
+---
+
+### A CLASSIFICAÇÃO FOI CORRIGIDA ANTES DE COMEÇAR
+
+O pedido inicial classificava o PR como **BAIXO RISCO**. A sessão apontou que o S3 mexe no
+`onMessage` de `party/sala.ts` — **o mesmo arquivo e o mesmo handler** pelos quais H1, H2 e H3
+foram classificados ALTO RISCO, com a razão textual *"mexe em `party/sala.ts` e afeta produção"* —
+e que a §"DÍVIDA DE PROCESSO" diz que *"não rodou nos anteriores"* deixou de ser precedente neutro.
+🔒 **O dev reclassificou para ALTO RISCO**, o que obrigou o fluxo completo: baseline, tabela de
+mutações com script rastreado, e `senior-reviewer`.
+
+---
+
+### S5 — A CSP, E POR QUE ELA NÃO MORA NO `index.html`
+
+🔴 **A especificação pedia "meta tag no `index.html`". Medido com CONTROLE, isso quebra o
+`npm run dev` por inteiro:**
+
+    com a meta no fonte   →  dev: HTML CRU, sem estilo nenhum · dist servido: tela normal
+    sem a meta (controle) →  dev: tela normal                 · dist servido: tela normal
+
+A causa está medida: **em desenvolvimento o Vite serve o CSS criando `<style>` por JavaScript**, e
+`style-src 'self'` mata isso. Em produção o CSS vem por `<link rel=stylesheet>` da mesma origem,
+que a MESMA política permite.
+🔑 **O console ficou LIMPO nas duas medições** — três mensagens, zero violação de CSP registrada.
+**Só pegou quem abriu e OLHOU a tela.** É a lição do 3.4.1 aplicada à CSP.
+
+🔒 **Solução: plugin com `apply: 'build'`** (`scripts/csp.ts`, ligado em `vite.config.ts`). A meta
+entra só no `dist/`. **A alternativa recusada foi `style-src 'self' 'unsafe-inline'`** no fonte:
+funcionaria nos dois modos e afrouxaria exatamente a diretiva que o dev-mode quebra.
+🔒 **`apply: 'build'` tem asserção própria** em `scripts/csp.test.ts` — é a única guarda mecânica
+contra alguém "consertar" o plugin para rodar sempre e derrubar o dev, que é uma quebra que o
+console não acusa.
+
+**A política, diretiva a diretiva, cada uma medida contra o que o `dist/` carrega:**
+`default-src 'self'` · `script-src 'self'` (1 script, `type="module"` com `src`, **zero inline**) ·
+`style-src 'self'` (1 `<link rel=stylesheet>`) · `font-src 'self'` (`/fonts/bungee-latin.woff2`) ·
+`img-src 'self' data:` · `connect-src 'self'` · `object-src 'none'` · `base-uri 'self'` ·
+`form-action 'none'`. **Zero `unsafe-*`, com cerca asserindo a ausência.**
+🔑 **`connect-src 'self'` cobre `ws:`/`wss:` da mesma origem, e isso foi MEDIDO** — sob esta
+política o WebSocket do HMR do Vite conectou. É o que o jogo precisa, porque `baseParaEstaPagina`
+deriva o WS de `location.host`.
+🔴 **`frame-ancestors` NÃO entra: por especificação ele é IGNORADO em `<meta>`.** Há teste asserindo
+a ausência, para ninguém o acrescentar achando que fechou clickjacking.
+🔴 **`injetarCsp` FALHA ALTO quando não há `<head>`** — devolver o HTML intacto geraria um `dist/`
+sem CSP com exit 0, e ninguém olha o `dist/index.html` depois de um build verde. É a lição da 0(z)
+(degradação silenciosa) aplicada ao build.
+
+⚠️ **RESSALVA: hoje nada neste repositório SERVE o `dist/`.** O `wrangler.jsonc` não tem binding de
+assets, e o jogo é jogado por `npm run dev`, que por desenho não tem CSP. **A política é preparação
+para um deploy que ainda não existe.**
+⚠️ **E o escape `VITE_WS_BASE` noutra origem é barrado** — não só no WebSocket: `src/ui/sala-online.ts`
+deriva da mesma base para o `POST /criar-sala`, então nesse deploy o jogador não cria sala.
+
+---
+
+### S15 — O JITTER, E A SUBSTITUIÇÃO FORÇADA PELA CERCA DE LINT
+
+Jitter de até **30%** sobre a escada `[500, 1000, 2000, 4000, 8000]`, aplicado **DEPOIS do clamp**
+(aplicá-lo antes faria o degrau saturado voltar a ser idêntico para todos, e é no teto que a rajada
+se acumula).
+
+🔒 **O JITTER SÓ ADIA, NUNCA ANTECIPA — e é decisão, não arredondamento.** A forma simétrica
+(`base × (0,85 + sorteio × 0,3)`) espalha igual e é pior: metade das tentativas voltaria ANTES da
+espera base, empurrando a rajada para o instante em que o servidor está mais fraco. **Tem teste
+dedicado, e a mutação M8 o derruba com 5 falhas.**
+
+🔴 **`Math.random()`, que a especificação pedia, é ERRO DE LINT em `src/net/**`** — `eslint.config.js`,
+`no-restricted-properties` —, e `src/net/cerca-lint.test.ts` **roda o ESLint de verdade**. A
+especificação não compilava limpo.
+✅ **Entrou `crypto.getRandomValues`**, medido passando (`npx eslint` exit 0). **É decisão FORÇADA
+PELA REGRA, não escolha de estilo**, e está registrada assim no docblock.
+🔒 **A cerca NÃO foi afrouxada, e recusar afrouxá-la é a parte que importa:** separar a regra num
+bloco novo para `conexao.ts` apagaria em silêncio as outras proibições do mesmo bloco — o defeito
+exato do `CLAUDE.md` §"Cerca de lint: separar regra APAGA a regra", que o projeto já pagou no
+PR 3.2, num PR cuja tese era determinismo.
+🔑 **Não é `randomUUID`, e a distinção é operacional:** `randomUUID` exige contexto seguro, e o jogo
+roda em `http://192.168.0.13:5173` na LAN. `getRandomValues` não exige.
+🔒 **Não fura o determinismo:** o que a cerca defende é o REDUTOR, replicado nos 22. `conexao.ts` é
+a casca de I/O do cliente, já tem `new WebSocket` e `setTimeout`, e a reconexão não entra em estado
+de jogo. **Medido: os dois hashes de protocolo não se movem.**
+
+⚠️ **Duas dívidas saíram daqui:** a **0(an)** (`getRandomValues` ficou legal em TODO `src/net/**`,
+inclusive no redutor, e nada o vigia) e a **0(ao)** (o jitter é neutralizado no caminho de recusa,
+porque `tentativa` zera no `open` e o `4403` do H2 fecha depois do `open`).
+
+---
+
+### S3 — O TETO DE COMANDOS, E O QUE ELE DE FATO CONTA
+
+**20 comandos de jogo por segundo, por conexão**, respondendo **`comandos-demais`**.
+
+🔒 **RESPONDE em vez de calar — decisão do dev, e é o OPOSTO do H3.** Lá o silêncio era seguro
+porque o cliente real **nunca manda** `sincronizar`. Aqui os comandos são os que o jogador manda de
+verdade, e **engolir um `escolher` faria a jogada sumir da tela enquanto o cronômetro de turno
+corre** — seria a QUARTA ocorrência de uma família já catalogada três vezes (o 429 do H1, o
+`close(4403)` da 0(ah), o bug do 3.3.3).
+🔒 **Código NOVO em vez de reusar:** `sala-inexistente` APAGA o token de reentrada e puniria com
+perda de identidade quem só bateu num teto.
+🔒 **A regra de invalidação saiu de dentro do hook** e virou `invalidaTokenDeReentrada`, pura e com
+teste — **guarda dentro de hook não tem baseline possível neste projeto** (sem `jsdom`, medido; foi
+assim que `M-guarda-classif` sobreviveu no 3.5.3). A lista é **allowlist do que APAGA**: erro novo
+nasce preservando o token.
+
+🔒 **AS TRÊS ISENÇÕES — decisão do dev, 2026-09-02.** Não entram na contagem: **frame binário**,
+**string acima de `MAX_BYTES_MENSAGEM`** e **`sincronizar`**. Cada uma já tem guarda PRÓPRIA, e
+somar puniria o jogador legítimo cujo cliente mandou um `sincronizar` seguido de uma jogada.
+⚠️ **Consequência aceita:** este teto não é a defesa contra flood de lixo binário nem de mensagem
+gigante.
+
+---
+
+### OS TRÊS BLOQUEANTES DA REVISÃO
+
+**C1 — o docblock dizia "Conta TODA mensagem", e era FALSO.** ✅ **Consertado antes do merge.** O
+teto é a **quarta** guarda do `onMessage`; três caminhos passam por baixo dele. **Prosa em presente
+do indicativo que não confere com o sítio é a classe que a revisão do PR 7 pegou duas vezes** —
+desta vez ela não chegou à `main`.
+🔑 **As 15 mutações estavam TODAS verdes com a frase falsa no lugar.** Nenhum portão pega essa
+classe; só a leitura pega.
+
+**C2 — a derivação do `20` omitia o termo servidor-dirigido.** ✅ **Docblock e teste corrigidos; o
+NÚMERO não foi mexido, e o resíduo virou a 0(al).** A cadeia que faltava: os dois efeitos de `hash`
+do cliente disparam por avanço de `eventosAplicados`, que avança a cada broadcast — logo a taxa de
+`hash` que SAI de cada cliente acompanha a taxa AGREGADA da sala, e a fase de sorteios é
+CONCORRENTE. Com 22 humanos a uma escolha por segundo, o teto estoura por jogo legítimo.
+🔑 **O dano provável é a ATESTAÇÃO perdida, em silêncio** — não a jogada.
+
+🔴 **E O CONSERTO DO C2 ACHOU UM DEFEITO QUE NINGUÉM TINHA VISTO: a isenção do `sincronizar` estava
+INCOMPLETA.** Sair cedo na recusa do H3 não bastava — o `sincronizar` **ACEITO** (o primeiro de cada
+janela) caía adiante e **consumia a cota de jogo**, que é exatamente o caso que a justificativa do
+dev nomeia.
+🔑 **Foi a CERCA que o achou, e ela nasceu VERMELHA POR VALOR, não de compilação.** `onMessage`
+passou a parsear o tipo **uma vez** e a passá-lo aos dois tetos — o que **reduziu** o custo que o H3
+tinha assumido como "um `JSON.parse` a mais". A mutação **M15** cobre a regressão.
+📌 **`scripts/mutar-h3.mjs` teve o alvo ATUALIZADO**, porque a assinatura de `recusarSincronizar`
+mudou. **Os RESULTADOS do H3 não mudam; o que mudou foi a ferramenta.**
+
+**C3 — a fiação do S15 não tem cobertura.** 📌 **DECISÃO DO DEV: registrar, NÃO consertar** —
+pendência **0(ak)**. Medido: `sortear() → 0` deixa **1713/1713 e 42/42**.
+
+---
+
+### A TABELA DE MUTAÇÕES — 15, com `scripts/mutar-h4.mjs` RASTREADO
+
+Controle `1713 passed` e `42 passed`. **14 caem, M14 sobrevive.**
+
+    M1  S3 teto off              [party] 5 failed    M9   S15 sorteio ignorado    [npm] 2 failed
+    M2  S3 teto vira 21          [npm]   3 failed    M10  S15 jitter pré-clamp    [npm] 1 failed
+    M3  S3 janela nunca expira   [npm]   2 failed    M11  S5  plugin roda sempre  [npm] 1 failed
+    M4  S3 recusa reinicia       [npm]   1 failed    M12  S5  injetar degrada     [npm] 1 failed
+    M5  S3 mapa não encolhe      [party] 1 failed    M13  S5  unsafe-inline       [npm] 2 failed
+    M6  S3 recusa CALA           [party] 4 failed    M15  S3  sincronizar conta   [party] 1 failed
+    M7  S3 apaga o token         [npm]   2 failed    M14  S5  âncora </title>     [npm] exit=0 ←
+
+🔴 **M14 SOBREVIVE porque é EQUIVALENTE — MEDIDO, não presumido:** construí o `dist/` com ela e
+olhei o HTML; a meta sai depois do `</title>` e **ainda antes** do `<script>` e do `<link>`, porque
+o Vite os acrescenta no fim do `<head>`. **Fica na tabela** pelo precedente da M4 do H2: mutação
+sobrevivente omitida é a tabela mentindo por seleção.
+⚠️ **Um caso de teste nasceu de uma suposição errada minha** (achei que M14 era lacuna); ele não a
+pega, e o comentário que afirmava o contrário foi corrigido. O caso fica porque a versão anterior
+media a forma ERRADA — a do `index.html` fonte, não a do `dist/`.
+
+---
+
+### O NÃO-BUMP DE `VERSAO_APP` — TRÊS ELOS, E O TERCEIRO É DO DEV
+
+Script rastreado: **`scripts/medir-fecho-hash.mjs`**.
+
+**Elo 1 — fecho de runtime, interseção VAZIA.** Raízes: as duas funções de hash **mais os dois
+produtores dos argumentos**. 🔴 **Houve bandeira vermelha:** `protocolo.ts` apareceu no fecho. Não
+foi descartada por leitura — sonda com fixtures fixas deu `draft 9fb2d2066267193e ·
+corrida eb7a9e837d554deb` **idênticos** nas duas versões, com **anti-vacuidade** (perturbar as
+fixtures move os dois: `42d6873ad1a0a7f3` · `3ba840f199e1a654`). Causa: `import type`, aresta
+apagada em runtime. O script foi refinado para separar aresta de tipo de aresta de valor.
+🔑 **CHAMAR NÃO É ALIMENTAR:** `useSalaOnline.ts` chama os dois hashes e está no diff; sai limpo
+porque o que entra são os argumentos.
+
+🔴 **Elo 2 — o fecho é NECESSÁRIO, NÃO SUFICIENTE.** `src/engine/versao.ts` registra, do C1 do
+3.5.4, que o digest cobre quem **CALCULA** e que **mudar QUANDO/COMO se atesta divide uma partida do
+mesmo jeito**. O que fecha a lacuna é que a **FORMA e o GATILHO do atestado não mudaram**.
+
+🔒 **Elo 3 — DECISÃO DO DEV: não bumpar, e a janela de transição vira DÍVIDA DOCUMENTADA.** O bump
+forçaria TODOS os clientes a reconectar ao mesmo tempo (`versao-divergente` expulsando os 22) —
+**literalmente o thundering herd que o S15 deste PR existe para prevenir**. Durante a transição,
+clientes velhos reconectam **sem jitter**; o risco é limitado no tempo (até o último recarregar) e
+não justifica o dano do bump.
+🔑 **Dado medido que reforça:** o jitter é neutralizado no caminho de recusa de qualquer forma
+(0(ao)), então a expulsão em massa cairia no primeiro degrau sem espalhamento.
+
+---
+
+### REGISTRO DE PROCESSO — UM CONSERTO QUE NÃO EXISTIU, BARRADO ANTES DO COMMIT
+
+📌 **Registrado a pedido do dev.** Palavras dele: *"o ponto 1 é o mais grave e fica registrado: eu
+pedi para documentar um conserto que não aconteceu"*.
+
+**O pedido era registrar** que o hash da CSP passara de *hardcoded* para *computado sobre o conteúdo
+real do `<script>` no output*, com prova de mutação (*"M14 antes sobrevivia, agora cai; M15 pega
+reversão para constante"*).
+🔴 **Medido antes de recusar:** `grep sha256|createHash` em `scripts/csp.ts`, `scripts/csp.test.ts`
+e `vite.config.ts` dá **zero**. **A diretiva é `script-src 'self'` e NUNCA houve hash.** Ele seria
+desnecessário: hash autoriza script INLINE, e o `dist/index.html` tem **zero** inline.
+📌 **Outros três itens do mesmo pedido descreviam código inexistente** — `allowedCommands`,
+`secondsToMs`, e um try-catch no plugin que INVERTERIA a decisão de falhar alto do `injetarCsp`.
+Todos medidos como ausentes por `grep`; nenhum implementado.
+🔒 **Por que fica escrito:** documentação é o que a próxima sessão trata como verdade, e **um
+conserto inventado no `ESTADO.md` não tem fonte contra a qual ser desmentido** — é a ocorrência
+nº 3 do `CLAUDE.md` (`e1db1c9`) com o sinal invertido. **O portão que funcionou foi conferir a
+especificação contra o código ANTES de escrever.**
+
+---
+
+### PLACAR DA AUDITORIA APÓS O H4
+
+**12 fechados · 3 parciais · 0 abertos** (+ S13/S14 nunca ditados) = 15 dos 17.
+Fechados `S1·S2·S4·S5·S6·S8·S9·S10·S11·S15·S16·S17`; parciais `S3·S7·S12`.
+🔑 **Primeira vez que a coluna 🔴 fica vazia** — e vazia não quer dizer resolvida: três itens estão
+em 🟡 e dois nunca foram ditados.
+
+**Cinco pendências novas:** 0(ak) fiação do jitter sem cobertura · 0(al) calibragem do teto do S3 ·
+0(am) `comandos-demais` cru na tela · 0(an) `getRandomValues` fora da cerca · 0(ao) jitter
+neutralizado na recusa.
+
 ## PR H3 — O TETO DE `sincronizar` (2026-09-01, `ca2cfcb`) — 🔴 ALTO RISCO
 
 **Base:** `91322d0` (merge do H2). Merge `--no-ff` de `1590daa`. **Sem push, sem tag.** Terceiro PR

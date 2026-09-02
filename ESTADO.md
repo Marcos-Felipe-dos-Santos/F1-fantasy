@@ -10,7 +10,24 @@
 
 ## Estado atual
 
-**Última medição (2026-09-01, na `main` — PR H2, teto de conexões + Origin, `91322d0`):**
+**Última medição (2026-09-02, na `main` — PR H4, CSP + jitter + teto de comandos, `0705ff6`):**
+`npm test` **1713/1713** em **3 rodadas idênticas**, 78 arquivos (era 1683/74, **+30**).
+⚠️ **SUBIU, e é dito assim de propósito:** os casos novos são de `src/net/jitter-reconexao.test.ts`,
+`src/net/teto-comandos.test.ts`, `src/net/token-reentrada.test.ts` e `scripts/csp.test.ts`.
+**`npm run test:party` 42/42** (era 36/36, **+6**: `party/comandos.test.ts`). typecheck **0** nos
+três projetos, lint **0** (por exit code), build **0**, `npm run preview` **0** (11/11).
+🔴 **O BUNDLE MUDOU DE HASH pela primeira vez na série de hardening: `index-B0pMOBwk.js` →
+`index-UkRE1HGe.js`.** Nos H1/H2/H3 ele ficava idêntico porque os módulos novos só eram importados
+por `party/`; aqui `conexao.ts`, `protocolo.ts` e `useSalaOnline.ts` chegam ao bundle.
+🔑 **`VERSAO_APP` fica 3.4.5 e `VERSAO_FORMATO` fica 3 — mas a prova NÃO é a dos PRs anteriores**
+(lá era o hash inalterado). São três elos, um deles decisão do dev: ver a §"Onde parei", bloco do H4.
+⚠️ **`npm run balance` NÃO rodado, e dito por quê:** zero arquivo de `src/engine/`, `src/data/`
+intocado.
+✅ **Portão visual ABERTO E OLHADO nos dois modos** (`dist/` servido e `npm run dev`), porque o S5
+muda o que é servido. Telas idênticas ao controle. 🔑 **O console ficou LIMPO nas duas medições** —
+só pegou quem olhou.
+
+*(Medição anterior, 2026-09-01, na `main` — PR H2, teto de conexões + Origin, `91322d0`):*
 `npm test` **1677/73** em **3 rodadas idênticas** — **INALTERADO**, e inalterado é o resultado
 CERTO: os 7 casos novos moram em `party/conexoes.test.ts`, fora do `include` do `npm test` (mesmo
 precedente do PR B do spike). **`npm run test:party` 33/33** (era 26/26, **+7**). typecheck **0**
@@ -599,6 +616,202 @@ dependência).
 
 
 ## Onde parei
+
+**🔐 PR H4 — CSP, JITTER DE RECONEXÃO E TETO DE COMANDOS INBOUND: CONCLUÍDO e MERGEADO em
+2026-09-02** (`0705ff6`, merge `--no-ff` de `2b924f6`), na `main`. **ALTO RISCO** — mexe em
+`party/sala.ts` e afeta produção. **Sem push, sem tag.** Detalhe completo: `HISTORICO.md`
+§"PR H4 — CSP, jitter e teto de comandos".
+
+**O que o PR faz, em uma linha:** os itens **S5** e **S15** vão a ✅ FECHADO por implementação e o
+**S3** vai a 🟡 PARCIAL — o app ganha CSP no build, a reconexão ganha jitter, e o `onMessage` ganha
+teto de 20 comandos de jogo por segundo por conexão.
+
+📊 **PORTÕES, medidos na `main` PÓS-MERGE (não herdados da branch):** `npm test` **1713/1713** em
+**3 rodadas idênticas**, 78 arquivos (era 1683/74, **+30**). **`npm run test:party` 42/42**
+(era 36/36, **+6**). typecheck **0** nos três projetos, lint **0** (por exit code), build **0**,
+`npm run preview` **0** (11/11).
+🔑 **`VERSAO_APP` fica 3.4.5 e `VERSAO_FORMATO` fica 3 — mas a prova NÃO é a dos PRs anteriores, e
+a diferença precisa estar escrita.** Nos H1/H2/H3 o bundle saía com o MESMO hash, porque os módulos
+novos só eram importados por `party/`. **Aqui o bundle MUDOU: `index-B0pMOBwk.js` →
+`index-UkRE1HGe.js`**, porque `conexao.ts`, `protocolo.ts` e `useSalaOnline.ts` chegam ao bundle.
+O não-bump se sustenta por **três** elos, e o terceiro é do dev — ver o bloco próprio abaixo.
+⚠️ **`npm run balance` NÃO rodado, e dito por quê:** zero arquivo de `src/engine/`, `src/data/`
+intocado.
+🔴 **A §"Onde parei" ACUMULA de novo** — a pré-condição da §Convenções segue **não verificada** para
+os blocos do H1, H2, H3 e PR 7, e não verificada trata-se como não cumprida. Nenhum bloco anterior
+foi tocado; o saldo de `git diff --stat ESTADO.md` é **positivo**, conferido antes do commit.
+
+---
+
+📏 **O NÃO-BUMP DE `VERSAO_APP`, MEDIDO — e o critério do fecho de hash sozinho NÃO basta.**
+Script rastreado: **`scripts/medir-fecho-hash.mjs`** (regra de 2026-08-30).
+
+- **Elo 1 — fecho de runtime.** As raízes são **quatro, não duas**: `hashDoDraft`, `hashDaCorrida` e
+  **os dois PRODUTORES dos argumentos** (`cliente.ts` produz `cliente.draft`; `corrida-online.ts`
+  produz `alvo.corrida`). Medir só as funções responderia *"o cálculo mudou?"* e deixaria de fora
+  *"o dado mudou?"*. **Interseção com o diff: VAZIA.**
+- 🔴 **Houve uma BANDEIRA VERMELHA no caminho, e ela fica registrada:** a primeira rodada acusou
+  `src/net/protocolo.ts`, que está no diff. **Não foi descartada por leitura.** Sonda que computa os
+  dois hashes sobre fixtures fixas, rodada com o `protocolo.ts` do `HEAD` e com o do H4:
+  `draft 9fb2d2066267193e · corrida eb7a9e837d554deb` — **idênticos**. Com **anti-vacuidade**:
+  perturbando as fixtures os dois hashes MUDAM (`42d6873ad1a0a7f3` · `3ba840f199e1a654`), o que
+  prova que a sonda enxerga. A causa é mecânica: `cliente.ts` o importa com **`import type`**,
+  aresta apagada em runtime. O script foi então **refinado** para separar aresta de tipo de aresta
+  de valor, de modo que o veredito seja mecânico e não um override meu.
+- 🔑 **CHAMAR NÃO É ALIMENTAR.** `useSalaOnline.ts` **chama** os dois hashes e está no diff; sai
+  limpo porque o que entra são os ARGUMENTOS, e os produtores deles não foram tocados. Critério
+  "cita o hash" daria vermelho falso.
+- 🔴 **Elo 2 — e este é o que impede o fecho de virar precedente errado:** `src/engine/versao.ts`
+  registra, do bloqueante C1 do 3.5.4, que **o digest cobre quem CALCULA** e que **mudar QUANDO/COMO
+  se atesta divide uma partida do mesmo jeito**, sem tocar em nada que o fecho vigia. O fecho é
+  **necessário, não suficiente**. O que fecha a lacuna aqui é que a **FORMA e o GATILHO do atestado
+  não mudaram** — os dois efeitos de `hash` de `useSalaOnline.ts` estão intocados no diff.
+- 🔒 **Elo 3 — DECISÃO DO DEV (2026-09-02): NÃO BUMPAR, e a janela de transição vira DÍVIDA
+  DOCUMENTADA.** Ver o bloco próprio, logo abaixo.
+
+---
+
+🔒 **A DÍVIDA DA JANELA DE TRANSIÇÃO — decisão do dev, 2026-09-02, e o raciocínio é dele.**
+**Não bumpar `VERSAO_APP`.** O motivo não é o fecho de hash (que é só o elo 1): é que **o bump
+forçaria TODOS os clientes a reconectar ao mesmo tempo** — o servidor recusaria todo build antigo
+com `versao-divergente`, expulsando os 22 de uma vez — **e isso é literalmente o thundering herd
+que o S15 deste mesmo PR existe para prevenir.**
+📌 **A dívida, dita por inteiro:** durante a transição, **clientes velhos reconectam SEM jitter**,
+porque o jitter mora no bundle deles. **O risco é limitado no tempo** (até o último recarregar a
+página) **e não justifica o dano do bump.** A transição gradual — clientes velhos saindo
+naturalmente conforme recarregam — é melhor que forçar a saída de todos de uma vez.
+🔑 **Um dado MEDIDO que reforça a decisão, e ele veio da revisão:** o jitter é **neutralizado no
+caminho de recusa** de qualquer forma (pendência **0(ao)**). Então uma expulsão em massa cairia no
+primeiro degrau da escada **sem espalhamento nenhum**, mesmo com todos já no build novo. É
+argumento a favor de não bumpar, não contra.
+
+---
+
+🔴 **REGISTRO DE PROCESSO — UM PEDIDO DE DOCUMENTAR CONSERTO QUE NÃO EXISTIU, BARRADO ANTES DO
+COMMIT. Registrado a pedido do dev, com as palavras dele:** *"o ponto 1 é o mais grave e fica
+registrado: eu pedi para documentar um conserto que não aconteceu"*.
+
+**O que foi pedido:** registrar que *"o hash da CSP passou de hardcoded para computado sobre o
+conteúdo real do `<script>` no output, em build time"*, com prova de mutação — *"M14 antes
+sobrevivia, agora cai; M15 pega reversão para constante"*.
+🔴 **NADA DISSO EXISTE NESTE PR, e foi medido antes de recusar:** `grep sha256|createHash` em
+`scripts/csp.ts`, `scripts/csp.test.ts` e `vite.config.ts` dá **zero**. **A diretiva é
+`script-src 'self'` e NUNCA houve hash** — nem hardcoded nem computado. Ele seria desnecessário:
+hash autoriza script INLINE, e o `dist/index.html` tem **zero** inline (medido). **M14 sobrevive e
+é EQUIVALENTE**; a **M15 que existe** é outra coisa (a isenção do `sincronizar`, do S3) e está
+rotulada no `mutar-h4.mjs` justamente para não ser confundida com esta.
+🔒 **POR QUE ISTO FICA ESCRITO, e não é constrangimento de ninguém:** documentação é o que a próxima
+sessão trata como verdade, e **um conserto inventado no `ESTADO.md` não tem fonte contra a qual ser
+desmentido** — é a ocorrência nº 3 do `CLAUDE.md` (`e1db1c9`) com o sinal invertido, e aquele
+arquivo a trata como o caso mais grave exatamente por isso. **O portão que funcionou foi conferir a
+especificação contra o código ANTES de escrever**, e é ele que precisa sobreviver a esta sessão.
+📌 **Na mesma leva, outros três itens do pedido descreviam código inexistente** (`allowedCommands`,
+`secondsToMs`, e um try-catch no plugin que INVERTERIA a decisão de falhar alto do `injetarCsp`).
+Nenhum foi implementado; todos foram medidos como ausentes por `grep`.
+
+---
+
+🔒 **A DECISÃO É PURA E MORA EM `src/net/`; a casca só lê relógio, sorteio e HTML.** Quarto PR
+seguido com o mesmo desenho — `avaliarTeto` (H1), `excedeuTetoDeConexoes` (H2),
+`avaliarTetoSincronizar` (H3), agora `avaliarTetoComandos`, `comJitter`/`esperaDaTentativa` e
+`injetarCsp`. É isso que torna a JANELA e o JITTER testáveis em `npm test`, sem relógio falso, sem
+sortear nada e sem `workerd`.
+
+🔒 **O S3 RESPONDE `comandos-demais` EM VEZ DE CALAR — decisão do dev, e é o OPOSTO do H3.** Lá o
+silêncio era seguro porque o cliente real **nunca manda** `sincronizar`. Aqui os comandos são os que
+o jogador manda de verdade, e **engolir um `escolher` faria a jogada sumir da tela enquanto o
+cronômetro de turno corre** — seria a QUARTA ocorrência de uma família já catalogada três vezes (o
+429 do H1, o `close(4403)` da 0(ah), o bug do 3.3.3). **Código NOVO em vez de reusar um:**
+`sala-inexistente` APAGA o token de reentrada e puniria com perda de identidade quem só bateu num
+teto. A regra de invalidação saiu de dentro do hook e virou `invalidaTokenDeReentrada`, pura e com
+teste — **guarda dentro de hook não tem baseline possível neste projeto** (sem `jsdom`, medido; foi
+assim que `M-guarda-classif` sobreviveu no 3.5.3).
+
+🔒 **AS TRÊS ISENÇÕES DO TETO DO S3 SÃO DELIBERADAS — decisão do dev, 2026-09-02.** Não entram na
+contagem: **frame binário** (rejeitado antes de tudo), **string acima de `MAX_BYTES_MENSAGEM`**
+(teto de bytes) e **`sincronizar`** (teto do H3, janela própria). **Cada uma já tem guarda
+PRÓPRIA**, e somar puniria o jogador legítimo cujo cliente mandou um `sincronizar` seguido de uma
+jogada.
+⚠️ **Consequência aceita:** este teto **não** é a defesa contra flood de lixo binário nem de
+mensagem gigante. Quem medir superfície de flood olha as quatro guardas, não só esta.
+
+---
+
+🔴 **DOIS BLOQUEANTES DA REVISÃO, CONSERTADOS NESTE PR — e o primeiro era PROSA FALSA MINHA.**
+✅ **O `senior-reviewer` RODOU neste PR** — o primeiro dos quatro de hardening a ter revisão. Ver a
+§"DÍVIDA DE PROCESSO".
+
+1. 🔴 **C1 — o docblock de `recusarPorTetoDeComandos` dizia "Conta TODA mensagem", e era FALSO.**
+   O teto é a **quarta** guarda do `onMessage`; três caminhos passam por baixo. **Corrigido no
+   lugar**, e a correção descreve o escopo real. **Prosa em presente do indicativo que não confere
+   com o sítio é a classe que a revisão do PR 7 pegou duas vezes** — e desta vez ela não foi para a
+   `main`.
+2. 🔴 **C2 — a derivação do `20` omitia o termo servidor-dirigido.** O dev decidiu as isenções
+   (acima) e a derivação foi reescrita com o termo que faltava. **O número NÃO foi mexido**; o
+   resíduo virou a **0(al)**.
+
+🔴 **E O CONSERTO DO C2 ACHOU UM DEFEITO QUE NINGUÉM TINHA VISTO: a isenção do `sincronizar` estava
+INCOMPLETA.** Sair cedo na recusa do H3 não bastava — o `sincronizar` **ACEITO** (o primeiro de cada
+janela) caía adiante e **consumia a cota de jogo**, que é exatamente o caso que a justificativa do
+dev nomeia ("um `sincronizar` seguido de uma jogada").
+🔑 **Foi a CERCA que o achou, e ela nasceu VERMELHA POR VALOR** — não de compilação. `onMessage`
+passou a parsear o tipo **uma vez** e a passá-lo aos dois tetos, o que de quebra **reduziu** o custo
+que o H3 tinha assumido como "um `JSON.parse` a mais". A mutação **M15** cobre a regressão.
+📌 **E o `scripts/mutar-h3.mjs` teve o alvo ATUALIZADO** — a assinatura de `recusarSincronizar`
+mudou, e script de mutação que aponta para string morta imprime "ALVO NÃO ENCONTRADO", deixando a
+tabela do H3 de ser refazível. **Os RESULTADOS do H3 não mudam; o que mudou foi a ferramenta.**
+
+---
+
+📊 **A TABELA DE MUTAÇÕES — QUINZE, com `scripts/mutar-h4.mjs` RASTREADO.** Controle:
+`1713 passed (1713)` e `42 passed (42)`. **14 caem, 1 sobrevive.**
+
+    M1   S3  teto deixa de ser consultado          [party] exit=1  5 failed | 37 passed (42)
+    M2   S3  teto vira 21 (off-by-one)             [npm]   exit=1  3 failed | 1710 passed (1713)
+    M3   S3  a janela NUNCA expira (banimento)     [npm]   exit=1  2 failed | 1711 passed (1713)
+    M4   S3  a recusa REINICIA a janela            [npm]   exit=1  1 failed | 1712 passed (1713)
+    M5   S3  o mapa não encolhe no onClose         [party] exit=1  1 failed | 41 passed (42)
+    M6   S3  a recusa CALA em vez de responder     [party] exit=1  4 failed | 38 passed (42)
+    M7   S3  comandos-demais APAGA o token         [npm]   exit=1  2 failed | 1711 passed (1713)
+    M8   S15 jitter SIMÉTRICO (passa a antecipar)  [npm]   exit=1  5 failed | 1708 passed (1713)
+    M9   S15 o sorteio é IGNORADO                  [npm]   exit=1  2 failed | 1711 passed (1713)
+    M10  S15 jitter ANTES do clamp                 [npm]   exit=1  1 failed | 1712 passed (1713)
+    M11  S5  o plugin roda SEMPRE (quebra o dev)   [npm]   exit=1  1 failed | 1712 passed (1713)
+    M12  S5  injetarCsp degrada em SILÊNCIO        [npm]   exit=1  1 failed | 1712 passed (1713)
+    M13  S5  style-src ganha 'unsafe-inline'       [npm]   exit=1  2 failed | 1711 passed (1713)
+    M15  S3  sincronizar aceito consome a cota     [party] exit=1  1 failed | 41 passed (42)
+    M14  S5  âncora <head> → </title>              [npm]   exit=0  1713 passed  <- SOBREVIVE
+
+🔴 **M14 SOBREVIVE porque é EQUIVALENTE, e isso foi MEDIDO, não presumido.** Construí o `dist/` com
+a mutação aplicada e **olhei o HTML**: com a âncora em `</title>` a meta sai depois do título e
+**ainda antes** do `<script>` e do `<link>`, porque o Vite os acrescenta no fim do `<head>`. A
+propriedade de segurança (a meta preceder o que governa) vale nas duas âncoras.
+🔑 **Ela FICA na tabela**, pelo precedente da M4 sobrevivente do H2: **mutação sobrevivente omitida
+é a tabela mentindo por seleção.**
+⚠️ **UM CASO DE TESTE NASCEU DE UMA SUPOSIÇÃO MINHA ERRADA, e fica dito:** escrevi um caso novo
+achando que M14 era lacuna de cobertura; ele **não a pega**, porque não há o que pegar. **Corrigi o
+comentário que já afirmava que pegava.** O caso fica porque a versão anterior media a forma ERRADA
+(o `index.html` fonte, onde o script mora no `<body>`, e não a do `dist/`), mas está rotulado como
+o que é. É a inexatidão que o H2 pagou uma vez ao alegar que M2 cobria a anti-vacuidade do S2.
+
+---
+
+🔴 **O QUE ESTE PR NÃO FAZ, e é o mais importante do registro.**
+
+- **A calibragem do teto do S3 não está medida** — pendência **0(al)**, com a conta.
+- **A fiação do S15 não tem cobertura**: medido, trocar `sortear()` por `0` em `conexao.ts` deixa as
+  duas suítes **1713/1713 e 42/42**. `abrirConexao` não tem teste em suíte nenhuma.
+  🔒 **DECISÃO DO DEV: registrar, NÃO consertar neste PR** — pendência **0(ak)**. Motivo dele: a
+  cerca-lint proíbe `Math.random` em `src/net/**` e a função já usa `crypto.getRandomValues`; o
+  risco residual é alguém substituir a implementação, **e a cerca pega isso**. Cobertura direta do
+  valor de retorno é bom-ter, não bloqueante.
+- **`comandos-demais` chega CRU à tela do jogador e nunca é limpo** — pendência **0(am)**.
+- **`crypto.getRandomValues` ficou legal em TODO `src/net/**`**, inclusive no redutor replicado —
+  pendência **0(an)**.
+- **A CSP não protege nada hoje**, porque nada neste repositório serve o `dist/` — ver a ressalva
+  do S5 na §"AUDITORIA DE SEGURANÇA".
+
+---
 
 **🔐 PR H3 — TETO DE `sincronizar` POR CONEXÃO: CONCLUÍDO e MERGEADO em 2026-09-01**
 (`ca2cfcb`, merge `--no-ff` de `1590daa`), na `main`. **ALTO RISCO** — mexe em `party/sala.ts` e
@@ -2075,9 +2288,9 @@ casca deixa de ser terra sem teste; a opção conhecida é `@cloudflare/vitest-p
 |---|---|---|---|
 | **S1** | ✅ **FECHADO** | teto de 5/IP por janela de 10 s no `POST /criar-sala` | fechado no **PR H1**, 2026-09-01 |
 | **S2** | ✅ **FECHADO** | teto de 64 conexões por sala, contando TODAS — não só o roster | fechado no **PR H2**, 2026-09-01 — ⚠️ **baliza a 0(y), não a fecha**; ver 0(ag) |
-| **S3** | 🟡 PARCIAL | `difundir()` checa identidade, **mas sem rate limit inbound** | — |
+| **S3** | 🟡 **PARCIAL** | teto de **20 comandos de jogo / s por conexão**, respondendo `comandos-demais` | mitigado no **PR H4**, 2026-09-02 — 🔴 **o teto EXISTE; a CALIBRAGEM dele tem termo não medido**; ver a ressalva e a 0(al) |
 | **S4** | ✅ **FECHADO** | `Origin` validado no upgrade, reusando a allowlist do H1 | fechado no **PR H2**, 2026-09-01 |
-| **S5** | 🔴 ABERTO | nenhum detalhe ditado | `= M4` (não conferível) |
+| **S5** | ✅ **FECHADO** | CSP `default-src 'self'`, **sem nenhum `unsafe-*`**, injetada só no build | fechado no **PR H4**, 2026-09-02 — ⚠️ **hoje nada neste repo SERVE o `dist/`**; ver a ressalva |
 | **S6** | ✅ FECHADO | **falso positivo**, 3ª confirmação | — |
 | **S7** | 🟡 **PARCIAL** | teto de 1/2 s por conexão no `sincronizar` | mitigado no **PR H3**, 2026-09-01 — 🔴 **o cap do log NÃO entrou**; ver a ressalva |
 | **S8** | ✅ FECHADO | `crypto.getRandomValues`, **32 bytes, base64url** | ⚠️ **não casa com o repo** — ver abaixo |
@@ -2087,7 +2300,7 @@ casca deixa de ser terra sem teste; a opção conhecida é `@cloudflare/vitest-p
 | **S12** | 🟡 **PARCIAL** | reentrada idempotente + `difundir()` só em caminho aceito | **rebaixado em 2026-09-01**, ditado pelo dev — 🔴 **a proveniência NÃO confere e a 2ª metade foi QUALIFICADA por sonda**; ver a ressalva |
 | **S13** | ⬜ **NÃO DITADO** | **ausente das três listas** — ver a lacuna 1 | — |
 | **S14** | ⬜ **NÃO DITADO** | **ausente das três listas** — ver a lacuna 1 | — |
-| **S15** | 🔴 ABERTO | nenhum detalhe ditado | `= A4` (não conferível) |
+| **S15** | ✅ **FECHADO** | jitter de até **30%** na escada de reconexão, que só ADIA | fechado no **PR H4**, 2026-09-02 — ⚠️ neutralizado no caminho de RECUSA; ver a 0(ao) |
 | **S16** | ✅ FECHADO | `MAX_BYTES_MENSAGEM` checado **ANTES** do `JSON.parse` | ✅ conferido nesta sessão |
 | **S17** | ✅ **FECHADO** | `catch` genérico, **sem stack trace** — `.stack` dá **ZERO** em produção | **fechado POR MEDIÇÃO** em 2026-09-01 — ⚠️ **UM sítio propaga `e.message` à tela**; ver a ressalva |
 
@@ -2104,6 +2317,77 @@ seria lida como o escopo inteiro do PR, que é mais largo: o **S3 está 🟡 PAR
 entra no H4 pelo *rate limit inbound* — **sem a coalescência de broadcast**, que fica na **0(ai)**,
 em PR próprio, como o dev ditou. **Corrigido no lugar** em vez de contradito adiante, pela regra
 da §Convenções.
+
+🔄 **ATUALIZADO em 2026-09-02, pelo PR H4 — S5 e S15 passam a ✅ FECHADO POR IMPLEMENTAÇÃO; o S3
+vai a 🟡 PARCIAL.** Placar corrente: **12 fechados · 3 parciais · 0 abertos** (+ S13/S14 não
+ditados). Conferido contra a tabela linha a linha: fechados
+`S1·S2·S4·S5·S6·S8·S9·S10·S11·S15·S16·S17` = **12**; parciais `S3·S7·S12` = **3**; abertos = **0**.
+`12 + 3 + 0 = 15`, e os dois que faltam para 17 são exatamente S13 e S14, que seguem **NÃO
+DITADOS** (lacuna 1). 🔑 **É a primeira vez que a coluna 🔴 fica vazia** — e vazia não quer dizer
+resolvida: três itens estão em 🟡 e dois nunca foram ditados.
+
+🔴 **O S3 NÃO FOI A ✅, e o motivo é específico — não é conservadorismo.** O que o ditado apontava
+(*"sem rate limit inbound"*) **existe agora**: 20 comandos de jogo por segundo, por conexão, com
+resposta `comandos-demais`. **O que não está medido é a CALIBRAGEM.** A revisão do H4 achou que a
+derivação do `20` omitiu um termo que **não é disparado pelo jogador, e sim pelos outros 21**: os
+dois efeitos de `hash` do cliente disparam por avanço de `eventosAplicados`, que avança a cada
+broadcast — logo a taxa de `hash` que SAI de cada cliente acompanha a taxa AGREGADA da sala, e a
+fase de sorteios é **CONCORRENTE** (`draft-rede.ts`). Com 22 humanos a uma escolha por segundo, o
+teto estoura por jogo legítimo.
+🔑 **E o dano provável não é a jogada perdida — é a ATESTAÇÃO perdida**, em silêncio, que é a
+família "detector morre em silêncio". **Virou a pendência 0(al), com a conta escrita.**
+**Promover o S3 a ✅ é decisão do dev**, e o precedente é o S7 do H3.
+
+✅ **S5 — FECHADO, e o portão visual foi ABERTO E OLHADO nos dois modos.** A política é
+`default-src 'self'` com `script-src`/`style-src`/`font-src`/`connect-src` em `'self'`,
+`object-src`/`form-action` em `'none'`, e **zero `unsafe-*`** (há cerca asserindo a ausência).
+Viável porque o `dist/index.html` tem **1 script, `type="module"` com `src`, ZERO inline** — medido.
+🔴 **A META NÃO VAI NO `index.html` FONTE, e isso é MEDIÇÃO com controle, não preferência:**
+
+    com a meta no fonte   →  npm run dev: HTML CRU, sem estilo nenhum · dist servido: tela normal
+    sem a meta (controle) →  npm run dev: tela normal              · dist servido: tela normal
+
+A causa: em dev o Vite serve o CSS criando `<style>` por JavaScript, e `style-src 'self'` mata isso;
+em produção o CSS vem por `<link rel=stylesheet>` da mesma origem. **A meta entra por plugin com
+`apply: 'build'`** (`scripts/csp.ts`), e há asserção sobre o `apply` — é a única guarda mecânica
+contra alguém "consertar" o plugin para rodar sempre e derrubar o dev.
+🔑 **O CONSOLE FICOU LIMPO NAS DUAS MEDIÇÕES — três mensagens, nenhuma violação de CSP registrada.
+Só pegou quem abriu e OLHOU a tela.** É a lição do 3.4.1 aplicada à CSP, e é a razão de a
+§"Definição de pronto" item 5 existir.
+⚠️ **RESSALVA QUE PRECISA VIAJAR JUNTO COM O `✅`: hoje NADA neste repositório SERVE o `dist/`.**
+O `wrangler.jsonc` não tem binding de assets (o worker serve `/parties/*` e `/criar-sala`), e o
+jogo é jogado por `npm run dev`, que por desenho não tem CSP. **A política é preparação correta
+para um deploy que ainda não existe** — quem ler o `✅` como "o jogo servido hoje está sob CSP"
+está errado.
+⚠️ **Segunda ressalva, do escape:** quem usar `VITE_WS_BASE` para pôr o worker noutra origem é
+barrado por `connect-src 'self'` — **e não só no WebSocket: `src/ui/sala-online.ts` deriva da mesma
+base para o `POST /criar-sala`**, então nesse deploy o jogador não consegue nem CRIAR sala. Está
+dito em `scripts/csp.ts` para não virar "servidor fora do ar".
+🔴 **`frame-ancestors` NÃO entra, e a ausência é deliberada:** por especificação ele é **IGNORADO**
+quando entregue por `<meta>`. Há teste asserindo que ele não está lá, para ninguém o acrescentar
+achando que fechou clickjacking.
+
+✅ **S15 — FECHADO, e o `Math.random()` da especificação NÃO entrou: a cerca de lint o proíbe.**
+O jitter é de até **30%** sobre a escada `[500, 1000, 2000, 4000, 8000]`, e **só ADIA, nunca
+antecipa** — a forma simétrica espalharia igual e empurraria metade das tentativas para ANTES da
+espera base, ou seja, para o instante em que o servidor está mais fraco. Há teste dedicado.
+🔴 **A SUBSTITUIÇÃO FOI FORÇADA PELA REGRA, NÃO ESCOLHIDA — e isso fica escrito porque a
+especificação pedia outra coisa.** `Math.random` é **erro de lint** em `src/net/**`
+(`eslint.config.js`, `no-restricted-properties`), e `src/net/cerca-lint.test.ts` **roda o ESLint de
+verdade** para garantir. Entrou **`crypto.getRandomValues`**, medido passando (`npx eslint` exit 0).
+🔒 **A cerca NÃO foi afrouxada, e recusar afrouxá-la é a parte que importa:** separar a regra num
+bloco novo para `conexao.ts` apagaria em silêncio as outras proibições do mesmo bloco — o defeito
+exato do `CLAUDE.md` §"Cerca de lint: separar regra APAGA a regra", que este projeto já pagou uma
+vez, no PR 3.2, num PR cuja tese era determinismo.
+🔑 **Não é `crypto.randomUUID`, e a distinção é operacional:** `randomUUID` exige contexto seguro, e
+o jogo é servido em `http://192.168.0.13:5173` na LAN (`docs/jogar-em-rede.md`). `getRandomValues`
+não exige.
+🔒 **E não fura o determinismo que a cerca protege:** o que ela defende é o REDUTOR, replicado nos
+22. `conexao.ts` é a casca de I/O do cliente — já tem `new WebSocket` e `setTimeout` —, e a
+reconexão não entra em estado de jogo nenhum. **Medido: os dois hashes de protocolo não mudam.**
+⚠️ **Duas ressalvas: a 0(ao)** (o jitter é neutralizado no caminho de RECUSA, porque `tentativa`
+zera no `open` e o `4403` do H2 fecha DEPOIS do `open`) **e a 0(an)** (`getRandomValues` ficou
+legal em TODO `src/net/**`, inclusive no redutor, e nada o vigia).
 
 ✅ **S10 — A EVIDÊNCIA JÁ ESTAVA NO REPOSITÓRIO, e é o que fecha o item.** O veredito ditado era
 *"`aplicar()` só grava quando muda, **mas o tique roda e cobra CPU**"*. **O tique medido não cobra
@@ -2347,6 +2631,7 @@ afetam produção) e **nenhum dos três passou pelo `senior-reviewer`**, que o `
 | **H1** (`2f780bb`) | S1 + S9 | 🔴 ALTO RISCO | ❌ não rodou | §"Onde parei", bloco do H1 · `HISTORICO.md` §"PR H1" |
 | **H2** (`91322d0`) | S2 + S4 | 🔴 ALTO RISCO | ❌ não rodou | §"Onde parei", bloco do H2 · `HISTORICO.md` §"PR H2" |
 | **H3** (`ca2cfcb`) | S7 (parcial) | 🔴 ALTO RISCO | ❌ não rodou | §"Onde parei", bloco do H3 · `HISTORICO.md` §"PR H3" |
+| **H4** (`0705ff6`) | S5 + S15 + S3 | 🔴 ALTO RISCO | ✅ **RODOU** — 3 bloqueantes, 8 avisos | §"Onde parei", bloco do H4 · `HISTORICO.md` §"PR H4" |
 
 🔴 **A PROVENIÊNCIA DOS TRÊS NÃO É A MESMA, e achatá-la seria perder o que importa.** As três linhas
 acima concordam no FATO e divergem em COMO ele veio a ser:
@@ -2381,8 +2666,22 @@ repositório**. **Nenhuma mutação e nenhum portão pega essa classe** — a me
 📌 **NÃO recebeu número de pendência, e a escolha é declarada em vez de feita em silêncio.** Segue o
 precedente do "429 vira servidor fora do ar" do H1 (*"Fica aqui sem número de pendência — atribuir um
 seria decidir por ele"*): o dev pediu **registrar a dívida**, não abrir item de trabalho, e disse que
-**os PRs não retroagem**. ✅ **Se ele quiser promovê-la, `0(ak)` está LIVRE** — conferido nesta sessão
-(zero ocorrências em `*.md`; a última ocupada é `0(aj)`).
+**os PRs não retroagem**.
+⚠️ **A redação anterior desta linha dizia que `0(ak)` estava LIVRE para o caso de o dev promover
+esta dívida a pendência. FICOU FALSA em 2026-09-02: o PR H4 OCUPOU `0(ak)`** (a fiação do jitter
+sem cobertura). **Corrigida no lugar, não contradita ao lado** — duas coisas com o mesmo rótulo é
+o defeito do `C1` ambíguo que a §"MEDIÇÕES E AUDITORIAS" já catalogou.
+✅ **A próxima livre é `0(ap)`**, conferido em 2026-09-02: a última ocupada passou a ser `0(ao)`.
+
+🔄 **ATUALIZADO em 2026-09-02 — A DÍVIDA PAROU DE CRESCER: o PR H4 TEVE `senior-reviewer`.**
+É o quarto PR de hardening e o **primeiro dos quatro** a passar pelo portão que a §"Definição de
+pronto" item 3 exige para ALTO RISCO. **A dívida dos três anteriores NÃO retroage e continua
+registrada acima, como o dev ditou** — o que muda é que ela deixou de ser o padrão em curso.
+🔑 **E a revisão se pagou na primeira vez que rodou, exatamente na classe que a tabela previa:** o
+bloqueante **C1** era **prosa em presente do indicativo virada falsa** num docblock que eu mesmo
+tinha acabado de escrever (*"Conta TODA mensagem"*, quando o teto é a quarta guarda). **Nenhuma
+mutação e nenhum portão pega essa classe** — as 15 mutações do H4 estavam todas verdes com a frase
+falsa no lugar. **Foi o único portão que a teria impedido de chegar à `main`.**
 
 ⚠️ **O que fica valendo para o PRÓXIMO PR ALTO RISCO, e é a única consequência operacional deste
 bloco:** com a dívida em três, *"não rodou nos anteriores"* deixa de ser precedente neutro e passa a
@@ -3050,6 +3349,106 @@ que agora ela é tomada com o número na mão.**
    proposto por mim porque não o enxerguei; se existir, é ele que destrava a ideia original.
    📌 **É decisão do dev.** ⚠️ **Ler junto com a 0(ai)**: são as duas metades do mesmo assunto, e a
    0(ai) é a que tem dano MEDIDO (19,5 MiB por draft). **Se só uma for feita, a 0(ai) é a que paga.**
+
+   (ak) 🟡 **NOVA (PR H4, 2026-09-02) — A FIAÇÃO DO JITTER NÃO TEM COBERTURA: trocar `sortear()`
+   por `0` deixa as duas suítes VERDES. DECISÃO DO DEV: registrar, NÃO consertar.**
+   **A numeração é minha**, pelo precedente da 0(y)/0(z)/0(af)/0(ag)/0(ai). ⚠️ **`0(ak)` era citada
+   como "LIVRE" na §"DÍVIDA DE PROCESSO"** (para o caso de o dev promover aquela dívida a
+   pendência); **ela passa a ser ESTA, e aquela linha foi corrigida no lugar** para apontar a
+   próxima livre. Duas coisas com o mesmo rótulo é o defeito do `C1` ambíguo que a §"MEDIÇÕES E
+   AUDITORIAS" já catalogou.
+   📏 **MEDIDO, não deduzido:** com `esperaDaTentativa(tentativa, 0)` no lugar de
+   `esperaDaTentativa(tentativa, sortear())` em `src/net/conexao.ts`, `npm test` dá **1713/1713** e
+   `npm run test:party` dá **42/42**. **`abrirConexao` não tem teste em suíte nenhuma** —
+   `src/net/conexao.test.ts` cobre só `baseParaEstaPagina` e `urlDaSala`.
+   🔑 **A decisão pura ESTÁ coberta** (`src/net/jitter-reconexao.test.ts`, e as mutações M8/M9/M10
+   caem). **O que não tem baseline é o elo entre ela e o `setTimeout`.**
+   🔒 **Palavras do dev ao decidir (2026-09-02):** a cerca-lint proíbe `Math.random` em
+   `src/net/**` e a função já usa `crypto.getRandomValues`; **o risco residual é alguém substituir a
+   implementação, e a cerca pega isso.** Cobertura direta do valor de retorno é **bom-ter, não
+   bloqueante**.
+   ⚠️ **O que a cerca NÃO pega, e por isso a pendência fica aberta:** trocar a CHAMADA (passar `0`,
+   ou voltar a indexar `ESPERAS_MS` direto) não usa `Math.random` nenhum — passa no lint e passa na
+   suíte. **Conserto natural, quando vier:** teste com `WebSocket` esfaqueado, ou extrair o
+   agendamento para uma função que receba o relógio e o sorteio.
+
+   (al) 🔴 **NOVA (PR H4, 2026-09-02) — A CALIBRAGEM DO TETO DO S3 TEM UM TERMO NÃO MEDIDO, e ele
+   NÃO é disparado pelo jogador: é disparado pelos outros 21.**
+   **A numeração é minha**, mesmo precedente.
+   **A cadeia, verificada elo a elo:** `src/net/servidor-sala.ts` termina todo comando de draft
+   aceito em `difundir(...)` (broadcast a todos) → `src/net/cliente.ts` incrementa
+   `eventosAplicados` por evento novo do log → o efeito de `src/ui/useSalaOnline.ts` tem
+   `eventosAplicados` nas dependências e manda **um `hash` por avanço**. **Logo a taxa de `hash` que
+   SAI de cada cliente acompanha a taxa AGREGADA de comandos aceitos da sala inteira.**
+   ⚠️ **E o pior instante é o mais sincronizado do jogo:** `src/net/draft-rede.ts` marca a fase de
+   sorteios como **CONCORRENTE** — os 22 jogam ao mesmo tempo —, e é quando as 22 telas abrem
+   juntas. Com 22 humanos escolhendo a cada T segundos, cada cliente emite ≈ 22/T `hash` por segundo
+   **além** dos próprios comandos: a 3 s por escolha são **7,3/s** (37% do orçamento de 20); a 1 s
+   por escolha, **estoura**.
+   🔑 **O dano provável NÃO é a jogada perdida — é a ATESTAÇÃO perdida.** Estourado o teto, a
+   mensagem mais provável de cair é um `hash`, e o detector de divergência perde a atestação daquela
+   âncora **em silêncio**, sem nada na tela e sem nada no log. É a família "detector morre em
+   silêncio" que `protocolo.ts` e `versao.ts` já catalogaram.
+   🔴 **O NÚMERO NÃO FOI MEXIDO NO H4, de propósito.** Propor um valor novo sem refazer a conta
+   repetiria o defeito um nível acima — que é exatamente o que a derivação original fez ao concluir
+   "3× de folga" a partir de uma rajada que não era a maior.
+   **As três saídas, NENHUMA escolhida:** (a) subir o teto **com a conta explícita**; (b) **isentar
+   `hash`** do teto geral — ele é idempotente e não gera escrita quando não muda estado; (c)
+   **coalescer** a atestação no cliente, que é vizinha da **0(ai)** e provavelmente PR próprio.
+   📌 **É decisão do dev.** ⚠️ **Ler junto com a 0(ai)**: as duas são sobre o mesmo tráfego visto de
+   pontas opostas — lá o snapshot que SAI do servidor, aqui o atestado que VOLTA.
+
+   (am) 🟠 **NOVA (PR H4, 2026-09-02) — `comandos-demais` CHEGA CRU À TELA DO JOGADOR E NUNCA SAI
+   DE LÁ.** É consequência direta da decisão de RESPONDER em vez de calar, e não foi antecipada.
+   **A cadeia, verificada:** `src/net/cliente.ts` acumula (`erros: [...estado.erros, mensagem.erro]`,
+   sem teto) → `src/ui/useSalaOnline.ts` expõe `ultimoErro: cliente.erros.at(-1) ?? null`, que
+   **nunca é limpo** → `src/ui/TelaLobby.tsx` renderiza `⚠️ {erro}` direto, **e não existe tradução
+   de código para texto humano em lugar nenhum da UI** (medido: zero). O mesmo `ultimoErro` chega em
+   `Espera` e em `TelaDraft` por `FluxoOnline.tsx`.
+   **Consequência:** quem encostar no teto **uma vez** fica com o texto técnico `comandos-demais`
+   grudado na tela **pelo resto da partida**.
+   ⚠️ **O comportamento é PRÉ-EXISTENTE para todos os códigos de erro** — não nasceu aqui. O que o
+   H4 muda é que passa a existir um código **alcançável por jogo legítimo** (bater num rate limit),
+   enquanto os outros são terminais ou raros.
+   📌 **Isto é mudança do que se VÊ, e aciona a §"Definição de pronto" item 5.** O `npm run preview`
+   verde do portão **não** cobre este caso: ele roda a config de preview, não abre a tela com esta
+   string. **Conserto natural:** mapear código → texto humano, ou não deixar este entrar em
+   `ultimoErro`. **É decisão do dev, e mexe em tela.**
+
+   (an) 🟡 **NOVA (PR H4, 2026-09-02) — `crypto.getRandomValues` FICOU LEGAL EM TODO `src/net/**`,
+   inclusive no REDUTOR replicado, e nada o vigia.**
+   **O que foi medido:** `eslint.config.js` proíbe `Math.random`, `performance.now` e `Date.now` em
+   `src/net/**` por `no-restricted-properties`; **`crypto.getRandomValues` não está na lista** — foi
+   por isso que ele passou (exit 0) e virou a saída do S15. **Mas a permissão não é local ao
+   `conexao.ts`:** ela vale para `servidor-sala.ts` e `draft-rede.ts`, que são o redutor replicado
+   nos 22 e a razão de a cerca existir.
+   🔑 **O H4 é o primeiro a introduzir entropia não semeada nesse diretório.** Quem copiar o padrão
+   para o redutor **não vai ouvir nada do lint**, e o efeito seria divergência entre os 22 — a classe
+   que a cerca existe para tornar impossível.
+   **Conserto natural, quando vier:** acrescentar a propriedade à lista **existente** e liberar por
+   `eslint-disable-next-line` na única linha de `conexao.ts`, **com caso em
+   `src/net/cerca-lint.test.ts`**.
+   🔒 **Explicitamente NÃO um bloco novo por arquivo:** um bloco file-scoped teria de repetir as três
+   entradas de `no-restricted-properties`, que é a armadilha do `CLAUDE.md` §"Cerca de lint: separar
+   regra APAGA a regra" — **a mesma doutrina que este PR invocou para justificar o
+   `getRandomValues`**. Quem consertar isto tem de consertar sem reabrir aquilo.
+
+   (ao) 🟡 **NOVA (PR H4, 2026-09-02) — O JITTER É NEUTRALIZADO NO CAMINHO DE RECUSA, que é
+   justamente o cenário de sobrecarga que ele nomeia.**
+   **A cadeia, verificada:** `src/net/conexao.ts` zera `tentativa` no evento `open`. E o H2 mediu e
+   registrou que o socket **É ACEITO** (101) antes de o `onConnect` fechá-lo com `4403` — a
+   plataforma não permite recusar antes do `accept`. **Logo "sala lotada" e "origem não autorizada"
+   produzem `open` → `close` → `tentativa = 0` → 500 ms → repete, para sempre, no PRIMEIRO
+   DEGRAU.**
+   🔑 **O jitter continua espalhando os 22 numa faixa de ~150 ms, mas a escada nunca sobe** —
+   exatamente quando o teto de conexões do H2 está disparando. O docblock de
+   `src/net/jitter-reconexao.ts` cita "queda do worker, deploy, blip": nesses o socket não abre e a
+   escada funciona normalmente. **O caso da recusa é o que fica descoberto.**
+   ⚠️ **Ler junto com a 0(ah)** (o cliente não distingue o `4403`): são o mesmo fechamento visto de
+   dois lados — lá o jogador não sabe por quê, aqui ele martela o servidor a cada 500 ms enquanto
+   não sabe.
+   **Conserto natural, quando vier:** só zerar `tentativa` depois de a conexão sobreviver N ms ou
+   receber a primeira mensagem. **É PR próprio e decisão do dev.**
 
 1. **Abertas pelo 7.8:** (a) o `BotaoTema` é um botão discreto no canto do `app-shell` — posição e
    forma **não passaram por veredito de arte**; (b) `erro` (salmão `#FF7B85`) e `raridadeProibido`
