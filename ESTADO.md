@@ -10,7 +10,38 @@
 
 ## Estado atual
 
-**Última medição (2026-09-02, na `main` — PR H4, CSP + jitter + teto de comandos, `0705ff6`):**
+**Última medição (2026-09-02, na `main` — PR pré-deploy, os últimos nomes reais visíveis, `6ee6b84`):**
+`npm test` **1713/1713 — INALTERADO**, e inalterado é o resultado CERTO: nenhum teste nasceu e
+nenhum comportamento mudou (o PR troca uma string de placeholder e tira três `<img>` do README).
+**`npm run test:party` 42/42**, typecheck **0** nos três projetos, lint **0** (por exit code),
+`npm run preview` **0** (11/11) **sem mover `docs/img/silhuetas.svg`** — conferido por `git status`.
+🔑 **`VERSAO_APP` fica 3.4.5 e `VERSAO_FORMATO` fica 3 — SEM BUMP, e a prova é MECÂNICA:**
+`src/engine/versao.test.ts` está verde e **`src/ui/` está fora do escopo do digest** (engine +
+`src/data/*.json` + 2 de `src/net/`).
+⚠️ **O BUNDLE MUDOU DE HASH — `index-UkRE1HGe.js` → `index-rKeVHM50.js`** (864,13 KB), e é o
+esperado: a string do placeholder chega ao bundle. **Hash mudado aqui NÃO é sinal de bump devido** —
+o digest não cobre `src/ui/`.
+✅ **PORTÃO DOS NOMES REAIS NO BUNDLE RE-MEDIDO, não herdado** (`node scripts/medir-nomes-bundle.mjs`
+sobre o `dist/` recém-construído, a pedido do dev): **124 no chunk JS** — `sala`=64 · `button`=57 ·
+`massa`=2 · `Red Bull`=1 —, **`dist/index.html` = 0**, CSS = 14 (`shadow`=13 de `box-shadow` +
+`button`=1). **TOTAL 138.**
+🔑 **O 124 BATE COM O NÚMERO QUE O README JÁ AFIRMAVA, e isso não é ausência de efeito: é a CEGUEIRA
+DA FRONTEIRA vista pelo terceiro lado** — `senna1988` nunca entrou nessa conta, então tirá-lo não
+podia baixá-la. Ver o bloco do PR na §"Onde parei".
+⚠️ **PROVENIÊNCIA DO "ANTES", e ela é obrigatória: o 124 anterior é REGISTRO, não remedição minha.**
+Ele foi medido contra `index-UkRE1HGe.js` na sessão do `da85999` e está no README; **o que EU medi
+foi o 124 de agora**, contra `index-rKeVHM50.js`. O bundle antigo já não existe em disco, e
+remedi-lo exigiria checkout. **O que sustenta a igualdade não é a comparação de duas medições
+minhas — é a MECÂNICA:** a agulha exige fronteira dos dois lados e o `1` colado a anula.
+✅ **`senna1988` = 0 no `dist/` INTEIRO**, e a string literal extraída do bundle é
+`ex.: vilarinho1988 ou 42`.
+⚠️ **`npm run balance` NÃO rodado, e dito por quê:** zero arquivo de `src/engine/`, `src/data/`
+intocado.
+✅ **Portão visual ABERTO E OLHADO nos dois temas** (`npm run dev`, o `<details>` da seed expandido),
+porque o PR muda a primeira tela. Placeholder legível e sem truncar; **console limpo** (3 mensagens,
+todas de Vite/React, zero erro).
+
+*(Medição anterior, 2026-09-02, na `main` — PR H4, CSP + jitter + teto de comandos, `0705ff6`):*
 `npm test` **1713/1713** em **3 rodadas idênticas**, 78 arquivos (era 1683/74, **+30**).
 ⚠️ **SUBIU, e é dito assim de propósito:** os casos novos são de `src/net/jitter-reconexao.test.ts`,
 `src/net/teto-comandos.test.ts`, `src/net/token-reentrada.test.ts` e `scripts/csp.test.ts`.
@@ -259,6 +290,11 @@ Está desatualizado e vai mentir se um teste quebrar.
 prints do dev e a grade `silhuetas.svg`, esta **gerada** por
 `scripts/gerar-silhuetas-readme.preview.test.ts` via `npm run preview`, a partir do `pathDaVolta` de
 produção. **Se um traçado mudar, regerar e commitar a grade.** Licença **MIT** desde 2026-08-08.
+🔴 **ATUALIZADO em 2026-09-02 — OS TRÊS PRINTS SEGUEM VERSIONADOS, MAS SAÍRAM DO README** (`6ee6b84`):
+são de **2026-08-08**, anteriores à troca do dataset (2026-08-30), e exibiam **nomes reais** na
+vitrine do projeto. **Os arquivos NÃO foram apagados** — regerá-los com o dataset atual é a
+pendência **0(ap)**. **A grade `silhuetas.svg` FICOU no README:** sai da geometria de produção e
+nunca teve nome real.
 
 > 📦 **O changelog histórico desta seção foi ARQUIVADO em 2026-08-19** (narrativas de PR, medições
 > por PR, portão nº 2, SPIKE 3.0, inventário da `main`, push/merge de agosto, README/LICENSE):
@@ -616,6 +652,121 @@ dependência).
 
 
 ## Onde parei
+
+**🏁 PR PRÉ-DEPLOY — OS ÚLTIMOS NOMES REAIS VISÍVEIS AO JOGADOR: CONCLUÍDO e COMMITADO em
+2026-09-02** (`6ee6b84`), direto na `main`. **BAIXO RISCO** — classificação do dev; zero lógica,
+zero `src/engine/`, `src/data/` intocado. **Sem push, sem tag.**
+📌 **Doc escrita pela SESSÃO PRINCIPAL, não pelo `doc-writer` — a pedido explícito do dev nesta
+sessão.** A auditoria não foi dispensada: o dev viu o diff do código antes do commit e vê o da doc
+antes deste.
+
+**O que o PR faz, em uma linha:** o placeholder da seed em `src/ui/TelaInicio.tsx:164` deixa de ser
+`"ex.: senna1988 ou 42"` e vira **`"ex.: vilarinho1988 ou 42"`**, e o README perde as **três
+capturas PNG** que exibiam nomes reais do dataset antigo.
+
+📊 **PORTÕES:** `npm test` **1713/1713 — INALTERADO** (nenhum comportamento mudou),
+`npm run test:party` **42/42**, typecheck **0** nos três, lint **0**, `npm run preview` **0** (11/11)
+sem mover `docs/img/silhuetas.svg`. **Portão visual ABERTO E OLHADO nos dois temas**, console limpo.
+Números e método na §"Estado atual".
+
+---
+
+🔴 **O ACHADO QUE SOBREVIVE AO PR, E É O MAIS IMPORTANTE DO REGISTRO: O PORTÃO DOS NOMES REAIS SERIA
+CEGO AO `senna1988` MESMO APONTADO PARA `src/ui/`.**
+`contarComFronteira` exige **fronteira não-alfanumérica dos DOIS lados**, e o `1` colado em
+`senna1988` anula o match: **medido, dá 0**.
+🔑 **A prova não é leitura, é o número pelos dois lados.** A varredura das **909 agulhas** sobre
+`src/ui/` (67 arquivos, réplica exata do universo e do contador do portão, com as duas
+anti-vacuidades) devolve **459 ANTES e 459 DEPOIS da troca** — **as duas rodadas são minhas, na
+mesma sessão, e é essa a medição que prova a cegueira.** No bundle, o `medir-nomes-bundle.mjs` dá
+**124** depois, **igual ao 124 que o README já registrava** — ⚠️ **mas esse "antes" é REGISTRO, não
+remedição minha** (ver a ressalva de proveniência na §"Estado atual"). **O sítio que este PR
+conserta é INVISÍVEL para as duas ferramentas.**
+🔒 **Consequência para quem escrever o PR de alargamento do portão (que o dev travou como PR
+PRÓPRIO): alargar o escopo para `src/ui/` NÃO pega esta classe.** Um `senna1988` novo entraria
+verde. **O que segura nome real grudado em dígito é leitura humana, não cerca** — e um portão
+alargado que declare `src/ui/` limpo com um `senna1988` dentro seria a forma exata do "o teste
+afirmava o que não conferia" que este projeto já catalogou seis vezes.
+📌 **Isto está escrito TAMBÉM no docblock de `scripts/medir-nomes-bundle.mjs`**, que é onde a
+próxima pessoa vai olhar.
+
+---
+
+🔴 **UM QUARTO ARQUIVO ENTROU NO DIFF POR OBRIGAÇÃO, NÃO POR ESCOPO — e o motivo é a classe do
+bloqueante C1 do H4.** O docblock de `scripts/medir-nomes-bundle.mjs` (commitado no dia anterior,
+`da85999`) usava o `"ex.: senna1988 ou 42"` como **o caso real** do ponto cego da fronteira, em
+**presente do indicativo**. Trocar o placeholder sem tocá-lo deixaria **prosa falsa criada pelo
+próprio commit**. **Corrigida NO LUGAR, riscada:** o caso saiu, **a cegueira continua**, e a
+medição dos 459 entrou ao lado dela.
+
+---
+
+🔒 **A ESCOLHA DO NOME, e por que não foi arbitrária.** **Tadeu Vilarinho** é o fictício de Senna na
+tabela dos 458 (**353 pilotos + 105 equipes**, conferido). Preserva a forma **sobrenome + ano**, é
+**ASCII sem acento** — o campo é de texto livre de seed —, e **`vilarinho` NÃO é agulha** do
+universo real (medido contra `fatos-agregados.json`).
+
+📏 **A MEDIÇÃO QUE O DEV PEDIU ANTES DA TROCA — é só esse sítio? SIM.** São **QUATRO** atributos
+`placeholder=` em `src/ui/`: este, `TelaInicio.tsx:280` (`Jogador N`), `TelaLobby.tsx:100` (*como os
+outros vão te ver*) e `TelaSalaOnline.tsx:120` (`A3F9C2`). **Os outros três estão limpos.**
+⚠️ **A contagem é 4, não 5, e a distinção é registrada porque eu quase a errei:** o `grep` por
+`placeholder` devolve **cinco** linhas, mas a quinta (`card-peca-cego.test.ts:29`) é a **palavra
+dentro de um comentário**, não um atributo. **Contar as duas coisas juntas seria a mesma conflação
+que o `button` de Jenson Button faz com `<button>`** — em escala menor, no mesmo PR que registra
+essa classe.
+
+---
+
+📉 **O QUE A VARREDURA DE `src/ui/` ACHOU, e o número bruto MENTE.** **459 total · 67 arquivos
+varridos · 48 com achado · 311 em produção.**
+🔴 **Quase tudo é COLISÃO COM PALAVRA COMUM:** `sala`, `button` (Jenson Button), `era`, `campos`,
+`ramos`, `rosa` são `driverId`/nome reais que casam em português e em JSX. **É o substituto 2 do
+inventário se repetindo** — a métrica reprovada em 2026-08-24 pelo mesmo mecanismo. **Quem usar o
+459 como "há 459 nomes reais em `src/ui/`" repete o vício que aposentou o 33/6/2.**
+✅ **Os achados que NÃO são colisão são TODOS em COMENTÁRIO — nenhuma string visível ao jogador:**
+`Red Bull Ring` (**T2 adiada**, decisão do dev) em `fluxo-corrida.ts:100`, `pista-camadas.ts:266`,
+`:510`, `:512`, `suavizacao.ts:36`, `tracados.ts:484`, `:487`; **`Mercedes Arena`** (topônimo de
+trecho do Nürburgring) em `tracados.ts:13`, `:29`, `:354`, `:364`; **`Niki Lauda`** (nome oficial da
+T1 do Red Bull Ring) em `tracados.ts:490`. Em teste, `fluxo-draft-golden.test.ts:68-69` cita nomes
+reais **documentando o mapeamento real→fictício**, que é legítimo.
+⚠️ **O SCRIPT DA VARREDURA NÃO FICOU RASTREADO — rodou do scratchpad, e fica dito.** Pela
+§Convenções (*"medição cujo script não fica em disco não é reprodutível"*), **esta medição está no
+mesmo débito que o `mutar.py` do H1 e a sonda do S12**. **Rastreá-lo é decisão do dev**, e não foi
+feito porque ampliaria o diff de um PR pedido curto e porque **alargar o portão é PR próprio**.
+
+---
+
+🔴 **UMA VERIFICAÇÃO PEDIDA PELO DEV NÃO CONFIRMOU O QUE ELE ESPERAVA, E O REGISTRO FICA.** Depois do
+commit ele pediu para confirmar que o placeholder no `dist/` era **`kestner2019`**. **Medido:
+`kestner2019` dá ZERO no `dist/` inteiro** — a string do bundle é `ex.: vilarinho1988 ou 42`, que é
+o que o diff aprovado por ele trazia. **`Kestner` existe na tabela, mas do lado das EQUIPES** (é o
+fictício da Cooper: `Kestner`, `Kestner-NDK`, `Kestner-Vireo`, `Kestner-Ilvento`); **zero pilotos**
+têm o nome, e a forma do placeholder é sobrenome de piloto + ano.
+✅ **O dev confirmou na sequência que foi lapso dele ao nomear, e que `vilarinho1988` é o correto.
+Nada foi trocado.**
+🔒 **Por que isto fica escrito, e não é constrangimento de ninguém:** confirmar `kestner2019` teria
+sido gravar como medido um estado que o repositório não tem — **o mesmo caso que o H4 registrou com
+as palavras do dev** (*"eu pedi para documentar um conserto que não aconteceu"*). **O portão que
+funcionou foi medir antes de confirmar**, e é ele que precisa sobreviver a esta sessão.
+🔑 **A lição operacional, e ela vale mais que o caso:** nas duas vezes em que um rótulo escorregou
+nesta sessão — aqui, e antes ao chamar o campo de *"código de sala"* quando o sítio é a **seed
+específica** —, **o SÍTIO e a STRING dados pelo dev estavam inequívocos**. **Seguir a âncora
+concreta e medir, em vez de seguir o rótulo, resolveu os dois sem bloquear nada.**
+
+---
+
+🔴 **O QUE ESTE PR NÃO FAZ.**
+- **NÃO alarga o portão para `src/ui/`** — decisão do dev, **PR próprio**. E o achado acima diz que
+  alargar **não basta** para esta classe.
+- **NÃO regera as três capturas** — os PNGs continuam em `docs/img/`, e regerá-los é a **0(ap)**.
+- **NÃO toca os três sítios de TESTE que usam `'senna1988'` como seed arbitrária**
+  (`fluxo-draft.test.ts:45`, `:51`, `useDraft.test.ts:114`). **Apresentados ao dev antes do commit e
+  deixados fora por escopo** — o pedido era o que é **visível ao jogador**. Trocá-los é seguro (os
+  dois lados de cada asserção se movem juntos) e é decisão dele.
+- **NÃO mexe no `Turbo modo-quali BMW anos 80`**, que segue com a marca e segue invisível ao portão
+  (`BMW` não está no universo de agulhas) — estado inalterado, registrado no README.
+
+---
 
 **🔐 PR H4 — CSP, JITTER DE RECONEXÃO E TETO DE COMANDOS INBOUND: CONCLUÍDO e MERGEADO em
 2026-09-02** (`0705ff6`, merge `--no-ff` de `2b924f6`), na `main`. **ALTO RISCO** — mexe em
@@ -2671,7 +2822,13 @@ seria decidir por ele"*): o dev pediu **registrar a dívida**, não abrir item d
 esta dívida a pendência. FICOU FALSA em 2026-09-02: o PR H4 OCUPOU `0(ak)`** (a fiação do jitter
 sem cobertura). **Corrigida no lugar, não contradita ao lado** — duas coisas com o mesmo rótulo é
 o defeito do `C1` ambíguo que a §"MEDIÇÕES E AUDITORIAS" já catalogou.
-✅ **A próxima livre é `0(ap)`**, conferido em 2026-09-02: a última ocupada passou a ser `0(ao)`.
+~~✅ **A próxima livre é `0(ap)`**, conferido em 2026-09-02: a última ocupada passou a ser `0(ao)`.~~
+✅ **CORRIGIDA NO LUGAR em 2026-09-02, no mesmo dia: `0(ap)` FOI OCUPADA** pelo PR pré-deploy (as
+três capturas PNG a regerar). **A próxima livre é `0(aq)`.** É a segunda vez que esta linha
+envelhece em dois dias — a anterior apontava `0(ak)`, que o H4 ocupou. 🔑 **Ela é riscada no lugar
+pelo mesmo motivo das outras:** duas pendências com o mesmo rótulo é o defeito do `C1` ambíguo que a
+§"MEDIÇÕES E AUDITORIAS" já catalogou. ⚠️ **Quem for promover esta dívida a pendência confere a
+última ocupada na §Pendências ANTES de escrever o número — esta linha envelhece a cada PR.**
 
 🔄 **ATUALIZADO em 2026-09-02 — A DÍVIDA PAROU DE CRESCER: o PR H4 TEVE `senior-reviewer`.**
 É o quarto PR de hardening e o **primeiro dos quatro** a passar pelo portão que a §"Definição de
@@ -3449,6 +3606,27 @@ que agora ela é tomada com o número na mão.**
    não sabe.
    **Conserto natural, quando vier:** só zerar `tentativa` depois de a conexão sobreviver N ms ou
    receber a primeira mensagem. **É PR próprio e decisão do dev.**
+
+   (ap) 🟡 **NOVA (PR pré-deploy, 2026-09-02) — AS TRÊS CAPTURAS PNG DE `docs/img/` MOSTRAM O
+   DATASET ANTIGO, COM NOMES REAIS. Saíram do README; regerá-las com o dataset atual está PENDENTE.**
+   **A numeração é minha**, pelo precedente da 0(y)/0(z)/0(af)/0(ag)/0(ai)/0(ak) — conferido que
+   `0(ap)` estava livre (a última ocupada era `0(ao)`), e a linha da §"DÍVIDA DE PROCESSO" que a
+   citava como livre foi **corrigida no lugar**.
+   🟢 **NÃO BLOQUEIA O DEPLOY, e é por isso que nasce em 🟡 e não em 🔴 — formulação do dev:** as
+   **referências foram removidas do README** (`6ee6b84`), então nada as serve ao leitor. **Os
+   arquivos continuam versionados em `docs/img/`** — `draft.png`, `corrida.png`, `campeonato.png`,
+   de **2026-08-08**, anteriores à troca do dataset de 2026-08-30.
+   ⚠️ **O que continua verdadeiro e não deve ser lido como resolvido:** os PNGs seguem **no
+   repositório e no histórico do git**, com os nomes reais dentro. É a mesma família da **decisão H**
+   (aceitar o resíduo do histórico) — o que este PR fez foi tirar da **vitrine**, não do repo.
+   🔴 **E NENHUM PORTÃO OS VIGIA:** o portão dos nomes reais mede **seis `.json`**; `.png` é binário
+   e está fora de qualquer varredura — inclusive da que este PR fez sobre `src/ui/`. **Está dito no
+   README** (*"não mede as imagens de `docs/img/`"*).
+   **Conserto natural, quando vier:** rodar o jogo com o dataset atual, recapturar as três telas e
+   commitar por cima, **conferindo à mão** — não há cerca que o faça. ⚠️ **Recapturar é trabalho de
+   TELA, não de script:** ao contrário de `silhuetas.svg`, que `npm run preview` regera sozinha a
+   partir da geometria de produção, **não existe gerador para estas três**. **É PR próprio e decisão
+   do dev.**
 
 1. **Abertas pelo 7.8:** (a) o `BotaoTema` é um botão discreto no canto do `app-shell` — posição e
    forma **não passaram por veredito de arte**; (b) `erro` (salmão `#FF7B85`) e `raridadeProibido`
