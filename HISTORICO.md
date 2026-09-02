@@ -2482,6 +2482,187 @@ Arquivo novo: `preview/campeonato-online.html` (não sobrescreve `preview/campeo
 
 ---
 
+## PR H3 — O TETO DE `sincronizar` (2026-09-01, `ca2cfcb`) — 🔴 ALTO RISCO
+
+**Base:** `91322d0` (merge do H2). Merge `--no-ff` de `1590daa`. **Sem push, sem tag.** Terceiro PR
+de hardening da auditoria.
+
+**Mitiga o item `S7`** — que passa de 🔴 ABERTO a 🟡 **PARCIAL**, não a ✅. O motivo do PARCIAL está
+na seção "O que NÃO entrou", abaixo, e é a parte mais importante desta entrada.
+
+**O que entrou, em uma linha:** o comando `sincronizar` passa a valer **1 por 2 s por conexão,
+rajada 1** (o primeiro sempre passa).
+
+### Portões, medidos na `main` PÓS-MERGE (não herdados da branch)
+
+`npm test` **1683/74** em **3 rodadas idênticas** (era 1677/73, **+6** — os seis casos novos de
+`src/net/teto-sincronizar.test.ts`, que é puro e roda no Node).
+**`npm run test:party` 36/36** (era 33/33, **+3** — `party/sincronizar.test.ts`).
+typecheck **0** nos três projetos, lint **0** (por exit code), build **0**.
+🔑 **`VERSAO_APP` fica 3.4.5 e `VERSAO_FORMATO` fica 3 — SEM BUMP, e a prova é MECÂNICA:**
+`src/engine/versao.test.ts` verde, e o bundle saiu **`dist/assets/index-B0pMOBwk.js` — o MESMO
+hash** do PR 6, do PR 7, do H1 e do H2. `src/net/teto-sincronizar.ts` só é importado por `party/`,
+então nada dele chega ao bundle.
+⚠️ **`npm run balance` NÃO rodado, e dito por quê:** zero arquivo de `src/engine/`, `src/data/`
+intocado. **`npm run preview` também não:** o PR não muda nada na tela.
+
+### A medição que veio ANTES da constante, e que mudou a justificativa dela
+
+O dev pediu, textualmente: *"MEÇA antes de fixar: quantos `sincronizar` o cliente real manda numa
+partida normal? Se o intervalo legítimo for menor que 2s, ajuste."*
+
+🔴 **A resposta medida é que o cliente real NÃO MANDA `sincronizar` — nunca.** Os envios de
+`src/ui/useSalaOnline.ts` são `entrar`, `reentrar`, `pronto`, `iniciar`, `hash`(×2), `escolher`,
+`corrida-concluida` e `sair`. O **único** remetente do repositório é `src/net/harness.ts:403`, e ele
+conta em PASSOS (`PASSOS_ATE_RESSINCRONIZAR = 4`), não em milissegundos, e **não passa por esta
+casca** — o harness dirige `aoReceber` direto.
+🔑 **O intervalo legítimo, portanto, é INFINITO**, e é isso que torna os 2 s gratuitos para o
+jogador. **Não é folga estimada: é ausência medida de uso.**
+⚠️ **A especificação da doc afirmava o oposto** — *"cliente manda `sincronizar` a cada snapshot,
+não a cada mudança de tela"*. **Refutado pela medição acima**, e registrado assim em vez de escrito
+como ditado. ⚠️ **Se algum dia a UI passar a re-pedir snapshot, a constante volta à mesa** — e o
+sítio a conferir é o `PASSOS_ATE_RESSINCRONIZAR` do harness, que descreve a cadência pretendida.
+
+### O que o teto defende, medido
+
+`sincronizar` responde `soPara(estado, conexaoId, estadoPara(estado))`: **~25 bytes de comando
+devolvem o snapshot INTEIRO**. Sonda de 2026-09-01, sala de 22 humanos com o log do draft no pior
+caso que as guardas permitem (132 escolhas infladas até `MAX_BYTES_ESCOLHA`): **283.810 bytes
+(277,2 KiB) por resposta.** Amplificação de leitura de graça — o pedido não custa nada a quem o faz.
+
+### Desenho
+
+🔒 **A decisão é PURA e mora em `src/net/teto-sincronizar.ts`; a casca só lê o relógio e a
+identidade da conexão.** Terceiro PR seguido com o mesmo desenho (H1 `avaliarTeto`, H2
+`excedeuTetoDeConexoes`). `Date.now` é proibido em `src/net/**` por lint.
+🔑 **É isso que põe a JANELA dentro do `npm test`** — sem relógio falso e sem `workerd`. A suíte da
+casca prova que o teto é CONSULTADO; a suíte pura prova que ele é um LIMITE e não um BANIMENTO, e
+essa metade a casca não alcança.
+
+🔒 **Janela FIXA, não deslizante** — a deslizante guardaria um carimbo por requisição, memória
+proporcional ao abuso. Mesmo argumento do H1.
+🔒 **A recusa NÃO estende a janela:** `contagem` cresce, `inicio` não se move. Se a recusa
+reiniciasse o relógio, um script batendo sem parar manteria o balde eternamente cheio, e o LIMITE
+viraria o BANIMENTO que este projeto já decidiu não ter.
+🔒 **O balde vive SÓ EM MEMÓRIA** — gravar um balde por comando trocaria amplificação de LEITURA por
+amplificação de ESCRITA, que `alarm()` e `registrarAtestado` nomeiam como "barata de explorar".
+🔒 **E o mapa ENCOLHE no `onClose`**, senão seria vazamento proporcional ao churn de conexões —
+**exatamente o defeito que este PR existe para não criar**.
+
+⚠️ **Custo aceito: um `JSON.parse` a mais.** A casca sniffa o tipo antes do `aoReceber`, que
+reparseará. A alternativa era mudar a assinatura de `aoReceber` para receber o comando já parseado,
+arrastando o redutor puro e os testes dele para dentro deste PR. A entrada já está limitada a
+`MAX_BYTES_MENSAGEM`, então o parse extra é O(8 KiB) no pior caso.
+🔒 **Falha ABERTO:** JSON inválido não é problema deste teto — quem responde `comando-invalido` é o
+`aoReceber`.
+⚠️ **A recusa é SILENCIOSA**, sem `{tipo:'erro'}` — mesmo raciocínio que manteve o `4403` do H2 mudo.
+
+### A tabela de mutações — CINCO, com saída real e os nomes dos testes que caem
+
+Controle: `1683 passed (1683)` e `36 passed (36)`.
+🔒 **Script rastreado em `scripts/mutar-h3.mjs`** — segundo do projeto a cumprir a regra de
+2026-08-30, depois do `mutar-h2.mjs`.
+
+    M1  teto deixa de ser consultado (limitador off)  [party] exit=1  1 failed | 34 passed (35)
+          ↳ BASELINE: uma rajada de sincronizar devolve UM snapshot
+    M2  o teto vira 2 em vez de 1 (off-by-one)        [npm]   exit=1  4 failed | 1679 passed (1683)
+          ↳ o SEGUNDO dentro da janela é recusado / é LIMITE não BANIMENTO /
+            a RECUSA não estende / fronteira INCLUSIVA
+                                                      [party] exit=1  1 failed | 34 passed (35)
+    M3  a janela NUNCA expira (vira BANIMENTO)        [npm]   exit=1  2 failed | 1681 passed (1683)
+          ↳ é LIMITE não BANIMENTO / fronteira INCLUSIVA
+    M4  a recusa REINICIA a janela                    [npm]   exit=1  2 failed | 1681 passed (1683)
+          ↳ é LIMITE não BANIMENTO / a RECUSA não estende
+    M5  o mapa de baldes NÃO encolhe no onClose       [party] exit=1  1 failed | 35 passed (36)
+          ↳ o mapa de baldes ENCOLHE quando a conexão fecha
+
+⚠️ **A especificação da doc pedia SEIS linhas. São CINCO.** Nenhuma foi cortada nem inventada para
+fechar o número. **Mesma disciplina do H1, que tinha sete quando seis foram pedidas.**
+
+🔴 **M5 SOBREVIVEU NA PRIMEIRA RODADA** (`exit=0` nas duas suítes) e o caso que a pega foi escrito
+**depois**, a partir dela. **A ordem real fica registrada em vez de maquiada** — é a lição do H2,
+onde um oitavo caso ficou verde enquanto M4 sobrevivia a ele.
+🔑 **M5 não é detalhe:** ela é a classe de defeito que este PR inteiro trata — estrutura que cresce
+com o abuso e não encolhe.
+🔒 **Reversão CONFERIDA, não presumida:** as duas suítes de volta a **1683/1683** e **36/36**.
+
+### O baseline foi VERMELHO POR VALOR, não de compilação
+
+Regra travada da Fase 3. `party/sincronizar.test.ts` não importa nada novo de produção: manda o
+comando pelo caminho real e **conta respostas**. Antes da implementação, a rajada de 6 devolvia
+**6 snapshots onde devia devolver 0**.
+🔒 **A pré-condição é ASSERIDA, não suposta** (lição da sexta instância, 3.5.2): o caso exige
+primeiro que o servidor **responda** ao comando, e só então cobra que a rajada não renda nada. Sem
+isso, um ambiente em que nada trafega passaria por vacuidade.
+🔒 **E há caso ANTI-BANIMENTO:** depois da rajada, um `entrar` na mesma conexão continua sendo
+atendido. O teto vale para o comando, não para o socket.
+
+### O que NÃO entrou — e é a parte mais importante desta entrada
+
+🔴 **O "cap 200 sliding window" NÃO FOI IMPLEMENTADO.** Ele estava no plano aprovado pelo dev; foi
+apresentado a ele com duas objeções MEDIDAS antes da implementação, e o PR foi aprovado sem que a
+pergunta fosse respondida. **Nada disso está no diff mergeado.**
+
+1. **O cap de 200 é INALCANÇÁVEL.** O log do draft é limitado POR CONSTRUÇÃO. Só dois escritores
+   (`escolher` e `marcarAusente`, via `anexar` em `draft-rede.ts:151`), ambos avançando a
+   coordenada que eles próprios guardam: `escolher` exige ser o dono da vez e `turnoEsperado ===
+   turnoCorrente`, e em todo sucesso incrementa `rodada` ou `indicePeca`; `marcarAusente` é guardada
+   por `!ausentes.includes(id)`. Com o roster capado em 22 (`sala.ts:500`) e `RODADAS_SORTEIO = 5`,
+   o teto analítico é **154** = 22 × (5 + 1 + 1).
+   📏 **MEDIDO, sonda que joga o draft inteiro pelo redutor real forçando abandonos para maximizar
+   entradas: `log=138`** (124 escolhas + 14 ausências). **138 medido, 154 teórico, 200 nunca
+   dispara.**
+2. **A janela DESLIZANTE corromperia o draft dos 22 se algum dia disparasse.** Três sítios dependem
+   da integridade posicional do log:
+   - `src/net/cliente.ts:213` — `log.slice(aplicados)`, cursor **posicional**;
+   - `sincronizarDraft` reconstrói o draft de `criarDraft` **aplicando desde o começo**;
+   - `src/net/servidor-sala.ts:835` — `draft.log.length` é a **âncora do atestado**, e
+     `atestadoValido` a usa como teto.
+
+   Descartar o início desloca todos os índices, some com as escolhas iniciais — o *"furam o pool em
+   silêncio"* do contrato do ausente — e quebra a monotonicidade da âncora, devolvendo o alarme
+   falso que travou o campeonato no 3.5.2.
+   🔑 **"Replay perde o início, não o fim" é o avesso do que este código faz:** aqui o replay
+   PRECISA do início; é o fim que ele alcança sozinho.
+
+📌 **Decisão do dev, ainda ABERTA.** As saídas apresentadas foram: (a) cap inerte como barreira
+declarada, sem descarte; (b) cerca de regressão que assere o limite estrutural e falha se um
+terceiro escritor do log aparecer; (c) um caminho para o descarte que preserve cursor e âncora.
+**Nenhuma foi escolhida, e nada foi implementado por conta própria.**
+
+### O "bloqueante C1" — não existe, e o conteúdo dele é refutado
+
+🔴 **NÃO HOUVE `senior-reviewer` NESTE PR**, então não há bloqueante nenhum para registrar.
+Gravar um veredito de revisão que não aconteceu é a **ocorrência nº 3 do `CLAUDE.md`** (o
+`e1db1c9`), que aquele arquivo trata como o caso mais grave. ⚠️ **`senior-reviewer` segue NÃO
+RODADO apesar do ALTO RISCO — terceiro PR seguido, e fica dito.**
+
+🔴 **E o conteúdo atribuído ao "C1" é FALSO, medido.** A afirmação era *"`sincronizar` é
+fire-and-forget, retorno é `undefined` sempre"*, com a conclusão de que o teste seria "vacuamente
+verdadeiro". **`servidor-sala.ts:822` responde `soPara(estado, conexaoId, estadoPara(estado))`, e
+`soPara` (`:454`) devolve `{ estado, envios: [{ para: conexaoId, mensagem }] }`** — o snapshot
+inteiro, de volta a quem pediu.
+🔑 **A prova não é leitura de código, é o próprio baseline:** ele contou **6 snapshots onde devia
+contar 0**. Um retorno `undefined` não teria dado o que contar — **o teste não seria vacuamente
+verdadeiro, seria impossível de escrever.**
+
+### A pendência que nasceu daqui
+
+📌 **0(ai) — o log inteiro vai em todo snapshot; a amplificação do broadcast é QUADRÁTICA.**
+`publicarSala` (`sala.ts:433`) publica `draft: estado.draft`, e `difundir` reenvia o snapshot
+completo com `para: null` a cada mudança. **Medido: 19,5 MiB de snapshots DISTINTOS num único
+draft**, antes do fanout de até 22 sockets. São O(n) broadcasts × log O(n).
+🔒 **O teto do H3 NÃO é o conserto disso e não deve ser lido como tal** — ele limita o caminho sob
+demanda; o broadcast é o automático.
+⚠️ **A especificação pedia registrar como `0(ah)`, e `0(ah)` JÁ ESTÁ OCUPADA** pelo "cliente não
+distingue o `close(4403)`" do H2. Reusar o rótulo daria duas pendências com o mesmo nome — o
+defeito de rótulo ambíguo que a §"MEDIÇÕES E AUDITORIAS" já catalogou no caso do `C1`. **Entrou
+como `0(ai)`.**
+**Conserto ditado pelo dev:** delta no `difundir()`. **É redesenho de protocolo e PR próprio** —
+palavras dele: *"o teto limita o dano; o delta elimina a amplificação. PRs diferentes."*
+
+---
+
 ## PR H2 — TETO DE CONEXÕES E ORIGIN NO `onConnect` (2026-09-01, `91322d0`) — 🔴 ALTO RISCO
 
 **Base:** `a7c0fec` (doc do H1). Merge `--no-ff` de `9cc7d83` (baseline) + `d23c6c4`

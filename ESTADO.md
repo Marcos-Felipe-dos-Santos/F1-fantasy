@@ -600,6 +600,141 @@ dependência).
 
 ## Onde parei
 
+**🔐 PR H3 — TETO DE `sincronizar` POR CONEXÃO: CONCLUÍDO e MERGEADO em 2026-09-01**
+(`ca2cfcb`, merge `--no-ff` de `1590daa`), na `main`. **ALTO RISCO** — mexe em `party/sala.ts` e
+afeta produção. **Sem push, sem tag.** Detalhe completo: `HISTORICO.md` §"PR H3 — o teto de
+`sincronizar`".
+
+**O que o PR faz, em uma linha:** o comando `sincronizar` passa a valer **1 por 2 s por conexão,
+rajada 1** — ele devolve o snapshot INTEIRO a quem pede, e não tinha teto nenhum.
+
+📊 **PORTÕES, medidos na `main` PÓS-MERGE (não herdados da branch):** `npm test` **1683/74** em
+**3 rodadas idênticas** (era 1677/73, **+6**: `src/net/teto-sincronizar.test.ts`).
+**`npm run test:party` 36/36** (era 33/33, **+3**: `party/sincronizar.test.ts`). typecheck **0** nos
+três projetos, lint **0** (por exit code), build **0**, bundle **`index-B0pMOBwk.js` — o MESMO
+hash** do PR 6, do PR 7, do H1 e do H2.
+⚠️ **`npm run balance` NÃO rodado, e dito por quê:** zero arquivo de `src/engine/`, `src/data/`
+intocado. **`npm run preview` também não:** o PR não muda nada na tela, e o hash inalterado confirma.
+
+---
+
+🔴 **SEIS PONTOS DA ESPECIFICAÇÃO DA DOC NÃO CORRESPONDEM AO CÓDIGO MERGEADO. Nenhum foi
+silenciado, nenhum foi "corrigido" por conta própria.** É a terceira vez seguida (H1: três itens;
+H2: três itens) e a disciplina é a mesma — o registro descreve o que ESTÁ no repositório, e a
+divergência fica escrita ao lado.
+
+1. 🔴 **"cap 200 sliding window" NÃO FOI IMPLEMENTADO — não existe no diff.** O PR mergeado tem
+   **só** o teto de `sincronizar`. O cap foi apresentado ao dev antes da implementação com duas
+   objeções MEDIDAS, e a resposta aprovou o PR sem responder à pergunta. **As objeções:**
+   - **O cap de 200 é INALCANÇÁVEL.** Sonda de 2026-09-01, draft inteiro jogado pelo redutor real
+     com abandonos forçados para maximizar entradas: **`log=138`** (124 escolhas + 14 ausências).
+     O teto analítico é **154** = 22 × (5 sorteios + 1 peça + 1 ausência). **138 medido, 154
+     teórico, 200 nunca dispara.**
+   - **A janela DESLIZANTE corromperia o draft dos 22 se algum dia disparasse.** `cliente.ts:213`
+     faz `log.slice(aplicados)` — cursor **posicional**; `sincronizarDraft` reconstrói o draft
+     aplicando **desde o começo**; e `servidor-sala.ts:835` usa `draft.log.length` como **âncora do
+     atestado**. Descartar o início desloca todos os índices, some com as escolhas iniciais (o
+     "furam o pool em silêncio" do contrato do ausente) e quebra a monotonicidade da âncora —
+     devolvendo o alarme falso que travou o campeonato no 3.5.2.
+
+   🔑 **"Replay perde o início, não o fim" é o avesso do que este código faz:** aqui o replay
+   PRECISA do início; é o fim que ele alcança sozinho.
+   📌 **Decisão ADIADA, não recusada — formulação do dev — e virou a pendência 0(aj)**, com as
+   duas objeções escritas no lugar. **Elas precisam de resposta antes de implementar.**
+2. 🔴 **NÃO EXISTE "bloqueante C1" NESTE PR — não houve `senior-reviewer`.** Registrar um veredito
+   de revisão que não aconteceu é a **ocorrência nº 3 do `CLAUDE.md`** (o `e1db1c9`), e é o caso
+   que aquele arquivo trata como o mais grave. ⚠️ **`senior-reviewer` segue NÃO RODADO apesar do
+   ALTO RISCO — e fica dito**, pelo terceiro PR seguido.
+3. 🔴 **E o CONTEÚDO atribuído ao "C1" é REFUTADO POR MEDIÇÃO.** A afirmação era *"`sincronizar` é
+   fire-and-forget, retorno é `undefined` sempre"*. **Falso:** `servidor-sala.ts:822` responde
+   `soPara(estado, conexaoId, estadoPara(estado))`, e `soPara` (`:454`) devolve
+   `{ estado, envios: [{ para: conexaoId, mensagem }] }` — **o snapshot inteiro, de volta a quem
+   pediu**. 🔑 **A prova não é leitura, é o baseline:** ele contou **6 snapshots onde devia contar
+   0**, vermelho por VALOR. Um retorno `undefined` não teria dado o que contar, e **o teste não
+   seria vacuamente verdadeiro — seria impossível de escrever.**
+4. 🔴 **"cliente manda `sincronizar` a cada snapshot" — REFUTADO POR MEDIÇÃO, e é o oposto.** O
+   cliente real **NUNCA** manda `sincronizar`. Os envios de `src/ui/useSalaOnline.ts` são `entrar`,
+   `reentrar`, `pronto`, `iniciar`, `hash`(×2), `escolher`, `corrida-concluida` e `sair`. O **único**
+   remetente do repositório é `src/net/harness.ts:403`, que conta em PASSOS
+   (`PASSOS_ATE_RESSINCRONIZAR = 4`) e **não passa por esta casca**. 🔑 **O intervalo legítimo
+   medido é INFINITO**, e é isso — não folga estimada — que torna os 2 s gratuitos para o jogador.
+5. ⚠️ **A tabela de mutações tem CINCO linhas, não seis.** Estão todas abaixo; nenhuma foi cortada
+   nem inventada para fechar o número pedido. **Mesma disciplina do H1 (que tinha sete, não seis).**
+6. ⚠️ **A notação `(c)` → `(a)` NÃO EXISTE na tabela da auditoria — é a TERCEIRA vez que é pedida**
+   (H1 e H2 registram a mesma discrepância). A tabela sempre usou 🔴/🟡/✅.
+   🔴 **E aqui a tradução não é evidente como foi nas outras duas:** com o cap fora, **metade do S7
+   não foi implementada**. Marquei **🟡 PARCIAL**, não ✅ — ver a ressalva na tabela.
+   **Promovê-lo a ✅ é decisão do dev.**
+
+---
+
+🔒 **A DECISÃO É PURA E MORA EM `src/net/teto-sincronizar.ts`; a casca só lê o relógio e a
+identidade da conexão.** Terceiro PR seguido com o mesmo desenho (H1: `avaliarTeto`; H2:
+`excedeuTetoDeConexoes`). `Date.now` é **proibido** em `src/net/**` e permitido só em `party/**`.
+🔑 **É isso que torna a JANELA testável em `npm test`** — sem relógio falso, sem `workerd`. É a
+parte que a suíte da casca não alcança, e é ela que separa um LIMITE de um BANIMENTO.
+
+🔒 **JANELA FIXA, NÃO DESLIZANTE**, pelo mesmo motivo do H1: a deslizante guardaria um carimbo por
+requisição — **memória proporcional ao abuso, o avesso do que um limitador deve fazer sob ataque**.
+
+🔒 **O BALDE VIVE SÓ EM MEMÓRIA, e o número está ACOPLADO a isso.** O comando limitado é
+justamente o que devolve o snapshot inteiro; gravar um balde por comando trocaria amplificação de
+LEITURA por amplificação de ESCRITA — que `alarm()` e `registrarAtestado` já nomeiam como "barata
+de explorar". Os 2 s ficam muito abaixo do horizonte de despejo do DO, então perder o balde num
+despejo é indistinguível de ele ter expirado.
+🔒 **E O MAPA ENCOLHE NO `onClose`** — sem isso ele seria vazamento proporcional ao churn de
+conexões, **exatamente o defeito que este PR existe para não criar**. Mesma disciplina do `delete`
+no `recusadas` do H2.
+
+📏 **O QUE O TETO DEFENDE, MEDIDO:** ~25 bytes de comando devolviam **283.810 bytes (277,2 KiB)** de
+resposta — sala de 22 humanos com o log no pior caso que as guardas permitem. Amplificação de
+leitura de graça, sem custo para quem pede.
+
+⚠️ **A RECUSA É SILENCIOSA, de propósito.** Nenhum `{tipo:'erro'}`: responder daria ao atacante uma
+resposta por comando e, ao cliente real, um erro que ele não sabe tratar — mesmo raciocínio que
+manteve o `4403` do H2 sem `{tipo:'erro'}`. O comando seguinte, fora da janela, volta a ser atendido.
+
+⚠️ **CUSTO CONHECIDO E ACEITO: um `JSON.parse` a mais.** A casca sniffa o tipo antes do `aoReceber`,
+que reparseará. A alternativa era mudar a assinatura de `aoReceber` para receber o comando já
+parseado — arrastando o redutor puro e os testes dele para dentro deste PR. A entrada já está
+limitada a `MAX_BYTES_MENSAGEM`, então o parse extra é O(8 KiB) no pior caso.
+🔒 **Falha ABERTO:** JSON inválido não é problema deste teto — quem responde `comando-invalido` é o
+`aoReceber`, e engolir aqui o que ele deveria recusar mudaria o protocolo por efeito colateral.
+
+---
+
+📊 **A TABELA DE MUTAÇÕES — CINCO, cada uma com SAÍDA REAL e com os NOMES dos testes que caem.**
+Controle: `1683 passed (1683)` e `36 passed (36)`.
+🔒 **Script RASTREADO em `scripts/mutar-h3.mjs`** — segundo do projeto a cumprir a regra de
+2026-08-30 (*"ou o script fica rastreado ou o número não vale"*), depois do `mutar-h2.mjs`.
+
+    M1  teto deixa de ser consultado (limitador off)  [party] exit=1  1 failed | 34 passed (35)
+    M2  o teto vira 2 em vez de 1 (off-by-one)        [npm]   exit=1  4 failed | 1679 passed (1683)
+                                                      [party] exit=1  1 failed | 34 passed (35)
+    M3  a janela NUNCA expira (vira BANIMENTO)        [npm]   exit=1  2 failed | 1681 passed (1683)
+    M4  a recusa REINICIA a janela                    [npm]   exit=1  2 failed | 1681 passed (1683)
+    M5  o mapa de baldes NÃO encolhe no onClose       [party] exit=1  1 failed | 35 passed (36)
+
+🔴 **M5 SOBREVIVEU NA PRIMEIRA RODADA** (`exit=0` nas DUAS suítes) e o caso que a pega foi escrito
+DEPOIS. **A ordem real fica registrada em vez de maquiada** — é a lição do H2, onde um oitavo caso
+ficou verde enquanto M4 sobrevivia a ele. Aqui a mutação veio primeiro e a cobertura veio dela.
+🔑 **E M5 não é detalhe: ela é a classe de defeito que este PR inteiro trata** — estrutura que
+cresce com o abuso e não encolhe.
+🔒 **Reversão CONFERIDA, não presumida:** as duas suítes de volta a **1683/1683** e **36/36**.
+
+---
+
+🔴 **O QUE ESTE PR NÃO FAZ, e é o mais importante do registro: O TETO NÃO TOCA A AMPLIFICAÇÃO DO
+BROADCAST.** `publicarSala` (`sala.ts:433`) publica `draft: estado.draft` — **o log INTEIRO vai em
+todo snapshot**, e o snapshot é reenviado a cada mudança. **Medido: 19,5 MiB de snapshots
+DISTINTOS num único draft**, com fanout `para: null` para até 22 sockets. Cresce em **O(n²)** no
+tamanho do log, porque cada um dos O(n) broadcasts recarrega o log de tamanho O(n).
+📌 **Virou a pendência 0(ai)** — e o número é **0(ai)**, não `0(ah)` como pedido: **`0(ah)` JÁ ESTÁ
+OCUPADA** pelo "cliente não distingue 4403" do H2. Reusar o número faria duas pendências diferentes
+com o mesmo rótulo. **O conserto é delta no protocolo, e é PR próprio** — como o dev ditou.
+
+---
+
 **🔐 PR H2 — TETO DE CONEXÕES POR SALA E ORIGIN NO `onConnect`: CONCLUÍDO e MERGEADO em
 2026-09-01** (`91322d0`, merge `--no-ff` de `9cc7d83` + `d23c6c4`), na `main`. **ALTO RISCO** —
 mexe em `party/sala.ts` e afeta produção. **Sem push, sem tag.** Detalhe completo: `HISTORICO.md`
@@ -1944,7 +2079,7 @@ casca deixa de ser terra sem teste; a opção conhecida é `@cloudflare/vitest-p
 | **S4** | ✅ **FECHADO** | `Origin` validado no upgrade, reusando a allowlist do H1 | fechado no **PR H2**, 2026-09-01 |
 | **S5** | 🔴 ABERTO | nenhum detalhe ditado | `= M4` (não conferível) |
 | **S6** | ✅ FECHADO | **falso positivo**, 3ª confirmação | — |
-| **S7** | 🔴 ABERTO | nenhum detalhe ditado | — |
+| **S7** | 🟡 **PARCIAL** | teto de 1/2 s por conexão no `sincronizar` | mitigado no **PR H3**, 2026-09-01 — 🔴 **o cap do log NÃO entrou**; ver a ressalva |
 | **S8** | ✅ FECHADO | `crypto.getRandomValues`, **32 bytes, base64url** | ⚠️ **não casa com o repo** — ver abaixo |
 | **S9** | ✅ **FECHADO** | CORS com allowlist; o curinga exige **dois** sinais | fechado no **PR H1**, 2026-09-01 |
 | **S10** | 🟡 PARCIAL | `aplicar()` só grava quando muda, **mas o tique roda e cobra CPU** | — |
@@ -1957,6 +2092,16 @@ casca deixa de ser terra sem teste; a opção conhecida é `@cloudflare/vitest-p
 | **S17** | 🔴 ABERTO | nenhum detalhe ditado | — |
 
 **Placar ditado em 2026-09-01: 4 fechados · 2 parcialmente mitigados · 9 abertos = 15.**
+🔄 **ATUALIZADO em 2026-09-01, pelo PR H3: o S7 passou de 🔴 ABERTO a 🟡 PARCIAL — e PARCIAL é o
+veredito exato, não conservadorismo.** Placar corrente: **8 fechados · 3 parciais · 4 abertos**.
+🔴 **A ESPECIFICAÇÃO DA DOC PEDIA `✅` (na notação `(a)`, que não existe aqui) — e o código não
+sustenta o `✅`.** O PR H3 mergeado tem **só** o teto de `sincronizar`; o **cap de 200 com janela
+deslizante NÃO foi implementado**, por duas objeções medidas (o cap é inalcançável — log máximo
+**138** medido, **154** teórico; e o descarte quebraria o cursor posicional do cliente e a âncora
+do atestado). **Ver a §"Onde parei", item 1 dos seis pontos.**
+🔑 **Marcar `✅` aqui gravaria como implementada uma metade que não existe** — e a tabela seria lida
+depois como se o log tivesse teto. **Promover o S7 a ✅, ou reabrir o cap, é decisão do dev.**
+
 🔄 **ATUALIZADO em 2026-09-01, pelo PR H2: o S2 e o S4 passaram a ✅ FECHADO — também por
 IMPLEMENTAÇÃO.** Placar corrente: **8 fechados · 2 parciais · 5 abertos**.
 ⚠️ **O ✅ DO S2 TEM RESSALVA, e ela precisa viajar junto com a linha da tabela:** o teto LIMITA o
@@ -2652,6 +2797,76 @@ o `S2 ⇒ 0(y)` está ligado, porque é o único que o arquivo sustenta.
    token. **O custo é UI + uma linha de protocolo, não lógica.** Perguntei ao dev qual erro o
    cliente deveria receber; **a pergunta não foi respondida e o PR foi aprovado como está** —
    registrado aqui em vez de decidido por mim.
+   (ai) 🔴 **NOVA (PR H3, 2026-09-01) — O LOG INTEIRO VAI EM TODO SNAPSHOT: a amplificação do
+   broadcast é QUADRÁTICA no tamanho do log, e o teto do H3 não a toca.**
+   **A numeração é minha**, pelo precedente da 0(y)/0(z)/0(af)/0(ag) — e **`0(ai)` foi escolhido
+   porque `0(ah)` JÁ ESTÁ OCUPADA** pela pendência logo acima (o cliente que não distingue o
+   `close(4403)`). A especificação da doc pedia registrar isto **como `0(ah)`**; obedecer daria
+   **duas pendências diferentes com o mesmo rótulo**, que é o defeito que a §"MEDIÇÕES E
+   AUDITORIAS" já catalogou como rótulo ambíguo (o caso do `C1`, que nomeia três coisas).
+   **A cadeia, verificada no código:** `publicarSala` (`src/net/sala.ts:433`) publica
+   `draft: estado.draft` — e `EstadoDraftRede.log` é o array **inteiro**, append-only. `difundir`
+   reenvia o snapshot completo a cada mudança de estado, com `para: null` (todos).
+   📏 **MEDIDO, sonda de 2026-09-01** (sala de 22 humanos, cada jogada inflada até
+   `MAX_BYTES_ESCOLHA`): **283.810 bytes (277,2 KiB)** no snapshot final e **19,5 MiB de snapshots
+   DISTINTOS** num único draft — antes do fanout. Com até 22 sockets, o tráfego real é
+   aproximadamente **20× isso**.
+   🔑 **Por que QUADRÁTICA:** são O(n) broadcasts, cada um carregando um log de tamanho O(n). O
+   teto de eventos não muda isso — mesmo um log curto é reenviado inteiro a cada evento.
+   🔒 **O TETO DO H3 NÃO É O CONSERTO E NÃO DEVE SER LIDO COMO TAL.** Ele limita `sincronizar`, que
+   é o caminho **sob demanda**; o broadcast é o caminho **automático**, e nenhum limitador de
+   comando o alcança.
+   **Conserto natural, ditado pelo dev:** `difundir()` manda **delta**, não o array inteiro.
+   ⚠️ **É REDESENHO DE PROTOCOLO, não ajuste** — mexe no `EstadoSalaPublico`, no cursor posicional
+   `eventosAplicados` do cliente (`src/net/cliente.ts:213`) e na âncora `draft.log.length` do
+   atestado (`src/net/servidor-sala.ts:835`), que são exatamente as três coisas que a §"Onde parei"
+   registra como quebradas por descarte. **É PR próprio e decisão do dev** — palavras dele: *"o teto
+   limita o dano; o delta elimina a amplificação. PRs diferentes."*
+   (aj) 🟠 **NOVA (PR H3, 2026-09-01) — O CAP DO LOG DO DRAFT: DECISÃO ADIADA, NÃO RECUSADA.**
+   **Formulação do dev, textual:** *"O cap de 200 é decisão adiada, não recusada — as duas objeções
+   medidas precisam de resposta antes de implementar."*
+   🔑 **A distinção é a mesma do "fechado por medição ≠ fechado por implementação"**: adiada quer
+   dizer que a pergunta segue de pé, e que quem a retomar precisa **responder às duas objeções**,
+   não redecidir do zero. **Nenhuma delas foi respondida.**
+
+   **OBJEÇÃO 1 — o cap proposto é INALCANÇÁVEL, e o número é medido.** O log do draft já é limitado
+   POR CONSTRUÇÃO. São só dois escritores (`escolher` e `marcarAusente`, via `anexar` em
+   `src/net/draft-rede.ts:151`), e ambos avançam a coordenada que eles próprios guardam: `escolher`
+   exige ser o dono da vez (`deQuemEhAVez`) e `turnoEsperado === turnoCorrente`, e em todo sucesso
+   incrementa `rodada` ou `indicePeca`; `marcarAusente` é guardada por `!ausentes.includes(id)`.
+   Com o roster capado em 22 (`src/net/sala.ts:500`) e `RODADAS_SORTEIO = 5`, o teto analítico é
+   **154** = 22 × (5 sorteios + 1 peça + 1 ausência).
+   📏 **MEDIDO em 2026-09-01** — sonda que joga o draft inteiro pelo redutor real, forçando
+   abandonos para maximizar entradas: **`log=138`** (124 escolhas + 14 ausências).
+   **138 medido · 154 teórico · cap proposto 200 ⇒ nunca dispara.**
+   ⚠️ **Um cap inerte não é neutro:** ele entra na tabela de mutações como sobrevivente de tudo (não
+   há caminho que o alcance) e é lido, meses depois, como "o log tem teto" — que é o oposto do que
+   estaria no código.
+
+   **OBJEÇÃO 2 — o descarte deslizante corromperia o draft dos 22 se algum dia disparasse.** Três
+   sítios dependem da integridade POSICIONAL do log:
+   - `src/net/cliente.ts:213` — `log.slice(aplicados)`, cursor **posicional**;
+   - `sincronizarDraft` reconstrói o draft de `criarDraft` **aplicando desde o começo**;
+   - `src/net/servidor-sala.ts:835` — `draft.log.length` é a **âncora do atestado**, e
+     `atestadoValido` a usa como teto.
+
+   Descartar o início desloca todos os índices, some com as escolhas iniciais — o *"furam o pool em
+   silêncio"* do contrato do ausente, que é regra inviolável da Fase 3 — e quebra a monotonicidade
+   da âncora, **devolvendo o alarme falso que travou o campeonato no 3.5.2**.
+   🔑 **"Replay perde o início, não o fim" é o avesso do que este código faz:** aqui o replay
+   PRECISA do início; é o fim que ele alcança sozinho. **Esta frase era a premissa do plano, e é
+   ela que a objeção 2 contradiz** — por isso a objeção não se resolve escolhendo outro número.
+
+   **As três saídas apresentadas ao dev, e NENHUMA foi escolhida:**
+   (a) cap inerte como **barreira declarada**, sem descarte — precedente do M4 do H2, que ficou
+   registrado como *"barreira, não conserto"*;
+   (b) **cerca de regressão** que assere o limite estrutural e falha se um terceiro escritor do log
+   aparecer ou se um escritor deixar de avançar a coordenada — protege a propriedade que hoje
+   sustenta o limite e que **não tem cerca nenhuma**;
+   (c) um caminho para o descarte que **preserve o cursor posicional e a âncora** — não foi
+   proposto por mim porque não o enxerguei; se existir, é ele que destrava a ideia original.
+   📌 **É decisão do dev.** ⚠️ **Ler junto com a 0(ai)**: são as duas metades do mesmo assunto, e a
+   0(ai) é a que tem dano MEDIDO (19,5 MiB por draft). **Se só uma for feita, a 0(ai) é a que paga.**
 
 1. **Abertas pelo 7.8:** (a) o `BotaoTema` é um botão discreto no canto do `app-shell` — posição e
    forma **não passaram por veredito de arte**; (b) `erro` (salmão `#FF7B85`) e `raridadeProibido`
