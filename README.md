@@ -19,10 +19,6 @@
 
 </div>
 
-<div align="center">
-  <img src="docs/img/corrida.png" alt="Corrida em andamento em Interlagos: traçado, carros e painel de posições ao vivo" width="820">
-</div>
-
 ---
 
 ## 🎮 O que é
@@ -78,20 +74,14 @@ ou torcer por algo melhor e ficar sem opção depois.
 Na **rodada 6** vem a **peça icônica** — uma carta de um catálogo de **24 peças** que modifica o
 carro montado. É o único momento de escolha aberta do draft.
 
-<div align="center">
-  <img src="docs/img/draft.png" alt="Tela de draft: a equipe/ano sorteada e os slots disponíveis" width="820">
-</div>
-
-_Rodada 2 de 5: saiu uma equipe/ano. O piloto já foi preenchido em outra rodada, então sobram
-chassi, motor, estrategista e pit — e só um deles vai levar essa equipe. No Modo Craque, as notas
-aparecem; no Cego, não._
-
-> 📸 **As três capturas em PNG deste README são ANTERIORES à troca por nomes fictícios**
-> (a troca do dataset é de 2026-08-30; os prints, de antes) e por isso ainda exibem os nomes reais
-> do dataset antigo. **Os nomes de dataset que elas mostram dão 0 no bundle servido hoje** — medido,
-> ver [Nomes fictícios](#-nomes-fict%C3%ADcios-o-dataset-do-jogo-n%C3%A3o-usa-nome-real). Regerar as
-> capturas está pendente. _(A grade de silhuetas em SVG, mais abaixo, é gerada por `npm run preview`
-> e **está atual**.)_
+> 📸 **As três capturas de tela em PNG SAÍRAM deste README em 2026-09-02, e o motivo fica escrito:**
+> `draft.png`, `corrida.png` e `campeonato.png` são anteriores à troca por nomes fictícios (a troca
+> do dataset é de 2026-08-30; os prints, de 2026-08-08) e por isso **exibiam os nomes reais do
+> dataset antigo** — na vitrine do projeto, fora de todo portão. **README sem screenshot é melhor
+> que README com screenshot de nome real.** Os arquivos **continuam em `docs/img/`**, não foram
+> apagados; **regerá-los com o dataset atual é pendência aberta.** _(A grade de silhuetas em SVG,
+> mais abaixo, é gerada por `npm run preview` a partir da geometria de produção, nunca teve nome
+> real e **está atual** — por isso ficou.)_
 
 ### Os modos
 
@@ -123,10 +113,6 @@ campeonato multiplayer o servidor sorteia uma seed independente por etapa e publ
 vez**, conforme a etapa abre — nunca a seed-mestre. Não é zelo: com a seed base na mão, qualquer
 jogador simularia as corridas futuras no console antes de draftar. Cada etapa só avança quando todos
 os elegíveis atestam o fim da anterior.
-
-<div align="center">
-  <img src="docs/img/campeonato.png" alt="Calendário do campeonato completo: 10 etapas com a miniatura de cada traçado" width="820">
-</div>
 
 ### Visibilidade: Craque ou Cego
 
