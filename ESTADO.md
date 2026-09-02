@@ -2082,16 +2082,74 @@ casca deixa de ser terra sem teste; a opção conhecida é `@cloudflare/vitest-p
 | **S7** | 🟡 **PARCIAL** | teto de 1/2 s por conexão no `sincronizar` | mitigado no **PR H3**, 2026-09-01 — 🔴 **o cap do log NÃO entrou**; ver a ressalva |
 | **S8** | ✅ FECHADO | `crypto.getRandomValues`, **32 bytes, base64url** | ⚠️ **não casa com o repo** — ver abaixo |
 | **S9** | ✅ **FECHADO** | CORS com allowlist; o curinga exige **dois** sinais | fechado no **PR H1**, 2026-09-01 |
-| **S10** | 🟡 PARCIAL | `aplicar()` só grava quando muda, **mas o tique roda e cobra CPU** | — |
+| **S10** | ✅ **FECHADO** | `aoPassarOTempo` devolve a **MESMA referência** no tique ocioso ⇒ zero escrita, zero broadcast | **fechado POR MEDIÇÃO** em 2026-09-01 — não por implementação; evidência em `party/sala.ts` e `barreira-corrida.test.ts` |
 | **S11** | ✅ FECHADO | **zero `dangerouslySetInnerHTML`**, React escapa em todos os sítios | ✅ metade conferida nesta sessão |
 | **S12** | 🟡 **PARCIAL** | reentrada idempotente + `difundir()` só em caminho aceito | **rebaixado em 2026-09-01**, ditado pelo dev — 🔴 **a proveniência NÃO confere e a 2ª metade foi QUALIFICADA por sonda**; ver a ressalva |
 | **S13** | ⬜ **NÃO DITADO** | **ausente das três listas** — ver a lacuna 1 | — |
 | **S14** | ⬜ **NÃO DITADO** | **ausente das três listas** — ver a lacuna 1 | — |
 | **S15** | 🔴 ABERTO | nenhum detalhe ditado | `= A4` (não conferível) |
 | **S16** | ✅ FECHADO | `MAX_BYTES_MENSAGEM` checado **ANTES** do `JSON.parse` | ✅ conferido nesta sessão |
-| **S17** | 🔴 ABERTO | nenhum detalhe ditado | — |
+| **S17** | ✅ **FECHADO** | `catch` genérico, **sem stack trace** — `.stack` dá **ZERO** em produção | **fechado POR MEDIÇÃO** em 2026-09-01 — ⚠️ **UM sítio propaga `e.message` à tela**; ver a ressalva |
 
 **Placar ditado em 2026-09-01: 4 fechados · 2 parcialmente mitigados · 9 abertos = 15.**
+🔄 **ATUALIZADO em 2026-09-01 — S10 e S17 passam a ✅ FECHADO, na notação `(a)`, ditado pelo dev.
+🔒 FECHADOS POR MEDIÇÃO, NÃO POR IMPLEMENTAÇÃO — e a distinção é a do próprio dev** (*"fechado por
+medição aqui significa NÃO CONSERTA, REGISTRA"*). **Zero diff de produção nos dois.** Placar
+corrente: **10 fechados · 3 parciais · 2 abertos** (+ S13/S14 não ditados). Conferido contra a
+tabela linha a linha: fechados `S1·S2·S4·S6·S8·S9·S10·S11·S16·S17`, parciais `S3·S7·S12`, abertos
+`S5·S15` — **os dois que sobram são exatamente os que o PR H4 vai fechar por implementação.**
+⚠️ **PRECISÃO ACRESCENTADA em 2026-09-02, antes de o H4 começar: o escopo aprovado do H4 é
+`S5 + S15 + S3`, TRÊS itens, não os dois abertos.** A frase acima está certa sobre os ABERTOS e
+seria lida como o escopo inteiro do PR, que é mais largo: o **S3 está 🟡 PARCIAL**, não aberto, e
+entra no H4 pelo *rate limit inbound* — **sem a coalescência de broadcast**, que fica na **0(ai)**,
+em PR próprio, como o dev ditou. **Corrigido no lugar** em vez de contradito adiante, pela regra
+da §Convenções.
+
+✅ **S10 — A EVIDÊNCIA JÁ ESTAVA NO REPOSITÓRIO, e é o que fecha o item.** O veredito ditado era
+*"`aplicar()` só grava quando muda, **mas o tique roda e cobra CPU**"*. **O tique medido não cobra
+o que a ressalva supunha:** `party/sala.ts` registra, com o teste que o mediu
+(`src/net/barreira-corrida.test.ts`), que com o draft concluído `deQuemEhAVez` devolve `[]`,
+`aoPassarOTempo` devolve o estado com a **MESMA REFERÊNCIA** e sem envios, e `aplicar` só grava
+quando a referência muda ⇒ **zero escritas, zero broadcasts**. E `carregar()` (`party/sala.ts:104`)
+serve de `this.estado` num DO quente — **o tique ocioso não relê o storage**.
+🔑 **Vale registrar o que ISSO acrescenta ao ditado, porque é o oposto do que ele temia:** o `if`
+que existia ali antes foi **REMOVIDO de propósito**, e o comentário no sítio diz por quê — a
+estimativa antiga (*"~120 escritas em storage e 120 broadcasts"*) era **falsa e foi medida como
+falsa**. Otimizar o tique seria otimizar um custo que já é zero.
+🔒 **O QUE NÃO SE FEZ, e é decisão registrada:** mexer no `setAlarm(agora + INTERVALO_TIQUE_MS)` do
+fim do `alarm()` **não entrou e não deve entrar de passagem** — é o relógio que faz a carência de
+vazio correr, e pular reagendamento é a **0(s)** por outra porta. A obrigação da **0(y)** vale
+igual: *"fechar sem re-verificar a 0(s) reabre o zumbi"*, com o par `MD` + anti-vacuidade de
+`party/alarme.test.ts` obrigado a continuar verde. **O S10 fecha porque não há custo a cortar, não
+porque o alarme foi otimizado.**
+
+✅ **S17 — A METADE MECÂNICA CONFERE, MEDIDA NESTA SESSÃO.** `.stack` dá **ZERO** ocorrências em todo
+o código de produção (`src/**`, `.ts`/`.tsx`, fora de teste); `dangerouslySetInnerHTML` dá **ZERO**
+(já registrado no S11); e os erros de protocolo são **uniões de token** (`ErroSala`, `ErroDraft` em
+`src/net/protocolo.ts`), não texto livre — um cliente hostil não arranca mensagem de servidor
+nenhuma, porque não existe mensagem de servidor, existe código. **São 21 blocos `catch` em produção,
+17 deles SEM binding** (`} catch {`) — esses não têm sequer como vazar. **Dos 4 com binding, 3 são
+`console.warn` e 1 é o sítio da ressalva abaixo.** *(Contagem por `grep -rn "} catch"` sobre
+`src/**` `.ts`/`.tsx` fora de teste — o método vai junto porque número sem método não se verifica
+depois.)*
+🔴 **A RESSALVA, MEDIDA, E ELA PRECISA VIAJAR JUNTO COM O `✅`: EXISTE UM SÍTIO QUE PROPAGA
+`e.message` ATÉ A TELA DO JOGADOR.** `src/ui/useDraft.ts:70` faz
+`setErro(e instanceof Error ? e.message : String(e))`, e `src/ui/TelaDraft.tsx:60` renderiza
+`{erro && <p className="erro">{erro}</p>}` — a mensagem da exceção da **engine** chega ao jogador
+verbatim. `App.tsx:300` e `:310` passam o mesmo `erro` para `TelaDraft` e `TelaPeca`.
+🔑 **Por que isto NÃO derruba o `✅`, e por que mesmo assim fica escrito:** o ditado do dev diz
+*"sem stack trace"*, e isso está **medido e verdadeiro** — `.message` não é `.stack`. Além disso o
+sítio é o **draft OFFLINE**, que roda inteiro na máquina do próprio jogador: não há servidor a
+expor, nem outro jogador a quem vazar. **Mas "catch genérico" não é universal neste repositório**, e
+um `✅` lido sem esta linha afirmaria mais do que o código faz — que é exatamente o defeito que o
+`✅` do S2 já obrigou a anotar.
+⚠️ **Nuance menor, também medida:** os **três** `console.warn(..., erro)` de `persistencia.ts`
+(`:285`, `:309`, `:414`) logam o objeto `Error` inteiro, cujo stack aparece no devtools. **Não é
+caminho de jogador** (console não é tela), e por isso entra como nuance, não como refutação.
+📌 **Nada foi consertado, e é de propósito:** este é commit de DOC, zero diff de produção. **Trocar
+o `e.message` por texto genérico é decisão do dev e PR próprio** — e mexeria numa tela, o que o
+tiraria de BAIXO RISCO.
+
 🔄 **ATUALIZADO em 2026-09-01 — o S12 passou de 🔴 ABERTO a 🟡 PARCIAL, por REBAIXAMENTO ditado pelo
 dev. Não houve diff de produção: é registro, não conserto.** Placar corrente: **8 fechados ·
 4 parciais · 3 abertos** (+ S13/S14 não ditados). Aritmética conferida contra a tabela: fechados
