@@ -3898,3 +3898,18 @@ arte vai ao dev** — mudar composição sozinho já custou 2 bloqueantes no 7.3
   comparador (e a receita do filtro do `balance`) é PR próprio e decisão do dev.** Regra escrita cujo
   primeiro caso segue violando-a em silêncio é como a próxima sessão herda a ilusão de que está
   resolvido.
+## Preparação de deploy — PR 1 (2026-10-16)
+
+Implementado em `codex/deploy-1-online`, com autorização do dev para os três PRs na mesma sessão.
+Confirmação de corrida exige a etapa atual em salas modernas; ausência só é aceita em sala legada.
+Cliente envia etapa e VERSAO_APP sobe para 3.4.6 (digest de simulação inalterado).
+Recusas 4403/4408 encerram a reconexão; o backoff só reinicia após receber estado.
+Conexões sem identificação expiram após 60 s, verificadas pelo alarme de 5 s, com prazo no attachment.
+Hashes têm limite próprio de 256/s, separado dos 20 comandos/s; não foi removido o limite de abuso.
+Validação: 1722 testes principais, 44 do Worker, typecheck e lint aprovados.
+Quatro mutações rastreadas em scripts/mutar-deploy.mjs: etapa, recusa, identificação e orçamento de hashes.
+Baseline vermelho medido antes das correções. O teste de expiração usa runDurableObjectAlarm:
+invocar alarm diretamente dentro de runInDurableObject causou crash nativo do runner Windows.
+Revisão local do diff realizada; não houve revisão independente por subagente.
+Pendente no lote: validação integrada de cinco etapas, hospedagem e CI. Sem push/deploy.
+As notas antigas sobre ausência de etapa e orçamento compartilhado descrevem o estado anterior.

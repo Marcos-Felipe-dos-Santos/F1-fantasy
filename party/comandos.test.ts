@@ -100,6 +100,22 @@ describe('S3 — teto de comandos inbound por conexão', () => {
     fecharTodos();
   });
 
+  it('hashes têm orçamento separado e limitado, sem consumir as jogadas', async () => {
+    const codigo = await criarSala();
+    const { ws, recebidas } = await abrirSocket(codigo);
+    await drenar();
+    // Uma rajada com mais de 20 hashes ocorre com 22 humanos simultâneos.
+    for (let i = 0; i < 30; i++) ws.send(JSON.stringify({ tipo: 'hash' }));
+    await drenar();
+    expect(contar(recebidas, 'comandos-demais')).toBe(0);
+    await expect.poll(() => contar(recebidas, 'jogador-desconhecido')).toBe(30);
+    martelar(ws, TETO_COMANDOS);
+    await drenar();
+    expect(contar(recebidas, 'comandos-demais')).toBe(0);
+    for (let i = 0; i < 300; i++) ws.send(JSON.stringify({ tipo: 'hash' }));
+    await expect.poll(() => contar(recebidas, 'comandos-demais')).toBeGreaterThan(0);
+  });
+
   it('🔴 a rajada além do teto responde `comandos-demais`', async () => {
     const codigo = await criarSala();
     const { ws, recebidas } = await abrirSocket(codigo);
@@ -148,10 +164,7 @@ describe('S3 — teto de comandos inbound por conexão', () => {
       ws.send(JSON.stringify({ tipo: 'sincronizar' }));
     }
     await drenar();
-    expect(
-      contar(recebidas, 'comandos-demais'),
-      '`sincronizar` consumiu a cota de jogo',
-    ).toBe(0);
+    expect(contar(recebidas, 'comandos-demais'), '`sincronizar` consumiu a cota de jogo').toBe(0);
 
     // E a cota de jogo tem que estar INTACTA depois disso: o teto inteiro ainda
     // passa. Sem esta metade, um servidor que ignorasse o teto passaria acima.

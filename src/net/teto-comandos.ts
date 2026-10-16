@@ -102,6 +102,10 @@ import type { BaldeDeTeto } from './rate-limit';
  */
 export const TETO_COMANDOS = 20;
 
+// Até 132 escolhas no draft de 22 jogadores, mais transições e reentrada.
+// Orçamento independente: atestados não podem consumir a cota das jogadas.
+export const TETO_HASHES = 256;
+
 /**
  * A janela, em milissegundos.
  *
@@ -140,6 +144,7 @@ export interface VeredictoComandos {
 export function avaliarTetoComandos(
   balde: BaldeDeTeto | null,
   agora: number,
+  teto = TETO_COMANDOS,
 ): VeredictoComandos {
   const expirou = balde === null || agora - balde.inicio >= JANELA_COMANDOS_MS;
   if (expirou) {
@@ -147,7 +152,7 @@ export function avaliarTetoComandos(
   }
   const contagem = balde.contagem + 1;
   return {
-    permitido: contagem <= TETO_COMANDOS,
+    permitido: contagem <= teto,
     balde: { inicio: balde.inicio, contagem },
   };
 }

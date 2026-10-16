@@ -349,8 +349,7 @@ export function avaliarBarreiraDaCorrida(
   // `true` e fecharia a corrida no instante em que o draft concluísse — de
   // novo armando a janela de graça cedo demais, que é o defeito que este PR
   // existe para consertar. Com o guarda, esse caso resolve pelo timeout.
-  const todosAtestaram =
-    elegiveis.length > 0 && elegiveis.every((id) => atestaram.includes(id));
+  const todosAtestaram = elegiveis.length > 0 && elegiveis.every((id) => atestaram.includes(id));
   const venceu = agora - abertaEm >= timeoutMs;
   if (!todosAtestaram && !venceu) return estado;
 
@@ -832,7 +831,9 @@ export function aoReceber(
     // O teto é o tamanho do log: a âncora é um índice dele. Ver `atestadoValido`.
     // O teto da ETAPA é `nEtapas - 1` — ela vira CHAVE de balde no estado
     // persistido, então sem teto o cliente escreveria baldes à vontade.
-    if (!atestadoValido(comando, estado.sala.draft?.log.length ?? 0, nEtapasDaSala(estado.sala) - 1)) {
+    if (
+      !atestadoValido(comando, estado.sala.draft?.log.length ?? 0, nEtapasDaSala(estado.sala) - 1)
+    ) {
       return soPara(estado, conexaoId, { tipo: 'erro', erro: 'comando-invalido' });
     }
     return registrarAtestado(estado, remetenteId, comando);
@@ -856,6 +857,15 @@ export function aoReceber(
     // nenhum — é ruído ou tentativa de fechar a sala dos outros mais cedo.
     if (abertaEmDe(estado.sala) === null) {
       return soPara(estado, conexaoId, { tipo: 'erro', erro: 'corrida-nao-comecou' });
+    }
+
+    const etapa = (comando as { etapa?: unknown }).etapa;
+    const legado = estadoDasSeeds(estado.sala).tipo === 'legado';
+    if (
+      !(legado && etapa === undefined) &&
+      (!Number.isInteger(etapa) || etapa !== cursorDaSala(estado.sala))
+    ) {
+      return soPara(estado, conexaoId, { tipo: 'erro', erro: 'comando-invalido' });
     }
     const comAtestado = atestarFimDaCorrida(estado, remetenteId);
     const avaliado = avaliarBarreiraDaCorrida(comAtestado, agora);

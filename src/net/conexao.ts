@@ -125,7 +125,6 @@ export function abrirConexao(opcoes: OpcoesConexao): Conexao {
     socket = ws;
 
     ws.addEventListener('open', () => {
-      tentativa = 0;
       mudarPara('aberta');
       opcoes.aoAbrir?.();
       // O que ficou na fila enquanto estava fora vai agora. A identificação
@@ -144,7 +143,9 @@ export function abrirConexao(opcoes: OpcoesConexao): Conexao {
 
     ws.addEventListener('message', (evento) => {
       try {
-        opcoes.aoReceber(JSON.parse(String(evento.data)) as MensagemServidor);
+        const mensagem = JSON.parse(String(evento.data)) as MensagemServidor;
+        if (mensagem.tipo === 'estado') tentativa = 0;
+        opcoes.aoReceber(mensagem);
       } catch {
         // Mensagem que não é JSON não derruba o cliente — o servidor também
         // não derruba com comando inválido (`aoReceber`, em servidor-sala.ts).
@@ -165,7 +166,15 @@ export function abrirConexao(opcoes: OpcoesConexao): Conexao {
       timer = setTimeout(conectar, espera);
     };
 
-    ws.addEventListener('close', reagendar);
+    ws.addEventListener('close', (evento) => {
+      if (evento.code === 4403 || evento.code === 4408) {
+        fechadaDeProposito = true;
+        if (timer !== null) clearTimeout(timer);
+        mudarPara('fechada');
+        return;
+      }
+      reagendar();
+    });
     ws.addEventListener('error', () => {
       // `error` costuma vir seguido de `close`; fechar aqui evita ficar preso
       // num socket zumbi quando o navegador não dispara o `close`.
