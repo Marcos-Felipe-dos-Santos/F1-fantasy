@@ -3938,3 +3938,5 @@ ALLOWED_ORIGINS público agora registrado no wrangler.jsonc, mantendo ENVIRONMEN
 ### Ajuste de CI no fechamento
 
 No mesmo SHA635413b, CI de pull_request passou e CI de push falhou em comandos.test.ts: esperava resposta WebSocket depois de sleep50ms. Corrigido o teste para expect.poll até as três recusas esperadas, sem alterar limitador/produção. Resultado anterior não foi ignorado; novo commit deve passar nas duas execuções antes do merge.
+
+A segunda execução de push39052791341 revelou a mesma espera fixa no caso de rajada (:132). A correção foi ampliada a comandos.test.ts inteiro: conexão aguarda snapshot inicial, mensagens aguardam contagem exata, fechamento aguarda mapa vazio. Sem sleep fixo nem remoção de casos. Duas execuções completas locais46/46 e lint/typecheck passaram.

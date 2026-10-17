@@ -6918,3 +6918,5 @@ README passa a ter link Jogar agora e estado de produção; docs/deploy-local.md
 ### CI remoto: espera fixa de WebSocket (PR de fechamento)
 
 Commit635413b teve resultados divergentes: pull_request39052613842 verde; push39052585050 falhou em party/comandos.test.ts:146, expected0 greater than0. O teste RESPONDE usava drenar50ms para esperar as respostas; trocado por expect.poll verificando exatamente3 comandos-demais após TETO+3 envios. Nenhuma regra do servidor foi alterada. Teste direcionado7/7 passou; suíte Worker completa e CI do novo SHA são os próximos portões.
+
+Ampliação medida: push39052791341 falhou no outro caso (:132), enquanto pull_request39052793966 passou. Removidas todas as esperas drenar50ms de comandos.test.ts; handshake por snapshot, respostas por contagem exata (inclusive negativas após confirmação do processamento), onClose por consulta do mapa até zero. Os sete casos permanecem; nenhuma produção alterada. Duas suítes Worker completas46/46 em sequência e lint/typecheck verdes.
