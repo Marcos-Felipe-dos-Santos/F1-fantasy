@@ -426,7 +426,7 @@ describe('carregarCampeonato — motivos de falha', () => {
     expect(carregarCampeonato(storage)).toEqual({ ok: false, motivo: 'shape-invalido' });
   });
 
-  it('versao-incompativel: versaoFormato diferente da atual', () => {
+  it.each([3, VERSAO_FORMATO + 1])('versao-incompativel: formato %s (fictício antigo ou futuro)', (versao) => {
     const loadouts = loadoutsDeTeste(2);
     const draft = draftDeTeste(loadouts);
     const calendario = calendarioPadrao(dataset);
@@ -435,7 +435,7 @@ describe('carregarCampeonato — motivos de falha', () => {
     salvarCampeonato(storage, 1, draft, estado);
 
     const bruto = JSON.parse(storage.getItem(CHAVE_SAVE)!);
-    bruto.versaoFormato = VERSAO_FORMATO + 1;
+    bruto.versaoFormato = versao;
     storage.setItem(CHAVE_SAVE, JSON.stringify(bruto));
 
     expect(carregarCampeonato(storage)).toEqual({ ok: false, motivo: 'versao-incompativel' });

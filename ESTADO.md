@@ -3922,3 +3922,10 @@ Validação: 1724 testes principais/79 arquivos, 46 testes Worker/8 arquivos, bu
 ## 2026-10-16 — Preparação local, PR 3/3
 
 CI em .github/workflows/ci.yml: Node 24, npm ci, lint, suíte principal, build/typecheck/dry-run e Worker após assets. Permissão somente leitura; não publica. README corrige online de cinco etapas e documenta start:local. Contagens atuais: 1724 testes principais e 46 Worker. CI remoto ainda não executado (sem push autorizado). Três branches locais empilhadas, sem PR remoto/deploy. Próximo passo do usuário: testar npm run start:local; endereço público e publicação ficam para decisão posterior.
+
+## 2026-10-17 — Nomes originais restaurados por pedido do Marcos
+
+Decisão atual de produto: usar nomes históricos originais de pilotos/equipes e restaurar marcas das peças e Montreal (Gilles Villeneuve). Este pedido explícito substitui decisões anteriores de anonimização; não é uma conclusão jurídica.
+Publicação: npm run dataset:publicar copia o derivado real por escrita atômica e verifica colisões. 771 equipe/anos. Fixture reversa pelo mapa de ids fictícios→reais com colisões recusadas; 22 registros, notas/anos/ordem preservados. CLI de migração faz ensaio por padrão. Funções antigas e tabela permanecem apenas como proveniência testada, CLIs fictícias aposentadas.
+VERSAO_APP 3.4.7, digest 61184d3b; VERSAO_FORMATO 4: salas e saves com ids fictícios são incompatíveis. Criar sala/campeonato novos.
+Validação: 1730 testes principais/80 arquivos, 46 Worker/8 arquivos, lint/typecheck/build. Assinaturas SHA-256 de notas/anos/ordem idênticas às anteriores. Goldens numéricos preservados; harness muda dois mínimos empatados por ordenação de ids, conferidos independentemente (Gasly/Alpine 2024 em PNEU60; Piquet/Benetton1990 em PNEU81). Navegador confirmou nomes originais e marcas das peças, prova docs/img/nomes-originais.png. Sem revisão independente. Branch codex/restaurar-nomes-originais; sem push/deploy desta alteração.

@@ -87,4 +87,5 @@
  * de formas diferentes — **alarme falso imediato**, que é literalmente o modo de
  * falha que o docblock do digest descreve.
  */
-export const VERSAO_APP = '3.4.6';
+// 3.4.6 → 3.4.7: restauração de nomes/ids originais e marcas das peças.
+export const VERSAO_APP = '3.4.7';

@@ -73,11 +73,11 @@ const PERFIS_GOLDEN: Record<string, 'passeio' | 'praGanhar'> = {
  * comentário de `scripts/balance.test.ts` impõe e que o PR 6 já pagou uma vez.
  */
 const SORTEIOS_VOCE_GOLDEN = [
-  { equipe: 'Salviati', ano: 1993 },
-  { equipe: 'Pemberley', ano: 2023 },
-  { equipe: 'Ridgeway', ano: 2004 },
-  { equipe: 'Baldern', ano: 2004 },
-  { equipe: 'Pemberley', ano: 2004 },
+  { equipe: 'Benetton', ano: 1993 },
+  { equipe: 'Williams', ano: 2023 },
+  { equipe: 'McLaren', ano: 2004 },
+  { equipe: 'Sauber', ano: 2004 },
+  { equipe: 'Williams', ano: 2004 },
 ];
 
 describe('golden snapshot: iniciarDraftSingle("demo", "dificil") == main pré-PR 2.1a', () => {

@@ -30,11 +30,11 @@ const pistaInterlagos = dataset.pistasById.get('pista-interlagos')!;
 function loadoutRedBull(overrides: Partial<Loadout> = {}): Loadout {
   return {
     jogadorId: 'j1',
-    pilotoId: 'kaldrix-2023-piloto-sander_doornbosch',
-    chassiId: 'kaldrix-2023-chassi',
-    motorId: 'kaldrix-2023-motor',
-    estrategistaId: 'kaldrix-2023-estrategista',
-    pitId: 'kaldrix-2023-pit',
+    pilotoId: 'red-bull-2023-piloto-max_verstappen',
+    chassiId: 'red-bull-2023-chassi',
+    motorId: 'red-bull-2023-motor',
+    estrategistaId: 'red-bull-2023-estrategista',
+    pitId: 'red-bull-2023-pit',
     pecaId: 'peca-composto-macio',
     ...overrides,
   };
@@ -43,11 +43,11 @@ function loadoutRedBull(overrides: Partial<Loadout> = {}): Loadout {
 function loadoutFerrari(overrides: Partial<Loadout> = {}): Loadout {
   return {
     jogadorId: 'j2',
-    pilotoId: 'sarterra-2023-piloto-valbonne',
-    chassiId: 'sarterra-2023-chassi',
-    motorId: 'sarterra-2023-motor',
-    estrategistaId: 'sarterra-2023-estrategista',
-    pitId: 'sarterra-2023-pit',
+    pilotoId: 'ferrari-2023-piloto-leclerc',
+    chassiId: 'ferrari-2023-chassi',
+    motorId: 'ferrari-2023-motor',
+    estrategistaId: 'ferrari-2023-estrategista',
+    pitId: 'ferrari-2023-pit',
     pecaId: 'peca-composto-macio',
     ...overrides,
   };
@@ -56,11 +56,11 @@ function loadoutFerrari(overrides: Partial<Loadout> = {}): Loadout {
 function loadoutMinardi(jogadorId: string, overrides: Partial<Loadout> = {}): Loadout {
   return {
     jogadorId,
-    pilotoId: 'ronzani-2004-piloto-beregszaszi',
-    chassiId: 'ronzani-2004-chassi',
-    motorId: 'ronzani-2004-motor',
-    estrategistaId: 'ronzani-2004-estrategista',
-    pitId: 'ronzani-2004-pit',
+    pilotoId: 'minardi-2004-piloto-baumgartner',
+    chassiId: 'minardi-2004-chassi',
+    motorId: 'minardi-2004-motor',
+    estrategistaId: 'minardi-2004-estrategista',
+    pitId: 'minardi-2004-pit',
     pecaId: 'peca-composto-macio',
     ...overrides,
   };
@@ -70,11 +70,11 @@ function loadoutMinardi(jogadorId: string, overrides: Partial<Loadout> = {}): Lo
 function loadoutRonzani1993Danesin(jogadorId: string, overrides: Partial<Loadout> = {}): Loadout {
   return {
     jogadorId,
-    pilotoId: 'ronzani-1993-piloto-danesin',
-    chassiId: 'ronzani-1993-chassi',
-    motorId: 'ronzani-1993-motor',
-    estrategistaId: 'ronzani-1993-estrategista',
-    pitId: 'ronzani-1993-pit',
+    pilotoId: 'minardi-1993-piloto-barbazza',
+    chassiId: 'minardi-1993-chassi',
+    motorId: 'minardi-1993-motor',
+    estrategistaId: 'minardi-1993-estrategista',
+    pitId: 'minardi-1993-pit',
     pecaId: 'peca-composto-macio',
     ...overrides,
   };
@@ -83,12 +83,12 @@ function loadoutRonzani1993Danesin(jogadorId: string, overrides: Partial<Loadout
 function loadoutMercedes(overrides: Partial<Loadout> = {}): Loadout {
   return {
     jogadorId: 'j4',
-    pilotoId: 'halbrandt-2023-piloto-calderwood',
-    chassiId: 'halbrandt-2023-chassi',
-    motorId: 'halbrandt-2023-motor',
-    estrategistaId: 'halbrandt-2023-estrategista',
-    pitId: 'halbrandt-2023-pit',
-    pecaId: 'peca-das',
+    pilotoId: 'mercedes-2023-piloto-hamilton',
+    chassiId: 'mercedes-2023-chassi',
+    motorId: 'mercedes-2023-motor',
+    estrategistaId: 'mercedes-2023-estrategista',
+    pitId: 'mercedes-2023-pit',
+    pecaId: 'peca-das-mercedes',
     ...overrides,
   };
 }
@@ -355,7 +355,7 @@ describe('simularCorrida', () => {
       let eventosComum = 0;
       for (let seed = 0; seed < totalSeeds; seed++) {
         const loadouts = [
-          loadoutRedBull({ jogadorId: 'proibida', pecaId: 'peca-suspensao-ativa' }),
+          loadoutRedBull({ jogadorId: 'proibida', pecaId: 'peca-suspensao-ativa-fw15' }),
           loadoutRedBull({ jogadorId: 'comum', pecaId: 'peca-composto-macio' }),
         ];
         const grid = simularQuali(dataset, loadouts, pistaMonza, seed);
@@ -379,7 +379,7 @@ describe('simularCorrida', () => {
       let achado: { evento: import('./types').EventoCorrida } | null = null;
       for (let seed = 0; seed < totalSeeds; seed++) {
         const loadouts = [
-          loadoutRedBull({ jogadorId: 'proibida', pecaId: 'peca-suspensao-ativa' }),
+          loadoutRedBull({ jogadorId: 'proibida', pecaId: 'peca-suspensao-ativa-fw15' }),
         ];
         const grid = simularQuali(dataset, loadouts, pistaMonza, seed);
         const resultado = simularCorrida(dataset, loadouts, pistaMonza, grid, seed);
@@ -667,7 +667,7 @@ describe('simularCorrida', () => {
       let achado: ReturnType<typeof simularCorrida> | null = null;
       for (let seed = 0; seed < totalSeeds; seed++) {
         const loadouts = [
-          loadoutRedBull({ jogadorId: 'proibida', pecaId: 'peca-suspensao-ativa' }),
+          loadoutRedBull({ jogadorId: 'proibida', pecaId: 'peca-suspensao-ativa-fw15' }),
         ];
         const grid = simularQuali(dataset, loadouts, pistaMonza, seed);
         const resultado = simularCorrida(dataset, loadouts, pistaMonza, grid, seed);
@@ -783,11 +783,11 @@ describe('simularCorrida', () => {
       // os erros seco==molhado, então o delta mede só a penalidade de CHU).
       const loadoutAlto = loadoutRedBull({
         jogadorId: 'alto',
-        pilotoId: 'kaldrix-2023-piloto-sander_doornbosch', // CHU 90
+        pilotoId: 'red-bull-2023-piloto-max_verstappen', // CHU 90
       });
       const loadoutBaixo = loadoutRedBull({
         jogadorId: 'baixo',
-        pilotoId: 'kaldrix-2023-piloto-barragan', // CHU 72
+        pilotoId: 'red-bull-2023-piloto-perez', // CHU 72
       });
       const loadouts = [loadoutAlto, loadoutBaixo];
       const pistaMolhada = { ...pistaMonza, chanceChuva: 1 };

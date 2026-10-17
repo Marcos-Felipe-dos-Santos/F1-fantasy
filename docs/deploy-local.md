@@ -35,7 +35,8 @@ Quando houver endereço público, definir ALLOWED_ORIGINS com a origem HTTPS
 exata, sem barra final; manter ENVIRONMENT=production. Não usar VITE_WS_BASE
 para outra origem sem revisar a CSP. Nenhum domínio foi inventado/configurado.
 O frontend e o Worker são publicados juntos. Salas de versões antigas devem
-ser encerradas antes da atualização: a versão 3.4.6 exige etapa na confirmação.
+ser encerradas antes da atualização: a versão atual é 3.4.7, com nomes e ids originais.
+Saves locais anteriores ao formato 4 são incompatíveis; comece um campeonato novo.
 
 Push e deploy dependem de autorização explícita. CI não publica automaticamente.
 
@@ -56,3 +57,9 @@ Pare o servidor antes de rodar start:local novamente. O CI está configurado,
 mas a execução no GitHub só ocorrerá após push autorizado; não foi executada aqui.
 
 Referência: https://developers.cloudflare.com/workers/static-assets/binding/
+
+## Nomes originais (2026-10-17)
+
+Pilotos, equipes, marcas das peças e Montreal (Gilles Villeneuve) restaurados.
+Use npm run dataset:publicar para regenerar o dado servido. As assinaturas de
+notas e os goldens confirmam a preservação dos valores e da ordem.

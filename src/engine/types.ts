@@ -129,7 +129,7 @@ export type AtributoAlvo = keyof NotasPiloto | keyof NotasChassi | keyof NotasMo
 
 /**
  * Peça icônica (§7). `atributosAlvo` é array porque há peças de 2 atributos
- * (ex.: "Suspensão ativa" → AERO+MEC; "DAS" → QUALI+PNEU; "Controle de tração
+ * (ex.: "Suspensão ativa Williams FW15" → AERO+MEC; "DAS Mercedes" → QUALI+PNEU; "Controle de tração
  * escondido" → LARG+MEC). `bonus`/`risco` numéricos explícitos nos dados — o
  * balance-harness ajusta valores, não tipos (§7-§8).
  *

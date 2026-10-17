@@ -40,9 +40,9 @@ describe('bot "pra ganhar" (baseline vermelho, §12)', () => {
 
   it('com só 2 slots livres, escolhe o melhor dos 2', () => {
     const state = stateComRodada('bot-1', 4, {
-      pilotoId: 'kaldrix-2023-piloto-sander_doornbosch',
-      estrategistaId: 'kaldrix-2023-estrategista',
-      pitId: 'kaldrix-2023-pit',
+      pilotoId: 'red-bull-2023-piloto-max_verstappen',
+      estrategistaId: 'red-bull-2023-estrategista',
+      pitId: 'red-bull-2023-pit',
     });
     const escolha = escolherBot(state, dataset, 'bot-1');
 
