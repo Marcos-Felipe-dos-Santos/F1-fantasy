@@ -3918,3 +3918,7 @@ As notas antigas sobre ausência de etapa e orçamento compartilhado descrevem o
 Frontend e Worker na mesma origem com Static Assets; `npm run start:local` compila e serve em 127.0.0.1:8787, sem publicação. Origem pública ainda não definida.
 O teste de navegador revelou que a barreira mudava etapa/conclusão sem incrementar seq: clientes descartavam os snapshots. Corrigido no redutor; regressões servidor→cliente por atestados e timeout nasceram vermelhas (0 em vez de 1) e passaram.
 Validação: 1724 testes principais/79 arquivos, 46 testes Worker/8 arquivos, build/typecheck. Dois clientes, F5 e encerramento com textos finais iguais; etapa 1 revelou o bug, etapas 2–5 validadas após correção. Evidência: docs/img/deploy-local-validado.png. Sem revisão independente, push ou deploy.
+
+## 2026-10-16 — Preparação local, PR 3/3
+
+CI em .github/workflows/ci.yml: Node 24, npm ci, lint, suíte principal, build/typecheck/dry-run e Worker após assets. Permissão somente leitura; não publica. README corrige online de cinco etapas e documenta start:local. Contagens atuais: 1724 testes principais e 46 Worker. CI remoto ainda não executado (sem push autorizado). Três branches locais empilhadas, sem PR remoto/deploy. Próximo passo do usuário: testar npm run start:local; endereço público e publicação ficam para decisão posterior.

@@ -39,4 +39,20 @@ ser encerradas antes da atualização: a versão 3.4.6 exige etapa na confirmaç
 
 Push e deploy dependem de autorização explícita. CI não publica automaticamente.
 
+## Validação realizada em 2026-10-16
+
+Build, lint, typecheck, 1724 testes principais e 46 testes Worker passaram.
+No navegador, dois jogadores concluíram o draft e viram resultados iguais.
+A primeira etapa revelou um bug: o servidor avançava sem incrementar a sequência
+do snapshot, e os clientes descartavam a atualização. Corrigido e coberto por
+dois testes de cinco etapas (confirmações e timeout), vermelhos antes do conserto.
+Após reiniciar o servidor, os clientes retomaram e concluíram as etapas 2–5,
+com textos finais idênticos. F5 também foi exercitado.
+
+![Pódio do teste local](img/deploy-local-validado.png)
+
+Ao recompilar com Wrangler aberto, o watcher de dist pode parar no Windows.
+Pare o servidor antes de rodar start:local novamente. O CI está configurado,
+mas a execução no GitHub só ocorrerá após push autorizado; não foi executada aqui.
+
 Referência: https://developers.cloudflare.com/workers/static-assets/binding/

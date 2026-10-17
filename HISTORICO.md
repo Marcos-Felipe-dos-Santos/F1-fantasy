@@ -6897,3 +6897,8 @@ As notas antigas sobre ausência de etapa e orçamento compartilhado descrevem o
 Static Assets em dist, ASSETS binding e rotas de API fora do fallback SPA. Build agora gera dist antes do dry-run; start:local usa loopback e duas origens explícitas em modo production. Dois testes novos de hospedagem verificam HTML/CSP/JS e API não capturada.
 No navegador, o campeonato parava visualmente após a primeira corrida: servidor avançava mas publicarSala preservava seq e aplicarMensagem descartava. Atestados novos, avanço e conclusão agora incrementam seq; duplicatas preservam identidade. Dois testes de integração dos redutores cobrem cinco etapas por atestados e timeout, com baseline vermelho por valor e verde após correção.
 Testes: principal 1724/79; Worker 46/8; build e typecheck verdes. Navegador: dois jogadores, draft, resultados iguais, F5, etapas 2–5 após correção e pódio final idêntico. Rebuild com Wrangler aberto invalidou o watcher de dist no Windows; reiniciar servidor resolveu. Não houve revisão independente nem publicação. Instruções em docs/deploy-local.md.
+
+## 2026-10-16 — PR 3/3: CI e documentação de execução local
+
+Workflow com checkout v5/setup-node v7 (APIs oficiais), Node 24, npm ci, lint, npm test, npm run build e npm run test:party nessa ordem para garantir dist no pool. contents:read, checkout sem persistir credenciais, timeout de 15 minutos e cancelamento de execução supersedida. Nenhum passo de deploy.
+README deixou de prometer formatos online inexistentes: cinco etapas online, uma/cinco/dez local. Instruções do build integrado e medição de 1724+46 testes; guia registra teste visual e limitação do watcher ao recompilar dist em uso. CI remoto não executado; nenhuma dependência nova instalada, push ou deploy realizado.
