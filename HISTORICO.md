@@ -2482,6 +2482,67 @@ Arquivo novo: `preview/campeonato-online.html` (não sobrescreve `preview/campeo
 
 ---
 
+## PR PRÉ-DEPLOY — OS ÚLTIMOS NOMES REAIS VISÍVEIS (2026-09-02, `6ee6b84`) — BAIXO RISCO
+
+**Commit direto na `main`, sem merge de branch. Sem push, sem tag.** Classificação **BAIXO RISCO
+ditada pelo dev**: zero lógica, zero `src/engine/`, `src/data/` intocado. Três arquivos, **+21 −28**.
+📌 **Doc escrita pela SESSÃO PRINCIPAL, não pelo `doc-writer` — a pedido explícito do dev.**
+
+**O que o PR faz:** o placeholder da seed em `src/ui/TelaInicio.tsx:164` deixa de ser
+`"ex.: senna1988 ou 42"` e vira `"ex.: vilarinho1988 ou 42"`; o README perde as três capturas PNG
+(`corrida.png`, `draft.png`, `campeonato.png`), que exibiam nomes reais do dataset antigo.
+
+📊 **PORTÕES:** `npm test` **1713/1713 — INALTERADO** (nenhum comportamento mudou),
+`npm run test:party` **42/42**, typecheck **0** nos três projetos, lint **0** (por exit code),
+`npm run preview` **0** (11/11) **sem mover `docs/img/silhuetas.svg`**. **`VERSAO_APP` fica 3.4.5 e
+`VERSAO_FORMATO` fica 3** — `src/ui/` está fora do escopo do digest, com `versao.test.ts` verde como
+prova mecânica. **Bundle `index-UkRE1HGe.js` → `index-rKeVHM50.js`**, esperado: a string chega ao
+bundle. **`npm run balance` não rodado** — zero arquivo de `src/engine/`.
+✅ **Portão visual ABERTO E OLHADO nos dois temas** (`npm run dev`, `<details>` da seed expandido):
+placeholder legível, sem truncar, **console limpo**.
+
+🔴 **O ACHADO QUE SOBREVIVE AO PR: O PORTÃO SERIA CEGO AO `senna1988` MESMO APONTADO PARA
+`src/ui/`.** `contarComFronteira` exige fronteira não-alfanumérica dos **dois** lados, e o `1` colado
+anula o match — **medido, dá 0**. A varredura das **909 agulhas** sobre `src/ui/` (67 arquivos,
+réplica do universo e do contador do portão, com as duas anti-vacuidades) devolve **459 antes e 459
+depois** — **as duas rodadas na mesma sessão, e é essa a medição que prova a cegueira.** No bundle,
+o `medir-nomes-bundle.mjs` dá **124** depois, igual ao 124 que o README já registrava — ⚠️ **mas
+esse "antes" é REGISTRO** (medido contra `index-UkRE1HGe.js` na sessão do `da85999`), **não
+remedição desta sessão**: o bundle antigo já não existe em disco. **O sítio que este PR conserta é
+invisível para as duas ferramentas** — quem escrever o PR de alargamento do portão precisa saber que
+alargar **não pega esta classe**.
+
+🔴 **UM QUARTO ARQUIVO ENTROU POR OBRIGAÇÃO:** o docblock de `scripts/medir-nomes-bundle.mjs`
+(`da85999`, do dia anterior) usava o `senna1988` como **o caso real** do ponto cego, em presente do
+indicativo. Trocar o placeholder sem tocá-lo deixaria prosa falsa criada pelo próprio commit — a
+classe do **bloqueante C1 do H4**. Corrigido **no lugar**, riscado: o caso saiu, **a cegueira
+continua**, e a medição dos 459 entrou ao lado.
+
+📏 **A VARREDURA DE `src/ui/`, e o número bruto MENTE.** 459 total · 311 em produção · 48 arquivos
+com achado. **Quase tudo é colisão com palavra comum** (`sala`, `button` de Jenson Button, `era`,
+`campos`, `ramos`, `rosa`) — **o substituto 2 do inventário se repetindo**, a métrica reprovada em
+2026-08-24 pelo mesmo mecanismo. Os achados que **não** são colisão estão **todos em comentário**:
+`Red Bull Ring` (T2 adiada) em `fluxo-corrida.ts`, `pista-camadas.ts`, `suavizacao.ts` e
+`tracados.ts`; `Mercedes Arena` (trecho do Nürburgring) e `Niki Lauda` (T1 do Red Bull Ring) em
+`tracados.ts`; e `fluxo-draft-golden.test.ts` citando nomes reais **para documentar o mapeamento
+real→fictício**. ⚠️ **O script da varredura NÃO ficou rastreado** — rodou do scratchpad, mesmo débito
+do `mutar.py` do H1; rastreá-lo é decisão do dev.
+
+🔴 **UMA VERIFICAÇÃO PÓS-COMMIT PEDIDA PELO DEV NÃO CONFIRMOU O ESPERADO.** Ele pediu para confirmar
+que o placeholder no `dist/` era `kestner2019`. **Medido: `kestner2019` dá ZERO no `dist/` inteiro**
+— a string do bundle é `ex.: vilarinho1988 ou 42`, que é o que o diff aprovado trazia. `Kestner`
+existe na tabela, mas do lado das **equipes** (fictício da Cooper); **zero pilotos** têm o nome.
+✅ **O dev confirmou ser lapso dele; nada foi trocado.** Registrado porque confirmar teria gravado
+como medido um estado que o repositório não tem — o caso que o próprio H4 registra com as palavras
+dele (*"eu pedi para documentar um conserto que não aconteceu"*).
+
+**O que o PR NÃO faz:** não alarga o portão para `src/ui/` (**PR próprio**, decisão do dev); não
+regera as capturas (**pendência 0(ap)** — os PNGs continuam em `docs/img/`); não toca os três sítios
+de teste que usam `'senna1988'` como seed arbitrária (`fluxo-draft.test.ts:45`, `:51`,
+`useDraft.test.ts:114`), apresentados ao dev e deixados fora por escopo.
+
+---
+
 ## PR H4 — CSP, JITTER E TETO DE COMANDOS (2026-09-02, `0705ff6`) — 🔴 ALTO RISCO
 
 **Merge `--no-ff` de `2b924f6`, na `main`. Sem push, sem tag.** Três itens da auditoria de segurança
@@ -6815,3 +6876,29 @@ design system arcade (5.1a/b/c), Modo Campeonato (6.1-6.5), Fase 7 até o **7.8*
 PRs **8.1** (calendário sorteado), **8.2** (round-trip do save) e **8.4-mínimo** (o campeonato
 deixou de ser inalcançável — tem seletor, encadeia corridas, salva e retoma).
 
+
+## Preparação de deploy — PR 1 (2026-10-16)
+
+Implementado em `codex/deploy-1-online`, com autorização do dev para os três PRs na mesma sessão.
+Confirmação de corrida exige a etapa atual em salas modernas; ausência só é aceita em sala legada.
+Cliente envia etapa e VERSAO_APP sobe para 3.4.6 (digest de simulação inalterado).
+Recusas 4403/4408 encerram a reconexão; o backoff só reinicia após receber estado.
+Conexões sem identificação expiram após 60 s, verificadas pelo alarme de 5 s, com prazo no attachment.
+Hashes têm limite próprio de 256/s, separado dos 20 comandos/s; não foi removido o limite de abuso.
+Validação: 1722 testes principais, 44 do Worker, typecheck e lint aprovados.
+Quatro mutações rastreadas em scripts/mutar-deploy.mjs: etapa, recusa, identificação e orçamento de hashes.
+Baseline vermelho medido antes das correções. O teste de expiração usa runDurableObjectAlarm:
+invocar alarm diretamente dentro de runInDurableObject causou crash nativo do runner Windows.
+Revisão local do diff realizada; não houve revisão independente por subagente.
+Pendente no lote: validação integrada de cinco etapas, hospedagem e CI. Sem push/deploy.
+As notas antigas sobre ausência de etapa e orçamento compartilhado descrevem o estado anterior.
+## 2026-10-16 — PR 2/3: hospedagem integrada e sequência da barreira
+
+Static Assets em dist, ASSETS binding e rotas de API fora do fallback SPA. Build agora gera dist antes do dry-run; start:local usa loopback e duas origens explícitas em modo production. Dois testes novos de hospedagem verificam HTML/CSP/JS e API não capturada.
+No navegador, o campeonato parava visualmente após a primeira corrida: servidor avançava mas publicarSala preservava seq e aplicarMensagem descartava. Atestados novos, avanço e conclusão agora incrementam seq; duplicatas preservam identidade. Dois testes de integração dos redutores cobrem cinco etapas por atestados e timeout, com baseline vermelho por valor e verde após correção.
+Testes: principal 1724/79; Worker 46/8; build e typecheck verdes. Navegador: dois jogadores, draft, resultados iguais, F5, etapas 2–5 após correção e pódio final idêntico. Rebuild com Wrangler aberto invalidou o watcher de dist no Windows; reiniciar servidor resolveu. Não houve revisão independente nem publicação. Instruções em docs/deploy-local.md.
+
+## 2026-10-16 — PR 3/3: CI e documentação de execução local
+
+Workflow com checkout v5/setup-node v7 (APIs oficiais), Node 24, npm ci, lint, npm test, npm run build e npm run test:party nessa ordem para garantir dist no pool. contents:read, checkout sem persistir credenciais, timeout de 15 minutos e cancelamento de execução supersedida. Nenhum passo de deploy.
+README deixou de prometer formatos online inexistentes: cinco etapas online, uma/cinco/dez local. Instruções do build integrado e medição de 1724+46 testes; guia registra teste visual e limitação do watcher ao recompilar dist em uso. CI remoto não executado; nenhuma dependência nova instalada, push ou deploy realizado.

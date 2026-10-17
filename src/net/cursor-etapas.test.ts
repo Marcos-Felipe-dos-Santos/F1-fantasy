@@ -38,6 +38,7 @@
  */
 
 import { describe, expect, it } from 'vitest';
+import { aplicarMensagem, criarCliente } from './cliente';
 import {
   aoDesconectar,
   aoPassarOTempo,
@@ -78,7 +79,11 @@ function mandar(
   agora = T0,
   token = 'tk',
 ): { estado: EstadoServidor; envios: Envios } {
-  return aoReceber(estado, conexaoId, JSON.stringify(comando), agora, token);
+  // Clientes atuais enviam a etapa; testes de protocolo bruto usam aoReceber diretamente.
+  const c = comando as { tipo?: string; etapa?: number };
+  const enviado =
+    c.tipo === 'corrida-concluida' ? { etapa: estado.sala.etapaAtual, ...c } : comando;
+  return aoReceber(estado, conexaoId, JSON.stringify(enviado), agora, token);
 }
 
 /** Sala com N humanos prontos e o draft REALMENTE iniciado — nenhuma fase forjada. */
@@ -86,7 +91,13 @@ function salaIniciada(quantos: number): EstadoServidor {
   let estado = criarServidor('sala-cursor', 987_654, 'dificil', T0, SEEDS_T, N_ETAPAS_CURTA);
   const nomes = ['Ana', 'Beto', 'Cida'];
   for (let i = 0; i < quantos; i += 1) {
-    estado = mandar(estado, `c${i + 1}`, { tipo: 'entrar', nome: nomes[i] }, T0, `tk${i + 1}`).estado;
+    estado = mandar(
+      estado,
+      `c${i + 1}`,
+      { tipo: 'entrar', nome: nomes[i] },
+      T0,
+      `tk${i + 1}`,
+    ).estado;
   }
   for (let i = 0; i < quantos; i += 1) {
     estado = mandar(estado, `c${i + 1}`, { tipo: 'pronto', pronto: true }).estado;
@@ -312,10 +323,7 @@ describe('🔴 O DETECTOR POR ETAPA — o alarme falso que trava o campeonato', 
       hash: H(5),
     });
 
-    expect(
-      r.estado.atestados?.['corrida:1'],
-      'bucketizado na etapa CORRENTE',
-    ).toBeDefined();
+    expect(r.estado.atestados?.['corrida:1'], 'bucketizado na etapa CORRENTE').toBeDefined();
     expect(
       r.estado.atestados?.['corrida:0'],
       'com `?? 0` fixo cairia aqui — o alarme falso de volta',
@@ -343,6 +351,38 @@ describe('🔴 O DETECTOR POR ETAPA — o alarme falso que trava o campeonato', 
 });
 
 describe('🏁 A BARREIRA POR ETAPA — o cursor anda, e só a última conclui', () => {
+  it.each(['atestados', 'timeout'] as const)(
+    'cliente recebe cinco etapas e encerramento por %s',
+    (via) => {
+      let servidor = comDraftConcluido(2);
+      let cliente = aplicarMensagem(criarCliente(), {
+        tipo: 'estado',
+        versaoProtocolo: 1,
+        estado: publicarSala(servidor.sala),
+      });
+      for (let etapa = 0; etapa < 5; etapa++) {
+        expect(cliente.sala?.etapaAtual).toBe(etapa);
+        const agora = T0 + (etapa + 1) * (via === 'timeout' ? TIMEOUT_FIM_DE_CORRIDA_MS + 1 : 100);
+        const resultados = [];
+        if (via === 'atestados') {
+          const primeiro = mandar(servidor, 'c1', { tipo: 'corrida-concluida', etapa }, agora);
+          expect(primeiro.estado.sala.etapaAtual).toBe(etapa);
+          expect(primeiro.estado.sala.concluidaEm).toBeNull();
+          resultados.push(primeiro);
+          resultados.push(
+            mandar(primeiro.estado, 'c2', { tipo: 'corrida-concluida', etapa }, agora),
+          );
+        } else resultados.push(aoPassarOTempo(servidor, agora, 60_000));
+        for (const resultado of resultados) {
+          servidor = resultado.estado;
+          for (const envio of resultado.envios) cliente = aplicarMensagem(cliente, envio.mensagem);
+        }
+        expect(cliente.sala?.etapaAtual).toBe(Math.min(etapa + 1, 4));
+      }
+      expect(cliente.sala?.concluidaEm).toBe(servidor.sala.concluidaEm);
+      expect(cliente.sala?.concluidaEm).not.toBeNull();
+    },
+  );
   it('🔴 BASELINE: fechada a barreira da etapa 0, o cursor vai a 1 e `concluidaEm` continua null', () => {
     const base = comDraftConcluido(2);
     expect(base.sala.etapaAtual).toBe(0);
@@ -372,10 +412,7 @@ describe('🏁 A BARREIRA POR ETAPA — o cursor anda, e só a última conclui',
 
     const depois = todosAtestamFim(base, ['c1', 'c2'], T0 + 1_000);
 
-    expect(publicarSala(depois.sala).seedsAbertas).toEqual([
-      SEEDS_T.etapas[0],
-      SEEDS_T.etapas[1],
-    ]);
+    expect(publicarSala(depois.sala).seedsAbertas).toEqual([SEEDS_T.etapas[0], SEEDS_T.etapas[1]]);
   });
 
   it('🔴 BASELINE: só a barreira da ÚLTIMA etapa marca `concluidaEm`', () => {
@@ -482,10 +519,9 @@ describe('🔒 Pendência 0(r) — `etapaAtual` DENTRO do discriminante', () => 
 
     const depois = avaliarBarreiraDaCorrida(corrompida, T0 + 1000, 0);
     expect(depois, 'nada foi tocado — a MESMA referência volta').toBe(corrompida);
-    expect(
-      estadoDasSeeds(depois.sala).tipo,
-      'a sala continua corrompida em vez de se curar',
-    ).toBe('corrompida');
+    expect(estadoDasSeeds(depois.sala).tipo, 'a sala continua corrompida em vez de se curar').toBe(
+      'corrompida',
+    );
   });
 
   /**

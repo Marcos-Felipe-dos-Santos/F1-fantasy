@@ -16,6 +16,12 @@
   "name": "f1-fantasy-sala",
   "main": "party/sala.ts",
   "compatibility_date": "2026-08-01",
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "run_worker_first": true,
+    "not_found_handling": "single-page-application"
+  },
   "durable_objects": {
     "bindings": [
       {

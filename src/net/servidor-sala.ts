@@ -292,7 +292,7 @@ export function atestarFimDaCorrida(estado: EstadoServidor, jogadorId: string): 
   if (ja.includes(jogadorId)) return estado;
   return {
     ...estado,
-    sala: { ...estado.sala, atestaramFimDaCorrida: [...ja, jogadorId] },
+    sala: { ...estado.sala, seq: estado.sala.seq + 1, atestaramFimDaCorrida: [...ja, jogadorId] },
   };
 }
 
@@ -349,8 +349,7 @@ export function avaliarBarreiraDaCorrida(
   // `true` e fecharia a corrida no instante em que o draft concluísse — de
   // novo armando a janela de graça cedo demais, que é o defeito que este PR
   // existe para consertar. Com o guarda, esse caso resolve pelo timeout.
-  const todosAtestaram =
-    elegiveis.length > 0 && elegiveis.every((id) => atestaram.includes(id));
+  const todosAtestaram = elegiveis.length > 0 && elegiveis.every((id) => atestaram.includes(id));
   const venceu = agora - abertaEm >= timeoutMs;
   if (!todosAtestaram && !venceu) return estado;
 
@@ -393,7 +392,7 @@ export function avaliarBarreiraDaCorrida(
 
   const cursor = cursorDaSala(estado.sala);
   if (cursor >= nEtapas - 1) {
-    return { ...estado, sala: { ...estado.sala, concluidaEm: agora } };
+    return { ...estado, sala: { ...estado.sala, seq: estado.sala.seq + 1, concluidaEm: agora } };
   }
 
   return {
@@ -401,6 +400,8 @@ export function avaliarBarreiraDaCorrida(
     sala: {
       ...estado.sala,
       etapaAtual: cursor + 1,
+      // O cliente descarta snapshots com seq repetida, inclusive após o draft.
+      seq: estado.sala.seq + 1,
       // Os dois campos da barreira são POR ETAPA a partir daqui. Reusar os
       // nomes de "corrida" em vez de criar `etapaAbertaEm`/`atestaramFimDaEtapa`
       // é deliberado: `abertaEmDe`/`atestadosDe` já fazem a leitura defensiva
@@ -832,7 +833,9 @@ export function aoReceber(
     // O teto é o tamanho do log: a âncora é um índice dele. Ver `atestadoValido`.
     // O teto da ETAPA é `nEtapas - 1` — ela vira CHAVE de balde no estado
     // persistido, então sem teto o cliente escreveria baldes à vontade.
-    if (!atestadoValido(comando, estado.sala.draft?.log.length ?? 0, nEtapasDaSala(estado.sala) - 1)) {
+    if (
+      !atestadoValido(comando, estado.sala.draft?.log.length ?? 0, nEtapasDaSala(estado.sala) - 1)
+    ) {
       return soPara(estado, conexaoId, { tipo: 'erro', erro: 'comando-invalido' });
     }
     return registrarAtestado(estado, remetenteId, comando);
@@ -856,6 +859,15 @@ export function aoReceber(
     // nenhum — é ruído ou tentativa de fechar a sala dos outros mais cedo.
     if (abertaEmDe(estado.sala) === null) {
       return soPara(estado, conexaoId, { tipo: 'erro', erro: 'corrida-nao-comecou' });
+    }
+
+    const etapa = (comando as { etapa?: unknown }).etapa;
+    const legado = estadoDasSeeds(estado.sala).tipo === 'legado';
+    if (
+      !(legado && etapa === undefined) &&
+      (!Number.isInteger(etapa) || etapa !== cursorDaSala(estado.sala))
+    ) {
+      return soPara(estado, conexaoId, { tipo: 'erro', erro: 'comando-invalido' });
     }
     const comAtestado = atestarFimDaCorrida(estado, remetenteId);
     const avaliado = avaliarBarreiraDaCorrida(comAtestado, agora);

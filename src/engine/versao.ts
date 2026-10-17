@@ -87,4 +87,4 @@
  * de formas diferentes — **alarme falso imediato**, que é literalmente o modo de
  * falha que o docblock do digest descreve.
  */
-export const VERSAO_APP = '3.4.5';
+export const VERSAO_APP = '3.4.6';

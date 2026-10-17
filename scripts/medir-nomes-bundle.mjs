@@ -27,12 +27,19 @@
  * sobreviventes são quatro, todas explicáveis.
  *
  * ⚠️ **E A FRONTEIRA TEM UM PONTO CEGO CONHECIDO, que fica declarado em vez de
- * escondido: ela não pega nome real GRUDADO EM DÍGITO.** O caso real deste
+ * escondido: ela não pega nome real GRUDADO EM DÍGITO.** ~~O caso real deste
  * repositório é o placeholder `"ex.: senna1988 ou 42"`
- * (`src/ui/TelaInicio.tsx`): `senna` é `driverId` real, mas o `1988` colado
- * anula a fronteira e a ocorrência não entra na conta. **Quem usar este número
- * como "não há nome real no bundle" está errado** — ele responde "quantas
- * agulhas do universo aparecem como palavra inteira", e só isso.
+ * (`src/ui/TelaInicio.tsx`)~~ — **esse caso foi REMOVIDO no PR pré-deploy de
+ * 2026-09-02** (o placeholder virou `"ex.: vilarinho1988 ou 42"`, nome da
+ * tabela dos 458). **A frase é riscada no lugar, não apagada, porque a CEGUEIRA
+ * CONTINUA e é ela que importa:** `senna` é `driverId` real, mas um `1988`
+ * colado anula a fronteira e a ocorrência não entra na conta. **Quem usar este
+ * número como "não há nome real no bundle" está errado** — ele responde
+ * "quantas agulhas do universo aparecem como palavra inteira", e só isso.
+ * 🔴 **E nada vigia isto: MEDIDO em 2026-09-02**, a mesma varredura sobre
+ * `src/ui/` (67 arquivos, as 909 agulhas) dava **0** para `senna1988` **antes**
+ * da troca. **Um `senna1988` novo entraria sem que portão nenhum acusasse** —
+ * o que segura essa classe é leitura humana, não cerca.
  *
  * ---
  *

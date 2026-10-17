@@ -63,7 +63,11 @@ function mandar(
   agora = T0,
   token = 'tk',
 ): { estado: EstadoServidor; envios: Envios } {
-  return aoReceber(estado, conexaoId, JSON.stringify(comando), agora, token);
+  // Clientes atuais enviam a etapa; testes de protocolo bruto usam aoReceber diretamente.
+  const c = comando as { tipo?: string; etapa?: number };
+  const enviado =
+    c.tipo === 'corrida-concluida' ? { etapa: estado.sala.etapaAtual, ...c } : comando;
+  return aoReceber(estado, conexaoId, JSON.stringify(enviado), agora, token);
 }
 
 /** Sala com N humanos prontos e o draft REALMENTE iniciado — nenhuma fase forjada. */
@@ -71,7 +75,13 @@ function salaIniciada(quantos: number): EstadoServidor {
   let estado = criarServidor('sala-barreira', 987_654, 'dificil', T0, SEEDS_T, N_ETAPAS_CURTA);
   const nomes = ['Ana', 'Beto', 'Cida'];
   for (let i = 0; i < quantos; i += 1) {
-    estado = mandar(estado, `c${i + 1}`, { tipo: 'entrar', nome: nomes[i] }, T0, `tk${i + 1}`).estado;
+    estado = mandar(
+      estado,
+      `c${i + 1}`,
+      { tipo: 'entrar', nome: nomes[i] },
+      T0,
+      `tk${i + 1}`,
+    ).estado;
   }
   for (let i = 0; i < quantos; i += 1) {
     estado = mandar(estado, `c${i + 1}`, { tipo: 'pronto', pronto: true }).estado;
@@ -104,8 +114,7 @@ function passoDoDraft(estado: EstadoServidor): EstadoServidor {
  * teste que olha `decidirVida` depois de 2 minutos precisa disto — senão mede
  * a regra de sala VAZIA achando que mede a janela de graça.
  */
-const comConexoes = (estado: EstadoServidor): EstadoServidor =>
-  registrarConexoes(estado, 2, T0);
+const comConexoes = (estado: EstadoServidor): EstadoServidor => registrarConexoes(estado, 2, T0);
 
 /**
  * Leva a sala até a ÚLTIMA etapa do campeonato, fechando as barreiras
@@ -163,6 +172,23 @@ function comDraftConcluido(quantos = 2): EstadoServidor {
   }
   return naUltimaEtapa(estado);
 }
+
+describe('confirmação identifica a etapa assistida', () => {
+  it.each([undefined, -1, 0, 5, 4.5, '4'])('recusa etapa inválida ou atrasada: %s', (etapa) => {
+    const estado = comDraftConcluido();
+    expect(estado.sala.etapaAtual).toBe(4);
+    const r = aoReceber(estado, 'c1', JSON.stringify({ tipo: 'corrida-concluida', etapa }), T0);
+    expect(r.estado).toBe(estado);
+    expect(r.envios[0].mensagem).toMatchObject({ tipo: 'erro', erro: 'comando-invalido' });
+  });
+  it('aceita a etapa atual e não conta duplicata duas vezes', () => {
+    const estado = comDraftConcluido();
+    const comando = JSON.stringify({ tipo: 'corrida-concluida', etapa: 4 });
+    const primeiro = aoReceber(estado, 'c1', comando, T0).estado;
+    expect(primeiro.sala.atestaramFimDaCorrida).toEqual(['humano-01']);
+    expect(aoReceber(primeiro, 'c1', comando, T0).estado).toBe(primeiro);
+  });
+});
 
 describe('📏 MEDIÇÃO da pendência 0(e): o tique com o draft concluído é inofensivo', () => {
   /**
@@ -244,8 +270,10 @@ describe('🔴 SALA REIDRATADA DE ANTES DO PR 3/4 (campos ausentes no storage)',
       passos += 1;
       if (passos > 500) throw new Error('o driver do teste não conseguiu concluir o draft');
     }
-    expect(estado.sala.corridaAbertaEm, 'a corrida tem que abrir mesmo vindo de storage velho').not
-      .toBeUndefined();
+    expect(
+      estado.sala.corridaAbertaEm,
+      'a corrida tem que abrir mesmo vindo de storage velho',
+    ).not.toBeUndefined();
     expect(estado.sala.corridaAbertaEm).not.toBeNull();
   });
 
@@ -319,7 +347,10 @@ describe('🔴 (B) `concluidaEm` marca o fim da CORRIDA, não o do DRAFT', () =>
 
     const r = mandar(estado, 'c1', { tipo: 'corrida-concluida' }, T0 + 30_000);
     expect(r.estado, 'pré-condição: este comando precisa MUDAR o estado').not.toBe(estado);
-    expect(r.envios.some((e) => e.para === null), 'e precisa DIFUNDIR').toBe(true);
+    expect(
+      r.envios.some((e) => e.para === null),
+      'e precisa DIFUNDIR',
+    ).toBe(true);
     estado = r.estado;
 
     expect(estado.sala.corridaAbertaEm, 'a âncora do timeout não pode fugir pra frente').toBe(
@@ -380,7 +411,9 @@ describe('🔴 (A fraca) a barreira é NO FIM e NÃO bloqueia ninguém', () => {
 
     const vencido = T0 + TIMEOUT_FIM_DE_CORRIDA_MS;
     const depois = aoPassarOTempo(estado, vencido);
-    expect(depois.estado.sala.concluidaEm, 'vencido o timeout, a sala decide sozinha').toBe(vencido);
+    expect(depois.estado.sala.concluidaEm, 'vencido o timeout, a sala decide sozinha').toBe(
+      vencido,
+    );
   });
 
   it('🔒 um AUSENTE não conta para a barreira — senão toda sala cairia no timeout', () => {
@@ -466,7 +499,10 @@ describe('🔴 (A fraca) a barreira é NO FIM e NÃO bloqueia ninguém', () => {
     const snapshot = r.envios.find((e) => e.mensagem.tipo === 'estado')!.mensagem as {
       estado: { seedCorrida: number | null };
     };
-    expect(snapshot.estado.seedCorrida, 'a corrida está disponível sem esperar ninguém').not.toBeNull();
+    expect(
+      snapshot.estado.seedCorrida,
+      'a corrida está disponível sem esperar ninguém',
+    ).not.toBeNull();
     expect(estado.sala.concluidaEm, 'e ela ainda não terminou').toBeNull();
   });
 });

@@ -17,12 +17,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-  abrirConexao,
-  baseParaEstaPagina,
-  type Conexao,
-  type EstadoConexao,
-} from '../net/conexao';
+import { abrirConexao, baseParaEstaPagina, type Conexao, type EstadoConexao } from '../net/conexao';
 import {
   aplicarMensagem,
   criarCliente,
@@ -429,11 +424,8 @@ export function useSalaOnline(sala: string): UseSalaOnline {
    * `etapaAtual` dele) ⇒ **alarme falso travado**. Ver o docblock de
    * `alvoDoAtestado` para a cadeia inteira; a mutação M6 a mantém vermelha.
    *
-   * 🔒 **`etapa` vai no comando; `corrida-concluida` continua SEM campo** — o
-   * servidor é dono do cursor e grava no balde da etapa corrente sozinho
-   * (`servidor-sala.ts:860`). A assimetria que isso deixa (jogador atrasado
-   * atesta o FIM da etapa em que o servidor está, não a que assistiu) é a
-   * **pendência 0(x)**, registrada e não consertada aqui por decisão do dev.
+   * A confirmação de fim também carrega etapa (preparação de deploy).
+   * O servidor recusa confirmações atrasadas sem avançar outra corrida.
    */
   const alvo = alvoDoAtestado(corrida, etapas);
   useEffect(() => {
@@ -480,13 +472,9 @@ export function useSalaOnline(sala: string): UseSalaOnline {
   // jogador à etapa em que ele estava, e o atestado volta a sair sozinho.
   // Quem ainda assim não atestar cai no `TIMEOUT_FIM_DE_CORRIDA_MS`, que segue
   // sendo o fallback projetado.
-  // ⚠️ **Sem `etapa` no comando, de propósito** — o servidor grava no balde do
-  // cursor dele. É a **pendência 0(x)**: o jogador atrasado atesta a etapa em
-  // que o SERVIDOR está, não a que assistiu. Decisão do dev: registrar, não
-  // consertar neste PR.
   const atestarFimDaCorrida = useCallback(
-    () => enviar({ tipo: 'corrida-concluida' }),
-    [enviar],
+    () => enviar({ tipo: 'corrida-concluida', etapa: etapaCorrente }),
+    [enviar, etapaCorrente],
   );
   const sair = useCallback(() => {
     enviar({ tipo: 'sair' });

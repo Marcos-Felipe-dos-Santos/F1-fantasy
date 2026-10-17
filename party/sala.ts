@@ -22,12 +22,7 @@
  * (o pool resolve `node:*`) pegam um import acidental — só aquele script pega.
  */
 
-import {
-  routePartykitRequest,
-  Server,
-  type Connection,
-  type ConnectionContext,
-} from 'partyserver';
+import { routePartykitRequest, Server, type Connection, type ConnectionContext } from 'partyserver';
 
 import {
   aoConectar,
@@ -46,7 +41,7 @@ import { AMBIENTE_DEV, origemPermitida } from '../src/net/cors';
 import { excedeuTetoDeConexoes } from '../src/net/teto-conexoes';
 import { JANELA_TETO_MS, type BaldeDeTeto } from '../src/net/rate-limit';
 import { avaliarTetoSincronizar } from '../src/net/teto-sincronizar';
-import { avaliarTetoComandos } from '../src/net/teto-comandos';
+import { avaliarTetoComandos, TETO_HASHES } from '../src/net/teto-comandos';
 import { ROTA_CRIAR_SALA } from '../src/net/rotas';
 import { Limite } from './limite';
 import {
@@ -58,6 +53,7 @@ import {
 } from '../src/net/tipos';
 
 interface Env {
+  ASSETS: Fetcher;
   Sala: DurableObjectNamespace<Sala>;
   /** O balde do teto de criação de sala — um DO por IP. Ver `limite.ts`. */
   Limite: DurableObjectNamespace<Limite>;
@@ -353,6 +349,17 @@ export class Sala extends Server<Env> {
    * sobreviveu à suíte inteira na primeira rodada.
    */
   private baldesComandos = new Map<string, BaldeDeTeto>();
+  private baldesHashes = new Map<string, BaldeDeTeto>();
+
+  private recusarHash(conexaoId: string, agora: number): boolean {
+    const resultado = avaliarTetoComandos(
+      this.baldesHashes.get(conexaoId) ?? null,
+      agora,
+      TETO_HASHES,
+    );
+    this.baldesHashes.set(conexaoId, resultado.balde);
+    return !resultado.permitido;
+  }
 
   /**
    * Esta conexão estourou o teto de COMANDOS DE JOGO?
@@ -421,6 +428,8 @@ export class Sala extends Server<Env> {
   }
 
   async onConnect(connection: Connection, ctx: ConnectionContext): Promise<void> {
+    // O attachment sobrevive à hibernação do Durable Object.
+    connection.setState({ identificarAte: Date.now() + 60_000 });
     // 🔒 AS DUAS GUARDAS VÊM ANTES DO `carregar()`, e é o mesmo argumento que o
     // PR H1 escreveu para pôr o teto de IP antes de sortear código: as duas são
     // O(1), não leem storage, e checá-las depois seria pagar o custo para então
@@ -512,7 +521,12 @@ export class Sala extends Server<Env> {
     // cota — exatamente o caso que a decisão nomeia, "um `sincronizar` seguido
     // de uma jogada". Achado ao escrever a cerca em `party/comandos.test.ts`,
     // que nasceu VERMELHA por valor.
-    if (tipo !== 'sincronizar' && this.recusarPorTetoDeComandos(connection.id, Date.now())) {
+    if (
+      (tipo === 'hash' && this.recusarHash(connection.id, Date.now())) ||
+      (tipo !== 'sincronizar' &&
+        tipo !== 'hash' &&
+        this.recusarPorTetoDeComandos(connection.id, Date.now()))
+    ) {
       connection.send(JSON.stringify({ tipo: 'erro', erro: 'comandos-demais' }));
       return;
     }
@@ -527,12 +541,11 @@ export class Sala extends Server<Env> {
     // sorteia. 128 bits de `crypto.randomUUID` — derivar de
     // `deriveSeed(seedMestre, …)` daria 32 bits, pouco para um segredo que vale
     // a identidade do jogador. Só é consumido num `entrar` aceito.
-    await this.aplicar(
-      aoReceber(estado, connection.id, message, Date.now(), crypto.randomUUID()),
-    );
+    await this.aplicar(aoReceber(estado, connection.id, message, Date.now(), crypto.randomUUID()));
   }
 
   async onClose(connection: Connection): Promise<void> {
+    this.baldesHashes.delete(connection.id);
     // ✅ **`close()` NO `onConnect` DISPARA `onClose` — MEDIDO, não suposto.**
     // Sonda de 2026-09-01: a sequência observada é `["onConnect-recusa",
     // "onClose"]`. Sem esta linha, todo socket recusado por política
@@ -593,6 +606,12 @@ export class Sala extends Server<Env> {
     if (estado === null) return;
 
     const agora = Date.now();
+    for (const conexao of [...this.getConnections<{ identificarAte?: number }>()]) {
+      if (estado.jogadorPorConexao[conexao.id] !== undefined) continue;
+      const prazo = conexao.state?.identificarAte;
+      if (prazo === undefined) conexao.setState({ identificarAte: agora + 60_000 });
+      else if (agora >= prazo) conexao.close(4408, 'prazo de identificacao vencido');
+    }
     const atualizado = registrarConexoes(estado, this.quantasConexoes(), agora);
     if (decidirVida(atualizado, agora).tipo === 'encerrar') {
       await this.encerrar();
@@ -792,8 +811,12 @@ export default {
       return Response.json({ erro: 'sem-codigo-livre' }, { status: 503, headers: cors });
     }
 
-    return (
-      (await routePartykitRequest(request, env)) ?? new Response('Não encontrado', { status: 404 })
-    );
+    if (url.pathname === ROTA_CRIAR_SALA || url.pathname.startsWith('/parties')) {
+      return (
+        (await routePartykitRequest(request, env)) ??
+        new Response('Não encontrado', { status: 404 })
+      );
+    }
+    return env.ASSETS.fetch(request);
   },
 } satisfies ExportedHandler<Env>;

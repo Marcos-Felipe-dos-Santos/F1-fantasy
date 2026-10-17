@@ -45,7 +45,7 @@
  * um teto de conexões, os casos passariam a depender da ORDEM — e ficariam
  * verdes escondendo isso.
  */
-import { env, reset, runInDurableObject, SELF } from 'cloudflare:test';
+import { env, reset, runInDurableObject, runDurableObjectAlarm, SELF } from 'cloudflare:test';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { ROTA_CRIAR_SALA } from '../src/net/rotas';
@@ -184,6 +184,31 @@ describe('S2 — teto de CONEXÕES por sala', () => {
 
   afterEach(() => {
     fecharTodos();
+  });
+
+  it('expira conexão sem identificação no alarme, preservando a identificada', async () => {
+    const codigo = await criarSala();
+    const identificado = await abrirSocket(codigo);
+    await abrirSocket(codigo);
+    expect(await contarConexoes(codigo)).toBe(2);
+    identificado.webSocket!.send(JSON.stringify({ tipo: 'entrar', nome: 'Teste' }));
+    const stub = env.Sala.get(env.Sala.idFromName(codigo));
+    await expect
+      .poll(() =>
+        runInDurableObject(stub, async (_sala, ctx) => {
+          const estado = await ctx.storage.get<{ jogadorPorConexao: Record<string, string> }>(
+            'estado',
+          );
+          return Object.keys(estado!.jogadorPorConexao).length;
+        }),
+      )
+      .toBe(1);
+    await runInDurableObject(stub, (sala) => {
+      const conexoes = [...sala.getConnections()];
+      for (const c of conexoes) c.setState({ identificarAte: Date.now() - 1 });
+    });
+    await runDurableObjectAlarm(stub);
+    expect(await contarConexoes(codigo)).toBe(1);
   });
 
   it('🔴 BASELINE: a conexão ACIMA do teto não permanece contada', async () => {

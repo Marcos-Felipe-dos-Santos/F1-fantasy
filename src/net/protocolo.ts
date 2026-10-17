@@ -117,7 +117,7 @@ export type ComandoSala =
   | { tipo: 'hash'; escopo: EscopoHash; ancora: number; hash: string; etapa?: number }
   /**
    * 🏁 "Terminei a corrida" (PR 3/4 de "corrida online") — alimenta a BARREIRA
-   * DO FIM. Não carrega nada: quem mandou vem do transporte, como todo comando
+   * DO FIM. Carrega a etapa assistida; quem mandou vem do transporte, como todo comando
    * desde o 3.1a, e QUANDO é o `agora` injetado no servidor.
    *
    * 🔑 **É barreira de FIM, nunca de LARGADA.** Nenhum cliente espera pelos
@@ -127,9 +127,9 @@ export type ComandoSala =
    * graça. Quem nunca atesta é resolvido pelo `TIMEOUT_FIM_DE_CORRIDA_MS`, sem
    * prender ninguém.
    *
-   * Idempotente: reatestar não muda estado nem gera escrita no Durable Object.
+   * Idempotente na mesma etapa. Etapa ausente só é aceita em salas legadas.
    */
-  | { tipo: 'corrida-concluida' };
+  | { tipo: 'corrida-concluida'; etapa?: number };
 
 /**
  * O que está sendo atestado. `draft` é o RISCO ATIVO que o 3.4 fechou (o pool

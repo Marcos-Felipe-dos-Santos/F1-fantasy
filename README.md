@@ -8,7 +8,7 @@
 [![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev/)
 [![Vite](https://img.shields.io/badge/Vite-7-646CFF?logo=vite&logoColor=white)](https://vite.dev/)
 [![Vitest](https://img.shields.io/badge/Vitest-4-6E9F18?logo=vitest&logoColor=white)](https://vitest.dev/)
-[![testes](https://img.shields.io/badge/testes-1713%20%2B%2042%20passando-brightgreen)](#-como-rodar)
+[![testes](https://img.shields.io/badge/testes-1724%20%2B%2046%20passando-brightgreen)](#-como-rodar)
 [![simulação](https://img.shields.io/badge/simula%C3%A7%C3%A3o-determin%C3%ADstica%20por%20seed-orange)](#-destaques-t%C3%A9cnicos)
 [![licença MIT](https://img.shields.io/badge/licen%C3%A7a-MIT-blue)](LICENSE)
 
@@ -17,10 +17,6 @@
 > para este projeto, apoiados sobre fatos históricos reais. Ver
 > **[Nomes fictícios](#-nomes-fict%C3%ADcios-o-dataset-do-jogo-n%C3%A3o-usa-nome-real)**.
 
-</div>
-
-<div align="center">
-  <img src="docs/img/corrida.png" alt="Corrida em andamento em Interlagos: traçado, carros e painel de posições ao vivo" width="820">
 </div>
 
 ---
@@ -78,20 +74,14 @@ ou torcer por algo melhor e ficar sem opção depois.
 Na **rodada 6** vem a **peça icônica** — uma carta de um catálogo de **24 peças** que modifica o
 carro montado. É o único momento de escolha aberta do draft.
 
-<div align="center">
-  <img src="docs/img/draft.png" alt="Tela de draft: a equipe/ano sorteada e os slots disponíveis" width="820">
-</div>
-
-_Rodada 2 de 5: saiu uma equipe/ano. O piloto já foi preenchido em outra rodada, então sobram
-chassi, motor, estrategista e pit — e só um deles vai levar essa equipe. No Modo Craque, as notas
-aparecem; no Cego, não._
-
-> 📸 **As três capturas em PNG deste README são ANTERIORES à troca por nomes fictícios**
-> (a troca do dataset é de 2026-08-30; os prints, de antes) e por isso ainda exibem os nomes reais
-> do dataset antigo. **Os nomes de dataset que elas mostram dão 0 no bundle servido hoje** — medido,
-> ver [Nomes fictícios](#-nomes-fict%C3%ADcios-o-dataset-do-jogo-n%C3%A3o-usa-nome-real). Regerar as
-> capturas está pendente. _(A grade de silhuetas em SVG, mais abaixo, é gerada por `npm run preview`
-> e **está atual**.)_
+> 📸 **As três capturas de tela em PNG SAÍRAM deste README em 2026-09-02, e o motivo fica escrito:**
+> `draft.png`, `corrida.png` e `campeonato.png` são anteriores à troca por nomes fictícios (a troca
+> do dataset é de 2026-08-30; os prints, de 2026-08-08) e por isso **exibiam os nomes reais do
+> dataset antigo** — na vitrine do projeto, fora de todo portão. **README sem screenshot é melhor
+> que README com screenshot de nome real.** Os arquivos **continuam em `docs/img/`**, não foram
+> apagados; **regerá-los com o dataset atual é pendência aberta.** _(A grade de silhuetas em SVG,
+> mais abaixo, é gerada por `npm run preview` a partir da geometria de produção, nunca teve nome
+> real e **está atual** — por isso ficou.)_
 
 ### Os modos
 
@@ -117,16 +107,12 @@ sem travar. Ver **[Como rodar](#-como-rodar)** e
 No campeonato, o calendário é sorteado, cada etapa mostra a miniatura do traçado e a tabela
 acumula entre as corridas — com a variação de posição de cada jogador etapa a etapa.
 
-**Os três formatos valem também no Online, e o multiplayer está ENCERRADO** — a fase de rede foi
-fechada em 2026-08-27, com corrida e campeonato online entregues. No
+**O Online usa campeonato curto de cinco etapas.** Corrida única e campeonato de dez etapas
+estão disponíveis nos modos Single e Local. No
 campeonato multiplayer o servidor sorteia uma seed independente por etapa e publica **uma de cada
 vez**, conforme a etapa abre — nunca a seed-mestre. Não é zelo: com a seed base na mão, qualquer
 jogador simularia as corridas futuras no console antes de draftar. Cada etapa só avança quando todos
 os elegíveis atestam o fim da anterior.
-
-<div align="center">
-  <img src="docs/img/campeonato.png" alt="Calendário do campeonato completo: 10 etapas com a miniatura de cada traçado" width="820">
-</div>
 
 ### Visibilidade: Craque ou Cego
 
@@ -221,10 +207,10 @@ A grade acima não é um print: é gerada a partir da **mesma função de geomet
 corrida usa** (`pathDaVolta`), por `npm run preview` — se o traçado mudar no jogo, muda aqui
 também. Regerar é um comando, não um trabalho de captura.
 
-### ✅ 1713 + 42 testes, em duas suítes
+### ✅ 1724 + 46 testes, em duas suítes
 
-**1713 testes em 78 arquivos** (`npm test`) cobrindo engine, UI e o redutor de rede, mais
-**42 testes em 7 arquivos** (`npm run test:party`) que rodam a casca do Durable Object dentro do
+**1724 testes em 79 arquivos** (`npm test`) cobrindo engine, UI e o redutor de rede, mais
+**46 testes em 8 arquivos** (`npm run test:party`) que rodam a casca do Durable Object dentro do
 `workerd` de verdade.
 
 **São duas suítes de propósito, e rodar só uma deixa metade do projeto sem portão:** `party/` roda
@@ -316,51 +302,59 @@ falso e sem `workerd`.
 
 ⚠️ **Duas ressalvas que viajam junto com o placar:**
 
-- **A CSP não protege nada hoje**, e o `✅` não deve ser lido de outro jeito: **nada neste
-  repositório serve o `dist/`**. O worker serve `/parties/*` e `/criar-sala`; o jogo se joga por
-  `npm run dev`, que por desenho não tem CSP. A política é **preparação correta para um deploy que
-  ainda não existe**.
-- **Socket ocioso é limitado, não expirado.** O teto do H2 impede que conexões caladas cresçam sem
-  limite, mas nada as fecha — 64 sockets quietos ainda trancam uma sala. É pendência conhecida.
+- **A CSP está ativa no build integrado**, servido por `npm run start:local`.
+  O servidor de desenvolvimento Vite continua sem essa política.
+- **Socket sem identificação expira após 60 segundos**, verificado pelo alarme periódico.
+  Jogadores identificados não são expulsos por essa regra. Hashes têm orçamento separado
+  das jogadas, e recusas de conexão por política não entram em reconexão infinita.
 
 ---
 
 ## 📍 Estado atual
 
-**O jogo está pronto para deploy público, e os dois bloqueadores que o seguravam foram fechados:**
-o dataset servido não tem mais nome real de piloto nem de equipe, e a superfície de rede passou por
-quatro PRs de hardening. Tudo abaixo é medido, na `main`, em 2026-09-02:
+**O jogo está preparado para teste integrado no computador.** A preparação de 2026-10-16
+acrescentou hospedagem, regressões de rede e CI. Endereço público e publicação continuam pendentes.
+Os registros de anonimização e H1–H4 abaixo são da auditoria de 2026-09-02; testes e build são atuais.
 
 | Frente                    | Onde está                                                                                                            |
 | ------------------------- | -------------------------------------------------------------------------------------------------------------------- |
 | **Fase de rede (online)** | ✅ encerrada em 2026-08-27 — corrida e campeonato online entregues                                                   |
 | **Nomes fictícios**       | ✅ 7 de 7 PRs · portão no piso de **6**, todas explicadas · bundle: **124**, todas sobre-contagem ou a pista mantida |
 | **Hardening**             | ✅ H1–H4 · **12 fechados · 3 parciais · 0 abertos** dos 15 itens com status (S13/S14 sem status)                     |
-| **Testes**                | `npm test` **1713/1713** em 78 arquivos · `npm run test:party` **42/42** em 7                                        |
-| **Build**                 | `npm run build` limpo — o chunk medido acima é `index-UkRE1HGe.js`                                                   |
+| **Testes**                | `npm test` **1724/1724** em 79 arquivos · `npm run test:party` **46/46** em 8                                        |
+| **Build**                 | `npm run build` aprovado — `index-Dd_9CQVp.js`, 864,26 kB (gzip 168,60 kB); aviso de chunk grande permanece |
 
-⚠️ **"Pronto para deploy" não é "deploy feito", e três coisas ficam ditas:** (1) **nada neste
-repositório serve o `dist/` hoje** — o worker serve só a API da sala, e é por isso que a CSP ainda
-não protege ninguém; (2) o **histórico do git** continua com o dataset real, por decisão consciente;
-(3) o repositório é **privado**, e abri-lo é decisão à parte.
+O Worker serve `dist/` e a API na mesma origem. Não houve deploy público.
+O histórico do Git continua com o dataset real; tornar o repositório público é decisão à parte.
 
 ---
 
 ## 🚀 Como rodar
 
-Precisa de **Node LTS**.
+Precisa de **Node 24** (também usado no CI).
 
 ```bash
-npm install
+npm ci
 npm run dev      # http://localhost:5173
 ```
 
 Isso basta para o **Single**, o **Local** e os dois formatos de campeonato.
 
-### Pro modo Online, dois terminais
+### Testar o jogo integrado no computador
+
+```bash
+npm run start:local  # http://127.0.0.1:8787
+```
+
+Compila e serve frontend e sala na mesma origem, sem login ou deploy na Cloudflare.
+Use outro navegador ou janela anônima para um segundo jogador.
+Veja [o guia de teste local](docs/deploy-local.md).
+
+### Desenvolver o modo Online, dois terminais
 
 ```bash
 # terminal 1 — o worker/Durable Object da sala
+npm run build    # gera os assets antes de iniciar o Worker
 npm run sala     # 127.0.0.1:8787
 
 # terminal 2 — o app
@@ -377,6 +371,11 @@ aba (ou mande pra outra pessoa). Quando todos marcarem "Estou pronto", o anfitri
 Para jogar do celular ou pela rede local, troque o terminal 2 por `npm run dev:rede` e siga o
 **[guia de rede](docs/jogar-em-rede.md)** (firewall, túnel, diagnóstico).
 
+### Verificação automática
+
+O workflow `.github/workflows/ci.yml` executa lint, suíte principal, build (com typecheck e
+dry-run do Worker) e suíte Worker em Node 24. Não faz deploy.
+
 ### Scripts
 
 | Comando              | O que faz                                                                                                               |
@@ -384,8 +383,8 @@ Para jogar do celular ou pela rede local, troque o terminal 2 por `npm run dev:r
 | `npm run dev`        | Sobe o servidor de desenvolvimento (Vite)                                                                               |
 | `npm run dev:rede`   | Idem, exposto na rede local — pra abrir do celular                                                                      |
 | `npm run sala`       | Sobe o worker/Durable Object do modo Online (`wrangler`, em `127.0.0.1:8787`)                                           |
-| `npm test`           | Suíte principal — 1713 testes (engine, UI, `src/net/`)                                                                  |
-| `npm run test:party` | Suíte da casca do Durable Object — 42 testes, roda no `workerd`                                                         |
+| `npm test`           | Suíte principal — 1724 testes (engine, UI, `src/net/`)                                                                  |
+| `npm run test:party` | Suíte da casca do Durable Object — 46 testes, roda no `workerd`                                                         |
 | `npm run test:watch` | Testes em modo watch                                                                                                    |
 | `npm run build`      | `tsc --noEmit` + build de produção                                                                                      |
 | `npm run typecheck`  | Só a checagem de tipos                                                                                                  |
