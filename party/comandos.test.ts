@@ -142,8 +142,9 @@ describe('S3 — teto de comandos inbound por conexão', () => {
     const { ws, recebidas } = await abrirSocket(codigo);
     await drenar();
     martelar(ws, TETO_COMANDOS + 3);
-    await drenar();
-    expect(contar(recebidas, 'comandos-demais')).toBeGreaterThan(0);
+    // O CI pode levar mais de 50 ms para entregar os eventos do WebSocket.
+    // Esperar as três recusas mantém a asserção sem depender dessa latência.
+    await expect.poll(() => contar(recebidas, 'comandos-demais')).toBe(3);
   });
 
   it('🔴 `sincronizar` NÃO consome a cota de jogo — isenção deliberada, não acidente', async () => {

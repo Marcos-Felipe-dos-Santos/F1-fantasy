@@ -3934,3 +3934,7 @@ Validação: 1730 testes principais/80 arquivos, 46 Worker/8 arquivos, lint/type
 
 Produção: https://f1-fantasy-sala.marcosfeliperigoto.workers.dev. O Marcos confirmou que amigos testaram o online com sucesso. Conferência independente nesta sessão: raiz HTTP200, OPTIONS de criar-sala libera exatamente a origem pública, origem externa sem Access-Control-Allow-Origin. Não criamos salas para esse diagnóstico.
 ALLOWED_ORIGINS público agora registrado no wrangler.jsonc, mantendo ENVIRONMENT=production. README e guia local atualizados para indicar publicação realizada, tutorial local preservado. Usuário autorizou enviar nomes originais/README/configuração/documentação, abrir PR e fechar a entrega. Nenhum redeploy necessário: configuração já aplicada pelo usuário. CI deve validar o PR antes de merge.
+
+### Ajuste de CI no fechamento
+
+No mesmo SHA635413b, CI de pull_request passou e CI de push falhou em comandos.test.ts: esperava resposta WebSocket depois de sleep50ms. Corrigido o teste para expect.poll até as três recusas esperadas, sem alterar limitador/produção. Resultado anterior não foi ignorado; novo commit deve passar nas duas execuções antes do merge.

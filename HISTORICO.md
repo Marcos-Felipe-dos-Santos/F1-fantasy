@@ -6914,3 +6914,7 @@ Bumps: app3.4.7/digest61184d3b/save4; regressão explícita recusa save formato3
 
 O usuário publicou e confirmou teste online bem-sucedido com amigos. Origem pública configurada manualmente e conferida em wrangler.jsonc: https://f1-fantasy-sala.marcosfeliperigoto.workers.dev, ENVIRONMENT=production. Diagnóstico remoto somente leitura: raiz200, preflight próprio204 com allow-origin exato, preflight externo204 sem allow-origin. Não equivale a repetir o campeonato remoto; o teste com amigos é relato do usuário.
 README passa a ter link Jogar agora e estado de produção; docs/deploy-local.md registra a publicação e manutenção manual. Histórico do CI anterior preservado, próximo CI vinculado ao PR corrente. Autorização explícita: "faça tudo agora" após proposta de registrar no GitHub, atualizar documentação, abrir PR e conferir CI antes de mesclar. Esta sessão não redespliega o Worker nem altera recursos remotos da Cloudflare.
+
+### CI remoto: espera fixa de WebSocket (PR de fechamento)
+
+Commit635413b teve resultados divergentes: pull_request39052613842 verde; push39052585050 falhou em party/comandos.test.ts:146, expected0 greater than0. O teste RESPONDE usava drenar50ms para esperar as respostas; trocado por expect.poll verificando exatamente3 comandos-demais após TETO+3 envios. Nenhuma regra do servidor foi alterada. Teste direcionado7/7 passou; suíte Worker completa e CI do novo SHA são os próximos portões.
