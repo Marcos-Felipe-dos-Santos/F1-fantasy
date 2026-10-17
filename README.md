@@ -56,13 +56,13 @@ flowchart LR
 Nas **rodadas 1 a 5**, cada jogador recebe um sorteio de equipe/ano e escolhe **um** dos cinco
 slots pra preencher com aquela combinação. O que não for pego, se perde:
 
-| Slot                | O que representa                              |
-| ------------------- | --------------------------------------------- |
-| 🧑‍✈️ **Piloto**       | A dupla de pilotos daquela equipe naquele ano |
-| 🏗️ **Chassi**       | O carro, aerodinâmica e comportamento         |
-| ⚙️ **Motor**        | A unidade de potência                         |
-| 🧠 **Estrategista** | O muro dos boxes — chamadas de parada         |
-| 🔧 **Pit**          | A velocidade e a confiabilidade da troca      |
+| Slot                | O que representa                               |
+| ------------------- | ---------------------------------------------- |
+| 🧑‍✈️ **Piloto**       | Um dos dois pilotos daquela equipe naquele ano |
+| 🏗️ **Chassi**       | O carro, aerodinâmica e comportamento          |
+| ⚙️ **Motor**        | A unidade de potência                          |
+| 🧠 **Estrategista** | O muro dos boxes — chamadas de parada          |
+| 🔧 **Pit**          | A velocidade e a confiabilidade da troca       |
 
 Como só há 5 rodadas para 5 slots, cada sorteio é uma decisão real: aceitar um motor mediano agora
 ou torcer por algo melhor e ficar sem opção depois.
@@ -98,8 +98,8 @@ acumula entre as corridas — com a variação de posição de cada jogador etap
 estão disponíveis nos modos Single e Local. No
 campeonato multiplayer o servidor sorteia uma seed independente por etapa e publica **uma de cada
 vez**, conforme a etapa abre — nunca a seed-mestre. Não é zelo: com a seed base na mão, qualquer
-jogador simularia as corridas futuras no console antes de draftar. Cada etapa só avança quando todos
-os elegíveis atestam o fim da anterior.
+jogador simularia as corridas futuras no console antes de draftar. A etapa avança quando todos
+os jogadores elegíveis terminam o replay, ou quando vence o timeout do servidor.
 
 ### Visibilidade: Craque ou Cego
 
@@ -134,8 +134,8 @@ As **771 combinações de equipe/ano (1950–2025)** não foram estimadas por op
 processadas por um pipeline versionado:
 
 ```
-dataset:fetch  →  dataset:fatos  →  dataset:notas  →  dataset:publicar  →  dataset:report
-  (API pública)   (agrega fatos)   (deriva notas)    (relatório)
+dataset:fetch → dataset:fatos → dataset:notas → dataset:publicar → dataset:report
+ API pública    agrega fatos    deriva notas    publica no app    relatório
 ```
 
 A normalização é o detalhe que faz a coisa funcionar: cada nota vem do **percentil de Hazen dentro
@@ -218,8 +218,11 @@ A contagem de nomes é uma cerca de estabilidade (não uma proibição): 9237 no
 254 na fixture, 19 em cada catálogo de peças e 2 em cada catálogo de pistas.
 
 A tabela fictícia e as funções puras antigas permanecem como proveniência testada;
-as CLIs de anonimização foram aposentadas. A versão 3.4.7 impede misturar clientes
-com ids antigos e novos. Saves anteriores ao formato 4 são incompatíveis.
+as CLIs de anonimização foram aposentadas.
+
+**Versão atual: 3.4.7.** Salas de versões diferentes não podem compartilhar clientes.
+Saves anteriores ao formato 4 são incompatíveis: após atualizar, comece uma sala ou
+um campeonato novo.
 
 ## 🔐 Hardening: quatro PRs antes de abrir ao público
 
@@ -255,38 +258,67 @@ falso e sem `workerd`.
 acrescentou hospedagem, regressões de rede e CI. Endereço público e publicação continuam pendentes.
 Nomes históricos restaurados em 2026-10-17; H1–H4 são da auditoria anterior.
 
-| Frente                    | Onde está                                                                                                            |
-| ------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| **Fase de rede (online)** | ✅ encerrada em 2026-08-27 — corrida e campeonato online entregues                                                   |
-| **Hardening**             | ✅ H1–H4 · **12 fechados · 3 parciais · 0 abertos** dos 15 itens com status (S13/S14 sem status)                     |
-| **Testes**                | `npm test` **1730/1730** em 80 arquivos · `npm run test:party` **46/46** em 8                                        |
+| Frente                    | Onde está                                                                                          |
+| ------------------------- | -------------------------------------------------------------------------------------------------- |
+| **Fase de rede (online)** | ✅ encerrada em 2026-08-27 — corrida e campeonato online entregues                                 |
+| **Hardening**             | ✅ H1–H4 · **12 fechados · 3 parciais · 0 abertos** dos 15 itens com status (S13/S14 sem status)   |
+| **Testes**                | `npm test` **1730/1730** em 80 arquivos · `npm run test:party` **46/46** em 8                      |
 | **Build**                 | `npm run build` aprovado — build integrado com os nomes originais; aviso de chunk grande permanece |
 
 O Worker serve `dist/` e a API na mesma origem. Não houve deploy público.
-O histórico do Git continua com o dataset real; tornar o repositório público é decisão à parte.
 
 ---
 
 ## 🚀 Como rodar
 
-Precisa de **Node 24** (também usado no CI).
+Precisa de **Node 24** (também usado no CI). O dataset já vem no repositório;
+não é necessário baixar os dados históricos para jogar.
 
-```bash
+### Testar no computador
+
+No PowerShell, dentro da pasta do projeto:
+
+```powershell
+cd "E:\projetos\F1 fantasy"
 npm ci
-npm run dev      # http://localhost:5173
+npm run start:local
 ```
 
-Isso basta para o **Single**, o **Local** e os dois formatos de campeonato.
+`npm ci` instala as dependências de um clone novo e deve ser repetido quando o
+arquivo de dependências mudar. Nas próximas execuções, basta `npm run start:local`.
 
-### Testar o jogo integrado no computador
+Espere aparecer `Ready on http://127.0.0.1:8787` e abra
+**[http://127.0.0.1:8787](http://127.0.0.1:8787)**. Mantenha o terminal aberto.
+O comando compila e serve o frontend e o servidor de salas na mesma origem,
+sem login na Cloudflare. O acesso fica restrito ao próprio computador.
+
+Para encerrar, pressione **Ctrl+C**. Se a porta 8787 estiver ocupada, encerre a
+execução anterior. Pare o servidor antes de recompilar e iniciar novamente.
+
+### Testar o Online com dois jogadores no mesmo computador
+
+1. Escolha **Online → Criar ou entrar numa sala → Criar sala**.
+2. Entre na sala, informe seu nome e copie o link.
+3. Abra o link em **outro navegador ou janela anônima** e entre com outro nome.
+4. Marque **Estou pronto** nos dois jogadores; no anfitrião 👑, clique em **Começar o draft**.
+5. Faça as cinco escolhas de componentes e escolha a peça icônica em cada jogador.
+6. Clique em **Largar** nos dois. **Acelerar ⏩** pula o replay daquele jogador.
+7. Termine as cinco etapas e confira se os resultados e o pódio são iguais.
+
+Experimente dar **F5 durante o draft ou no grid**: a identidade e a etapa atual
+devem ser recuperadas. Duas abas na mesma sessão de navegador compartilham o
+`localStorage` e o token da sala, então não representam dois jogadores diferentes.
+
+Veja também o [guia de teste local](docs/deploy-local.md).
+
+### Desenvolver Single e Local
 
 ```bash
-npm run start:local  # http://127.0.0.1:8787
+npm run dev  # http://localhost:5173
 ```
 
-Compila e serve frontend e sala na mesma origem, sem login ou deploy na Cloudflare.
-Use outro navegador ou janela anônima para um segundo jogador.
-Veja [o guia de teste local](docs/deploy-local.md).
+O Vite atualiza o frontend durante o desenvolvimento. Para Online, inicie também
+o Worker conforme abaixo.
 
 ### Desenvolver o modo Online, dois terminais
 
@@ -316,32 +348,33 @@ dry-run do Worker) e suíte Worker em Node 24. Não faz deploy.
 
 ### Scripts
 
-| Comando              | O que faz                                                                                                               |
-| -------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `npm run dev`        | Sobe o servidor de desenvolvimento (Vite)                                                                               |
-| `npm run dev:rede`   | Idem, exposto na rede local — pra abrir do celular                                                                      |
-| `npm run sala`       | Sobe o worker/Durable Object do modo Online (`wrangler`, em `127.0.0.1:8787`)                                           |
-| `npm test`           | Suíte principal — 1730 testes (engine, UI, `src/net/`)                                                                  |
-| `npm run test:party` | Suíte da casca do Durable Object — 46 testes, roda no `workerd`                                                         |
-| `npm run test:watch` | Testes em modo watch                                                                                                    |
-| `npm run build`      | `tsc --noEmit` + build de produção                                                                                      |
-| `npm run typecheck`  | Só a checagem de tipos                                                                                                  |
-| `npm run lint`       | ESLint                                                                                                                  |
-| `npm run format`     | Prettier                                                                                                                |
-| `npm run balance`    | Balance harness — pesado, roda fora do `npm test`                                                                       |
-| `npm run preview`    | Gera os previews visuais em `preview/` (gitignored) **e** a grade de silhuetas em `docs/img/silhuetas.svg` (versionada) |
+| Comando               | O que faz                                                                                                               |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `npm run dev`         | Sobe o servidor de desenvolvimento (Vite)                                                                               |
+| `npm run start:local` | Compila e serve frontend e Worker em `http://127.0.0.1:8787`, com CSP e origens locais explícitas                       |
+| `npm run dev:rede`    | Idem, exposto na rede local — pra abrir do celular                                                                      |
+| `npm run sala`        | Sobe o worker/Durable Object do modo Online (`wrangler`, em `127.0.0.1:8787`)                                           |
+| `npm test`            | Suíte principal — 1730 testes (engine, UI, `src/net/`)                                                                  |
+| `npm run test:party`  | Suíte do Worker — 46 testes no `workerd`; execute `npm run build` antes para gerar os assets                            |
+| `npm run test:watch`  | Testes em modo watch                                                                                                    |
+| `npm run build`       | Typecheck, build do frontend e inspeção do bundle do Worker em dry-run                                                  |
+| `npm run typecheck`   | Só a checagem de tipos                                                                                                  |
+| `npm run lint`        | ESLint                                                                                                                  |
+| `npm run format`      | Prettier                                                                                                                |
+| `npm run balance`     | Balance harness — pesado, roda fora do `npm test`                                                                       |
+| `npm run preview`     | Gera os previews visuais em `preview/` (gitignored) **e** a grade de silhuetas em `docs/img/silhuetas.svg` (versionada) |
 
 ### Pipeline de dados
 
 Só é necessário pra **regerar** o dataset — o resultado já está versionado em `src/data/`.
 
-| Comando                  | O que faz                             |
-| ------------------------ | ------------------------------------- |
-| `npm run dataset:fetch`  | Baixa os fatos crus da API Jolpica-F1 |
-| `npm run dataset:fatos`  | Agrega os fatos por equipe/ano        |
-| `npm run dataset:notas`  | Deriva as notas por percentil         |
+| Comando                    | O que faz                              |
+| -------------------------- | -------------------------------------- |
+| `npm run dataset:fetch`    | Baixa os fatos crus da API Jolpica-F1  |
+| `npm run dataset:fatos`    | Agrega os fatos por equipe/ano         |
+| `npm run dataset:notas`    | Deriva as notas por percentil          |
 | `npm run dataset:publicar` | Publica o derivado com nomes originais |
-| `npm run dataset:report` | Relatório do dataset gerado           |
+| `npm run dataset:report`   | Relatório do dataset gerado            |
 
 ---
 
@@ -358,10 +391,8 @@ Cada sala é um **Durable Object isolado**. A corrida roda **no cliente** e o se
 o determinismo por seed é justamente o que permite esse desenho: o servidor não precisa simular
 nada, e nem sequer carrega o dataset.
 
-> 📌 **Foi `partykit` no papel, é `partyserver` no código.** A troca é deliberada: o pacote
-> `partykit` está sem release desde 2025-09, enquanto o `partyserver` segue publicando no mesmo
-> monorepo da Cloudflare. O princípio do primeiro dia não mudou — sala = Durable Object isolado —,
-> só o CLI (`partykit dev` → `wrangler dev`).
+O servidor usa `partyserver` e o CLI `wrangler`. Cada sala mantém seu estado em
+um Durable Object; o frontend usa WebSocket para enviar escolhas e receber snapshots.
 
 ---
 
