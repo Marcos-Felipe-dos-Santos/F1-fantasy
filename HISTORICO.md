@@ -6892,3 +6892,8 @@ invocar alarm diretamente dentro de runInDurableObject causou crash nativo do ru
 Revisão local do diff realizada; não houve revisão independente por subagente.
 Pendente no lote: validação integrada de cinco etapas, hospedagem e CI. Sem push/deploy.
 As notas antigas sobre ausência de etapa e orçamento compartilhado descrevem o estado anterior.
+## 2026-10-16 — PR 2/3: hospedagem integrada e sequência da barreira
+
+Static Assets em dist, ASSETS binding e rotas de API fora do fallback SPA. Build agora gera dist antes do dry-run; start:local usa loopback e duas origens explícitas em modo production. Dois testes novos de hospedagem verificam HTML/CSP/JS e API não capturada.
+No navegador, o campeonato parava visualmente após a primeira corrida: servidor avançava mas publicarSala preservava seq e aplicarMensagem descartava. Atestados novos, avanço e conclusão agora incrementam seq; duplicatas preservam identidade. Dois testes de integração dos redutores cobrem cinco etapas por atestados e timeout, com baseline vermelho por valor e verde após correção.
+Testes: principal 1724/79; Worker 46/8; build e typecheck verdes. Navegador: dois jogadores, draft, resultados iguais, F5, etapas 2–5 após correção e pódio final idêntico. Rebuild com Wrangler aberto invalidou o watcher de dist no Windows; reiniciar servidor resolveu. Não houve revisão independente nem publicação. Instruções em docs/deploy-local.md.

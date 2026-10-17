@@ -3913,3 +3913,8 @@ invocar alarm diretamente dentro de runInDurableObject causou crash nativo do ru
 Revisão local do diff realizada; não houve revisão independente por subagente.
 Pendente no lote: validação integrada de cinco etapas, hospedagem e CI. Sem push/deploy.
 As notas antigas sobre ausência de etapa e orçamento compartilhado descrevem o estado anterior.
+## 2026-10-16 — Preparação local, PR 2/3
+
+Frontend e Worker na mesma origem com Static Assets; `npm run start:local` compila e serve em 127.0.0.1:8787, sem publicação. Origem pública ainda não definida.
+O teste de navegador revelou que a barreira mudava etapa/conclusão sem incrementar seq: clientes descartavam os snapshots. Corrigido no redutor; regressões servidor→cliente por atestados e timeout nasceram vermelhas (0 em vez de 1) e passaram.
+Validação: 1724 testes principais/79 arquivos, 46 testes Worker/8 arquivos, build/typecheck. Dois clientes, F5 e encerramento com textos finais iguais; etapa 1 revelou o bug, etapas 2–5 validadas após correção. Evidência: docs/img/deploy-local-validado.png. Sem revisão independente, push ou deploy.

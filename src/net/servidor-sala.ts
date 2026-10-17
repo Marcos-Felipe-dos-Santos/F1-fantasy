@@ -292,7 +292,7 @@ export function atestarFimDaCorrida(estado: EstadoServidor, jogadorId: string): 
   if (ja.includes(jogadorId)) return estado;
   return {
     ...estado,
-    sala: { ...estado.sala, atestaramFimDaCorrida: [...ja, jogadorId] },
+    sala: { ...estado.sala, seq: estado.sala.seq + 1, atestaramFimDaCorrida: [...ja, jogadorId] },
   };
 }
 
@@ -392,7 +392,7 @@ export function avaliarBarreiraDaCorrida(
 
   const cursor = cursorDaSala(estado.sala);
   if (cursor >= nEtapas - 1) {
-    return { ...estado, sala: { ...estado.sala, concluidaEm: agora } };
+    return { ...estado, sala: { ...estado.sala, seq: estado.sala.seq + 1, concluidaEm: agora } };
   }
 
   return {
@@ -400,6 +400,8 @@ export function avaliarBarreiraDaCorrida(
     sala: {
       ...estado.sala,
       etapaAtual: cursor + 1,
+      // O cliente descarta snapshots com seq repetida, inclusive após o draft.
+      seq: estado.sala.seq + 1,
       // Os dois campos da barreira são POR ETAPA a partir daqui. Reusar os
       // nomes de "corrida" em vez de criar `etapaAbertaEm`/`atestaramFimDaEtapa`
       // é deliberado: `abertaEmDe`/`atestadosDe` já fazem a leitura defensiva

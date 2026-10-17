@@ -38,6 +38,7 @@
  */
 
 import { describe, expect, it } from 'vitest';
+import { aplicarMensagem, criarCliente } from './cliente';
 import {
   aoDesconectar,
   aoPassarOTempo,
@@ -350,6 +351,38 @@ describe('🔴 O DETECTOR POR ETAPA — o alarme falso que trava o campeonato', 
 });
 
 describe('🏁 A BARREIRA POR ETAPA — o cursor anda, e só a última conclui', () => {
+  it.each(['atestados', 'timeout'] as const)(
+    'cliente recebe cinco etapas e encerramento por %s',
+    (via) => {
+      let servidor = comDraftConcluido(2);
+      let cliente = aplicarMensagem(criarCliente(), {
+        tipo: 'estado',
+        versaoProtocolo: 1,
+        estado: publicarSala(servidor.sala),
+      });
+      for (let etapa = 0; etapa < 5; etapa++) {
+        expect(cliente.sala?.etapaAtual).toBe(etapa);
+        const agora = T0 + (etapa + 1) * (via === 'timeout' ? TIMEOUT_FIM_DE_CORRIDA_MS + 1 : 100);
+        const resultados = [];
+        if (via === 'atestados') {
+          const primeiro = mandar(servidor, 'c1', { tipo: 'corrida-concluida', etapa }, agora);
+          expect(primeiro.estado.sala.etapaAtual).toBe(etapa);
+          expect(primeiro.estado.sala.concluidaEm).toBeNull();
+          resultados.push(primeiro);
+          resultados.push(
+            mandar(primeiro.estado, 'c2', { tipo: 'corrida-concluida', etapa }, agora),
+          );
+        } else resultados.push(aoPassarOTempo(servidor, agora, 60_000));
+        for (const resultado of resultados) {
+          servidor = resultado.estado;
+          for (const envio of resultado.envios) cliente = aplicarMensagem(cliente, envio.mensagem);
+        }
+        expect(cliente.sala?.etapaAtual).toBe(Math.min(etapa + 1, 4));
+      }
+      expect(cliente.sala?.concluidaEm).toBe(servidor.sala.concluidaEm);
+      expect(cliente.sala?.concluidaEm).not.toBeNull();
+    },
+  );
   it('🔴 BASELINE: fechada a barreira da etapa 0, o cursor vai a 1 e `concluidaEm` continua null', () => {
     const base = comDraftConcluido(2);
     expect(base.sala.etapaAtual).toBe(0);

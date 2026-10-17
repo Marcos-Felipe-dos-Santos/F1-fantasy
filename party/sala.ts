@@ -53,6 +53,7 @@ import {
 } from '../src/net/tipos';
 
 interface Env {
+  ASSETS: Fetcher;
   Sala: DurableObjectNamespace<Sala>;
   /** O balde do teto de criação de sala — um DO por IP. Ver `limite.ts`. */
   Limite: DurableObjectNamespace<Limite>;
@@ -810,8 +811,12 @@ export default {
       return Response.json({ erro: 'sem-codigo-livre' }, { status: 503, headers: cors });
     }
 
-    return (
-      (await routePartykitRequest(request, env)) ?? new Response('Não encontrado', { status: 404 })
-    );
+    if (url.pathname === ROTA_CRIAR_SALA || url.pathname.startsWith('/parties')) {
+      return (
+        (await routePartykitRequest(request, env)) ??
+        new Response('Não encontrado', { status: 404 })
+      );
+    }
+    return env.ASSETS.fetch(request);
   },
 } satisfies ExportedHandler<Env>;
