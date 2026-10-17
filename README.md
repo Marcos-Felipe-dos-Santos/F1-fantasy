@@ -4,6 +4,8 @@
 
 **Monte um carro frankenstein com peças de 76 anos de Fórmula 1 e corra contra 21 rivais.**
 
+**[Jogar agora](https://f1-fantasy-sala.marcosfeliperigoto.workers.dev)**
+
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev/)
 [![Vite](https://img.shields.io/badge/Vite-7-646CFF?logo=vite&logoColor=white)](https://vite.dev/)
@@ -254,8 +256,9 @@ falso e sem `workerd`.
 
 ## 📍 Estado atual
 
-**O jogo está preparado para teste integrado no computador.** A preparação de 2026-10-16
-acrescentou hospedagem, regressões de rede e CI. Endereço público e publicação continuam pendentes.
+**O jogo está publicado na Cloudflare Workers.**
+Abra [F1 Fantasy](https://f1-fantasy-sala.marcosfeliperigoto.workers.dev).
+O modo online foi testado com amigos, conforme confirmação do responsável pelo projeto.
 Nomes históricos restaurados em 2026-10-17; H1–H4 são da auditoria anterior.
 
 | Frente                    | Onde está                                                                                          |
@@ -265,7 +268,8 @@ Nomes históricos restaurados em 2026-10-17; H1–H4 são da auditoria anterior.
 | **Testes**                | `npm test` **1730/1730** em 80 arquivos · `npm run test:party` **46/46** em 8                      |
 | **Build**                 | `npm run build` aprovado — build integrado com os nomes originais; aviso de chunk grande permanece |
 
-O Worker serve `dist/` e a API na mesma origem. Não houve deploy público.
+O Worker serve `dist/` e a API na mesma origem, com `ENVIRONMENT=production` e
+`ALLOWED_ORIGINS` limitado ao endereço público acima. O CI valida mudanças; o deploy é manual.
 
 ---
 

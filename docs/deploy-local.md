@@ -25,15 +25,18 @@ formatos locais. F5 deve reconstruir o draft e a etapa atual.
 2. Conferir cinco etapas e classificação iguais, incluindo F5 e reconexão.
 3. Conferir sala inexistente, origens recusadas e fechamento da sala.
 
-## Publicação futura (não executada)
+## Produção publicada
 
 O Worker usa Static Assets e serve dist/ na mesma origem de /criar-sala e
 /parties/*. API nunca cai no fallback HTML da SPA. Build deve preceder o Worker
 também nos testes: `npm run build` antes de `npm run test:party`.
 
-Quando houver endereço público, definir ALLOWED_ORIGINS com a origem HTTPS
-exata, sem barra final; manter ENVIRONMENT=production. Não usar VITE_WS_BASE
-para outra origem sem revisar a CSP. Nenhum domínio foi inventado/configurado.
+Endereço: https://f1-fantasy-sala.marcosfeliperigoto.workers.dev
+
+ALLOWED_ORIGINS usa essa origem HTTPS exata, sem barra final, e ENVIRONMENT é
+production. O usuário confirmou o teste online com amigos. Conferência adicional:
+site HTTP 200, preflight da origem pública liberado e origem externa sem liberação.
+Não usar VITE_WS_BASE para outra origem sem revisar a CSP.
 O frontend e o Worker são publicados juntos. Salas de versões antigas devem
 ser encerradas antes da atualização: a versão atual é 3.4.7, com nomes e ids originais.
 Saves locais anteriores ao formato 4 são incompatíveis; comece um campeonato novo.
@@ -53,8 +56,8 @@ com textos finais idênticos. F5 também foi exercitado.
 ![Pódio do teste local](img/deploy-local-validado.png)
 
 Ao recompilar com Wrangler aberto, o watcher de dist pode parar no Windows.
-Pare o servidor antes de rodar start:local novamente. O CI está configurado,
-mas a execução no GitHub só ocorrerá após push autorizado; não foi executada aqui.
+Pare o servidor antes de rodar start:local novamente. O CI também passou no GitHub na entrega anterior. Cada PR deve passar novamente
+antes do merge; o workflow não publica automaticamente.
 
 Referência: https://developers.cloudflare.com/workers/static-assets/binding/
 
@@ -63,3 +66,10 @@ Referência: https://developers.cloudflare.com/workers/static-assets/binding/
 Pilotos, equipes, marcas das peças e Montreal (Gilles Villeneuve) restaurados.
 Use npm run dataset:publicar para regenerar o dado servido. As assinaturas de
 notas e os goldens confirmam a preservação dos valores e da ordem.
+
+## Atualizar a produção
+
+Na versão aprovada, execute `npm run build` e `npx wrangler deploy`. A autenticação
+do Wrangler é separada do MCP Cloudflare; se necessário, use
+`npx wrangler login --device` e conclua a autorização no navegador.
+Não atualize no meio de uma partida quando houver mudança de versão/ids.
