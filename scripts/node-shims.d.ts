@@ -12,6 +12,15 @@
  * removido.
  */
 
+/** SHA-256 usado na assinatura das notas preservadas durante a migração. */
+declare module 'node:crypto' {
+  interface Hash {
+    update(data: string): Hash;
+    digest(encoding: 'hex'): string;
+  }
+  export function createHash(algorithm: 'sha256'): Hash;
+}
+
 declare module 'node:fs' {
   export function existsSync(path: string): boolean;
   export function readFileSync(path: string, encoding: 'utf8'): string;

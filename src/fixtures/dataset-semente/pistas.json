@@ -91,7 +91,7 @@
   },
   {
     "id": "pista-montreal",
-    "nome": "Montreal",
+    "nome": "Montreal (Gilles Villeneuve)",
     "pesos": { "aero": 0.2, "mec": 0.3, "motor": 0.5 },
     "ultrapassagem": "facil",
     "chanceChuva": 0.3,

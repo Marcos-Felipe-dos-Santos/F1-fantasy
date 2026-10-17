@@ -31,51 +31,15 @@ const dataset = criarDataset(equipeAnosReal, pecasReal, pistasReal);
 
 describe('selecionarPilotosParadas', () => {
   it('seleciona exatamente os 6 pilotos reais pinados (min/max de PNEU por bucket)', () => {
-    // Pinado deliberadamente contra o dataset servido de hoje. Se o dataset for
-    // regenerado (novos fatos agregados, novo shrink etc.) e os extremos de
-    // PNEU por bucket mudarem, este teste FALHA — e re-pinar exige decisão
-    // CONSCIENTE do dev (é guarda de "o que o harness mede", auditável),
-    // nunca um ajuste automático pra fazer passar.
-    //
-    // 🔴 RE-PINADO NO PR 6 (2026-08-28), a troca do dataset. **QUATRO linhas
-    // mudaram só de rótulo; DUAS mudaram de piloto** — ver o bloco logo abaixo,
-    // que dá a causa medida. **Não houve delta zero no harness:**
-    // `npm run balance` mudou em 40 linhas, e é por isso que o baseline foi
-    // re-capturado (`preview/medicoes-pr6/`).
-    // 🔒 **Como foi re-pinado, e a ordem importa:** cada valor foi DERIVADO de
-    // `scripts/nomes-ficticios.json` (constructorId/driverId reais → código
-    // fictício, remontando `${slug(codigo)}-${ano}-piloto-${codigo}`) e só
-    // ENTÃO conferido contra a saída. **Copiar o "Received" do vermelho seria
-    // exatamente o ajuste automático que o parágrafo acima proíbe.**
-    //
-    // 🔴 **QUATRO das seis linhas são rótulo puro. DUAS TROCARAM DE PILOTO, e
-    // isso NÃO é rótulo — está registrado aqui em vez de escondido.**
-    // `pneuMedio-min` e `pneuAlto-min` mudaram de equipe/ano inteiro. **Causa
-    // medida:** `escolherExtremoPneu` (`balance.ts:167`) desempata por
-    // `pilotoId` ascendente, e nesses dois buckets o extremo é um EMPATE MASSIVO
-    // — **42 pilotos empatados em PNEU 60** e **23 em PNEU 81**, contagem
-    // idêntica antes e depois. Renomear os ids reembaralha quem ganha o
-    // desempate.
-    // ✅ **O que foi verificado, e é o que sustenta o re-pin:** o PNEU do
-    // escolhido é o MESMO extremo do bucket nos dois mundos (60 e 81), e as
-    // notas do dataset são **byte a byte idênticas** (medido: derivado e
-    // publicado, despidos de nome/id, dão a mesma string). **A medida do harness
-    // continua medindo o extremo; muda QUAL dos empatados o representa.**
-    // ✅ **E estas duas TAMBÉM foram derivadas da tabela, não copiadas da
-    // saída** — a primeira redação desta nota dizia que não eram deriváveis, e
-    // **isso era falso** (achado da revisão do PR 6). O desempate é
-    // determinístico e enumerável: o vencedor é o **mínimo lexicográfico
-    // (code unit) do conjunto de empatados**, e o conjunto sai do dataset REAL
-    // remapeado pela tabela. Derivado assim, dá `ashcombe-1988-piloto-netherby`
-    // (42 empatados em PNEU 60) e `baldern-2000-piloto-vaisanen` (23 em 81) —
-    // **os mesmos valores pinados acima.**
+    // Nomes originais: os mínimos dos empates são obtidos por ids reais.
+    // Conferidos no derivado: 42 candidatos em PNEU 60, 23 em PNEU 81.
     expect(selecionarPilotosParadas(dataset)).toEqual([
-      { jogadorId: 'pneuBaixo-min', pilotoId: 'pemberley-2022-piloto-ravenshoe', equipe: 'Pemberley', ano: 2022 },
-      { jogadorId: 'pneuBaixo-max', pilotoId: 'ardenta-1984-piloto-valsecchi', equipe: 'Ardenta', ano: 1984 },
-      { jogadorId: 'pneuMedio-min', pilotoId: 'ashcombe-1988-piloto-netherby', equipe: 'Ashcombe', ano: 1988 },
-      { jogadorId: 'pneuMedio-max', pilotoId: 'ardenta-1951-piloto-brenzoni', equipe: 'Ardenta', ano: 1951 },
-      { jogadorId: 'pneuAlto-min', pilotoId: 'baldern-2000-piloto-vaisanen', equipe: 'Baldern', ano: 2000 },
-      { jogadorId: 'pneuAlto-max', pilotoId: 'charmont-2006-piloto-goikoetxea', equipe: 'Charmont', ano: 2006 },
+      { jogadorId: 'pneuBaixo-min', pilotoId: 'williams-2022-piloto-latifi', equipe: 'Williams', ano: 2022 },
+      { jogadorId: 'pneuBaixo-max', pilotoId: 'alfa-1984-piloto-patrese', equipe: 'Alfa Romeo', ano: 1984 },
+      { jogadorId: 'pneuMedio-min', pilotoId: 'alpine-2024-piloto-gasly', equipe: 'Alpine F1 Team', ano: 2024 },
+      { jogadorId: 'pneuMedio-max', pilotoId: 'alfa-1951-piloto-farina', equipe: 'Alfa Romeo', ano: 1951 },
+      { jogadorId: 'pneuAlto-min', pilotoId: 'benetton-1990-piloto-piquet', equipe: 'Benetton', ano: 1990 },
+      { jogadorId: 'pneuAlto-max', pilotoId: 'renault-2006-piloto-alonso', equipe: 'Renault', ano: 2006 },
     ]);
   });
 
@@ -123,7 +87,7 @@ describe('loadoutForte', () => {
   // `sander_doornbosch`, derivados de `scripts/nomes-ficticios.json`.
   it('resolve pilotoId para o titular nº1 de Kaldrix 2023 — blinda a suposição pilotos[0]', () => {
     const loadout = loadoutForte(dataset, 'jogador-teste');
-    expect(loadout.pilotoId).toBe('kaldrix-2023-piloto-sander_doornbosch');
+    expect(loadout.pilotoId).toBe('red-bull-2023-piloto-max_verstappen');
   });
 });
 
@@ -222,7 +186,7 @@ describe('scoreCarroPista sincronizado com a fórmula real de quali.ts (guard-ra
       // demais não toca nenhum atributo da fórmula, então o caminho
       // `resolverCarro` -> bônus de peça (que a medição real exercita) ficava
       // sem cobertura — segundo achado da mutação na revisão do PR 6.3.
-      { ...loadoutDe(DATA_WILLIAMS_2022, 'williams-peca'), pecaId: 'peca-efeito-solo' },
+      { ...loadoutDe(DATA_WILLIAMS_2022, 'williams-peca'), pecaId: 'peca-efeito-solo-lotus-79' },
     ];
     const pistas = [
       dataset.pistasById.get('pista-monza')!,

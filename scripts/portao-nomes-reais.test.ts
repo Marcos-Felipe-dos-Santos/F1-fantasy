@@ -1,125 +1,6 @@
-/**
- * 🔒 PORTÃO DOS NOMES REAIS — PR 1 da trilha do dataset fictício.
- *
- * Conta quantos nomes reais de F1 aparecem nos ARQUIVOS DE DADOS e compara com
- * um baseline commitado, **por arquivo e por contagem EXATA**. Mexeu a
- * contagem, o teste cai — para mais OU para menos. É de propósito: teto que só
- * desce sozinho não registra progresso, e cerca cujo número nunca se mexeu é
- * cerca não exercitada.
- *
- * ─────────────────────────────────────────────────────────────────────────────
- * UNIVERSO DE AGULHAS — decisão do dev, 2026-08-25.
- *
- * Sai de `scripts/derived/fatos-agregados.json`, lido pela constante única de
- * `./caminhos-dataset.ts` (`FATOS_AGREGADOS`). São QUATRO campos, não dois:
- *   - `equipes[].nome`         → 105 nomes de equipe   ("Ferrari")
- *   - `equipes[].constructorId`→ 105 ids de equipe     ("ferrari")
- *   - `titulares[].nome`       → 353 nomes de piloto   ("Juan Manuel Fangio")
- *   - `titulares[].driverId`   → 353 ids de piloto     ("fangio")
- *
- * 🔑 **OS IDs ENTRAM, e essa é a diferença entre um portão honesto e um que
- * mente.** O id é o nome slugado e MINÚSCULO; a varredura é sensível a caixa.
- * Um portão só de nomes exibidos leria ZERO num dataset em que todo
- * `red-bull-2023-piloto-fangio` continuasse intacto — a forma exata do "o teste
- * afirmava o que não conferia" que este projeto já catalogou seis vezes.
- *
- * A união é DEDUPLICADA: 916 → **909 agulhas**. As 7 repetidas são história
- * real da F1 — `brabham`, `mclaren`, `hill`, `prost`, `stewart`, `surtees` e
- * `fittipaldi` foram piloto E construtor. Sem o dedup, cada uma contaria duas
- * vezes e o número viraria arbitrário.
- *
- * ─────────────────────────────────────────────────────────────────────────────
- * ESCOPO — SÓ ARQUIVOS DE DADOS. Fixado aqui, de propósito.
- *
- * `src/data/*.json` (o que vai no bundle) e `src/fixtures/dataset-semente/*.json`
- * (o artefato que existe para ser lido com segurança — se ele ficar com nome
- * real, a próxima sessão volta a ler nome real justamente no arquivo criado
- * para evitar isso).
- *
- * ⚠️ **`scripts/derived/` está FORA, e não é esquecimento:** ele É o universo.
- * Contar nome real no arquivo que DEFINE a lista de nomes reais é circular —
- * daria 100% por construção e não mediria nada. Ele segue com nome real por
- * desenho; ~~quem o anonimiza é o PR 5, na escrita para `src/data/`.~~
- * ~~CORRIGIDO em 2026-08-28: o PR 5 lê o derivado e escreve
- * `equipe-anos.anonimo.json` (gitignorado), com `src/data/` INTOCADO. A cópia
- * manual NÃO morre no PR 5: morre no PR 6.~~
- * ✅ **ESTADO DESDE O PR 6 (2026-08-28):** `anonimizar.ts` publica **direto em
- * `src/data/equipe-anos.json`**; `equipe-anos.anonimo.json` **deixou de
- * existir** e a cópia manual **morreu**. A entrada (`equipe-anos.derivado.json`)
- * segue real por desenho, que é o que este bloco explica.
- * 📌 **O `BASELINE` NÃO se moveu no PR 5** (a lista é fixa e a saída do
- * `anonimizar` não estava nela) **e MOVEU no PR 6**: a linha
- * `src/data/equipe-anos.json` foi a **0** — ⚠️ **não foi "derrubada" da lista**,
- * como a redação anterior dizia; ela continua lá, medindo zero, que é o que faz
- * a cerca seguir viva. Achado da revisão do PR 6.
- *
- * ⚠️ **CÓDIGO-FONTE está FORA, e o PR 2 NÃO fechou isso.** Este portão não mede
- * `.ts`/`.tsx`, e segue sem medir depois do PR 2 (`50bda11`).
- *
- * O que o PR 2 fez foi **CONCENTRAR** os literais de `equipe/ano` em
- * `src/fixtures/referencias-dataset.ts` — 44 sítios espalhados por 7 arquivos
- * saíram de lá. **O que ele NÃO fez foi criar cerca sobre código-fonte:** nada
- * impede que um `.find((e) => e.equipe === 'Red Bull')` novo apareça amanhã, e
- * nenhum teste falharia. Medido em 2026-08-25, pós-funil: ainda há **14
- * arquivos-fonte / 58 sítios-linha** citando nome de equipe, dos quais 22 são o
- * próprio módulo de referência — os demais são oráculos pinados, fixtures
- * sintéticas, prosa e a anti-vacuidade deste arquivo.
- *
- * **Quem ler este teste verde e concluir "não há nome real no repo" está
- * errado** — ele responde "quanto nome real há nos DADOS", e só isso.
- *
- * ⚠️ **O BUNDLE está FORA, e CONTINUA fora depois do PR 6.** A medição que
- * decide o deploy é sobre `dist/` (contagem nº 5 do inventário) e exige
- * `npm run build` — caro demais para rodar em todo `npm test`.
- * 🔴 **CORRIGIDO em 2026-08-28: esta linha dizia "entra como passo do PR 6", e
- * o que o PR 6 fez foi MEDIR À MÃO** (114 ocorrências no bundle, todas
- * sobre-contagem ou a pista da T2). **Medição manual não é portão: uma
- * regressão futura em `dist/` passa em silêncio.** Cerca automatizada do bundle
- * **continua não existindo**, e dizer o contrário faria a próxima sessão
- * confiar num portão inexistente. Achado da revisão do PR 6.
- *
- * ─────────────────────────────────────────────────────────────────────────────
- * MÉTODO — VARREDURA DE TEXTO CRU, NUNCA CAMINHADA POR CAMPO.
- *
- * O arquivo é lido como uma string só e cada agulha é contada nele. **Não se
- * percorre a estrutura JSON.** A razão é medida: `scripts/derivar-notas.ts:719`
- * monta o nome do estrategista por INTERPOLAÇÃO —
- * `` `Estrategista ${equipe.nome} ${season}` `` —, então o nome da equipe vive
- * DENTRO de um valor, não numa chave. Foram três sessões contando "3 sítios de
- * normalização" quando eram 4, justamente por pensar em campo. Varredura de
- * texto acha; enumeração de campo só acha se alguém lembrar do campo.
- *
- * 🔒 **FRONTEIRA NÃO-ALFANUMÉRICA nos dois lados, e ela não é preciosismo.**
- * Sem ela a métrica vira lixo, e isso está MEDIDO: `rb` (Red Bull) casa dentro
- * de `Nürburgring`, e `pistas.json` acusava 4 ids fantasma em vez de 0. É a
- * repetição exata do substituto 2 do inventário, reprovado por `button` (Jenson
- * Button) casar em todo `<button>` e `sala` (driverId real) casar em `src/net/`.
- * 🔒 **NÃO EXISTE ALLOWLIST AQUI, e não se acrescenta uma.** Escolher exceções
- * a dedo até o número ficar bonito é o vício que aposentou a contagem 33/6/2.
- * Se o número incomoda, corrige-se o DADO, não a lista.
- *
- * 📌 **Sobre-contagem conhecida, registrada em vez de excluída:** `massa` é
- * driverId real (Felipe Massa) e casa em `peca-amortecedor-massa` (era
- * `peca-amortecedor-massa-renault` antes do PR 3), onde "massa" é a palavra
- * portuguesa. São 2 ocorrências por arquivo de peças — o nome exibido
- * "Amortecedor de massa" e o id. Fica contado. Um portão que sobre-conta é
- * seguro; um que sub-conta mente.
- * 🔑 **Depois do PR 3 elas são as ÚNICAS AGULHAS que sobraram nos arquivos de
- * peças**, ou seja o 2 do baseline é 100% sobre-contagem. **Não se corrige
- * baixando o número:** a linha acima proíbe allowlist, e o dado está no estado
- * que a decisão P pediu.
- * 🔴 **"Portão em 2" NÃO É "peças sem marca", e a diferença é estrutural.**
- * `peca-turbo-modo-quali-bmw` / "Turbo modo-quali BMW anos 80" **ficou fora da
- * decisão P e mantém a marca** — e este portão **não consegue vê-la**: o
- * universo de agulhas traz `BMW Sauber` / `bmw_sauber`, nunca `BMW` sozinho
- * (medido em 2026-08-27 contra `fatos-agregados.json`). **Cegueira do universo,
- * não limpeza do dado.** Quem ler o 2 como "não há mais marca em peça" repete o
- * erro que este arquivo inteiro existe para evitar.
- *
- * 📛 **Este teste LÊ `src/data/*.json` — em bytes, para contar, NUNCA
- * imprimindo o conteúdo.** A saída de falha é limitada a 5 amostras
- * `agulha=contagem`. Mesma disciplina de `src/engine/versao.test.ts:18`.
- */
+/** Estabilidade dos nomes históricos: contagens exatas, não uma proibição.
+ * Restauração: dataset 9237; fixture 254 (ids canônicos red-bull, ao contrário
+ * do antigo redbull); peças 19 e pistas 2 em cada origem. */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -234,20 +115,18 @@ const ESPERADO_AGULHAS_DEDUPLICADAS = 909;
  * intocável por determinismo. Ele é intocável por DECISÃO, que é outra coisa.
  */
 const BASELINE: ReadonlyArray<readonly [string, number]> = [
-  ['src/data/equipe-anos.json', 0],
-  ['src/data/pecas.json', 2],
-  ['src/data/pistas.json', 1],
-  ['src/fixtures/dataset-semente/equipe-anos.json', 0],
-  ['src/fixtures/dataset-semente/pecas.json', 2],
-  ['src/fixtures/dataset-semente/pistas.json', 1],
+  ['src/data/equipe-anos.json', 9237],
+  ['src/data/pecas.json', 19],
+  ['src/data/pistas.json', 2],
+  ['src/fixtures/dataset-semente/equipe-anos.json', 254],
+  ['src/fixtures/dataset-semente/pecas.json', 19],
+  ['src/fixtures/dataset-semente/pistas.json', 2],
 ];
 
 /** Resolve o nome relativo (POSIX, estável entre plataformas) para o caminho real. */
 function caminhoDe(relativo: string): string {
   const arquivo = relativo.slice(relativo.lastIndexOf('/') + 1);
-  return relativo.startsWith('src/data/')
-    ? join(DATA_DIR, arquivo)
-    : join(FIXTURE_DIR, arquivo);
+  return relativo.startsWith('src/data/') ? join(DATA_DIR, arquivo) : join(FIXTURE_DIR, arquivo);
 }
 
 const EH_ALFANUMERICO = /[\p{L}\p{N}_]/u;
@@ -378,7 +257,7 @@ describe('🔒 portão dos nomes reais — a cerca', () => {
           `   medido agora:       ${total}`,
           `   até 5 amostras:     ${amostras}`,
           '',
-          '   Se a mudança é INTENCIONAL (um PR da trilha do dataset fictício),',
+          '   Se a mudança é INTENCIONAL (uma atualização aprovada do dataset),',
           '   atualize o BASELINE deste arquivo no MESMO commit que muda o dado.',
           '   Se não é, algum nome real entrou ou saiu sem que ninguém pedisse.',
         ].join('\n'),

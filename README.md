@@ -4,18 +4,18 @@
 
 **Monte um carro frankenstein com peças de 76 anos de Fórmula 1 e corra contra 21 rivais.**
 
+**[Jogar agora](https://f1-fantasy-sala.marcosfeliperigoto.workers.dev)**
+
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev/)
 [![Vite](https://img.shields.io/badge/Vite-7-646CFF?logo=vite&logoColor=white)](https://vite.dev/)
 [![Vitest](https://img.shields.io/badge/Vitest-4-6E9F18?logo=vitest&logoColor=white)](https://vitest.dev/)
-[![testes](https://img.shields.io/badge/testes-1724%20%2B%2046%20passando-brightgreen)](#-como-rodar)
+[![testes](https://img.shields.io/badge/testes-1730%20%2B%2046%20passando-brightgreen)](#-como-rodar)
 [![simulação](https://img.shields.io/badge/simula%C3%A7%C3%A3o-determin%C3%ADstica%20por%20seed-orange)](#-destaques-t%C3%A9cnicos)
 [![licença MIT](https://img.shields.io/badge/licen%C3%A7a-MIT-blue)](LICENSE)
 
 > ⚠️ **Projeto de fã, não oficial.** Sem qualquer afiliação, patrocínio ou endosso da Formula 1,
-> da FIA ou de qualquer equipe. **Os nomes de pilotos e equipes do jogo são FICTÍCIOS** — inventados
-> para este projeto, apoiados sobre fatos históricos reais. Ver
-> **[Nomes fictícios](#-nomes-fict%C3%ADcios-o-dataset-do-jogo-n%C3%A3o-usa-nome-real)**.
+> da FIA ou de qualquer equipe. Os nomes de pilotos e equipes são referências históricas aos dados da API Jolpica-F1.
 
 </div>
 
@@ -28,14 +28,12 @@ brasileiros **"7x1"** e **"38 a 0"** — aquela mesma fórmula de sortear, monta
 com uma partida inteira cabendo num intervalo de almoço.
 
 A ideia é simples e cruel: você não escolhe um carro pronto. Você monta um **frankenstein**.
-Sorteia uma equipe e um ano — digamos, Sarterra 2004 — e leva **um único componente** dela. Depois
+Sorteia uma equipe e um ano — digamos, Ferrari 2004 — e leva **um único componente** dela. Depois
 sorteia de novo, e de novo. No fim você tem um piloto de uma era, um chassi de outra, um motor de
 uma terceira, e uma equipe de pit stop que talvez nem existisse quando esse piloto correu. São
 **76 temporadas (1950–2025)** e **771 combinações de equipe/ano** no baralho.
 
-As equipes e os pilotos têm **nomes fictícios** — "Sarterra 2004" é uma equipe inventada —, mas as
-**notas** de cada um saem de resultados históricos reais daquela temporada. Ver
-**[Nomes fictícios](#-nomes-fict%C3%ADcios-o-dataset-do-jogo-n%C3%A3o-usa-nome-real)**.
+Os nomes originais de equipes e pilotos acompanham as notas derivadas dos resultados históricos.
 
 Aí o carro vai pra pista contra **21 rivais** que passaram exatamente pelo mesmo processo. Quali,
 largada, ritmo, estratégia de parada, incidentes — tudo simulado volta a volta, e tudo derivado de
@@ -60,28 +58,19 @@ flowchart LR
 Nas **rodadas 1 a 5**, cada jogador recebe um sorteio de equipe/ano e escolhe **um** dos cinco
 slots pra preencher com aquela combinação. O que não for pego, se perde:
 
-| Slot                | O que representa                              |
-| ------------------- | --------------------------------------------- |
-| 🧑‍✈️ **Piloto**       | A dupla de pilotos daquela equipe naquele ano |
-| 🏗️ **Chassi**       | O carro, aerodinâmica e comportamento         |
-| ⚙️ **Motor**        | A unidade de potência                         |
-| 🧠 **Estrategista** | O muro dos boxes — chamadas de parada         |
-| 🔧 **Pit**          | A velocidade e a confiabilidade da troca      |
+| Slot                | O que representa                               |
+| ------------------- | ---------------------------------------------- |
+| 🧑‍✈️ **Piloto**       | Um dos dois pilotos daquela equipe naquele ano |
+| 🏗️ **Chassi**       | O carro, aerodinâmica e comportamento          |
+| ⚙️ **Motor**        | A unidade de potência                          |
+| 🧠 **Estrategista** | O muro dos boxes — chamadas de parada          |
+| 🔧 **Pit**          | A velocidade e a confiabilidade da troca       |
 
 Como só há 5 rodadas para 5 slots, cada sorteio é uma decisão real: aceitar um motor mediano agora
 ou torcer por algo melhor e ficar sem opção depois.
 
 Na **rodada 6** vem a **peça icônica** — uma carta de um catálogo de **24 peças** que modifica o
 carro montado. É o único momento de escolha aberta do draft.
-
-> 📸 **As três capturas de tela em PNG SAÍRAM deste README em 2026-09-02, e o motivo fica escrito:**
-> `draft.png`, `corrida.png` e `campeonato.png` são anteriores à troca por nomes fictícios (a troca
-> do dataset é de 2026-08-30; os prints, de 2026-08-08) e por isso **exibiam os nomes reais do
-> dataset antigo** — na vitrine do projeto, fora de todo portão. **README sem screenshot é melhor
-> que README com screenshot de nome real.** Os arquivos **continuam em `docs/img/`**, não foram
-> apagados; **regerá-los com o dataset atual é pendência aberta.** _(A grade de silhuetas em SVG,
-> mais abaixo, é gerada por `npm run preview` a partir da geometria de produção, nunca teve nome
-> real e **está atual** — por isso ficou.)_
 
 ### Os modos
 
@@ -111,8 +100,8 @@ acumula entre as corridas — com a variação de posição de cada jogador etap
 estão disponíveis nos modos Single e Local. No
 campeonato multiplayer o servidor sorteia uma seed independente por etapa e publica **uma de cada
 vez**, conforme a etapa abre — nunca a seed-mestre. Não é zelo: com a seed base na mão, qualquer
-jogador simularia as corridas futuras no console antes de draftar. Cada etapa só avança quando todos
-os elegíveis atestam o fim da anterior.
+jogador simularia as corridas futuras no console antes de draftar. A etapa avança quando todos
+os jogadores elegíveis terminam o replay, ou quando vence o timeout do servidor.
 
 ### Visibilidade: Craque ou Cego
 
@@ -122,8 +111,7 @@ os elegíveis atestam o fim da anterior.
 | 🎲 **Cego**   | As notas dos componentes e das peças ficam escondidas — sobram o nome e o **ano**. |
 
 O Modo Cego esconde as notas; não esconde a pista nem o resultado da corrida. É a diferença entre
-otimizar uma planilha e apostar no faro — e, com o dataset fictício, o que resta pra apostar é
-sobretudo o **ano**: um carro de 1988 não é um de 1950.
+otimizar uma planilha e apostar no faro — o **ano** também faz parte da decisão: um carro de 1988 não é um de 1950.
 
 ---
 
@@ -148,8 +136,8 @@ As **771 combinações de equipe/ano (1950–2025)** não foram estimadas por op
 processadas por um pipeline versionado:
 
 ```
-dataset:fetch  →  dataset:fatos  →  dataset:notas  →  dataset:report
-  (API pública)   (agrega fatos)   (deriva notas)    (relatório)
+dataset:fetch → dataset:fatos → dataset:notas → dataset:publicar → dataset:report
+ API pública    agrega fatos    deriva notas    publica no app    relatório
 ```
 
 A normalização é o detalhe que faz a coisa funcionar: cada nota vem do **percentil de Hazen dentro
@@ -157,10 +145,7 @@ da própria temporada**, mapeado pra uma faixa-alvo. Ou seja — um carro é med
 adversários que ele realmente enfrentou, não contra a história inteira. Sem isso, a era híbrida
 esmagaria os anos 50 por puro avanço tecnológico e o draft perderia a graça.
 
-🔑 **Os NÚMEROS vêm dos fatos; os NOMES são inventados.** O último passo do pipeline troca cada
-rótulo por um nome fictício, chaveado por id — as notas não se movem (medido: byte a byte
-idênticas dos dois lados). É por isso que o jogo pode ser publicado sem usar marca de terceiros e
-mesmo assim continuar sendo um jogo sobre a história da F1.
+A publicação preserva os nomes históricos e todas as notas do derivado.
 
 ### ⚖️ Balanceamento medido, não sentido
 
@@ -207,9 +192,9 @@ A grade acima não é um print: é gerada a partir da **mesma função de geomet
 corrida usa** (`pathDaVolta`), por `npm run preview` — se o traçado mudar no jogo, muda aqui
 também. Regerar é um comando, não um trabalho de captura.
 
-### ✅ 1724 + 46 testes, em duas suítes
+### ✅ 1730 + 46 testes, em duas suítes
 
-**1724 testes em 79 arquivos** (`npm test`) cobrindo engine, UI e o redutor de rede, mais
+**1730 testes em 80 arquivos** (`npm test`) cobrindo engine, UI e o redutor de rede, mais
 **46 testes em 8 arquivos** (`npm run test:party`) que rodam a casca do Durable Object dentro do
 `workerd` de verdade.
 
@@ -221,66 +206,25 @@ comportamento pretendido — só depois vem a implementação.
 
 ---
 
-## 🎭 Nomes fictícios: o dataset do jogo não usa nome real
+## Nomes históricos
 
-**Por que existe:** com o deploy público decidido, nome real deixou de ser risco contido e virou
-bloqueador — e a razão é medida, não jurídica-de-corredor: o dataset **vai inteiro para o bundle
-servido**. A contagem de 2026-08-24, sobre o `dist/` de então, era **105/105 nomes de equipe,
-1.542/1.542 ids de piloto e 353/353 nomes exibidos**. Não era resíduo em arquivo de teste; era 100%
-do dataset, servido a quem abrisse o jogo.
+![Draft com os nomes originais](docs/img/nomes-originais.png)
 
-**A trilha de 7 PRs está ENTREGUE (7 de 7, concluída em 2026-08-31).** O que ela trocou:
+O jogo usa nomes originais de pilotos, equipes, peças e circuitos. O derivado real é
+publicado com `npm run dataset:publicar`; a cerca de publicação confere a igualdade
+do arquivo servido com o derivado em cada execução de testes.
 
-| PR  | O que                                                                                            | Estado |
-| --- | ------------------------------------------------------------------------------------------------ | ------ |
-| 1   | **Portão** — conta nome real nos arquivos de dados; falha se a contagem mudar, pra mais ou menos | ✅     |
-| 2   | **Funil de literais** — os nomes espalhados em `scripts/` passam a sair de um sítio só           | ✅     |
-| 3   | **Peças despidas** — 10 peças icônicas perdem marca e código de modelo, mantêm a inovação        | ✅     |
-| 4   | **A tabela** — 458 nomes fictícios (105 equipes + 353 pilotos), chaveados por id                 | ✅     |
-| 5   | `anonimizar.ts` + teste diferencial, com `src/data/` ainda intocado                              | ✅     |
-| 6   | **A troca** — `src/data/` passa a ser fictício (771 registros reescritos, nomes **e** ids)       | ✅     |
-| 7   | Fixture de teste e baseline do portão no piso                                                    | ✅     |
+A fixture mantém suas notas congeladas. A migração reversa restaurou nomes e ids
+sem alterar notas, anos ou ordem; assinaturas SHA-256 verificam essa preservação.
+A contagem de nomes é uma cerca de estabilidade (não uma proibição): 9237 no dataset,
+254 na fixture, 19 em cada catálogo de peças e 2 em cada catálogo de pistas.
 
-### O que está medido hoje
+A tabela fictícia e as funções puras antigas permanecem como proveniência testada;
+as CLIs de anonimização foram aposentadas.
 
-**O portão** (`scripts/portao-nomes-reais.test.ts`, dentro do `npm test`) mede **6** ocorrências nos
-seis JSON de dados — era **9.486** antes da trilha. É asserção de igualdade exata, e **as 6 estão
-explicadas desde antes do PR 7**, a pedido do dev (_"o que sobrar precisa estar explicado, não
-descoberto depois"_):
-
-    massa    = 2 + 2   sobre-contagem: a peça "Amortecedor de massa" colide com o
-                       driverId de Felipe Massa. O dado está limpo; a palavra é comum.
-    Red Bull = 1 + 1   "Red Bull Ring", a pista — mantida por decisão (ver abaixo).
-
-**O bundle servido** não tem portão automatizado — a medição é à mão, e foi **refeita nesta
-atualização** porque o bundle mudou de hash no PR H4:
-
-    dist/assets/index-UkRE1HGe.js   →  124 ocorrências
-       sala = 64 · button = 57 · massa = 2 · Red Bull = 1
-
-Todas as quatro são sobre-contagem ou a pista mantida: `sala` é um `driverId` real e casa com o
-vocabulário do modo online; `button` é sobrenome real (Jenson Button) e casa com todo `<button>` do
-React. **Contraprova:** `Ferrari`, `McLaren`, `Schumacher`, `Verstappen` e `Senna` dão **0**, e
-`Sarterra` — o nome fictício que ocupou o lugar da Ferrari — dá **152**, exatamente a contagem que
-`Ferrari` tinha no dataset derivado.
-
-### O que a trilha NÃO resolve, e fica dito
-
-- **As pistas continuam reais, e é decisão de projeto.** 8 das 10 são **topônimos** — Monza, Spa,
-  Imola, Suzuka, Interlagos, Silverstone, Mônaco, Nürburgring: são lugares, não marcas. `Montreal`
-  perdeu o "(Gilles Villeneuve)"; **`Red Bull Ring` ficou**, porque o id da pista alimenta
-  `seedDaEtapa` — trocá-lo seria mudança de comportamento, não renomeação.
-- **A peça `Turbo modo-quali BMW anos 80` mantém a marca.** Ficou fora do escopo do PR 3, e o
-  portão **não a enxerga**: `BMW` não está no universo de agulhas (não é nome de construtor no
-  agregado de fatos), então esse resíduo não aparece nos 6.
-- **O histórico do git continua servindo os nomes reais** — decisão consciente do dev, não
-  esquecimento: reescrever histórico invalidaria as SHAs citadas na documentação do projeto.
-  **"Nomes fictícios entregues" não quer dizer "o repositório está limpo".**
-- **O portão mede só os seis JSON de dados.** Não mede `.ts`/`.tsx`, não mede `.md`, não mede o
-  bundle e não mede as imagens de `docs/img/`. Quem ler o teste verde e concluir "não há nome real
-  no repositório" está errado — ele responde "quanto nome real há nos DADOS", e só isso.
-
----
+**Versão atual: 3.4.7.** Salas de versões diferentes não podem compartilhar clientes.
+Saves anteriores ao formato 4 são incompatíveis: após atualizar, comece uma sala ou
+um campeonato novo.
 
 ## 🔐 Hardening: quatro PRs antes de abrir ao público
 
@@ -312,43 +256,73 @@ falso e sem `workerd`.
 
 ## 📍 Estado atual
 
-**O jogo está preparado para teste integrado no computador.** A preparação de 2026-10-16
-acrescentou hospedagem, regressões de rede e CI. Endereço público e publicação continuam pendentes.
-Os registros de anonimização e H1–H4 abaixo são da auditoria de 2026-09-02; testes e build são atuais.
+**O jogo está publicado na Cloudflare Workers.**
+Abra [F1 Fantasy](https://f1-fantasy-sala.marcosfeliperigoto.workers.dev).
+O modo online foi testado com amigos, conforme confirmação do responsável pelo projeto.
+Nomes históricos restaurados em 2026-10-17; H1–H4 são da auditoria anterior.
 
-| Frente                    | Onde está                                                                                                            |
-| ------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| **Fase de rede (online)** | ✅ encerrada em 2026-08-27 — corrida e campeonato online entregues                                                   |
-| **Nomes fictícios**       | ✅ 7 de 7 PRs · portão no piso de **6**, todas explicadas · bundle: **124**, todas sobre-contagem ou a pista mantida |
-| **Hardening**             | ✅ H1–H4 · **12 fechados · 3 parciais · 0 abertos** dos 15 itens com status (S13/S14 sem status)                     |
-| **Testes**                | `npm test` **1724/1724** em 79 arquivos · `npm run test:party` **46/46** em 8                                        |
-| **Build**                 | `npm run build` aprovado — `index-Dd_9CQVp.js`, 864,26 kB (gzip 168,60 kB); aviso de chunk grande permanece |
+| Frente                    | Onde está                                                                                          |
+| ------------------------- | -------------------------------------------------------------------------------------------------- |
+| **Fase de rede (online)** | ✅ encerrada em 2026-08-27 — corrida e campeonato online entregues                                 |
+| **Hardening**             | ✅ H1–H4 · **12 fechados · 3 parciais · 0 abertos** dos 15 itens com status (S13/S14 sem status)   |
+| **Testes**                | `npm test` **1730/1730** em 80 arquivos · `npm run test:party` **46/46** em 8                      |
+| **Build**                 | `npm run build` aprovado — build integrado com os nomes originais; aviso de chunk grande permanece |
 
-O Worker serve `dist/` e a API na mesma origem. Não houve deploy público.
-O histórico do Git continua com o dataset real; tornar o repositório público é decisão à parte.
+O Worker serve `dist/` e a API na mesma origem, com `ENVIRONMENT=production` e
+`ALLOWED_ORIGINS` limitado ao endereço público acima. O CI valida mudanças; o deploy é manual.
 
 ---
 
 ## 🚀 Como rodar
 
-Precisa de **Node 24** (também usado no CI).
+Precisa de **Node 24** (também usado no CI). O dataset já vem no repositório;
+não é necessário baixar os dados históricos para jogar.
 
-```bash
+### Testar no computador
+
+No PowerShell, dentro da pasta do projeto:
+
+```powershell
+cd "E:\projetos\F1 fantasy"
 npm ci
-npm run dev      # http://localhost:5173
+npm run start:local
 ```
 
-Isso basta para o **Single**, o **Local** e os dois formatos de campeonato.
+`npm ci` instala as dependências de um clone novo e deve ser repetido quando o
+arquivo de dependências mudar. Nas próximas execuções, basta `npm run start:local`.
 
-### Testar o jogo integrado no computador
+Espere aparecer `Ready on http://127.0.0.1:8787` e abra
+**[http://127.0.0.1:8787](http://127.0.0.1:8787)**. Mantenha o terminal aberto.
+O comando compila e serve o frontend e o servidor de salas na mesma origem,
+sem login na Cloudflare. O acesso fica restrito ao próprio computador.
+
+Para encerrar, pressione **Ctrl+C**. Se a porta 8787 estiver ocupada, encerre a
+execução anterior. Pare o servidor antes de recompilar e iniciar novamente.
+
+### Testar o Online com dois jogadores no mesmo computador
+
+1. Escolha **Online → Criar ou entrar numa sala → Criar sala**.
+2. Entre na sala, informe seu nome e copie o link.
+3. Abra o link em **outro navegador ou janela anônima** e entre com outro nome.
+4. Marque **Estou pronto** nos dois jogadores; no anfitrião 👑, clique em **Começar o draft**.
+5. Faça as cinco escolhas de componentes e escolha a peça icônica em cada jogador.
+6. Clique em **Largar** nos dois. **Acelerar ⏩** pula o replay daquele jogador.
+7. Termine as cinco etapas e confira se os resultados e o pódio são iguais.
+
+Experimente dar **F5 durante o draft ou no grid**: a identidade e a etapa atual
+devem ser recuperadas. Duas abas na mesma sessão de navegador compartilham o
+`localStorage` e o token da sala, então não representam dois jogadores diferentes.
+
+Veja também o [guia de teste local](docs/deploy-local.md).
+
+### Desenvolver Single e Local
 
 ```bash
-npm run start:local  # http://127.0.0.1:8787
+npm run dev  # http://localhost:5173
 ```
 
-Compila e serve frontend e sala na mesma origem, sem login ou deploy na Cloudflare.
-Use outro navegador ou janela anônima para um segundo jogador.
-Veja [o guia de teste local](docs/deploy-local.md).
+O Vite atualiza o frontend durante o desenvolvimento. Para Online, inicie também
+o Worker conforme abaixo.
 
 ### Desenvolver o modo Online, dois terminais
 
@@ -378,31 +352,33 @@ dry-run do Worker) e suíte Worker em Node 24. Não faz deploy.
 
 ### Scripts
 
-| Comando              | O que faz                                                                                                               |
-| -------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `npm run dev`        | Sobe o servidor de desenvolvimento (Vite)                                                                               |
-| `npm run dev:rede`   | Idem, exposto na rede local — pra abrir do celular                                                                      |
-| `npm run sala`       | Sobe o worker/Durable Object do modo Online (`wrangler`, em `127.0.0.1:8787`)                                           |
-| `npm test`           | Suíte principal — 1724 testes (engine, UI, `src/net/`)                                                                  |
-| `npm run test:party` | Suíte da casca do Durable Object — 46 testes, roda no `workerd`                                                         |
-| `npm run test:watch` | Testes em modo watch                                                                                                    |
-| `npm run build`      | `tsc --noEmit` + build de produção                                                                                      |
-| `npm run typecheck`  | Só a checagem de tipos                                                                                                  |
-| `npm run lint`       | ESLint                                                                                                                  |
-| `npm run format`     | Prettier                                                                                                                |
-| `npm run balance`    | Balance harness — pesado, roda fora do `npm test`                                                                       |
-| `npm run preview`    | Gera os previews visuais em `preview/` (gitignored) **e** a grade de silhuetas em `docs/img/silhuetas.svg` (versionada) |
+| Comando               | O que faz                                                                                                               |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `npm run dev`         | Sobe o servidor de desenvolvimento (Vite)                                                                               |
+| `npm run start:local` | Compila e serve frontend e Worker em `http://127.0.0.1:8787`, com CSP e origens locais explícitas                       |
+| `npm run dev:rede`    | Idem, exposto na rede local — pra abrir do celular                                                                      |
+| `npm run sala`        | Sobe o worker/Durable Object do modo Online (`wrangler`, em `127.0.0.1:8787`)                                           |
+| `npm test`            | Suíte principal — 1730 testes (engine, UI, `src/net/`)                                                                  |
+| `npm run test:party`  | Suíte do Worker — 46 testes no `workerd`; execute `npm run build` antes para gerar os assets                            |
+| `npm run test:watch`  | Testes em modo watch                                                                                                    |
+| `npm run build`       | Typecheck, build do frontend e inspeção do bundle do Worker em dry-run                                                  |
+| `npm run typecheck`   | Só a checagem de tipos                                                                                                  |
+| `npm run lint`        | ESLint                                                                                                                  |
+| `npm run format`      | Prettier                                                                                                                |
+| `npm run balance`     | Balance harness — pesado, roda fora do `npm test`                                                                       |
+| `npm run preview`     | Gera os previews visuais em `preview/` (gitignored) **e** a grade de silhuetas em `docs/img/silhuetas.svg` (versionada) |
 
 ### Pipeline de dados
 
 Só é necessário pra **regerar** o dataset — o resultado já está versionado em `src/data/`.
 
-| Comando                  | O que faz                             |
-| ------------------------ | ------------------------------------- |
-| `npm run dataset:fetch`  | Baixa os fatos crus da API Jolpica-F1 |
-| `npm run dataset:fatos`  | Agrega os fatos por equipe/ano        |
-| `npm run dataset:notas`  | Deriva as notas por percentil         |
-| `npm run dataset:report` | Relatório do dataset gerado           |
+| Comando                    | O que faz                              |
+| -------------------------- | -------------------------------------- |
+| `npm run dataset:fetch`    | Baixa os fatos crus da API Jolpica-F1  |
+| `npm run dataset:fatos`    | Agrega os fatos por equipe/ano         |
+| `npm run dataset:notas`    | Deriva as notas por percentil          |
+| `npm run dataset:publicar` | Publica o derivado com nomes originais |
+| `npm run dataset:report`   | Relatório do dataset gerado            |
 
 ---
 
@@ -419,10 +395,8 @@ Cada sala é um **Durable Object isolado**. A corrida roda **no cliente** e o se
 o determinismo por seed é justamente o que permite esse desenho: o servidor não precisa simular
 nada, e nem sequer carrega o dataset.
 
-> 📌 **Foi `partykit` no papel, é `partyserver` no código.** A troca é deliberada: o pacote
-> `partykit` está sem release desde 2025-09, enquanto o `partyserver` segue publicando no mesmo
-> monorepo da Cloudflare. O princípio do primeiro dia não mudou — sala = Durable Object isolado —,
-> só o CLI (`partykit dev` → `wrangler dev`).
+O servidor usa `partyserver` e o CLI `wrangler`. Cada sala mantém seu estado em
+um Durable Object; o frontend usa WebSocket para enviar escolhas e receber snapshots.
 
 ---
 
@@ -434,11 +408,8 @@ Os fatos históricos que alimentam o pipeline vêm da **[API Jolpica-F1](https:/
 sucessora da [Ergast Developer API](https://ergast.com/mrd/). Agradecimento sincero a quem mantém
 esse serviço público — sem ele este projeto não existiria na forma em que está.
 
-O que entra são **fatos históricos públicos** (resultados, posições, participações), e é deles que
-as **notas** são derivadas. **O que sai são nomes fictícios:** o dataset servido pelo jogo não
-carrega nome de piloto nem de equipe reais. As **pistas** são exceção declarada — são lugares
-reais, e estão nomeadas como tal (ver
-[Nomes fictícios](#-nomes-fict%C3%ADcios-o-dataset-do-jogo-n%C3%A3o-usa-nome-real)).
+O pipeline deriva notas de resultados históricos públicos e preserva os nomes originais
+de pilotos e equipes. As pistas e peças também usam suas referências históricas.
 
 ### Aviso
 
@@ -447,8 +418,7 @@ reais, e estão nomeadas como tal (ver
 > ou de qualquer equipe, piloto ou fabricante. _F1_, _FORMULA 1_, _GRAND PRIX_ e marcas
 > relacionadas pertencem a seus respectivos titulares. Nenhuma arte, logotipo ou material gráfico de
 > terceiros é incorporado ao projeto — os traçados de pista e os elementos visuais são originais.
-> **Os nomes de pilotos e equipes que aparecem no jogo são inventados**; qualquer semelhança com
-> pessoa real é involuntária.
+> Os nomes de pilotos, equipes e circuitos são referências históricas.
 
 ### Licença
 
@@ -456,7 +426,7 @@ O **código** deste projeto está sob a **[Licença MIT](LICENSE)** — use, mod
 vontade, mantendo o aviso de copyright.
 
 A MIT cobre **o que foi escrito aqui**: a engine, a interface, os scripts, os traçados de pista
-originais e a tabela de nomes fictícios. Ela **não** concede nem reivindica direito algum sobre
+originais e os scripts de dados. Ela **não** concede nem reivindica direito algum sobre
 nomes de circuitos ou marcas de terceiros que ainda apareçam no projeto — esses continuam com seus
 respectivos titulares, e nada nesta licença muda isso. Os fatos históricos derivados da API
 Jolpica-F1 seguem os termos da própria fonte.

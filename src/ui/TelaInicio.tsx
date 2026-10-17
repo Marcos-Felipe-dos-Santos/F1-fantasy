@@ -161,7 +161,7 @@ export function TelaInicio({
               type="text"
               value={seedTexto}
               onChange={(evento) => setSeedTexto(evento.target.value)}
-              placeholder="ex.: vilarinho1988 ou 42"
+              placeholder="ex.: senna1988 ou 42"
             />
           </label>
           <p className="form-inicio__seed-dica">

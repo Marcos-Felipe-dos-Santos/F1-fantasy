@@ -111,10 +111,10 @@ describe('rodada 5 forçada (§3)', () => {
         'bot-1': {
           rodada: 5,
           slots: {
-            pilotoId: 'kaldrix-2023-piloto-sander_doornbosch',
-            chassiId: 'kaldrix-2023-chassi',
-            motorId: 'kaldrix-2023-motor',
-            estrategistaId: 'kaldrix-2023-estrategista',
+            pilotoId: 'red-bull-2023-piloto-max_verstappen',
+            chassiId: 'red-bull-2023-chassi',
+            motorId: 'red-bull-2023-motor',
+            estrategistaId: 'red-bull-2023-estrategista',
           },
         },
       },
@@ -133,10 +133,10 @@ describe('rodada 5 forçada (§3)', () => {
         'bot-1': {
           rodada: 5,
           slots: {
-            chassiId: 'kaldrix-2023-chassi',
-            motorId: 'kaldrix-2023-motor',
-            estrategistaId: 'kaldrix-2023-estrategista',
-            pitId: 'kaldrix-2023-pit',
+            chassiId: 'red-bull-2023-chassi',
+            motorId: 'red-bull-2023-motor',
+            estrategistaId: 'red-bull-2023-estrategista',
+            pitId: 'red-bull-2023-pit',
           },
         },
       },
@@ -144,10 +144,10 @@ describe('rodada 5 forçada (§3)', () => {
 
     const proximo = aplicarEscolha(state, dataset, 'bot-1', {
       tipo: 'piloto',
-      pilotoId: 'kaldrix-2023-piloto-barragan',
+      pilotoId: 'red-bull-2023-piloto-perez',
     });
 
-    expect(proximo.progresso['bot-1'].slots.pilotoId).toBe('kaldrix-2023-piloto-barragan');
+    expect(proximo.progresso['bot-1'].slots.pilotoId).toBe('red-bull-2023-piloto-perez');
     expect(proximo.progresso['bot-1'].rodada).toBe(6);
   });
 });
@@ -157,7 +157,7 @@ describe('escolhas ilegais lançam erro descritivo', () => {
     const jogador: Jogador = { id: 'bot-1', tipo: 'bot', perfilBot: 'passeio' };
     const state = stateManual(dataset, {
       jogadores: [jogador],
-      progresso: { 'bot-1': { rodada: 2, slots: { chassiId: 'kaldrix-2023-chassi' } } },
+      progresso: { 'bot-1': { rodada: 2, slots: { chassiId: 'red-bull-2023-chassi' } } },
     });
     expect(() => aplicarEscolha(state, dataset, 'bot-1', { tipo: 'componente', slot: 'chassi' })).toThrow(
       /já preenchido/,
@@ -170,7 +170,7 @@ describe('escolhas ilegais lançam erro descritivo', () => {
     expect(() =>
       aplicarEscolha(state, dataset, 'bot-1', {
         tipo: 'piloto',
-        pilotoId: 'sarterra-2004-piloto-klaus_reithoffer',
+        pilotoId: 'ferrari-2004-piloto-michael_schumacher',
       }),
     ).toThrow(/não pertence à equipe\/ano/);
   });
@@ -184,11 +184,11 @@ describe('escolhas ilegais lançam erro descritivo', () => {
         'bot-1': {
           rodada: 6,
           slots: {
-            pilotoId: 'kaldrix-2023-piloto-sander_doornbosch',
-            chassiId: 'kaldrix-2023-chassi',
-            motorId: 'kaldrix-2023-motor',
-            estrategistaId: 'kaldrix-2023-estrategista',
-            pitId: 'kaldrix-2023-pit',
+            pilotoId: 'red-bull-2023-piloto-max_verstappen',
+            chassiId: 'red-bull-2023-chassi',
+            motorId: 'red-bull-2023-motor',
+            estrategistaId: 'red-bull-2023-estrategista',
+            pitId: 'red-bull-2023-pit',
           },
         },
       },
@@ -203,11 +203,11 @@ describe('escolhas ilegais lançam erro descritivo', () => {
     const jogadorA: Jogador = { id: 'bot-1', tipo: 'bot', perfilBot: 'passeio' };
     const jogadorB: Jogador = { id: 'bot-2', tipo: 'bot', perfilBot: 'passeio' };
     const slotsCompletos = {
-      pilotoId: 'kaldrix-2023-piloto-sander_doornbosch',
-      chassiId: 'kaldrix-2023-chassi',
-      motorId: 'kaldrix-2023-motor',
-      estrategistaId: 'kaldrix-2023-estrategista',
-      pitId: 'kaldrix-2023-pit',
+      pilotoId: 'red-bull-2023-piloto-max_verstappen',
+      chassiId: 'red-bull-2023-chassi',
+      motorId: 'red-bull-2023-motor',
+      estrategistaId: 'red-bull-2023-estrategista',
+      pitId: 'red-bull-2023-pit',
     };
     const state = stateManual(dataset, {
       jogadores: [jogadorA, jogadorB],
@@ -246,11 +246,11 @@ describe('imutabilidade', () => {
         'bot-1': {
           rodada: 6,
           slots: {
-            pilotoId: 'kaldrix-2023-piloto-sander_doornbosch',
-            chassiId: 'kaldrix-2023-chassi',
-            motorId: 'kaldrix-2023-motor',
-            estrategistaId: 'kaldrix-2023-estrategista',
-            pitId: 'kaldrix-2023-pit',
+            pilotoId: 'red-bull-2023-piloto-max_verstappen',
+            chassiId: 'red-bull-2023-chassi',
+            motorId: 'red-bull-2023-motor',
+            estrategistaId: 'red-bull-2023-estrategista',
+            pitId: 'red-bull-2023-pit',
           },
         },
       },
@@ -317,11 +317,11 @@ describe('humano no meio da fila da rodada 6 (§3, §12)', () => {
     const botB: Jogador = { id: 'bot-b', tipo: 'bot', perfilBot: 'passeio' };
 
     const slotsCompletos = {
-      pilotoId: 'kaldrix-2023-piloto-sander_doornbosch',
-      chassiId: 'kaldrix-2023-chassi',
-      motorId: 'kaldrix-2023-motor',
-      estrategistaId: 'kaldrix-2023-estrategista',
-      pitId: 'kaldrix-2023-pit',
+      pilotoId: 'red-bull-2023-piloto-max_verstappen',
+      chassiId: 'red-bull-2023-chassi',
+      motorId: 'red-bull-2023-motor',
+      estrategistaId: 'red-bull-2023-estrategista',
+      pitId: 'red-bull-2023-pit',
     };
 
     // Só 6 peças com cópias disponíveis (1 cada) — a que o bot-a vai pegar
@@ -335,7 +335,7 @@ describe('humano no meio da fila da rodada 6 (§3, §12)', () => {
       'peca-asa-flexivel',
     ];
     // peca-esgotavel não existe no dataset real — troca por uma id real do catálogo.
-    const idEsgotavel = 'peca-das';
+    const idEsgotavel = 'peca-das-mercedes';
     const copiasRestantes = Object.fromEntries(dataset.pecas.map((p) => [p.id, 0]));
     for (const id of [idEsgotavel, ...pecasComCopia.slice(1)]) {
       copiasRestantes[id] = 1;

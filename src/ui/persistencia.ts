@@ -63,7 +63,8 @@ import { iniciarCampeonato } from './fluxo-campeonato';
  * chamada dele.** Este PR o DIZ em vez de deixar o segundo disparo passar em
  * silêncio — o primeiro foi o bump 1 → 2 do PR 3.
  */
-export const VERSAO_FORMATO = 3;
+// 3 → 4: nomes e ids originais restaurados; saves fictícios são incompatíveis.
+export const VERSAO_FORMATO = 4;
 
 /** Chave única do save do modo Campeonato no `localStorage`. */
 export const CHAVE_SAVE = 'f1-fantasy:campeonato';

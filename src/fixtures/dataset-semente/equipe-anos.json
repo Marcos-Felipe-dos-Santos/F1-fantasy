@@ -1,11 +1,11 @@
 [
   {
-    "equipe": "Kaldrix",
+    "equipe": "Red Bull",
     "ano": 2023,
     "pilotos": [
       {
-        "id": "kaldrix-2023-piloto-sander_doornbosch",
-        "nome": "Sander Doornbosch",
+        "id": "red-bull-2023-piloto-max_verstappen",
+        "nome": "Max Verstappen",
         "notas": {
           "rit": 96,
           "quali": 95,
@@ -19,8 +19,8 @@
         }
       },
       {
-        "id": "kaldrix-2023-piloto-barragan",
-        "nome": "Ulises Barragán",
+        "id": "red-bull-2023-piloto-perez",
+        "nome": "Sergio Pérez",
         "notas": {
           "rit": 82,
           "quali": 80,
@@ -35,7 +35,7 @@
       }
     ],
     "chassi": {
-      "id": "kaldrix-2023-chassi",
+      "id": "red-bull-2023-chassi",
       "notas": {
         "aero": 96,
         "mec": 88,
@@ -45,22 +45,22 @@
       }
     },
     "motor": {
-      "id": "kaldrix-2023-motor",
+      "id": "red-bull-2023-motor",
       "notas": {
         "motor": 88,
         "confMotor": 90
       }
     },
     "estrategista": {
-      "id": "kaldrix-2023-estrategista",
-      "nome": "Estrategista Kaldrix 2023",
+      "id": "red-bull-2023-estrategista",
+      "nome": "Estrategista Red Bull 2023",
       "notas": {
         "call": 90,
         "sangf": 88
       }
     },
     "pit": {
-      "id": "kaldrix-2023-pit",
+      "id": "red-bull-2023-pit",
       "notas": {
         "pitTempo": 92,
         "pitErro": 90
@@ -68,12 +68,12 @@
     }
   },
   {
-    "equipe": "Sarterra",
+    "equipe": "Ferrari",
     "ano": 2023,
     "pilotos": [
       {
-        "id": "sarterra-2023-piloto-valbonne",
-        "nome": "Rémy Valbonne",
+        "id": "ferrari-2023-piloto-leclerc",
+        "nome": "Charles Leclerc",
         "notas": {
           "rit": 88,
           "quali": 93,
@@ -87,8 +87,8 @@
         }
       },
       {
-        "id": "sarterra-2023-piloto-aranguren",
-        "nome": "Nicolás Aranguren",
+        "id": "ferrari-2023-piloto-sainz",
+        "nome": "Carlos Sainz",
         "notas": {
           "rit": 85,
           "quali": 86,
@@ -103,7 +103,7 @@
       }
     ],
     "chassi": {
-      "id": "sarterra-2023-chassi",
+      "id": "ferrari-2023-chassi",
       "notas": {
         "aero": 85,
         "mec": 80,
@@ -113,22 +113,22 @@
       }
     },
     "motor": {
-      "id": "sarterra-2023-motor",
+      "id": "ferrari-2023-motor",
       "notas": {
         "motor": 87,
         "confMotor": 72
       }
     },
     "estrategista": {
-      "id": "sarterra-2023-estrategista",
-      "nome": "Estrategista Sarterra 2023",
+      "id": "ferrari-2023-estrategista",
+      "nome": "Estrategista Ferrari 2023",
       "notas": {
         "call": 60,
         "sangf": 65
       }
     },
     "pit": {
-      "id": "sarterra-2023-pit",
+      "id": "ferrari-2023-pit",
       "notas": {
         "pitTempo": 85,
         "pitErro": 70
@@ -136,12 +136,12 @@
     }
   },
   {
-    "equipe": "Halbrandt",
+    "equipe": "Mercedes",
     "ano": 2023,
     "pilotos": [
       {
-        "id": "halbrandt-2023-piloto-calderwood",
-        "nome": "Idris Calderwood",
+        "id": "mercedes-2023-piloto-hamilton",
+        "nome": "Lewis Hamilton",
         "notas": {
           "rit": 89,
           "quali": 87,
@@ -155,8 +155,8 @@
         }
       },
       {
-        "id": "halbrandt-2023-piloto-redmayne",
-        "nome": "Alfie Redmayne",
+        "id": "mercedes-2023-piloto-russell",
+        "nome": "George Russell",
         "notas": {
           "rit": 83,
           "quali": 85,
@@ -171,7 +171,7 @@
       }
     ],
     "chassi": {
-      "id": "halbrandt-2023-chassi",
+      "id": "mercedes-2023-chassi",
       "notas": {
         "aero": 80,
         "mec": 78,
@@ -181,22 +181,22 @@
       }
     },
     "motor": {
-      "id": "halbrandt-2023-motor",
+      "id": "mercedes-2023-motor",
       "notas": {
         "motor": 85,
         "confMotor": 88
       }
     },
     "estrategista": {
-      "id": "halbrandt-2023-estrategista",
-      "nome": "Estrategista Halbrandt 2023",
+      "id": "mercedes-2023-estrategista",
+      "nome": "Estrategista Mercedes 2023",
       "notas": {
         "call": 85,
         "sangf": 84
       }
     },
     "pit": {
-      "id": "halbrandt-2023-pit",
+      "id": "mercedes-2023-pit",
       "notas": {
         "pitTempo": 84,
         "pitErro": 82
@@ -204,12 +204,12 @@
     }
   },
   {
-    "equipe": "Ridgeway",
+    "equipe": "McLaren",
     "ano": 2023,
     "pilotos": [
       {
-        "id": "ridgeway-2023-piloto-corfield",
-        "nome": "Jasper Corfield",
+        "id": "mclaren-2023-piloto-norris",
+        "nome": "Lando Norris",
         "notas": {
           "rit": 84,
           "quali": 83,
@@ -223,8 +223,8 @@
         }
       },
       {
-        "id": "ridgeway-2023-piloto-yarraville",
-        "nome": "Hamish Yarraville",
+        "id": "mclaren-2023-piloto-piastri",
+        "nome": "Oscar Piastri",
         "notas": {
           "rit": 76,
           "quali": 78,
@@ -239,7 +239,7 @@
       }
     ],
     "chassi": {
-      "id": "ridgeway-2023-chassi",
+      "id": "mclaren-2023-chassi",
       "notas": {
         "aero": 78,
         "mec": 76,
@@ -249,22 +249,22 @@
       }
     },
     "motor": {
-      "id": "ridgeway-2023-motor",
+      "id": "mclaren-2023-motor",
       "notas": {
         "motor": 85,
         "confMotor": 88
       }
     },
     "estrategista": {
-      "id": "ridgeway-2023-estrategista",
-      "nome": "Estrategista Ridgeway 2023",
+      "id": "mclaren-2023-estrategista",
+      "nome": "Estrategista McLaren 2023",
       "notas": {
         "call": 78,
         "sangf": 76
       }
     },
     "pit": {
-      "id": "ridgeway-2023-pit",
+      "id": "mclaren-2023-pit",
       "notas": {
         "pitTempo": 82,
         "pitErro": 80
@@ -272,12 +272,12 @@
     }
   },
   {
-    "equipe": "Ardsley Vane",
+    "equipe": "Aston Martin",
     "ano": 2023,
     "pilotos": [
       {
-        "id": "ardsley-vane-2023-piloto-goikoetxea",
-        "nome": "Asier Goikoetxea",
+        "id": "aston-martin-2023-piloto-alonso",
+        "nome": "Fernando Alonso",
         "notas": {
           "rit": 88,
           "quali": 84,
@@ -291,8 +291,8 @@
         }
       },
       {
-        "id": "ardsley-vane-2023-piloto-ballantyne",
-        "nome": "Emory Ballantyne",
+        "id": "aston-martin-2023-piloto-stroll",
+        "nome": "Lance Stroll",
         "notas": {
           "rit": 68,
           "quali": 66,
@@ -307,7 +307,7 @@
       }
     ],
     "chassi": {
-      "id": "ardsley-vane-2023-chassi",
+      "id": "aston-martin-2023-chassi",
       "notas": {
         "aero": 76,
         "mec": 74,
@@ -317,22 +317,22 @@
       }
     },
     "motor": {
-      "id": "ardsley-vane-2023-motor",
+      "id": "aston-martin-2023-motor",
       "notas": {
         "motor": 85,
         "confMotor": 88
       }
     },
     "estrategista": {
-      "id": "ardsley-vane-2023-estrategista",
-      "nome": "Estrategista Ardsley Vane 2023",
+      "id": "aston-martin-2023-estrategista",
+      "nome": "Estrategista Aston Martin 2023",
       "notas": {
         "call": 76,
         "sangf": 78
       }
     },
     "pit": {
-      "id": "ardsley-vane-2023-pit",
+      "id": "aston-martin-2023-pit",
       "notas": {
         "pitTempo": 78,
         "pitErro": 76
@@ -340,12 +340,12 @@
     }
   },
   {
-    "equipe": "Pemberley",
+    "equipe": "Williams",
     "ano": 2023,
     "pilotos": [
       {
-        "id": "pemberley-2023-piloto-sirichai",
-        "nome": "Nattapong Sirichai",
+        "id": "williams-2023-piloto-albon",
+        "nome": "Alexander Albon",
         "notas": {
           "rit": 72,
           "quali": 74,
@@ -359,8 +359,8 @@
         }
       },
       {
-        "id": "pemberley-2023-piloto-marlowe",
-        "nome": "Beckett Marlowe",
+        "id": "williams-2023-piloto-sargeant",
+        "nome": "Logan Sargeant",
         "notas": {
           "rit": 50,
           "quali": 48,
@@ -375,7 +375,7 @@
       }
     ],
     "chassi": {
-      "id": "pemberley-2023-chassi",
+      "id": "williams-2023-chassi",
       "notas": {
         "aero": 55,
         "mec": 58,
@@ -385,22 +385,22 @@
       }
     },
     "motor": {
-      "id": "pemberley-2023-motor",
+      "id": "williams-2023-motor",
       "notas": {
         "motor": 85,
         "confMotor": 86
       }
     },
     "estrategista": {
-      "id": "pemberley-2023-estrategista",
-      "nome": "Estrategista Pemberley 2023",
+      "id": "williams-2023-estrategista",
+      "nome": "Estrategista Williams 2023",
       "notas": {
         "call": 55,
         "sangf": 58
       }
     },
     "pit": {
-      "id": "pemberley-2023-pit",
+      "id": "williams-2023-pit",
       "notas": {
         "pitTempo": 60,
         "pitErro": 62
@@ -408,12 +408,12 @@
     }
   },
   {
-    "equipe": "Sarterra",
+    "equipe": "Ferrari",
     "ano": 2004,
     "pilotos": [
       {
-        "id": "sarterra-2004-piloto-klaus_reithoffer",
-        "nome": "Klaus Reithoffer",
+        "id": "ferrari-2004-piloto-michael_schumacher",
+        "nome": "Michael Schumacher",
         "notas": {
           "rit": 96,
           "quali": 94,
@@ -427,8 +427,8 @@
         }
       },
       {
-        "id": "sarterra-2004-piloto-nogueira",
-        "nome": "Everaldo Nogueira",
+        "id": "ferrari-2004-piloto-barrichello",
+        "nome": "Rubens Barrichello",
         "notas": {
           "rit": 85,
           "quali": 84,
@@ -443,7 +443,7 @@
       }
     ],
     "chassi": {
-      "id": "sarterra-2004-chassi",
+      "id": "ferrari-2004-chassi",
       "notas": {
         "aero": 95,
         "mec": 90,
@@ -453,22 +453,22 @@
       }
     },
     "motor": {
-      "id": "sarterra-2004-motor",
+      "id": "ferrari-2004-motor",
       "notas": {
         "motor": 95,
         "confMotor": 90
       }
     },
     "estrategista": {
-      "id": "sarterra-2004-estrategista",
-      "nome": "Estrategista Sarterra 2004",
+      "id": "ferrari-2004-estrategista",
+      "nome": "Estrategista Ferrari 2004",
       "notas": {
         "call": 95,
         "sangf": 90
       }
     },
     "pit": {
-      "id": "sarterra-2004-pit",
+      "id": "ferrari-2004-pit",
       "notas": {
         "pitTempo": 88,
         "pitErro": 88
@@ -476,12 +476,12 @@
     }
   },
   {
-    "equipe": "Pemberley",
+    "equipe": "Williams",
     "ano": 2004,
     "pilotos": [
       {
-        "id": "pemberley-2004-piloto-villamil",
-        "nome": "Andrés Villamil",
+        "id": "williams-2004-piloto-montoya",
+        "nome": "Juan Pablo Montoya",
         "notas": {
           "rit": 86,
           "quali": 88,
@@ -495,8 +495,8 @@
         }
       },
       {
-        "id": "pemberley-2004-piloto-dietmar_reithoffer",
-        "nome": "Dietmar Reithoffer",
+        "id": "williams-2004-piloto-ralf_schumacher",
+        "nome": "Ralf Schumacher",
         "notas": {
           "rit": 78,
           "quali": 78,
@@ -511,7 +511,7 @@
       }
     ],
     "chassi": {
-      "id": "pemberley-2004-chassi",
+      "id": "williams-2004-chassi",
       "notas": {
         "aero": 80,
         "mec": 78,
@@ -521,22 +521,22 @@
       }
     },
     "motor": {
-      "id": "pemberley-2004-motor",
+      "id": "williams-2004-motor",
       "notas": {
         "motor": 90,
         "confMotor": 78
       }
     },
     "estrategista": {
-      "id": "pemberley-2004-estrategista",
-      "nome": "Estrategista Pemberley 2004",
+      "id": "williams-2004-estrategista",
+      "nome": "Estrategista Williams 2004",
       "notas": {
         "call": 75,
         "sangf": 74
       }
     },
     "pit": {
-      "id": "pemberley-2004-pit",
+      "id": "williams-2004-pit",
       "notas": {
         "pitTempo": 78,
         "pitErro": 76
@@ -544,12 +544,12 @@
     }
   },
   {
-    "equipe": "Ridgeway",
+    "equipe": "McLaren",
     "ano": 2004,
     "pilotos": [
       {
-        "id": "ridgeway-2004-piloto-peltola",
-        "nome": "Veikko Peltola",
+        "id": "mclaren-2004-piloto-raikkonen",
+        "nome": "Kimi Räikkönen",
         "notas": {
           "rit": 86,
           "quali": 85,
@@ -563,8 +563,8 @@
         }
       },
       {
-        "id": "ridgeway-2004-piloto-struthers",
-        "nome": "Ewan Struthers",
+        "id": "mclaren-2004-piloto-coulthard",
+        "nome": "David Coulthard",
         "notas": {
           "rit": 76,
           "quali": 76,
@@ -579,7 +579,7 @@
       }
     ],
     "chassi": {
-      "id": "ridgeway-2004-chassi",
+      "id": "mclaren-2004-chassi",
       "notas": {
         "aero": 74,
         "mec": 72,
@@ -589,22 +589,22 @@
       }
     },
     "motor": {
-      "id": "ridgeway-2004-motor",
+      "id": "mclaren-2004-motor",
       "notas": {
         "motor": 82,
         "confMotor": 70
       }
     },
     "estrategista": {
-      "id": "ridgeway-2004-estrategista",
-      "nome": "Estrategista Ridgeway 2004",
+      "id": "mclaren-2004-estrategista",
+      "nome": "Estrategista McLaren 2004",
       "notas": {
         "call": 76,
         "sangf": 74
       }
     },
     "pit": {
-      "id": "ridgeway-2004-pit",
+      "id": "mclaren-2004-pit",
       "notas": {
         "pitTempo": 76,
         "pitErro": 74
@@ -612,12 +612,12 @@
     }
   },
   {
-    "equipe": "Charmont",
+    "equipe": "Renault",
     "ano": 2004,
     "pilotos": [
       {
-        "id": "charmont-2004-piloto-goikoetxea",
-        "nome": "Asier Goikoetxea",
+        "id": "renault-2004-piloto-alonso",
+        "nome": "Fernando Alonso",
         "notas": {
           "rit": 85,
           "quali": 83,
@@ -631,8 +631,8 @@
         }
       },
       {
-        "id": "charmont-2004-piloto-rustichelli",
-        "nome": "Emiliano Rustichelli",
+        "id": "renault-2004-piloto-trulli",
+        "nome": "Jarno Trulli",
         "notas": {
           "rit": 76,
           "quali": 80,
@@ -647,7 +647,7 @@
       }
     ],
     "chassi": {
-      "id": "charmont-2004-chassi",
+      "id": "renault-2004-chassi",
       "notas": {
         "aero": 76,
         "mec": 74,
@@ -657,22 +657,22 @@
       }
     },
     "motor": {
-      "id": "charmont-2004-motor",
+      "id": "renault-2004-motor",
       "notas": {
         "motor": 78,
         "confMotor": 76
       }
     },
     "estrategista": {
-      "id": "charmont-2004-estrategista",
-      "nome": "Estrategista Charmont 2004",
+      "id": "renault-2004-estrategista",
+      "nome": "Estrategista Renault 2004",
       "notas": {
         "call": 80,
         "sangf": 76
       }
     },
     "pit": {
-      "id": "charmont-2004-pit",
+      "id": "renault-2004-pit",
       "notas": {
         "pitTempo": 76,
         "pitErro": 74
@@ -680,12 +680,12 @@
     }
   },
   {
-    "equipe": "Baldern",
+    "equipe": "Sauber",
     "ano": 2004,
     "pilotos": [
       {
-        "id": "baldern-2004-piloto-prado",
-        "nome": "Juscelino Prado",
+        "id": "sauber-2004-piloto-massa",
+        "nome": "Felipe Massa",
         "notas": {
           "rit": 68,
           "quali": 70,
@@ -699,8 +699,8 @@
         }
       },
       {
-        "id": "baldern-2004-piloto-falcinelli",
-        "nome": "Ruggero Falcinelli",
+        "id": "sauber-2004-piloto-fisichella",
+        "nome": "Giancarlo Fisichella",
         "notas": {
           "rit": 70,
           "quali": 72,
@@ -715,7 +715,7 @@
       }
     ],
     "chassi": {
-      "id": "baldern-2004-chassi",
+      "id": "sauber-2004-chassi",
       "notas": {
         "aero": 66,
         "mec": 64,
@@ -725,22 +725,22 @@
       }
     },
     "motor": {
-      "id": "baldern-2004-motor",
+      "id": "sauber-2004-motor",
       "notas": {
         "motor": 82,
         "confMotor": 78
       }
     },
     "estrategista": {
-      "id": "baldern-2004-estrategista",
-      "nome": "Estrategista Baldern 2004",
+      "id": "sauber-2004-estrategista",
+      "nome": "Estrategista Sauber 2004",
       "notas": {
         "call": 62,
         "sangf": 64
       }
     },
     "pit": {
-      "id": "baldern-2004-pit",
+      "id": "sauber-2004-pit",
       "notas": {
         "pitTempo": 64,
         "pitErro": 62
@@ -748,12 +748,12 @@
     }
   },
   {
-    "equipe": "Ronzani",
+    "equipe": "Minardi",
     "ano": 2004,
     "pilotos": [
       {
-        "id": "ronzani-2004-piloto-ceccarelli",
-        "nome": "Damiano Ceccarelli",
+        "id": "minardi-2004-piloto-bruni",
+        "nome": "Gianmaria Bruni",
         "notas": {
           "rit": 48,
           "quali": 46,
@@ -767,8 +767,8 @@
         }
       },
       {
-        "id": "ronzani-2004-piloto-beregszaszi",
-        "nome": "Zoltán Beregszászi",
+        "id": "minardi-2004-piloto-baumgartner",
+        "nome": "Zsolt Baumgartner",
         "notas": {
           "rit": 44,
           "quali": 42,
@@ -783,7 +783,7 @@
       }
     ],
     "chassi": {
-      "id": "ronzani-2004-chassi",
+      "id": "minardi-2004-chassi",
       "notas": {
         "aero": 48,
         "mec": 46,
@@ -793,22 +793,22 @@
       }
     },
     "motor": {
-      "id": "ronzani-2004-motor",
+      "id": "minardi-2004-motor",
       "notas": {
         "motor": 55,
         "confMotor": 58
       }
     },
     "estrategista": {
-      "id": "ronzani-2004-estrategista",
-      "nome": "Estrategista Ronzani 2004",
+      "id": "minardi-2004-estrategista",
+      "nome": "Estrategista Minardi 2004",
       "notas": {
         "call": 48,
         "sangf": 50
       }
     },
     "pit": {
-      "id": "ronzani-2004-pit",
+      "id": "minardi-2004-pit",
       "notas": {
         "pitTempo": 50,
         "pitErro": 52
@@ -816,12 +816,12 @@
     }
   },
   {
-    "equipe": "Ridgeway",
+    "equipe": "McLaren",
     "ano": 1998,
     "pilotos": [
       {
-        "id": "ridgeway-1998-piloto-lehtimaki",
-        "nome": "Jere Lehtimäki",
+        "id": "mclaren-1998-piloto-hakkinen",
+        "nome": "Mika Häkkinen",
         "notas": {
           "rit": 92,
           "quali": 93,
@@ -835,8 +835,8 @@
         }
       },
       {
-        "id": "ridgeway-1998-piloto-struthers",
-        "nome": "Ewan Struthers",
+        "id": "mclaren-1998-piloto-coulthard",
+        "nome": "David Coulthard",
         "notas": {
           "rit": 82,
           "quali": 82,
@@ -851,7 +851,7 @@
       }
     ],
     "chassi": {
-      "id": "ridgeway-1998-chassi",
+      "id": "mclaren-1998-chassi",
       "notas": {
         "aero": 94,
         "mec": 88,
@@ -861,22 +861,22 @@
       }
     },
     "motor": {
-      "id": "ridgeway-1998-motor",
+      "id": "mclaren-1998-motor",
       "notas": {
         "motor": 90,
         "confMotor": 86
       }
     },
     "estrategista": {
-      "id": "ridgeway-1998-estrategista",
-      "nome": "Estrategista Ridgeway 1998",
+      "id": "mclaren-1998-estrategista",
+      "nome": "Estrategista McLaren 1998",
       "notas": {
         "call": 90,
         "sangf": 86
       }
     },
     "pit": {
-      "id": "ridgeway-1998-pit",
+      "id": "mclaren-1998-pit",
       "notas": {
         "pitTempo": 86,
         "pitErro": 84
@@ -884,12 +884,12 @@
     }
   },
   {
-    "equipe": "Sarterra",
+    "equipe": "Ferrari",
     "ano": 1998,
     "pilotos": [
       {
-        "id": "sarterra-1998-piloto-klaus_reithoffer",
-        "nome": "Klaus Reithoffer",
+        "id": "ferrari-1998-piloto-michael_schumacher",
+        "nome": "Michael Schumacher",
         "notas": {
           "rit": 94,
           "quali": 92,
@@ -903,8 +903,8 @@
         }
       },
       {
-        "id": "sarterra-1998-piloto-clonakilty",
-        "nome": "Dermot Clonakilty",
+        "id": "ferrari-1998-piloto-irvine",
+        "nome": "Eddie Irvine",
         "notas": {
           "rit": 76,
           "quali": 76,
@@ -919,7 +919,7 @@
       }
     ],
     "chassi": {
-      "id": "sarterra-1998-chassi",
+      "id": "ferrari-1998-chassi",
       "notas": {
         "aero": 88,
         "mec": 84,
@@ -929,22 +929,22 @@
       }
     },
     "motor": {
-      "id": "sarterra-1998-motor",
+      "id": "ferrari-1998-motor",
       "notas": {
         "motor": 88,
         "confMotor": 84
       }
     },
     "estrategista": {
-      "id": "sarterra-1998-estrategista",
-      "nome": "Estrategista Sarterra 1998",
+      "id": "ferrari-1998-estrategista",
+      "nome": "Estrategista Ferrari 1998",
       "notas": {
         "call": 86,
         "sangf": 84
       }
     },
     "pit": {
-      "id": "sarterra-1998-pit",
+      "id": "ferrari-1998-pit",
       "notas": {
         "pitTempo": 84,
         "pitErro": 82
@@ -952,12 +952,12 @@
     }
   },
   {
-    "equipe": "Pemberley",
+    "equipe": "Williams",
     "ano": 1998,
     "pilotos": [
       {
-        "id": "pemberley-1998-piloto-beauchamp",
-        "nome": "Émile Beauchamp",
+        "id": "williams-1998-piloto-villeneuve",
+        "nome": "Jacques Villeneuve",
         "notas": {
           "rit": 78,
           "quali": 80,
@@ -971,8 +971,8 @@
         }
       },
       {
-        "id": "pemberley-1998-piloto-ohrmann",
-        "nome": "Detlev Ohrmann",
+        "id": "williams-1998-piloto-frentzen",
+        "nome": "Heinz-Harald Frentzen",
         "notas": {
           "rit": 74,
           "quali": 76,
@@ -987,7 +987,7 @@
       }
     ],
     "chassi": {
-      "id": "pemberley-1998-chassi",
+      "id": "williams-1998-chassi",
       "notas": {
         "aero": 76,
         "mec": 74,
@@ -997,22 +997,22 @@
       }
     },
     "motor": {
-      "id": "pemberley-1998-motor",
+      "id": "williams-1998-motor",
       "notas": {
         "motor": 74,
         "confMotor": 72
       }
     },
     "estrategista": {
-      "id": "pemberley-1998-estrategista",
-      "nome": "Estrategista Pemberley 1998",
+      "id": "williams-1998-estrategista",
+      "nome": "Estrategista Williams 1998",
       "notas": {
         "call": 72,
         "sangf": 70
       }
     },
     "pit": {
-      "id": "pemberley-1998-pit",
+      "id": "williams-1998-pit",
       "notas": {
         "pitTempo": 72,
         "pitErro": 70
@@ -1020,12 +1020,12 @@
     }
   },
   {
-    "equipe": "Salviati",
+    "equipe": "Benetton",
     "ano": 1998,
     "pilotos": [
       {
-        "id": "salviati-1998-piloto-falcinelli",
-        "nome": "Ruggero Falcinelli",
+        "id": "benetton-1998-piloto-fisichella",
+        "nome": "Giancarlo Fisichella",
         "notas": {
           "rit": 70,
           "quali": 72,
@@ -1039,8 +1039,8 @@
         }
       },
       {
-        "id": "salviati-1998-piloto-achleitner",
-        "nome": "Konstantin Achleitner",
+        "id": "benetton-1998-piloto-wurz",
+        "nome": "Alexander Wurz",
         "notas": {
           "rit": 66,
           "quali": 66,
@@ -1055,7 +1055,7 @@
       }
     ],
     "chassi": {
-      "id": "salviati-1998-chassi",
+      "id": "benetton-1998-chassi",
       "notas": {
         "aero": 68,
         "mec": 66,
@@ -1065,22 +1065,22 @@
       }
     },
     "motor": {
-      "id": "salviati-1998-motor",
+      "id": "benetton-1998-motor",
       "notas": {
         "motor": 70,
         "confMotor": 68
       }
     },
     "estrategista": {
-      "id": "salviati-1998-estrategista",
-      "nome": "Estrategista Salviati 1998",
+      "id": "benetton-1998-estrategista",
+      "nome": "Estrategista Benetton 1998",
       "notas": {
         "call": 64,
         "sangf": 62
       }
     },
     "pit": {
-      "id": "salviati-1998-pit",
+      "id": "benetton-1998-pit",
       "notas": {
         "pitTempo": 64,
         "pitErro": 62
@@ -1088,12 +1088,12 @@
     }
   },
   {
-    "equipe": "Ronzani",
+    "equipe": "Minardi",
     "ano": 1998,
     "pilotos": [
       {
-        "id": "ronzani-1998-piloto-iriarte",
-        "nome": "Gonzalo Iriarte",
+        "id": "minardi-1998-piloto-tuero",
+        "nome": "Esteban Tuero",
         "notas": {
           "rit": 44,
           "quali": 42,
@@ -1107,8 +1107,8 @@
         }
       },
       {
-        "id": "ronzani-1998-piloto-konishi",
-        "nome": "Tetsuya Konishi",
+        "id": "minardi-1998-piloto-nakano",
+        "nome": "Shinji Nakano",
         "notas": {
           "rit": 46,
           "quali": 44,
@@ -1123,7 +1123,7 @@
       }
     ],
     "chassi": {
-      "id": "ronzani-1998-chassi",
+      "id": "minardi-1998-chassi",
       "notas": {
         "aero": 48,
         "mec": 46,
@@ -1133,22 +1133,22 @@
       }
     },
     "motor": {
-      "id": "ronzani-1998-motor",
+      "id": "minardi-1998-motor",
       "notas": {
         "motor": 54,
         "confMotor": 56
       }
     },
     "estrategista": {
-      "id": "ronzani-1998-estrategista",
-      "nome": "Estrategista Ronzani 1998",
+      "id": "minardi-1998-estrategista",
+      "nome": "Estrategista Minardi 1998",
       "notas": {
         "call": 46,
         "sangf": 48
       }
     },
     "pit": {
-      "id": "ronzani-1998-pit",
+      "id": "minardi-1998-pit",
       "notas": {
         "pitTempo": 48,
         "pitErro": 50
@@ -1156,12 +1156,12 @@
     }
   },
   {
-    "equipe": "Pemberley",
+    "equipe": "Williams",
     "ano": 1993,
     "pilotos": [
       {
-        "id": "pemberley-1993-piloto-aubrion",
-        "nome": "Gérard Aubrion",
+        "id": "williams-1993-piloto-prost",
+        "nome": "Alain Prost",
         "notas": {
           "rit": 92,
           "quali": 94,
@@ -1175,8 +1175,8 @@
         }
       },
       {
-        "id": "pemberley-1993-piloto-bertram_aldwych",
-        "nome": "Bertram Aldwych",
+        "id": "williams-1993-piloto-damon_hill",
+        "nome": "Damon Hill",
         "notas": {
           "rit": 78,
           "quali": 80,
@@ -1191,7 +1191,7 @@
       }
     ],
     "chassi": {
-      "id": "pemberley-1993-chassi",
+      "id": "williams-1993-chassi",
       "notas": {
         "aero": 96,
         "mec": 90,
@@ -1201,22 +1201,22 @@
       }
     },
     "motor": {
-      "id": "pemberley-1993-motor",
+      "id": "williams-1993-motor",
       "notas": {
         "motor": 92,
         "confMotor": 84
       }
     },
     "estrategista": {
-      "id": "pemberley-1993-estrategista",
-      "nome": "Estrategista Pemberley 1993",
+      "id": "williams-1993-estrategista",
+      "nome": "Estrategista Williams 1993",
       "notas": {
         "call": 88,
         "sangf": 84
       }
     },
     "pit": {
-      "id": "pemberley-1993-pit",
+      "id": "williams-1993-pit",
       "notas": {
         "pitTempo": 82,
         "pitErro": 80
@@ -1224,12 +1224,12 @@
     }
   },
   {
-    "equipe": "Ridgeway",
+    "equipe": "McLaren",
     "ano": 1993,
     "pilotos": [
       {
-        "id": "ridgeway-1993-piloto-vilarinho",
-        "nome": "Tadeu Vilarinho",
+        "id": "mclaren-1993-piloto-senna",
+        "nome": "Ayrton Senna",
         "notas": {
           "rit": 95,
           "quali": 95,
@@ -1243,8 +1243,8 @@
         }
       },
       {
-        "id": "ridgeway-1993-piloto-lehtimaki",
-        "nome": "Jere Lehtimäki",
+        "id": "mclaren-1993-piloto-hakkinen",
+        "nome": "Mika Häkkinen",
         "notas": {
           "rit": 70,
           "quali": 72,
@@ -1259,7 +1259,7 @@
       }
     ],
     "chassi": {
-      "id": "ridgeway-1993-chassi",
+      "id": "mclaren-1993-chassi",
       "notas": {
         "aero": 78,
         "mec": 76,
@@ -1269,22 +1269,22 @@
       }
     },
     "motor": {
-      "id": "ridgeway-1993-motor",
+      "id": "mclaren-1993-motor",
       "notas": {
         "motor": 76,
         "confMotor": 74
       }
     },
     "estrategista": {
-      "id": "ridgeway-1993-estrategista",
-      "nome": "Estrategista Ridgeway 1993",
+      "id": "mclaren-1993-estrategista",
+      "nome": "Estrategista McLaren 1993",
       "notas": {
         "call": 82,
         "sangf": 80
       }
     },
     "pit": {
-      "id": "ridgeway-1993-pit",
+      "id": "mclaren-1993-pit",
       "notas": {
         "pitTempo": 78,
         "pitErro": 76
@@ -1292,12 +1292,12 @@
     }
   },
   {
-    "equipe": "Salviati",
+    "equipe": "Benetton",
     "ano": 1993,
     "pilotos": [
       {
-        "id": "salviati-1993-piloto-klaus_reithoffer",
-        "nome": "Klaus Reithoffer",
+        "id": "benetton-1993-piloto-michael_schumacher",
+        "nome": "Michael Schumacher",
         "notas": {
           "rit": 84,
           "quali": 82,
@@ -1311,8 +1311,8 @@
         }
       },
       {
-        "id": "salviati-1993-piloto-valsecchi",
-        "nome": "Enrico Valsecchi",
+        "id": "benetton-1993-piloto-patrese",
+        "nome": "Riccardo Patrese",
         "notas": {
           "rit": 70,
           "quali": 70,
@@ -1327,7 +1327,7 @@
       }
     ],
     "chassi": {
-      "id": "salviati-1993-chassi",
+      "id": "benetton-1993-chassi",
       "notas": {
         "aero": 74,
         "mec": 76,
@@ -1337,22 +1337,22 @@
       }
     },
     "motor": {
-      "id": "salviati-1993-motor",
+      "id": "benetton-1993-motor",
       "notas": {
         "motor": 78,
         "confMotor": 74
       }
     },
     "estrategista": {
-      "id": "salviati-1993-estrategista",
-      "nome": "Estrategista Salviati 1993",
+      "id": "benetton-1993-estrategista",
+      "nome": "Estrategista Benetton 1993",
       "notas": {
         "call": 76,
         "sangf": 72
       }
     },
     "pit": {
-      "id": "salviati-1993-pit",
+      "id": "benetton-1993-pit",
       "notas": {
         "pitTempo": 74,
         "pitErro": 72
@@ -1360,12 +1360,12 @@
     }
   },
   {
-    "equipe": "Sarterra",
+    "equipe": "Ferrari",
     "ano": 1993,
     "pilotos": [
       {
-        "id": "sarterra-1993-piloto-chambaud",
-        "nome": "Loïc Chambaud",
+        "id": "ferrari-1993-piloto-alesi",
+        "nome": "Jean Alesi",
         "notas": {
           "rit": 74,
           "quali": 76,
@@ -1379,8 +1379,8 @@
         }
       },
       {
-        "id": "sarterra-1993-piloto-aschenbrenner",
-        "nome": "Toni Aschenbrenner",
+        "id": "ferrari-1993-piloto-berger",
+        "nome": "Gerhard Berger",
         "notas": {
           "rit": 70,
           "quali": 70,
@@ -1395,7 +1395,7 @@
       }
     ],
     "chassi": {
-      "id": "sarterra-1993-chassi",
+      "id": "ferrari-1993-chassi",
       "notas": {
         "aero": 66,
         "mec": 64,
@@ -1405,22 +1405,22 @@
       }
     },
     "motor": {
-      "id": "sarterra-1993-motor",
+      "id": "ferrari-1993-motor",
       "notas": {
         "motor": 72,
         "confMotor": 64
       }
     },
     "estrategista": {
-      "id": "sarterra-1993-estrategista",
-      "nome": "Estrategista Sarterra 1993",
+      "id": "ferrari-1993-estrategista",
+      "nome": "Estrategista Ferrari 1993",
       "notas": {
         "call": 58,
         "sangf": 60
       }
     },
     "pit": {
-      "id": "sarterra-1993-pit",
+      "id": "ferrari-1993-pit",
       "notas": {
         "pitTempo": 62,
         "pitErro": 60
@@ -1428,12 +1428,12 @@
     }
   },
   {
-    "equipe": "Ronzani",
+    "equipe": "Minardi",
     "ano": 1993,
     "pilotos": [
       {
-        "id": "ronzani-1993-piloto-braganca",
-        "nome": "Cauã Bragança",
+        "id": "minardi-1993-piloto-fittipaldi",
+        "nome": "Christian Fittipaldi",
         "notas": {
           "rit": 46,
           "quali": 44,
@@ -1447,8 +1447,8 @@
         }
       },
       {
-        "id": "ronzani-1993-piloto-danesin",
-        "nome": "Casimiro Danesin",
+        "id": "minardi-1993-piloto-barbazza",
+        "nome": "Fabrizio Barbazza",
         "notas": {
           "rit": 42,
           "quali": 40,
@@ -1463,7 +1463,7 @@
       }
     ],
     "chassi": {
-      "id": "ronzani-1993-chassi",
+      "id": "minardi-1993-chassi",
       "notas": {
         "aero": 46,
         "mec": 48,
@@ -1473,22 +1473,22 @@
       }
     },
     "motor": {
-      "id": "ronzani-1993-motor",
+      "id": "minardi-1993-motor",
       "notas": {
         "motor": 52,
         "confMotor": 54
       }
     },
     "estrategista": {
-      "id": "ronzani-1993-estrategista",
-      "nome": "Estrategista Ronzani 1993",
+      "id": "minardi-1993-estrategista",
+      "nome": "Estrategista Minardi 1993",
       "notas": {
         "call": 46,
         "sangf": 48
       }
     },
     "pit": {
-      "id": "ronzani-1993-pit",
+      "id": "minardi-1993-pit",
       "notas": {
         "pitTempo": 48,
         "pitErro": 50

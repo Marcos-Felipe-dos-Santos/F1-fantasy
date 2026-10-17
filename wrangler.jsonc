@@ -61,10 +61,9 @@
   // o levaria para produção e ANULARIA o PR inteiro, em silêncio. O sinal de
   // dev entra pela linha de comando, no `npm run sala` — ver o `package.json`.
   //
-  // O domínio de produção e as origens de túnel/LAN entram em
-  // `ALLOWED_ORIGINS` (aqui ou por `--var`) quando o deploy existir.
+  // Origem pública de produção. start:local sobrescreve pela allowlist local.
   "vars": {
-    "ALLOWED_ORIGINS": "",
+    "ALLOWED_ORIGINS": "https://f1-fantasy-sala.marcosfeliperigoto.workers.dev",
     "ENVIRONMENT": "production"
   }
 }

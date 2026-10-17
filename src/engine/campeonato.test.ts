@@ -40,11 +40,11 @@ const pistaSpa = dataset.pistasById.get('pista-spa')!;
 function loadoutRedBull(jogadorId: string, overrides: Partial<Loadout> = {}): Loadout {
   return {
     jogadorId,
-    pilotoId: 'kaldrix-2023-piloto-sander_doornbosch',
-    chassiId: 'kaldrix-2023-chassi',
-    motorId: 'kaldrix-2023-motor',
-    estrategistaId: 'kaldrix-2023-estrategista',
-    pitId: 'kaldrix-2023-pit',
+    pilotoId: 'red-bull-2023-piloto-max_verstappen',
+    chassiId: 'red-bull-2023-chassi',
+    motorId: 'red-bull-2023-motor',
+    estrategistaId: 'red-bull-2023-estrategista',
+    pitId: 'red-bull-2023-pit',
     pecaId: 'peca-composto-macio',
     ...overrides,
   };
@@ -53,11 +53,11 @@ function loadoutRedBull(jogadorId: string, overrides: Partial<Loadout> = {}): Lo
 function loadoutFerrari(jogadorId: string, overrides: Partial<Loadout> = {}): Loadout {
   return {
     jogadorId,
-    pilotoId: 'sarterra-2023-piloto-valbonne',
-    chassiId: 'sarterra-2023-chassi',
-    motorId: 'sarterra-2023-motor',
-    estrategistaId: 'sarterra-2023-estrategista',
-    pitId: 'sarterra-2023-pit',
+    pilotoId: 'ferrari-2023-piloto-leclerc',
+    chassiId: 'ferrari-2023-chassi',
+    motorId: 'ferrari-2023-motor',
+    estrategistaId: 'ferrari-2023-estrategista',
+    pitId: 'ferrari-2023-pit',
     pecaId: 'peca-composto-macio',
     ...overrides,
   };
@@ -66,11 +66,11 @@ function loadoutFerrari(jogadorId: string, overrides: Partial<Loadout> = {}): Lo
 function loadoutMinardi(jogadorId: string, overrides: Partial<Loadout> = {}): Loadout {
   return {
     jogadorId,
-    pilotoId: 'ronzani-2004-piloto-beregszaszi',
-    chassiId: 'ronzani-2004-chassi',
-    motorId: 'ronzani-2004-motor',
-    estrategistaId: 'ronzani-2004-estrategista',
-    pitId: 'ronzani-2004-pit',
+    pilotoId: 'minardi-2004-piloto-baumgartner',
+    chassiId: 'minardi-2004-chassi',
+    motorId: 'minardi-2004-motor',
+    estrategistaId: 'minardi-2004-estrategista',
+    pitId: 'minardi-2004-pit',
     pecaId: 'peca-composto-macio',
     ...overrides,
   };

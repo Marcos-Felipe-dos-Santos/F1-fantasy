@@ -1,72 +1,5 @@
-/**
- * Conta NOME REAL DE F1 no bundle servido (`dist/`), que é a medição que decide
- * o deploy público. Nasceu na atualização do README de 2026-09-02, a pedido do
- * dev, quando a cifra de 114 do PR 6 deixou de valer.
- *
- * 🔒 **Rastreado por regra** (2026-08-30: *"se a captura importa, ou o script
- * fica rastreado ou o número não vale"*). O README passou a afirmar **124**;
- * sem este arquivo, a próxima sessão teria o número sem o meio de refazê-lo —
- * a dívida exata que o `mutar.py` do H1 e o comparador do PR 6 registraram.
- *
- * ---
- *
- * 🔴 **O PORTÃO NÃO COBRE ISTO, E É POR ISSO QUE O SCRIPT EXISTE.**
- * `scripts/portao-nomes-reais.test.ts` mede **só os seis JSON de dados** e roda
- * dentro do `npm test`. O bundle exige `npm run build`, caro demais para todo
- * teste — então a contagem do `dist/` é **manual por desenho**, e uma regressão
- * ali passa em silêncio. **Este script NÃO é portão; é a ferramenta de refazer
- * a medida à mão.**
- *
- * ---
- *
- * 🔑 **A FRONTEIRA NÃO-ALFANUMÉRICA É O QUE SEPARA MEDIÇÃO DE LIXO — medido.**
- * Sem ela, a mesma varredura sobre `index-UkRE1HGe.js` devolve **784**, porque
- * ids curtos de construtor casam dentro de código minificado: `ags`=217,
- * `era`=130, `rb`=117, `bar`=57, `ram`=43. Todos são substring, nenhum é nome.
- * Com fronteira dos dois lados, o resultado cai para **124** e as agulhas
- * sobreviventes são quatro, todas explicáveis.
- *
- * ⚠️ **E A FRONTEIRA TEM UM PONTO CEGO CONHECIDO, que fica declarado em vez de
- * escondido: ela não pega nome real GRUDADO EM DÍGITO.** ~~O caso real deste
- * repositório é o placeholder `"ex.: senna1988 ou 42"`
- * (`src/ui/TelaInicio.tsx`)~~ — **esse caso foi REMOVIDO no PR pré-deploy de
- * 2026-09-02** (o placeholder virou `"ex.: vilarinho1988 ou 42"`, nome da
- * tabela dos 458). **A frase é riscada no lugar, não apagada, porque a CEGUEIRA
- * CONTINUA e é ela que importa:** `senna` é `driverId` real, mas um `1988`
- * colado anula a fronteira e a ocorrência não entra na conta. **Quem usar este
- * número como "não há nome real no bundle" está errado** — ele responde
- * "quantas agulhas do universo aparecem como palavra inteira", e só isso.
- * 🔴 **E nada vigia isto: MEDIDO em 2026-09-02**, a mesma varredura sobre
- * `src/ui/` (67 arquivos, as 909 agulhas) dava **0** para `senna1988` **antes**
- * da troca. **Um `senna1988` novo entraria sem que portão nenhum acusasse** —
- * o que segura essa classe é leitura humana, não cerca.
- *
- * ---
- *
- * UNIVERSO DE AGULHAS — o mesmo do portão, de propósito, para que os dois
- * números sejam comparáveis. Sai de `scripts/derived/fatos-agregados.json`
- * (que é real por desenho: ele DEFINE a lista de nomes reais), em quatro
- * campos — `equipes[].nome`, `equipes[].constructorId`, `titulares[].nome`,
- * `titulares[].driverId` —, deduplicado: 916 → **909**. As 7 repetidas foram
- * piloto E construtor.
- *
- * 🔑 **OS IDs ENTRAM.** Um contador só de nome exibido leria zero num bundle em
- * que todo `red-bull-2023-piloto-fangio` continuasse intacto.
- *
- * ---
- *
- * Uso:
- *   npm run build
- *   node scripts/medir-nomes-bundle.mjs                  # varre dist/ inteiro
- *   node scripts/medir-nomes-bundle.mjs <arquivo>...     # alvos explícitos
- *   node scripts/medir-nomes-bundle.mjs --contraprova    # + a checagem abaixo
- *
- * A CONTRAPROVA é o que separa "a contagem baixou" de "a troca aconteceu":
- * confere que os nomes reais famosos dão 0 **e** que o fictício que ocupou o
- * lugar de um deles aparece na MESMA contagem que o real tinha no derivado.
- * Contagem que só desce pode ser bug na varredura; contagem que desce enquanto
- * a substituta sobe no mesmo número, não.
- */
+/** Diagnóstico de nomes no bundle: nomes históricos são esperados desde 3.4.7.
+ * As contagens do dataset são travadas por portao-nomes-reais.test.ts. */
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -175,7 +108,7 @@ function main() {
     console.log(`\n${alvo}`);
     for (const [real, ficticio] of CONTRAPROVA) {
       const nReal = cru(real);
-      const marca = nReal === 0 ? 'ok' : 'ATENCAO';
+      const marca = 'historico';
       const parte = ficticio ? `   |   ${ficticio} = ${cru(ficticio)}` : '';
       console.log(`   ${real.padEnd(12)} = ${nReal}  [${marca}]${parte}`);
     }

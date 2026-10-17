@@ -1,105 +1,12 @@
-/**
- * CERCA DE PUBLICAÇÃO — PR 6 da trilha do dataset fictício.
- *
- * Trava a única propriedade que o PR 6 precisa manter para sempre:
- *
- *     src/data/equipe-anos.json  ===  anonimizar(derivado, tabela)
- *
- * ─────────────────────────────────────────────────────────────────────────────
- * 🔒 POR QUE ESTA CERCA EXISTE — palavras do dev, 2026-08-28.
- *
- * *"A cópia manual sem guarda existe há meses e ninguém sabia até o PR 5 medir.
- * Trocar um passo manual sem guarda por um script sem guarda não seria ganho —
- * seria a mesma dívida com nome novo."*
- *
- * O estado que este PR encerra está medido no `ESTADO.md`: `src/data/equipe-anos.json`
- * era **cópia byte a byte** de `scripts/derived/equipe-anos.derivado.json` (mesmo
- * `git hash-object`), **nenhum script fazia a cópia**, e **nada falhava se os dois
- * divergissem** — a identidade era resultado de alguém ter copiado certo, não de
- * um portão. Publicar por script mata o passo manual; **é esta cerca que mata a
- * ausência de guarda.** As duas coisas são diferentes.
- *
- * ─────────────────────────────────────────────────────────────────────────────
- * 🔒 A COMPARAÇÃO NÃO USA `toBe` SOBRE O CONTEÚDO, E É REGRA DO PROJETO.
- *
- * `src/data/equipe-anos.json` tem ~1 MB. Um `expect(publicado).toBe(esperado)`
- * que falhasse mandaria o vitest imprimir um diff de 1 MB — que é exatamente a
- * leitura integral que o `CLAUDE.md` §"Leitura de `src/data/`" proíbe, entrando
- * pela porta da mensagem de erro. `primeiraDivergencia` devolve **string vazia
- * quando são iguais** e, quando não são, um diagnóstico de tamanho fixo: o
- * índice, os dois tamanhos e uma janela de 60 caracteres de cada lado.
- * 🔑 **Portão que só é seguro enquanto passa não é seguro** — o custo de uma
- * cerca se paga no dia em que ela fica vermelha.
- *
- * ─────────────────────────────────────────────────────────────────────────────
- * 🔴 A COMPARAÇÃO NORMALIZA CRLF → LF, E ISSO NÃO É FROUXIDÃO: SEM ISSO A CERCA
- * PASSARIA POR SORTE.
- *
- * **Medido no PR 6, ao ver este baseline vermelho pela primeira vez:** o repo
- * roda `core.autocrlf=true`, então
- *
- * - arquivo que o **git faz checkout** chega ao working tree em **CRLF** —
- *   `src/data/equipe-anos.json` tinha 52.430 CRLF antes deste PR;
- * - arquivo que um **script escreve** sai em **LF** — é o caso de
- *   `serializarDerivado`, que termina em `\n`.
- *
- * Comparando bytes crus, esta cerca ficaria **VERDE logo depois de rodar
- * `npm run dataset:anonimizar`** (arquivo recém-escrito, LF dos dois lados) e
- * **VERMELHA depois de qualquer `git clone` ou checkout limpo** (arquivo em
- * CRLF, esperado em LF) — **com o dado idêntico nos dois casos**. Seria um
- * vermelho que não é regressão, na cerca que existe para detectar regressão.
- *
- * 🔑 **Final de linha é artefato de CHECKOUT, não conteúdo de dataset.** O que
- * esta cerca afirma é sobre o dado; normalizar é o que a faz afirmar isso e não
- * o modo de checkout de quem a rodou.
- * ✅ **A ALTERNATIVA FOI TOMADA em 2026-09-01, em PR próprio — e a redação
- * anterior dela ficou falsa em duas frentes, por isso é corrigida no lugar.**
- * Ela dizia: *"pinar `*.json` como LF num `.gitattributes` resolveria a classe
- * inteira, mas reescreveria final de linha do repo todo no próximo checkout"*.
- *
- * - **`*.json` NÃO resolveria a classe inteira.** Medido: o digest de
- *   `versao.test.ts` lê **18 arquivos e só 3 são `.json`** — pinar só JSON
- *   consertaria 3 de 18. O arquivo que entrou pina `*`.
- * - **"Reescreveria o repo todo no próximo checkout" superestima o custo, e a
- *   parte factual dela é verdadeira.** Um arquivo re-checkoutado sai mesmo em
- *   LF (medido: `pecas.json`, 266 CR → 0). O que é falso é o custo implícito:
- *   **não há diff, nunca.** O índice já era 100% LF (233/233), então
- *   `git add --renormalize .` **não encena nada** e `git status` fica limpo —
- *   medido de duas formas independentes. A convergência é **gradual, por
- *   arquivo**, não um varrido só.
- *
- * 🔒 **E a normalização abaixo FICA.** `.gitattributes` não renormaliza o
- * working tree existente: nesta máquina o escopo do digest seguia
- * **12 CRLF + 6 LF** depois do PR. Remover o `comLf` re-acoplaria esta cerca ao
- * modo de checkout — a classe que o `.gitattributes` existe para fechar.
- * Ver `scripts/cerca-eol.test.ts` e `ESTADO.md` §Pendências 0(af).
- *
- * ─────────────────────────────────────────────────────────────────────────────
- * 🔒 ANTI-VACUIDADE, e ela tem DUAS metades load-bearing.
- *
- * - **(1) O esperado não é vazio nem degenerado.** ⚠️ **Das duas asserções, quem
- *   carrega o peso é `derivado.length === 771`.** A outra (o esperado ter o
- *   mesmo comprimento) é quase tautológica: `anonimizar` é um `.map`, então o
- *   comprimento bate **por construção**. Dito assim porque a redação anterior
- *   sugeria que a segunda sozinha pegava um `anonimizar` que devolvesse `[]` —
- *   **e ela não pega; quem pega é a primeira.** Achado da revisão do PR 6.
- * - **(2) O esperado DIFERE do derivado.** É o que impede a cerca de passar num
- *   mundo em que `anonimizar` virou cópia — o mesmo defeito que o `hashDoDraft`
- *   do teste diferencial do PR 5 existe para pegar, aqui do lado do artefato.
- *   **Sem esta metade, publicar o derivado cru passaria** desde que o script
- *   fosse consistente consigo mesmo.
- */
+/** Cerca de publicação: dado servido idêntico ao derivado real. Diagnóstico limitado. */
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { anonimizar, type TabelaDeNomes } from './anonimizar.ts';
 import {
   serializarDerivado,
   verificarColisaoDeIds,
   type EquipeAnoDerivado,
 } from './derivar-notas.ts';
-import { EQUIPE_ANOS_DERIVADO, PUBLICADO_EQUIPE_ANOS, TABELA_NOMES } from './caminhos-dataset.ts';
-
-/** CRLF → LF. Ver o docblock: final de linha é artefato de checkout, não dado. */
+import { EQUIPE_ANOS_DERIVADO, PUBLICADO_EQUIPE_ANOS } from './caminhos-dataset.ts';
 function comLf(texto: string): string {
   return texto.replace(/\r\n/g, '\n');
 }
@@ -125,35 +32,23 @@ function primeiraDivergencia(bruto: string, esperado: string): string {
 }
 
 const derivado = JSON.parse(readFileSync(EQUIPE_ANOS_DERIVADO, 'utf8')) as EquipeAnoDerivado[];
-const tabela = JSON.parse(readFileSync(TABELA_NOMES, 'utf8')) as TabelaDeNomes;
-const esperado = serializarDerivado(anonimizar(derivado, tabela));
-
-describe('🔒 cerca de publicação — `src/data/` é a saída do `anonimizar`, não uma cópia', () => {
-  it('ANTI-VACUIDADE 1: o esperado tem os 771 registros do derivado, não um array vazio', () => {
-    expect(derivado.length).toBe(771);
-    expect(JSON.parse(esperado)).toHaveLength(derivado.length);
+const esperado = serializarDerivado(derivado);
+describe('publicação dos nomes originais', () => {
+  it('a comparação detecta alteração e limita o diagnóstico', () => {
+    const diagnostico = primeiraDivergencia('a'.repeat(10000), 'b'.repeat(10000));
+    expect(diagnostico).toContain('divergem no índice 0');
+    expect(diagnostico.length).toBeLessThan(400);
+    expect(primeiraDivergencia('a\r\n', 'a\n')).toBe('');
   });
-
-  it('ANTI-VACUIDADE 2: o esperado DIFERE do derivado — `anonimizar` não é cópia', () => {
-    expect(esperado).not.toBe(serializarDerivado(derivado));
+  it('tem 771 registros e os nomes históricos conhecidos', () => {
+    expect(derivado).toHaveLength(771);
+    expect(
+      derivado.find((r) => r.equipe === 'McLaren' && r.ano === 1988)?.pilotos.map((p) => p.nome),
+    ).toContain('Ayrton Senna');
   });
-
-  /**
-   * 🔴 A GUARDA DE COLISÃO ENTRA AQUI, e é conserto de achado da revisão do PR 6.
-   *
-   * `anonimizar.ts` afirma no docblock que `verificarColisaoDeIds` é
-   * "re-executada sobre a própria saída" — verdade, mas **só em `main()`**, e
-   * `main()` nunca roda no `npm test` (o `ehExecucaoDireta` a barra, e esta
-   * cerca chama `anonimizar()` direto). **O docblock afirmava mais do que o
-   * código sustentava**, que é a classe de defeito que este projeto já pagou
-   * seis vezes. Rodando-a aqui, ela passa a valer em todo `npm test`.
-   */
-  it('a guarda de COLISÃO DE IDS roda sobre a saída — e não só no `main()`', () => {
-    expect(() => verificarColisaoDeIds(anonimizar(derivado, tabela))).not.toThrow();
-  });
-
-  it('src/data/equipe-anos.json é EXATAMENTE `anonimizar(derivado, tabela)`', () => {
-    const publicado = readFileSync(PUBLICADO_EQUIPE_ANOS, 'utf8');
-    expect(primeiraDivergencia(publicado, esperado)).toBe('');
+  it('não contém colisão de ids', () =>
+    expect(() => verificarColisaoDeIds(derivado)).not.toThrow());
+  it('publicado é exatamente o derivado real', () => {
+    expect(primeiraDivergencia(readFileSync(PUBLICADO_EQUIPE_ANOS, 'utf8'), esperado)).toBe('');
   });
 });
