@@ -1,0 +1,95 @@
+diff --git a/party/comandos.test.ts b/party/comandos.test.ts
+index 2069c40..2568947 100644
+--- a/party/comandos.test.ts
++++ b/party/comandos.test.ts
+@@ -52,0 +53,3 @@ async function abrirSocket(codigo: string): Promise<{ ws: WebSocket; recebidas:
++  await expect
++    .poll(() => recebidas.some((texto) => JSON.parse(texto).tipo === 'estado'))
++    .toBe(true);
+@@ -67,2 +69,0 @@ function fecharTodos(): void {
+-const drenar = (): Promise<void> => new Promise((r) => setTimeout(r, 50));
+-
+@@ -106 +106,0 @@ describe('S3 — teto de comandos inbound por conexão', () => {
+-    await drenar();
+@@ -109,2 +108,0 @@ describe('S3 — teto de comandos inbound por conexão', () => {
+-    await drenar();
+-    expect(contar(recebidas, 'comandos-demais')).toBe(0);
+@@ -111,0 +110 @@ describe('S3 — teto de comandos inbound por conexão', () => {
++    expect(contar(recebidas, 'comandos-demais')).toBe(0);
+@@ -113 +112 @@ describe('S3 — teto de comandos inbound por conexão', () => {
+-    await drenar();
++    await expect.poll(() => contar(recebidas, 'jogador-desconhecido')).toBe(30 + TETO_COMANDOS);
+@@ -122 +120,0 @@ describe('S3 — teto de comandos inbound por conexão', () => {
+-    await drenar();
+@@ -127 +125 @@ describe('S3 — teto de comandos inbound por conexão', () => {
+-    await drenar();
++    await expect.poll(() => contar(recebidas, 'jogador-desconhecido')).toBe(TETO_COMANDOS);
+@@ -131,2 +129 @@ describe('S3 — teto de comandos inbound por conexão', () => {
+-    await drenar();
+-    expect(contar(recebidas, 'comandos-demais')).toBeGreaterThan(0);
++    await expect.poll(() => contar(recebidas, 'comandos-demais')).toBe(5);
+@@ -143 +139,0 @@ describe('S3 — teto de comandos inbound por conexão', () => {
+-    await drenar();
+@@ -145,2 +141,3 @@ describe('S3 — teto de comandos inbound por conexão', () => {
+-    await drenar();
+-    expect(contar(recebidas, 'comandos-demais')).toBeGreaterThan(0);
++    // O CI pode levar mais de 50 ms para entregar os eventos do WebSocket.
++    // Esperar as três recusas mantém a asserção sem depender dessa latência.
++    await expect.poll(() => contar(recebidas, 'comandos-demais')).toBe(3);
+@@ -159 +155,0 @@ describe('S3 — teto de comandos inbound por conexão', () => {
+-    await drenar();
+@@ -166,2 +161,0 @@ describe('S3 — teto de comandos inbound por conexão', () => {
+-    await drenar();
+-    expect(contar(recebidas, 'comandos-demais'), '`sincronizar` consumiu a cota de jogo').toBe(0);
+@@ -172 +166 @@ describe('S3 — teto de comandos inbound por conexão', () => {
+-    await drenar();
++    await expect.poll(() => contar(recebidas, 'jogador-desconhecido')).toBe(TETO_COMANDOS);
+@@ -177,5 +171 @@ describe('S3 — teto de comandos inbound por conexão', () => {
+-    await drenar();
+-    expect(
+-      contar(recebidas, 'comandos-demais'),
+-      'o teto de jogo nem sequer dispara — o caso acima seria vácuo',
+-    ).toBeGreaterThan(0);
++    await expect.poll(() => contar(recebidas, 'comandos-demais')).toBe(5);
+@@ -189 +178,0 @@ describe('S3 — teto de comandos inbound por conexão', () => {
+-    await drenar();
+@@ -193 +181,0 @@ describe('S3 — teto de comandos inbound por conexão', () => {
+-    await drenar();
+@@ -196,4 +184 @@ describe('S3 — teto de comandos inbound por conexão', () => {
+-    expect(
+-      contar(recebidas, 'escolha-grande-demais'),
+-      'a guarda de bytes não disparou — o caso seria vácuo',
+-    ).toBeGreaterThan(0);
++    await expect.poll(() => contar(recebidas, 'escolha-grande-demais')).toBe(TETO_COMANDOS + 10);
+@@ -207 +191,0 @@ describe('S3 — teto de comandos inbound por conexão', () => {
+-    await drenar();
+@@ -210,2 +194 @@ describe('S3 — teto de comandos inbound por conexão', () => {
+-    await drenar();
+-    expect(contar(abusador.recebidas, 'comandos-demais')).toBeGreaterThan(0);
++    await expect.poll(() => contar(abusador.recebidas, 'comandos-demais')).toBe(10);
+@@ -215 +198 @@ describe('S3 — teto de comandos inbound por conexão', () => {
+-    await drenar();
++    await expect.poll(() => contar(inocente.recebidas, 'jogador-desconhecido')).toBe(3);
+@@ -230,2 +213 @@ describe('S3 — teto de comandos inbound por conexão', () => {
+-    const { ws } = await abrirSocket(codigo);
+-    await drenar();
++    const { ws, recebidas } = await abrirSocket(codigo);
+@@ -233 +215 @@ describe('S3 — teto de comandos inbound por conexão', () => {
+-    await drenar();
++    await expect.poll(() => contar(recebidas, 'jogador-desconhecido')).toBe(3);
+@@ -244 +225,0 @@ describe('S3 — teto de comandos inbound por conexão', () => {
+-    await drenar();
+@@ -246,5 +227,8 @@ describe('S3 — teto de comandos inbound por conexão', () => {
+-    await runInDurableObject(stub, (instancia: Sala) => {
+-      const mapa = (instancia as unknown as { baldesComandos: Map<string, unknown> })
+-        .baldesComandos;
+-      expect(mapa.size, 'o balde sobreviveu ao onClose — vazamento por churn').toBe(0);
+-    });
++    await expect
++      .poll(() =>
++        runInDurableObject(stub, (instancia: Sala) => {
++          return (instancia as unknown as { baldesComandos: Map<string, unknown> }).baldesComandos
++            .size;
++        }),
++      )
++      .toBe(0);

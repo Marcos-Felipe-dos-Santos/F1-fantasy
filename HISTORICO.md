@@ -6906,7 +6906,7 @@ README deixou de prometer formatos online inexistentes: cinco etapas online, uma
 ## 2026-10-17 — Restauração dos nomes originais (pedido explícito do usuário)
 
 Escopo: produção volta a publicar scripts/derived/equipe-anos.derivado.json diretamente, com script publicar-dataset.ts e cerca de identidade preservada. Teste novo de publicação falhou por valor antes de trocar o artefato; diagnóstico permanece limitado para não despejar 1 MB. restaurar-fixture.ts faz mapa reverso por códigos, recusa ambiguidades/desconhecidos/segunda aplicação, remonta estrategista e preserva notas por referência e ordem. Ensaio antes da escrita realizado. Funções antigas e testes de anonimização mantidos como proveniência, CLIs antigas falham com instrução para o publisher atual. Nenhum teste foi removido para contornar falha.
-Marcas/ids de dez peças restaurados a partir do artefato anterior a e501b97, conferindo todos os campos numéricos antes de gravar; Montreal (Gilles Villeneuve) nos dois catálogos. Referências e literais de teste restaurados pelo mesmo mapa; goldens numéricos não foram repinados. Baseline: 9237 dataset, 254 fixture (11 ocorrências a mais que o pré-PR7 por red-bull canônico vs redbull), peças19/pistas2 em cada origem.
+Marcas/ids de dez peças restaurados a partir do artefato anterior a e501b97, conferindo todos os campos numéricos antes de gravar; Montreal (Gilles Villeneuve) nos dois catálogos. Referências e literais de teste restaurados pelo mesmo mapa; goldens numéricos não foram repinados. Baseline: 9237 dataset, 254 fixture (~~11 ocorrências a mais que o pré-PR7 por red-bull canônico vs redbull~~ **justificativa corrigida em 2026-10-18: +7 em estrategistas e +4 em IDs de pilotos; slug de equipe sozinho dá delta zero**), peças19/pistas2 em cada origem.
 Assinaturas das notas/anos/ordem capturadas ANTES: dataset 8eab5ec0237b7e573a10b0cf711e674a2fb3934a635ce6bc90e048a782cdc8eb; fixture 0bcdfd149b09b390cb7eda2c3f73a60e56117ad3e360fb3f538a27e59b1b5260. Testes atuais conferem igualdade dessas assinaturas. Dois mínimos do harness mudam por desempate de id: listagem independente do derivado confirma alpine-2024-piloto-gasly como mínimo dos 42 empatados em PNEU60, benetton-1990-piloto-piquet dos 23 em PNEU81.
 Bumps: app3.4.7/digest61184d3b/save4; regressão explícita recusa save formato3. 1730 testes principais/80 arquivos, 46 Worker/8 arquivos, lint/typecheck/build aprovados; bundle index-By4m-ig1.js 851,65kB/gzip167,53kB, aviso de chunk grande permanece. Navegador: Jordan1994, Barrichello/Irvine, peças Lotus79/TyrrellP34/Brawn/McLaren; captura docs/img/nomes-originais.png. Sem revisão independente, sem push/deploy nesta mudança.
 
@@ -6920,3 +6920,78 @@ README passa a ter link Jogar agora e estado de produção; docs/deploy-local.md
 Commit635413b teve resultados divergentes: pull_request39052613842 verde; push39052585050 falhou em party/comandos.test.ts:146, expected0 greater than0. O teste RESPONDE usava drenar50ms para esperar as respostas; trocado por expect.poll verificando exatamente3 comandos-demais após TETO+3 envios. Nenhuma regra do servidor foi alterada. Teste direcionado7/7 passou; suíte Worker completa e CI do novo SHA são os próximos portões.
 
 Ampliação medida: push39052791341 falhou no outro caso (:132), enquanto pull_request39052793966 passou. Removidas todas as esperas drenar50ms de comandos.test.ts; handshake por snapshot, respostas por contagem exata (inclusive negativas após confirmação do processamento), onClose por consulta do mapa até zero. Os sete casos permanecem; nenhuma produção alterada. Duas suítes Worker completas46/46 em sequência e lint/typecheck verdes.
+
+## 2026-10-18 — Auditoria pré-PR 1 e decisões ditadas pelo Marcos
+
+Escrita pela **sessão principal**, sem doc-writer. Risco BAIXO: documentação e
+instrumento de auditoria. Sem código de produto, commit, push, merge, deploy ou
+tag nesta etapa. Base `ef8c520`, merge do PR #2; relatório completo, inventário
+por arquivo, receita, script e evidências em `docs/auditoria-pre-pr1.md`.
+
+**Deploy já realizado pelo usuário em 2026-10-17:** URL pública
+https://f1-fantasy-sala.marcosfeliperigoto.workers.dev;
+`ALLOWED_ORIGINS=https://f1-fantasy-sala.marcosfeliperigoto.workers.dev`;
+`ENVIRONMENT=production`. Marcos confirmou teste online com amigos/jogadores
+reais bem-sucedido. É relato do usuário; o diagnóstico HTTP independente do dia
+17 não substitui esse teste de jogo. Nenhuma nova publicação nesta auditoria.
+
+**🔒 DECISÃO DO MARCOS, reafirmada após pesquisa dele:** manter nomes históricos
+reais de pilotos/equipes, por **fato histórico + uso nominativo**. Não reverter a
+restauração. Não é conclusão jurídica da sessão. **Logos e liveries oficiais
+proibidos; nenhum nome real de pessoa ou equipe em material monetizado ou
+anunciado.** Peças/modelos e Montreal restaurados em `9600c53` preservados; T2
+não implementada, ID de Red Bull Ring inalterado. Decisões antigas de anonimizar
+P/T1 estão superadas, com aviso junto ao registro em ESTADO.md.
+
+**Remedição do PR #2:** dado, fixture, baseline e versão no mesmo `9600c53`;
+3.4.6/digest `a2b34e13` → 3.4.7/`61184d3b`, ambos recalculados. Baseline dos seis
+JSONs: 9237/19/2 e 254/19/2. Folhas numéricas/ordem preservadas nos seis arquivos;
+fixture tem 22 equipe-anos/44 pilotos, nomes reais e IDs canônicos. A janela de
+nomes DATA/FIXTURE fechou, mas as notas congeladas seguem diferentes. Goldens de
+equipes mudaram de rótulo; dois representantes do harness mudaram por empate de
+IDs. Ferramentas fictícias mantidas como proveniência, CLIs antigas aposentadas,
+publisher e cerca passam a exigir o derivado real. Build local sem imagem,
+data:image ou URL de imagem; revisão dos SVGs do jogo/mock não achou logo/livery.
+
+**Correção factual da explicação do 254:** comparado a `cd9d5b7^`, o slug
+`red-bull` vs `redbull` isolado não muda a contagem. Estrategistas interpolados
+acrescentam 8 agulhas de equipes e retiram Brawn (saldo +7); IDs canônicos de
+pilotos dão saldo +4. Oito estrategistas não recuperaram seus nomes pessoais
+antigos: seguem o molde `Estrategista <equipe> <ano>`. A justificativa anterior
+foi riscada no lugar, sem apagar o registro; a prosa antiga no teste do portão
+continua uma dívida, não se mudou código nesta etapa.
+
+**CI fechado, 0(v) não:** GitHub confirma push `39052585050` vermelho em
+comandos.test.ts:146 e push `39052791341` vermelho em :132; PRs simultâneos verdes.
+Após correção completa, push `39053003826` e PR `39053008495` em `7ca39cc` verdes;
+main `39053132098` em `ef8c520` verde. Houve vermelho → correção parcial → outro
+vermelho → verde observado no CI, sem reprodução local controlada nova.
+**0(v) permanece 🟡**: descreve I/O concorrente das sabotagens em arquivos,
+não a espera fixa de WebSocket corrigida. Não afirmar encerramento da causa
+estrutural nem confundir uma rodada atual verde com prova de erradicação.
+
+**🔒 DECISÃO DO MARCOS: nome futuro “Paddock Draft”**, pois o nome atual colide
+com o jogo oficial. Nova pendência **0(aq)**; próxima livre **0(ar)**. Inventário
+anterior às edições documentais: 66 ocorrências em 33 arquivos, mais nome do GDD
+e repo. **URL EM ABERTO:** manter Worker/URL, mudar URL com redirect antigo, ou
+aceitar a quebra; custos/impactos no relatório, nenhuma opção escolhida. Alterar
+apenas o `name` não constitui migração segura de namespaces/saves/reentrada.
+
+**Sequência ditada, um PR por sessão:** PR 1 resultados → PR R rename → PR 2a
+carros/chuva/incidentes → PR 2b boxes → PR 3 som. Dez pistas, nenhuma com pit lane
+definido no replay; a via fixa é só da maquete. Estimativas por pista no relatório,
+a aprovar antes de implementar. Regras ditadas preservadas integralmente no
+relatório: zero engine/dados, digest verde, risco/baseline vermelho, reduced-motion,
+velocidades, FPS com 22 carros/chuva em perfil de celular, CSP intacta, sons
+WebAudio/CC0 após clique com volume/mudo persistidos e vozes limitadas; formas
+próprias, portão visual desktop/celular/dois temas **antes de commit**. Sem
+push/merge/deploy sem aprovação explícita no PR, nenhum subagente commita, sem
+tag, instrumentos de medição versionados. FPS não medido nesta auditoria sem
+alteração visual. Um único commit documental deve preceder o PR 1; diff primeiro.
+
+Validação em 2026-10-18: 57 testes direcionados, 1730 principais, 46 Worker,
+build/typecheck/grafo do Worker e lint verdes. Aviso preexistente de bundle grande.
+
+Em 2026-10-21, Marcos aprovou o commit documental, o pódio adaptável e o início
+do PR 1. Autorização não inclui commit visual antes do veredito nem push,
+merge ou deploy desse PR.

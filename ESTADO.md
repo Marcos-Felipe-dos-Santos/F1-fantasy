@@ -1,5 +1,16 @@
 # ESTADO — F1 Fantasy
 
+> **Atualização operacional — 2026-10-18, sessão principal.** Produção publicada em
+> 2026-10-17: https://f1-fantasy-sala.marcosfeliperigoto.workers.dev;
+> `ALLOWED_ORIGINS` = essa origem exata; `ENVIRONMENT=production`. Marcos relatou
+> teste online bem-sucedido com amigos/jogadores reais. PR #2 mesclado em `ef8c520`;
+> CI da main `39053132098` verde. App 3.4.7 / digest `61184d3b` / save 4.
+> A auditoria de 2026-10-18 passou 1730 testes principais e 46 Worker, build/typecheck.
+> Decisões atuais de nomes e rename estão no bloco ao fim deste documento; as
+> notas antigas de anonimização abaixo são históricas e não autorizam reversão.
+> **Agora:** quatro medições concluídas, sem código de produto nem commit; pacote
+> documental aguardando revisão. Relatório: `docs/auditoria-pre-pr1.md`.
+
 > **Leia este arquivo PRIMEIRO em toda sessão nova.** É curto de propósito.
 > **Planos de fase em `PLANOS_ATIVOS.md`** (~~Fase 3, 3.5 campeonato online, spike da casca~~ —
 > ⚠️ **os três encerraram: a FASE 3 ESTÁ ENCERRADA desde 2026-08-27**, ver §"FASE 3 ENCERRADA"; o
@@ -10,7 +21,7 @@
 
 ## Estado atual
 
-**Última medição (2026-09-02, na `main` — PR pré-deploy, os últimos nomes reais visíveis, `6ee6b84`):**
+**Medição histórica (2026-09-02, na `main` — PR pré-deploy, os últimos nomes reais visíveis, `6ee6b84`):**
 `npm test` **1713/1713 — INALTERADO**, e inalterado é o resultado CERTO: nenhum teste nasceu e
 nenhum comportamento mudou (o PR troca uma string de placeholder e tira três `<img>` do README).
 **`npm run test:party` 42/42**, typecheck **0** nos três projetos, lint **0** (por exit code),
@@ -2199,6 +2210,14 @@ encerramento** — encerrada não quer dizer sem dívida.
 
 ## 🔒 NOMES FICTÍCIOS — DECISÕES DO DEV, ditadas em 2026-08-25. Não reabrir sem ele.
 
+> **Registro histórico, superado quanto à anonimização em 2026-10-17 e
+> reconfirmado explicitamente pelo Marcos em 2026-10-18.** Pilotos/equipes reais,
+> marcas/modelos das peças e Montreal (Gilles Villeneuve) foram restaurados no
+> commit `9600c53`. As decisões P/T1 abaixo descrevem o passado; não reaplicar.
+> T2 não foi executada: ID/nome de Red Bull Ring continuam. A decisão H sobre
+> não reescrever histórico permanece. Restrições atuais: ver decisão de nomes
+> ao fim deste arquivo; nenhuma autorização para logos/liveries ou anúncio.
+
 📌 **PROVENIÊNCIA, e ela é parte da decisão.** Estas três decisões foram **ditadas pelo dev em
 2026-08-25**, nesta sessão, e transcritas por mim. Fica registrado que o commit `e1db1c9`
 (2026-08-24) já havia gravado três vereditos **com o mesmo assunto** atribuindo-os ao dev — "Palavras
@@ -2824,7 +2843,8 @@ sem cobertura). **Corrigida no lugar, não contradita ao lado** — duas coisas 
 o defeito do `C1` ambíguo que a §"MEDIÇÕES E AUDITORIAS" já catalogou.
 ~~✅ **A próxima livre é `0(ap)`**, conferido em 2026-09-02: a última ocupada passou a ser `0(ao)`.~~
 ✅ **CORRIGIDA NO LUGAR em 2026-09-02, no mesmo dia: `0(ap)` FOI OCUPADA** pelo PR pré-deploy (as
-três capturas PNG a regerar). **A próxima livre é `0(aq)`.** É a segunda vez que esta linha
+três capturas PNG a regerar). **A próxima livre é `0(ar)`**, após ocupar `0(aq)`
+com o rename ditado pelo Marcos em 2026-10-18. É a segunda vez que esta linha
 envelhece em dois dias — a anterior apontava `0(ak)`, que o H4 ocupou. 🔑 **Ela é riscada no lugar
 pelo mesmo motivo das outras:** duas pendências com o mesmo rótulo é o defeito do `C1` ambíguo que a
 §"MEDIÇÕES E AUDITORIAS" já catalogou. ⚠️ **Quem for promover esta dívida a pendência confere a
@@ -3157,6 +3177,11 @@ que agora ela é tomada com o número na mão.**
    vulnerável, agora por vacuidade em vez de exceção. Está escrito no docblock de `lerFonte`.
    ⚠️ **Era um portão que passava por SORTE**, e a regra do projeto trata portão assim como risco,
    não como detalhe.
+   **Auditoria 2026-10-18:** a 0(v) continua **🟡**, sem nova alegação de fechamento.
+   O flake WebSocket de `party/comandos.test.ts` corrigido em `c740248`/`7ca39cc`
+   é distinto desta corrida de arquivos. Não houve reprodução nova da 0(v),
+   remoção das sabotagens em `src/ui/` nem prova de eliminação da vacuidade.
+   Verde atual de `npm test` não prova erradicação dessa condição intermitente.
    (w) 🟠 **NOVA (revisão do 3.5.3, 2026-08-21) — O CLIENTE FIXA `'curta'` (5) E O TETO DE LEITURA DE
    `nEtapas` NO SERVIDOR É `[1, 10]`. DECISÃO DO DEV.** `etapasDaSala` chama
    `calendarioSorteado(dataset, seedCalendario, 'curta')` e ignora o `nEtapas` do snapshot — hoje
@@ -3628,6 +3653,17 @@ que agora ela é tomada com o número na mão.**
    partir da geometria de produção, **não existe gerador para estas três**. **É PR próprio e decisão
    do dev.**
 
+   (aq) 🟡 **NOVA — 2026-10-18, decisão 🔒 do Marcos: renomear para “Paddock Draft”.**
+   Razão ditada: “F1 Fantasy” colide com o jogo oficial da Fórmula 1. Inventário
+   na base `ef8c520`: **66 ocorrências textuais em 33 arquivos**, além do nome do
+   arquivo do GDD e do repo. Script/resultado e lista por arquivo no relatório
+   `docs/auditoria-pre-pr1.md`; nenhuma substituição implementada nesta auditoria.
+   **URL EM ABERTO, decisão do Marcos:** manter Worker/URL técnicos antigos,
+   nova URL com redirect antigo, ou nova URL aceitando quebra dos links.
+   Custos e efeitos em salas/DO, saves, tema e reentrada estão no relatório.
+   O PR R depende dessa escolha; não trocar `name`/`ALLOWED_ORIGINS` de passagem.
+   `0(ap)` era a última ocupada; próxima livre agora `0(ar)`.
+
 1. **Abertas pelo 7.8:** (a) o `BotaoTema` é um botão discreto no canto do `app-shell` — posição e
    forma **não passaram por veredito de arte**; (b) `erro` (salmão `#FF7B85`) e `raridadeProibido`
    (`#FF4757`) continuam sendo dois vermelhos ao lado do vermelho da marca — não foi mexido porque
@@ -3940,3 +3976,53 @@ ALLOWED_ORIGINS público agora registrado no wrangler.jsonc, mantendo ENVIRONMEN
 No mesmo SHA635413b, CI de pull_request passou e CI de push falhou em comandos.test.ts: esperava resposta WebSocket depois de sleep50ms. Corrigido o teste para expect.poll até as três recusas esperadas, sem alterar limitador/produção. Resultado anterior não foi ignorado; novo commit deve passar nas duas execuções antes do merge.
 
 A segunda execução de push39052791341 revelou a mesma espera fixa no caso de rajada (:132). A correção foi ampliada a comandos.test.ts inteiro: conexão aguarda snapshot inicial, mensagens aguardam contagem exata, fechamento aguarda mapa vazio. Sem sleep fixo nem remoção de casos. Duas execuções completas locais46/46 e lint/typecheck passaram.
+
+## 2026-10-18 — Decisões do Marcos e auditoria anterior ao PR 1
+
+**🔒 DECISÃO DO MARCOS — NOMES REAIS, reafirmada nesta sessão após pesquisa dele.**
+Usar nomes históricos reais de pilotos e equipes: razão ditada
+**fato histórico + uso nominativo**. Não reverter a restauração. Esta é decisão de produto do
+Marcos, não parecer jurídico da sessão. **Logos e liveries oficiais proibidos.
+Nenhum nome real de pessoa ou equipe em material monetizado ou anunciado.**
+Peças com marcas/modelos restaurados em `9600c53` e nomes das pistas ficam como
+estão; nenhuma autorização para mudar ID de pista/seed ou aplicar T2.
+
+**🔒 DECISÃO DO MARCOS — RENOMEAR PARA “PADDOCK DRAFT”.** Motivo: colisão do nome
+antigo com o jogo oficial. Pendência `0(aq)`; destino da URL permanece **EM ABERTO**.
+Não renomear Worker, repo, pacote, GDD ou UI antes do PR R e da escolha de URL.
+
+**Correção de medição da fixture:** baseline 254 confirmado, mas a explicação
+anterior “11 a mais por red-bull versus redbull” estava errada. Comparação contra
+`cd9d5b7^` mostra delta **+7** nos nomes interpolados dos estrategistas/saída de
+Brawn e **+4** nos IDs canônicos dos pilotos; total +11. A troca isolada do slug
+red-bull dá **zero** no contador. Pilotos/equipes reais, notas preservadas; oito
+estrategistas usam o molde genérico, não os nomes pessoais da fixture original.
+O comentário de `scripts/portao-nomes-reais.test.ts` ainda contém a justificativa
+errada e o relato antigo do piso 6; dívida de prosa do teste, não correção de dados.
+Script reproduzível: `scripts/medir-pre-pr1.mjs`; evidências JSON/diffs no relatório.
+
+**Fechamento do CI do PR #2:** após os dois vermelhos observados nas anotações
+do GitHub, push `39053003826` e PR `39053008495`, ambos em `7ca39cc`, passaram.
+Merge `ef8c520` em 2026-10-17 e main `39053132098` verde. Esse flake de espera fixa
+de WebSocket foi corrigido; **não fecha a 0(v)**, que continua 🟡 por outra causa.
+
+**Ordem ditada, UM PR POR SESSÃO:** PR 1 Resultados → PR R Rename → PR 2a
+carros/chuva/incidentes → PR 2b pit lane → PR 3 sons. Regras completas em
+`docs/auditoria-pre-pr1.md`: zero engine/dados; digest verde; risco e vermelho
+onde houver lógica nova; reduced-motion/velocidades; FPS antes/depois com
+22 carros + chuva em perfil de celular; CSP intacta, qualquer mudança antes
+mostrada; WebAudio/CC0, clique prévio, mudo/volume persistidos e limite de vozes;
+formas/cores próprias; prints nos dois temas e tamanhos; **aguardar veredito
+visual antes de commitar**. Push/merge/deploy exigem aprovação explícita no PR,
+nenhum subagente commita, sem tag, instrumentos de medição versionados.
+
+Auditoria documental de risco BAIXO, escrita pela sessão principal. 1730 testes
+principais, 46 Worker e 57 direcionados verdes; build/typecheck/grafo do Worker
+aprovados. 10 pistas, zero pit lane definido no replay; custo estimado por pista
+e infraestrutura comum no relatório, a aprovar antes do PR 2b. FPS não medido
+neste pacote sem mudança visual. **Sem commit e sem início do PR 1 nesta etapa**;
+um commit documental deve precedê-lo, após o Marcos revisar o diff.
+
+**Autorização de 2026-10-21:** Marcos aprovou o commit documental acima, o pódio
+adaptável e o início do PR 1. Após esse commit, iniciar somente Resultados;
+aguardar veredito visual antes do commit de produto, sem push/merge/deploy.
