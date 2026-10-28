@@ -27,6 +27,29 @@ import type {
 /** Pista default da corrida (Monza) quando `prepararCorrida` é chamada sem `pistaId` explícito. */
 export const PISTA_CORRIDA_ID = 'pista-monza';
 
+/** Leitura para a tabela final, sem simular ou escolher o recordista da prova.
+ * O histórico contém a volta da quebra; a engine interrompe essa volta antes
+ * de atualizar melhorVolta. Excluí-la preserva o significado dos tempos exibidos.
+ */
+export function melhorVoltaDoJogador(
+  resultado: {
+    historicoVoltas: Readonly<Record<string, readonly number[]>>;
+    classificacao: readonly Pick<
+      ResultadoCorrida['classificacao'][number],
+      'jogadorId' | 'status'
+    >[];
+  },
+  jogadorId: string,
+): number | null {
+  const item = resultado.classificacao.find((c) => c.jogadorId === jogadorId);
+  const historico = resultado.historicoVoltas[jogadorId];
+  if (!item || !historico) return null;
+  const limite = historico.length - (item.status === 'dnf' ? 1 : 0);
+  let melhor = Infinity;
+  for (let i = 0; i < limite; i++) melhor = Math.min(melhor, historico[i]);
+  return melhor === Infinity ? null : melhor;
+}
+
 /** Ponto 2D usado pelo traçado (mesmo sistema de coordenadas do viewBox SVG). */
 export interface Ponto {
   x: number;

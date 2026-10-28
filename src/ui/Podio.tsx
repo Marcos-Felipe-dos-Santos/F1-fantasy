@@ -12,9 +12,8 @@
  * e as duas telas passariam a desenhar pódios diferentes.
  *
  * 🔒 **A ordem visual é 2º-1º-3º, e não é enfeite:** é a do pódio real, com o
- * campeão ao centro e mais alto. Quem governa a altura é a classe
- * `podio__lugar--1|2|3` no CSS, então trocar a ordem aqui sem trocar as classes
- * põe o vice no degrau do campeão.
+ * campeão ao centro e mais alto. O CSS ordena os degraus em telas largas;
+ * o DOM segue 1º–2º–3º para leitura assistiva e para a lista no celular.
  */
 
 import type { DraftState, LinhaClassificacao } from '../engine/types';
@@ -46,19 +45,23 @@ export function Podio({
 }) {
   const podio = classificacao.slice(0, 3);
   return (
-    <ol className="podio">
-      {[podio[1], podio[0], podio[2]].map((linha, posicaoVisual) =>
-        linha === undefined ? null : (
-          <li
-            key={linha.jogadorId}
-            className={`podio__lugar podio__lugar--${[2, 1, 3][posicaoVisual]}`}
-          >
-            <span className="podio__medalha">{['🥈', '🥇', '🥉'][posicaoVisual]}</span>
-            <span className="podio__nome">{nomeDoJogador(state, linha.jogadorId)}</span>
-            <span className="podio__pontos">{linha.pontos} pts</span>
-          </li>
-        ),
-      )}
+    <ol className="podio" aria-label="Pódio do campeonato">
+      {podio.map((linha, indice) => (
+        <li
+          key={linha.jogadorId}
+          className={`podio__lugar podio__lugar--${indice + 1}`}
+          aria-label={`${indice + 1}º lugar`}
+        >
+          <span className="podio__medalha" aria-hidden="true">
+            {['🥇', '🥈', '🥉'][indice]}
+          </span>
+          <span className="podio__posicao" aria-hidden="true">
+            {indice + 1}º
+          </span>
+          <span className="podio__nome">{nomeDoJogador(state, linha.jogadorId)}</span>
+          <span className="podio__pontos">{linha.pontos} pts</span>
+        </li>
+      ))}
     </ol>
   );
 }

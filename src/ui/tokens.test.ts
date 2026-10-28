@@ -64,6 +64,29 @@ function razaoContraste(hexA: string, hexB: string): number {
   return (claro + 0.05) / (escuro + 0.05);
 }
 
+describe('recorde de volta — tinta própria, independente de raridade', () => {
+  it('declara recordeTexto nos dois temas e protege os três fundos', () => {
+    for (const modo of ['dark', 'light'] as const) {
+      const pal = paleta(modo) as Record<string, string>;
+      expect(pal).toHaveProperty('recordeTexto');
+      expect(pal.recordeTexto).not.toBe(pal.raridadeLendarioTexto);
+      for (const bg of ['fundo', 'fundoElevado', 'fundoAfundado']) {
+        expect(razaoContraste(pal.recordeTexto, pal[bg])).toBeGreaterThanOrEqual(4.5);
+        expect(
+          PARES_CONTRASTE.some(
+            (p) =>
+              String(p.fg) === 'recordeTexto' &&
+              p.bg === bg &&
+              p.minimo === 4.5 &&
+              p.escopo === 'ambos',
+          ),
+        ).toBe(true);
+      }
+    }
+  });
+});
+
+
 describe('fórmula de contraste WCAG', () => {
   it('preto sobre branco dá razão 21 (caso conhecido)', () => {
     expect(razaoContraste('#000000', '#FFFFFF')).toBeCloseTo(21, 5);

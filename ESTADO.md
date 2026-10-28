@@ -4026,3 +4026,16 @@ um commit documental deve precedê-lo, após o Marcos revisar o diff.
 **Autorização de 2026-10-21:** Marcos aprovou o commit documental acima, o pódio
 adaptável e o início do PR 1. Após esse commit, iniciar somente Resultados;
 aguardar veredito visual antes do commit de produto, sem push/merge/deploy.
+
+**PR 1 em 2026-10-21 — aguardando veredito visual:** commit documental `26ad532`
+feito; produto local em `codex/pr1-resultados`, ainda sem commit. Tempo total e
+melhor volta separados, recorde roxo, cartões no celular e pódio adaptável.
+Risco ALTO pelo portão visual. Baselines vermelhos preservados, três mutações
+detectadas, revisão independente sem achados. 1764 testes principais e 46 Worker,
+lint/build verdes; versão 3.4.7/digest 61184d3b intactos, zero engine/data/net/CSP.
+Capturas nos dois temas e tamanhos em `docs/pr1-imagens/`; relatório/instrumentos
+em `docs/pr1-resultados.md`. Cadência rAF antes/depois estável, mas viewport
+mobile em desktop sem CPU throttling **não valida aparelho real**: essa medição
+continua pendente. Não iniciar PR R nem commitar produto antes do veredito.
+
+**Veredito visual 2026-10-28: prints aprovados pelo Marcos; produto commitado nesta branch.** Antes do commit, a sessão principal mediu 1764/81 testes principais e 46/8 Worker; typecheck, lint e build verdes; `versao.test.ts` 3/3; 3.4.7, save 4 e digest `61184d3b`; diff vazio em engine/data/party/net. Sem push, merge ou deploy. FPS em aparelho real continua pendente.

@@ -1,0 +1,151 @@
+
+ RUN  v4.1.10 E:/projetos/F1 fantasy
+
+ ❯ src/ui/tokens.test.ts (176 tests | 1 failed) 22ms
+     × declara recordeTexto nos dois temas e protege os três fundos 4ms
+ ❯ src/ui/resultado-corrida.test.ts (5 tests | 4 failed) 18ms
+     × separa tempo total e melhor volta, com VR somente na célula da volta 12ms
+     × abandono na primeira volta mostra ausência de melhor volta 1ms
+     × não anuncia recorde nem ponto extra quando todos abandonam sem volta válida 1ms
+     × recorde em corrida sem finalistas é exibido sem prometer ponto extra 2ms
+ ❯ src/ui/fluxo-corrida.test.ts (69 tests | 4 failed) 36ms
+     × escolhe a menor volta de quem terminou 3ms
+     × descarta a volta da quebra mesmo quando ela é a menor 0ms
+     × abandono na primeira volta e histórico vazio não têm volta válida 0ms
+     × jogador sem histórico não produz tempo inventado 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/ui/fluxo-corrida.test.ts > melhorVoltaDoJogador — leitura do histórico já calculado > escolhe a menor volta de quem terminou
+TypeError: melhorVoltaDoJogador is not a function
+ ❯ src/ui/fluxo-corrida.test.ts:34:12
+     32|   });
+     33|   it('escolhe a menor volta de quem terminou', () => {
+     34|     expect(melhorVoltaDoJogador(resultado([91000, 89000, 93000], 'term…
+       |            ^
+     35|   });
+     36|   it('descarta a volta da quebra mesmo quando ela é a menor', () => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  src/ui/fluxo-corrida.test.ts > melhorVoltaDoJogador — leitura do histórico já calculado > descarta a volta da quebra mesmo quando ela é a menor
+TypeError: melhorVoltaDoJogador is not a function
+ ❯ src/ui/fluxo-corrida.test.ts:38:12
+     36|   it('descarta a volta da quebra mesmo quando ela é a menor', () => {
+     37|     const entrada = resultado([90000, 85000], 'dnf');
+     38|     expect(melhorVoltaDoJogador(entrada, 'a')).toBe(90000);
+       |            ^
+     39|     expect(entrada.historicoVoltas.a).toEqual([90000, 85000]);
+     40|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  src/ui/fluxo-corrida.test.ts > melhorVoltaDoJogador — leitura do histórico já calculado > abandono na primeira volta e histórico vazio não têm volta válida
+TypeError: melhorVoltaDoJogador is not a function
+ ❯ src/ui/fluxo-corrida.test.ts:42:12
+     40|   });
+     41|   it('abandono na primeira volta e histórico vazio não têm volta válid…
+     42|     expect(melhorVoltaDoJogador(resultado([85000], 'dnf'), 'a')).toBeN…
+       |            ^
+     43|     expect(melhorVoltaDoJogador(resultado([], 'terminou'), 'a')).toBeN…
+     44|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+ FAIL  src/ui/fluxo-corrida.test.ts > melhorVoltaDoJogador — leitura do histórico já calculado > jogador sem histórico não produz tempo inventado
+TypeError: melhorVoltaDoJogador is not a function
+ ❯ src/ui/fluxo-corrida.test.ts:46:12
+     44|   });
+     45|   it('jogador sem histórico não produz tempo inventado', () => {
+     46|     expect(melhorVoltaDoJogador(resultado([90000], 'terminou'), 'ausen…
+       |            ^
+     47|   });
+     48| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+
+ FAIL  src/ui/resultado-corrida.test.ts > resultado: tempos inequívocos > separa tempo total e melhor volta, com VR somente na célula da volta
+AssertionError: expected '<tr><th>Pos</th><th>Jogador</th><th>P…' to contain 'Tempo total'
+
+Expected: "Tempo total"
+Received: "<tr><th>Pos</th><th>Jogador</th><th>Piloto</th><th>Status</th><th>Paradas</th><th>Pontos</th></tr>"
+
+ ❯ src/ui/resultado-corrida.test.ts:34:21
+     32|   it('separa tempo total e melhor volta, com VR somente na célula da v…
+     33|     const rows = linhas(renderizar());
+     34|     expect(rows[0]).toContain('Tempo total');
+       |                     ^
+     35|     expect(rows[0]).toContain('Melhor volta');
+     36|     const vencedor = celulas(rows[1]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/9]⎯
+
+ FAIL  src/ui/resultado-corrida.test.ts > resultado: tempos inequívocos > abandono na primeira volta mostra ausência de melhor volta
+AssertionError: expected '<td>0</td>' to contain '—'
+
+Expected: "—"
+Received: "<td>0</td>"
+
+ ❯ src/ui/resultado-corrida.test.ts:49:22
+     47|     const cells = celulas(linhas(renderizar())[3]);
+     48|     expect(cells[3]).toContain('DNF');
+     49|     expect(cells[4]).toContain('—');
+       |                      ^
+     50|     expect(cells[4]).not.toContain('1:10.000');
+     51|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/9]⎯
+
+ FAIL  src/ui/resultado-corrida.test.ts > resultado: tempos inequívocos > não anuncia recorde nem ponto extra quando todos abandonam sem volta válida
+AssertionError: expected '<div class="tela-resultado-corrida"><…' not to match /Infinity|NaN|pontinho extra|badge-vr/
+
+- Expected:
+/Infinity|NaN|pontinho extra|badge-vr/
+
++ Received:
+"<div class=\"tela-resultado-corrida\"><h2>Resultado da corrida</h2><p class=\"resultado-corrida__seed\">Seed da partida: <code>42</code> <button type=\"button\" class=\"botao-secundario\">Copiar seed</button></p><p class=\"resultado-corrida__destaque\">Piloto da casa terminou em 1º — 0 pontos</p><div class=\"tabela-grid-wrap\"><table class=\"tabela-grid\"><thead><tr><th>Pos</th><th>Jogador</th><th>Piloto</th><th>Status</th><th>Paradas</th><th>Pontos</th></tr></thead><tbody><tr class=\"linha-humano linha-volta-rapida\"><td>1</td><td>Piloto da casa</td><td>?</td><td>DNF (volta 1) 🏆 VR</td><td>1</td><td>0</td></tr><tr class=\"\"><td>2</td><td>b</td><td>?</td><td>DNF (volta 1)</td><td>1</td><td>0</td></tr><tr class=\"\"><td>3</td><td>c</td><td>?</td><td>DNF (volta 1)</td><td>0</td><td>0</td></tr></tbody></table></div><p class=\"resultado-corrida__volta-rapida\">Volta mais rápida: Piloto da casa — pontinho extra pra ? (Infinitys)</p><button type=\"button\" class=\"botao-secundario\">Novo draft</button></div>"
+
+ ❯ src/ui/resultado-corrida.test.ts:59:22
+     57|     r.voltaMaisRapida = { jogadorId: 'a', tempo: Infinity };
+     58|     const html = renderizar(r);
+     59|     expect(html).not.toMatch(/Infinity|NaN|pontinho extra|badge-vr/);
+       |                      ^
+     60|     expect(html).toContain('Nenhuma volta válida');
+     61|     expect(html).not.toContain('terminou em');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/9]⎯
+
+ FAIL  src/ui/resultado-corrida.test.ts > resultado: tempos inequívocos > recorde em corrida sem finalistas é exibido sem prometer ponto extra
+AssertionError: expected '<div class="tela-resultado-corrida"><…' to contain '1:29.000'
+
+Expected: "1:29.000"
+Received: "<div class="tela-resultado-corrida"><h2>Resultado da corrida</h2><p class="resultado-corrida__seed">Seed da partida: <code>42</code> <button type="button" class="botao-secundario">Copiar seed</button></p><p class="resultado-corrida__destaque">Piloto da casa terminou em 1º — 0 pontos</p><div class="tabela-grid-wrap"><table class="tabela-grid"><thead><tr><th>Pos</th><th>Jogador</th><th>Piloto</th><th>Status</th><th>Paradas</th><th>Pontos</th></tr></thead><tbody><tr class="linha-humano"><td>1</td><td>Piloto da casa</td><td>?</td><td>DNF (volta 2)</td><td>1</td><td>0</td></tr><tr class="linha-volta-rapida"><td>2</td><td>b</td><td>?</td><td>DNF (volta 2) 🏆 VR</td><td>1</td><td>0</td></tr><tr class=""><td>3</td><td>c</td><td>?</td><td>DNF (volta 1)</td><td>0</td><td>0</td></tr></tbody></table></div><p class="resultado-corrida__volta-rapida">Volta mais rápida: b — pontinho extra pra ? (89.000s)</p><button type="button" class="botao-secundario">Novo draft</button></div>"
+
+ ❯ src/ui/resultado-corrida.test.ts:68:18
+     66|     r.classificacao = r.classificacao.map((item) => ({ ...item, status…
+     67|     const html = renderizar(r);
+     68|     expect(html).toContain('1:29.000');
+       |                  ^
+     69|     expect(html).toContain('Sem ponto extra');
+     70|     expect(html).not.toContain('pontinho extra');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/9]⎯
+
+ FAIL  src/ui/tokens.test.ts > recorde de volta — tinta própria, independente de raridade > declara recordeTexto nos dois temas e protege os três fundos
+AssertionError: expected { fundo: '#1A1A1A', …(31) } to have property "recordeTexto"
+ ❯ src/ui/tokens.test.ts:77:19
+     75|     for (const modo of ['dark', 'light'] as const) {
+     76|       const pal = paleta(modo) as Record<string, string>;
+     77|       expect(pal).toHaveProperty('recordeTexto');
+       |                   ^
+     78|       expect(pal.recordeTexto).not.toBe(pal.raridadeLendarioTexto);
+     79|       for (const bg of ['fundo', 'fundoElevado', 'fundoAfundado']) {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/9]⎯
+
+
+ Test Files  3 failed (3)
+      Tests  9 failed | 241 passed (250)
+   Start at  17:50:09
+   Duration  400ms (transform 328ms, setup 0ms, import 472ms, tests 76ms, environment 0ms)
+

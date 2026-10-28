@@ -6995,3 +6995,27 @@ build/typecheck/grafo do Worker e lint verdes. Aviso preexistente de bundle gran
 Em 2026-10-21, Marcos aprovou o commit documental, o pódio adaptável e o início
 do PR 1. Autorização não inclui commit visual antes do veredito nem push,
 merge ou deploy desse PR.
+
+### 2026-10-21 — PR 1 Resultados implementado localmente; portão visual pendente
+
+Documentação anterior commitada em `26ad532`, branch `codex/pr1-resultados`.
+Risco ALTO por mudança visual. Tabela separa tempo total/melhor volta, VR roxo
+restrito ao recordista recebido; DNF exclui a entrada da quebra na leitura da
+melhor volta. Sem volta válida mostra travessão. Sem finalistas não promete bônus.
+Resumos humanos e cartões responsivos; pódio semântico 1–2–3 com degraus 2–1–3
+no desktop e lista no celular. Friso duplicado encontrado nas capturas e corrigido.
+
+TDD: 9 falhas iniciais/241 sucessos e vermelho separado do pódio. Verde principal
+1764/81 arquivos, Worker 46/8 arquivos, lint/build e digest verdes. Três mutações
+detectadas por asserção e fontes restaurados; revisão independente sem achados.
+Teste de render online agora verifica célula de pontos da primeira linha, após
+o markup ganhar classes e rótulos. Sem mudanças em engine/data/net/party/CSP,
+versão 3.4.7 e digest 61184d3b preservados. Aviso de bundle grande preexistente.
+
+Instrumento de revisão e evidências em `docs/pr1-resultados.md`: capturas reais
+desktop/celular e dark/light, rAF com 22 carros e chuva real em três velocidades.
+Sem queda observada, mas sem emulação de CPU/GPU: **aparelho real não validado**.
+Produto e documentação deste PR continuam sem commit aguardando veredito visual.
+Nenhum push, merge, deploy ou tag; rename e demais PRs não iniciados.
+
+**Veredito visual 2026-10-28: prints aprovados pelo Marcos; produto commitado nesta branch.** Antes do commit, a sessão principal mediu 1764/81 testes principais e 46/8 Worker; typecheck, lint e build verdes; `versao.test.ts` 3/3; 3.4.7, save 4 e digest `61184d3b`; diff vazio em engine/data/party/net. Sem push, merge ou deploy. FPS em aparelho real continua pendente.
