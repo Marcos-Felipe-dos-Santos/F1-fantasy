@@ -15,7 +15,7 @@ description: Regras de PR, commit, merge e tag do projeto. Use ao finalizar uma 
 - Mensagem no imperativo, curta e específica.
 
 ## Git — regras invioláveis
-- **NUNCA `git push` sem aprovação explícita do dev.** Preparar o commit local e pedir o "ok". O mesmo vale para abrir PR remoto.
+- **NUNCA `git push` sem aprovação explícita do dev.** O mesmo vale para abrir PR remoto. **Só a sessão principal prepara commit e pede o "ok" do dev; subagente nunca commita nem pede push.**
 - Trabalhar em branch por PR (`feat/...`, `fix/...`), nunca direto na main.
 
 ## Tags (erro recorrente a evitar)

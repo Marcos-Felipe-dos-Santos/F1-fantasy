@@ -2041,7 +2041,7 @@ encerramento** — encerrada não quer dizer sem dívida.
 6. **Decisão de arte ainda aberta:** o `88/40%` da zebra (seção própria abaixo) — não foi tocado
    pela aprovação dos portões.
 
-## 🔒 DECISÕES DO MARCOS — VIGENTES (ditadas em 2026-10-18; regra de prints em 2026-10-28)
+## 🔒 DECISÕES DO MARCOS — VIGENTES (ditadas em 2026-10-18; regra de prints em 2026-10-28; doc e `doc-writer` em 2026-10-29)
 
 > Movido do fim do arquivo em 2026-10-28, sem alteração de conteúdo, exceto "spray" no PR 2a,
 > que constava no pedido original do Marcos e faltava aqui.
@@ -2073,6 +2073,20 @@ representativos por PR**; os demais vão anexados na descrição do PR no GitHub
 próximos PRs visuais (PR R em diante); os 10 de `docs/pr1-imagens/` entraram em `d6f77cf`, antes
 desta regra, e ficam. A exigência de prints nos dois temas e tamanhos continua: o limite é do que
 fica no repositório, não do que se mostra.
+
+**🔒 DECISÃO DO MARCOS, 2026-10-29 — QUEM ESCREVE A DOC:** a doc de cada PR (`HISTORICO.md` +
+`ESTADO.md`) é escrita pela **SESSÃO PRINCIPAL**. O `doc-writer` passa a ser ferramenta **OPCIONAL
+de rascunho**: só a sessão principal o invoca, ela audita o rascunho antes de usar qualquer linha,
+e ele nunca commita. Motivo: os 23 erros factuais de `HISTORICO.md:4895`. Regra em `CLAUDE.md`
+§"O que ler em sessão nova", parágrafo "Ao concluir um PR"; nenhum subagente chama outro (`.claude/agents/junior-dev.md` passo 7).
+
+**🔒 DECISÃO DO MARCOS, 2026-10-29 — `doc-writer` EM HAIKU 5.5 COM CONTRATO DE FATOS:**
+`model: claude-haiku-5-5`, ferramentas só `Read, Grep, Glob` (sem `Write`, `Edit`, `Bash`). Entrada:
+bloco FATOS passado pela sessão principal (números medidos, SHAs, arquivos, decisões do dev, seção
+de destino); usa só isso e o que ler nos arquivos. Saída: rascunho em texto, cada número com a
+fonte entre colchetes (`[FATOS #3]`, `[ESTADO.md:120]`), o que não tiver fonte vira
+`[FALTA: o quê]`; nunca apaga nem reescreve seção, só propõe acréscimo ou a substituição da
+§"Onde parei". Contrato completo em `.claude/agents/doc-writer.md`.
 
 ## 🔒 NOMES FICTÍCIOS — DECISÕES DO DEV, ditadas em 2026-08-25. Não reabrir sem ele.
 
