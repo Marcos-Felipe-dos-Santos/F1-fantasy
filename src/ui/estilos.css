@@ -650,6 +650,11 @@ button.card {
   stroke-linecap: butt;
 }
 
+/* PR 2b: pit lane e viaduto também terminam em ponta reta (as rampas nascem da pista; o tabuleiro é recortado por máscara). */
+.tracado-svg__camada--box {
+  stroke-linecap: butt;
+}
+
 .tracado-svg__carro {
   /* PR 7.3: cor de token de CARRO, não de token de raridade de peça/draft
      (ver doc de `carroBot` em `tokens.ts`, bomba-relógio do Modo Cego).

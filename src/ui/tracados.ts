@@ -31,9 +31,14 @@
  *
  * Todas as polilinhas são FECHADAS implicitamente: o último ponto liga de volta
  * ao primeiro (ver `pontoNoTracado`), sem repetir o primeiro ponto no fim.
+ *
+ * PR 2b: os traçados redesenhados neste PR são DERIVADOS da linha central real
+ * (bacinger/f1-circuits, MIT), simplificados e com as chicanes estilizadas; a
+ * posição aproximada das pit lanes vem do OpenStreetMap (ODbL), sem copiar
+ * pontos. Avisos de licença em `THIRD_PARTY_NOTICES.md`.
  */
 
-import type { TracadoImutavel } from './fluxo-corrida';
+import type { Ponto, TracadoImutavel } from './fluxo-corrida';
 import { TRACADO_GENERICO } from './fluxo-corrida';
 
 /**
@@ -612,3 +617,42 @@ export const TRACADOS_POR_PISTA: Readonly<Record<string, TracadoImutavel>> = {
 export function tracadoDaPista(pistaId: string): TracadoImutavel {
   return TRACADOS_POR_PISTA[pistaId] ?? TRACADO_GENERICO;
 }
+
+/**
+ * PIT LANE declarada (PR 2b). Frações da volta medidas por arco do traçado
+ * SUAVIZADO a partir do vértice 0, no sentido de corrida; geometria e desenho
+ * em `box.ts`. Entrada, saída e lado vêm da pit lane real (OpenStreetMap), só
+ * como posição aproximada.
+ */
+export interface BoxDeclarado {
+  /** Onde a rampa de entrada começa (fração da volta, 0..1). */
+  readonly entrada: number;
+  /** Onde a rampa de saída termina. Menor que `entrada` = o box cruza a largada. */
+  readonly saida: number;
+  /** +1 / −1: lado do deslocamento em relação à normal (−ty, tx) da tangente. */
+  readonly lado: 1 | -1;
+  readonly afastamento: number;
+  readonly rampa: number;
+}
+
+export const BOXES_POR_PISTA: Readonly<Record<string, BoxDeclarado>> = {
+  // Do lado de dentro da reta principal, da saída da Parabólica até antes do Rettifilo.
+  'pista-monza': { entrada: 0.9026, saida: 0.0318, lado: 1, afastamento: 48, rampa: 60 },
+};
+
+/**
+ * VIADUTO declarado (PR 2b): cruzamento real do traçado, desenhado como ponte
+ * (`viaduto.ts`). `centro` é o vértice compartilhado; `controleBaixo` e
+ * `controleCima` são os índices desse vértice na passagem de baixo e na de
+ * cima. A cerca de folga só isenta o círculo em volta de `centro`.
+ */
+export interface ViadutoDeclarado {
+  readonly centro: Ponto;
+  readonly controleBaixo: number;
+  readonly controleCima: number;
+}
+
+export const VIADUTOS_POR_PISTA: Readonly<Record<string, readonly ViadutoDeclarado[]>> = {
+  // Reta traseira (#33) passa POR CIMA da ligação Degner 2 → hairpin (#16).
+  'pista-suzuka': [{ centro: { x: 452, y: 376 }, controleBaixo: 16, controleCima: 33 }],
+};

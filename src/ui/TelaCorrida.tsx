@@ -5,6 +5,7 @@
  * componente só resolve nomes pro dataset e desenha.
  */
 
+import { Fragment } from 'react';
 import type { DraftState, Pista, ResultadoCorrida, ResultadoQuali } from '../engine/types';
 import { dataset } from './dataset-app';
 import {
@@ -31,6 +32,14 @@ import {
   varDeCor,
 } from './pista-camadas';
 import { tracadoSuavizado } from './suavizacao';
+import { LARGURA_BORDA_BOX, LARGURA_BOX, pathDoBox } from './box';
+import {
+  LARGURA_ESCAPE as LARGURA_ESCAPE_VIADUTO,
+  OPACIDADE_SOMBRA,
+  OPACIDADE_TABULEIRO,
+  estaSobViaduto,
+  pathsDosViadutos,
+} from './viaduto';
 
 /**
  * Camadas do traçado de `pistaId` (PR 7.3): a pilha `CAMADAS_PISTA`
@@ -43,19 +52,38 @@ import { tracadoSuavizado } from './suavizacao';
  * desenha).
  */
 export function CamadasDaPista({ pistaId }: { pistaId: string }) {
+  const box = pathDoBox(pistaId);
   return (
     <>
       {CAMADAS_PISTA.map((camada) =>
         camada.alvo === 'volta' ? (
-          <path
-            key={camada.id}
-            d={pathDaVolta(pistaId)}
-            stroke={varDeCor(camada.cor)}
-            strokeWidth={camada.largura}
-            strokeDasharray={camada.tracejado}
-            strokeDashoffset={camada.deslocamentoTracejado}
-            className="tracado-svg__camada"
-          />
+          <Fragment key={camada.id}>
+            <path
+              d={pathDaVolta(pistaId)}
+              stroke={varDeCor(camada.cor)}
+              strokeWidth={camada.largura}
+              strokeDasharray={camada.tracejado}
+              strokeDashoffset={camada.deslocamentoTracejado}
+              className="tracado-svg__camada"
+            />
+            {/* PR 2b: a pit lane entra na pilha logo depois do muro (ver `box.ts`). */}
+            {camada.id === 'muro' && box !== null && (
+              <>
+                <path
+                  d={box}
+                  stroke={varDeCor('pistaLimite')}
+                  strokeWidth={LARGURA_BORDA_BOX}
+                  className="tracado-svg__camada tracado-svg__camada--box"
+                />
+                <path
+                  d={box}
+                  stroke={varDeCor('pistaServico')}
+                  strokeWidth={LARGURA_BOX}
+                  className="tracado-svg__camada tracado-svg__camada--box"
+                />
+              </>
+            )}
+          </Fragment>
         ) : (
           pathsDeZebraDaPista(pistaId).map((trecho) => (
             <path
@@ -70,6 +98,54 @@ export function CamadasDaPista({ pistaId }: { pistaId: string }) {
           ))
         ),
       )}
+    </>
+  );
+}
+
+/**
+ * Viadutos de `pistaId` (PR 2b, `viaduto.ts`): tabuleiro semitransparente da
+ * passagem de cima, recortado pela faixa da passagem de baixo, com o
+ * guarda-corpo opaco. Vai DEPOIS dos carros que estão sob a ponte e ANTES dos
+ * demais (ver `TelaCorrida`).
+ */
+export function ViadutosDaPista({ pistaId }: { pistaId: string }) {
+  return (
+    <>
+      {pathsDosViadutos(pistaId).map((v, i) => {
+        const id = `viaduto-${pistaId}-${i}`;
+        const camada = (nome: 'escape' | 'muro' | 'asfalto', d: string) => {
+          const c = CAMADAS_PISTA.find((x) => x.id === nome);
+          return c === undefined ? null : (
+            <path d={d} stroke={varDeCor(c.cor)} strokeWidth={c.largura} className="tracado-svg__camada tracado-svg__camada--box" />
+          );
+        };
+        return (
+          <g key={id}>
+            <defs>
+              <mask id={id} maskUnits="userSpaceOnUse" x={VIEWBOX_X} y={VIEWBOX_Y} width={VIEWBOX_LARGURA} height={VIEWBOX_ALTURA}>
+                <path d={v.mascara} stroke="#fff" strokeWidth={LARGURA_ESCAPE_VIADUTO} className="tracado-svg__camada tracado-svg__camada--box" />
+              </mask>
+            </defs>
+            <g mask={`url(#${id})`}>
+              <g opacity={OPACIDADE_SOMBRA}>{camada('escape', v.sombra)}</g>
+              <g opacity={OPACIDADE_TABULEIRO}>
+                {camada('escape', v.tabuleiro)}
+                {camada('muro', v.tabuleiro)}
+                {camada('asfalto', v.tabuleiro)}
+              </g>
+              {v.guardaCorpo.map((d) => (
+                <path
+                  key={d}
+                  d={d}
+                  stroke={varDeCor('pistaLimite')}
+                  strokeWidth={v.espessuraGuardaCorpo}
+                  className="tracado-svg__camada tracado-svg__camada--box"
+                />
+              ))}
+            </g>
+          </g>
+        );
+      })}
     </>
   );
 }
@@ -174,6 +250,41 @@ export function TelaCorrida({
   const gridLargada = grid.grid.map((item) => item.jogadorId);
   const classificacaoAtual = classificacaoAoVivo(resultado, gridLargada, tempoSimMs, pista.voltas);
 
+  const carrosDoReplay = resultado.classificacao.map((item) => {
+    const historico = resultado.historicoVoltas[item.jogadorId] ?? [];
+    const fracao = fracaoVisual(historico, tempoSimMs, item.status, pista.voltas);
+    // Curva SUAVIZADA, a mesma geometria que `pathDaVolta` desenha
+    // (PR 7.4): usar a polilinha de controle aqui deixaria os carros
+    // cortando as curvas por fora do asfalto desenhado.
+    const ponto = pontoNoTracado(tracadoSuavizado(pista.id), fracao);
+    const somaHistorico = acumularVoltas(historico).at(-1) ?? 0;
+    const congelado = item.status === 'dnf' && tempoSimMs >= somaHistorico;
+    const ehHumano = ehHumanoId(state, item.jogadorId);
+    const classes = [
+      'tracado-svg__carro',
+      ehHumano ? 'tracado-svg__carro--humano' : '',
+      congelado ? 'tracado-svg__carro--congelado' : '',
+    ]
+      .filter(Boolean)
+      .join(' ');
+    return {
+      // PR 2b: carro na passagem de baixo de um viaduto é desenhado ANTES do
+      // tabuleiro, pra aparecer através dele e não por cima.
+      sob: estaSobViaduto(pista.id, fracao),
+      el: (
+        <circle
+          key={item.jogadorId}
+          cx={ponto.x}
+          cy={ponto.y}
+          r={ehHumano ? RAIO_CARRO_HUMANO : RAIO_CARRO_BOT}
+          className={classes}
+        >
+          <title>{`${nomeDoJogadorId(state, item.jogadorId)} — ${nomePiloto(state, item.jogadorId)}`}</title>
+        </circle>
+      ),
+    };
+  });
+
   return (
     <div className="tela-corrida">
       <div className="tela-corrida__cabecalho">
@@ -208,35 +319,9 @@ export function TelaCorrida({
               className="tracado-svg__chao"
             />
             <CamadasDaPista pistaId={pista.id} />
-            {resultado.classificacao.map((item) => {
-              const historico = resultado.historicoVoltas[item.jogadorId] ?? [];
-              const fracao = fracaoVisual(historico, tempoSimMs, item.status, pista.voltas);
-              // Curva SUAVIZADA, a mesma geometria que `pathDaVolta` desenha
-              // (PR 7.4): usar a polilinha de controle aqui deixaria os carros
-              // cortando as curvas por fora do asfalto desenhado.
-              const ponto = pontoNoTracado(tracadoSuavizado(pista.id), fracao);
-              const somaHistorico = acumularVoltas(historico).at(-1) ?? 0;
-              const congelado = item.status === 'dnf' && tempoSimMs >= somaHistorico;
-              const ehHumano = ehHumanoId(state, item.jogadorId);
-              const classes = [
-                'tracado-svg__carro',
-                ehHumano ? 'tracado-svg__carro--humano' : '',
-                congelado ? 'tracado-svg__carro--congelado' : '',
-              ]
-                .filter(Boolean)
-                .join(' ');
-              return (
-                <circle
-                  key={item.jogadorId}
-                  cx={ponto.x}
-                  cy={ponto.y}
-                  r={ehHumano ? RAIO_CARRO_HUMANO : RAIO_CARRO_BOT}
-                  className={classes}
-                >
-                  <title>{`${nomeDoJogadorId(state, item.jogadorId)} — ${nomePiloto(state, item.jogadorId)}`}</title>
-                </circle>
-              );
-            })}
+            {carrosDoReplay.filter((c) => c.sob).map((c) => c.el)}
+            <ViadutosDaPista pistaId={pista.id} />
+            {carrosDoReplay.filter((c) => !c.sob).map((c) => c.el)}
           </svg>
           <p className="tracado-svg__legenda">{pista.nome}</p>
         </div>

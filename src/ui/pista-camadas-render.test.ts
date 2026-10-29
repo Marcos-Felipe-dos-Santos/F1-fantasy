@@ -16,6 +16,8 @@ import { describe, expect, it } from 'vitest';
 import { CAMADAS_PISTA, pathDaVolta, pathDoTrecho, varDeCor, zebrasDaPista } from './pista-camadas';
 import { indiceDoVertice, tracadoSuavizado, trechoPorArco } from './suavizacao';
 import { CamadasDaPista } from './TelaCorrida';
+import { LARGURA_BORDA_BOX, LARGURA_BOX, caminhoDoBox } from './box';
+import { BOXES_POR_PISTA } from './tracados';
 
 const PISTA_ID = 'pista-monza';
 
@@ -68,8 +70,12 @@ describe('CamadasDaPista renderiza CAMADAS_PISTA fielmente (Aviso 3 da revisão 
   const camadasDeCurva = CAMADAS_PISTA.filter((c) => c.alvo === 'curvas').length;
   const trechos = zebrasDaPista(PISTA_ID);
 
-  it(`sai exatamente ${camadasDeVolta} paths de volta + ${trechos.length} trechos × ${camadasDeCurva} camadas de curva`, () => {
-    const esperado = camadasDeVolta + trechos.length * camadasDeCurva;
+  // PR 2b: Monza declara pit lane — borda + superfície, 2 paths a mais.
+  const box = BOXES_POR_PISTA[PISTA_ID];
+  const pathsDoBox = box === undefined ? 0 : 2;
+
+  it(`sai exatamente ${camadasDeVolta} paths de volta + ${trechos.length} trechos × ${camadasDeCurva} camadas de curva + ${pathsDoBox} do box`, () => {
+    const esperado = camadasDeVolta + trechos.length * camadasDeCurva + pathsDoBox;
     expect(paths.length).toBe(esperado);
   });
 
@@ -85,6 +91,24 @@ describe('CamadasDaPista renderiza CAMADAS_PISTA fielmente (Aviso 3 da revisão 
       };
       if (camada.alvo === 'volta') {
         esperado.push({ ...comum, d: pathDaVolta(PISTA_ID), className: 'tracado-svg__camada' });
+        // PR 2b: a pit lane entra logo DEPOIS do muro — derivada aqui da
+        // geometria do box, não lida de `pathDoBox`.
+        if (camada.id === 'muro' && box !== undefined) {
+          const d = pathDoTrecho(caminhoDoBox(tracadoSuavizado(PISTA_ID), box).amostras.map((a) => a.p));
+          for (const [cor, largura] of [
+            ['pistaLimite', LARGURA_BORDA_BOX],
+            ['pistaServico', LARGURA_BOX],
+          ] as const) {
+            esperado.push({
+              d,
+              stroke: varDeCor(cor),
+              strokeWidth: String(largura),
+              strokeDasharray: undefined,
+              strokeDashoffset: undefined,
+              className: 'tracado-svg__camada tracado-svg__camada--box',
+            });
+          }
+        }
       } else {
         // PR 7.4: a zebra é recortada da CURVA por comprimento de arco, não
         // mais os 3 pontos sobre as retas de controle. Derivado aqui de novo

@@ -618,7 +618,7 @@ describe('fusão de asfalto (3.8 — documenta e trava o que foi medido)', () =>
     'pista-interlagos': 29.7,
     'pista-nurburgring': 29.5,
     'pista-monaco': 29.1,
-    'pista-monza': 21.5,
+    'pista-monza': 19.6, // PR 2b: Monza da linha central real (era 21,5).
     'pista-silverstone': 27.5,
     'pista-montreal': 23.8,
     'pista-suzuka': 20.9,
@@ -666,10 +666,12 @@ describe('fusão de asfalto (3.8 — documenta e trava o que foi medido)', () =>
    * valendo pras 10 e Monza passa com 11,6 de folga. O que este teste trava agora
    * é o VALOR medido — se subir, alguém mexeu na chicane sem perceber.
    */
-  it('Monza: 12,5 de sobreposição — a chicane como degrau custa isso, e o teto de 17 segue de pé', () => {
+  // PR 2b: Monza redesenhada da linha central real; o mesmo degrau, agora na posição real do
+  // Rettifilo, mede 14,4 (minNaoAdj 19,6). Teto de 17 de pé.
+  it('Monza: 14,4 de sobreposição — a chicane como degrau custa isso, e o teto de 17 segue de pé', () => {
     const tracado = tracadoDaPista('pista-monza');
     const sobreposicao = Math.max(0, LARGURA_ASFALTO - minNaoAdj(tracado));
-    expect(sobreposicao).toBeCloseTo(12.5, 1);
+    expect(sobreposicao).toBeCloseTo(14.4, 1);
     expect(sobreposicao).toBeLessThanOrEqual(LARGURA_ASFALTO / 2);
   });
 
@@ -680,7 +682,7 @@ describe('fusão de asfalto (3.8 — documenta e trava o que foi medido)', () =>
    * desenhar ali, então a camada de limite também se funde). Números
    * escritos pro 7.4 (Bézier) comparar antes/depois da suavização.
    */
-  it('report-only: fusão da camada de LIMITE (largura 42) — as 10 fundem depois do redesenho, de 8,5 (RBR) a 21,1 (Suzuka)', () => {
+  it('report-only: fusão da camada de LIMITE (largura 42) — as 10 fundem depois do redesenho, de 8,5 (RBR) a 22,4 (Monza, PR 2b)', () => {
     const larguraLimite = CAMADAS_PISTA.find((c) => c.id === 'limite')?.largura;
     expect(larguraLimite).toBe(42);
     /**
@@ -695,7 +697,7 @@ describe('fusão de asfalto (3.8 — documenta e trava o que foi medido)', () =>
       'pista-suzuka': 21.1,
       'pista-montreal': 18.2,
       'pista-silverstone': 14.5,
-      'pista-monza': 20.5,
+      'pista-monza': 22.4, // PR 2b: Monza da linha central real (era 20,5).
       'pista-monaco': 12.9,
       'pista-nurburgring': 12.5,
       'pista-interlagos': 12.3,
@@ -746,7 +748,8 @@ describe('zebra (3.9)', () => {
   > = {
     'pista-monaco': { candidatos: 16, candidatosPorJanela: 31, escolhidos: 24, coberturaPct: 39.0, indices: [3, 4, 10, 11, 12, 17, 18, 19, 20, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45] },
     'pista-spa': { candidatos: 13, candidatosPorJanela: 18, escolhidos: 18, coberturaPct: 33.4, indices: [2, 3, 4, 5, 18, 19, 20, 22, 23, 24, 28, 34, 35, 37, 41, 42, 45, 46] },
-    'pista-monza': { candidatos: 11, candidatosPorJanela: 31, escolhidos: 27, coberturaPct: 38.5, indices: [3, 4, 5, 6, 7, 8, 11, 12, 13, 17, 18, 19, 20, 21, 23, 24, 25, 27, 28, 34, 35, 36, 37, 42, 43, 44, 45] },
+    // PR 2b: Monza da linha central real.
+    'pista-monza': { candidatos: 11, candidatosPorJanela: 30, escolhidos: 25, coberturaPct: 39.1, indices: [2, 3, 4, 5, 6, 7, 10, 15, 16, 17, 18, 20, 21, 22, 23, 24, 27, 28, 29, 30, 33, 34, 35, 36, 37] },
     'pista-silverstone': { candidatos: 22, candidatosPorJanela: 23, escolhidos: 22, coberturaPct: 39.7, indices: [3, 4, 6, 7, 8, 9, 10, 11, 15, 16, 18, 19, 20, 26, 30, 31, 32, 37, 38, 40, 41, 42] },
     'pista-suzuka': { candidatos: 23, candidatosPorJanela: 29, escolhidos: 20, coberturaPct: 38.7, indices: [3, 4, 7, 8, 9, 10, 11, 12, 15, 16, 19, 20, 21, 22, 23, 26, 27, 29, 38, 39] },
     'pista-interlagos': { candidatos: 19, candidatosPorJanela: 26, escolhidos: 22, coberturaPct: 39.4, indices: [3, 4, 5, 6, 7, 8, 9, 14, 15, 16, 20, 21, 22, 23, 24, 26, 27, 28, 29, 31, 33, 34] },
@@ -859,7 +862,7 @@ describe('zebra (3.9)', () => {
   const DIVERGENCIA_POS_REDESENHO: Record<string, number[]> = {
     'pista-monaco': [5, 12, 13, 16, 20, 22, 32, 34, 35, 37, 39, 40, 42, 43, 45],
     'pista-spa': [2, 5, 34, 41, 46],
-    'pista-monza': [3, 4, 6, 8, 10, 11, 12, 13, 17, 20, 21, 22, 23, 25, 26, 27, 34, 37, 38, 42],
+    'pista-monza': [2, 3, 5, 7, 9, 10, 11, 12, 15, 18, 20, 22, 27, 30, 31, 33, 36, 37, 38], // PR 2b: Monza da linha central real.
     'pista-silverstone': [41],
     'pista-suzuka': [9, 11, 16, 19, 26, 37],
     'pista-interlagos': [3, 5, 7, 9, 14, 16, 28],
@@ -942,19 +945,20 @@ describe('zebra (3.9)', () => {
    * algoritmo faz `continue` quando estouraria o teto, então essa comparação
    * não pode falhar e não detecta nada.
    */
-  it('não-regressão da zebra de Monza REDESENHADA: 27 trechos e 38,5% — e o teto de 40% MORDE, cortando 4 candidatos', () => {
+  // PR 2b: Monza redesenhada da linha central real — era 27 trechos / 38,5%, 31 / 45,9% sem teto, 4 cortados.
+  it('não-regressão da zebra de Monza REDESENHADA: 25 trechos e 39,1% — e o teto de 40% MORDE, cortando 5 candidatos', () => {
     const tracado = tracadoDaPista('pista-monza');
     const trechos = trechosDeZebra(tracado);
-    expect(trechos.length).toBe(27);
-    expect(coberturaAprox(tracado, trechos)).toBeCloseTo(38.5, 0);
+    expect(trechos.length).toBe(25);
+    expect(coberturaAprox(tracado, trechos)).toBeCloseTo(39.1, 0);
 
-    // Sem teto seriam 31 trechos / 45,9% — a diferença é o corte, e é ela que
+    // Sem teto seriam 30 trechos / 47,9% — a diferença é o corte, e é ela que
     // prova que o teto é vinculante nesta pista.
     const semTeto = trechosDeZebra(tracado, { coberturaMaxima: 1 });
-    expect(semTeto).toHaveLength(31);
-    expect(coberturaAprox(tracado, semTeto)).toBeCloseTo(45.9, 0);
+    expect(semTeto).toHaveLength(30);
+    expect(coberturaAprox(tracado, semTeto)).toBeCloseTo(47.9, 0);
     const cortados = semTeto.map((t) => t.indice).filter((i) => !trechos.some((t) => t.indice === i));
-    expect(cortados).toEqual([10, 22, 26, 38]);
+    expect(cortados).toEqual([9, 11, 12, 31, 38]);
   });
 
   /**
@@ -1159,8 +1163,11 @@ describe('zebra (3.9)', () => {
    */
   it('regra 3 continua valendo em densidade alta: nenhum trecho de Monza cobre o meio das retas longas (48 → 80 → 120)', () => {
     const curva = suavizarPolilinhaFechada(tracadoDaPista('pista-monza'));
-    const meioLargada = { x: 400, y: 500 };
-    const meioRettilineo = { x: 485, y: 105 };
+    // PR 2b: meios das retas da Monza redesenhada (a reta principal e a reta
+    // oposta); os pontos antigos, (400,500) e (485,105), caíam no Rettifilo e
+    // fora da pista nova.
+    const meioLargada = { x: 570, y: 513 };
+    const meioRettilineo = { x: 750, y: 411 };
     for (const densidade of [48, 80, 120]) {
       const pontos = reamostrarPorArco(curva, densidade);
       for (const { antes, depois } of trechosDeZebra(pontos)) {
@@ -1191,8 +1198,11 @@ describe('zebra (3.9)', () => {
     const tracado = tracadoDaPista('pista-monza');
     const trechos = trechosDeZebra(tracado);
     // meio da reta de largada (150,500)-(650,500): (400,500); meio do Rettilineo (650,110)-(320,100): (485,105)
-    const meioLargada = { x: 400, y: 500 };
-    const meioRettilineo = { x: 485, y: 105 };
+    // PR 2b: meios das retas da Monza redesenhada (a reta principal e a reta
+    // oposta); os pontos antigos, (400,500) e (485,105), caíam no Rettifilo e
+    // fora da pista nova.
+    const meioLargada = { x: 570, y: 513 };
+    const meioRettilineo = { x: 750, y: 411 };
     for (const { antes, depois } of trechos) {
       for (const meio of [meioLargada, meioRettilineo]) {
         const dentroDoSegmento =

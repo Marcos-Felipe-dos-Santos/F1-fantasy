@@ -523,72 +523,65 @@ export function classificacaoAoVivo(
  * Monza na hora. Lesmo 1+2 juntas fazem o cotovelo, e a Parabólica é o único
  * arco realmente longo e contínuo do traçado.
  *
+ * 🔁 PR 2b (2026-10-29): REDESENHADA a partir da linha central REAL
+ * (bacinger/f1-circuits, MIT — ver `THIRD_PARTY_NOTICES.md`), alinhada a esta
+ * silhueta, reescalada uniformemente pra moldura e simplificada. Desvio médio
+ * ao real medido por `referencias/pistas-2b/gerar_referencias.py`: 1,1% → 0,4%.
+ * Na escala do jogo as três chicanes reais viravam ondulações invisíveis, então
+ * são DEGRAUS estilizados do tamanho dos aprovados no 7.7, nas posições reais.
+ *
  * Continua sendo a silhueta de Monza (reaproveitada diretamente por
  * `TRACADOS_POR_PISTA`) E o FALLBACK genérico de `tracadoDaPista` pra um id de
  * pista sem silhueta própria.
  */
 export const TRACADO_GENERICO: TracadoImutavel = [
-  // Reta principal (Rettifilo Tribune) — horizontal, da direita pra
-  // esquerda, a mais longa do traçado.
-  { x: 636, y: 510 },
-  { x: 556, y: 506 },
-  { x: 476, y: 504 },
-  { x: 434, y: 502 },
-  // Variante del Rettifilo: degrau logo no fim da reta. Largo o bastante pra
-  // os dois lados não fundirem (é o que aperta o `minNaoAdj` em Monza), mas
-  // ainda um DEGRAU — arredondar aqui tira a Monza na hora.
-  { x: 410, y: 490 },
-  { x: 390, y: 472 },
-  { x: 366, y: 488 },
-  { x: 352, y: 512 },
-  { x: 320, y: 520 },
-  { x: 278, y: 520 },
-  { x: 234, y: 516 },
-  // Curva Grande / Biassono: arco amplo à direita, vira a pista pra cima.
-  { x: 202, y: 510 },
-  { x: 180, y: 494 },
-  { x: 166, y: 468 },
-  { x: 160, y: 436 },
-  // Subida pelo lado esquerdo (reta de Biassono).
-  { x: 158, y: 384 },
-  { x: 154, y: 314 },
-  // Variante della Roggia: segundo degrau, no lado esquerdo.
-  { x: 152, y: 282 },
-  { x: 142, y: 258 },
-  { x: 100, y: 246 },
-  { x: 92, y: 226 },
-  // Subida pras Lesmo.
-  { x: 92, y: 204 },
-  { x: 78, y: 170 },
-  { x: 64, y: 140 },
-  // Lesmo 1 + Lesmo 2, no canto de cima — o cotovelo da cunha.
-  { x: 56, y: 120 },
-  { x: 76, y: 102 },
-  { x: 108, y: 92 },
-  { x: 150, y: 86 },
-  { x: 190, y: 80 },
-  // Reta do Serraglio: a diagonal longa descendo pra direita.
-  { x: 226, y: 112 },
-  { x: 270, y: 156 },
-  { x: 320, y: 212 },
-  { x: 376, y: 274 },
-  { x: 430, y: 332 },
-  // Variante Ascari: três degraus encadeados.
-  { x: 452, y: 354 },
-  { x: 476, y: 376 },
-  { x: 502, y: 362 },
-  { x: 528, y: 382 },
-  { x: 550, y: 394 },
-  // Reta traseira, horizontal.
-  { x: 640, y: 402 },
-  { x: 746, y: 404 },
-  { x: 830, y: 406 },
-  // Parabólica / Alboreto: o único arco longo e contínuo, de raio crescente.
-  { x: 888, y: 410 },
-  { x: 920, y: 428 },
-  { x: 924, y: 460 },
-  { x: 900, y: 488 },
-  { x: 854, y: 502 },
-  { x: 790, y: 506 },
-  { x: 714, y: 508 },
+  // Reta principal (da direita pra esquerda), largada.
+  { x: 625, y: 512 },
+  { x: 520, y: 513 },
+  { x: 436, y: 514 },
+  // Variante del Rettifilo: degrau.
+  { x: 412, y: 504 },
+  { x: 394, y: 484 },
+  { x: 370, y: 496 },
+  { x: 352, y: 516 },
+  { x: 318, y: 520 },
+  // Curva Biassono (Curva Grande): arco amplo pra cima.
+  { x: 262, y: 517 },
+  { x: 229, y: 511 },
+  { x: 201, y: 497 },
+  { x: 175, y: 471 },
+  { x: 161, y: 450 },
+  { x: 150, y: 425 },
+  // Subida → Variante della Roggia: degrau.
+  { x: 134, y: 330 },
+  { x: 126, y: 292 },
+  { x: 114, y: 272 },
+  { x: 90, y: 262 },
+  { x: 84, y: 238 },
+  // Lesmo 1 + 2 (pontos reais afinados: segmentos de 9 a 15 u reprovavam a
+  // guarda de asfalto da polilinha de controle, `pista-camadas.test.ts`).
+  { x: 70, y: 186 },
+  { x: 58, y: 140 },
+  { x: 62, y: 112 },
+  { x: 84, y: 99 },
+  { x: 166, y: 82 },
+  { x: 186, y: 92 },
+  // Serraglio, a diagonal longa.
+  { x: 270, y: 214 },
+  { x: 400, y: 338 },
+  { x: 432, y: 366 },
+  // Variante Ascari: degrau duplo.
+  { x: 456, y: 384 },
+  { x: 482, y: 372 },
+  { x: 508, y: 392 },
+  { x: 534, y: 406 },
+  { x: 600, y: 410 },
+  // Reta oposta → Parabólica (Alboreto).
+  { x: 896, y: 412 },
+  { x: 916, y: 422 },
+  { x: 924, y: 444 },
+  { x: 919, y: 463 },
+  { x: 901, y: 486 },
+  { x: 872, y: 501 },
+  { x: 771, y: 514 },
 ];
