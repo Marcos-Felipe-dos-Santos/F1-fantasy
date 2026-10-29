@@ -406,6 +406,36 @@ dependência).
 
 ## Onde parei
 
+### 2026-10-29 — PR 2b EM ANDAMENTO (redesenho das pistas + box), lote 0 commitado (`82bac6a`)
+
+> Nota de passagem entre sessões, escrita pela sessão principal. **Não é a doc de fechamento do
+> PR** (essa vem no fim, com `HISTORICO.md`). **Não commitada.**
+
+- **Decisões do Marcos de hoje** (registrar na doc de fechamento, §DECISÕES):
+  - nova ordem: PR 1 ✅ → **PR 2b (pistas, este)** → PR 2a → PR 2c (só a animação do pit) → PR 3. O PR R segue pendente, sem posição. Motivo: arrumar a geometria antes de desenhar carros e spray.
+  - **o traçado do box entra no 2b**;
+  - traçados **derivados da linha central real** (bacinger/f1-circuits, MIT), simplificados, chicanes estilizadas; pit lane posicionada pelo OSM, sem copiar pontos (`THIRD_PARTY_NOTICES.md`, GDD §14.2);
+  - ponte de Suzuka **semitransparente, nível A (75%)**;
+  - **"mesma curva" FORA do PR**: pendência nova a abrir (zebras internas de grampo/chicane se tocando em 9 das 10 pistas).
+- **Feito em `82bac6a`:** cerca `scripts/folga-pistas.test.ts`, Monza nova (desvio 1,1% → 0,4%) com box, `box.ts`, `viaduto.ts`, ponte de Suzuka sobre a geometria ANTIGA. **Suíte vermelha de propósito: 11 falhas, todas da cerca.**
+- **Próximo: lote 1 = Interlagos, Mônaco, Suzuka** (ordem do `referencias/pistas-2b/desvios.txt`), parar a cada 3 pistas para aprovação, um commit por lote.
+- **Método (o mesmo da Monza):**
+  1. `python -I scripts/derivar-tracado-real.py <pista> 2 referencias/pistas-2b .` gera os pontos alinhados e a pit lane OSM;
+  2. estilizar as chicanes;
+  3. afinar pontos densos (a guarda de asfalto ≤ 17 é por índice);
+  4. medir com a cerca e com `gerar_referencias.py`, numa cópia, para não sobrescrever os arquivos "antes";
+  5. preview `scripts/preview-pr2b-box.preview.test.ts`;
+  6. recapturar os goldens da pista, só os valores medidos.
+- **Rascunhos NÃO rastreados, não commitar:**
+  - `scripts/derivar-tracado-real.py`
+  - `scripts/redesenho-pr2b.ts`
+  - `scripts/propostas-pr2b.ts`
+  - `scripts/preview-pr2b-*.preview.test.ts`
+- ⚠️ **Lições desta sessão:**
+  - NÃO rodar `prettier --write` em arquivo existente: o repositório não está formatado pelo prettier, e ele reformata código alheio.
+  - Python no Windows grava CRLF: abrir com `newline='\n'`.
+- **No fim do PR:** regerar `docs/img/silhuetas.svg`, rodar o `senior-reviewer` (risco ALTO), escrever a doc. Sem push até a cerca e o `npm test` estarem verdes.
+
 ### 2026-10-29 — Ciclo de regras de doc (sem PR de produto)
 
 Após `d6f77cf`, a branch tem 4 commits só de doc/config, nenhum em `src/`: `206aed0`, `ec41694`,
