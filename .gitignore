@@ -60,3 +60,9 @@ src/data/*.tmp
 # a fonte das regras é CLAUDE.md / .claude/ (AGENTS.md só aponta para lá).
 .codex/
 .agents/
+
+# Permissões locais do Claude Code (caminhos da máquina, aprovações pessoais): nunca publicar.
+.claude/settings.local.json
+
+# Cache incremental do `tsc -b` (o typecheck do projeto usa --noEmit e não gera isto).
+*.tsbuildinfo
