@@ -403,6 +403,20 @@ dependência).
 
 ## Onde parei
 
+### 2026-10-29 — Ciclo de regras de doc (sem PR de produto)
+
+Após `d6f77cf`, a branch tem 4 commits só de doc/config, nenhum em `src/`: `206aed0`, `ec41694`,
+`f1b6dc3`, `2ac569c` (detalhe em `HISTORICO.md` §"2026-10-28/29 — Ciclo de regras de doc"). Regra
+vigente desde `2ac569c`: **a sessão principal escreve a doc**; o `doc-writer` é rascunho opcional
+em Haiku 5.5, só leitura, e nunca commita (§"🔒 DECISÕES DO MARCOS — VIGENTES"). Teste do
+`doc-writer`: modelo e ferramentas conferidos no transcript; a lacuna virou `[FALTA]`. ⚠️ A sessão
+aberta antes do `2ac569c` entregou ao subagente o `CLAUDE.md` antigo, em cache; que sessão nova
+resolva **não foi testado** — conferir na próxima. `npm test` 1764/81 em 2026-10-29. Sem push,
+merge ou deploy.
+
+**Próximo:** PR R (rename para Paddock Draft), em sessão nova, bloqueado pela escolha de URL da
+`0(aq)` — ver o "Próximo" do PR 1, logo abaixo.
+
 ### 2026-10-28 — PR 1 Resultados COMMITADO (`d6f77cf`, branch `codex/pr1-resultados`)
 
 **Autorização de 2026-10-21:** Marcos aprovou o commit documental `26ad532`, o pódio

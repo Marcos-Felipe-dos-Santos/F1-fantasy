@@ -7020,6 +7020,32 @@ Nenhum push, merge, deploy ou tag; rename e demais PRs não iniciados.
 
 **Veredito visual 2026-10-28: prints aprovados pelo Marcos; produto commitado nesta branch.** Antes do commit, a sessão principal mediu 1764/81 testes principais e 46/8 Worker; typecheck, lint e build verdes; `versao.test.ts` 3/3; 3.4.7, save 4 e digest `61184d3b`; diff vazio em engine/data/party/net. Sem push, merge ou deploy. FPS em aparelho real continua pendente.
 
+### 2026-10-28/29 — Ciclo de regras de doc: sessão principal escreve, `doc-writer` vira rascunho
+
+- **Escopo:** 4 commits só de doc/config na `codex/pr1-resultados`, após `d6f77cf`, nenhum em
+  `src/`: `206aed0` (reorganiza o `ESTADO.md`; medições de 2026-08-18 a 09-02 e o bloco de 18/10
+  arquivados neste arquivo; regra de no máximo 3 prints por PR visual), `ec41694` (`ESTADO.md` nunca
+  se lê inteiro, decisão do dev de 2026-10-28), `f1b6dc3` (`AGENTS.md` vira ponteiro; `.codex/` e
+  `.agents/` no `.gitignore`) e `2ac569c`.
+- **`2ac569c` — decisões do Marcos de 2026-10-29** (`ESTADO.md` §"🔒 DECISÕES DO MARCOS —
+  VIGENTES"): a doc de cada PR é escrita pela sessão principal; o `doc-writer` vira rascunho
+  opcional, invocado só por ela, auditado antes de usar qualquer linha, sem commit. Motivo: os 23
+  erros factuais de `HISTORICO.md:4895`. O `doc-writer` passa a `claude-haiku-5-5`, só
+  `Read, Grep, Glob`, com contrato de FATOS. No mesmo commit, sem commit separado: `junior-dev.md`
+  passo 7 (devolve à sessão principal; nenhum subagente chama outro) e `pr-workflow/SKILL.md` (só a
+  sessão principal prepara commit e pede o ok).
+- **Teste do `doc-writer` após `2ac569c`, sem mudar arquivo:** o transcript do subagente mostra
+  `"model":"claude-haiku-5-5"` nas respostas e só `Read, Grep, Glob` oferecidas; a lacuna
+  proposital (contagem de testes) virou `[FALTA: …]`, sem número inventado; `git status` limpo.
+- ⚠️ **`CLAUDE.md` em cache:** a sessão aberta antes do `2ac569c` passou ao subagente o `CLAUDE.md`
+  antigo (o transcript tem "AINDA DEPENDEM DA REGRA" e nada do texto novo). Disco e commit estão
+  corretos; que uma sessão nova resolva **não foi testado**.
+- **Doc deste ciclo:** rascunho do `doc-writer` auditado pela sessão principal; um erro corrigido
+  antes do uso (atribuía as edições de `junior-dev.md`/`pr-workflow` também ao `ec41694`, que não
+  toca nenhum dos dois).
+- **Medido:** `npm test` 1764 testes em 81 arquivos em 2026-10-29, após `2ac569c` — o mesmo número
+  do PR 1 (nenhum commit do ciclo toca código). Sem push, merge ou deploy.
+
 ## ARQUIVADO DO `ESTADO.md` em 2026-10-28 — §"Estado atual", medições de 2026-08-18 a 2026-09-02
 
 > Movido sem alteração pela sessão principal, a pedido do Marcos. Antes da cópia, 18,8% dos
