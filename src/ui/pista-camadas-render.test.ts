@@ -16,7 +16,15 @@ import { describe, expect, it } from 'vitest';
 import { CAMADAS_PISTA, pathDaVolta, pathDoTrecho, varDeCor, zebrasDaPista } from './pista-camadas';
 import { indiceDoVertice, tracadoSuavizado, trechoPorArco } from './suavizacao';
 import { CamadasDaPista } from './TelaCorrida';
-import { LARGURA_BORDA_BOX, LARGURA_BOX, caminhoDoBox } from './box';
+import {
+  ESPESSURA_BORDA_BOX,
+  LARGURA_BOX,
+  LARGURA_GARAGEM,
+  LARGURA_PIT_WALL,
+  TRACEJADO_GARAGEM,
+  caminhoDoBox,
+  desenhoDoBoxNaCurva,
+} from './box';
 import { BOXES_POR_PISTA } from './tracados';
 
 const PISTA_ID = 'pista-monza';
@@ -70,9 +78,10 @@ describe('CamadasDaPista renderiza CAMADAS_PISTA fielmente (Aviso 3 da revisão 
   const camadasDeCurva = CAMADAS_PISTA.filter((c) => c.alvo === 'curvas').length;
   const trechos = zebrasDaPista(PISTA_ID);
 
-  // PR 2b: Monza declara pit lane — borda + superfície, 2 paths a mais.
+  // PR 2b: Monza declara pit lane — superfície, borda externa, pit wall e
+  // garagens depois do muro; as 2 rampas depois do limite. 6 paths a mais.
   const box = BOXES_POR_PISTA[PISTA_ID];
-  const pathsDoBox = box === undefined ? 0 : 2;
+  const pathsDoBox = box === undefined ? 0 : 6;
 
   it(`sai exatamente ${camadasDeVolta} paths de volta + ${trechos.length} trechos × ${camadasDeCurva} camadas de curva + ${pathsDoBox} do box`, () => {
     const esperado = camadasDeVolta + trechos.length * camadasDeCurva + pathsDoBox;
@@ -91,19 +100,27 @@ describe('CamadasDaPista renderiza CAMADAS_PISTA fielmente (Aviso 3 da revisão 
       };
       if (camada.alvo === 'volta') {
         esperado.push({ ...comum, d: pathDaVolta(PISTA_ID), className: 'tracado-svg__camada' });
-        // PR 2b: a pit lane entra logo DEPOIS do muro — derivada aqui da
-        // geometria do box, não lida de `pathDoBox`.
-        if (camada.id === 'muro' && box !== undefined) {
-          const d = pathDoTrecho(caminhoDoBox(tracadoSuavizado(PISTA_ID), box).amostras.map((a) => a.p));
-          for (const [cor, largura] of [
-            ['pistaLimite', LARGURA_BORDA_BOX],
-            ['pistaServico', LARGURA_BOX],
-          ] as const) {
+        // PR 2b: a pit lane entra logo DEPOIS do muro e as rampas logo DEPOIS
+        // do limite (é o que abre a passagem). A faixa é derivada aqui da
+        // geometria do box, não lida de `pathDoBox`; as demais peças têm a
+        // geometria travada em `box-viaduto.test.ts`.
+        if (box !== undefined && (camada.id === 'muro' || camada.id === 'limite')) {
+          const desenho = desenhoDoBoxNaCurva(tracadoSuavizado(PISTA_ID), box);
+          const pecas: readonly (readonly [string, string, number, string | undefined])[] =
+            camada.id === 'muro'
+              ? [
+                  [pathDoTrecho(caminhoDoBox(tracadoSuavizado(PISTA_ID), box).amostras.map((a) => a.p)), 'pistaServico', LARGURA_BOX, undefined],
+                  [desenho.bordaExterna, 'pistaLimite', ESPESSURA_BORDA_BOX, undefined],
+                  [desenho.pitWall, 'pistaEscape', LARGURA_PIT_WALL, undefined],
+                  [desenho.garagens, 'pistaLimite', LARGURA_GARAGEM, TRACEJADO_GARAGEM],
+                ]
+              : desenho.rampas.map((d) => [d, 'pistaServico', LARGURA_BOX, undefined] as const);
+          for (const [d, cor, largura, tracejado] of pecas) {
             esperado.push({
               d,
-              stroke: varDeCor(cor),
+              stroke: varDeCor(cor as Parameters<typeof varDeCor>[0]),
               strokeWidth: String(largura),
-              strokeDasharray: undefined,
+              strokeDasharray: tracejado,
               strokeDashoffset: undefined,
               className: 'tracado-svg__camada tracado-svg__camada--box',
             });

@@ -32,7 +32,14 @@ import {
   varDeCor,
 } from './pista-camadas';
 import { tracadoSuavizado } from './suavizacao';
-import { LARGURA_BORDA_BOX, LARGURA_BOX, pathDoBox } from './box';
+import {
+  ESPESSURA_BORDA_BOX,
+  LARGURA_BOX,
+  LARGURA_GARAGEM,
+  LARGURA_PIT_WALL,
+  TRACEJADO_GARAGEM,
+  desenhoDoBox,
+} from './box';
 import {
   LARGURA_ESCAPE as LARGURA_ESCAPE_VIADUTO,
   OPACIDADE_SOMBRA,
@@ -52,7 +59,7 @@ import {
  * desenha).
  */
 export function CamadasDaPista({ pistaId }: { pistaId: string }) {
-  const box = pathDoBox(pistaId);
+  const box = desenhoDoBox(pistaId);
   return (
     <>
       {CAMADAS_PISTA.map((camada) =>
@@ -66,23 +73,48 @@ export function CamadasDaPista({ pistaId }: { pistaId: string }) {
               strokeDashoffset={camada.deslocamentoTracejado}
               className="tracado-svg__camada"
             />
-            {/* PR 2b: a pit lane entra na pilha logo depois do muro (ver `box.ts`). */}
+            {/* PR 2b: pit lane (superfície, borda só por fora, pit wall, garagens) logo depois do muro (ver `box.ts`). */}
             {camada.id === 'muro' && box !== null && (
               <>
                 <path
-                  d={box}
-                  stroke={varDeCor('pistaLimite')}
-                  strokeWidth={LARGURA_BORDA_BOX}
-                  className="tracado-svg__camada tracado-svg__camada--box"
-                />
-                <path
-                  d={box}
+                  d={box.faixa}
                   stroke={varDeCor('pistaServico')}
                   strokeWidth={LARGURA_BOX}
                   className="tracado-svg__camada tracado-svg__camada--box"
                 />
+                <path
+                  d={box.bordaExterna}
+                  stroke={varDeCor('pistaLimite')}
+                  strokeWidth={ESPESSURA_BORDA_BOX}
+                  className="tracado-svg__camada tracado-svg__camada--box"
+                />
+                <path
+                  d={box.pitWall}
+                  stroke={varDeCor('pistaEscape')}
+                  strokeWidth={LARGURA_PIT_WALL}
+                  className="tracado-svg__camada tracado-svg__camada--box"
+                />
+                <path
+                  d={box.garagens}
+                  stroke={varDeCor('pistaLimite')}
+                  strokeWidth={LARGURA_GARAGEM}
+                  strokeDasharray={TRACEJADO_GARAGEM}
+                  className="tracado-svg__camada tracado-svg__camada--box"
+                />
               </>
             )}
+            {/* As rampas por cima do limite abrem a passagem; o asfalto, que vem depois, cobre o eixo. */}
+            {camada.id === 'limite' &&
+              box !== null &&
+              box.rampas.map((d) => (
+                <path
+                  key={d}
+                  d={d}
+                  stroke={varDeCor('pistaServico')}
+                  strokeWidth={LARGURA_BOX}
+                  className="tracado-svg__camada tracado-svg__camada--box"
+                />
+              ))}
           </Fragment>
         ) : (
           pathsDeZebraDaPista(pistaId).map((trecho) => (

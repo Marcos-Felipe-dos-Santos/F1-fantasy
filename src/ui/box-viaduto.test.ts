@@ -1,7 +1,16 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { caminhoDoBox, pathDoBox } from './box';
+import {
+  LARGURA_BOX,
+  LARGURA_GARAGEM,
+  LARGURA_PIT_WALL,
+  caminhoDoBox,
+  desenhoDoBox,
+  desenhoDoBoxNaCurva,
+  pathDoBox,
+} from './box';
+import { LARGURA_ASFALTO, CAMADAS_PISTA } from './pista-camadas';
 import { indiceDoVertice, tracadoSuavizado } from './suavizacao';
 import { ViadutosDaPista } from './TelaCorrida';
 import { BOXES_POR_PISTA } from './tracados';
@@ -62,6 +71,91 @@ describe('box (PR 2b)', () => {
 
   it('pathDoBox é memoizado (mesma referência de string)', () => {
     expect(pathDoBox('pista-monza')).toBe(pathDoBox('pista-monza'));
+    expect(desenhoDoBox('pista-monza')).toBe(desenhoDoBox('pista-monza'));
+    expect(desenhoDoBox('pista-monaco')).toBeNull();
+  });
+});
+
+/** Pontos de um `d` de `pathDoTrecho` (`M x y L x y ...`). */
+function pontosDoPath(d: string): { x: number; y: number }[] {
+  const n = d.match(/-?\d+(\.\d+)?/g)!.map(Number);
+  const pontos = [];
+  for (let i = 0; i + 1 < n.length; i += 2) pontos.push({ x: n[i], y: n[i + 1] });
+  return pontos;
+}
+
+/**
+ * Distância de `p` à reta do box: só os segmentos da curva dentro da janela do
+ * box (por arco). A curva inteira não serve: em Monza a outra reta passa a
+ * ~40 u das garagens.
+ */
+function distanciaACurva(p: { x: number; y: number }, curva: readonly { x: number; y: number }[]): number {
+  const { janela } = caminhoDoBox(curva, BOXES_POR_PISTA['pista-monza']);
+  const arco = [0];
+  for (let i = 1; i < curva.length; i++) arco.push(arco[i - 1] + Math.hypot(curva[i].x - curva[i - 1].x, curva[i].y - curva[i - 1].y));
+  const perimetro = arco[arco.length - 1] + Math.hypot(curva[0].x - curva[curva.length - 1].x, curva[0].y - curva[curva.length - 1].y);
+  let menor = Infinity;
+  for (let i = 0; i < curva.length; i++) {
+    if (![arco[i], arco[i] + perimetro].some((s) => s >= janela.inicio && s <= janela.fim)) continue;
+    const a = curva[i];
+    const b = curva[(i + 1) % curva.length];
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+    const k = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.y - a.y) * dy) / (dx * dx + dy * dy || 1)));
+    menor = Math.min(menor, Math.hypot(p.x - a.x - k * dx, p.y - a.y - k * dy));
+  }
+  return menor;
+}
+
+/** Ajuste de estilo do box (PR 2b, antes do lote 1): aberto nas rampas, pit wall e garagens. */
+describe('desenho do box aberto (PR 2b)', () => {
+  const box = BOXES_POR_PISTA['pista-monza'];
+  const curva = tracadoSuavizado('pista-monza');
+  const desenho = desenhoDoBoxNaCurva(curva, box);
+  const limite = CAMADAS_PISTA.find((c) => c.id === 'limite')!.largura;
+
+  it('as duas rampas vão da pista ao afastamento cheio, e por isso cruzam o limite da pista', () => {
+    expect(desenho.rampas).toHaveLength(2);
+    for (const d of desenho.rampas) {
+      const distancias = pontosDoPath(d).map((p) => distanciaACurva(p, curva));
+      expect(Math.min(...distancias)).toBeLessThan(3);
+      expect(Math.max(...distancias)).toBeGreaterThan(box.afastamento - 1);
+    }
+  });
+
+  it('a borda clara só existe do lado de FORA: no paralelo fica a afastamento + 11, nunca entre o box e a pista', () => {
+    // A borda tem uma amostra por amostra da pit lane; `paralelo` diz quais estão fora das rampas.
+    const { amostras } = caminhoDoBox(curva, box);
+    const distancias = pontosDoPath(desenho.bordaExterna).map((p) => distanciaACurva(p, curva));
+    expect(distancias).toHaveLength(amostras.length);
+    // Nas rampas também: a borda nunca fica mais perto da pista que o eixo da pit lane.
+    amostras.forEach((a, i) => expect(distancias[i]).toBeGreaterThan(distanciaACurva(a.p, curva)));
+    const paralelas = distancias.filter((_, i) => amostras[i].paralelo);
+    expect(paralelas.length).toBeGreaterThan(10);
+    expect(Math.max(...paralelas)).toBeLessThan(box.afastamento + 11 + 1);
+    expect(Math.min(...paralelas)).toBeGreaterThan(box.afastamento + 11 - 1);
+  });
+
+  it('o pit wall fica entre o limite da pista e a superfície do box, sem cobrir nenhum dos dois', () => {
+    const pontos = pontosDoPath(desenho.pitWall);
+    expect(pontos.length).toBeGreaterThan(10);
+    for (const p of pontos) {
+      const dist = distanciaACurva(p, curva);
+      expect(dist - LARGURA_PIT_WALL / 2).toBeGreaterThanOrEqual(limite / 2);
+      expect(dist + LARGURA_PIT_WALL / 2).toBeLessThanOrEqual(box.afastamento - LARGURA_BOX / 2 + 0.5);
+      // Encostado na superfície do box: a borda de fora do muro coincide com a de dentro do box.
+      expect(dist + LARGURA_PIT_WALL / 2).toBeCloseTo(box.afastamento - LARGURA_BOX / 2, 0);
+    }
+  });
+
+  it('as garagens ficam do lado de FORA da borda externa', () => {
+    for (const p of pontosDoPath(desenho.garagens)) {
+      expect(distanciaACurva(p, curva) - LARGURA_GARAGEM / 2).toBeGreaterThan(box.afastamento + 13 - 0.5);
+    }
+  });
+
+  it('sanidade da pilha usada acima: limite mais largo que o asfalto', () => {
+    expect(limite).toBeGreaterThan(LARGURA_ASFALTO);
   });
 });
 
