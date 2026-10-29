@@ -78,9 +78,13 @@ export const cores = {
    */
   primariaTexto: '#FF5443',
 
-  // ---- Acento 2: dourado/âmbar (pódio, campeão, volta rápida) ----
+  // ---- Acento 2: dourado/âmbar (pódio, campeão) ----
   acento: '#FFB800',
   acentoTexto: '#FFB800', // no dark a tinta é a própria cor da marca (8,276 no pior fundo)
+
+  // Cronometragem: semântica própria, sem depender da raridade de peça.
+  recorde: '#B45BFF',
+  recordeTexto: '#C880FF',
 
   // ---- Acento 3: verde semáforo (largada, status ok) ----
   sucesso: '#00D26A',
@@ -189,6 +193,8 @@ export const coresLight: Partial<Record<NomeCor, string>> = {
   // texto ilegível dentro de input).
   primariaTexto: '#CB1301',
   acentoTexto: '#845F00',
+  recorde: '#9333EA',
+  recordeTexto: '#6B21A8',
   sucessoTexto: '#00763C',
   erroTexto: '#9F4D53',
   raridadeLendarioTexto: '#7D621D',
@@ -240,6 +246,12 @@ export interface ParContraste {
  * `textoEscuro` por cima.
  */
 export const PARES_CONTRASTE: ParContraste[] = [
+  { nome: 'recordeTexto/fundo', fg: 'recordeTexto', bg: 'fundo', minimo: 4.5, escopo: 'ambos' },
+  { nome: 'recorde/fundo', fg: 'recorde', bg: 'fundo', minimo: 3, escopo: 'ambos' },
+  { nome: 'recordeTexto/fundoElevado', fg: 'recordeTexto', bg: 'fundoElevado', minimo: 4.5, escopo: 'ambos' },
+  { nome: 'recorde/fundoElevado', fg: 'recorde', bg: 'fundoElevado', minimo: 3, escopo: 'ambos' },
+  { nome: 'recordeTexto/fundoAfundado', fg: 'recordeTexto', bg: 'fundoAfundado', minimo: 4.5, escopo: 'ambos' },
+  { nome: 'recorde/fundoAfundado', fg: 'recorde', bg: 'fundoAfundado', minimo: 3, escopo: 'ambos' },
   // ---- Texto sobre as três superfícies ----
   { nome: 'texto/fundo', fg: 'texto', bg: 'fundo', minimo: 4.5, escopo: 'ambos' },
   { nome: 'texto/fundoElevado', fg: 'texto', bg: 'fundoElevado', minimo: 4.5, escopo: 'ambos' },

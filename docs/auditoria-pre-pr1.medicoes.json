@@ -1,0 +1,710 @@
+{
+  "base": "ef8c52093825aaeaa122493ea00924d682b6f3b2",
+  "restauracao": {
+    "antes": {
+      "ref": "9600c5359e8f0aeb58ece37db278992c47679b49^",
+      "app": "3.4.6",
+      "registrado": "a2b34e13",
+      "recalculado": "a2b34e13",
+      "fontes": [
+        "src/engine/bots.ts",
+        "src/engine/campeonato.ts",
+        "src/engine/carro.ts",
+        "src/engine/corrida.ts",
+        "src/engine/dataset.ts",
+        "src/engine/draft-test-fixtures.ts",
+        "src/engine/draft-utils.ts",
+        "src/engine/draft.ts",
+        "src/engine/namespaces-seed.ts",
+        "src/engine/pista-sorteada.ts",
+        "src/engine/quali.ts",
+        "src/engine/rng.ts",
+        "src/engine/types.ts",
+        "src/data/equipe-anos.json",
+        "src/data/pecas.json",
+        "src/data/pistas.json",
+        "src/net/cliente.ts",
+        "src/net/hash-draft.ts"
+      ]
+    },
+    "depois": {
+      "ref": "9600c5359e8f0aeb58ece37db278992c47679b49",
+      "app": "3.4.7",
+      "registrado": "61184d3b",
+      "recalculado": "61184d3b",
+      "fontes": [
+        "src/engine/bots.ts",
+        "src/engine/campeonato.ts",
+        "src/engine/carro.ts",
+        "src/engine/corrida.ts",
+        "src/engine/dataset.ts",
+        "src/engine/draft-test-fixtures.ts",
+        "src/engine/draft-utils.ts",
+        "src/engine/draft.ts",
+        "src/engine/namespaces-seed.ts",
+        "src/engine/pista-sorteada.ts",
+        "src/engine/quali.ts",
+        "src/engine/rng.ts",
+        "src/engine/types.ts",
+        "src/data/equipe-anos.json",
+        "src/data/pecas.json",
+        "src/data/pistas.json",
+        "src/net/cliente.ts",
+        "src/net/hash-draft.ts"
+      ]
+    }
+  },
+  "arquivosMesmoCommit": [
+    "ESTADO.md",
+    "HISTORICO.md",
+    "README.md",
+    "docs/deploy-local.md",
+    "docs/img/nomes-originais.png",
+    "package.json",
+    "scripts/anonimizar-fixture.ts",
+    "scripts/anonimizar.ts",
+    "scripts/balance.test.ts",
+    "scripts/caminhos-dataset.ts",
+    "scripts/fixture-semente.test.ts",
+    "scripts/medir-nomes-bundle.mjs",
+    "scripts/node-shims.d.ts",
+    "scripts/portao-nomes-reais.test.ts",
+    "scripts/publicacao.test.ts",
+    "scripts/publicar-dataset.ts",
+    "scripts/restaurar-fixture.test.ts",
+    "scripts/restaurar-fixture.ts",
+    "src/data/equipe-anos.json",
+    "src/data/pecas.json",
+    "src/data/pistas.json",
+    "src/engine/bots.test.ts",
+    "src/engine/campeonato.test.ts",
+    "src/engine/carro.test.ts",
+    "src/engine/corrida.test.ts",
+    "src/engine/dataset.test.ts",
+    "src/engine/draft.test.ts",
+    "src/engine/quali.test.ts",
+    "src/engine/types.test.ts",
+    "src/engine/types.ts",
+    "src/engine/versao.test.ts",
+    "src/engine/versao.ts",
+    "src/fixtures/dataset-semente/README.md",
+    "src/fixtures/dataset-semente/equipe-anos.json",
+    "src/fixtures/dataset-semente/pecas.json",
+    "src/fixtures/dataset-semente/pistas.json",
+    "src/fixtures/referencias-dataset.ts",
+    "src/ui/TelaInicio.tsx",
+    "src/ui/card-peca-cego.test.ts",
+    "src/ui/fluxo-draft-golden.test.ts",
+    "src/ui/persistencia.test.ts",
+    "src/ui/persistencia.ts",
+    "src/ui/visibilidade.test.ts"
+  ],
+  "universoAgulhas": 909,
+  "dados": [
+    {
+      "arquivo": "src/data/equipe-anos.json",
+      "medicoes": [
+        {
+          "ref": "9600c5359e8f0aeb58ece37db278992c47679b49^",
+          "registros": 771,
+          "ocorrenciasReais": 0,
+          "assinaturaNumerica": "9ad94c28b52b0b08fc39772a8c7c7449df0a82a0a4200b68be2721ba52183e1d"
+        },
+        {
+          "ref": "9600c5359e8f0aeb58ece37db278992c47679b49",
+          "registros": 771,
+          "ocorrenciasReais": 9237,
+          "assinaturaNumerica": "9ad94c28b52b0b08fc39772a8c7c7449df0a82a0a4200b68be2721ba52183e1d"
+        }
+      ]
+    },
+    {
+      "arquivo": "src/data/pecas.json",
+      "medicoes": [
+        {
+          "ref": "9600c5359e8f0aeb58ece37db278992c47679b49^",
+          "registros": 24,
+          "ocorrenciasReais": 2,
+          "assinaturaNumerica": "c425ca5c3e47fe3bcc75ba72da9a83e7b83552ba1aff8c63251b9eff20d96c60"
+        },
+        {
+          "ref": "9600c5359e8f0aeb58ece37db278992c47679b49",
+          "registros": 24,
+          "ocorrenciasReais": 19,
+          "assinaturaNumerica": "c425ca5c3e47fe3bcc75ba72da9a83e7b83552ba1aff8c63251b9eff20d96c60"
+        }
+      ]
+    },
+    {
+      "arquivo": "src/data/pistas.json",
+      "medicoes": [
+        {
+          "ref": "9600c5359e8f0aeb58ece37db278992c47679b49^",
+          "registros": 10,
+          "ocorrenciasReais": 1,
+          "assinaturaNumerica": "8b7ba1df745425fadff11f4ed846aee73ebbc6a388a2e237ebb6a25ecf7306f8"
+        },
+        {
+          "ref": "9600c5359e8f0aeb58ece37db278992c47679b49",
+          "registros": 10,
+          "ocorrenciasReais": 2,
+          "assinaturaNumerica": "8b7ba1df745425fadff11f4ed846aee73ebbc6a388a2e237ebb6a25ecf7306f8"
+        }
+      ]
+    },
+    {
+      "arquivo": "src/fixtures/dataset-semente/equipe-anos.json",
+      "medicoes": [
+        {
+          "ref": "9600c5359e8f0aeb58ece37db278992c47679b49^",
+          "registros": 22,
+          "ocorrenciasReais": 0,
+          "assinaturaNumerica": "dbcadac977bdcb997429aa8ad8b9c442e746dd1340c75c86ee811092f3b4a88f"
+        },
+        {
+          "ref": "9600c5359e8f0aeb58ece37db278992c47679b49",
+          "registros": 22,
+          "ocorrenciasReais": 254,
+          "assinaturaNumerica": "dbcadac977bdcb997429aa8ad8b9c442e746dd1340c75c86ee811092f3b4a88f"
+        }
+      ]
+    },
+    {
+      "arquivo": "src/fixtures/dataset-semente/pecas.json",
+      "medicoes": [
+        {
+          "ref": "9600c5359e8f0aeb58ece37db278992c47679b49^",
+          "registros": 24,
+          "ocorrenciasReais": 2,
+          "assinaturaNumerica": "c425ca5c3e47fe3bcc75ba72da9a83e7b83552ba1aff8c63251b9eff20d96c60"
+        },
+        {
+          "ref": "9600c5359e8f0aeb58ece37db278992c47679b49",
+          "registros": 24,
+          "ocorrenciasReais": 19,
+          "assinaturaNumerica": "c425ca5c3e47fe3bcc75ba72da9a83e7b83552ba1aff8c63251b9eff20d96c60"
+        }
+      ]
+    },
+    {
+      "arquivo": "src/fixtures/dataset-semente/pistas.json",
+      "medicoes": [
+        {
+          "ref": "9600c5359e8f0aeb58ece37db278992c47679b49^",
+          "registros": 10,
+          "ocorrenciasReais": 1,
+          "assinaturaNumerica": "8b7ba1df745425fadff11f4ed846aee73ebbc6a388a2e237ebb6a25ecf7306f8"
+        },
+        {
+          "ref": "9600c5359e8f0aeb58ece37db278992c47679b49",
+          "registros": 10,
+          "ocorrenciasReais": 2,
+          "assinaturaNumerica": "8b7ba1df745425fadff11f4ed846aee73ebbc6a388a2e237ebb6a25ecf7306f8"
+        }
+      ]
+    }
+  ],
+  "tabelaFicticiaInalterada": true,
+  "fixtureComparadaAoOriginal": {
+    "refOriginal": "24e9af406bed589250b726a692ee9e09ca9ce8f6",
+    "totalOriginal": 243,
+    "totalAtual": 254,
+    "deltaAgulhas": [
+      {
+        "agulha": "Ferrari",
+        "antes": 6,
+        "depois": 8
+      },
+      {
+        "agulha": "McLaren",
+        "antes": 5,
+        "depois": 8
+      },
+      {
+        "agulha": "hill",
+        "antes": 1,
+        "depois": 0
+      },
+      {
+        "agulha": "Williams",
+        "antes": 7,
+        "depois": 8
+      },
+      {
+        "agulha": "Renault",
+        "antes": 1,
+        "depois": 2
+      },
+      {
+        "agulha": "Benetton",
+        "antes": 3,
+        "depois": 4
+      },
+      {
+        "agulha": "Brawn",
+        "antes": 1,
+        "depois": 0
+      },
+      {
+        "agulha": "michael_schumacher",
+        "antes": 0,
+        "depois": 3
+      },
+      {
+        "agulha": "damon_hill",
+        "antes": 0,
+        "depois": 1
+      },
+      {
+        "agulha": "verstappen",
+        "antes": 1,
+        "depois": 0
+      },
+      {
+        "agulha": "ralf_schumacher",
+        "antes": 0,
+        "depois": 1
+      },
+      {
+        "agulha": "max_verstappen",
+        "antes": 0,
+        "depois": 1
+      }
+    ],
+    "deltaApenasSlugRedBull": 0
+  },
+  "rename": {
+    "arquivos": [
+      {
+        "arquivo": ".claude/agents/doc-writer.md",
+        "ocorrencias": 2,
+        "linhas": [
+          7,
+          55
+        ]
+      },
+      {
+        "arquivo": ".claude/agents/fable-architect.md",
+        "ocorrencias": 1,
+        "linhas": [
+          16
+        ]
+      },
+      {
+        "arquivo": ".claude/agents/junior-dev.md",
+        "ocorrencias": 1,
+        "linhas": [
+          7
+        ]
+      },
+      {
+        "arquivo": ".claude/agents/senior-reviewer.md",
+        "ocorrencias": 1,
+        "linhas": [
+          15
+        ]
+      },
+      {
+        "arquivo": ".claude/skills/sim-engine/SKILL.md",
+        "ocorrencias": 1,
+        "linhas": [
+          3
+        ]
+      },
+      {
+        "arquivo": "CLAUDE.md",
+        "ocorrencias": 2,
+        "linhas": [
+          1,
+          36
+        ]
+      },
+      {
+        "arquivo": "ESTADO.md",
+        "ocorrencias": 11,
+        "linhas": [
+          1,
+          9,
+          333,
+          346,
+          378,
+          389,
+          1813,
+          1891,
+          1894,
+          3935
+        ]
+      },
+      {
+        "arquivo": "F1_Fantasy_GDD.md",
+        "ocorrencias": 1,
+        "linhas": [
+          1
+        ]
+      },
+      {
+        "arquivo": "HISTORICO.md",
+        "ocorrencias": 8,
+        "linhas": [
+          1,
+          28,
+          1491,
+          4876,
+          4963,
+          5274,
+          5672,
+          6915
+        ]
+      },
+      {
+        "arquivo": "PLANOS_ATIVOS.md",
+        "ocorrencias": 1,
+        "linhas": [
+          1
+        ]
+      },
+      {
+        "arquivo": "PLANO_CLAUDE_CODE.md",
+        "ocorrencias": 1,
+        "linhas": [
+          1
+        ]
+      },
+      {
+        "arquivo": "README.md",
+        "ocorrencias": 7,
+        "linhas": [
+          3,
+          7,
+          26,
+          184,
+          260,
+          286
+        ]
+      },
+      {
+        "arquivo": "docs/deploy-local.md",
+        "ocorrencias": 1,
+        "linhas": [
+          34
+        ]
+      },
+      {
+        "arquivo": "docs/img/silhuetas.svg",
+        "ocorrencias": 2,
+        "linhas": [
+          3,
+          4
+        ]
+      },
+      {
+        "arquivo": "docs/jogar-em-rede.md",
+        "ocorrencias": 3,
+        "linhas": [
+          58,
+          66,
+          72
+        ]
+      },
+      {
+        "arquivo": "index.html",
+        "ocorrencias": 1,
+        "linhas": [
+          8
+        ]
+      },
+      {
+        "arquivo": "package-lock.json",
+        "ocorrencias": 2,
+        "linhas": [
+          2,
+          8
+        ]
+      },
+      {
+        "arquivo": "package.json",
+        "ocorrencias": 1,
+        "linhas": [
+          2
+        ]
+      },
+      {
+        "arquivo": "party/conexoes.test.ts",
+        "ocorrencias": 1,
+        "linhas": [
+          101
+        ]
+      },
+      {
+        "arquivo": "scripts/checar-casca-sem-node.ts",
+        "ocorrencias": 1,
+        "linhas": [
+          74
+        ]
+      },
+      {
+        "arquivo": "scripts/csp.test.ts",
+        "ocorrencias": 1,
+        "linhas": [
+          82
+        ]
+      },
+      {
+        "arquivo": "scripts/despejar-seeds.ts",
+        "ocorrencias": 1,
+        "linhas": [
+          37
+        ]
+      },
+      {
+        "arquivo": "scripts/fetch-f1-data.ts",
+        "ocorrencias": 1,
+        "linhas": [
+          54
+        ]
+      },
+      {
+        "arquivo": "scripts/gerar-silhuetas-readme.preview.test.ts",
+        "ocorrencias": 2,
+        "linhas": [
+          90,
+          91
+        ]
+      },
+      {
+        "arquivo": "src/engine/types.ts",
+        "ocorrencias": 1,
+        "linhas": [
+          6
+        ]
+      },
+      {
+        "arquivo": "src/net/cors.test.ts",
+        "ocorrencias": 1,
+        "linhas": [
+          17
+        ]
+      },
+      {
+        "arquivo": "src/ui/TelaInicio.tsx",
+        "ocorrencias": 1,
+        "linhas": [
+          130
+        ]
+      },
+      {
+        "arquivo": "src/ui/contrato-corrida-online.test.ts",
+        "ocorrencias": 3,
+        "linhas": [
+          88,
+          92,
+          336
+        ]
+      },
+      {
+        "arquivo": "src/ui/persistencia.ts",
+        "ocorrencias": 1,
+        "linhas": [
+          70
+        ]
+      },
+      {
+        "arquivo": "src/ui/tema.ts",
+        "ocorrencias": 1,
+        "linhas": [
+          21
+        ]
+      },
+      {
+        "arquivo": "src/ui/tokens.css",
+        "ocorrencias": 1,
+        "linhas": [
+          1
+        ]
+      },
+      {
+        "arquivo": "src/ui/tokens.ts",
+        "ocorrencias": 1,
+        "linhas": [
+          2
+        ]
+      },
+      {
+        "arquivo": "wrangler.jsonc",
+        "ocorrencias": 2,
+        "linhas": [
+          16,
+          66
+        ]
+      }
+    ],
+    "totalArquivos": 33,
+    "totalOcorrencias": 66,
+    "arquivosComNomeAntigo": [
+      "F1_Fantasy_GDD.md"
+    ],
+    "remoto": "https://github.com/Marcos-Felipe-dos-Santos/F1-fantasy.git",
+    "excluidos": [
+      ".claude/settings.json",
+      ".env/credenciais",
+      "binários",
+      "arquivos ignorados/não versionados"
+    ]
+  },
+  "boxes": {
+    "pistas": [
+      {
+        "pistaId": "pista-monaco",
+        "nome": "Mônaco",
+        "pontosControle": 48
+      },
+      {
+        "pistaId": "pista-spa",
+        "nome": "Spa-Francorchamps",
+        "pontosControle": 47
+      },
+      {
+        "pistaId": "pista-monza",
+        "nome": "Monza",
+        "pontosControle": 49
+      },
+      {
+        "pistaId": "pista-silverstone",
+        "nome": "Silverstone",
+        "pontosControle": 44
+      },
+      {
+        "pistaId": "pista-suzuka",
+        "nome": "Suzuka",
+        "pontosControle": 42
+      },
+      {
+        "pistaId": "pista-interlagos",
+        "nome": "Interlagos",
+        "pontosControle": 44
+      },
+      {
+        "pistaId": "pista-nurburgring",
+        "nome": "Nürburgring (GP-Strecke)",
+        "pontosControle": 48
+      },
+      {
+        "pistaId": "pista-imola",
+        "nome": "Imola",
+        "pontosControle": 46
+      },
+      {
+        "pistaId": "pista-red-bull-ring",
+        "nome": "Red Bull Ring",
+        "pontosControle": 34
+      },
+      {
+        "pistaId": "pista-montreal",
+        "nome": "Montreal (Gilles Villeneuve)",
+        "pontosControle": 44
+      }
+    ],
+    "totalPistas": 10,
+    "definicaoPitEmTracados": false,
+    "maqueteTemDPit": true,
+    "replayUsaMaquete": false
+  },
+  "bundle": {
+    "arquivos": [
+      {
+        "arquivo": "dist/assets/index-By4m-ig1.js",
+        "sha256": "74bfbf1fe7e402f8c5284a27ace504c21d82505285d63a4f0ab8672828605072"
+      },
+      {
+        "arquivo": "dist/assets/index-CQAhVB7k.css",
+        "sha256": "e842fcc9f6771ebf0a133984f717ac00712d1fcbce55e4b42aedf078b8ae4028"
+      },
+      {
+        "arquivo": "dist/fonts/OFL-Bungee.txt",
+        "sha256": "d5787a50dde5be6c6daecab9ed459939b1bc37cff0d0e00257eaf1ec2cf4c16c"
+      },
+      {
+        "arquivo": "dist/fonts/bungee-latin.woff2",
+        "sha256": "126eec706b7931682dbcf6c6efc274132c603f181fbf912678e6cfeb341e721b"
+      },
+      {
+        "arquivo": "dist/index.html",
+        "sha256": "e65eb38c0e0cb7a5ff2363bedee1ea8daa95e6fda232758fcdc443996e968f5b"
+      }
+    ],
+    "imagens": [],
+    "dataImage": 0,
+    "urlsDeImagem": 0,
+    "aviso": "Contagens de recursos não reconhecem semanticamente logos/liveries desenhados em SVG/CSS; exigem revisão das formas."
+  },
+  "ci": [
+    {
+      "id": 39052585050,
+      "sha": "635413b75f8a5d5338ff97cf14b0dc0aaf63728a",
+      "evento": "push",
+      "conclusao": "failure",
+      "url": "https://github.com/Marcos-Felipe-dos-Santos/F1-fantasy/actions/runs/39052585050",
+      "falhas": [
+        {
+          "arquivo": "party/comandos.test.ts",
+          "linha": 146,
+          "mensagem": "AssertionError: expected 0 to be greater than 0\n ❯ party/comandos.test.ts:146:50\n\n"
+        }
+      ]
+    },
+    {
+      "id": 39052613842,
+      "sha": "635413b75f8a5d5338ff97cf14b0dc0aaf63728a",
+      "evento": "pull_request",
+      "conclusao": "success",
+      "url": "https://github.com/Marcos-Felipe-dos-Santos/F1-fantasy/actions/runs/39052613842",
+      "falhas": []
+    },
+    {
+      "id": 39052791341,
+      "sha": "c740248c8ba753624b0d2c0e3fa61625e95cdf3d",
+      "evento": "push",
+      "conclusao": "failure",
+      "url": "https://github.com/Marcos-Felipe-dos-Santos/F1-fantasy/actions/runs/39052791341",
+      "falhas": [
+        {
+          "arquivo": "party/comandos.test.ts",
+          "linha": 132,
+          "mensagem": "AssertionError: expected 0 to be greater than 0\n ❯ party/comandos.test.ts:132:50\n\n"
+        }
+      ]
+    },
+    {
+      "id": 39052793966,
+      "sha": "c740248c8ba753624b0d2c0e3fa61625e95cdf3d",
+      "evento": "pull_request",
+      "conclusao": "success",
+      "url": "https://github.com/Marcos-Felipe-dos-Santos/F1-fantasy/actions/runs/39052793966",
+      "falhas": []
+    },
+    {
+      "id": 39053003826,
+      "sha": "7ca39ccdd69e1b87ff6972bdc89c10d08a276815",
+      "evento": "push",
+      "conclusao": "success",
+      "url": "https://github.com/Marcos-Felipe-dos-Santos/F1-fantasy/actions/runs/39053003826",
+      "falhas": []
+    },
+    {
+      "id": 39053008495,
+      "sha": "7ca39ccdd69e1b87ff6972bdc89c10d08a276815",
+      "evento": "pull_request",
+      "conclusao": "success",
+      "url": "https://github.com/Marcos-Felipe-dos-Santos/F1-fantasy/actions/runs/39053008495",
+      "falhas": []
+    },
+    {
+      "id": 39053132098,
+      "sha": "ef8c52093825aaeaa122493ea00924d682b6f3b2",
+      "evento": "push",
+      "conclusao": "success",
+      "url": "https://github.com/Marcos-Felipe-dos-Santos/F1-fantasy/actions/runs/39053132098",
+      "falhas": []
+    }
+  ]
+}

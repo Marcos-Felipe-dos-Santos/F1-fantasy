@@ -8,6 +8,7 @@ import { useState, type ReactNode } from 'react';
 import type { DraftState, ResultadoCorrida } from '../engine/types';
 import { dataset } from './dataset-app';
 import { nomeJogador } from './loadout-view';
+import { melhorVoltaDoJogador } from './fluxo-corrida';
 
 /** Quanto tempo o feedback "Copiado!" fica visível no botão de copiar seed (PR 2.4). */
 const DURACAO_FEEDBACK_COPIA_MS = 2000;
@@ -68,6 +69,10 @@ export function TelaResultadoCorrida({
   rotuloReiniciar,
 }: TelaResultadoCorridaProps) {
   const resultadosHumanos = resultado.classificacao.filter((c) => ehHumanoId(state, c.jogadorId));
+  const temRecorde =
+    Number.isFinite(resultado.voltaMaisRapida.tempo) &&
+    melhorVoltaDoJogador(resultado, resultado.voltaMaisRapida.jogadorId) !== null;
+  const houveFinalista = resultado.classificacao.some((c) => c.status === 'terminou');
   const [seedCopiada, setSeedCopiada] = useState(false);
 
   /**
@@ -98,46 +103,97 @@ export function TelaResultadoCorrida({
         </button>
       </p>
 
-      {resultadosHumanos.map((humano) => (
-        <p key={humano.jogadorId} className="resultado-corrida__destaque">
-          {nomeDoJogadorId(state, humano.jogadorId)} terminou em {humano.posicao}º — {humano.pontos} pontos
-        </p>
-      ))}
+      <div className="resultado-corrida__humanos">
+        {resultadosHumanos.map((humano) => (
+          <div key={humano.jogadorId} className="resultado-corrida__resumo">
+            <strong className="resultado-corrida__posicao">
+              {humano.status === 'dnf' ? 'DNF' : `${humano.posicao}º`}
+            </strong>
+            <div className="resultado-corrida__jogador">
+              <strong>{nomeDoJogadorId(state, humano.jogadorId)}</strong>
+              <span>
+                {humano.status === 'dnf'
+                  ? `Abandonou na volta ${humano.voltasCompletadas}`
+                  : 'Posição final'}
+              </span>
+            </div>
+            <strong className="resultado-corrida__pontos">
+              {humano.pontos}
+              <span>pontos</span>
+            </strong>
+          </div>
+        ))}
+      </div>
 
-      <div className="tabela-grid-wrap">
-        <table className="tabela-grid">
+      <div className="tabela-grid-wrap resultado-corrida__tabela">
+        <table
+          className="tabela-grid resultado-tabela"
+          role="table"
+          aria-label="Classificação final da corrida"
+        >
           <thead>
             <tr>
-              <th>Pos</th>
-              <th>Jogador</th>
-              <th>Piloto</th>
-              <th>Status</th>
-              <th>Paradas</th>
-              <th>Pontos</th>
+              <th scope="col">Pos</th>
+              <th scope="col">Jogador</th>
+              <th scope="col">Piloto</th>
+              <th scope="col">Tempo total</th>
+              <th scope="col">Melhor volta</th>
+              <th scope="col">Paradas</th>
+              <th scope="col">Pontos</th>
             </tr>
           </thead>
           <tbody>
             {resultado.classificacao.map((item) => {
               const ehHumano = ehHumanoId(state, item.jogadorId);
-              const ehVoltaRapida = item.jogadorId === resultado.voltaMaisRapida.jogadorId;
+              const melhor = melhorVoltaDoJogador(resultado, item.jogadorId);
+              const ehVoltaRapida =
+                temRecorde &&
+                melhor !== null &&
+                item.jogadorId === resultado.voltaMaisRapida.jogadorId;
               const status =
                 item.status === 'terminou'
                   ? formatarTempo(item.tempoTotal)
                   : `DNF (volta ${item.voltasCompletadas})`;
-              const classes = [ehHumano ? 'linha-humano' : '', ehVoltaRapida ? 'linha-volta-rapida' : '']
-                .filter(Boolean)
-                .join(' ');
               return (
-                <tr key={item.jogadorId} className={classes}>
-                  <td>{item.posicao}</td>
-                  <td>{nomeDoJogadorId(state, item.jogadorId)}</td>
-                  <td>{nomePiloto(state, item.jogadorId)}</td>
-                  <td>
-                    {status}
-                    {ehVoltaRapida && ' 🏆 VR'}
+                <tr key={item.jogadorId} className={ehHumano ? 'linha-humano' : ''}>
+                  <td className="resultado-tabela__posicao">{item.posicao}</td>
+                  <td className="resultado-tabela__jogador">
+                    {nomeDoJogadorId(state, item.jogadorId)}
                   </td>
-                  <td>{item.paradas}</td>
-                  <td>{item.pontos}</td>
+                  <td className="resultado-tabela__piloto">{nomePiloto(state, item.jogadorId)}</td>
+                  <td className="resultado-tabela__tempo">
+                    <span className="resultado-tabela__rotulo" aria-hidden="true">
+                      Tempo total
+                    </span>
+                    {status}
+                  </td>
+                  <td
+                    className={`resultado-tabela__volta${ehVoltaRapida ? ' celula-volta-rapida' : ''}`}
+                  >
+                    <span className="resultado-tabela__rotulo" aria-hidden="true">
+                      Melhor volta
+                    </span>
+                    <span className="resultado-tabela__valor">
+                      {melhor === null ? '—' : formatarTempo(melhor)}
+                      {ehVoltaRapida && (
+                        <span className="badge-vr" aria-label="Volta mais rápida da corrida">
+                          VR
+                        </span>
+                      )}
+                    </span>
+                  </td>
+                  <td className="resultado-tabela__paradas">
+                    <span className="resultado-tabela__rotulo" aria-hidden="true">
+                      Paradas
+                    </span>
+                    {item.paradas}
+                  </td>
+                  <td className="resultado-tabela__pontos">
+                    <span className="resultado-tabela__rotulo" aria-hidden="true">
+                      Pontos
+                    </span>
+                    {item.pontos}
+                  </td>
                 </tr>
               );
             })}
@@ -146,9 +202,22 @@ export function TelaResultadoCorrida({
       </div>
 
       <p className="resultado-corrida__volta-rapida">
-        Volta mais rápida: {nomeDoJogadorId(state, resultado.voltaMaisRapida.jogadorId)} — pontinho extra pra{' '}
-        {nomePiloto(state, resultado.voltaMaisRapida.jogadorId)} (
-        {(resultado.voltaMaisRapida.tempo / 1000).toFixed(3)}s)
+        {temRecorde ? (
+          <>
+            <strong>Volta mais rápida · {formatarTempo(resultado.voltaMaisRapida.tempo)}</strong>
+            <span>
+              {nomeDoJogadorId(state, resultado.voltaMaisRapida.jogadorId)} ·{' '}
+              {nomePiloto(state, resultado.voltaMaisRapida.jogadorId)}
+            </span>
+            <span>
+              {houveFinalista
+                ? '+1 ponto pela volta mais rápida'
+                : 'Sem ponto extra: ninguém concluiu a corrida'}
+            </span>
+          </>
+        ) : (
+          'Nenhuma volta válida para registrar a volta mais rápida.'
+        )}
       </p>
 
       {extra}

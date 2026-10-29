@@ -42,6 +42,8 @@
   --primaria-texto: #FF5443;
   --acento: #FFB800;
   --acento-texto: #FFB800;
+  --recorde: #B45BFF;
+  --recorde-texto: #C880FF;
   --sucesso: #00D26A;
   --sucesso-texto: #00D26A;
   --erro: #FF7B85;
@@ -100,6 +102,8 @@
     --texto-suave: #666666;
     --primaria-texto: #CB1301;
     --acento-texto: #845F00;
+    --recorde: #9333EA;
+    --recorde-texto: #6B21A8;
     --sucesso-texto: #00763C;
     --erro-texto: #9F4D53;
     --raridade-comum: #299544;
@@ -124,6 +128,8 @@
   --texto-suave: #666666;
   --primaria-texto: #CB1301;
   --acento-texto: #845F00;
+  --recorde: #9333EA;
+  --recorde-texto: #6B21A8;
   --sucesso-texto: #00763C;
   --erro-texto: #9F4D53;
   --raridade-comum: #299544;

@@ -1,0 +1,30 @@
+diff --git a/src/engine/versao.test.ts b/src/engine/versao.test.ts
+index 025c6a4..1a0028c 100644
+--- a/src/engine/versao.test.ts
++++ b/src/engine/versao.test.ts
+@@ -36 +36 @@ const RAIZ_SRC = join(AQUI, '..');
+-const DIGEST_REGISTRADO = 'a2b34e13';
++const DIGEST_REGISTRADO = '61184d3b';
+diff --git a/src/engine/versao.ts b/src/engine/versao.ts
+index f72750c..7979289 100644
+--- a/src/engine/versao.ts
++++ b/src/engine/versao.ts
+@@ -90 +90,2 @@
+-export const VERSAO_APP = '3.4.6';
++// 3.4.6 → 3.4.7: restauração de nomes/ids originais e marcas das peças.
++export const VERSAO_APP = '3.4.7';
+diff --git a/src/ui/fluxo-draft-golden.test.ts b/src/ui/fluxo-draft-golden.test.ts
+index 9e5f36a..0334405 100644
+--- a/src/ui/fluxo-draft-golden.test.ts
++++ b/src/ui/fluxo-draft-golden.test.ts
+@@ -76,5 +76,5 @@ const SORTEIOS_VOCE_GOLDEN = [
+-  { equipe: 'Salviati', ano: 1993 },
+-  { equipe: 'Pemberley', ano: 2023 },
+-  { equipe: 'Ridgeway', ano: 2004 },
+-  { equipe: 'Baldern', ano: 2004 },
+-  { equipe: 'Pemberley', ano: 2004 },
++  { equipe: 'Benetton', ano: 1993 },
++  { equipe: 'Williams', ano: 2023 },
++  { equipe: 'McLaren', ano: 2004 },
++  { equipe: 'Sauber', ano: 2004 },
++  { equipe: 'Williams', ano: 2004 },

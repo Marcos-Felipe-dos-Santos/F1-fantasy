@@ -883,8 +883,135 @@ button.card {
   margin: var(--espaco-md) 0 var(--espaco-lg);
 }
 
-.linha-volta-rapida {
-  color: var(--raridade-lendario-texto);
+.resultado-corrida__seed {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--espaco-sm);
+  color: var(--texto-suave);
+}
+
+.resultado-corrida__humanos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr));
+  gap: var(--espaco-md);
+  margin: var(--espaco-xl) 0;
+}
+
+.resultado-corrida__resumo {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-md);
+  padding: var(--espaco-lg);
+  border: 2px solid var(--borda);
+  border-left: 5px solid var(--primaria);
+  border-radius: var(--raio-md);
+  background: var(--fundo-elevado);
+}
+
+.resultado-corrida__posicao {
+  font-family: var(--fonte-display);
+  font-size: clamp(1.3rem, 4vw, 2rem);
+  color: var(--primaria-texto);
+}
+
+.resultado-corrida__jogador { min-width: 0; flex: 1; overflow-wrap: anywhere; }
+.resultado-corrida__jogador span,
+.resultado-corrida__pontos span {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--texto-suave);
+  margin-top: var(--espaco-xs);
+}
+.resultado-corrida__pontos { font-size: 1.5rem; text-align: right; }
+
+.resultado-tabela { min-width: 0; }
+.resultado-tabela th { padding-top: var(--espaco-md); padding-bottom: var(--espaco-md); }
+.resultado-tabela td { padding-top: var(--espaco-md); padding-bottom: var(--espaco-md); }
+.resultado-tabela .resultado-tabela__jogador,
+.resultado-tabela .resultado-tabela__piloto { white-space: normal; overflow-wrap: anywhere; }
+.resultado-tabela__posicao { color: var(--texto-suave); }
+.resultado-tabela__pontos { font-weight: 700; }
+.resultado-tabela__rotulo { display: none; }
+.resultado-tabela__valor { display: inline-flex; flex-wrap: wrap; align-items: center; gap: var(--espaco-xs); }
+.resultado-tabela,
+.resultado-corrida__resumo,
+.resultado-corrida__volta-rapida { font-variant-numeric: tabular-nums; }
+
+.resultado-tabela .celula-volta-rapida { color: var(--recorde-texto); font-weight: 700; }
+.badge-vr {
+  display: inline-block;
+  border: 1px solid var(--recorde);
+  border-radius: var(--raio-pill);
+  padding: 1px 5px;
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: var(--recorde-texto);
+  background: var(--fundo);
+}
+
+.resultado-corrida__volta-rapida {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espaco-xs) var(--espaco-lg);
+  padding: var(--espaco-lg);
+  border: 2px solid var(--recorde);
+  border-radius: var(--raio-md);
+  background: var(--fundo-elevado);
+  color: var(--recorde-texto);
+  line-height: 1.6;
+}
+.resultado-corrida__volta-rapida strong { flex-basis: 100%; }
+
+@media (max-width: 700px) {
+  /* Apenas o resultado vira cartões; grid de largada e demais tabelas ficam intactos. */
+  .resultado-corrida__tabela { overflow: visible; }
+  .resultado-tabela { display: block; width: 100%; }
+  .resultado-tabela thead {
+    position: absolute;
+    width: 1px; height: 1px;
+    padding: 0; margin: -1px;
+    overflow: hidden; clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .resultado-tabela tbody { display: grid; gap: var(--espaco-md); }
+  .resultado-tabela tbody tr {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-template-areas:
+      'pos jogador jogador jogador pontos pontos'
+      'pos piloto piloto piloto pontos pontos'
+      'tempo tempo volta volta paradas paradas';
+    gap: var(--espaco-xs) var(--espaco-sm);
+    padding: var(--espaco-md);
+    border: 2px solid var(--borda);
+    border-radius: var(--raio-md);
+    background: var(--fundo-elevado);
+  }
+  .resultado-tabela tbody tr.linha-humano { border-left: 4px solid var(--primaria); }
+  .resultado-tabela td { min-width: 0; padding: 0; border: 0; }
+  .resultado-tabela .linha-humano td:first-child { border-left: 0; }
+  .resultado-tabela__posicao { grid-area: pos; font-family: var(--fonte-display); font-size: 1.1rem; }
+  .resultado-tabela__jogador { grid-area: jogador; font-weight: 700; }
+  .resultado-tabela__piloto { grid-area: piloto; color: var(--texto-suave); font-size: 0.8rem; }
+  .resultado-tabela__pontos { grid-area: pontos; text-align: right; align-self: start; font-size: 1.2rem; }
+  .resultado-tabela__tempo { grid-area: tempo; }
+  .resultado-tabela__volta { grid-area: volta; }
+  .resultado-tabela__paradas { grid-area: paradas; text-align: right; }
+  .resultado-tabela__tempo,
+  .resultado-tabela__volta,
+  .resultado-tabela__paradas { margin-top: var(--espaco-sm); font-size: 0.8rem; white-space: normal; }
+  .resultado-tabela__rotulo {
+    display: block;
+    margin-bottom: var(--espaco-xs);
+    color: var(--texto-suave);
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-weight: 500;
+  }
+  .resultado-corrida__resumo { padding: var(--espaco-md); }
 }
 
 /* Responsivo básico */
@@ -1129,26 +1256,32 @@ button.card {
 
 .podio__lugar {
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: var(--espaco-xs);
   padding: var(--espaco-md) var(--espaco-sm);
   background: var(--cor-superficie);
-  border: 1px solid var(--cor-borda);
-  border-radius: var(--raio-sm);
+  border: 2px solid var(--cor-borda);
+  border-radius: var(--raio-md);
   text-align: center;
 }
 
 /* A altura é o que faz o pódio parecer um pódio. */
 .podio__lugar--1 {
+  order: 2;
   padding-top: var(--espaco-xxl);
   border-color: var(--acento);
 }
 
 .podio__lugar--2 {
+  order: 1;
   padding-top: var(--espaco-xl);
 }
+
+.podio__lugar--3 { order: 3; }
+.podio__posicao { font-family: var(--fonte-display); font-size: 1.2rem; }
 
 .podio__medalha {
   font-size: 1.6rem;
@@ -1157,6 +1290,7 @@ button.card {
 .podio__nome {
   font-weight: 700;
   font-size: 0.95rem;
+  overflow-wrap: anywhere;
 }
 
 /* Pontos do campeão em dourado: é TEXTO ⇒ tinta (`--acento-texto`). */
@@ -1171,16 +1305,23 @@ button.card {
   font-variant-numeric: tabular-nums;
 }
 
-@media (max-width: 360px) {
-  /* Regra dos 360px: o pódio lado a lado fica ilegível, então empilha. */
+@media (max-width: 420px) {
+  /* Lista semântica 1º–2º–3º quando não há espaço para degraus legíveis. */
   .podio {
     flex-direction: column;
     align-items: stretch;
   }
-  .podio__lugar--1,
-  .podio__lugar--2 {
-    padding-top: var(--espaco-md);
+  .podio .podio__lugar {
+    order: initial;
+    display: grid;
+    grid-template-columns: 2.5rem minmax(0, 1fr) auto;
+    gap: var(--espaco-md);
+    padding: var(--espaco-lg) var(--espaco-md);
+    text-align: left;
   }
+  .podio__medalha { display: none; }
+  .podio__posicao { text-align: center; }
+  .podio__pontos { white-space: nowrap; }
 }
 
 /* --- Modo Online: lobby e espera (PR 3.3) ------------------------------- */

@@ -9,12 +9,11 @@ Este arquivo é a memória sempre-ativa do projeto. As regras aqui são **inviol
 
 1. **`CLAUDE.md`** (este arquivo) — regras invioláveis.
 2. **`ESTADO.md`** — estado atual, onde parei, próximo PR, pendências ativas, regras da Fase 7.
-   **É o único documento de estado que se lê por completo.**
-   🔴 **NÃO É MAIS "curto de propósito (~60 linhas)" — essa frase era FALSA e ficou aqui por muito
-   tempo.** Medido em 2026-08-31, **depois** da higiene que arquivou 845 linhas: **2.202 linhas,
-   184 KB**. Antes da higiene eram **2.863**. **A regra de ler por completo continua valendo — o que
-   muda é saber o que ela custa**, e planejar a sessão com esse número na mão em vez de com um "~60"
-   que nunca foi verdade nesta fase do projeto.
+   🔒 **NUNCA INTEIRO** (decisão do dev, 2026-10-28). Ler só: o topo (§"Estado atual"),
+   §"Onde parei", §"🔒 DECISÕES DO MARCOS — VIGENTES" e §"Pendências ATIVAS". O resto, só por
+   seção, quando o trabalho pedir. É a mesma regra do topo do `ESTADO.md`.
+   ~~É o único documento de estado que se lê por completo.~~ **Substituída em 2026-10-28**: o
+   arquivo tinha **3.809 linhas** nesse dia (o "~60 linhas" antigo nunca foi verdade nesta fase).
 
 **Sob demanda, nunca por completo na abertura:**
 
@@ -44,9 +43,13 @@ razão** — daria 25,6 caracteres por token, o que não corresponde a tokenizad
 ⚠️ **Token é ESTIMATIVA declarada, não medição:** não há tokenizador neste repositório. **Bytes e
 linhas são o que está medido; quem precisar do número exato roda um tokenizador e corrige aqui.**
 
-**Ao concluir um PR, o `doc-writer` ESCREVE OS DOIS:** entrada detalhada no `HISTORICO.md`
+~~**Ao concluir um PR, o `doc-writer` ESCREVE OS DOIS:**~~ **Ao concluir um PR, a SESSÃO PRINCIPAL
+ESCREVE OS DOIS** (decisão do dev, 2026-10-29, motivada pelos 23 erros factuais de
+`HISTORICO.md:4895`): entrada detalhada no `HISTORICO.md`
 (acumula) e o `ESTADO.md` **atualizado — só a seção "Onde parei" é reescrita** (ver a regra logo
 abaixo). Se só um dos dois for atualizado, a próxima sessão começa com informação errada.
+O `doc-writer` é **rascunho OPCIONAL**: só a sessão principal o invoca, e nenhuma linha do rascunho
+entra sem ela auditar contra a fonte.
 **Quem AUDITA o conteúdo e COMMITA é a sessão principal, nunca o `doc-writer`** — ver a seção
 "NENHUM SUBAGENTE COMMITA", logo abaixo.
 
@@ -124,9 +127,10 @@ falsa no efeito: **`Bash` É ferramenta de escrita** (`>`, `>>`, heredoc, `git c
 
 ### Quem foi IMPOSSIBILITADO por configuração e quem ainda DEPENDE da regra (2026-08-25)
 
-**A distinção importa e por isso está escrita:** três dos cinco papéis agora não conseguem escrever
-nem que queiram; os outros dois conseguem, e para eles a regra é a única coisa que segura. Ler a
-lista errada é achar que o problema está resolvido para todo mundo.
+**A distinção importa e por isso está escrita:** ~~três dos cinco papéis agora não conseguem
+escrever nem que queiram; os outros dois conseguem,~~ desde 2026-10-29, quatro dos cinco papéis não
+conseguem escrever nem que queiram; só o `junior-dev` consegue, e para ele a regra é a única coisa
+que segura. Ler a lista errada é achar que o problema está resolvido para todo mundo.
 
 🔒 **IMPOSSIBILITADOS POR CONFIGURAÇÃO — `Bash` REMOVIDO em 2026-08-25 (decisão do dev):**
 `fable-architect`, `scout` e `senior-reviewer`. Os três são papéis de **leitura**; nenhum tinha
@@ -140,12 +144,15 @@ lista errada é achar que o problema está resolvido para todo mundo.
   estar disponível para esses três. Eles usam `src/fixtures/dataset-semente/`; consulta ao dataset
   real passa a ser pedida à sessão principal.
 
-🔓 **AINDA DEPENDEM DA REGRA — mantêm `Write`, `Edit` e `Bash`:** `doc-writer` e `junior-dev`.
-**É intencional: o papel deles é ESCREVER**, e tirar a ferramenta os inutilizaria. **As ocorrências
-nº 1 e nº 2 foram os dois do `doc-writer`** — ou seja, o papel com mais histórico de estrago é
-justamente o que não dá para fechar por configuração. **Para estes dois, o único portão é a
-auditoria da sessão principal antes do commit.** Quem for afrouxar o fluxo deles ("é só doc",
-"é baixo risco") está mexendo exatamente onde não há rede.
+~~🔓 **AINDA DEPENDEM DA REGRA — mantêm `Write`, `Edit` e `Bash`:** `doc-writer` e `junior-dev`.
+**É intencional: o papel deles é ESCREVER**, e tirar a ferramenta os inutilizaria.~~ **As ocorrências
+nº 1 e nº 2 foram os dois do `doc-writer`** — ~~ou seja, o papel com mais histórico de estrago é
+justamente o que não dá para fechar por configuração.~~
+🔒 **Atualizado em 2026-10-29 (decisão do dev):** o `doc-writer` também foi **IMPOSSIBILITADO POR
+CONFIGURAÇÃO** — ficou com `Read, Grep, Glob` e devolve rascunho como texto; quem escreve no arquivo
+é a sessão principal. 🔓 **Só o `junior-dev` mantém `Write`, `Edit` e `Bash`**, porque o papel dele
+é escrever código. **Para ele, o único portão é a auditoria da sessão principal antes do commit.**
+Quem for afrouxar esse fluxo ("é baixo risco") está mexendo exatamente onde não há rede.
 
 ---
 
@@ -238,10 +245,13 @@ código que viola cada regra, inclusive um caso anti-vacuidade. **Cerca nova ent
     está mais disponível.
   - **Opus 5** (`senior-reviewer`) — revisão de diff, segurança, correção.
   - **Sonnet** (`junior-dev`) — implementação dos planos aprovados. NÃO atualiza docs — devolve o
-    código à sessão principal, que audita e commita; a doc vai depois, pelo `doc-writer`.
+    código à sessão principal, que audita e commita; ~~a doc vai depois, pelo `doc-writer`~~ a doc
+    vai depois, escrita pela sessão principal.
   - **Haiku** (`scout`) — exploração barata, leitura de arquivos, busca.
-  - **Haiku** (`doc-writer`) — **escreve** `ESTADO.md`, `HISTORICO.md`, `README` e `CHANGELOG` após
-    PR concluído. Documentação é baixo risco: fluxo curto, **sem `senior-reviewer`**.
+  - ~~**Haiku** (`doc-writer`) — **escreve** `ESTADO.md`, `HISTORICO.md`, `README` e `CHANGELOG` após
+    PR concluído.~~ **Haiku 5.5** (`doc-writer`) — rascunho opcional de doc, invocado só pela sessão
+    principal (contrato de FATOS em `.claude/agents/doc-writer.md`). Documentação é baixo risco:
+    fluxo curto, **sem `senior-reviewer`**.
     ⚠️ **`sem senior-reviewer` NÃO É `sem auditoria`, e confundir os dois foi a ocorrência nº 2.**
     A sessão principal lê o diff da doc e confere as afirmações contra a fonte antes de commitar.
   - 🔒 **Nenhum deles commita** — ver "NENHUM SUBAGENTE COMMITA".
@@ -257,24 +267,27 @@ mapeamento de todos os chamadores + re-verificação de cada correção) estoura
 **Classificar o PR ANTES de começar e anunciar a classificação ao dev.**
 
 **ALTO RISCO** — engine, `src/data/`, balanceamento, portão visual (o que se vê na tela), netcode.
-Fluxo completo: baseline vermelho → implementação → `senior-reviewer` → `doc-writer` → teste de
-mutação → medição independente → preview mostrado, quando aplicável.
+Fluxo completo: baseline vermelho → implementação → `senior-reviewer` → ~~`doc-writer`~~ doc
+escrita pela sessão principal → teste de mutação → medição independente → preview mostrado,
+quando aplicável.
 
 **BAIXO RISCO** — docs, `chore`, refactor sem mudança de comportamento, `fix` de uma linha,
 mudança só de tipos sem efeito em runtime. Fluxo curto: **implementar → rodar testes → a sessão
-principal commita → `doc-writer` escreve a doc → a sessão principal commita a doc.** **Sem
-`senior-reviewer`, sem mutação, sem auditoria token a token.** Se o teste passa e o diff é o que se
-pretendia, está pronto. **O que este fluxo curto NÃO dispensa é a leitura do diff antes do commit,
-nos dois commits** — é o único portão que existe contra erro factual em `.md`.
+principal commita → ~~`doc-writer` escreve a doc~~ a sessão principal escreve a doc → a sessão
+principal commita a doc.** **Sem `senior-reviewer`, sem mutação, sem auditoria token a token.**
+Se o teste passa e o diff é o que se pretendia, está pronto. **O que este fluxo curto NÃO dispensa
+é a leitura do diff antes do commit, nos dois commits** — é o único portão que existe contra erro
+factual em `.md`.
 
 Na dúvida entre os dois, **perguntar ao dev** — não escalar por precaução. Escalar "por via das
 dúvidas" é justamente o hábito que esta regra corta.
 
 ## UM PR POR SESSÃO (padrão)
 
-Ao concluir um PR: **commitar, invocar `doc-writer` para escrever `HISTORICO.md` + `ESTADO.md`,
-auditar o que ele escreveu, commitar EU a doc, PARAR e avisar o dev** — mesmo com mais itens
-aprovados na fila. **Quem decide se segue na mesma
+Ao concluir um PR: **commitar, ~~invocar `doc-writer` para escrever `HISTORICO.md` + `ESTADO.md`,
+auditar o que ele escreveu,~~ escrever EU `HISTORICO.md` + `ESTADO.md` (com rascunho opcional do
+`doc-writer`, auditado antes de usar qualquer linha), commitar EU a doc, PARAR e avisar o dev** —
+mesmo com mais itens aprovados na fila. **Quem decide se segue na mesma
 sessão é o dev, não eu.** ~~Sessão nova custa ~2,4 mil tokens de abertura (`CLAUDE.md` +
 `ESTADO.md`); continuar numa sessão já carregada custa muito mais que isso.~~ Exceção: o dev
 autorizar explicitamente vários itens numa sessão só — e mesmo aí, parar ao fim do lote autorizado.
@@ -314,5 +327,6 @@ decidir, o padrão segue: um PR por sessão.**
    vezes no código (comentário dizendo checar o proxy sem ler nada, regex furado na cerca, "sala
    vazia encerra na hora", teste de lag com estados idênticos, digest sem `src/net/`) — agora do
    lado visual. **Artefato que não foi verificado não conta como verificado, em nenhuma camada.**
-6. **`doc-writer` atualizou `ESTADO.md` + `HISTORICO.md`.**
+6. ~~**`doc-writer` atualizou `ESTADO.md` + `HISTORICO.md`.**~~ **A sessão principal atualizou
+   `ESTADO.md` + `HISTORICO.md`.**
 7. Aprovação explícita do dev antes de qualquer push.

@@ -307,10 +307,14 @@ describe('🏁 a corrida online COMPÕE com as telas do offline', () => {
       }),
     );
     expect(html).toContain('Pontos');
-    // O vencedor da corrida online tem os 25 pontos da vitória na tabela.
+    // Confere a célula de pontos da PRIMEIRA linha, não uma célula qualquer
+    // cujo número coincida. A pontuação pode incluir o bônus de volta rápida.
     const vencedor = corridaPronta.resultado.classificacao[0];
     expect(vencedor.posicao).toBe(1);
-    expect(html).toContain(`<td>${vencedor.pontos}</td>`);
+    const primeiraLinha = html.match(/<tbody>\s*<tr\b[^>]*>([\s\S]*?)<\/tr>/)?.[1];
+    expect(primeiraLinha).toBeDefined();
+    const pontos = primeiraLinha?.match(/<td class="resultado-tabela__pontos">([\s\S]*?)<\/td>/)?.[1];
+    expect(pontos?.replace(/<[^>]*>/g, '')).toBe(`Pontos${vencedor.pontos}`);
   });
 });
 

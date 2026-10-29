@@ -1,290 +1,40 @@
 # ESTADO — F1 Fantasy
 
-> **Leia este arquivo PRIMEIRO em toda sessão nova.** É curto de propósito.
-> **Planos de fase em `PLANOS_ATIVOS.md`** (~~Fase 3, 3.5 campeonato online, spike da casca~~ —
-> ⚠️ **os três encerraram: a FASE 3 ESTÁ ENCERRADA desde 2026-08-27**, ver §"FASE 3 ENCERRADA"; o
-> que segue **ATIVO ali é a trilha de NOMES FICTÍCIOS**, §"NOMES FICTÍCIOS — o plano dos 7 PRs") —
-> consulte **o plano que interessa**, nunca inteiro. Histórico por PR: `HISTORICO.md` (fases 6-7 e o
-> que foi arquivado daqui) e `HISTORICO_ARQUIVO.md` (fases 0-5). Não leia nenhum dos três inteiro.
+> **Leia este arquivo PRIMEIRO em toda sessão nova, mas NUNCA INTEIRO** (decisão do Marcos,
+> 2026-10-28). Leia: o topo (§"Estado atual"), §"Onde parei", §"🔒 DECISÕES DO MARCOS — VIGENTES"
+> e §"Pendências ATIVAS". O resto, só por seção, quando o trabalho pedir.
+> **Planos de fase em `PLANOS_ATIVOS.md`.** As trilhas de lá estão encerradas: Fase 3 desde
+> 2026-08-27 e a de NOMES FICTÍCIOS superada pela restauração dos nomes reais em 2026-10-17
+> (ver §"🔒 DECISÕES DO MARCOS — VIGENTES"). Consulte o plano que interessa, nunca inteiro.
+> Histórico por PR: `HISTORICO.md` (fases 6-7, deploy e o que foi arquivado daqui) e
+> `HISTORICO_ARQUIVO.md` (fases 0-5). Não leia nenhum dos dois inteiro.
 > Plano de build e direção de arte: `PLANO_CLAUDE_CODE.md`. Regras de jogo: `F1_Fantasy_GDD.md`.
 
 ## Estado atual
 
-**Última medição (2026-09-02, na `main` — PR pré-deploy, os últimos nomes reais visíveis, `6ee6b84`):**
-`npm test` **1713/1713 — INALTERADO**, e inalterado é o resultado CERTO: nenhum teste nasceu e
-nenhum comportamento mudou (o PR troca uma string de placeholder e tira três `<img>` do README).
-**`npm run test:party` 42/42**, typecheck **0** nos três projetos, lint **0** (por exit code),
-`npm run preview` **0** (11/11) **sem mover `docs/img/silhuetas.svg`** — conferido por `git status`.
-🔑 **`VERSAO_APP` fica 3.4.5 e `VERSAO_FORMATO` fica 3 — SEM BUMP, e a prova é MECÂNICA:**
-`src/engine/versao.test.ts` está verde e **`src/ui/` está fora do escopo do digest** (engine +
-`src/data/*.json` + 2 de `src/net/`).
-⚠️ **O BUNDLE MUDOU DE HASH — `index-UkRE1HGe.js` → `index-rKeVHM50.js`** (864,13 KB), e é o
-esperado: a string do placeholder chega ao bundle. **Hash mudado aqui NÃO é sinal de bump devido** —
-o digest não cobre `src/ui/`.
-✅ **PORTÃO DOS NOMES REAIS NO BUNDLE RE-MEDIDO, não herdado** (`node scripts/medir-nomes-bundle.mjs`
-sobre o `dist/` recém-construído, a pedido do dev): **124 no chunk JS** — `sala`=64 · `button`=57 ·
-`massa`=2 · `Red Bull`=1 —, **`dist/index.html` = 0**, CSS = 14 (`shadow`=13 de `box-shadow` +
-`button`=1). **TOTAL 138.**
-🔑 **O 124 BATE COM O NÚMERO QUE O README JÁ AFIRMAVA, e isso não é ausência de efeito: é a CEGUEIRA
-DA FRONTEIRA vista pelo terceiro lado** — `senna1988` nunca entrou nessa conta, então tirá-lo não
-podia baixá-la. Ver o bloco do PR na §"Onde parei".
-⚠️ **PROVENIÊNCIA DO "ANTES", e ela é obrigatória: o 124 anterior é REGISTRO, não remedição minha.**
-Ele foi medido contra `index-UkRE1HGe.js` na sessão do `da85999` e está no README; **o que EU medi
-foi o 124 de agora**, contra `index-rKeVHM50.js`. O bundle antigo já não existe em disco, e
-remedi-lo exigiria checkout. **O que sustenta a igualdade não é a comparação de duas medições
-minhas — é a MECÂNICA:** a agulha exige fronteira dos dois lados e o `1` colado a anula.
-✅ **`senna1988` = 0 no `dist/` INTEIRO**, e a string literal extraída do bundle é
-`ex.: vilarinho1988 ou 42`.
-⚠️ **`npm run balance` NÃO rodado, e dito por quê:** zero arquivo de `src/engine/`, `src/data/`
-intocado.
-✅ **Portão visual ABERTO E OLHADO nos dois temas** (`npm run dev`, o `<details>` da seed expandido),
-porque o PR muda a primeira tela. Placeholder legível e sem truncar; **console limpo** (3 mensagens,
-todas de Vite/React, zero erro).
+**2026-10-28, branch `codex/pr1-resultados` em `d6f77cf`** (sobre `26ad532`, que está sobre a
+`main` `ef8c520`). Sem push: a branch existe só localmente até o Marcos decidir.
 
-*(Medição anterior, 2026-09-02, na `main` — PR H4, CSP + jitter + teto de comandos, `0705ff6`):*
-`npm test` **1713/1713** em **3 rodadas idênticas**, 78 arquivos (era 1683/74, **+30**).
-⚠️ **SUBIU, e é dito assim de propósito:** os casos novos são de `src/net/jitter-reconexao.test.ts`,
-`src/net/teto-comandos.test.ts`, `src/net/token-reentrada.test.ts` e `scripts/csp.test.ts`.
-**`npm run test:party` 42/42** (era 36/36, **+6**: `party/comandos.test.ts`). typecheck **0** nos
-três projetos, lint **0** (por exit code), build **0**, `npm run preview` **0** (11/11).
-🔴 **O BUNDLE MUDOU DE HASH pela primeira vez na série de hardening: `index-B0pMOBwk.js` →
-`index-UkRE1HGe.js`.** Nos H1/H2/H3 ele ficava idêntico porque os módulos novos só eram importados
-por `party/`; aqui `conexao.ts`, `protocolo.ts` e `useSalaOnline.ts` chegam ao bundle.
-🔑 **`VERSAO_APP` fica 3.4.5 e `VERSAO_FORMATO` fica 3 — mas a prova NÃO é a dos PRs anteriores**
-(lá era o hash inalterado). São três elos, um deles decisão do dev: ver a §"Onde parei", bloco do H4.
-⚠️ **`npm run balance` NÃO rodado, e dito por quê:** zero arquivo de `src/engine/`, `src/data/`
-intocado.
-✅ **Portão visual ABERTO E OLHADO nos dois modos** (`dist/` servido e `npm run dev`), porque o S5
-muda o que é servido. Telas idênticas ao controle. 🔑 **O console ficou LIMPO nas duas medições** —
-só pegou quem olhou.
+- **Produção pública desde 2026-10-17:** https://f1-fantasy-sala.marcosfeliperigoto.workers.dev.
+  `ALLOWED_ORIGINS` = essa origem exata; `ENVIRONMENT=production`. Marcos relatou o online
+  testado com sucesso por jogadores reais. O que está no ar é a `main` `ef8c520`; o PR 1 **não**.
+- **`main` `ef8c520`:** merge do PR #2 (nomes reais restaurados). CI em `.github/workflows/ci.yml`;
+  CI da main `39053132098` verde. Medido na main em 2026-10-18: 1730 testes principais, 46 Worker.
+- **Versões:** `VERSAO_APP` **3.4.7**, digest **`61184d3b`**, `VERSAO_FORMATO` **4**.
+- **Medido pela sessão principal em 2026-10-28, sobre o PR 1:** `npm test` **1764/81**,
+  `npm run test:party` **46/8**, typecheck, lint e build com exit 0, `versao.test.ts` 3/3;
+  `git diff --stat` vazio em `src/engine/`, `src/data/`, `src/net/` e `party/`.
+- **PR 1 Resultados:** commitado em `d6f77cf` com os prints aprovados pelo Marcos. Ver §"Onde parei".
+- **Abertas que importam agora:** FPS do PR 1 em aparelho real (não medido); `0(v)` continua 🟡
+  aberta (o flake de `comandos.test.ts` corrigido em 2026-10-17 é outro); `0(aq)`, a URL do
+  rename, aguarda escolha do Marcos.
+- **Decisões vigentes:** §"🔒 DECISÕES DO MARCOS — VIGENTES".
 
-*(Medição anterior, 2026-09-01, na `main` — PR H2, teto de conexões + Origin, `91322d0`):*
-`npm test` **1677/73** em **3 rodadas idênticas** — **INALTERADO**, e inalterado é o resultado
-CERTO: os 7 casos novos moram em `party/conexoes.test.ts`, fora do `include` do `npm test` (mesmo
-precedente do PR B do spike). **`npm run test:party` 33/33** (era 26/26, **+7**). typecheck **0**
-nos três projetos, lint **0** (por exit code), build **0**.
-🔑 **`VERSAO_APP` fica 3.4.5 e `VERSAO_FORMATO` fica 3 — SEM BUMP, e a prova é MECÂNICA:**
-`src/engine/versao.test.ts` verde dentro do `npm test`, e o bundle saiu
-**`dist/assets/index-B0pMOBwk.js` — o MESMO hash** do PR 6, do PR 7 e do H1.
-`src/net/teto-conexoes.ts` só é importado por `party/`, então nada dele chega ao bundle.
-⚠️ **`npm run balance` NÃO rodado, e dito por quê:** zero arquivo de `src/engine/`, `src/data/`
-intocado. **`npm run preview` também não:** o PR não muda nada na tela, e o hash inalterado confirma.
-🔴 **A §"Onde parei" ACUMULA de novo** — ver o motivo no bloco do H2, lá embaixo.
-
-⚠️ **ACHADO AO ESCREVER ESTA LINHA, registrado em vez de consertado em silêncio: a medição do PR H1
-NUNCA ENTROU NESTA SEÇÃO.** A entrada abaixo, do `.gitattributes`, era a que estava marcada como
-"última" — e entre ela e hoje houve o H1 (`2f780bb`), cujos portões (`1677/73`, `26/26`) vivem só na
-§"Onde parei". **Não reescrevi o rótulo dela nem fabriquei um bloco retroativo do H1**: o que está
-medido por mim é a linha do H2, acima. 🔑 **É a mesma família do "cifra obsoleta sobrevivendo"** da
-pendência 10 — seção de estado que envelhece porque a atualização mora noutro lugar.
-
-*(Medição anterior, 2026-09-01, na `main` — PR do `.gitattributes`, `ea2c8f4`):*
-`npm test` **1662/71** em **3 rodadas** (era 1659/70). ⚠️ **SUBIU, e é dito assim de propósito:** os
-**3 testes novos** são a cerca de final de linha (`scripts/cerca-eol.test.ts`, arquivo novo).
-**`npm run test:party` 19/19**, typecheck **0** nos três projetos, eslint **0** (por exit code),
-build **0**.
-🔑 **`VERSAO_APP` fica 3.4.5 e `VERSAO_FORMATO` fica 3 — SEM BUMP, e a prova é MECÂNICA:**
-`src/engine/versao.test.ts` está verde. Os dois arquivos editados são `.test.ts` e `scripts/`,
-**fora do escopo do digest**, e o `.gitattributes` mora na raiz, também fora.
-🔑 **Bundle `dist/assets/index-B0pMOBwk.js` — MESMO hash de conteúdo do PR 6 e do PR 7.** Nada que
-chega ao bundle foi tocado.
-✅ **ZERO DIFF DE RENORMALIZAÇÃO, medido de duas formas independentes** (sonda não-rastreada no repo
-real + clone isolado): o índice já era **100% LF, 233/233**, então `git add --renormalize .` não
-encena nada. **`git status` ficou limpo antes e depois do commit.**
-⚠️ **`npm run balance` NÃO rodado, e dito por quê:** zero arquivo de produção de `src/engine/`, e
-`src/data/` está **byte a byte idêntico em disco** — nenhum arquivo foi reescrito. Delta zero por
-construção. **`npm run preview` também não:** o PR não muda nada na tela, e o hash do bundle
-inalterado é a confirmação.
-🔴 **A §"Onde parei" voltou a ACUMULAR** — o bloco do PR 7 não estava espelhado (contenção **33,0%**,
-medida). Ver lá.
-📌 **Portão dos nomes reais NÃO re-rodado por medição direta, e é dito:** o `npm test` verde inclui
-`scripts/portao-nomes-reais.test.ts`, e o PR não toca nenhum dos seis `.json` do `BASELINE`.
-**Medido à parte que o portão é EOL-INVARIANTE** (contagens idênticas em LF e CRLF com os bytes
-diferindo — a sonda não é vácua), então ele não podia se mover por este PR.
-
-*(Medição anterior, 2026-08-31, na `main` — PR 7 da trilha de nomes fictícios, A FIXTURE, `cd9d5b7`):*
-`npm test` **1659/70** em **3 rodadas** (era 1642/68). ⚠️ **SUBIU, e é dito assim de propósito:** os
-**17 testes novos** são **7** da cerca de propriedade (`scripts/fixture-semente.test.ts`) e **10** do
-diferencial da migração (`scripts/anonimizar-fixture.test.ts`), os dois arquivos novos.
-**`npm run test:party` 19/19**, typecheck **0** nos três projetos, eslint **0** (por exit code),
-build **0**.
-🔑 **`VERSAO_APP` fica 3.4.5 e `VERSAO_FORMATO` fica 3 — SEM BUMP, e MEDIDO:** o digest **`a2b34e13`
-não se moveu**, porque `src/fixtures/` está **fora do escopo** de `digestDoConteudo()` (engine +
-`src/data/*.json` + 2 de `src/net/`). A fixture não é servida ao app nem persistida em save.
-🔑 **Bundle `dist/assets/index-B0pMOBwk.js` — MESMO hash de conteúdo do PR 6.** Confirma por medição
-que nada que chega ao bundle foi tocado; **a contagem de 114 do PR 6 segue valendo sem remedição**.
-🏁 **PORTÃO DOS NOMES REAIS: 249 → 6. O PISO FOI ATINGIDO, e ele estava registrado ANTES do PR:**
-`massa`=2+2 (sobre-contagem sobre dado limpo) e `Red Bull`=1+1 (`Red Bull Ring`, T2 adiada). A linha
-`src/fixtures/dataset-semente/equipe-anos.json` foi de **243 a 0**; as outras cinco não se moveram.
-**Medido por réplica independente do contador**, não só pelo teste verde.
-✅ **`npm run balance`: DELTA ZERO** — sha256 `a0aa98e4…` **idêntico** ao baseline do PR 6, **diff
-vazio**, mesma receita de filtro. **Previsto ANTES de rodar:** os dois `*.balance.test.ts` leem
-`src/data/`, nunca a fixture. **Delta ≠ 0 teria sido bandeira vermelha, não a 0(ae).**
-🔴 **`M-pessoa` (mapear o piloto para a pessoa ERRADA) passa em TUDO — limite honesto declarado.**
-Ver a §Onde parei. **A trilha de nomes fictícios está ENTREGUE: 7 de 7.**
-📄 **Medições refeitas nesta sessão, com método: `preview/medicoes-pr7/MEDICOES-DA-DOC.md`.**
-
-*(Medição anterior, 2026-08-30, na `main` — PR 6 da trilha de nomes fictícios, A TROCA DO DATASET):*
-`npm test` **1642/68** em **2 rodadas** (era 1638/67). ⚠️ **SUBIU, e é dito assim de propósito:** os
-**4 testes novos** são a cerca de publicação (`scripts/publicacao.test.ts`, arquivo novo).
-**`npm run test:party` 19/19**, typecheck **0** nos três projetos, eslint **0** (por exit code),
-build **0** (`dist/assets/index-B0pMOBwk.js`).
-🔴 **`VERSAO_APP` 3.4.4 → 3.4.5 e `VERSAO_FORMATO` 2 → 3 — OS DOIS BUMPS SÃO OBRIGATÓRIOS**, e não
-são o caso "refactor sem efeito": `src/data/equipe-anos.json` mudou inteiro (**771 registros, 7710
-linhas em cada direção**), nomes exibidos **e ids**. Dois builds com datasets diferentes não podem
-compartilhar sala (o `hashDoDraft` consome `${equipe}@${ano}` e os seis ids de loadout), e save
-antigo carrega ids que não existem mais.
-🔑 **Digest `442b210c` → `a2b34e13`** (`src/engine/versao.test.ts:36`). ⚠️ **O salto NÃO é só o dado:
-a FÓRMULA do digest mudou junto** — passou a normalizar CRLF → LF. Ver o C1 do PR 6 em `HISTORICO.md` §"ARQUIVADO DO `ESTADO.md` em 2026-08-31".
-✅ **Portão dos nomes reais: 9.486 → 249 (−9.237).** A linha `src/data/equipe-anos.json` foi a **0**;
-as outras cinco não se moveram. **O piso do PR 7 é 6**, não 0 — quebra no docblock do portão.
-✅ **Bundle medido À MÃO (não há portão): 114** no chunk JS — `button`=57 · `sala`=54 · `massa`=2 ·
-`Red Bull`=1, **tudo sobre-contagem ou a pista da T2**. ⚠️ **`dist/` INTEIRO dá 128** (o CSS soma
-`shadow`=13 de `box-shadow` + `button`=1). **Contra-prova:** `Ferrari` 152× no derivado → `Sarterra`
-152× no publicado e no bundle, contagem idêntica.
-🔴 **`npm run balance`: DELTA ≠ ZERO — 40 linhas, e é a PRIMEIRA vez que o baseline se move.**
-Novo baseline `a0aa98e48d259a4e9ce9752da505331cfcf4ecf6085c51ea053b1f5d6a2aec37`
-(`preview/medicoes-pr6/`), com a **mesma receita de filtro de 4 padrões** — o filtro NÃO foi
-alargado. **Não é mudança de balanceamento:** as notas são byte a byte idênticas (medido, sha
-`8eab5ec0…` dos dois lados despidos de nome/id); o que mudou foi **quem ganha um desempate
-lexicográfico por id**. **Pendência 0(ae).**
-⚠️ **`npm run dataset:report`: 255 linhas, zero `'(não encontrado)'`, sha256 `c509049b0e…` — BYTE A
-BYTE igual ao do PR 2. E isso NÃO é evidência de que a troca foi segura:** `dataset-report.ts:265-266`
-lê `fatos-agregados.json` e `equipe-anos.derivado.json`, **a entrada real, que o PR 6 não toca**. O
-relatório é **cego para `src/data/`**. Rodado e registrado assim para ninguém o ler como portão da
-publicação.
-📄 **Medições refeitas nesta sessão, com método: `preview/medicoes-pr6/MEDICOES-DA-DOC.md`.**
-
-*(Medição anterior, 2026-08-28, na `main` — PR de POSICIONAMENTO das referências, `c61b3a7`):*
-`npm test` **1638/67 — INALTERADO**, e inalterado é o resultado CERTO: nenhum teste nasceu e nenhum
-comportamento mudou (o PR renomeia constantes, não muda valor nenhum).
-**`npm run test:party` não rodado, e dito:** zero arquivo de `party/` no diff.
-typecheck **0** nos três projetos, eslint **0** (lido por **exit code**).
-⚠️ **`VERSAO_APP` fica em 3.4.4 e `VERSAO_FORMATO` em 2, mas NÃO porque o digest ficou parado — ele
-MUDOU: `bb6c419d` → `442b210c`**, colado em `src/engine/versao.test.ts:36`.
-`src/engine/draft-test-fixtures.ts` mora em `src/engine/` e **não** tem sufixo `.test.ts`, então
-entra no escopo do digest, e o import renomeado o moveu. **O não-bump é o caso "Não" que o próprio
-`versao.test.ts` descreve** — o arquivo é consumido só por `bots.test.ts` e `draft.test.ts`, zero
-efeito em runtime. **Mesmo precedente do PR 2 (`50bda11`), pelo mesmo arquivo.**
-✅ **`npm run balance`: DELTA ZERO** — sha256 do filtrado **idêntico** ao da captura do PR 2,
-`e62fe729406e6bcb0b1514ac8e337a00a5c5ed5c01c7e2e00ae0195786c0b9fc`, com a **mesma receita de filtro
-de 4 padrões** (`preview/medicoes-pr2/LEIA-ME.md`).
-✅ **`npm run dataset:report`: BYTE A BYTE idêntico** ao do PR 2 — 255 linhas,
-`c509049b0ea9dce58b7b4c7aa4d7331f0760f97fb876fa8755ca55d63205a78c`, zero `'(não encontrado)'`.
-**Rodado de propósito: nenhum teste do `npm test` o executa** e é o caminho que degrada em silêncio.
-✅ **Portão dos nomes reais INALTERADO em 9.486** (`9237+2+1+243+2+1`), **por rodada direta** — e
-inalterado é o CERTO: a lista `BASELINE` só tem os 6 JSON de dados e nenhum foi tocado. **O portão
-não mede `.ts`.**
-
-*(Medição anterior, 2026-08-28, na `main` — PR 5 da trilha de nomes fictícios, `3d5f105`):*
-`npm test` **1638/67** em **3 rodadas** (era 1622/66). ⚠️ **SUBIU, e é dito assim de propósito:** os
-**16 testes novos** são o diferencial (`scripts/anonimizar.test.ts`). **"Inalterado" aqui seria a
-conflação que este arquivo já pagou.**
-**`npm run test:party` 19/19**, typecheck **0** nos três projetos, eslint **0**, build **0**.
-**`VERSAO_APP` 3.4.4 e `VERSAO_FORMATO` 2 — SEM BUMP, medido:** nenhum arquivo do digest tocado (o
-`src/engine/versao.test.ts` verde é a prova mecânica) e nenhum id persistido mudou.
-**`balance-harness` não rodado, e dito:** zero arquivo de `src/engine/`.
-✅ **Portão dos nomes reais INALTERADO em 9.486** (`9237+2+1+243+2+1`), **confirmado por rodada
-direta, não herdado** — e inalterado é o CERTO: `src/data/` está intocado (medido: `git diff --stat
-src/data/` vazio) e a saída do `anonimizar` é **gitignorada**, fora da lista `BASELINE`.
-⚠️ **O `tsc` foi o portão que a suíte não foi neste PR** — ver o erro do `'media'` no PR 5, em `HISTORICO.md` §"ARQUIVADO DO `ESTADO.md` em 2026-08-31".
-
-*(Medição anterior, 2026-08-27, na `main` — PR 4 da trilha de nomes fictícios, `cbe2bbc`):*
-`npm test` **1622/66** em **2 rodadas** (era 1603/65). ⚠️ **SUBIU, e é dito assim de propósito:** os
-**19 testes novos** são os da cerca de quase-marca (`scripts/nomes-ficticios.test.ts`). **Reportar
-"inalterado" aqui seria a conflação que este arquivo já pagou.**
-**`npm run test:party` 19/19**, typecheck **0** nos três projetos, eslint **0**, build **0**.
-**`VERSAO_APP` 3.4.4 e `VERSAO_FORMATO` 2 — SEM BUMP, medido:** nenhum arquivo do digest tocado e
-nenhum id persistido mudou (a tabela ainda não é aplicada a nada). **`balance-harness` não rodado, e
-dito:** zero arquivo de `src/engine/`.
-✅ **Portão dos nomes reais INALTERADO em 9.486** (`9237+2+1+243+2+1`), **confirmado por rodada
-direta, não herdado** — e inalterado é o resultado CERTO: o PR não encosta em `src/data/` nem na
-fixture. **A tabela nova mora em `scripts/`**, fora da lista `BASELINE` do portão.
-
-*(Medição anterior, 2026-08-27, na `main` — PR 3 da trilha de nomes fictícios, `e501b97`):*
-`npm test` **1603/65** (inalterado — o novo gerador vive em `scripts/` e roda por `npm run preview`).
-**`npm run test:party` 19/19**, typecheck **0** nos três projetos, eslint **0**, build **0**.
-**`VERSAO_FORMATO` 1 → 2, `VERSAO_APP` 3.4.3 → 3.4.4 — BUMP OBRIGATÓRIO** (digest de dados mudou).
-Digest novo: **`96c4f6b1` → `bb6c419d`** (`src/engine/versao.test.ts:36`).
-**`npm run balance`: DELTA ZERO**, sha256 do filtrado **idêntico** antes e depois — `e62fe729406e6bcb0b1514ac8e337a00a5c5ed5c01c7e2e00ae0195786c0b9fc`.
-**Bundle:** amostras dos 10 ids antigos = **0**; os 4 "Gilles Villeneuve" que sobraram são o piloto (PR 6).
-✅ **Portão dos nomes reais: 9.522 → 9.486 (−36). PRIMEIRO PR que move a baseline.**
-
-*(Medição anterior, 2026-08-25, na `main` — PR 2 da trilha de nomes fictícios, `50bda11`):*
-`npm test` **1603/65** em **2 rodadas pós-mudança** — **INALTERADO em relação ao PR 1 (`fc6fb6a`),
-que já media 1603/65**; foi o PR 1 que subiu de 1592/64, não este. **`npm run test:party` 19/19**,
-typecheck **0** nos três projetos, eslint **0**, build **0**.
-⚠️ **`VERSAO_APP` fica em 3.4.3, mas NÃO porque o digest ficou parado — ele MUDOU.**
-`src/engine/draft-test-fixtures.ts` mora em `src/engine/` e **não** tem sufixo `.test.ts`, então
-entra no escopo do digest: `9dccd150` → **`96c4f6b1`**, colado em `src/engine/versao.test.ts:36`.
-**O não-bump é o caso "Não" que o próprio `versao.test.ts` descreve** — o arquivo é consumido só por
-`bots.test.ts` e `draft.test.ts`, zero efeito em runtime.
-✅ **Bundle byte a byte INALTERADO, medido pelo hash de conteúdo do chunk:** `index-C10zYSkb.js`,
-o **mesmo** registrado no inventário de nomes reais (ver a §"MEDIÇÕES E AUDITORIAS DA TRILHA DE NOMES") — o que também confirma que os
-105/1.542/353 daquela contagem seguem valendo.
-
-*(Medição anterior, 2026-08-23, na branch `fix-0s-sala-zumbi` — conserto da 0(s), pós-revisão):*
-`npm test` **1592/64** em **3 rodadas**, **`npm run test:party` 19/19** (era 16/16), typecheck **0**
-nos três projetos, eslint **0**, build **0**. `VERSAO_APP` **3.4.3** (inalterado — o diff de
-produção é um `else if` na casca, e o digest não cobre `party/`).
-
-*(Medição anterior, 2026-08-23, na branch `pr-c-gate-alarm` — PR C do spike):* `npm test`
-**1592/64** em **3 rodadas** (INALTERADO, e é o resultado correto: o arquivo novo mora em `party/`,
-fora do `include` do `npm test` — mesmo precedente do PR B), **`npm run test:party` 16/16**
-(era 10/10), typecheck **0** nos três projetos, eslint **0**, build **0**. `VERSAO_APP` **3.4.3**
-(inalterado — **zero diff de produção** neste PR).
-
-*(Medição anterior, 2026-08-23, na branch `pr-3.5.4-ui-campeonato` — `7c5efa9` —, pós-revisão):*
-`npm test` **1592/64**, **`npm run test:party` 10/10**, typecheck **0** nos três projetos, eslint **0**, build **0**.
-`VERSAO_APP` **3.4.2 → 3.4.3 — BUMP OBRIGATÓRIO** (bloqueante C1 da revisão exigiu). `balance-harness`
-não se aplica — zero arquivo de `src/engine/` além de `versao.ts`. 🔑 **Medição de portão instável se faz com
-a saída INTEIRA salva por rodada** — filtro que guarda só o placar joga fora o dado que discrimina 0(v) de regressão.
-
-*(Medição anterior, 2026-08-23, na `main` PÓS-MERGE do 3.5.3 — `922bdd0` —, medida na `main` e não
-herdada da branch):* `npm test` **1565/64** em **8 rodadas seguidas**, **`npm run test:party` 10/10**,
-typecheck **0** nos três projetos, eslint **0**, build **0**. `VERSAO_APP` **3.4.2**.
-⚠️ **Uma leva ANTERIOR de 8 rodadas, no MESMO commit, teve 1 vermelho na rodada 1** (1564/1565) —
-rodada **com leitura de arquivos do projeto em paralelo**, que é o gatilho da 0(v). **O nome do teste
-não foi capturado** (o filtro da medição descartou a linha), então ele **não pode ser atribuído à
-0(v) por medição, só por plausibilidade**. A leva limpa que vale (8/8) foi rodada sem nada
-concorrente. ⚠️ Esta ressalva foi **APAGADA pela atualização de documentação do 3.5.4 e restaurada
-aqui**: ela é o FATO medido, e a lição que sobrou no lugar dela (a linha do "🔑" acima) é só a
-conclusão. **Conclusão sem o fato que a gerou não se verifica depois.**
-✅ **2026-08-27 — A LACUNA ACIMA FOI PREENCHIDA: desta vez o NOME do teste FOI capturado.** No PR
-(ab), uma rodada do `npm test` deu **1 vermelho em `src/ui/contrato-ausente.test.ts`** (1602/1603),
-num PR que **só toca um arquivo de preview** e não encosta no ausente. **Três rodadas seguintes:
-1603/1603.** 🔑 **É a primeira vez que a 0(v) é atribuída por MEDIÇÃO e não por plausibilidade** — o
-arquivo bate exatamente com o que a §Pendências prevê ("um vermelho em `contrato-ausente.test.ts`
-num PR que não toca o ausente é sintoma disso, não regressão"). **O que fez a diferença foi guardar
-a saída INTEIRA por rodada**, que é a lição do 🔑 acima aplicada e agora confirmada por uso.
-
-*(Medição anterior, PR 3.5.3, 2026-08-21, na branch `pr-3.5.3-cliente-multietapa`, pós-revisão e
-pós-conserto do bloqueante C1):* `npm test` **1565/64**, **`npm run test:party` 10/10**, typecheck
-**0** nos três projetos, eslint **0**, build **0**. `VERSAO_APP` **3.4.2** (sem bump — medido: o
-digest não foi tocado e nenhum rótulo novo nasceu).
-
-*(Medição anterior, PR 3.5.2, 2026-08-20, na branch `pr-3.5.2-cursor-por-etapa`):* `npm test`
-**1544/64**, **`npm run test:party` 10/10**, typecheck **0** nos três projetos, eslint **0**, build
-**0**. `VERSAO_APP` **3.4.2** (sem bump — o digest não foi tocado).
-⚠️ **`VERSAO_ESTADO_SALA` subiu de 1 para 2** — ver o 3.5.2 em `HISTORICO.md` §"ARQUIVADO DO `ESTADO.md` em 2026-08-31".
-⚠️ **O `npm test` deste projeto tem uma corrida de I/O entre duas cercas e pode falhar por
-escalonamento — pendência 0(v), medida e PRÉ-EXISTENTE.** A parcela introduzida pelo 3.5.3 foi
-FECHADA NA RAIZ no proprio PR (8 rodadas seguidas a 1565/1565), mas **um vermelho em `contrato-ausente.test.ts` num PR que
-não toca o ausente é sintoma disso, não regressão** — reproduzir antes de caçar bug.
-⚠️ **A medição do 3.5.2 estava DUPLICADA aqui (dois blocos idênticos), sobra da atualização de
-documentação do 3.5.4. A segunda cópia foi removida no PR C** — o bloco acima é o que fica.
-
-*(Medição anterior, PR B do spike, 2026-08-19, na `main` pós-merge):* `npm test` **1516/63**,
-**`npm run test:party` 8/8** (novo portão desde o PR A — era 5/5 lá), typecheck app **0**, typecheck
-`party/` **0**, **typecheck `party/tsconfig.test.json` 0** (novo), eslint **0**, build **0**
-(o `checar:casca` roda dentro dele). `VERSAO_APP` **3.4.2**.
-⚠️ **`npm test` e `npm run test:party` são suítes SEPARADAS, e é de propósito** — `party/` roda no
-`workerd` com config à parte, fora do `include` do `npm test`. **Medir só um dos dois deixa metade
-do projeto sem portão.**
-*(Medição anterior, PR 3.5.1, 2026-08-18: `npm test` 1516/63, typecheck app 0, typecheck `party/` 0,
-eslint 0, build 0.)*
-⚠️ O badge do README diz **1094** e é **estático** — não há CI neste repo (`.github/` não existe).
-Está desatualizado e vai mentir se um teste quebrar.
+> 📦 **As medições históricas desta seção (2026-08-18 a 2026-09-02) foram ARQUIVADAS em
+> 2026-10-28**, sem alteração, em `HISTORICO.md` §"ARQUIVADO DO `ESTADO.md` em 2026-10-28".
+> Antes de mover, só 18,8% dos shingles de 8 palavras já estavam no `HISTORICO.md`
+> (`node scripts/medir-shingles-doc.mjs ESTADO.md <ini> <fim> HISTORICO.md 8`), por isso o
+> trecho foi copiado inteiro, e não resumido.
 
 📄 **`docs/img/` é VERSIONADA** (ao contrário de `preview/` e `referencias/`, gitignored): os três
 prints do dev e a grade `silhuetas.svg`, esta **gerada** por
@@ -652,6 +402,114 @@ dependência).
 
 
 ## Onde parei
+
+### 2026-10-29 — Ciclo de regras de doc (sem PR de produto)
+
+Após `d6f77cf`, a branch tem 4 commits só de doc/config, nenhum em `src/`: `206aed0`, `ec41694`,
+`f1b6dc3`, `2ac569c` (detalhe em `HISTORICO.md` §"2026-10-28/29 — Ciclo de regras de doc"). Regra
+vigente desde `2ac569c`: **a sessão principal escreve a doc**; o `doc-writer` é rascunho opcional
+em Haiku 5.5, só leitura, e nunca commita (§"🔒 DECISÕES DO MARCOS — VIGENTES"). Teste do
+`doc-writer`: modelo e ferramentas conferidos no transcript; a lacuna virou `[FALTA]`. ⚠️ A sessão
+aberta antes do `2ac569c` entregou ao subagente o `CLAUDE.md` antigo, em cache; que sessão nova
+resolva **não foi testado** — conferir na próxima. `npm test` 1764/81 em 2026-10-29. Sem push,
+merge ou deploy.
+
+**Próximo:** PR R (rename para Paddock Draft), em sessão nova, bloqueado pela escolha de URL da
+`0(aq)` — ver o "Próximo" do PR 1, logo abaixo.
+
+### 2026-10-28 — PR 1 Resultados COMMITADO (`d6f77cf`, branch `codex/pr1-resultados`)
+
+**Autorização de 2026-10-21:** Marcos aprovou o commit documental `26ad532`, o pódio
+adaptável e o início do PR 1. Após esse commit, iniciar somente Resultados;
+aguardar veredito visual antes do commit de produto, sem push/merge/deploy.
+
+**PR 1 em 2026-10-21 — aguardando veredito visual:** commit documental `26ad532`
+feito; produto local em `codex/pr1-resultados`, ainda sem commit. Tempo total e
+melhor volta separados, recorde roxo, cartões no celular e pódio adaptável.
+Risco ALTO pelo portão visual. Baselines vermelhos preservados, três mutações
+detectadas, revisão independente sem achados. 1764 testes principais e 46 Worker,
+lint/build verdes; versão 3.4.7/digest 61184d3b intactos, zero engine/data/net/CSP.
+Capturas nos dois temas e tamanhos em `docs/pr1-imagens/`; relatório/instrumentos
+em `docs/pr1-resultados.md`. Cadência rAF antes/depois estável, mas viewport
+mobile em desktop sem CPU throttling **não valida aparelho real**: essa medição
+continua pendente. Não iniciar PR R nem commitar produto antes do veredito.
+
+**Veredito visual 2026-10-28: prints aprovados pelo Marcos; produto commitado nesta branch.** Antes do commit, a sessão principal mediu 1764/81 testes principais e 46/8 Worker; typecheck, lint e build verdes; `versao.test.ts` 3/3; 3.4.7, save 4 e digest `61184d3b`; diff vazio em engine/data/party/net. Sem push, merge ou deploy. FPS em aparelho real continua pendente.
+
+**Próximo:** push da branch e PR no GitHub são decisão do Marcos. Depois do merge, PR R (Rename),
+bloqueado pela escolha de URL da `0(aq)`. Um PR por sessão.
+
+### 2026-10-18 — Auditoria anterior ao PR 1 (decisões ditadas: §"🔒 DECISÕES DO MARCOS — VIGENTES")
+
+**Correção de medição da fixture:** baseline 254 confirmado, mas a explicação
+anterior “11 a mais por red-bull versus redbull” estava errada. Comparação contra
+`cd9d5b7^` mostra delta **+7** nos nomes interpolados dos estrategistas/saída de
+Brawn e **+4** nos IDs canônicos dos pilotos; total +11. A troca isolada do slug
+red-bull dá **zero** no contador. Pilotos/equipes reais, notas preservadas; oito
+estrategistas usam o molde genérico, não os nomes pessoais da fixture original.
+O comentário de `scripts/portao-nomes-reais.test.ts` ainda contém a justificativa
+errada e o relato antigo do piso 6; dívida de prosa do teste, não correção de dados.
+Script reproduzível: `scripts/medir-pre-pr1.mjs`; evidências JSON/diffs no relatório.
+
+**Fechamento do CI do PR #2:** após os dois vermelhos observados nas anotações
+do GitHub, push `39053003826` e PR `39053008495`, ambos em `7ca39cc`, passaram.
+Merge `ef8c520` em 2026-10-17 e main `39053132098` verde. Esse flake de espera fixa
+de WebSocket foi corrigido; **não fecha a 0(v)**, que continua 🟡 por outra causa.
+
+Auditoria documental de risco BAIXO, escrita pela sessão principal. 1730 testes
+principais, 46 Worker e 57 direcionados verdes; build/typecheck/grafo do Worker
+aprovados. 10 pistas, zero pit lane definido no replay; custo estimado por pista
+e infraestrutura comum no relatório, a aprovar antes do PR 2b. FPS não medido
+neste pacote sem mudança visual. **Sem commit e sem início do PR 1 nesta etapa**;
+um commit documental deve precedê-lo, após o Marcos revisar o diff.
+
+### 2026-10-17 — Deploy público validado e fechamento da entrega
+
+Produção: https://f1-fantasy-sala.marcosfeliperigoto.workers.dev. O Marcos confirmou que amigos testaram o online com sucesso. Conferência independente nesta sessão: raiz HTTP200, OPTIONS de criar-sala libera exatamente a origem pública, origem externa sem Access-Control-Allow-Origin. Não criamos salas para esse diagnóstico.
+ALLOWED_ORIGINS público agora registrado no wrangler.jsonc, mantendo ENVIRONMENT=production. README e guia local atualizados para indicar publicação realizada, tutorial local preservado. Usuário autorizou enviar nomes originais/README/configuração/documentação, abrir PR e fechar a entrega. Nenhum redeploy necessário: configuração já aplicada pelo usuário. CI deve validar o PR antes de merge.
+
+#### Ajuste de CI no fechamento
+
+No mesmo SHA635413b, CI de pull_request passou e CI de push falhou em comandos.test.ts: esperava resposta WebSocket depois de sleep50ms. Corrigido o teste para expect.poll até as três recusas esperadas, sem alterar limitador/produção. Resultado anterior não foi ignorado; novo commit deve passar nas duas execuções antes do merge.
+
+A segunda execução de push39052791341 revelou a mesma espera fixa no caso de rajada (:132). A correção foi ampliada a comandos.test.ts inteiro: conexão aguarda snapshot inicial, mensagens aguardam contagem exata, fechamento aguarda mapa vazio. Sem sleep fixo nem remoção de casos. Duas execuções completas locais46/46 e lint/typecheck passaram.
+
+### 2026-10-17 — Nomes originais restaurados por pedido do Marcos
+
+Decisão atual de produto: usar nomes históricos originais de pilotos/equipes e restaurar marcas das peças e Montreal (Gilles Villeneuve). Este pedido explícito substitui decisões anteriores de anonimização; não é uma conclusão jurídica.
+Publicação: npm run dataset:publicar copia o derivado real por escrita atômica e verifica colisões. 771 equipe/anos. Fixture reversa pelo mapa de ids fictícios→reais com colisões recusadas; 22 registros, notas/anos/ordem preservados. CLI de migração faz ensaio por padrão. Funções antigas e tabela permanecem apenas como proveniência testada, CLIs fictícias aposentadas.
+VERSAO_APP 3.4.7, digest 61184d3b; VERSAO_FORMATO 4: salas e saves com ids fictícios são incompatíveis. Criar sala/campeonato novos.
+Validação: 1730 testes principais/80 arquivos, 46 Worker/8 arquivos, lint/typecheck/build. Assinaturas SHA-256 de notas/anos/ordem idênticas às anteriores. Goldens numéricos preservados; harness muda dois mínimos empatados por ordenação de ids, conferidos independentemente (Gasly/Alpine 2024 em PNEU60; Piquet/Benetton1990 em PNEU81). Navegador confirmou nomes originais e marcas das peças, prova docs/img/nomes-originais.png. Sem revisão independente. Branch codex/restaurar-nomes-originais; sem push/deploy desta alteração.
+
+### 2026-10-16 — Preparação local, PR 3/3
+
+CI em .github/workflows/ci.yml: Node 24, npm ci, lint, suíte principal, build/typecheck/dry-run e Worker após assets. Permissão somente leitura; não publica. README corrige online de cinco etapas e documenta start:local. Contagens atuais: 1724 testes principais e 46 Worker. CI remoto ainda não executado (sem push autorizado). Três branches locais empilhadas, sem PR remoto/deploy. Próximo passo do usuário: testar npm run start:local; endereço público e publicação ficam para decisão posterior.
+
+### 2026-10-16 — Preparação local, PR 2/3
+
+Frontend e Worker na mesma origem com Static Assets; `npm run start:local` compila e serve em 127.0.0.1:8787, sem publicação. Origem pública ainda não definida.
+O teste de navegador revelou que a barreira mudava etapa/conclusão sem incrementar seq: clientes descartavam os snapshots. Corrigido no redutor; regressões servidor→cliente por atestados e timeout nasceram vermelhas (0 em vez de 1) e passaram.
+Validação: 1724 testes principais/79 arquivos, 46 testes Worker/8 arquivos, build/typecheck. Dois clientes, F5 e encerramento com textos finais iguais; etapa 1 revelou o bug, etapas 2–5 validadas após correção. Evidência: docs/img/deploy-local-validado.png. Sem revisão independente, push ou deploy.
+
+### 2026-10-16 — Preparação de deploy, PR 1/3
+
+Implementado em `codex/deploy-1-online`, com autorização do dev para os três PRs na mesma sessão.
+Confirmação de corrida exige a etapa atual em salas modernas; ausência só é aceita em sala legada.
+Cliente envia etapa e VERSAO_APP sobe para 3.4.6 (digest de simulação inalterado).
+Recusas 4403/4408 encerram a reconexão; o backoff só reinicia após receber estado.
+Conexões sem identificação expiram após 60 s, verificadas pelo alarme de 5 s, com prazo no attachment.
+Hashes têm limite próprio de 256/s, separado dos 20 comandos/s; não foi removido o limite de abuso.
+Validação: 1722 testes principais, 44 do Worker, typecheck e lint aprovados.
+Quatro mutações rastreadas em scripts/mutar-deploy.mjs: etapa, recusa, identificação e orçamento de hashes.
+Baseline vermelho medido antes das correções. O teste de expiração usa runDurableObjectAlarm:
+invocar alarm diretamente dentro de runInDurableObject causou crash nativo do runner Windows.
+Revisão local do diff realizada; não houve revisão independente por subagente.
+Pendente no lote: validação integrada de cinco etapas, hospedagem e CI. Sem push/deploy.
+As notas antigas sobre ausência de etapa e orçamento compartilhado descrevem o estado anterior.
+
+---
+
+### 2026-09-02 e anteriores (registro mantido como estava)
 
 **🏁 PR PRÉ-DEPLOY — OS ÚLTIMOS NOMES REAIS VISÍVEIS AO JOGADOR: CONCLUÍDO e COMMITADO em
 2026-09-02** (`6ee6b84`), direto na `main`. **BAIXO RISCO** — classificação do dev; zero lógica,
@@ -2197,7 +2055,62 @@ encerramento** — encerrada não quer dizer sem dívida.
 6. **Decisão de arte ainda aberta:** o `88/40%` da zebra (seção própria abaixo) — não foi tocado
    pela aprovação dos portões.
 
+## 🔒 DECISÕES DO MARCOS — VIGENTES (ditadas em 2026-10-18; regra de prints em 2026-10-28; doc e `doc-writer` em 2026-10-29)
+
+> Movido do fim do arquivo em 2026-10-28, sem alteração de conteúdo, exceto "spray" no PR 2a,
+> que constava no pedido original do Marcos e faltava aqui.
+
+**🔒 DECISÃO DO MARCOS — NOMES REAIS, reafirmada nesta sessão após pesquisa dele.**
+Usar nomes históricos reais de pilotos e equipes: razão ditada
+**fato histórico + uso nominativo**. Não reverter a restauração. Esta é decisão de produto do
+Marcos, não parecer jurídico da sessão. **Logos e liveries oficiais proibidos.
+Nenhum nome real de pessoa ou equipe em material monetizado ou anunciado.**
+Peças com marcas/modelos restaurados em `9600c53` e nomes das pistas ficam como
+estão; nenhuma autorização para mudar ID de pista/seed ou aplicar T2.
+
+**🔒 DECISÃO DO MARCOS — RENOMEAR PARA “PADDOCK DRAFT”.** Motivo: colisão do nome
+antigo com o jogo oficial. Pendência `0(aq)`; destino da URL permanece **EM ABERTO**.
+Não renomear Worker, repo, pacote, GDD ou UI antes do PR R e da escolha de URL.
+
+**Ordem ditada, UM PR POR SESSÃO:** PR 1 Resultados → PR R Rename → PR 2a
+carros/chuva/spray/incidentes → PR 2b pit lane → PR 3 sons. Regras completas em
+`docs/auditoria-pre-pr1.md`: zero engine/dados; digest verde; risco e vermelho
+onde houver lógica nova; reduced-motion/velocidades; FPS antes/depois com
+22 carros + chuva em perfil de celular; CSP intacta, qualquer mudança antes
+mostrada; WebAudio/CC0, clique prévio, mudo/volume persistidos e limite de vozes;
+formas/cores próprias; prints nos dois temas e tamanhos; **aguardar veredito
+visual antes de commitar**. Push/merge/deploy exigem aprovação explícita no PR,
+nenhum subagente commita, sem tag, instrumentos de medição versionados.
+
+**🔒 DECISÃO DO MARCOS, 2026-10-28 — PRINTS DE PR VISUAL:** no repositório, **no máximo 3 prints
+representativos por PR**; os demais vão anexados na descrição do PR no GitHub. Vale para os
+próximos PRs visuais (PR R em diante); os 10 de `docs/pr1-imagens/` entraram em `d6f77cf`, antes
+desta regra, e ficam. A exigência de prints nos dois temas e tamanhos continua: o limite é do que
+fica no repositório, não do que se mostra.
+
+**🔒 DECISÃO DO MARCOS, 2026-10-29 — QUEM ESCREVE A DOC:** a doc de cada PR (`HISTORICO.md` +
+`ESTADO.md`) é escrita pela **SESSÃO PRINCIPAL**. O `doc-writer` passa a ser ferramenta **OPCIONAL
+de rascunho**: só a sessão principal o invoca, ela audita o rascunho antes de usar qualquer linha,
+e ele nunca commita. Motivo: os 23 erros factuais de `HISTORICO.md:4895`. Regra em `CLAUDE.md`
+§"O que ler em sessão nova", parágrafo "Ao concluir um PR"; nenhum subagente chama outro (`.claude/agents/junior-dev.md` passo 7).
+
+**🔒 DECISÃO DO MARCOS, 2026-10-29 — `doc-writer` EM HAIKU 5.5 COM CONTRATO DE FATOS:**
+`model: claude-haiku-5-5`, ferramentas só `Read, Grep, Glob` (sem `Write`, `Edit`, `Bash`). Entrada:
+bloco FATOS passado pela sessão principal (números medidos, SHAs, arquivos, decisões do dev, seção
+de destino); usa só isso e o que ler nos arquivos. Saída: rascunho em texto, cada número com a
+fonte entre colchetes (`[FATOS #3]`, `[ESTADO.md:120]`), o que não tiver fonte vira
+`[FALTA: o quê]`; nunca apaga nem reescreve seção, só propõe acréscimo ou a substituição da
+§"Onde parei". Contrato completo em `.claude/agents/doc-writer.md`.
+
 ## 🔒 NOMES FICTÍCIOS — DECISÕES DO DEV, ditadas em 2026-08-25. Não reabrir sem ele.
+
+> **Registro histórico, superado quanto à anonimização em 2026-10-17 e
+> reconfirmado explicitamente pelo Marcos em 2026-10-18.** Pilotos/equipes reais,
+> marcas/modelos das peças e Montreal (Gilles Villeneuve) foram restaurados no
+> commit `9600c53`. As decisões P/T1 abaixo descrevem o passado; não reaplicar.
+> T2 não foi executada: ID/nome de Red Bull Ring continuam. A decisão H sobre
+> não reescrever histórico permanece. Restrições atuais: ver decisão de nomes
+> em §"🔒 DECISÕES DO MARCOS — VIGENTES", logo acima; nenhuma autorização para logos/liveries ou anúncio.
 
 📌 **PROVENIÊNCIA, e ela é parte da decisão.** Estas três decisões foram **ditadas pelo dev em
 2026-08-25**, nesta sessão, e transcritas por mim. Fica registrado que o commit `e1db1c9`
@@ -2824,7 +2737,8 @@ sem cobertura). **Corrigida no lugar, não contradita ao lado** — duas coisas 
 o defeito do `C1` ambíguo que a §"MEDIÇÕES E AUDITORIAS" já catalogou.
 ~~✅ **A próxima livre é `0(ap)`**, conferido em 2026-09-02: a última ocupada passou a ser `0(ao)`.~~
 ✅ **CORRIGIDA NO LUGAR em 2026-09-02, no mesmo dia: `0(ap)` FOI OCUPADA** pelo PR pré-deploy (as
-três capturas PNG a regerar). **A próxima livre é `0(aq)`.** É a segunda vez que esta linha
+três capturas PNG a regerar). **A próxima livre é `0(ar)`**, após ocupar `0(aq)`
+com o rename ditado pelo Marcos em 2026-10-18. É a segunda vez que esta linha
 envelhece em dois dias — a anterior apontava `0(ak)`, que o H4 ocupou. 🔑 **Ela é riscada no lugar
 pelo mesmo motivo das outras:** duas pendências com o mesmo rótulo é o defeito do `C1` ambíguo que a
 §"MEDIÇÕES E AUDITORIAS" já catalogou. ⚠️ **Quem for promover esta dívida a pendência confere a
@@ -3139,6 +3053,10 @@ que agora ela é tomada com o número na mão.**
    concorrente que a descrição acima nomeia, só que noutro par de cercas. **A redação anterior
    nomeava `contrato-ausente.test.ts` como O sintoma; ele é UM sintoma.** Quem vir vermelho em
    `cerca-lint.test.ts` num PR que não toca `src/net/` deve **reproduzir antes de caçar bug**.
+   📎 **NOVO DADO, 2026-10-28 (commit de doc após o PR 1):** **2 de 11 rodadas** do `npm test` deram
+   1 vermelho no MESMO caso de `cerca-lint.test.ts` (1763/1764); as outras 9 foram 1764/1764. O diff
+   era só de `.md` (`CLAUDE.md`, `doc-writer.md`, `README.md`): zero `src/net/`, zero config do
+   ESLint. Mais um sinal de que a 0(v) segue aberta; nenhuma causa nova investigada.
    ✅ **A contribuição do 3.5.3 foi FECHADA no próprio PR** (a sabotagem nova passou de 6 varreduras
    com o arquivo em disco para 1). ✅ **E A CAUSA RAIZ FOI CONSERTADA NO MESMO PR (2ª passada da
    revisão) — porque estreitar a janela NÃO BASTOU: a taxa voltou a 3 falhas em 6 rodadas.**
@@ -3157,6 +3075,11 @@ que agora ela é tomada com o número na mão.**
    vulnerável, agora por vacuidade em vez de exceção. Está escrito no docblock de `lerFonte`.
    ⚠️ **Era um portão que passava por SORTE**, e a regra do projeto trata portão assim como risco,
    não como detalhe.
+   **Auditoria 2026-10-18:** a 0(v) continua **🟡**, sem nova alegação de fechamento.
+   O flake WebSocket de `party/comandos.test.ts` corrigido em `c740248`/`7ca39cc`
+   é distinto desta corrida de arquivos. Não houve reprodução nova da 0(v),
+   remoção das sabotagens em `src/ui/` nem prova de eliminação da vacuidade.
+   Verde atual de `npm test` não prova erradicação dessa condição intermitente.
    (w) 🟠 **NOVA (revisão do 3.5.3, 2026-08-21) — O CLIENTE FIXA `'curta'` (5) E O TETO DE LEITURA DE
    `nEtapas` NO SERVIDOR É `[1, 10]`. DECISÃO DO DEV.** `etapasDaSala` chama
    `calendarioSorteado(dataset, seedCalendario, 'curta')` e ignora o `nEtapas` do snapshot — hoje
@@ -3372,6 +3295,13 @@ que agora ela é tomada com o número na mão.**
    esperar delta é que seria descuido.**
    🔑 **Ler junto com a 0(z)** (renomear pista degrada em SILÊNCIO): as duas são a mesma família —
    **rótulo carregando efeito que ninguém declarou.**
+   📎 **CASO REAL, 2026-10-17 (restauração dos nomes reais, PR #2) — anexado em 2026-10-28.** A troca
+   dos ids fictícios pelos reais, com notas/anos/ordem de SHA-256 idênticos, moveu os dois mínimos
+   empatados do harness: **Gasly/Alpine 2024 (`alpine-2024-piloto-gasly`) passou a ser o mínimo dos
+   42 empatados em PNEU 60, e Piquet/Benetton 1990 (`benetton-1990-piloto-piquet`) o dos 23 em
+   PNEU 81.** Conferido por listagem independente do derivado (`HISTORICO.md` §"2026-10-17 —
+   Restauração dos nomes originais"). É a classe acima medida de novo: nenhuma nota mudou, o rótulo
+   mudou e o resultado andou. Nenhum conserto proposto; a decisão (C) segue valendo.
    (af) 🟡 **NOVA (PR do `.gitattributes`, 2026-09-01) — O `.gitattributes` NÃO UNIFORMIZA ESTA
    MÁQUINA: o working tree segue MISTO até que cada arquivo seja re-checkoutado. DECISÃO DO DEV:
    registrar, NÃO renormalizar neste PR.**
@@ -3627,6 +3557,17 @@ que agora ela é tomada com o número na mão.**
    TELA, não de script:** ao contrário de `silhuetas.svg`, que `npm run preview` regera sozinha a
    partir da geometria de produção, **não existe gerador para estas três**. **É PR próprio e decisão
    do dev.**
+
+   (aq) 🟡 **NOVA — 2026-10-18, decisão 🔒 do Marcos: renomear para “Paddock Draft”.**
+   Razão ditada: “F1 Fantasy” colide com o jogo oficial da Fórmula 1. Inventário
+   na base `ef8c520`: **66 ocorrências textuais em 33 arquivos**, além do nome do
+   arquivo do GDD e do repo. Script/resultado e lista por arquivo no relatório
+   `docs/auditoria-pre-pr1.md`; nenhuma substituição implementada nesta auditoria.
+   **URL EM ABERTO, decisão do Marcos:** manter Worker/URL técnicos antigos,
+   nova URL com redirect antigo, ou nova URL aceitando quebra dos links.
+   Custos e efeitos em salas/DO, saves, tema e reentrada estão no relatório.
+   O PR R depende dessa escolha; não trocar `name`/`ALLOWED_ORIGINS` de passagem.
+   `0(ap)` era a última ocupada; próxima livre agora `0(ar)`.
 
 1. **Abertas pelo 7.8:** (a) o `BotaoTema` é um botão discreto no canto do `app-shell` — posição e
    forma **não passaram por veredito de arte**; (b) `erro` (salmão `#FF7B85`) e `raridadeProibido`
@@ -3898,45 +3839,3 @@ arte vai ao dev** — mudar composição sozinho já custou 2 bloqueantes no 7.3
   comparador (e a receita do filtro do `balance`) é PR próprio e decisão do dev.** Regra escrita cujo
   primeiro caso segue violando-a em silêncio é como a próxima sessão herda a ilusão de que está
   resolvido.
-## Preparação de deploy — PR 1 (2026-10-16)
-
-Implementado em `codex/deploy-1-online`, com autorização do dev para os três PRs na mesma sessão.
-Confirmação de corrida exige a etapa atual em salas modernas; ausência só é aceita em sala legada.
-Cliente envia etapa e VERSAO_APP sobe para 3.4.6 (digest de simulação inalterado).
-Recusas 4403/4408 encerram a reconexão; o backoff só reinicia após receber estado.
-Conexões sem identificação expiram após 60 s, verificadas pelo alarme de 5 s, com prazo no attachment.
-Hashes têm limite próprio de 256/s, separado dos 20 comandos/s; não foi removido o limite de abuso.
-Validação: 1722 testes principais, 44 do Worker, typecheck e lint aprovados.
-Quatro mutações rastreadas em scripts/mutar-deploy.mjs: etapa, recusa, identificação e orçamento de hashes.
-Baseline vermelho medido antes das correções. O teste de expiração usa runDurableObjectAlarm:
-invocar alarm diretamente dentro de runInDurableObject causou crash nativo do runner Windows.
-Revisão local do diff realizada; não houve revisão independente por subagente.
-Pendente no lote: validação integrada de cinco etapas, hospedagem e CI. Sem push/deploy.
-As notas antigas sobre ausência de etapa e orçamento compartilhado descrevem o estado anterior.
-## 2026-10-16 — Preparação local, PR 2/3
-
-Frontend e Worker na mesma origem com Static Assets; `npm run start:local` compila e serve em 127.0.0.1:8787, sem publicação. Origem pública ainda não definida.
-O teste de navegador revelou que a barreira mudava etapa/conclusão sem incrementar seq: clientes descartavam os snapshots. Corrigido no redutor; regressões servidor→cliente por atestados e timeout nasceram vermelhas (0 em vez de 1) e passaram.
-Validação: 1724 testes principais/79 arquivos, 46 testes Worker/8 arquivos, build/typecheck. Dois clientes, F5 e encerramento com textos finais iguais; etapa 1 revelou o bug, etapas 2–5 validadas após correção. Evidência: docs/img/deploy-local-validado.png. Sem revisão independente, push ou deploy.
-
-## 2026-10-16 — Preparação local, PR 3/3
-
-CI em .github/workflows/ci.yml: Node 24, npm ci, lint, suíte principal, build/typecheck/dry-run e Worker após assets. Permissão somente leitura; não publica. README corrige online de cinco etapas e documenta start:local. Contagens atuais: 1724 testes principais e 46 Worker. CI remoto ainda não executado (sem push autorizado). Três branches locais empilhadas, sem PR remoto/deploy. Próximo passo do usuário: testar npm run start:local; endereço público e publicação ficam para decisão posterior.
-
-## 2026-10-17 — Nomes originais restaurados por pedido do Marcos
-
-Decisão atual de produto: usar nomes históricos originais de pilotos/equipes e restaurar marcas das peças e Montreal (Gilles Villeneuve). Este pedido explícito substitui decisões anteriores de anonimização; não é uma conclusão jurídica.
-Publicação: npm run dataset:publicar copia o derivado real por escrita atômica e verifica colisões. 771 equipe/anos. Fixture reversa pelo mapa de ids fictícios→reais com colisões recusadas; 22 registros, notas/anos/ordem preservados. CLI de migração faz ensaio por padrão. Funções antigas e tabela permanecem apenas como proveniência testada, CLIs fictícias aposentadas.
-VERSAO_APP 3.4.7, digest 61184d3b; VERSAO_FORMATO 4: salas e saves com ids fictícios são incompatíveis. Criar sala/campeonato novos.
-Validação: 1730 testes principais/80 arquivos, 46 Worker/8 arquivos, lint/typecheck/build. Assinaturas SHA-256 de notas/anos/ordem idênticas às anteriores. Goldens numéricos preservados; harness muda dois mínimos empatados por ordenação de ids, conferidos independentemente (Gasly/Alpine 2024 em PNEU60; Piquet/Benetton1990 em PNEU81). Navegador confirmou nomes originais e marcas das peças, prova docs/img/nomes-originais.png. Sem revisão independente. Branch codex/restaurar-nomes-originais; sem push/deploy desta alteração.
-
-## 2026-10-17 — Deploy público validado e fechamento da entrega
-
-Produção: https://f1-fantasy-sala.marcosfeliperigoto.workers.dev. O Marcos confirmou que amigos testaram o online com sucesso. Conferência independente nesta sessão: raiz HTTP200, OPTIONS de criar-sala libera exatamente a origem pública, origem externa sem Access-Control-Allow-Origin. Não criamos salas para esse diagnóstico.
-ALLOWED_ORIGINS público agora registrado no wrangler.jsonc, mantendo ENVIRONMENT=production. README e guia local atualizados para indicar publicação realizada, tutorial local preservado. Usuário autorizou enviar nomes originais/README/configuração/documentação, abrir PR e fechar a entrega. Nenhum redeploy necessário: configuração já aplicada pelo usuário. CI deve validar o PR antes de merge.
-
-### Ajuste de CI no fechamento
-
-No mesmo SHA635413b, CI de pull_request passou e CI de push falhou em comandos.test.ts: esperava resposta WebSocket depois de sleep50ms. Corrigido o teste para expect.poll até as três recusas esperadas, sem alterar limitador/produção. Resultado anterior não foi ignorado; novo commit deve passar nas duas execuções antes do merge.
-
-A segunda execução de push39052791341 revelou a mesma espera fixa no caso de rajada (:132). A correção foi ampliada a comandos.test.ts inteiro: conexão aguarda snapshot inicial, mensagens aguardam contagem exata, fechamento aguarda mapa vazio. Sem sleep fixo nem remoção de casos. Duas execuções completas locais46/46 e lint/typecheck passaram.

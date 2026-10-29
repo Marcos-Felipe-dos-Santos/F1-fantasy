@@ -19,11 +19,41 @@ import {
   prepararCorrida,
   progressoNoReplay,
   voltaAtual,
+  melhorVoltaDoJogador,
   type Ponto,
 } from './fluxo-corrida';
 import { tracadoSuavizado } from './suavizacao';
 
 const dataset = criarDataset(equipeAnosReal, pecasReal, pistasReal);
+
+describe('melhorVoltaDoJogador — leitura do histórico já calculado', () => {
+  const resultado = (historico: number[], status: 'terminou' | 'dnf') => ({
+    historicoVoltas: { a: historico },
+    classificacao: [{ jogadorId: 'a', status }],
+  });
+  it('escolhe a menor volta de quem terminou', () => {
+    expect(melhorVoltaDoJogador(resultado([91000, 89000, 93000], 'terminou'), 'a')).toBe(89000);
+  });
+  it('descarta a volta da quebra mesmo quando ela é a menor', () => {
+    const entrada = resultado([90000, 85000], 'dnf');
+    expect(melhorVoltaDoJogador(entrada, 'a')).toBe(90000);
+    expect(entrada.historicoVoltas.a).toEqual([90000, 85000]);
+  });
+  it('abandono na primeira volta e histórico vazio não têm volta válida', () => {
+    expect(melhorVoltaDoJogador(resultado([85000], 'dnf'), 'a')).toBeNull();
+    expect(melhorVoltaDoJogador(resultado([], 'terminou'), 'a')).toBeNull();
+  });
+  it('jogador sem histórico não produz tempo inventado', () => {
+    expect(melhorVoltaDoJogador(resultado([90000], 'terminou'), 'ausente')).toBeNull();
+  });
+  it.each(['3', '42', '235', '314159'])('confere com o recorde autoritativo da engine, seed %s', (seed) => {
+    const draft = jogarDraftAteConcluir(seed);
+    const { resultado: corrida } = prepararCorrida(dataset, draft, 'pista-interlagos');
+    expect(corrida.classificacao).toHaveLength(22);
+    expect(melhorVoltaDoJogador(corrida, corrida.voltaMaisRapida.jogadorId)).toBe(corrida.voltaMaisRapida.tempo);
+  });
+});
+
 
 /** Joga as 5 rodadas de sorteio do humano (primeiro slot disponível) e a peça (primeira revelada) — mesmo padrão de useDraft.test.ts, até o draft concluir. */
 function jogarDraftAteConcluir(seedTexto: string): DraftState {

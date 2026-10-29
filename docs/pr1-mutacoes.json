@@ -1,0 +1,32 @@
+[
+  {
+    "id": "DNF",
+    "arquivo": "src/ui/fluxo-corrida.ts",
+    "resultado": "detectado",
+    "resumo": [
+      "Tests  3 failed | 77 passed (80)",
+      "FAIL  src/ui/fluxo-corrida.test.ts > melhorVoltaDoJogador — leitura do histórico já calculado > descarta a volta da quebra mesmo quando ela é a menor",
+      "FAIL  src/ui/fluxo-corrida.test.ts > melhorVoltaDoJogador — leitura do histórico já calculado > abandono na primeira volta e histórico vazio não têm volta válida",
+      "FAIL  src/ui/resultado-corrida.test.ts > resultado: tempos inequívocos > abandono na primeira volta mostra ausência de melhor volta"
+    ]
+  },
+  {
+    "id": "VR-empate",
+    "arquivo": "src/ui/TelaResultadoCorrida.tsx",
+    "resultado": "detectado",
+    "resumo": [
+      "Tests  2 failed | 78 passed (80)",
+      "FAIL  src/ui/resultado-corrida.test.ts > resultado: tempos inequívocos > separa tempo total e melhor volta, com VR somente na célula da volta",
+      "FAIL  src/ui/resultado-corrida.test.ts > resultado: tempos inequívocos > em empate exibe VR somente para o recordista já escolhido pela engine"
+    ]
+  },
+  {
+    "id": "Podio-invertido",
+    "arquivo": "src/ui/Podio.tsx",
+    "resultado": "detectado",
+    "resumo": [
+      "Tests  1 failed | 79 passed (80)",
+      "FAIL  src/ui/resultado-corrida.test.ts > pódio tem ordem semântica 1º–2º–3º e posição explícita para o layout adaptável"
+    ]
+  }
+]

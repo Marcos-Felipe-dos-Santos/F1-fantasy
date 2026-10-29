@@ -1,0 +1,37 @@
+
+ RUN  v4.1.10 E:/projetos/F1 fantasy
+
+ ❯ src/ui/resultado-corrida.test.ts (6 tests | 1 failed | 5 skipped) 12ms
+   × pódio tem ordem semântica 1º–2º–3º e posição explícita para o layout adaptável 11ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/ui/resultado-corrida.test.ts > pódio tem ordem semântica 1º–2º–3º e posição explícita para o layout adaptável
+AssertionError: expected [] to deeply equal [ '1', '2', '3' ]
+
+- Expected
++ Received
+
+- [
+-   "1",
+-   "2",
+-   "3",
+- ]
++ []
+
+ ❯ src/ui/resultado-corrida.test.ts:37:19
+     35|   const html = renderToStaticMarkup(createElement(Podio, { state, clas…
+     36|   const lugares = [...html.matchAll(/<li[^>]*aria-label="(\d)º lugar"/…
+     37|   expect(lugares).toEqual(['1', '2', '3']);
+       |                   ^
+     38| });
+     39|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 5 skipped (6)
+   Start at  17:51:02
+   Duration  321ms (transform 92ms, setup 0ms, import 162ms, tests 12ms, environment 0ms)
+

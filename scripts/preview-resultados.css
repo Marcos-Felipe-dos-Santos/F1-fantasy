@@ -1,0 +1,26 @@
+/* Somente controles do instrumento. Telas abaixo usam o CSS de produção. */
+.revisao-pr1 {
+  max-width: 1200px;
+  margin: auto;
+  padding: 16px;
+}
+.revisao-pr1__controles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+.revisao-pr1__controles button,
+.revisao-pr1__controles select {
+  min-height: 44px;
+  padding: 8px 12px;
+  color: var(--texto);
+  background: var(--fundo-elevado);
+  border: 2px solid var(--borda-interativa);
+  border-radius: 8px;
+}
+.revisao-pr1__medicao {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 12px;
+}
