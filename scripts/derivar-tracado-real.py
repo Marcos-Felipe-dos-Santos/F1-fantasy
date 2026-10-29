@@ -6,6 +6,30 @@
 # Ex.: python -I scripts/derivar-tracado-real.py interlagos 2 referencias/pistas-2b .
 # Saída (stdout, JSON): pontos de controle candidatos e a pit lane OSM alinhada.
 # O resultado é PONTO DE PARTIDA: chicanes ainda precisam ser estilizadas à mão.
+#
+# O SCRIPT DÁ A BASE; O QUE VAI PRO JOGO PASSA POR DOIS PASSOS MANUAIS:
+#   1. estilizar as chicanes (degraus) e reforçar retas/diagonais;
+#   2. afinar pontos densos (a guarda de asfalto <= 17 é por índice).
+# ⚠️ O alinhamento usa o traçado ATUAL do jogo (jogo() lê src/ui/tracados.ts e
+# fluxo-corrida.ts). Depois que a pista nova entra, rodar de novo alinha contra
+# ela e dá outros pontos. Pra reproduzir a base, aponte <repo> pra uma cópia com
+# esses dois arquivos da revisão ANTERIOR à troca.
+#
+# Registro da Monza (medido em 2026-10-29; base reproduzida com os arquivos de
+# 82bac6a~1): script 36 pontos -> estilizada 43 -> commitada 40 (82bac6a).
+#   Passo 1 (36 -> 43, saem 13, entram 20):
+#     reta principal, entram (520,513) (436,514);
+#     Rettifilo, saem (390,514) (385,512) (384,501) (378,498) (330,514),
+#       entram (412,504) (394,484) (370,496) (352,516) (318,520);
+#     Roggia, saem (119,255) (102,247) (95,223),
+#       entram (134,330) (126,292) (114,272) (90,262) (84,238), + (70,186) antes do Lesmo;
+#     Serraglio, entram (400,338) (432,366);
+#     Ascari, saem (455,388) (490,385) (502,390) (519,405) (530,407),
+#       entram (456,384) (482,372) (508,392) (534,406) (600,410).
+#   Passo 2 (43 -> 40, saem 9, entram 6):
+#     Lesmo, saem (58,141) (56,124) (70,104) (79,101) (168,83) (179,85),
+#       entram (58,140) (84,99) (166,82) (186,92);
+#     Parabólica, saem (910,417) (919,426) (924,438), entram (916,422) (924,444).
 """Deriva pontos de controle de uma pista a partir da linha central real (GeoJSON),
 alinhada ao traçado ATUAL do jogo (mesma orientação, sentido e largada), reescalada
 uniformemente pra moldura [56,924]x[36,564] e simplificada (Douglas-Peucker).

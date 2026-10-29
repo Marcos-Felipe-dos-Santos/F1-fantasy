@@ -420,14 +420,15 @@ dependência).
 - **Feito em `82bac6a`:** cerca `scripts/folga-pistas.test.ts`, Monza nova (desvio 1,1% → 0,4%) com box, `box.ts`, `viaduto.ts`, ponte de Suzuka sobre a geometria ANTIGA. **Suíte vermelha de propósito: 11 falhas, todas da cerca.**
 - **Próximo: lote 1 = Interlagos, Mônaco, Suzuka** (ordem do `referencias/pistas-2b/desvios.txt`), parar a cada 3 pistas para aprovação, um commit por lote.
 - **Método (o mesmo da Monza):**
-  1. `python -I scripts/derivar-tracado-real.py <pista> 2 referencias/pistas-2b .` gera os pontos alinhados e a pit lane OSM;
-  2. estilizar as chicanes;
-  3. afinar pontos densos (a guarda de asfalto ≤ 17 é por índice);
+  1. `python -I scripts/derivar-tracado-real.py <pista> 2 referencias/pistas-2b .` gera os pontos alinhados e a pit lane OSM. **O script dá só a BASE**; os passos 2 e 3 são MANUAIS;
+  2. estilizar as chicanes (passo manual);
+  3. afinar pontos densos (passo manual; a guarda de asfalto ≤ 17 é por índice);
+  - **Monza, conferido em 2026-10-29:** script 36 pontos → estilizada 43 (passo 2: saem 13, entram 20, nas chicanes Rettifilo, Roggia e Ascari, mais reforço na reta principal, na chegada ao Lesmo e no Serraglio) → commitada **40** (passo 3: saem 9, entram 6, no Lesmo e na Parabólica). A lista ponto a ponto está no topo de `scripts/derivar-tracado-real.py`.
+  - ⚠️ O script alinha contra o traçado ATUAL do jogo. Rodado de novo sobre a Monza já trocada, ele devolve outros 36 pontos (só 1 idêntico). A base só se reproduz com `tracados.ts` e `fluxo-corrida.ts` de `82bac6a~1`. Nas pistas do lote 1, ainda não trocadas, rodar direto funciona.
   4. medir com a cerca e com `gerar_referencias.py`, numa cópia, para não sobrescrever os arquivos "antes";
   5. preview `scripts/preview-pr2b-box.preview.test.ts`;
   6. recapturar os goldens da pista, só os valores medidos.
-- **Rascunhos NÃO rastreados, não commitar:**
-  - `scripts/derivar-tracado-real.py`
+- **Rascunhos NÃO rastreados, não commitar:** (`scripts/derivar-tracado-real.py` saiu desta lista: é versionado desde `2ef4dfb`)
   - `scripts/redesenho-pr2b.ts`
   - `scripts/propostas-pr2b.ts`
   - `scripts/preview-pr2b-*.preview.test.ts`
