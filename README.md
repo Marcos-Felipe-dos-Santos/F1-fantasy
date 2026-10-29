@@ -10,7 +10,7 @@
 [![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev/)
 [![Vite](https://img.shields.io/badge/Vite-7-646CFF?logo=vite&logoColor=white)](https://vite.dev/)
 [![Vitest](https://img.shields.io/badge/Vitest-4-6E9F18?logo=vitest&logoColor=white)](https://vitest.dev/)
-[![testes](https://img.shields.io/badge/testes-1730%20%2B%2046%20passando-brightgreen)](#-como-rodar)
+[![testes](https://img.shields.io/badge/testes-1764%20%2B%2046%20passando-brightgreen)](#-como-rodar)
 [![simulação](https://img.shields.io/badge/simula%C3%A7%C3%A3o-determin%C3%ADstica%20por%20seed-orange)](#-destaques-t%C3%A9cnicos)
 [![licença MIT](https://img.shields.io/badge/licen%C3%A7a-MIT-blue)](LICENSE)
 
@@ -192,9 +192,9 @@ A grade acima não é um print: é gerada a partir da **mesma função de geomet
 corrida usa** (`pathDaVolta`), por `npm run preview` — se o traçado mudar no jogo, muda aqui
 também. Regerar é um comando, não um trabalho de captura.
 
-### ✅ 1730 + 46 testes, em duas suítes
+### ✅ 1764 + 46 testes, em duas suítes
 
-**1730 testes em 80 arquivos** (`npm test`) cobrindo engine, UI e o redutor de rede, mais
+**1764 testes em 81 arquivos** (`npm test`) cobrindo engine, UI e o redutor de rede, mais
 **46 testes em 8 arquivos** (`npm run test:party`) que rodam a casca do Durable Object dentro do
 `workerd` de verdade.
 
@@ -265,7 +265,7 @@ Nomes históricos restaurados em 2026-10-17; H1–H4 são da auditoria anterior.
 | ------------------------- | -------------------------------------------------------------------------------------------------- |
 | **Fase de rede (online)** | ✅ encerrada em 2026-08-27 — corrida e campeonato online entregues                                 |
 | **Hardening**             | ✅ H1–H4 · **12 fechados · 3 parciais · 0 abertos** dos 15 itens com status (S13/S14 sem status)   |
-| **Testes**                | `npm test` **1730/1730** em 80 arquivos · `npm run test:party` **46/46** em 8                      |
+| **Testes**                | `npm test` **1764/1764** em 81 arquivos · `npm run test:party` **46/46** em 8                      |
 | **Build**                 | `npm run build` aprovado — build integrado com os nomes originais; aviso de chunk grande permanece |
 
 O Worker serve `dist/` e a API na mesma origem, com `ENVIRONMENT=production` e
@@ -358,7 +358,7 @@ dry-run do Worker) e suíte Worker em Node 24. Não faz deploy.
 | `npm run start:local` | Compila e serve frontend e Worker em `http://127.0.0.1:8787`, com CSP e origens locais explícitas                       |
 | `npm run dev:rede`    | Idem, exposto na rede local — pra abrir do celular                                                                      |
 | `npm run sala`        | Sobe o worker/Durable Object do modo Online (`wrangler`, em `127.0.0.1:8787`)                                           |
-| `npm test`            | Suíte principal — 1730 testes (engine, UI, `src/net/`)                                                                  |
+| `npm test`            | Suíte principal — 1764 testes (engine, UI, `src/net/`)                                                                  |
 | `npm run test:party`  | Suíte do Worker — 46 testes no `workerd`; execute `npm run build` antes para gerar os assets                            |
 | `npm run test:watch`  | Testes em modo watch                                                                                                    |
 | `npm run build`       | Typecheck, build do frontend e inspeção do bundle do Worker em dry-run                                                  |

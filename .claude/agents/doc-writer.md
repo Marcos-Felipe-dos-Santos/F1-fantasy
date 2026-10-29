@@ -16,9 +16,12 @@ Leia `CLAUDE.md` antes de tocar em qualquer arquivo. Regras invioláveis valem s
 
 ## Pós-PR — o que atualizar (sempre OS DOIS)
 
-### ESTADO.md (reescrito, não acumula)
-- Substitua o conteúdo pelo estado atual do projeto.
-- Mantenha ~60 linhas. É o único documento de estado que se lê por completo na abertura de sessão.
+### ESTADO.md (só §"Onde parei" é reescrita; o resto é acrescido ou editado pontualmente)
+- **Reescreva só a seção `## Onde parei`** e atualize §"Estado atual" no topo. Decisões travadas,
+  regras invioláveis, pendências e riscos: **acrescentar ou editar pontualmente, nunca apagar**
+  (`CLAUDE.md` §"O `doc-writer` NÃO APAGA SEÇÃO DE RESTRIÇÃO PERMANENTE").
+- O arquivo tem milhares de linhas e **nunca se lê inteiro** (`CLAUDE.md` §"O que ler em sessão
+  nova"). Se o saldo de linhas ficar negativo, pare e avise: encolher é decisão do dev.
 - Inclua: onde parou, próximo PR, pendências ativas, contagem de testes, risco ativo.
 - **Nunca invente números.** Se não sabe a contagem de testes, rode
   `npm test -- --reporter=verbose 2>&1 | tail -5` e use o número real.
@@ -54,7 +57,8 @@ Leia `CLAUDE.md` antes de tocar em qualquer arquivo. Regras invioláveis valem s
   `HISTORICO_ARQUIVO.md` — mas só com aprovação do dev.
 - **NUNCA altere `CLAUDE.md`, `PLANO_CLAUDE_CODE.md` ou `F1_Fantasy_GDD.md`.** Esses são do dev.
   Se sugerir mudança, escreva a sugestão no output e pare.
-- **NUNCA faça push.** Deixe o commit local pronto e avise o dev.
+- **NUNCA faça push nem commit.** Entregue o texto; quem audita e commita é a sessão principal
+  (`CLAUDE.md` §"NENHUM SUBAGENTE COMMITA").
 - **NUNCA rode `senior-reviewer`.** Documentação é baixo risco — fluxo curto.
 - **NUNCA leia `src/data/*.json` integralmente.** Use `jq` com filtro ou
   `src/fixtures/dataset-seente/`.
@@ -65,11 +69,11 @@ Leia `CLAUDE.md` antes de tocar em qualquer arquivo. Regras invioláveis valem s
 2. Rode `npm test 2>&1 | tail -3` para medir a contagem de testes real.
 3. Se o PR tocou `src/engine/` ou `src/data/`: rode `npm run balance 2>&1 | tail -10` e registre
    os números.
-4. Reescreva `ESTADO.md` com o estado pós-PR.
+4. Reescreva a §"Onde parei" do `ESTADO.md` e atualize §"Estado atual" (nada além disso em massa).
 5. Adicione entrada em `HISTORICO.md`.
 6. Se o PR mudou algo que o usuário final vê (UI, fluxo de jogo): atualize `README.md`.
-7. Commit das docs: `docs: PR X.Y.Z — entrada no HISTORICO e ESTADO reescrito`.
-8. Avise o dev que as docs estão prontas e o PR pode ser pushado.
+7. **Não commite.** Informe à sessão principal os arquivos alterados e o
+   `git diff --stat`; ela audita e commita.
 
 ## Modelo e custo
 

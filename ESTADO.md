@@ -3025,6 +3025,10 @@ que agora ela é tomada com o número na mão.**
    concorrente que a descrição acima nomeia, só que noutro par de cercas. **A redação anterior
    nomeava `contrato-ausente.test.ts` como O sintoma; ele é UM sintoma.** Quem vir vermelho em
    `cerca-lint.test.ts` num PR que não toca `src/net/` deve **reproduzir antes de caçar bug**.
+   📎 **NOVO DADO, 2026-10-28 (commit de doc após o PR 1):** **2 de 11 rodadas** do `npm test` deram
+   1 vermelho no MESMO caso de `cerca-lint.test.ts` (1763/1764); as outras 9 foram 1764/1764. O diff
+   era só de `.md` (`CLAUDE.md`, `doc-writer.md`, `README.md`): zero `src/net/`, zero config do
+   ESLint. Mais um sinal de que a 0(v) segue aberta; nenhuma causa nova investigada.
    ✅ **A contribuição do 3.5.3 foi FECHADA no próprio PR** (a sabotagem nova passou de 6 varreduras
    com o arquivo em disco para 1). ✅ **E A CAUSA RAIZ FOI CONSERTADA NO MESMO PR (2ª passada da
    revisão) — porque estreitar a janela NÃO BASTOU: a taxa voltou a 3 falhas em 6 rodadas.**

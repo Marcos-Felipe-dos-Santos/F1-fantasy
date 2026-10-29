@@ -9,12 +9,11 @@ Este arquivo é a memória sempre-ativa do projeto. As regras aqui são **inviol
 
 1. **`CLAUDE.md`** (este arquivo) — regras invioláveis.
 2. **`ESTADO.md`** — estado atual, onde parei, próximo PR, pendências ativas, regras da Fase 7.
-   **É o único documento de estado que se lê por completo.**
-   🔴 **NÃO É MAIS "curto de propósito (~60 linhas)" — essa frase era FALSA e ficou aqui por muito
-   tempo.** Medido em 2026-08-31, **depois** da higiene que arquivou 845 linhas: **2.202 linhas,
-   184 KB**. Antes da higiene eram **2.863**. **A regra de ler por completo continua valendo — o que
-   muda é saber o que ela custa**, e planejar a sessão com esse número na mão em vez de com um "~60"
-   que nunca foi verdade nesta fase do projeto.
+   🔒 **NUNCA INTEIRO** (decisão do dev, 2026-10-28). Ler só: o topo (§"Estado atual"),
+   §"Onde parei", §"🔒 DECISÕES DO MARCOS — VIGENTES" e §"Pendências ATIVAS". O resto, só por
+   seção, quando o trabalho pedir. É a mesma regra do topo do `ESTADO.md`.
+   ~~É o único documento de estado que se lê por completo.~~ **Substituída em 2026-10-28**: o
+   arquivo tinha **3.809 linhas** nesse dia (o "~60 linhas" antigo nunca foi verdade nesta fase).
 
 **Sob demanda, nunca por completo na abertura:**
 
