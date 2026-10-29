@@ -106,6 +106,9 @@ Esta seção fica como registro do veredito — não reabrir sem ele.
 
 ### 1. AS SILHUETAS (PR 7.7/7.7.1) — ✅ APROVADAS. **Teste cego: 10/10.**
 
+> 🔓 **REABERTAS pelo Marcos em 2026-10-29, só para o PR 2b (redesenho de pistas)** — sobreposição
+> de trechos próximos em Suzuka e Nürburgring. Ver §"🔒 DECISÕES DO MARCOS — VIGENTES".
+
 O critério de aceite era do próprio dev: *o jogador vê a pista e pensa "poxa, Interlagos" sem ler o
 nome?* **Linha de base era 0/10; o placar final foi 10/10.** O redesenho a partir da geometria real
 dos circuitos resolveu — e o **gatilho de abandono** que estava armado (parar e reabrir a pergunta
@@ -459,7 +462,7 @@ de WebSocket foi corrigido; **não fecha a 0(v)**, que continua 🟡 por outra c
 Auditoria documental de risco BAIXO, escrita pela sessão principal. 1730 testes
 principais, 46 Worker e 57 direcionados verdes; build/typecheck/grafo do Worker
 aprovados. 10 pistas, zero pit lane definido no replay; custo estimado por pista
-e infraestrutura comum no relatório, a aprovar antes do PR 2b. FPS não medido
+e infraestrutura comum no relatório, a aprovar antes do PR 2b (pit lane; hoje PR 2c). FPS não medido
 neste pacote sem mudança visual. **Sem commit e sem início do PR 1 nesta etapa**;
 um commit documental deve precedê-lo, após o Marcos revisar o diff.
 
@@ -2072,8 +2075,12 @@ estão; nenhuma autorização para mudar ID de pista/seed ou aplicar T2.
 antigo com o jogo oficial. Pendência `0(aq)`; destino da URL permanece **EM ABERTO**.
 Não renomear Worker, repo, pacote, GDD ou UI antes do PR R e da escolha de URL.
 
-**Ordem ditada, UM PR POR SESSÃO:** PR 1 Resultados → PR R Rename → PR 2a
-carros/chuva/spray/incidentes → PR 2b pit lane → PR 3 sons. Regras completas em
+**Ordem ditada, UM PR POR SESSÃO:** ~~PR 1 Resultados → PR R Rename → PR 2a
+carros/chuva/spray/incidentes → PR 2b pit lane → PR 3 sons.~~ **Substituída em 2026-10-29
+(decisão do Marcos):** PR 1 Resultados ✅ → PR R Rename → PR 2a carros/chuva/spray/incidentes →
+**PR 2b redesenho de pistas** → **PR 2c pit lane (antes chamado 2b)** → PR 3 sons. Toda menção
+anterior a "PR 2b pit lane" neste arquivo e em `docs/auditoria-pre-pr1.md` passa a ler **PR 2c**.
+Regras completas em
 `docs/auditoria-pre-pr1.md`: zero engine/dados; digest verde; risco e vermelho
 onde houver lógica nova; reduced-motion/velocidades; FPS antes/depois com
 22 carros + chuva em perfil de celular; CSP intacta, qualquer mudança antes
@@ -2093,6 +2100,14 @@ fica no repositório, não do que se mostra.
 de rascunho**: só a sessão principal o invoca, ela audita o rascunho antes de usar qualquer linha,
 e ele nunca commita. Motivo: os 23 erros factuais de `HISTORICO.md:4895`. Regra em `CLAUDE.md`
 §"O que ler em sessão nova", parágrafo "Ao concluir um PR"; nenhum subagente chama outro (`.claude/agents/junior-dev.md` passo 7).
+
+**🔒 DECISÃO DO MARCOS, 2026-10-29 — SILHUETAS REABERTAS PARA O PR 2b (redesenho de pistas):**
+o Marcos **reabre** as silhuetas aprovadas na Fase 7 (teste cego 10/10, §"✅ OS DOIS PORTÕES
+VISUAIS ESTÃO FECHADOS") **só para o PR 2b**. Motivo ditado: **trechos próximos se sobrepõem** —
+Suzuka no cruzamento, Nürburgring no laço do meio. **Continuam valendo, sem reabertura:** a
+tabela de luminância, a regra dos 360px e a zebra só em curva (§"Regras invioláveis da Fase 7",
+itens 1 a 3). As demais decisões de §"Decisões travadas do redesenho" **não foram citadas** nesta
+decisão; mexer em qualquer uma delas no PR 2b é pergunta ao Marcos.
 
 **🔒 DECISÃO DO MARCOS, 2026-10-29 — `doc-writer` EM HAIKU 5.5 COM CONTRATO DE FATOS:**
 `model: claude-haiku-5-5`, ferramentas só `Read, Grep, Glob` (sem `Write`, `Edit`, `Bash`). Entrada:
@@ -2193,6 +2208,9 @@ O plano novo não a reaproveitou: onde precisou de número, mediu.
   **`:root:not([data-tema])`** → `[data-tema]` manual. Sem o `:not()`, o toggle não vence o SO.
 
 ## Decisões travadas do redesenho (✅ silhuetas APROVADAS 10/10 — não reabrir sem o dev)
+
+> 🔓 **2026-10-29: o Marcos reabriu as SILHUETAS para o PR 2b** (§"🔒 DECISÕES DO MARCOS —
+> VIGENTES"). Os itens abaixo **não foram citados** nessa decisão: mexer neles é pergunta ao Marcos.
 
 - 🔒 **TODA guarda geométrica nova neste projeto MEDE EM ARCO, NUNCA EM ÍNDICE** (dev, 2026-08-01).
   **Palavras do dev: "já custou duas vezes".**
