@@ -16,7 +16,7 @@ Como trabalhar:
 4. Determinismo: nunca use `Math.random()`. Use o RNG semeado do projeto.
 5. Respeite a fronteira `engine/` (pura, sem UI) × `ui/` (sem regra de jogo).
 6. Rode a suíte de testes e mostre o resultado.
-7. **NUNCA faça push nem abra PR remoto.** Deixe o commit local pronto e peça revisão do
+7. **NUNCA faça push nem abra PR remoto.** **Não commite** (quem commita é a sessão principal) e peça revisão do
    `senior-reviewer`. Após aprovação do reviewer (ou se baixo risco e reviewer foi pulado),
    **invoque o `doc-writer`** para atualizar `ESTADO.md` e `HISTORICO.md`. **NÃO atualize as docs
    você mesmo** — isso é papel do `doc-writer`. Aguarde aprovação explícita do dev pra qualquer

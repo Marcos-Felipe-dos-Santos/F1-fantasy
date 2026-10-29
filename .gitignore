@@ -55,3 +55,8 @@ tmp-*
 # deixaria ~1 MB de JSON solto, colhível por um `git add .`. Achado da revisão
 # do PR 6.
 src/data/*.tmp
+
+# Configuração local do Codex (agentes e cópias de skills). O Codex lê do disco;
+# a fonte das regras é CLAUDE.md / .claude/ (AGENTS.md só aponta para lá).
+.codex/
+.agents/
