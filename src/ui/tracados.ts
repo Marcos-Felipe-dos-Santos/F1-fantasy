@@ -552,48 +552,61 @@ const TRACADO_IMOLA: TracadoImutavel = [
  * praticamente um triângulo irregular, com três lados quase retos separados por
  * freadas duras e muito espaço vazio. Se ficar "cheio de curvas", deixa de ser
  * Red Bull Ring — é por isso que esta é a silhueta com menos pontos de todas.
+ *
+ * PR 2b: derivada da linha central real (43 pontos; deixou de ser a de menos
+ * pontos, mas os pontos novos estão nas curvas, e os três lados seguem
+ * retos). Nenhum trecho colava; T1, Remus, Schlossgold, o miolo e a Rindt
+ * desbastados. Ordem e sentido intocados.
  */
 const TRACADO_RED_BULL_RING: TracadoImutavel = [
-  // Reta principal → T1 (Niki Lauda), canto de baixo.
-  { x: 686, y: 446 },
-  { x: 610, y: 514 },
-  { x: 556, y: 546 },
-  { x: 510, y: 534 },
-  // Reta longa em subida, lado esquerdo.
-  { x: 410, y: 450 },
-  { x: 308, y: 372 },
-  { x: 222, y: 310 },
-  // T3 (Remus), ponto mais alto do traçado.
-  { x: 102, y: 220 },
-  { x: 66, y: 216 },
-  { x: 56, y: 184 },
-  // Reta do topo.
-  { x: 180, y: 138 },
-  { x: 322, y: 96 },
-  { x: 452, y: 62 },
-  // T4 (Schlossgold) → o dente central.
-  { x: 540, y: 54 },
-  { x: 564, y: 86 },
-  { x: 512, y: 138 },
-  { x: 440, y: 186 },
-  { x: 358, y: 234 },
-  { x: 308, y: 260 },
-  { x: 334, y: 308 },
-  { x: 392, y: 356 },
-  { x: 450, y: 386 },
-  { x: 494, y: 358 },
-  { x: 500, y: 296 },
-  { x: 518, y: 244 },
-  // Curvas fluidas voltando pela direita.
-  { x: 594, y: 192 },
-  { x: 688, y: 144 },
-  { x: 778, y: 108 },
-  { x: 842, y: 104 },
-  { x: 900, y: 150 },
-  { x: 924, y: 222 },
-  { x: 888, y: 296 },
-  { x: 816, y: 356 },
-  { x: 748, y: 404 },
+  // Reta dos boxes → Niki Lauda (T1), subida até Remus.
+  { x: 681, y: 444 },
+  { x: 574, y: 536 },
+  { x: 556, y: 540 },
+  { x: 539, y: 524 },
+  { x: 436, y: 468 },
+  { x: 389, y: 438 },
+  { x: 348, y: 410 },
+  { x: 248, y: 328 },
+  { x: 221, y: 310 },
+  { x: 180, y: 291 },
+  // Remus (hairpin) → Schlossgold, no topo.
+  { x: 66, y: 252 },
+  { x: 56, y: 235 },
+  { x: 97, y: 210 },
+  { x: 161, y: 179 },
+  { x: 232, y: 156 },
+  { x: 351, y: 125 },
+  { x: 404, y: 108 },
+  // Schlossgold → a descida pelo miolo (Rauch, Würth).
+  { x: 514, y: 61 },
+  { x: 536, y: 64 },
+  { x: 541, y: 84 },
+  { x: 534, y: 119 },
+  { x: 525, y: 140 },
+  { x: 512, y: 158 },
+  { x: 473, y: 189 },
+  { x: 351, y: 227 },
+  { x: 330, y: 243 },
+  { x: 321, y: 264 },
+  { x: 323, y: 289 },
+  { x: 340, y: 315 },
+  // Curvas do miolo → reta de volta.
+  { x: 421, y: 371 },
+  { x: 449, y: 377 },
+  { x: 470, y: 370 },
+  { x: 486, y: 354 },
+  { x: 503, y: 301 },
+  { x: 520, y: 275 },
+  { x: 550, y: 248 },
+  { x: 800, y: 122 },
+  // Rindt, fechando na reta.
+  { x: 830, y: 116 },
+  { x: 860, y: 133 },
+  { x: 920, y: 200 },
+  { x: 922, y: 218 },
+  { x: 899, y: 252 },
+  { x: 868, y: 284 },
 ];
 /**
  * Montreal (4,361 km) — HORÁRIO. Polígono muito estreito e
@@ -838,6 +851,23 @@ export const BOXES_POR_PISTA: Readonly<Record<string, BoxDeclarado>> = {
       pontosEntrada: [],
       pontosSaida: [{ x: 865, y: 286 }, { x: 930, y: 296 }, { x: 958, y: 335 }],
       juncaoSaida: 0.102,
+    },
+  },
+  // MODELO LIVRE. Lado real (dentro da reta dos boxes). A entrada nasce antes da
+  // Rindt e corta por dentro dela, como a real; o paralelo para antes da T1 (o V
+  // entre a reta e a subida é estreito) e a saída atravessa o V e entra na
+  // subida pro Remus, depois da T1, como a real. Degrau 1.
+  'pista-red-bull-ring': {
+    entrada: 0.965,
+    saida: 0.025,
+    lado: 1,
+    afastamento: 48,
+    rampa: 60,
+    livre: {
+      juncaoEntrada: 0.845,
+      pontosEntrada: [{ x: 845, y: 215 }, { x: 790, y: 295 }],
+      pontosSaida: [{ x: 530, y: 445 }, { x: 458, y: 428 }],
+      juncaoSaida: 0.13,
     },
   },
 };

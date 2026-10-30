@@ -203,7 +203,7 @@ const ANGULO_MEDIDO: Record<string, { controle: number; suavizado: number }> = {
   'pista-interlagos': { controle: 87.51, suavizado: 17.18 }, // PR 2b: Interlagos da linha central real.
   'pista-nurburgring': { controle: 81.99, suavizado: 20.76 }, // PR 2b: Nürburgring da linha central real.
   'pista-imola': { controle: 73.42, suavizado: 15.48 }, // PR 2b: Imola da linha central real.
-  'pista-red-bull-ring': { controle: 90.97, suavizado: 17.34 },
+  'pista-red-bull-ring': { controle: 89.09, suavizado: 15.27 }, // PR 2b: Red Bull Ring da linha central real.
   'pista-montreal': { controle: 90.0, suavizado: 18.0 }, // PR 2b: Montreal da linha central real.
 };
 
@@ -351,7 +351,7 @@ describe('fidelidade da amostragem (escolha de AMOSTRAS_POR_SEGMENTO)', () => {
  */
 const OVERSHOOT_MEDIDO: Record<string, number> = {
   'pista-monaco': 0.54, // PR 2b: Mônaco da linha central real (era 1,12).
-  'pista-red-bull-ring': 3.09,
+  'pista-red-bull-ring': 0.94, // PR 2b: Red Bull Ring da linha central real.
   'pista-montreal': 0.56, // PR 2b: Montreal da linha central real.
   'pista-imola': 1.2, // PR 2b: Imola da linha central real.
   'pista-spa': 0.88, // PR 2b: Spa da linha central real.
@@ -486,7 +486,7 @@ describe('auto-interseção da curva suavizada', () => {
  * diferentes da pista" quer dizer de fato.
  */
 const SEPARACAO_MEDIDA: Record<string, number> = {
-  'pista-red-bull-ring': 48.0,
+  'pista-red-bull-ring': 43.06, // PR 2b: Red Bull Ring da linha central real.
   'pista-nurburgring': 29.24, // PR 2b: Nürburgring da linha central real.
   // Fatia 1 do redesenho (PR 7.7): Interlagos era o pior caso NÃO-exceção da
   // tabela, a 20,1 — 3,1 acima do limiar de 17. Foi a restrição que mandou no

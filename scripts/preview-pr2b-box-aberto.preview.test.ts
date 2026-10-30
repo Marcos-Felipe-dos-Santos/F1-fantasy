@@ -33,7 +33,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const RAIZ = join(__dirname, '..');
 const DIR = join(RAIZ, 'preview');
 const REF_ANTES = process.env.PREVIEW_ANTES_REF ?? '994f1de';
-const PISTAS = ['pista-interlagos', 'pista-monaco', 'pista-suzuka', 'pista-silverstone', 'pista-imola', 'pista-spa', 'pista-nurburgring', 'pista-montreal'] as const;
+const PISTAS = ['pista-interlagos', 'pista-monaco', 'pista-suzuka', 'pista-silverstone', 'pista-imola', 'pista-spa', 'pista-nurburgring', 'pista-montreal', 'pista-red-bull-ring'] as const;
 /**
  * Pistas que este lote NÃO mexe: antes e depois têm que sair idênticos. Monza
  * mora em `fluxo-corrida.ts`, fora do mock, e só exercita o box. (Até o lote 2,

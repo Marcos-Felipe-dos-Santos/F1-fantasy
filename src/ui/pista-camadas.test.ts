@@ -625,7 +625,7 @@ describe('fusão de asfalto (3.8 — documenta e trava o que foi medido)', () =>
     // Interlagos 19,8 são exatamente o menor segmento de cada uma (folga de 0,5
     // sobre o teto no pior caso). Quem vigia trechos próximos agora é a cerca
     // em arco (`scripts/folga-pistas.test.ts`) e `SEPARACAO_MEDIDA`.
-    'pista-red-bull-ring': 33.5,
+    'pista-red-bull-ring': 18.1, // PR 2b: Red Bull Ring da linha central real.
     'pista-imola': 17.5, // PR 2b: Imola da linha central real.
     'pista-spa': 19.8, // PR 2b: Spa da linha central real.
     'pista-interlagos': 19.8, // PR 2b: Interlagos da linha central real (era 29,7).
@@ -695,7 +695,7 @@ describe('fusão de asfalto (3.8 — documenta e trava o que foi medido)', () =>
    * desenhar ali, então a camada de limite também se funde). Números
    * escritos pro 7.4 (Bézier) comparar antes/depois da suavização.
    */
-  it('report-only: fusão da camada de LIMITE (largura 42) — as 10 fundem depois do redesenho, de 8,5 (RBR) a 24,5 (Suzuka, PR 2b)', () => {
+  it('report-only: fusão da camada de LIMITE (largura 42) — as 10 fundem depois do redesenho, de 22,2 (Interlagos, Spa) a 24,7 (Nürburgring, PR 2b)', () => {
     const larguraLimite = CAMADAS_PISTA.find((c) => c.id === 'limite')?.largura;
     expect(larguraLimite).toBe(42);
     /**
@@ -716,7 +716,7 @@ describe('fusão de asfalto (3.8 — documenta e trava o que foi medido)', () =>
       'pista-interlagos': 22.2, // PR 2b: Interlagos da linha central real (era 12,3).
       'pista-spa': 22.2, // PR 2b: Spa da linha central real.
       'pista-imola': 24.5, // PR 2b: Imola da linha central real.
-      'pista-red-bull-ring': 8.5,
+      'pista-red-bull-ring': 23.9, // PR 2b: Red Bull Ring da linha central real.
     };
     for (const [pistaId, esperado] of Object.entries(PISTAS_COM_FUSAO_DE_LIMITE)) {
       const sobreposicao = Math.max(0, (larguraLimite as number) - minNaoAdj(tracadoDaPista(pistaId)));
@@ -769,7 +769,7 @@ describe('zebra (3.9)', () => {
     'pista-interlagos': { candidatos: 21, candidatosPorJanela: 42, escolhidos: 33, coberturaPct: 40.0, indices: [1, 2, 3, 4, 5, 6, 8, 12, 13, 14, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 39, 40, 41, 45] },
     'pista-nurburgring': { candidatos: 23, candidatosPorJanela: 37, escolhidos: 27, coberturaPct: 39.9, indices: [2, 3, 4, 6, 7, 9, 10, 11, 12, 16, 17, 22, 23, 24, 25, 26, 28, 32, 33, 34, 35, 39, 40, 41, 42, 43, 44] }, // PR 2b: Nürburgring da linha central real.
     'pista-imola': { candidatos: 16, candidatosPorJanela: 21, escolhidos: 19, coberturaPct: 39.6, indices: [5, 6, 8, 9, 10, 11, 12, 15, 16, 17, 19, 20, 21, 22, 23, 27, 28, 29, 30] }, // PR 2b: Imola da linha central real.
-    'pista-red-bull-ring': { candidatos: 13, candidatosPorJanela: 13, escolhidos: 13, coberturaPct: 28.0, indices: [2, 7, 8, 9, 13, 14, 18, 21, 22, 24, 28, 29, 30] },
+    'pista-red-bull-ring': { candidatos: 12, candidatosPorJanela: 29, escolhidos: 27, coberturaPct: 39.1, indices: [1, 2, 3, 10, 11, 17, 18, 19, 20, 21, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 36, 37, 38, 39, 40, 41] }, // PR 2b: Red Bull Ring da linha central real.
     'pista-montreal': { candidatos: 15, candidatosPorJanela: 22, escolhidos: 19, coberturaPct: 38.3, indices: [2, 3, 4, 5, 7, 8, 10, 12, 13, 14, 15, 19, 20, 24, 25, 26, 27, 30, 31] }, // PR 2b: Montreal da linha central real.
   };
 
@@ -883,6 +883,7 @@ describe('zebra (3.9)', () => {
     'pista-nurburgring': [4, 5, 8, 9, 14, 26, 28, 29, 30, 31, 33, 36, 37, 41], // PR 2b: Nürburgring da linha central real.
     'pista-imola': [12, 17, 18, 21, 28], // PR 2b: Imola da linha central real.
     'pista-montreal': [5, 9, 11, 13, 15, 21, 27], // PR 2b: Montreal da linha central real.
+    'pista-red-bull-ring': [3, 19, 20, 21, 22, 24, 26, 28, 29, 31, 32, 33, 34, 35, 36, 38, 41], // PR 2b: Red Bull Ring da linha central real.
   };
 
   /**
@@ -891,6 +892,10 @@ describe('zebra (3.9)', () => {
    * janela não encontra nada além do vértice é o **Red Bull Ring** — a mais
    * simples do parque, com curvas amplas e poucos pontos, onde cada curva ainda
    * cabe num vértice só. Não é resíduo do 2.8; é a geometria da pista.
+   *
+   * PR 2b: com o Red Bull Ring derivado da linha central real, as curvas dele
+   * também viraram arcos de vários vértices, e a lista ficou VAZIA: as 10
+   * pistas estão no teste de divergência. A derivação continua, pra pista nova.
    *
    * DERIVADA do dataset, nunca listada à mão: com lista hardcoded, uma pista
    * nova não cairia em nenhum dos dois testes (nem no de coincidência nem no de
@@ -901,8 +906,8 @@ describe('zebra (3.9)', () => {
     .map((p) => p.id)
     .filter((id) => !(id in DIVERGENCIA_POS_REDESENHO));
 
-  it('onde os dois critérios coincidem, coincidem de verdade — e sobrou só o Red Bull Ring', () => {
-    expect(CRITERIOS_COINCIDEM).toEqual(['pista-red-bull-ring']);
+  it('onde os dois critérios coincidem, coincidem de verdade — depois do PR 2b, nenhuma', () => {
+    expect(CRITERIOS_COINCIDEM).toEqual([]);
     for (const id of CRITERIOS_COINCIDEM) {
       const { porVertice, porJanela } = candidatosPorCriterio(tracadoDaPista(id));
       expect(porJanela, `${id}: candidatos`).toEqual(porVertice);

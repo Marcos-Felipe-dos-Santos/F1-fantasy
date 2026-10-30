@@ -70,6 +70,9 @@
 #   Montreal: script 44 -> commitada 32. Pernas da L'Épingle afastadas (reta
 #     Casino 5-9 u acima na saída do grampo); Senna, chicanes de baixo e a do
 #     Muro dos Campeões desbastadas.
+#   Red Bull Ring: script 49 -> commitada 43. Nenhum trecho colava; T1,
+#     Remus (2 pontos: fundido num só, o N=8 ia a 0,705), Schlossgold, miolo e
+#     Rindt desbastados.
 """Deriva pontos de controle de uma pista a partir da linha central real (GeoJSON),
 alinhada ao traçado ATUAL do jogo (mesma orientação, sentido e largada), reescalada
 uniformemente pra moldura [56,924]x[36,564] e simplificada (Douglas-Peucker).
