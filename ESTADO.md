@@ -406,36 +406,45 @@ dependência).
 
 ## Onde parei
 
-### 2026-10-29 — PR 2b EM ANDAMENTO (redesenho das pistas + box), lote 0 commitado (`82bac6a`)
+### 2026-10-29 — PR 2b EM ANDAMENTO (redesenho das pistas + box): lote 0 (`82bac6a`) e lote 1 (`971ce2e`) commitados
 
 > Nota de passagem entre sessões, escrita pela sessão principal. **Não é a doc de fechamento do
-> PR** (essa vem no fim, com `HISTORICO.md`). **Não commitada.**
+> PR** (essa vem no fim, com `HISTORICO.md`).
 
-- **Decisões do Marcos de hoje** (registrar na doc de fechamento, §DECISÕES):
+- **Decisões do Marcos de 2026-10-29** (registrar na doc de fechamento, §DECISÕES):
   - nova ordem: PR 1 ✅ → **PR 2b (pistas, este)** → PR 2a → PR 2c (só a animação do pit) → PR 3. O PR R segue pendente, sem posição. Motivo: arrumar a geometria antes de desenhar carros e spray.
   - **o traçado do box entra no 2b**;
   - traçados **derivados da linha central real** (bacinger/f1-circuits, MIT), simplificados, chicanes estilizadas; pit lane posicionada pelo OSM, sem copiar pontos (`THIRD_PARTY_NOTICES.md`, GDD §14.2);
   - ponte de Suzuka **semitransparente, nível A (75%)**;
-  - **"mesma curva" FORA do PR**: pendência nova a abrir (zebras internas de grampo/chicane se tocando em 9 das 10 pistas).
-- **Feito em `82bac6a`:** cerca `scripts/folga-pistas.test.ts`, Monza nova (desvio 1,1% → 0,4%) com box, `box.ts`, `viaduto.ts`, ponte de Suzuka sobre a geometria ANTIGA. **Suíte vermelha de propósito: 11 falhas, todas da cerca.**
-- **Próximo: lote 1 = Interlagos, Mônaco, Suzuka** (ordem do `referencias/pistas-2b/desvios.txt`), parar a cada 3 pistas para aprovação, um commit por lote.
-- **Método (o mesmo da Monza):**
-  1. `python -I scripts/derivar-tracado-real.py <pista> 2 referencias/pistas-2b .` gera os pontos alinhados e a pit lane OSM. **O script dá só a BASE**; os passos 2 e 3 são MANUAIS;
-  2. estilizar as chicanes (passo manual);
-  3. afinar pontos densos (passo manual; a guarda de asfalto ≤ 17 é por índice);
-  - **Monza, conferido em 2026-10-29:** script 36 pontos → estilizada 43 (passo 2: saem 13, entram 20, nas chicanes Rettifilo, Roggia e Ascari, mais reforço na reta principal, na chegada ao Lesmo e no Serraglio) → commitada **40** (passo 3: saem 9, entram 6, no Lesmo e na Parabólica). A lista ponto a ponto está no topo de `scripts/derivar-tracado-real.py`.
-  - ⚠️ O script alinha contra o traçado ATUAL do jogo. Rodado de novo sobre a Monza já trocada, ele devolve outros 36 pontos (só 1 idêntico). A base só se reproduz com `tracados.ts` e `fluxo-corrida.ts` de `82bac6a~1`. Nas pistas do lote 1, ainda não trocadas, rodar direto funciona.
-  4. medir com a cerca e com `gerar_referencias.py`, numa cópia, para não sobrescrever os arquivos "antes";
-  5. preview `scripts/preview-pr2b-box.preview.test.ts`;
-  6. recapturar os goldens da pista, só os valores medidos.
-- **Rascunhos NÃO rastreados, não commitar:** (`scripts/derivar-tracado-real.py` saiu desta lista: é versionado desde `2ef4dfb`)
-  - `scripts/redesenho-pr2b.ts`
-  - `scripts/propostas-pr2b.ts`
-  - `scripts/preview-pr2b-*.preview.test.ts`
-- ⚠️ **Lições desta sessão:**
-  - NÃO rodar `prettier --write` em arquivo existente: o repositório não está formatado pelo prettier, e ele reformata código alheio.
-  - Python no Windows grava CRLF: abrir com `newline='\n'`.
-- **No fim do PR:** regerar `docs/img/silhuetas.svg`, rodar o `senior-reviewer` (risco ALTO), escrever a doc. Sem push até a cerca e o `npm test` estarem verdes.
+  - **"mesma curva" FORA do PR**: pendência nova a abrir (zebras internas de grampo/chicane se tocando em 9 das 10 pistas);
+  - **MODELO LIVRE do box, para todas as pistas** (Monza fica no modelo de rampas, aprovado): trecho PARALELO só ao longo da reta dos boxes, onde cabe; ENTRADA e SAÍDA como caminhos livres (curvas suaves declaradas por pontos) até o ponto real de entrada/saída; a cerca vale para tudo, isentas só as duas pontas onde o box encontra a pista; estilo aprovado mantido (rampas abertas, pit wall 9 u, garagens só no paralelo). **Boxes na posição mais real possível.**
+  - **ESCADA quando o box não cabe no lado real** (registrar na doc qual degrau e a folga, por pista): 1. modelo livre; 2. sem garagens; 3. afastamento mínimo; 4. box mais estreito só naquela pista (regra dos 360px); 5. ajuste de traçado de até 10 u num trecho que não seja o mais característico; 6. lado oposto. **Só parar se nenhum degrau resolver ou se precisar deformar trecho característico.**
+  - **Autonomia para terminar o PR**: as 10 pistas (Monza fica), na ordem do `desvios.txt`; **um commit por pista na branch**, sem push; Silverstone e Nürburgring têm trechos colados, resolver no redesenho delas. Se o contexto apertar: parar num commit, atualizar esta nota e avisar.
+- **Feito no lote 0 (`82bac6a`, `b52a8af`):** cerca `scripts/folga-pistas.test.ts`, Monza nova (desvio 1,1% → 0,4%; script 36 → estilizada 43 → commitada 40, lista ponto a ponto no topo de `scripts/derivar-tracado-real.py`; a base só se reproduz com `tracados.ts` e `fluxo-corrida.ts` de `82bac6a~1`) com box no modelo de rampas, `box.ts`, `viaduto.ts`, box aberto nas rampas e pit wall.
+- **Feito no lote 1 (`971ce2e`)** — degrau usado e folga medida na cerca de produção (mínimo 3,125 u = 1 px a 360px):
+
+  | pista | box | degraus | folga do box | trechos distintos |
+  |---|---|---|---|---|
+  | Interlagos | lado real; paralelo 0,99→0,035; entrada na reta (a Subida real não cabe: corredor ~57 u, precisa ~82); saída livre pelo miolo até a Reta Oposta, DEPOIS do S do Senna | 1 | 6,0 u | 6,2 u |
+  | Mônaco | lado real; entrada depois da Rascasse; saída DEPOIS da Sainte Dévote | 1 + 5 (perna da Piscina #40-43 afastada 8-10 u, aprovado) | 4,5 u | 8,5 u |
+  | Suzuka | lado real (decisão do Marcos); paralelo curto 0,99→0,03 | 2 (sem garagens), 3 (afastamento 35), 4 (box 12 u = 3,8 px), 5 (crista dos Esses #8-9 −6 u) | 3,9 u | 4,8 u |
+
+  Suzuka: grampo refeito em **V** (era um "pirulito"), ponte no vértice compartilhado **(430,372), #22 e #47**. Desvio médio ao real (antes dos ajustes finais de Mônaco/Suzuka): Interlagos 3,4%→1,1%, Mônaco 2,6%→2,1%, Suzuka 2,0%→1,1% — **remedir no fim**. `npm test` 1803 passam / **8 falham, todas da cerca, pistas fora do lote**; typecheck e lint verdes.
+- **Próximo: Silverstone, Imola, Spa, Nürburgring, Montreal, Red Bull Ring** (ordem do `desvios.txt`), um commit por pista.
+- **Método por pista:**
+  1. `python -I scripts/derivar-tracado-real.py <pista> 2 referencias/pistas-2b .` dá a BASE (pontos alinhados + pit lane OSM). Nas pistas ainda não trocadas, rodar direto funciona. Guardar a base (as do lote 1 estão em `referencias/pistas-2b/bases-lote1/`).
+  2. Estilizar (chicanes como degrau; ABRIR trechos que na escala da moldura ficam colados) e afinar (guarda de asfalto ≤ 17 é por índice: na prática exige segmento de controle ≥ 17 u).
+  3. Box: medir o PARALELO primeiro (é ele que decide se cabe); depois entrada/saída livres. Caminho livre de 26 u precisa de corredor de ~74–90 u entre eixos.
+  4. Gravar em `tracados.ts`, rodar a cerca, recapturar goldens (só valores medidos), regerar o preview, olhar.
+- **Ferramentas de rascunho (NÃO versionadas, `preview/_aval/`, gitignored):** `cand.aval.test.ts` (avalia candidato: cerca, asfalto, ângulo, cruzamento, PNG), `livre.aval.test.ts` (protótipo do box livre), `captura.aval.test.ts`/`esc.aval.test.ts` (capturam goldens). Rodar com `npx vitest run --config preview/_aval/vitest.config.ts <arquivo> --reporter=verbose --silent=false`. ⚠️ **`npm run lint` falha por causa delas** (`any` em rascunho): mover/apagar `preview/_aval/` antes do lint final.
+- **Preview:** `npm run preview` → `preview/pr2b-<pista>-{escuro,claro}.html` (antes do git em `994f1de` × depois). Hoje cobre Interlagos, Mônaco e Suzuka; estender `PISTAS` para as 10 no fim.
+- **Pendências do `senior-reviewer` do lote 1** (decisão do Marcos, não resolvidas):
+  - a guarda "sobreposição de asfalto" (`minNaoAdj`) **degenerou**: com pistas densas mede o menor segmento de controle, não trechos próximos (docblock já diz isso); propor migrar para arco;
+  - margem do N=8 caiu para 0,681 (teto 0,7, Mônaco) — tira a base da decisão travada "AMOSTRAS_POR_SEGMENTO 12 → 4-6";
+  - zebra mais contínua nas pistas densas (Interlagos no teto de 40%, 19 vértices seguidos no miolo) — olhar no veredito.
+- **Rascunhos NÃO rastreados, não commitar:** `scripts/redesenho-pr2b.ts`, `scripts/propostas-pr2b.ts`, `scripts/preview-pr2b-box.preview.test.ts`, `scripts/preview-pr2b-pistas.preview.test.ts` (os dois últimos importam os dois primeiros), e os 5 `.txt` da raiz (dumps do Marcos de 21/10, ele apaga à mão).
+- ⚠️ **Lições:** NÃO rodar `prettier --write` em arquivo existente; gravar em LF (Python: `newline='\n'`); typecheck é `--noEmit` (nunca `tsc -b`); heredoc com código TS quebrou duas vezes no Bash desta máquina — gravar o script Python num arquivo e rodar.
+- **No fim do PR:** cerca e `npm test` verdes; typecheck, lint; `desvios.txt` antes/depois das 10 (`gerar_referencias.py` numa cópia); preview das 10 (celular e desktop, dois temas); regerar `docs/img/silhuetas.svg`; `senior-reviewer` no diff completo do PR; escrever a doc. Sem push, merge ou deploy.
 
 ### 2026-10-29 — Ciclo de regras de doc (sem PR de produto)
 
