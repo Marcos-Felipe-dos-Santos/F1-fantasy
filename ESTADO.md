@@ -431,6 +431,12 @@ dependência).
 
   Suzuka: grampo refeito em **V** (era um "pirulito"), ponte no vértice compartilhado **(430,372), #22 e #47**. Desvio médio ao real (antes dos ajustes finais de Mônaco/Suzuka): Interlagos 3,4%→1,1%, Mônaco 2,6%→2,1%, Suzuka 2,0%→1,1% — **remedir no fim**. `npm test` 1803 passam / **8 falham, todas da cerca, pistas fora do lote**; typecheck e lint verdes.
 - **Próximo: Silverstone, Imola, Spa, Nürburgring, Montreal, Red Bull Ring** (ordem do `desvios.txt`), um commit por pista.
+- **Lote 2 (sessão de 2026-10-29, noite):** Silverstone em `4a0da81` (degrau 1; box 4,2 u; trechos 6,3 u).
+- **🔒 Regra do N=8, decisão do Marcos (2026-10-29), teto 0,7 mantido; reabrir o N fica FORA do PR 2b:** se o N=8 passar do teto por causa de uma RETA LONGA, pode-se inserir pontos SOBRE a reta, sem pedir, desde que (a) a silhueta não mude (ponto praticamente em cima da reta), (b) a cerca de folga continue passando, (c) o máximo das 10 volte a ficar abaixo de 0,7. Registrar cada ponto (pista, trecho, coordenada, valor antes e depois). Se o estouro não vier de reta longa, ou se ponto na reta não resolver: PARAR e mostrar.
+  | pista | trecho | ponto inserido | N=8 da pista antes → depois | máximo das 10 depois |
+  |---|---|---|---|---|
+  | Silverstone | Wellington Straight, #11 (370,162) → (193,433) | (282,297) | 0,739 → 0,451 | 0,681 (Mônaco) |
+- **Pendência NOVA (decisão do Marcos, 2026-10-29), não mexer no PR 2b:** a guarda que mede o menor segmento de controle (`minNaoAdj`, "sobreposição de asfalto") degenerou; a cerca de folga cobre a distância entre trechos. Abrir em §"Pendências ATIVAS" na doc de fechamento.
 - **Método por pista:**
   1. `python -I scripts/derivar-tracado-real.py <pista> 2 referencias/pistas-2b .` dá a BASE (pontos alinhados + pit lane OSM). Nas pistas ainda não trocadas, rodar direto funciona. Guardar a base (as do lote 1 estão em `referencias/pistas-2b/bases-lote1/`).
   2. Estilizar (chicanes como degrau; ABRIR trechos que na escala da moldura ficam colados) e afinar (guarda de asfalto ≤ 17 é por índice: na prática exige segmento de controle ≥ 17 u).
