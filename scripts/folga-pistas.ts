@@ -277,10 +277,18 @@ export interface MedicaoBox {
  *   pista, alargada em `rampa` pra cada lado (logo antes da entrada e logo
  *   depois da saída a pit lane ainda está colada na pista), é isenta, e o
  *   resto da volta não.
+ * - MODELO LIVRE (amostras com `largura`/`isencao`): cada amostra é medida com a
+ *   própria largura, e só a ponta de cada caminho livre perto da junção é
+ *   isenta, e só contra o arco da pista em volta da junção (`isencao`).
  */
 export function medirFolgaDoBox(
   controle: TracadoImutavel,
-  amostras: readonly { readonly p: Ponto; readonly paralelo: boolean }[],
+  amostras: readonly {
+    readonly p: Ponto;
+    readonly paralelo: boolean;
+    readonly largura?: number;
+    readonly isencao?: { readonly inicio: number; readonly fim: number } | null;
+  }[],
   janela: { readonly inicio: number; readonly fim: number },
   larguraBox: number,
   rampa: number,
@@ -295,16 +303,26 @@ export function medirFolgaDoBox(
     arco[n - 1] + Math.hypot(curva[0].x - curva[n - 1].x, curva[0].y - curva[n - 1].y);
   const ini = janela.inicio - rampa;
   const fim = janela.fim + rampa;
-  const naJanela = (i: number) =>
-    [arco[i] - perimetro, arco[i], arco[i] + perimetro].some((s) => s >= ini && s <= fim);
+  const dentro = (i: number, de: number, ate: number) =>
+    [arco[i] - perimetro, arco[i], arco[i] + perimetro].some((s) => s >= de && s <= ate);
   let melhor: MedicaoBox | undefined;
-  for (const { p, paralelo } of amostras) {
+  for (const { p, paralelo, largura, isencao } of amostras) {
+    // Modelo livre: a amostra traz a própria isenção (`null` = nenhuma); sem
+    // ela, vale a regra das rampas (paralelo nada, rampa a janela alargada).
+    const isenta =
+      isencao !== undefined
+        ? isencao === null
+          ? () => false
+          : (i: number) => dentro(i, isencao.inicio, isencao.fim)
+        : paralelo
+          ? () => false
+          : (i: number) => dentro(i, ini, fim);
     for (let i = 0; i < n; i++) {
-      if (!paralelo && (naJanela(i) || naJanela((i + 1) % n))) continue;
+      if (isenta(i) || isenta((i + 1) % n)) continue;
       const a = curva[i];
       const b = curva[(i + 1) % n];
       const meiaPista = (zebra[i] || zebra[(i + 1) % n] ? LARGURA_ZEBRA : LARGURA_LIMITE) / 2;
-      const folga = distanciaPontoSegmento(p, a, b) - (larguraBox / 2 + meiaPista);
+      const folga = distanciaPontoSegmento(p, a, b) - ((largura ?? larguraBox) / 2 + meiaPista);
       if (melhor === undefined || folga < melhor.folga) {
         melhor = {
           folga,

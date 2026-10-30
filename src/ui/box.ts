@@ -32,10 +32,17 @@ import { BOXES_POR_PISTA, type BoxDeclarado } from './tracados';
 export const LARGURA_BOX = 18;
 export const LARGURA_BORDA_BOX = 26;
 
-/** Amostra da pit lane; `paralelo` = já no afastamento cheio (fora das rampas). */
+/**
+ * Amostra da pit lane; `paralelo` = já no afastamento cheio (fora das rampas).
+ * Modelo LIVRE: cada amostra traz a própria `largura` medida pela cerca e a
+ * `isencao` (arco da pista contra o qual ela pode encostar: só a ponta perto
+ * da junção; `null` = nenhuma). Sem os dois campos vale o modelo de rampas.
+ */
 export interface AmostraDoBox {
   readonly p: Ponto;
   readonly paralelo: boolean;
+  readonly largura?: number;
+  readonly isencao?: { readonly inicio: number; readonly fim: number } | null;
 }
 
 export interface CaminhoDoBox {
@@ -78,8 +85,116 @@ function noArco(curva: readonly Ponto[], arco: Arco, alvo: number): { p: Ponto; 
   return { p: { x: a.x + k * dx, y: a.y + k * dy }, t: { x: dx / c, y: dy / c } };
 }
 
+/** Superfície e borda do box declarado (a borda só existe do lado de fora). */
+function largurasDe(box: BoxDeclarado): { faixa: number; borda: number } {
+  const faixa = box.larguraBox ?? LARGURA_BOX;
+  return { faixa, borda: faixa + (LARGURA_BORDA_BOX - LARGURA_BOX) };
+}
+
+/**
+ * Curva LIVRE por `pontos` (Hermite com tangentes de Catmull-Rom no meio e
+ * impostas nas pontas: `t0` na primeira, `t1` na última), amostrada a ~`passo` u.
+ */
+function curvaLivre(pontos: readonly Ponto[], t0: Ponto, t1: Ponto, passo: number): Ponto[] {
+  const n = pontos.length;
+  const tangente = (i: number): Ponto => {
+    if (i === 0 || i === n - 1) {
+      const t = i === 0 ? t0 : t1;
+      const vizinho = pontos[i === 0 ? 1 : n - 2];
+      const c = Math.hypot(vizinho.x - pontos[i].x, vizinho.y - pontos[i].y);
+      return { x: t.x * c, y: t.y * c };
+    }
+    return { x: (pontos[i + 1].x - pontos[i - 1].x) / 2, y: (pontos[i + 1].y - pontos[i - 1].y) / 2 };
+  };
+  const saida: Ponto[] = [];
+  for (let i = 0; i < n - 1; i++) {
+    const a = pontos[i];
+    const b = pontos[i + 1];
+    const ma = tangente(i);
+    const mb = tangente(i + 1);
+    const k = Math.max(2, Math.ceil(Math.hypot(b.x - a.x, b.y - a.y) / passo));
+    for (let j = 0; j < k; j++) {
+      const t = j / k;
+      const h00 = 2 * t * t * t - 3 * t * t + 1;
+      const h10 = t * t * t - 2 * t * t + t;
+      const h01 = -2 * t * t * t + 3 * t * t;
+      const h11 = t * t * t - t * t;
+      saida.push({
+        x: h00 * a.x + h10 * ma.x + h01 * b.x + h11 * mb.x,
+        y: h00 * a.y + h10 * ma.y + h01 * b.y + h11 * mb.y,
+      });
+    }
+  }
+  saida.push(pontos[n - 1]);
+  return saida;
+}
+
+/** Comprimento acumulado de uma polilinha aberta. */
+function acumulado(linha: readonly Ponto[]): number[] {
+  const s = [0];
+  for (let i = 1; i < linha.length; i++)
+    s.push(s[i - 1] + Math.hypot(linha[i].x - linha[i - 1].x, linha[i].y - linha[i - 1].y));
+  return s;
+}
+
+/**
+ * Modelo LIVRE: entrada livre + paralelo + saída livre, numa polilinha só,
+ * contínua, da junção de entrada à de saída (é o caminho que o PR 2c anda).
+ * Largura medida pela cerca: a borda nos caminhos livres; borda + garagens no
+ * paralelo. Isenção: só a ponta de cada caminho livre até `rampa` u de arco
+ * da junção, e só contra a pista a `rampa` u da junção.
+ */
+function caminhoLivre(curva: readonly Ponto[], box: BoxDeclarado, passo: number): CaminhoDoBox {
+  const livre = box.livre;
+  if (livre === undefined) throw new Error('box: caminhoLivre sem `livre`');
+  const arco = arcoDe(curva);
+  const { borda } = largurasDe(box);
+  const larguraParalelo = borda + (box.garagens === false ? 0 : 2 * LARGURA_GARAGEM);
+  const inicio = box.entrada * arco.perimetro;
+  let fim = box.saida * arco.perimetro;
+  if (fim <= inicio) fim += arco.perimetro;
+  const paralelo: Ponto[] = [];
+  const tangentes: Ponto[] = [];
+  for (let s = inicio; s <= fim + 1e-9; s += passo) {
+    const { p, t } = noArco(curva, arco, s);
+    paralelo.push({ x: p.x - t.y * box.lado * box.afastamento, y: p.y + t.x * box.lado * box.afastamento });
+    tangentes.push(t);
+  }
+  const sEntrada = livre.juncaoEntrada * arco.perimetro;
+  const sSaida = livre.juncaoSaida * arco.perimetro;
+  const jEntrada = noArco(curva, arco, sEntrada);
+  const jSaida = noArco(curva, arco, sSaida);
+  const entrada = curvaLivre([jEntrada.p, ...livre.pontosEntrada, paralelo[0]], jEntrada.t, tangentes[0], passo);
+  const saida = curvaLivre(
+    [paralelo[paralelo.length - 1], ...livre.pontosSaida, jSaida.p],
+    tangentes[tangentes.length - 1],
+    jSaida.t,
+    passo,
+  );
+  const ponta = (linha: readonly Ponto[], sJuncao: number, doFim: boolean): AmostraDoBox[] => {
+    const s = acumulado(linha);
+    const total = s[s.length - 1];
+    return linha.map((p, i) => ({
+      p,
+      paralelo: false,
+      largura: borda,
+      isencao:
+        (doFim ? total - s[i] : s[i]) <= box.rampa ? { inicio: sJuncao - box.rampa, fim: sJuncao + box.rampa } : null,
+    }));
+  };
+  const amostras = [
+    ...ponta(entrada.slice(0, -1), sEntrada, false),
+    ...paralelo.map((p) => ({ p, paralelo: true, largura: larguraParalelo, isencao: null })),
+    ...ponta(saida.slice(1), sSaida, true),
+  ];
+  let fimJanela = sSaida;
+  while (fimJanela <= sEntrada) fimJanela += arco.perimetro;
+  return { amostras, janela: { inicio: sEntrada, fim: fimJanela }, largura: larguraParalelo };
+}
+
 /** Pit lane de `box` sobre `curva`, amostrada a cada `passo` u de arco. Puro. */
 export function caminhoDoBox(curva: readonly Ponto[], box: BoxDeclarado, passo = 4): CaminhoDoBox {
+  if (box.livre !== undefined) return caminhoLivre(curva, box, passo);
   const arco = arcoDe(curva);
   const inicio = box.entrada * arco.perimetro;
   let fim = box.saida * arco.perimetro;
@@ -141,6 +256,8 @@ export const TRACEJADO_GARAGEM = '6 10';
 export interface DesenhoDoBox {
   /** A pit lane inteira, como `pathDoBox`: superfície `pistaServico`. */
   readonly faixa: string;
+  /** Largura da superfície (`LARGURA_BOX`, ou a declarada na pista). */
+  readonly larguraFaixa: number;
   /**
    * Borda clara só do lado de fora. Sem a de dentro, o box não fecha um
    * contorno com o limite da pista: era isso que o fazia ler como ilha.
@@ -153,7 +270,8 @@ export interface DesenhoDoBox {
    */
   readonly rampas: readonly string[];
   readonly pitWall: string;
-  readonly garagens: string;
+  /** `null` = pista sem garagens. */
+  readonly garagens: string | null;
 }
 
 /** Curva deslocada de `desvio` u (no `lado` do box) entre os arcos `de` e `ate`. */
@@ -183,18 +301,34 @@ export function desenhoDoBoxNaCurva(curva: readonly Ponto[], box: BoxDeclarado, 
   const primeiraParalela = caminho.amostras.findIndex((a) => a.paralelo);
   const ultimaParalela = caminho.amostras.length - 1 - [...caminho.amostras].reverse().findIndex((a) => a.paralelo);
   const arco = arcoDe(curva);
-  const de = caminho.janela.inicio + box.rampa;
-  const ate = caminho.janela.fim - box.rampa;
+  const { faixa, borda } = largurasDe(box);
+  const livre = box.livre !== undefined;
+  // Trecho paralelo, em arco da pista: no modelo livre é `entrada..saida` inteiro.
+  const de = livre ? box.entrada * arco.perimetro : caminho.janela.inicio + box.rampa;
+  let ate = livre ? box.saida * arco.perimetro : caminho.janela.fim - box.rampa;
+  if (ate <= de) ate += arco.perimetro;
+  // Rampas repintadas depois do limite: no modelo livre, só a ponta isenta de cada junção.
+  const n = caminho.amostras.length;
+  const rampas = livre
+    ? [
+        pontos.slice(0, caminho.amostras.findIndex((a) => a.isencao === null) + 1),
+        pontos.slice(n - 1 - [...caminho.amostras].reverse().findIndex((a) => a.isencao === null)),
+      ]
+    : [pontos.slice(0, primeiraParalela + 1), pontos.slice(ultimaParalela)];
   return {
     faixa: pathDoTrecho(pontos),
-    bordaExterna: pathDoTrecho(aoLado(pontos, box.lado, (LARGURA_BOX + ESPESSURA_BORDA_BOX) / 2)),
-    rampas: [pontos.slice(0, primeiraParalela + 1), pontos.slice(ultimaParalela)].map(pathDoTrecho),
+    larguraFaixa: faixa,
+    bordaExterna: pathDoTrecho(aoLado(pontos, box.lado, (faixa + ESPESSURA_BORDA_BOX) / 2)),
+    rampas: rampas.map(pathDoTrecho),
     pitWall: pathDoTrecho(
-      deslocada(curva, arco, box.lado, box.afastamento - LARGURA_BOX / 2 - LARGURA_PIT_WALL / 2, de, ate, passo),
+      deslocada(curva, arco, box.lado, box.afastamento - faixa / 2 - LARGURA_PIT_WALL / 2, de, ate, passo),
     ),
-    garagens: pathDoTrecho(
-      deslocada(curva, arco, box.lado, box.afastamento + LARGURA_BORDA_BOX / 2 + LARGURA_GARAGEM / 2, de, ate, passo),
-    ),
+    garagens:
+      box.garagens === false
+        ? null
+        : pathDoTrecho(
+            deslocada(curva, arco, box.lado, box.afastamento + borda / 2 + LARGURA_GARAGEM / 2, de, ate, passo),
+          ),
   };
 }
 

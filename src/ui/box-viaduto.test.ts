@@ -13,7 +13,7 @@ import {
 import { LARGURA_ASFALTO, CAMADAS_PISTA } from './pista-camadas';
 import { indiceDoVertice, tracadoSuavizado } from './suavizacao';
 import { ViadutosDaPista } from './TelaCorrida';
-import { BOXES_POR_PISTA } from './tracados';
+import { BOXES_POR_PISTA, VIADUTOS_POR_PISTA, tracadoDaPista } from './tracados';
 import {
   OPACIDADE_TABULEIRO,
   estaSobViaduto,
@@ -39,7 +39,7 @@ describe('box (PR 2b)', () => {
 
   it('Monza declara box; pista sem box não desenha nada', () => {
     expect(box).toBeDefined();
-    expect(pathDoBox('pista-monaco')).toBeNull();
+    expect(pathDoBox('pista-spa')).toBeNull();
   });
 
   it('no trecho paralelo a pit lane fica EXATAMENTE no afastamento declarado da curva', () => {
@@ -72,7 +72,7 @@ describe('box (PR 2b)', () => {
   it('pathDoBox é memoizado (mesma referência de string)', () => {
     expect(pathDoBox('pista-monza')).toBe(pathDoBox('pista-monza'));
     expect(desenhoDoBox('pista-monza')).toBe(desenhoDoBox('pista-monza'));
-    expect(desenhoDoBox('pista-monaco')).toBeNull();
+    expect(desenhoDoBox('pista-spa')).toBeNull();
   });
 });
 
@@ -149,7 +149,8 @@ describe('desenho do box aberto (PR 2b)', () => {
   });
 
   it('as garagens ficam do lado de FORA da borda externa', () => {
-    for (const p of pontosDoPath(desenho.garagens)) {
+    expect(desenho.garagens).not.toBeNull();
+    for (const p of pontosDoPath(desenho.garagens ?? '')) {
       expect(distanciaACurva(p, curva) - LARGURA_GARAGEM / 2).toBeGreaterThan(box.afastamento + 13 - 0.5);
     }
   });
@@ -168,10 +169,10 @@ describe('viaduto (PR 2b)', () => {
 
   it('carro no vértice de BAIXO está sob o viaduto; no de CIMA, não (vai por cima do tabuleiro)', () => {
     expect(
-      estaSobViaduto('pista-suzuka', fracaoDoIndice('pista-suzuka', indiceDoVertice(16))),
+      estaSobViaduto('pista-suzuka', fracaoDoIndice('pista-suzuka', indiceDoVertice(22))),
     ).toBe(true);
     expect(
-      estaSobViaduto('pista-suzuka', fracaoDoIndice('pista-suzuka', indiceDoVertice(33))),
+      estaSobViaduto('pista-suzuka', fracaoDoIndice('pista-suzuka', indiceDoVertice(47))),
     ).toBe(false);
     expect(estaSobViaduto('pista-monza', 0.5)).toBe(false);
     expect(fracoesSobViaduto('pista-suzuka')).toHaveLength(1);
@@ -193,5 +194,69 @@ describe('viaduto (PR 2b)', () => {
         createElement('svg', null, createElement(ViadutosDaPista, { pistaId: 'pista-monza' })),
       ),
     ).toBe('<svg></svg>');
+  });
+
+  it('o centro declarado é o vértice compartilhado, nos dois índices declarados', () => {
+    for (const [id, viadutos] of Object.entries(VIADUTOS_POR_PISTA)) {
+      const t = tracadoDaPista(id);
+      for (const v of viadutos) {
+        expect(t[v.controleBaixo], `${id} #${v.controleBaixo}`).toEqual(v.centro);
+        expect(t[v.controleCima], `${id} #${v.controleCima}`).toEqual(v.centro);
+      }
+    }
+  });
+});
+
+/** Ponto dentro do polígono de controle (par-ímpar). */
+function dentroDoPoligono(p: { x: number; y: number }, poligono: readonly { x: number; y: number }[]): boolean {
+  let dentro = false;
+  for (let i = 0, j = poligono.length - 1; i < poligono.length; j = i++) {
+    const a = poligono[i];
+    const b = poligono[j];
+    if (a.y > p.y !== b.y > p.y && p.x < ((b.x - a.x) * (p.y - a.y)) / (b.y - a.y) + a.x) dentro = !dentro;
+  }
+  return dentro;
+}
+
+describe('box: modelo livre e lado (PR 2b)', () => {
+  /**
+   * O `lado` declarado tem que pôr o box do lado de DENTRO da pista em todas
+   * as que o declaram: a cerca de folga não pega um `lado` invertido (do lado
+   * de fora costuma sobrar mais espaço). Exceção só com decisão do Marcos.
+   */
+  it.each(Object.keys(BOXES_POR_PISTA).map((id) => [id] as const))('%s: o meio do trecho paralelo fica DENTRO da pista', (id) => {
+    const { amostras } = caminhoDoBox(tracadoSuavizado(id), BOXES_POR_PISTA[id]);
+    const paralelas = amostras.filter((a) => a.paralelo);
+    expect(dentroDoPoligono(paralelas[Math.floor(paralelas.length / 2)].p, tracadoDaPista(id))).toBe(true);
+  });
+
+  it.each(
+    Object.entries(BOXES_POR_PISTA)
+      .filter(([, b]) => b.livre !== undefined)
+      .map(([id]) => [id] as const),
+  )('%s: o caminho livre é contínuo, nasce e morre sobre a pista, e só as pontas são isentas', (id) => {
+    const curva = tracadoSuavizado(id);
+    const { amostras } = caminhoDoBox(curva, BOXES_POR_PISTA[id]);
+    for (let i = 1; i < amostras.length; i++) {
+      const a = amostras[i - 1].p;
+      const b = amostras[i].p;
+      expect(Math.hypot(b.x - a.x, b.y - a.y), `${id}: salto na amostra ${i}`).toBeLessThan(10);
+    }
+    // Distância ao SEGMENTO da curva: a junção cai no meio de um, longe dos vértices.
+    const aoSegmento = (p: { x: number; y: number }) =>
+      Math.min(
+        ...curva.map((a, i) => {
+          const b = curva[(i + 1) % curva.length];
+          const dx = b.x - a.x;
+          const dy = b.y - a.y;
+          const k = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.y - a.y) * dy) / (dx * dx + dy * dy || 1)));
+          return Math.hypot(p.x - a.x - k * dx, p.y - a.y - k * dy);
+        }),
+      );
+    expect(aoSegmento(amostras[0].p)).toBeLessThan(1e-6);
+    expect(aoSegmento(amostras[amostras.length - 1].p)).toBeLessThan(1e-6);
+    expect(amostras[0].isencao).not.toBeNull();
+    expect(amostras[amostras.length - 1].isencao).not.toBeNull();
+    expect(amostras.filter((a) => a.paralelo).every((a) => a.isencao === null)).toBe(true);
   });
 });

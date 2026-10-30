@@ -45,58 +45,82 @@ import { TRACADO_GENERICO } from './fluxo-corrida';
  * Mônaco (3,337 km, o menor do calendário) — HORÁRIO. Irregular e
  * "amassada" contornando o porto: nenhuma reta longa e nenhuma curva ampla. Os
  * identificadores são o gancho da hairpin do Grand Hotel, na ponta direita, e o
- * zigue-zague da piscina, à esquerda. O túnel é um ARCO à direita, não uma reta
+ * zigue-zague da piscina, no meio. O túnel é um ARCO à direita, não uma reta
  * — desenhá-lo reto descaracteriza.
+ *
+ * PR 2b: derivada da linha central real. Na escala da moldura o real é um
+ * novelo (a volta corre a ~35 u da ida quase inteira), então o trecho de
+ * volta (túnel → Rascasse) foi deslocado pra baixo e pra direita e a hairpin
+ * do Grand Hotel foi aberta. A perna da Piscina foi afastada mais 8-10 u
+ * pra caber a saída do box depois da Sainte Dévote. Ordem e sentido das
+ * curvas intocados.
  */
 const TRACADO_MONACO: TracadoImutavel = [
-  { x: 120, y: 228 },
-  { x: 178, y: 186 },
-  { x: 240, y: 140 },
-  { x: 288, y: 112 },
-  { x: 320, y: 118 },
-  { x: 346, y: 142 },
-  { x: 392, y: 176 },
-  { x: 456, y: 218 },
-  { x: 520, y: 252 },
-  { x: 570, y: 276 },
-  { x: 618, y: 298 },
-  { x: 644, y: 282 },
-  { x: 662, y: 246 },
-  { x: 692, y: 222 },
-  { x: 754, y: 210 },
-  { x: 822, y: 202 },
-  { x: 870, y: 198 },
-  { x: 906, y: 212 },
-  { x: 924, y: 246 },
-  { x: 910, y: 272 },
-  { x: 874, y: 276 },
-  { x: 844, y: 286 },
-  { x: 822, y: 312 },
-  { x: 780, y: 340 },
-  { x: 724, y: 378 },
-  { x: 654, y: 390 },
-  { x: 580, y: 364 },
-  { x: 512, y: 328 },
-  { x: 460, y: 314 },
-  { x: 406, y: 282 },
-  { x: 356, y: 236 },
-  { x: 326, y: 200 },
-  { x: 288, y: 216 },
-  { x: 260, y: 246 },
-  { x: 258, y: 278 },
-  { x: 238, y: 314 },
-  { x: 228, y: 354 },
-  { x: 194, y: 360 },
-  { x: 166, y: 368 },
-  { x: 148, y: 402 },
-  { x: 146, y: 450 },
-  { x: 154, y: 488 },
-  { x: 118, y: 478 },
-  { x: 78, y: 460 },
-  { x: 56, y: 440 },
-  { x: 64, y: 398 },
-  { x: 86, y: 338 },
-  { x: 104, y: 278 },
+  // Reta dos boxes (largada) → Sainte Dévote → subida do Beau Rivage.
+  { x: 148, y: 233 },
+  { x: 173, y: 201 },
+  { x: 204, y: 168 },
+  { x: 220, y: 154 },
+  { x: 251, y: 135 },
+  { x: 272, y: 116 },
+  { x: 289, y: 123 },
+  { x: 348, y: 164 },
+  { x: 423, y: 202 },
+  // Massenet → Casino → Mirabeau.
+  { x: 459, y: 227 },
+  { x: 534, y: 252 },
+  { x: 594, y: 289 },
+  { x: 621, y: 297 },
+  { x: 650, y: 292 },
+  { x: 668, y: 277 },
+  { x: 683, y: 243 },
+  { x: 679, y: 208 },
+  { x: 691, y: 188 },
+  { x: 710, y: 182 },
+  // Hairpin do Grand Hotel (o gancho), ABERTA: no real as duas pernas ficam
+  // a ~18 u, um borrão só a 360px.
+  { x: 838, y: 152 },
+  { x: 826, y: 182 },
+  { x: 806, y: 212 },
+  { x: 800, y: 242 },
+  { x: 818, y: 264 },
+  { x: 842, y: 252 },
+  { x: 854, y: 222 },
+  // Portier → túnel (o arco à direita).
+  { x: 874, y: 202 },
+  { x: 906, y: 206 },
+  { x: 924, y: 228 },
+  { x: 898, y: 282 },
+  { x: 813, y: 333 },
+  { x: 791, y: 375 },
+  { x: 760, y: 385 },
+  // Nouvelle Chicane → Tabac → Piscina → Rascasse. Todo este trecho de volta
+  // foi DESLOCADO pra baixo e pra direita em relação ao real (até ~45 u): na
+  // posição real ele corre a ~35 u da subida e da reta dos boxes.
+  { x: 692, y: 393 },
+  { x: 649, y: 385 },
+  { x: 579, y: 364 },
+  { x: 550, y: 351 },
+  { x: 476, y: 307 },
+  { x: 458, y: 320 },
+  { x: 439, y: 293 },
+  { x: 332, y: 216 },
+  { x: 276, y: 233 },
+  { x: 255, y: 250 },
+  { x: 234, y: 268 },
+  { x: 226, y: 300 },
+  { x: 186, y: 377 },
+  { x: 172, y: 388 },
+  { x: 140, y: 426 },
+  { x: 134, y: 458 },
+  { x: 126, y: 498 },
+  // Anthony Noghes → reta dos boxes.
+  { x: 69, y: 465 },
+  { x: 56, y: 444 },
+  { x: 67, y: 426 },
+  { x: 73, y: 375 },
+  { x: 82, y: 352 },
+  { x: 119, y: 277 },
 ];
 /**
  * Spa-Francorchamps (7,004 km, o maior) — HORÁRIO. Triângulo muito alongado e
@@ -239,61 +263,85 @@ const TRACADO_SILVERSTONE: TracadoImutavel = [
  * em `tracados.test.ts` só perdoa auto-interseção em vértice, e `pontoNoTracado`
  * percorre a polilinha por comprimento de arco na ordem sequencial, então os
  * carros passam "por cima" no desenho sem que o movimento mude.
+ *
+ * PR 2b: derivada da linha central real. O cruzamento fica no trecho em que a
+ * ligação já SOBE pra hairpin (~55° com a reta traseira): mais raso, os dois
+ * trechos correriam colados além do círculo isento da ponte. Degner foi
+ * afastada do 130R, a aproximação do Spoon erguida e a crista dos Esses
+ * baixada 6 u pro box do lado real (ver os comentários e `BOXES_POR_PISTA`).
  */
 const TRACADO_SUZUKA: TracadoImutavel = [
   // Reta principal (topo) → curvas 1-2 na ponta direita.
-  { x: 740, y: 158 },
-  { x: 824, y: 174 },
-  { x: 902, y: 196 },
-  { x: 924, y: 238 },
-  { x: 910, y: 274 },
-  { x: 866, y: 282 },
-  // Esses: quatro curvas encadeadas, serpente.
-  { x: 814, y: 262 },
-  { x: 774, y: 288 },
-  { x: 736, y: 260 },
-  { x: 692, y: 282 },
-  { x: 652, y: 282 },
-  // Dunlop → Degner 1 → Degner 2.
-  { x: 608, y: 252 },
-  { x: 588, y: 218 },
-  { x: 556, y: 268 },
-  { x: 524, y: 348 },
-  { x: 488, y: 388 },
-  // ↓ CRUZAMENTO — mesmo ponto da segunda passagem, mais abaixo.
-  { x: 452, y: 376 },
-  // Ligação → hairpin (pico agudo).
-  { x: 406, y: 368 },
-  { x: 374, y: 316 },
-  { x: 352, y: 262 },
-  { x: 330, y: 224 },
-  { x: 302, y: 260 },
-  { x: 322, y: 318 },
-  // 200R → Spoon (duplo ápice) na ponta esquerda. A ida corre ACIMA da reta
-  // traseira: coladas, as duas viram uma faixa só na tela.
-  { x: 312, y: 342 },
-  { x: 262, y: 366 },
-  { x: 202, y: 360 },
-  { x: 144, y: 342 },
-  { x: 104, y: 340 },
-  { x: 64, y: 376 },
-  { x: 56, y: 434 },
-  { x: 98, y: 468 },
-  { x: 172, y: 452 },
-  // Reta traseira — passa POR CIMA de Degner 2.
-  { x: 312, y: 418 },
-  // ↓ CRUZAMENTO — mesmo ponto da primeira passagem.
-  { x: 452, y: 376 },
-  // 130R → Casio Triangle → última curva. Sobe DIRETO: desviar pra direita
-  // aqui punha a reta traseira em cima de Degner 1 (segundo cruzamento).
-  { x: 480, y: 326 },
-  { x: 488, y: 276 },
-  { x: 506, y: 224 },
-  { x: 520, y: 188 },
-  { x: 538, y: 154 },
-  { x: 574, y: 132 },
-  { x: 628, y: 138 },
-  { x: 682, y: 148 },
+  { x: 727, y: 186 },
+  { x: 898, y: 230 },
+  { x: 916, y: 250 },
+  { x: 922, y: 276 },
+  { x: 904, y: 297 },
+  // Esses: serpente de quatro curvas.
+  { x: 819, y: 271 },
+  { x: 788, y: 289 },
+  { x: 762, y: 284 },
+  { x: 738, y: 272 },
+  { x: 712, y: 266 },
+  { x: 684, y: 278 },
+  { x: 659, y: 283 },
+  { x: 638, y: 268 },
+  // Dunlop → Degner 1 → Degner 2. Degner foi afastada ~22-30 u pra direita e o
+  // 130R/Casio ~18-25 u pra esquerda: no real os dois trechos correm a ~25-30 u.
+  { x: 625, y: 222 },
+  { x: 605, y: 220 },
+  { x: 583, y: 225 },
+  { x: 567, y: 232 },
+  { x: 545, y: 250 },
+  { x: 537, y: 276 },
+  { x: 528, y: 352 },
+  { x: 498, y: 392 },
+  { x: 462, y: 398 },
+  // ↓ CRUZAMENTO — mesmo ponto da segunda passagem (passagem de BAIXO).
+  { x: 430, y: 372 },
+  // Ligação → hairpin em V: a perna de entrada vem em DIAGONAL desde o
+  // cruzamento e a de saída desce quase reta, como a real (paralelas, liam
+  // como um pirulito).
+  { x: 400, y: 346 },
+  { x: 374, y: 312 },
+  { x: 356, y: 280 },
+  { x: 344, y: 254 },
+  { x: 331, y: 236 },
+  { x: 318, y: 250 },
+  { x: 317, y: 284 },
+  { x: 330, y: 330 },
+  // 200R → Spoon. A aproximação do Spoon foi ERGUIDA ~28 u pra descolar da reta
+  // traseira, que no real corre a ~25 u abaixo dela.
+  { x: 322, y: 346 },
+  { x: 306, y: 356 },
+  { x: 280, y: 362 },
+  { x: 254, y: 370 },
+  { x: 226, y: 377 },
+  { x: 192, y: 378 },
+  { x: 158, y: 368 },
+  { x: 111, y: 350 },
+  { x: 83, y: 351 },
+  { x: 64, y: 372 },
+  { x: 57, y: 404 },
+  { x: 66, y: 432 },
+  { x: 81, y: 441 },
+  // Reta traseira — passa POR CIMA da ligação Degner 2 → hairpin.
+  { x: 125, y: 445 },
+  { x: 181, y: 443 },
+  { x: 236, y: 431 },
+  // ↓ CRUZAMENTO — mesmo ponto da primeira passagem (passagem de CIMA).
+  { x: 430, y: 372 },
+  // 130R → Casio Triangle → última curva.
+  { x: 455, y: 347 },
+  { x: 470, y: 318 },
+  { x: 474, y: 276 },
+  { x: 479, y: 238 },
+  { x: 494, y: 214 },
+  { x: 508, y: 200 },
+  { x: 520, y: 176 },
+  { x: 546, y: 160 },
+  { x: 575, y: 155 },
+  { x: 606, y: 156 },
 ];
 /**
  * Interlagos (4,309 km) — ANTI-HORÁRIO. Anel externo grande (reta principal
@@ -301,56 +349,68 @@ const TRACADO_SUZUKA: TracadoImutavel = [
  * sinuoso preso a ele. Compacta: é a única das dez que não enche a moldura na
  * horizontal, porque o traçado real é quase quadrado e a escala é UNIFORME —
  * esticar pra preencher distorceria a proporção que faz a pista ser ela mesma.
+ *
+ * PR 2b: derivada da linha central real, com os dois picos do miolo
+ * abaixados pra não encostar na Subida dos Boxes.
  */
 const TRACADO_INTERLAGOS: TracadoImutavel = [
-  { x: 306, y: 284 },
-  { x: 280, y: 330 },
-  { x: 252, y: 378 },
-  { x: 224, y: 426 },
-  { x: 216, y: 462 },
-  { x: 244, y: 486 },
-  { x: 276, y: 500 },
-  { x: 298, y: 530 },
-  { x: 318, y: 552 },
-  { x: 354, y: 564 },
-  { x: 402, y: 562 },
-  { x: 486, y: 522 },
-  { x: 570, y: 480 },
-  { x: 646, y: 438 },
-  { x: 690, y: 402 },
-  { x: 704, y: 370 },
-  { x: 688, y: 334 },
-  { x: 654, y: 302 },
-  { x: 582, y: 286 },
-  { x: 498, y: 284 },
-  // Miolo (Ferradura → Junção): sete curvas lentas alternando. A
-  // ALTERNÂNCIA é o que identifica Interlagos, então ela fica; o aperto
-  // real do emaranhado, não — a 360 px vira borrão. Dois picos bem
-  // separados no lugar dos dedos colados.
-  { x: 424, y: 300 },
-  { x: 390, y: 266 },
-  { x: 402, y: 224 },
-  { x: 446, y: 202 },
-  { x: 492, y: 224 },
-  { x: 514, y: 160 },
-  { x: 536, y: 112 },
-  { x: 576, y: 124 },
-  { x: 584, y: 184 },
-  { x: 598, y: 224 },
-  { x: 634, y: 174 },
-  { x: 654, y: 118 },
-  { x: 690, y: 154 },
-  { x: 702, y: 210 },
-  { x: 738, y: 224 },
-  { x: 764, y: 184 },
-  { x: 758, y: 134 },
-  { x: 738, y: 90 },
-  { x: 694, y: 56 },
-  { x: 624, y: 36 },
-  { x: 536, y: 52 },
-  { x: 450, y: 90 },
-  { x: 370, y: 142 },
-  { x: 332, y: 216 },
+  // Reta principal descendo (largada) → S do Senna.
+  { x: 293, y: 263 },
+  { x: 186, y: 389 },
+  { x: 173, y: 416 },
+  { x: 184, y: 438 },
+  { x: 222, y: 444 },
+  { x: 236, y: 458 },
+  { x: 240, y: 485 },
+  { x: 250, y: 515 },
+  { x: 272, y: 542 },
+  { x: 300, y: 558 },
+  { x: 348, y: 563 },
+  { x: 419, y: 541 },
+  // Fim da Reta Oposta → Descida do Lago.
+  { x: 735, y: 423 },
+  { x: 752, y: 404 },
+  { x: 748, y: 380 },
+  { x: 724, y: 328 },
+  { x: 700, y: 304 },
+  { x: 643, y: 292 },
+  // Ferradura → miolo. Os dois picos do miolo ficam
+  // ABAIXADOS em relação ao real: na posição real, a ponta de cada um encosta
+  // na Subida dos Boxes (trechos distintos a ~30 u; a cerca exige de 45 a 61 u
+  // entre eixos, conforme haja zebra de um lado, dos dois ou de nenhum).
+  { x: 448, y: 288 },
+  { x: 420, y: 274 },
+  { x: 404, y: 250 },
+  { x: 401, y: 226 },
+  { x: 420, y: 200 },
+  { x: 440, y: 184 },
+  { x: 466, y: 164 },
+  { x: 494, y: 170 },
+  { x: 506, y: 198 },
+  { x: 528, y: 204 },
+  { x: 548, y: 190 },
+  { x: 556, y: 150 },
+  { x: 568, y: 124 },
+  { x: 588, y: 114 },
+  { x: 612, y: 106 },
+  { x: 630, y: 116 },
+  { x: 618, y: 140 },
+  { x: 616, y: 170 },
+  { x: 630, y: 196 },
+  { x: 656, y: 216 },
+  // Cotovelo → Junção → Subida dos Boxes, de volta à reta.
+  { x: 690, y: 221 },
+  { x: 788, y: 217 },
+  { x: 804, y: 204 },
+  { x: 802, y: 180 },
+  { x: 786, y: 125 },
+  { x: 743, y: 82 },
+  { x: 681, y: 45 },
+  { x: 645, y: 37 },
+  { x: 604, y: 42 },
+  { x: 550, y: 63 },
+  { x: 452, y: 103 },
+  { x: 400, y: 140 },
 ];
 /**
  * Nürburgring GP-Strecke (5,148 km) — HORÁRIO. NÃO é a Nordschleife (20,8 km,
@@ -632,12 +692,82 @@ export interface BoxDeclarado {
   /** +1 / −1: lado do deslocamento em relação à normal (−ty, tx) da tangente. */
   readonly lado: 1 | -1;
   readonly afastamento: number;
+  /**
+   * Modelo de RAMPAS (sem `livre`): arco em que o deslocamento vai de 0 ao
+   * afastamento nas pontas. Modelo LIVRE: arco da ponta isenta em cada junção
+   * (o trecho do caminho livre que ainda nasce da pista).
+   */
   readonly rampa: number;
+  /**
+   * Modelo LIVRE (PR 2b, decisão do Marcos em 2026-10-29): `entrada`/`saida`
+   * passam a delimitar só o trecho PARALELO, e entrada e saída viram caminhos
+   * livres, de `juncaoEntrada` (fração da volta onde o box nasce da pista)
+   * pelos `pontosEntrada` até o início do paralelo, e do fim do paralelo pelos
+   * `pontosSaida` até `juncaoSaida`. Tangentes à pista nas junções.
+   */
+  readonly livre?: {
+    readonly juncaoEntrada: number;
+    readonly pontosEntrada: readonly Ponto[];
+    readonly pontosSaida: readonly Ponto[];
+    readonly juncaoSaida: number;
+  };
+  /** `false` = sem garagens (degrau 2 da escada do box). Padrão: com. */
+  readonly garagens?: boolean;
+  /** Largura da superfície do box, se diferente de `LARGURA_BOX` (degrau 4 da escada). */
+  readonly larguraBox?: number;
 }
 
 export const BOXES_POR_PISTA: Readonly<Record<string, BoxDeclarado>> = {
   // Do lado de dentro da reta principal, da saída da Parabólica até antes do Rettifilo.
   'pista-monza': { entrada: 0.9026, saida: 0.0318, lado: 1, afastamento: 48, rampa: 60 },
+  // MODELO LIVRE (PR 2b). Lado real (dentro). Paralelo só na reta principal; a
+  // entrada nasce na reta (a Subida dos Boxes real não cabe: o corredor até o miolo
+  // tem ~57 u e o caminho precisa de ~82); a saída atravessa o miolo vazio e cai
+  // na Reta Oposta, DEPOIS do S do Senna, como a real. Degrau 1 da escada.
+  'pista-interlagos': {
+    entrada: 0.99,
+    saida: 0.035,
+    lado: -1,
+    afastamento: 48,
+    rampa: 60,
+    livre: {
+      juncaoEntrada: 0.97,
+      pontosEntrada: [],
+      pontosSaida: [{ x: 290, y: 420 }, { x: 390, y: 452 }, { x: 450, y: 482 }],
+      juncaoSaida: 0.23,
+    },
+  },
+  // MODELO LIVRE. Lado real (dentro), entre a reta dos boxes e a Piscina. Entrada
+  // depois da Rascasse; saída DEPOIS da Sainte Dévote, pelo vão entre ela e a
+  // Piscina (a perna da Piscina foi afastada 8-10 u pra isso: degrau 5, aprovado
+  // pelo Marcos em 2026-10-29).
+  'pista-monaco': {
+    entrada: 0.95,
+    saida: 0.99,
+    lado: 1,
+    afastamento: 48,
+    rampa: 60,
+    livre: {
+      juncaoEntrada: 0.925,
+      pontosEntrada: [],
+      pontosSaida: [{ x: 236, y: 202 }, { x: 302, y: 174 }],
+      juncaoSaida: 0.095,
+    },
+  },
+  // MODELO LIVRE. Lado real (dentro, do lado dos Esses), decisão do Marcos
+  // (2026-10-29). Degraus 2 (sem garagens), 3 (afastamento mínimo), 4 (box de
+  // 12 u = 3,8 px a 360px) e 5 (crista dos Esses baixada 6 u): com garagens e
+  // afastamento 46, faltavam 22,6 u. Paralelo curto, onde o vão é maior.
+  'pista-suzuka': {
+    entrada: 0.99,
+    saida: 0.03,
+    lado: 1,
+    afastamento: 35,
+    rampa: 60,
+    livre: { juncaoEntrada: 0.975, pontosEntrada: [], pontosSaida: [], juncaoSaida: 0.045 },
+    garagens: false,
+    larguraBox: 12,
+  },
 };
 
 /**
@@ -653,6 +783,6 @@ export interface ViadutoDeclarado {
 }
 
 export const VIADUTOS_POR_PISTA: Readonly<Record<string, readonly ViadutoDeclarado[]>> = {
-  // Reta traseira (#33) passa POR CIMA da ligação Degner 2 → hairpin (#16).
-  'pista-suzuka': [{ centro: { x: 452, y: 376 }, controleBaixo: 16, controleCima: 33 }],
+  // Reta traseira (#47) passa POR CIMA da ligação Degner 2 → hairpin (#22).
+  'pista-suzuka': [{ centro: { x: 430, y: 372 }, controleBaixo: 22, controleCima: 47 }],
 };

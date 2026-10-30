@@ -23,7 +23,8 @@
  *    geometria em `caminhoDoBox`, `src/ui/box.ts`): toda pista tem pit lane, e ela pode correr
  *    paralela à reta principal a afastamento fixo, mas não encosta em nenhum
  *    outro trecho (`medirFolgaDoBox`). Só a janela de entrada/saída, alargada
- *    pela rampa, é isenta.
+ *    pela rampa, é isenta; no modelo LIVRE, só a ponta de cada caminho livre
+ *    junto da junção, e só contra o arco da pista em volta dela.
  *
  * Tabela: `FOLGA_TABELA=1 npx vitest run scripts/folga-pistas.test.ts --reporter=verbose --silent=false`
  */
@@ -147,6 +148,31 @@ describe('folga entre trechos não adjacentes (PR 2b)', () => {
     const m = medirFolgaDoBox(u, amostras, { inicio: 0, fim: 1e6 }, 26, 60);
     expect(m.folga).toBeLessThan(0);
     expect(m.trecho).toBe('paralelo');
+  });
+
+  /**
+   * MODELO LIVRE: a isenção é literal, por amostra. Uma amostra do caminho
+   * livre em cima de uma reta reprova se a isenção dela não cobre aquele arco
+   * da pista (ou se ela não tem isenção), e só passa se cobre.
+   */
+  it('anti-vacuidade: caminho livre em cima da pista reprova fora da própria junção, e só a junção isenta', () => {
+    const u = [
+      ...[0, 100, 200, 300, 400, 500].map((x) => ({ x, y: 0 })),
+      { x: 600, y: -100 },
+      { x: 700, y: 20 },
+      { x: 600, y: 140 },
+      ...[500, 400, 300, 200, 100, 0].map((x) => ({ x, y: 40 })),
+      { x: -60, y: 20 },
+    ];
+    const sobreAReta = [{ p: { x: 250, y: 0 }, paralelo: false, largura: 26 }];
+    const semIsencao = medirFolgaDoBox(u, sobreAReta.map((a) => ({ ...a, isencao: null })), { inicio: 0, fim: 0 }, 26, 60);
+    expect(semIsencao.folga).toBeLessThan(0);
+    // Isenção em outro arco da volta (longe de x=250 na reta de cima) não salva.
+    const isencaoLonge = medirFolgaDoBox(u, sobreAReta.map((a) => ({ ...a, isencao: { inicio: 900, fim: 1000 } })), { inicio: 0, fim: 0 }, 26, 60);
+    expect(isencaoLonge.folga).toBeLessThan(0);
+    // Com a isenção cobrindo a reta de cima, passa: a de baixo (y=40) fica a 40 − 13 − 21 = 6 u.
+    const isencaoDaReta = medirFolgaDoBox(u, sobreAReta.map((a) => ({ ...a, isencao: { inicio: 0, fim: 520 } })), { inicio: 0, fim: 0 }, 26, 60);
+    expect(isencaoDaReta.folga).toBeCloseTo(6, 5);
   });
 
   it('anti-vacuidade: a isenção do viaduto é literal — um cruzamento fora do círculo declarado reprova', () => {

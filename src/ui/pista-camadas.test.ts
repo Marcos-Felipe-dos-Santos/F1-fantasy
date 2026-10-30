@@ -520,8 +520,11 @@ describe('viewBox contém todas as 10 pistas (3.7 — reapertado no 7.4)', () =>
    * usam a moldura inteira (a antiga parava em x=920). 3,4 é apertado mas não é
    * chute: a moldura do redesenho já recua `MEIA_CAMADA_MAIS_LARGA` (60) mais
    * uma margem pro overshoot da Catmull-Rom, e a pior é Suzuka.
+   *
+   * PR 2b: Suzuka, redesenhada da linha central real, deixou de ser a pior; a
+   * pior passou a ser Imola, que o lote 1 não tocou, com 4,5.
    */
-  it('pior folga real é 3,4 (Suzuka)', () => {
+  it('pior folga real é 4,5 (Imola, PR 2b)', () => {
     let piorFolga = Infinity;
     for (const pista of dataset.pistas) {
       const e = envelope(pista.id);
@@ -533,7 +536,7 @@ describe('viewBox contém todas as 10 pistas (3.7 — reapertado no 7.4)', () =>
         maxYViewbox - e.maxY,
       );
     }
-    expect(piorFolga).toBeCloseTo(3.4, 1);
+    expect(piorFolga).toBeCloseTo(4.5, 1);
   });
 
   /**
@@ -612,16 +615,24 @@ describe('fusão de asfalto (3.8 — documenta e trava o que foi medido)', () =>
     // 17 (= LARGURA_ASFALTO / 2). A pior é Suzuka em 20,9, que é o X do 8 —
     // auto-contato intencional —, seguida de Montreal em 23,8 (hairpin
     // L'Épingle). Folga de 3,9 sobre o limiar no pior caso.
+    //
+    // ⚠️ PR 2b: com as pistas derivadas da linha central real (densas), esta
+    // métrica passou a medir o MENOR SEGMENTO DE CONTROLE, e não a aproximação
+    // de dois trechos: os segmentos i-1→i e i+1→i+2 não são adjacentes por
+    // índice, e a distância entre eles é |i, i+1|. Suzuka 17,5, Mônaco 17,8 e
+    // Interlagos 19,8 são exatamente o menor segmento de cada uma (folga de 0,5
+    // sobre o teto no pior caso). Quem vigia trechos próximos agora é a cerca
+    // em arco (`scripts/folga-pistas.test.ts`) e `SEPARACAO_MEDIDA`.
     'pista-red-bull-ring': 33.5,
     'pista-imola': 32.2,
     'pista-spa': 31.5,
-    'pista-interlagos': 29.7,
+    'pista-interlagos': 19.8, // PR 2b: Interlagos da linha central real (era 29,7).
     'pista-nurburgring': 29.5,
-    'pista-monaco': 29.1,
+    'pista-monaco': 17.8, // PR 2b: Mônaco da linha central real (era 29,1).
     'pista-monza': 19.6, // PR 2b: Monza da linha central real (era 21,5).
     'pista-silverstone': 27.5,
     'pista-montreal': 23.8,
-    'pista-suzuka': 20.9,
+    'pista-suzuka': 17.5, // PR 2b: Suzuka da linha central real (era 20,9).
   };
 
   /**
@@ -682,7 +693,7 @@ describe('fusão de asfalto (3.8 — documenta e trava o que foi medido)', () =>
    * desenhar ali, então a camada de limite também se funde). Números
    * escritos pro 7.4 (Bézier) comparar antes/depois da suavização.
    */
-  it('report-only: fusão da camada de LIMITE (largura 42) — as 10 fundem depois do redesenho, de 8,5 (RBR) a 22,4 (Monza, PR 2b)', () => {
+  it('report-only: fusão da camada de LIMITE (largura 42) — as 10 fundem depois do redesenho, de 8,5 (RBR) a 24,5 (Suzuka, PR 2b)', () => {
     const larguraLimite = CAMADAS_PISTA.find((c) => c.id === 'limite')?.largura;
     expect(larguraLimite).toBe(42);
     /**
@@ -694,13 +705,13 @@ describe('fusão de asfalto (3.8 — documenta e trava o que foi medido)', () =>
      * aberta e agora tem os números das 10 pra decidir.
      */
     const PISTAS_COM_FUSAO_DE_LIMITE: Record<string, number> = {
-      'pista-suzuka': 21.1,
+      'pista-suzuka': 24.5, // PR 2b: Suzuka da linha central real (era 21,1).
       'pista-montreal': 18.2,
       'pista-silverstone': 14.5,
       'pista-monza': 22.4, // PR 2b: Monza da linha central real (era 20,5).
-      'pista-monaco': 12.9,
+      'pista-monaco': 24.2, // PR 2b: Mônaco da linha central real (era 12,9).
       'pista-nurburgring': 12.5,
-      'pista-interlagos': 12.3,
+      'pista-interlagos': 22.2, // PR 2b: Interlagos da linha central real (era 12,3).
       'pista-spa': 10.5,
       'pista-imola': 9.8,
       'pista-red-bull-ring': 8.5,
@@ -746,13 +757,14 @@ describe('zebra (3.9)', () => {
     string,
     { candidatos: number; candidatosPorJanela: number; escolhidos: number; coberturaPct: number; indices: number[] }
   > = {
-    'pista-monaco': { candidatos: 16, candidatosPorJanela: 31, escolhidos: 24, coberturaPct: 39.0, indices: [3, 4, 10, 11, 12, 17, 18, 19, 20, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45] },
+    // PR 2b: Mônaco, Suzuka e Interlagos da linha central real.
+    'pista-monaco': { candidatos: 23, candidatosPorJanela: 40, escolhidos: 28, coberturaPct: 39.4, indices: [4, 5, 6, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 37, 38, 39, 48, 49, 50, 51, 52] },
     'pista-spa': { candidatos: 13, candidatosPorJanela: 18, escolhidos: 18, coberturaPct: 33.4, indices: [2, 3, 4, 5, 18, 19, 20, 22, 23, 24, 28, 34, 35, 37, 41, 42, 45, 46] },
     // PR 2b: Monza da linha central real.
     'pista-monza': { candidatos: 11, candidatosPorJanela: 30, escolhidos: 25, coberturaPct: 39.1, indices: [2, 3, 4, 5, 6, 7, 10, 15, 16, 17, 18, 20, 21, 22, 23, 24, 27, 28, 29, 30, 33, 34, 35, 36, 37] },
     'pista-silverstone': { candidatos: 22, candidatosPorJanela: 23, escolhidos: 22, coberturaPct: 39.7, indices: [3, 4, 6, 7, 8, 9, 10, 11, 15, 16, 18, 19, 20, 26, 30, 31, 32, 37, 38, 40, 41, 42] },
-    'pista-suzuka': { candidatos: 23, candidatosPorJanela: 29, escolhidos: 20, coberturaPct: 38.7, indices: [3, 4, 7, 8, 9, 10, 11, 12, 15, 16, 19, 20, 21, 22, 23, 26, 27, 29, 38, 39] },
-    'pista-interlagos': { candidatos: 19, candidatosPorJanela: 26, escolhidos: 22, coberturaPct: 39.4, indices: [3, 4, 5, 6, 7, 8, 9, 14, 15, 16, 20, 21, 22, 23, 24, 26, 27, 28, 29, 31, 33, 34] },
+    'pista-suzuka': { candidatos: 24, candidatosPorJanela: 47, escolhidos: 30, coberturaPct: 39.1, indices: [2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15, 16, 20, 21, 26, 27, 28, 30, 31, 32, 38, 39, 40, 41, 42, 43, 48, 54] },
+    'pista-interlagos': { candidatos: 21, candidatosPorJanela: 42, escolhidos: 33, coberturaPct: 40.0, indices: [1, 2, 3, 4, 5, 6, 8, 12, 13, 14, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 39, 40, 41, 45] },
     'pista-nurburgring': { candidatos: 23, candidatosPorJanela: 29, escolhidos: 24, coberturaPct: 38.7, indices: [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 21, 25, 26, 32, 33, 34, 40, 41, 42, 43, 44, 45, 46] },
     'pista-imola': { candidatos: 19, candidatosPorJanela: 23, escolhidos: 22, coberturaPct: 39.3, indices: [6, 7, 8, 9, 10, 13, 14, 15, 18, 19, 20, 26, 27, 29, 30, 31, 34, 35, 36, 41, 42, 43] },
     'pista-red-bull-ring': { candidatos: 13, candidatosPorJanela: 13, escolhidos: 13, coberturaPct: 28.0, indices: [2, 7, 8, 9, 13, 14, 18, 21, 22, 24, 28, 29, 30] },
@@ -860,12 +872,12 @@ describe('zebra (3.9)', () => {
    * é silhueta perdendo densidade, não a zebra.
    */
   const DIVERGENCIA_POS_REDESENHO: Record<string, number[]> = {
-    'pista-monaco': [5, 12, 13, 16, 20, 22, 32, 34, 35, 37, 39, 40, 42, 43, 45],
+    'pista-monaco': [4, 6, 11, 12, 14, 18, 20, 21, 25, 32, 39, 42, 44, 45, 46, 48, 52], // PR 2b: Mônaco da linha central real.
     'pista-spa': [2, 5, 34, 41, 46],
     'pista-monza': [2, 3, 5, 7, 9, 10, 11, 12, 15, 18, 20, 22, 27, 30, 31, 33, 36, 37, 38], // PR 2b: Monza da linha central real.
     'pista-silverstone': [41],
-    'pista-suzuka': [9, 11, 16, 19, 26, 37],
-    'pista-interlagos': [3, 5, 7, 9, 14, 16, 28],
+    'pista-suzuka': [7, 8, 10, 14, 15, 16, 18, 22, 26, 29, 32, 35, 36, 38, 43, 48, 49, 50, 51, 52, 53, 55, 56], // PR 2b: Suzuka da linha central real.
+    'pista-interlagos': [1, 6, 7, 8, 9, 12, 14, 15, 18, 20, 22, 23, 29, 31, 34, 36, 38, 41, 44, 45, 46], // PR 2b: Interlagos da linha central real.
     'pista-nurburgring': [12, 13, 33, 41, 43, 44],
     'pista-imola': [6, 9, 18, 31],
     'pista-montreal': [3, 7, 8, 9, 10, 15, 29, 33, 38],

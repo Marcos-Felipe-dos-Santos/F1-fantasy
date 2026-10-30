@@ -112,7 +112,9 @@ describe('CamadasDaPista renderiza CAMADAS_PISTA fielmente (Aviso 3 da revisão 
                   [pathDoTrecho(caminhoDoBox(tracadoSuavizado(PISTA_ID), box).amostras.map((a) => a.p)), 'pistaServico', LARGURA_BOX, undefined],
                   [desenho.bordaExterna, 'pistaLimite', ESPESSURA_BORDA_BOX, undefined],
                   [desenho.pitWall, 'pistaEscape', LARGURA_PIT_WALL, undefined],
-                  [desenho.garagens, 'pistaLimite', LARGURA_GARAGEM, TRACEJADO_GARAGEM],
+                  ...(desenho.garagens === null
+                    ? []
+                    : [[desenho.garagens, 'pistaLimite', LARGURA_GARAGEM, TRACEJADO_GARAGEM] as const]),
                 ]
               : desenho.rampas.map((d) => [d, 'pistaServico', LARGURA_BOX, undefined] as const);
           for (const [d, cor, largura, tracejado] of pecas) {

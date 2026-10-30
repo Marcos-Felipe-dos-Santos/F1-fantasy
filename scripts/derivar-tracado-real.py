@@ -30,6 +30,26 @@
 #     Lesmo, saem (58,141) (56,124) (70,104) (79,101) (168,83) (179,85),
 #       entram (58,140) (84,99) (166,82) (186,92);
 #     Parabólica, saem (910,417) (919,426) (924,438), entram (916,422) (924,444).
+#
+# Registro do lote 1 (2026-10-29; base rodada direto sobre os traçados de 994f1de,
+# guardada em referencias/pistas-2b/bases-lote1/). Aqui o trabalho manual foi
+# sobretudo ABRIR trechos que, na escala da moldura, ficam colados no real:
+#   Interlagos: script 70 pontos -> commitada 50. S do Senna, Curva do Sol,
+#     Descida do Lago, Junção e a Subida desbastadas; os dois picos do miolo
+#     ABAIXADOS ~15-25 u (a ponta de cada um encostava na Subida dos Boxes).
+#   Mônaco: script 74 -> 56. Trecho de volta inteiro (túnel -> Rascasse)
+#     deslocado até ~45 u pra baixo e ~30 u pra direita (corria a ~35 u da ida);
+#     hairpin do Grand Hotel redesenhada com as pernas a ~40 u (eram ~18 u);
+#     Rascasse e Tabac desbastadas.
+#   Suzuka: script 65 -> 58. Degner afastada ~22-30 u do 130R, e 130R/Casio
+#     ~18-25 u pra esquerda; aproximação do Spoon erguida ~28 u da reta traseira;
+#     cruzamento refeito como vértice compartilhado (430,372) no trecho em que a
+#     ligação já sobe pra hairpin; ponta da hairpin aberta; Esses, T1-T2 e Spoon
+#     desbastados.
+#   Ajustes depois do primeiro veredito do Marcos (2026-10-29), já no modelo de
+#   box livre: Mônaco, perna da Piscina (#40-43) +8-10 u pra baixo (saída do box
+#   depois da Sainte Dévote); Suzuka, grampo refeito em V (#24-29), #48 (455,347)
+#   e crista dos Esses (#8, #9) baixada 6 u (box do lado real).
 """Deriva pontos de controle de uma pista a partir da linha central real (GeoJSON),
 alinhada ao traçado ATUAL do jogo (mesma orientação, sentido e largada), reescalada
 uniformemente pra moldura [56,924]x[36,564] e simplificada (Douglas-Peucker).

@@ -34,7 +34,6 @@ import {
 import { tracadoSuavizado } from './suavizacao';
 import {
   ESPESSURA_BORDA_BOX,
-  LARGURA_BOX,
   LARGURA_GARAGEM,
   LARGURA_PIT_WALL,
   TRACEJADO_GARAGEM,
@@ -79,7 +78,7 @@ export function CamadasDaPista({ pistaId }: { pistaId: string }) {
                 <path
                   d={box.faixa}
                   stroke={varDeCor('pistaServico')}
-                  strokeWidth={LARGURA_BOX}
+                  strokeWidth={box.larguraFaixa}
                   className="tracado-svg__camada tracado-svg__camada--box"
                 />
                 <path
@@ -94,13 +93,15 @@ export function CamadasDaPista({ pistaId }: { pistaId: string }) {
                   strokeWidth={LARGURA_PIT_WALL}
                   className="tracado-svg__camada tracado-svg__camada--box"
                 />
-                <path
-                  d={box.garagens}
-                  stroke={varDeCor('pistaLimite')}
-                  strokeWidth={LARGURA_GARAGEM}
-                  strokeDasharray={TRACEJADO_GARAGEM}
-                  className="tracado-svg__camada tracado-svg__camada--box"
-                />
+                {box.garagens !== null && (
+                  <path
+                    d={box.garagens}
+                    stroke={varDeCor('pistaLimite')}
+                    strokeWidth={LARGURA_GARAGEM}
+                    strokeDasharray={TRACEJADO_GARAGEM}
+                    className="tracado-svg__camada tracado-svg__camada--box"
+                  />
+                )}
               </>
             )}
             {/* As rampas por cima do limite abrem a passagem; o asfalto, que vem depois, cobre o eixo. */}
@@ -111,7 +112,7 @@ export function CamadasDaPista({ pistaId }: { pistaId: string }) {
                   key={d}
                   d={d}
                   stroke={varDeCor('pistaServico')}
-                  strokeWidth={LARGURA_BOX}
+                  strokeWidth={box.larguraFaixa}
                   className="tracado-svg__camada tracado-svg__camada--box"
                 />
               ))}
