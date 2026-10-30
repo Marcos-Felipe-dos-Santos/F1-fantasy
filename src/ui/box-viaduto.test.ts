@@ -39,7 +39,8 @@ describe('box (PR 2b)', () => {
 
   it('Monza declara box; pista sem box não desenha nada', () => {
     expect(box).toBeDefined();
-    expect(pathDoBox('pista-spa')).toBeNull();
+    // PR 2b: as 10 pistas declaram box; "sem box" é um id fora do dataset.
+    expect(pathDoBox('pista-inexistente')).toBeNull();
   });
 
   it('no trecho paralelo a pit lane fica EXATAMENTE no afastamento declarado da curva', () => {
@@ -72,7 +73,7 @@ describe('box (PR 2b)', () => {
   it('pathDoBox é memoizado (mesma referência de string)', () => {
     expect(pathDoBox('pista-monza')).toBe(pathDoBox('pista-monza'));
     expect(desenhoDoBox('pista-monza')).toBe(desenhoDoBox('pista-monza'));
-    expect(desenhoDoBox('pista-spa')).toBeNull();
+    expect(desenhoDoBox('pista-inexistente')).toBeNull();
   });
 });
 

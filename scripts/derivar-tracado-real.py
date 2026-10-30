@@ -59,6 +59,10 @@
 #     inserido SOBRE a Wellington Straight (N=8: 0,739 -> 0,451, ver ESTADO.md).
 #   Imola: script 41 -> commitada 32. Nenhum trecho colava; Tamburello,
 #     Villeneuve, Tosa, Variante Alta e Rivazza desbastadas.
+#   Spa: script 64 -> commitada 49. Nenhum trecho colava; La Source,
+#     Bruxelles, Pouhon, Fagnes, Stavelot e Bus Stop desbastados; reta da
+#     largada (#0, #1) afastada 10 u da Eau Rouge (degrau 5 do box); pontos
+#     SOBRE a reta da largada (162,473) e o Kemmel (564,97), pro N=8.
 """Deriva pontos de controle de uma pista a partir da linha central real (GeoJSON),
 alinhada ao traçado ATUAL do jogo (mesma orientação, sentido e largada), reescalada
 uniformemente pra moldura [56,924]x[36,564] e simplificada (Douglas-Peucker).

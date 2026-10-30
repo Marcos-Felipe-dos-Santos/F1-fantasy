@@ -33,13 +33,14 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const RAIZ = join(__dirname, '..');
 const DIR = join(RAIZ, 'preview');
 const REF_ANTES = process.env.PREVIEW_ANTES_REF ?? '994f1de';
-const PISTAS = ['pista-interlagos', 'pista-monaco', 'pista-suzuka', 'pista-silverstone', 'pista-imola'] as const;
+const PISTAS = ['pista-interlagos', 'pista-monaco', 'pista-suzuka', 'pista-silverstone', 'pista-imola', 'pista-spa'] as const;
 /**
- * Pistas que este lote NÃO mexe: antes e depois têm que sair idênticos. Spa é
- * a prova de que o `tracados.ts` do git foi lido (o traçado dela mora lá);
- * Monza mora em `fluxo-corrida.ts`, fora do mock, e só exercita o box.
+ * Pistas que este lote NÃO mexe: antes e depois têm que sair idênticos. Monza
+ * mora em `fluxo-corrida.ts`, fora do mock, e só exercita o box. (Até o lote 2,
+ * Spa era o controle que provava a leitura do `tracados.ts` do git; com as 10
+ * redesenhadas, a prova é a asserção de que as pistas do lote saem DIFERENTES.)
  */
-const CONTROLES = ['pista-spa', 'pista-monza'] as const;
+const CONTROLES = ['pista-monza'] as const;
 
 function kebab(nome: string): string {
   return nome.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();

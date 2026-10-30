@@ -129,65 +129,71 @@ const TRACADO_MONACO: TracadoImutavel = [
  * cima, e o lado direito descendo por Rivage, Pouhon, Fagnes e Stavelot até
  * Blanchimont fechar na reta dos boxes. O "S" de Eau Rouge é curto de propósito
  * — a fama dele vem do desnível, que não aparece em silhueta.
+ *
+ * PR 2b: derivada da linha central real. Nenhum trecho colava; La Source,
+ * Bruxelles, Pouhon, Fagnes, Stavelot e a Bus Stop desbastados. A reta da
+ * largada foi afastada 10 u da Eau Rouge (degrau 5 do box, ver
+ * `BOXES_POR_PISTA`); a Eau Rouge não foi mexida. Ordem e sentido intocados.
  */
 const TRACADO_SPA: TracadoImutavel = [
-  // Reta dos boxes → La Source (hairpin no canto esquerdo).
-  { x: 244, y: 420 },
-  { x: 180, y: 460 },
-  { x: 122, y: 490 },
-  { x: 94, y: 506 },
-  { x: 84, y: 474 },
-  { x: 106, y: 436 },
-  // Eau Rouge / Raidillon: "S" curto e apertado subindo.
-  { x: 142, y: 382 },
-  { x: 184, y: 338 },
-  { x: 212, y: 306 },
-  { x: 238, y: 284 },
-  { x: 272, y: 250 },
-  { x: 320, y: 224 },
-  // Reta do Kemmel — a mais longa, em diagonal.
-  { x: 374, y: 186 },
-  { x: 428, y: 148 },
-  // Les Combes: degrau no vértice de cima.
-  { x: 470, y: 118 },
-  { x: 514, y: 100 },
-  { x: 594, y: 70 },
-  { x: 670, y: 46 },
-  { x: 718, y: 36 },
-  { x: 756, y: 64 },
-  // Rivage: volta longa e fechada na ponta de cima.
-  { x: 800, y: 56 },
-  { x: 848, y: 84 },
-  { x: 886, y: 132 },
-  { x: 896, y: 188 },
-  { x: 860, y: 218 },
-  { x: 810, y: 208 },
-  // Descida por Pouhon (duplo ápice).
-  { x: 742, y: 218 },
-  { x: 682, y: 234 },
-  { x: 638, y: 250 },
-  // Fagnes: cobra dir-esq.
-  { x: 670, y: 284 },
-  { x: 718, y: 306 },
-  { x: 762, y: 328 },
-  { x: 810, y: 358 },
-  // Stavelot, ponta inferior direita.
-  { x: 852, y: 392 },
-  { x: 876, y: 436 },
-  { x: 882, y: 478 },
-  { x: 854, y: 526 },
-  { x: 806, y: 564 },
-  // Blanchimont — reta longa de volta.
-  { x: 724, y: 520 },
-  { x: 654, y: 452 },
-  { x: 602, y: 398 },
-  { x: 556, y: 370 },
-  { x: 514, y: 358 },
-  // Bus Stop: chicane que fecha a volta.
-  { x: 434, y: 376 },
-  { x: 362, y: 398 },
-  { x: 324, y: 424 },
-  { x: 294, y: 414 },
+  // Reta da largada → La Source. Afastada 10 u da Eau Rouge pro box caber no V; o ponto #1 fica SOBRE a reta, pro N=8.
+  { x: 241, y: 427 },
+  { x: 168, y: 481 },
+  // La Source (hairpin) → Eau Rouge / Raidillon, a assinatura.
+  { x: 88, y: 528 },
+  { x: 70, y: 512 },
+  { x: 96, y: 462 },
+  { x: 118, y: 421 },
+  { x: 143, y: 388 },
+  { x: 221, y: 307 },
+  { x: 245, y: 266 },
+  { x: 262, y: 255 },
+  // Kemmel Straight (o ponto #13 fica SOBRE a reta, pro N=8).
+  { x: 299, y: 243 },
+  { x: 392, y: 171 },
+  { x: 414, y: 157 },
+  { x: 564, y: 97 },
+  // Les Combes.
+  { x: 714, y: 37 },
+  { x: 745, y: 56 },
+  { x: 805, y: 43 },
+  // Bruxelles (hairpin à direita) → Pouhon, a esquerda longa.
+  { x: 904, y: 150 },
+  { x: 898, y: 174 },
+  { x: 870, y: 174 },
+  { x: 835, y: 128 },
+  { x: 815, y: 122 },
+  { x: 740, y: 155 },
+  { x: 631, y: 187 },
+  { x: 610, y: 212 },
+  { x: 611, y: 262 },
+  { x: 630, y: 292 },
+  { x: 655, y: 306 },
+  // Fagnes.
+  { x: 786, y: 345 },
+  { x: 801, y: 368 },
+  { x: 791, y: 404 },
+  { x: 812, y: 439 },
+  // Stavelot.
+  { x: 886, y: 478 },
+  { x: 889, y: 500 },
+  { x: 861, y: 548 },
+  { x: 830, y: 564 },
+  // Blanchimont → Bus Stop.
+  { x: 786, y: 555 },
+  { x: 753, y: 539 },
+  { x: 706, y: 501 },
+  { x: 692, y: 487 },
+  { x: 640, y: 410 },
+  { x: 616, y: 385 },
+  { x: 580, y: 365 },
+  { x: 514, y: 344 },
+  { x: 485, y: 347 },
+  { x: 399, y: 391 },
+  { x: 371, y: 400 },
+  // Bus Stop (chicane como degrau).
+  { x: 290, y: 415 },
+  { x: 276, y: 394 },
 ];
 /**
  * Silverstone (5,891 km) — HORÁRIO. Larga e aberta, dois lóbulos ligados por
@@ -792,6 +798,21 @@ export const BOXES_POR_PISTA: Readonly<Record<string, BoxDeclarado>> = {
       pontosSaida: [{ x: 410, y: 58 }, { x: 358, y: 62 }],
       juncaoSaida: 0.18,
     },
+  },
+  // MODELO LIVRE. Lado real (no V entre a reta da largada e a Eau Rouge), curto.
+  // Degraus 2 (sem garagens), 3 (afastamento 36), 4 (box de 12 u) e 5 (reta da
+  // largada afastada 10 u da Eau Rouge). Desvio do real, inevitável na escala:
+  // a entrada nasce DEPOIS da Bus Stop (a real é antes) e a saída entra ANTES
+  // da La Source (a real é depois). O lado oposto também foi medido e ficou pior.
+  'pista-spa': {
+    entrada: 0.008,
+    saida: 0.035,
+    lado: 1,
+    afastamento: 36,
+    rampa: 60,
+    livre: { juncaoEntrada: 0.986, pontosEntrada: [], pontosSaida: [], juncaoSaida: 0.054 },
+    garagens: false,
+    larguraBox: 12,
   },
 };
 

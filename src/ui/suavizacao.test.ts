@@ -196,7 +196,7 @@ describe('tracadoSuavizado', () => {
  */
 const ANGULO_MEDIDO: Record<string, { controle: number; suavizado: number }> = {
   'pista-monaco': { controle: 124.99, suavizado: 39.0 }, // PR 2b: Mônaco da linha central real.
-  'pista-spa': { controle: 113.28, suavizado: 25.6 },
+  'pista-spa': { controle: 99.63, suavizado: 24.63 }, // PR 2b: Spa da linha central real.
   'pista-monza': { controle: 74.58, suavizado: 14.27 }, // PR 2b: Monza da linha central real.
   'pista-silverstone': { controle: 86.1, suavizado: 15.38 }, // PR 2b: Silverstone da linha central real.
   'pista-suzuka': { controle: 101.28, suavizado: 19.42 }, // PR 2b: Suzuka da linha central real.
@@ -354,7 +354,7 @@ const OVERSHOOT_MEDIDO: Record<string, number> = {
   'pista-red-bull-ring': 3.09,
   'pista-montreal': 1.32,
   'pista-imola': 1.2, // PR 2b: Imola da linha central real.
-  'pista-spa': 1.78,
+  'pista-spa': 0.88, // PR 2b: Spa da linha central real.
   // Fatia 1 do redesenho (PR 7.7): Interlagos 10,53 ⇒ 3,96 e Monza 14,03 ⇒
   // 0,91 — as duas saíram do topo da tabela. Menos overshoot é consequência
   // direta de pontos de controle mais densos: a Catmull-Rom extrapola menos
@@ -499,7 +499,7 @@ const SEPARACAO_MEDIDA: Record<string, number> = {
   'pista-silverstone': 37.72, // PR 2b: Silverstone da linha central real.
   'pista-imola': 44.43, // PR 2b: Imola da linha central real.
   'pista-monaco': 35.81, // PR 2b: Mônaco da linha central real (era 35,96).
-  'pista-spa': 39.67,
+  'pista-spa': 43.69, // PR 2b: Spa da linha central real.
   'pista-suzuka': 0.0,
 };
 
