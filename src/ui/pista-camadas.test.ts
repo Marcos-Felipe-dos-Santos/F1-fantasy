@@ -633,7 +633,7 @@ describe('fusão de asfalto (3.8 — documenta e trava o que foi medido)', () =>
     'pista-monaco': 17.8, // PR 2b: Mônaco da linha central real (era 29,1).
     'pista-monza': 19.6, // PR 2b: Monza da linha central real (era 21,5).
     'pista-silverstone': 19.1, // PR 2b: Silverstone da linha central real.
-    'pista-montreal': 23.8,
+    'pista-montreal': 18.8, // PR 2b: Montreal da linha central real.
     'pista-suzuka': 17.5, // PR 2b: Suzuka da linha central real (era 20,9).
   };
 
@@ -708,7 +708,7 @@ describe('fusão de asfalto (3.8 — documenta e trava o que foi medido)', () =>
      */
     const PISTAS_COM_FUSAO_DE_LIMITE: Record<string, number> = {
       'pista-suzuka': 24.5, // PR 2b: Suzuka da linha central real (era 21,1).
-      'pista-montreal': 18.2,
+      'pista-montreal': 23.2, // PR 2b: Montreal da linha central real.
       'pista-silverstone': 22.9, // PR 2b: Silverstone da linha central real.
       'pista-monza': 22.4, // PR 2b: Monza da linha central real (era 20,5).
       'pista-monaco': 24.2, // PR 2b: Mônaco da linha central real (era 12,9).
@@ -770,7 +770,7 @@ describe('zebra (3.9)', () => {
     'pista-nurburgring': { candidatos: 23, candidatosPorJanela: 37, escolhidos: 27, coberturaPct: 39.9, indices: [2, 3, 4, 6, 7, 9, 10, 11, 12, 16, 17, 22, 23, 24, 25, 26, 28, 32, 33, 34, 35, 39, 40, 41, 42, 43, 44] }, // PR 2b: Nürburgring da linha central real.
     'pista-imola': { candidatos: 16, candidatosPorJanela: 21, escolhidos: 19, coberturaPct: 39.6, indices: [5, 6, 8, 9, 10, 11, 12, 15, 16, 17, 19, 20, 21, 22, 23, 27, 28, 29, 30] }, // PR 2b: Imola da linha central real.
     'pista-red-bull-ring': { candidatos: 13, candidatosPorJanela: 13, escolhidos: 13, coberturaPct: 28.0, indices: [2, 7, 8, 9, 13, 14, 18, 21, 22, 24, 28, 29, 30] },
-    'pista-montreal': { candidatos: 20, candidatosPorJanela: 29, escolhidos: 24, coberturaPct: 39.3, indices: [4, 5, 6, 7, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 24, 25, 30, 31, 32, 38, 39, 40, 41] },
+    'pista-montreal': { candidatos: 15, candidatosPorJanela: 22, escolhidos: 19, coberturaPct: 38.3, indices: [2, 3, 4, 5, 7, 8, 10, 12, 13, 14, 15, 19, 20, 24, 25, 26, 27, 30, 31] }, // PR 2b: Montreal da linha central real.
   };
 
   function candidatos28(tracado: readonly Ponto[]): number {
@@ -882,7 +882,7 @@ describe('zebra (3.9)', () => {
     'pista-interlagos': [1, 6, 7, 8, 9, 12, 14, 15, 18, 20, 22, 23, 29, 31, 34, 36, 38, 41, 44, 45, 46], // PR 2b: Interlagos da linha central real.
     'pista-nurburgring': [4, 5, 8, 9, 14, 26, 28, 29, 30, 31, 33, 36, 37, 41], // PR 2b: Nürburgring da linha central real.
     'pista-imola': [12, 17, 18, 21, 28], // PR 2b: Imola da linha central real.
-    'pista-montreal': [3, 7, 8, 9, 10, 15, 29, 33, 38],
+    'pista-montreal': [5, 9, 11, 13, 15, 21, 27], // PR 2b: Montreal da linha central real.
   };
 
   /**

@@ -67,6 +67,9 @@
 #     descida da Mercedes Arena x subida de volta (as duas diagonais, ~10 u
 #     cada), pernas da Dunlop-Kehre (ida ~20 u pra baixo, volta ~5 u pra cima)
 #     e laço x reta de cima; T1 recuada ~14 u pra direita (garganta do ômega).
+#   Montreal: script 44 -> commitada 32. Pernas da L'Épingle afastadas (reta
+#     Casino 5-9 u acima na saída do grampo); Senna, chicanes de baixo e a do
+#     Muro dos Campeões desbastadas.
 """Deriva pontos de controle de uma pista a partir da linha central real (GeoJSON),
 alinhada ao traçado ATUAL do jogo (mesma orientação, sentido e largada), reescalada
 uniformemente pra moldura [56,924]x[36,564] e simplificada (Douglas-Peucker).

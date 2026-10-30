@@ -204,7 +204,7 @@ const ANGULO_MEDIDO: Record<string, { controle: number; suavizado: number }> = {
   'pista-nurburgring': { controle: 81.99, suavizado: 20.76 }, // PR 2b: Nürburgring da linha central real.
   'pista-imola': { controle: 73.42, suavizado: 15.48 }, // PR 2b: Imola da linha central real.
   'pista-red-bull-ring': { controle: 90.97, suavizado: 17.34 },
-  'pista-montreal': { controle: 126.2, suavizado: 37.15 },
+  'pista-montreal': { controle: 90.0, suavizado: 18.0 }, // PR 2b: Montreal da linha central real.
 };
 
 /** A silhueta com espinho de ~180° no vértice #0. Ver `ANGULO_MEDIDO`. */
@@ -352,7 +352,7 @@ describe('fidelidade da amostragem (escolha de AMOSTRAS_POR_SEGMENTO)', () => {
 const OVERSHOOT_MEDIDO: Record<string, number> = {
   'pista-monaco': 0.54, // PR 2b: Mônaco da linha central real (era 1,12).
   'pista-red-bull-ring': 3.09,
-  'pista-montreal': 1.32,
+  'pista-montreal': 0.56, // PR 2b: Montreal da linha central real.
   'pista-imola': 1.2, // PR 2b: Imola da linha central real.
   'pista-spa': 0.88, // PR 2b: Spa da linha central real.
   // Fatia 1 do redesenho (PR 7.7): Interlagos 10,53 ⇒ 3,96 e Monza 14,03 ⇒
@@ -495,7 +495,7 @@ const SEPARACAO_MEDIDA: Record<string, number> = {
   // de 40,5 pra 51,8 no mesmo movimento.
   'pista-interlagos': 37.94, // PR 2b: Interlagos da linha central real (era 35,72).
   'pista-monza': 50.62, // PR 2b: Monza da linha central real (era 50,3).
-  'pista-montreal': 31.46,
+  'pista-montreal': 23.01, // PR 2b: Montreal da linha central real.
   'pista-silverstone': 37.72, // PR 2b: Silverstone da linha central real.
   'pista-imola': 44.43, // PR 2b: Imola da linha central real.
   'pista-monaco': 35.81, // PR 2b: Mônaco da linha central real (era 35,96).

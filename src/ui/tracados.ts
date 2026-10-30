@@ -602,63 +602,50 @@ const TRACADO_RED_BULL_RING: TracadoImutavel = [
  * notavelmente retilíneo e é ele que dá a leitura de "estreito e comprido";
  * L'Épingle (hairpin) fecha a ponta oposta à largada e a chicane do Muro dos
  * Campeões vem logo antes da linha.
+ *
+ * PR 2b: derivada da linha central real. As pernas da L'Épingle corriam
+ * coladas (−0,8 u na base): a reta Casino subiu 5-9 u na saída do grampo.
+ * Senna, as chicanes de baixo e a do Muro dos Campeões desbastadas. Ordem e
+ * sentido intocados.
  */
 const TRACADO_MONTREAL: TracadoImutavel = [
-  // Reta principal → Senna S: grampo na ponta direita. Os dois braços
-  // correm separados e a ponta tem raio de verdade — apertada, ela virava
-  // um bico de 69° que a guarda dos 45°/vértice reprova.
-  { x: 730, y: 322 },
-  { x: 788, y: 328 },
-  { x: 844, y: 330 },
-  { x: 876, y: 332 },
-  { x: 908, y: 342 },
-  { x: 924, y: 362 },
-  { x: 906, y: 384 },
-  { x: 872, y: 392 },
-  { x: 832, y: 394 },
-  { x: 794, y: 414 },
-  // Descida em zigue-zague (as chicanes do setor 1) pelo lado de baixo.
-  // Cada ponta leva três pontos: com dois, a virada concentra num vértice e
-  // a curva suavizada sai com bico de 57°.
-  { x: 764, y: 446 },
-  { x: 734, y: 458 },
-  { x: 706, y: 446 },
-  { x: 694, y: 422 },
-  { x: 668, y: 412 },
-  { x: 638, y: 430 },
-  { x: 618, y: 452 },
-  { x: 590, y: 446 },
-  { x: 572, y: 424 },
-  { x: 556, y: 442 },
-  { x: 550, y: 470 },
-  // Trecho da bacia olímpica — praticamente reto, é o que dá a leitura.
-  { x: 496, y: 452 },
-  { x: 420, y: 414 },
-  { x: 346, y: 376 },
-  { x: 280, y: 344 },
-  { x: 320, y: 312 },
-  { x: 268, y: 280 },
-  { x: 194, y: 238 },
-  // L'Épingle: hairpin fechando a ponta esquerda. Os braços ficam a ~40 u:
-  // colados, o asfalto de um cobre o eixo do outro e a hairpin some.
-  { x: 130, y: 202 },
-  { x: 86, y: 180 },
-  { x: 60, y: 168 },
-  { x: 56, y: 144 },
-  { x: 82, y: 130 },
-  { x: 120, y: 136 },
-  // Reta do Casino — longa, de volta pelo topo.
-  { x: 192, y: 146 },
-  { x: 280, y: 158 },
-  { x: 376, y: 178 },
-  { x: 476, y: 204 },
-  { x: 560, y: 226 },
-  // Chicane final (Muro dos Campeões).
-  { x: 598, y: 240 },
-  { x: 590, y: 268 },
-  { x: 564, y: 288 },
-  { x: 612, y: 302 },
-  { x: 678, y: 322 },
+  // Reta dos boxes → Senna (T1-T2), o S apertado.
+  { x: 742, y: 302 },
+  { x: 806, y: 320 },
+  { x: 883, y: 365 },
+  { x: 910, y: 347 },
+  { x: 924, y: 360 },
+  { x: 918, y: 378 },
+  // Sequência de chicanes do lado de baixo.
+  { x: 880, y: 416 },
+  { x: 800, y: 452 },
+  { x: 772, y: 437 },
+  { x: 714, y: 448 },
+  { x: 680, y: 463 },
+  { x: 642, y: 458 },
+  { x: 576, y: 425 },
+  { x: 561, y: 442 },
+  { x: 548, y: 459 },
+  { x: 511, y: 458 },
+  { x: 439, y: 431 },
+  { x: 396, y: 408 },
+  { x: 348, y: 376 },
+  // Subida até a L'Épingle, com as pernas do grampo afastadas.
+  { x: 288, y: 323 },
+  { x: 291, y: 296 },
+  { x: 279, y: 276 },
+  { x: 192, y: 204 },
+  { x: 136, y: 173 },
+  // L'Épingle (hairpin) → reta Casino (pernas a ~10 u mais longe que na base).
+  { x: 66, y: 154 },
+  { x: 56, y: 138 },
+  { x: 72, y: 128 },
+  { x: 107, y: 142 },
+  { x: 155, y: 144 },
+  { x: 284, y: 160 },
+  // Chicane final, a do Muro dos Campeões.
+  { x: 588, y: 245 },
+  { x: 596, y: 262 },
 ];
 
 /** Traçado por pista (id do dataset ⇒ polilinha); Monza reaproveita `TRACADO_GENERICO` (já é a Monza redesenhada). */
@@ -835,6 +822,23 @@ export const BOXES_POR_PISTA: Readonly<Record<string, BoxDeclarado>> = {
     },
     garagens: false,
     larguraBox: 12,
+  },
+  // MODELO LIVRE. Lado real (por fora da reta dos boxes, em cima: decisão do
+  // Marcos de 2026-10-29 pra pit lane real por fora). A entrada nasce logo
+  // depois da chicane do Muro dos Campeões; a saída contorna o Senna por fora
+  // e entra na pista depois dele, como a real. Degrau 1.
+  'pista-montreal': {
+    entrada: 0.975,
+    saida: 0.035,
+    lado: -1,
+    afastamento: 48,
+    rampa: 60,
+    livre: {
+      juncaoEntrada: 0.95,
+      pontosEntrada: [],
+      pontosSaida: [{ x: 865, y: 286 }, { x: 930, y: 296 }, { x: 958, y: 335 }],
+      juncaoSaida: 0.102,
+    },
   },
 };
 

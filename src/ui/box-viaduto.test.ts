@@ -229,7 +229,7 @@ describe('box: modelo livre e lado (PR 2b)', () => {
    * lane REAL fica por fora (OpenStreetMap), onde o box segue o lado real. Nelas
    * o teste vira o contrário: o box tem que estar FORA.
    */
-  const BOX_REAL_POR_FORA: readonly string[] = ['pista-imola'];
+  const BOX_REAL_POR_FORA: readonly string[] = ['pista-imola', 'pista-montreal'];
   it.each(Object.keys(BOXES_POR_PISTA).map((id) => [id] as const))('%s: o meio do trecho paralelo fica do lado REAL (dentro, salvo exceção)', (id) => {
     const { amostras } = caminhoDoBox(tracadoSuavizado(id), BOXES_POR_PISTA[id]);
     const paralelas = amostras.filter((a) => a.paralelo);
