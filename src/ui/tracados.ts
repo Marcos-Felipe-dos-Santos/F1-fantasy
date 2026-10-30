@@ -195,62 +195,68 @@ const TRACADO_SPA: TracadoImutavel = [
  * ~180°, que faz um dente visível no meio; e Maggotts-Becketts-Chapel, cinco
  * mudanças de direção em alta velocidade atravessando o topo — precisa ler como
  * SERPENTE, não como curva única.
+ *
+ * PR 2b: derivada da linha central real. Na escala da moldura o Loop corria
+ * colado em Becketts/Chapel (folga −12 u na base), então Maggotts-Becketts-
+ * Chapel subiram ~14 u (há folga na moldura, a real é limitada pela largura).
+ * Village, Luffield, Copse e Stowe desbastadas. Ordem e sentido intocados.
  */
 const TRACADO_SILVERSTONE: TracadoImutavel = [
-  // Hamilton Straight → Abbey / Farm.
-  { x: 624, y: 502 },
-  { x: 556, y: 460 },
-  { x: 486, y: 420 },
-  { x: 458, y: 370 },
-  { x: 468, y: 318 },
-  { x: 430, y: 264 },
-  // Village → The Loop (o único ~180°, apêndice visível).
-  { x: 390, y: 226 },
-  { x: 402, y: 190 },
-  { x: 430, y: 164 },
-  { x: 462, y: 170 },
-  { x: 462, y: 142 },
-  { x: 424, y: 132 },
-  { x: 384, y: 152 },
-  // Wellington Straight, em diagonal.
-  { x: 316, y: 236 },
-  { x: 250, y: 324 },
-  { x: 194, y: 398 },
-  // Brooklands → Luffield: arco longo e lento, ~170°. A volta passa ABAIXO
-  // da chegada da Wellington, senão as duas se cruzam.
-  { x: 200, y: 448 },
-  { x: 246, y: 480 },
-  { x: 294, y: 486 },
-  { x: 302, y: 524 },
-  { x: 250, y: 542 },
-  { x: 174, y: 524 },
-  // Woodcote → National straight, pro lado esquerdo.
-  { x: 118, y: 486 },
-  { x: 80, y: 432 },
-  // Lateral esquerda subindo até Copse.
-  { x: 62, y: 354 },
-  { x: 56, y: 260 },
-  { x: 72, y: 186 },
-  { x: 128, y: 132 },
-  // Maggotts-Becketts-Chapel: cinco mudanças de direção em alta.
-  { x: 206, y: 108 },
-  { x: 294, y: 96 },
-  { x: 350, y: 70 },
-  { x: 412, y: 86 },
-  { x: 484, y: 54 },
-  { x: 558, y: 114 },
-  // Hangar Straight, descendo pela direita.
-  { x: 672, y: 182 },
-  { x: 792, y: 248 },
-  { x: 890, y: 298 },
-  // Stowe → Vale → Club, fechando na reta principal.
-  { x: 924, y: 342 },
-  { x: 908, y: 402 },
-  { x: 842, y: 442 },
-  { x: 774, y: 474 },
-  { x: 758, y: 510 },
-  { x: 714, y: 546 },
-  { x: 664, y: 532 },
+  // Hamilton Straight (reta dos boxes) â†’ Abbey / Farm.
+  { x: 722, y: 530 },
+  { x: 527, y: 424 },
+  { x: 508, y: 400 },
+  { x: 502, y: 330 },
+  { x: 493, y: 300 },
+  // Village â†’ The Loop (o grampo Ã  esquerda) â†’ Aintree.
+  { x: 418, y: 228 },
+  { x: 406, y: 210 },
+  { x: 420, y: 196 },
+  { x: 460, y: 182 },
+  { x: 462, y: 160 },
+  { x: 412, y: 152 },
+  { x: 370, y: 162 },
+  { x: 282, y: 297 },
+  // Wellington Straight desemboca em Brooklands â†’ Luffield, arco longo e lento.
+  { x: 193, y: 433 },
+  { x: 191, y: 453 },
+  { x: 205, y: 476 },
+  { x: 258, y: 478 },
+  { x: 274, y: 500 },
+  { x: 262, y: 526 },
+  { x: 238, y: 529 },
+  // Woodcote â†’ reta National, subindo pela esquerda atÃ© Copse.
+  { x: 170, y: 506 },
+  { x: 132, y: 479 },
+  { x: 110, y: 446 },
+  { x: 58, y: 249 },
+  { x: 57, y: 224 },
+  { x: 72, y: 200 },
+  { x: 100, y: 180 },
+  { x: 150, y: 159 },
+  { x: 198, y: 145 },
+  // Maggotts-Becketts-Chapel, erguidos ~14 u pra abrir o vÃ£o atÃ© o Loop.
+  { x: 296, y: 116 },
+  { x: 338, y: 82 },
+  { x: 357, y: 80 },
+  { x: 400, y: 88 },
+  { x: 422, y: 84 },
+  { x: 456, y: 56 },
+  { x: 482, y: 46 },
+  { x: 502, y: 56 },
+  { x: 532, y: 96 },
+  // Hangar Straight â†’ Stowe.
+  { x: 548, y: 108 },
+  { x: 825, y: 214 },
+  { x: 895, y: 246 },
+  { x: 920, y: 272 },
+  { x: 918, y: 305 },
+  // Vale â†’ Club, fechando na reta dos boxes.
+  { x: 866, y: 354 },
+  { x: 786, y: 452 },
+  { x: 804, y: 484 },
+  { x: 790, y: 510 },
+  { x: 760, y: 530 },
 ];
 /**
  * Suzuka (5,807 km) — o ÚNICO 8 do calendário, e ASSIMÉTRICO: o laço dos Esses
@@ -767,6 +773,22 @@ export const BOXES_POR_PISTA: Readonly<Record<string, BoxDeclarado>> = {
     livre: { juncaoEntrada: 0.975, pontosEntrada: [], pontosSaida: [], juncaoSaida: 0.045 },
     garagens: false,
     larguraBox: 12,
+  },
+  // MODELO LIVRE. Lado real (dentro da Hamilton Straight). A entrada nasce antes
+  // da Vale e passa por dentro dela e da Club, como a real; a saída sobe por
+  // dentro da Abbey e entra na pista antes da Farm. Degrau 1 da escada.
+  'pista-silverstone': {
+    entrada: 0.026,
+    saida: 0.065,
+    lado: 1,
+    afastamento: 48,
+    rampa: 60,
+    livre: {
+      juncaoEntrada: 0.893,
+      pontosEntrada: [{ x: 818, y: 332 }, { x: 762, y: 398 }, { x: 722, y: 448 }],
+      pontosSaida: [{ x: 556, y: 350 }],
+      juncaoSaida: 0.118,
+    },
   },
 };
 

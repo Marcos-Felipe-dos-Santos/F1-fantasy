@@ -630,7 +630,7 @@ describe('fusão de asfalto (3.8 — documenta e trava o que foi medido)', () =>
     'pista-nurburgring': 29.5,
     'pista-monaco': 17.8, // PR 2b: Mônaco da linha central real (era 29,1).
     'pista-monza': 19.6, // PR 2b: Monza da linha central real (era 21,5).
-    'pista-silverstone': 27.5,
+    'pista-silverstone': 19.1, // PR 2b: Silverstone da linha central real.
     'pista-montreal': 23.8,
     'pista-suzuka': 17.5, // PR 2b: Suzuka da linha central real (era 20,9).
   };
@@ -707,7 +707,7 @@ describe('fusão de asfalto (3.8 — documenta e trava o que foi medido)', () =>
     const PISTAS_COM_FUSAO_DE_LIMITE: Record<string, number> = {
       'pista-suzuka': 24.5, // PR 2b: Suzuka da linha central real (era 21,1).
       'pista-montreal': 18.2,
-      'pista-silverstone': 14.5,
+      'pista-silverstone': 22.9, // PR 2b: Silverstone da linha central real.
       'pista-monza': 22.4, // PR 2b: Monza da linha central real (era 20,5).
       'pista-monaco': 24.2, // PR 2b: Mônaco da linha central real (era 12,9).
       'pista-nurburgring': 12.5,
@@ -762,7 +762,7 @@ describe('zebra (3.9)', () => {
     'pista-spa': { candidatos: 13, candidatosPorJanela: 18, escolhidos: 18, coberturaPct: 33.4, indices: [2, 3, 4, 5, 18, 19, 20, 22, 23, 24, 28, 34, 35, 37, 41, 42, 45, 46] },
     // PR 2b: Monza da linha central real.
     'pista-monza': { candidatos: 11, candidatosPorJanela: 30, escolhidos: 25, coberturaPct: 39.1, indices: [2, 3, 4, 5, 6, 7, 10, 15, 16, 17, 18, 20, 21, 22, 23, 24, 27, 28, 29, 30, 33, 34, 35, 36, 37] },
-    'pista-silverstone': { candidatos: 22, candidatosPorJanela: 23, escolhidos: 22, coberturaPct: 39.7, indices: [3, 4, 6, 7, 8, 9, 10, 11, 15, 16, 18, 19, 20, 26, 30, 31, 32, 37, 38, 40, 41, 42] },
+    'pista-silverstone': { candidatos: 22, candidatosPorJanela: 41, escolhidos: 29, coberturaPct: 39.3, indices: [0, 5, 6, 7, 8, 9, 10, 11, 13, 14, 15, 16, 17, 18, 19, 24, 25, 31, 32, 34, 35, 36, 40, 41, 42, 44, 45, 46, 47] }, // PR 2b: Silverstone da linha central real.
     'pista-suzuka': { candidatos: 24, candidatosPorJanela: 47, escolhidos: 30, coberturaPct: 39.1, indices: [2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15, 16, 20, 21, 26, 27, 28, 30, 31, 32, 38, 39, 40, 41, 42, 43, 48, 54] },
     'pista-interlagos': { candidatos: 21, candidatosPorJanela: 42, escolhidos: 33, coberturaPct: 40.0, indices: [1, 2, 3, 4, 5, 6, 8, 12, 13, 14, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 39, 40, 41, 45] },
     'pista-nurburgring': { candidatos: 23, candidatosPorJanela: 29, escolhidos: 24, coberturaPct: 38.7, indices: [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 21, 25, 26, 32, 33, 34, 40, 41, 42, 43, 44, 45, 46] },
@@ -875,7 +875,7 @@ describe('zebra (3.9)', () => {
     'pista-monaco': [4, 6, 11, 12, 14, 18, 20, 21, 25, 32, 39, 42, 44, 45, 46, 48, 52], // PR 2b: Mônaco da linha central real.
     'pista-spa': [2, 5, 34, 41, 46],
     'pista-monza': [2, 3, 5, 7, 9, 10, 11, 12, 15, 18, 20, 22, 27, 30, 31, 33, 36, 37, 38], // PR 2b: Monza da linha central real.
-    'pista-silverstone': [41],
+    'pista-silverstone': [1, 3, 5, 7, 10, 13, 19, 21, 22, 23, 25, 26, 31, 32, 34, 36, 37, 38, 40], // PR 2b: Silverstone da linha central real.
     'pista-suzuka': [7, 8, 10, 14, 15, 16, 18, 22, 26, 29, 32, 35, 36, 38, 43, 48, 49, 50, 51, 52, 53, 55, 56], // PR 2b: Suzuka da linha central real.
     'pista-interlagos': [1, 6, 7, 8, 9, 12, 14, 15, 18, 20, 22, 23, 29, 31, 34, 36, 38, 41, 44, 45, 46], // PR 2b: Interlagos da linha central real.
     'pista-nurburgring': [12, 13, 33, 41, 43, 44],

@@ -198,7 +198,7 @@ const ANGULO_MEDIDO: Record<string, { controle: number; suavizado: number }> = {
   'pista-monaco': { controle: 124.99, suavizado: 39.0 }, // PR 2b: Mônaco da linha central real.
   'pista-spa': { controle: 113.28, suavizado: 25.6 },
   'pista-monza': { controle: 74.58, suavizado: 14.27 }, // PR 2b: Monza da linha central real.
-  'pista-silverstone': { controle: 100.6, suavizado: 23.6 },
+  'pista-silverstone': { controle: 86.1, suavizado: 15.38 }, // PR 2b: Silverstone da linha central real.
   'pista-suzuka': { controle: 101.28, suavizado: 19.42 }, // PR 2b: Suzuka da linha central real.
   'pista-interlagos': { controle: 87.51, suavizado: 17.18 }, // PR 2b: Interlagos da linha central real.
   'pista-nurburgring': { controle: 91.74, suavizado: 16.64 },
@@ -361,7 +361,7 @@ const OVERSHOOT_MEDIDO: Record<string, number> = {
   // quando a corda é mais curta.
   'pista-interlagos': 1.08, // PR 2b: Interlagos da linha central real (era 1,47).
   'pista-monza': 0.29, // PR 2b: Monza da linha central real.
-  'pista-silverstone': 0.89,
+  'pista-silverstone': 2.91, // PR 2b: Silverstone da linha central real.
   'pista-suzuka': 0.5, // PR 2b: Suzuka da linha central real (era 2,54).
   'pista-nurburgring': 3.4,
 };
@@ -496,7 +496,7 @@ const SEPARACAO_MEDIDA: Record<string, number> = {
   'pista-interlagos': 37.94, // PR 2b: Interlagos da linha central real (era 35,72).
   'pista-monza': 50.62, // PR 2b: Monza da linha central real (era 50,3).
   'pista-montreal': 31.46,
-  'pista-silverstone': 31.48,
+  'pista-silverstone': 37.72, // PR 2b: Silverstone da linha central real.
   'pista-imola': 39.62,
   'pista-monaco': 35.81, // PR 2b: Mônaco da linha central real (era 35,96).
   'pista-spa': 39.67,

@@ -50,6 +50,13 @@
 #   box livre: Mônaco, perna da Piscina (#40-43) +8-10 u pra baixo (saída do box
 #   depois da Sainte Dévote); Suzuka, grampo refeito em V (#24-29), #48 (455,347)
 #   e crista dos Esses (#8, #9) baixada 6 u (box do lado real).
+#
+# Registro do lote 2 (2026-10-29; base rodada direto sobre os traçados de 4a40319,
+# guardada em referencias/pistas-2b/bases-lote2/):
+#   Silverstone: script 65 pontos -> commitada 48. Maggotts-Becketts-Chapel
+#     erguidos ~14 u (na base o Loop corria a -12 u de folga de Becketts);
+#     Village, Loop, Luffield, Copse, Stowe e Club desbastados; ponto (282,297)
+#     inserido SOBRE a Wellington Straight (N=8: 0,739 -> 0,451, ver ESTADO.md).
 """Deriva pontos de controle de uma pista a partir da linha central real (GeoJSON),
 alinhada ao traçado ATUAL do jogo (mesma orientação, sentido e largada), reescalada
 uniformemente pra moldura [56,924]x[36,564] e simplificada (Douglas-Peucker).
