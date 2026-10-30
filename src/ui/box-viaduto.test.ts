@@ -223,11 +223,18 @@ describe('box: modelo livre e lado (PR 2b)', () => {
    * O `lado` declarado tem que pôr o box do lado de DENTRO da pista em todas
    * as que o declaram: a cerca de folga não pega um `lado` invertido (do lado
    * de fora costuma sobrar mais espaço). Exceção só com decisão do Marcos.
+   *
+   * EXCEÇÕES (lista FECHADA, decisão do Marcos em 2026-10-29): pistas cuja pit
+   * lane REAL fica por fora (OpenStreetMap), onde o box segue o lado real. Nelas
+   * o teste vira o contrário: o box tem que estar FORA.
    */
-  it.each(Object.keys(BOXES_POR_PISTA).map((id) => [id] as const))('%s: o meio do trecho paralelo fica DENTRO da pista', (id) => {
+  const BOX_REAL_POR_FORA: readonly string[] = ['pista-imola'];
+  it.each(Object.keys(BOXES_POR_PISTA).map((id) => [id] as const))('%s: o meio do trecho paralelo fica do lado REAL (dentro, salvo exceção)', (id) => {
     const { amostras } = caminhoDoBox(tracadoSuavizado(id), BOXES_POR_PISTA[id]);
     const paralelas = amostras.filter((a) => a.paralelo);
-    expect(dentroDoPoligono(paralelas[Math.floor(paralelas.length / 2)].p, tracadoDaPista(id))).toBe(true);
+    expect(dentroDoPoligono(paralelas[Math.floor(paralelas.length / 2)].p, tracadoDaPista(id))).toBe(
+      !BOX_REAL_POR_FORA.includes(id),
+    );
   });
 
   it.each(

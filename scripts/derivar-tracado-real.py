@@ -57,6 +57,8 @@
 #     erguidos ~14 u (na base o Loop corria a -12 u de folga de Becketts);
 #     Village, Loop, Luffield, Copse, Stowe e Club desbastados; ponto (282,297)
 #     inserido SOBRE a Wellington Straight (N=8: 0,739 -> 0,451, ver ESTADO.md).
+#   Imola: script 41 -> commitada 32. Nenhum trecho colava; Tamburello,
+#     Villeneuve, Tosa, Variante Alta e Rivazza desbastadas.
 """Deriva pontos de controle de uma pista a partir da linha central real (GeoJSON),
 alinhada ao traçado ATUAL do jogo (mesma orientação, sentido e largada), reescalada
 uniformemente pra moldura [56,924]x[36,564] e simplificada (Douglas-Peucker).

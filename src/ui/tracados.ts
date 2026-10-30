@@ -491,65 +491,52 @@ const TRACADO_NURBURGRING: TracadoImutavel = [
  * As três chicanes (Tamburello, Villeneuve, Variante Alta) aparecem como
  * recortes ANGULOSOS — arredondá-las descaracteriza na hora. Tosa é o vértice
  * mais fechado e marca a dobra do traçado; a dupla Rivazza faz o gancho duplo.
+ *
+ * PR 2b: derivada da linha central real. Na escala da moldura nenhum trecho
+ * cola; o trabalho foi desbastar as chicanes, Tosa e Rivazza. Ordem e sentido
+ * das curvas intocados.
  */
 const TRACADO_IMOLA: TracadoImutavel = [
   // Reta principal (topo, direita → esquerda).
-  { x: 704, y: 130 },
-  { x: 634, y: 134 },
-  { x: 574, y: 140 },
-  // Variante Tamburello: chicane como degrau.
-  { x: 492, y: 134 },
-  { x: 418, y: 124 },
-  { x: 352, y: 112 },
-  { x: 300, y: 118 },
-  // Variante Villeneuve.
+  { x: 734, y: 109 },
+  { x: 583, y: 118 },
+  { x: 483, y: 103 },
+  { x: 427, y: 102 },
+  // Variante Tamburello.
+  { x: 325, y: 117 },
   { x: 272, y: 134 },
-  { x: 286, y: 166 },
-  { x: 250, y: 172 },
-  { x: 204, y: 178 },
-  // Descida pra Tosa — o vértice mais fechado, extremo esquerdo.
-  { x: 170, y: 228 },
-  { x: 144, y: 302 },
-  { x: 130, y: 372 },
-  { x: 156, y: 402 },
-  { x: 192, y: 402 },
-  // Piratella, no alto do lado esquerdo.
-  { x: 184, y: 446 },
-  { x: 144, y: 482 },
-  { x: 92, y: 508 },
-  { x: 56, y: 516 },
-  // Acque Minerali.
-  { x: 78, y: 550 },
-  { x: 138, y: 554 },
-  { x: 204, y: 528 },
-  { x: 252, y: 514 },
-  // Variante Alta: chicane no ponto alto.
-  { x: 304, y: 508 },
-  { x: 352, y: 494 },
-  { x: 392, y: 466 },
-  // Rivazza 1 + 2: gancho duplo, quatro esquerdas.
-  { x: 400, y: 428 },
-  { x: 366, y: 392 },
-  { x: 338, y: 336 },
-  { x: 364, y: 292 },
-  { x: 404, y: 274 },
-  // Reta de volta pro fundo do traçado.
-  { x: 480, y: 274 },
-  { x: 554, y: 272 },
-  { x: 614, y: 272 },
-  { x: 622, y: 314 },
-  { x: 662, y: 326 },
-  // Subida ao topo direito.
-  { x: 730, y: 282 },
-  { x: 790, y: 228 },
-  { x: 842, y: 172 },
-  { x: 890, y: 134 },
-  { x: 924, y: 100 },
-  // Variante Gresini: alça que fecha na reta principal.
-  { x: 918, y: 64 },
-  { x: 882, y: 46 },
-  { x: 830, y: 60 },
-  { x: 776, y: 98 },
+  { x: 260, y: 162 },
+  // Variante Villeneuve.
+  { x: 206, y: 200 },
+  { x: 138, y: 398 },
+  // Tosa: o vértice mais fechado, dobra do traçado.
+  { x: 147, y: 438 },
+  { x: 59, y: 530 },
+  { x: 66, y: 552 },
+  { x: 88, y: 553 },
+  // Piratella → Acque Minerali.
+  { x: 236, y: 524 },
+  { x: 277, y: 526 },
+  { x: 340, y: 533 },
+  { x: 368, y: 506 },
+  { x: 380, y: 462 },
+  { x: 377, y: 432 },
+  // Variante Alta.
+  { x: 354, y: 346 },
+  { x: 382, y: 300 },
+  { x: 417, y: 307 },
+  // Descida até Rivazza.
+  { x: 623, y: 293 },
+  { x: 638, y: 306 },
+  { x: 728, y: 261 },
+  { x: 762, y: 235 },
+  // Rivazza, o gancho duplo, e a volta pra reta.
+  { x: 842, y: 148 },
+  { x: 924, y: 101 },
+  { x: 920, y: 84 },
+  { x: 904, y: 54 },
+  { x: 884, y: 46 },
+  { x: 757, y: 103 },
 ];
 /**
  * Red Bull Ring (4,318 km, 10 curvas) — HORÁRIO. O mais SIMPLES do conjunto:
@@ -788,6 +775,22 @@ export const BOXES_POR_PISTA: Readonly<Record<string, BoxDeclarado>> = {
       pontosEntrada: [{ x: 818, y: 332 }, { x: 762, y: 398 }, { x: 722, y: 448 }],
       pontosSaida: [{ x: 556, y: 350 }],
       juncaoSaida: 0.118,
+    },
+  },
+  // MODELO LIVRE. Lado real (por fora da reta principal, em cima). A entrada nasce
+  // logo depois da Rivazza e sobe por cima dela; a saída desce e entra na pista
+  // antes da Tamburello. Degrau 1 da escada.
+  'pista-imola': {
+    entrada: 0.97,
+    saida: 0.115,
+    lado: 1,
+    afastamento: 48,
+    rampa: 60,
+    livre: {
+      juncaoEntrada: 0.94,
+      pontosEntrada: [{ x: 825, y: 22 }],
+      pontosSaida: [{ x: 410, y: 58 }, { x: 358, y: 62 }],
+      juncaoSaida: 0.18,
     },
   },
 };

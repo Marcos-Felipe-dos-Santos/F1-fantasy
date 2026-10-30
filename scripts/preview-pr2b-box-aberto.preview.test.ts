@@ -33,7 +33,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const RAIZ = join(__dirname, '..');
 const DIR = join(RAIZ, 'preview');
 const REF_ANTES = process.env.PREVIEW_ANTES_REF ?? '994f1de';
-const PISTAS = ['pista-interlagos', 'pista-monaco', 'pista-suzuka', 'pista-silverstone'] as const;
+const PISTAS = ['pista-interlagos', 'pista-monaco', 'pista-suzuka', 'pista-silverstone', 'pista-imola'] as const;
 /**
  * Pistas que este lote NÃO mexe: antes e depois têm que sair idênticos. Spa é
  * a prova de que o `tracados.ts` do git foi lido (o traçado dela mora lá);

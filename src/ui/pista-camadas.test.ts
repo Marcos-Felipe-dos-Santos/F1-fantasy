@@ -522,9 +522,10 @@ describe('viewBox contém todas as 10 pistas (3.7 — reapertado no 7.4)', () =>
    * uma margem pro overshoot da Catmull-Rom, e a pior é Suzuka.
    *
    * PR 2b: Suzuka, redesenhada da linha central real, deixou de ser a pior; a
-   * pior passou a ser Imola, que o lote 1 não tocou, com 4,5.
+   * pior passou a ser Imola, que o lote 1 não tocou, com 4,5. Com Imola
+   * redesenhada (lote 2), a pior passou a ser o Red Bull Ring, também com 4,5.
    */
-  it('pior folga real é 4,5 (Imola, PR 2b)', () => {
+  it('pior folga real é 4,5 (Red Bull Ring, PR 2b)', () => {
     let piorFolga = Infinity;
     for (const pista of dataset.pistas) {
       const e = envelope(pista.id);
@@ -624,7 +625,7 @@ describe('fusão de asfalto (3.8 — documenta e trava o que foi medido)', () =>
     // sobre o teto no pior caso). Quem vigia trechos próximos agora é a cerca
     // em arco (`scripts/folga-pistas.test.ts`) e `SEPARACAO_MEDIDA`.
     'pista-red-bull-ring': 33.5,
-    'pista-imola': 32.2,
+    'pista-imola': 17.5, // PR 2b: Imola da linha central real.
     'pista-spa': 31.5,
     'pista-interlagos': 19.8, // PR 2b: Interlagos da linha central real (era 29,7).
     'pista-nurburgring': 29.5,
@@ -713,7 +714,7 @@ describe('fusão de asfalto (3.8 — documenta e trava o que foi medido)', () =>
       'pista-nurburgring': 12.5,
       'pista-interlagos': 22.2, // PR 2b: Interlagos da linha central real (era 12,3).
       'pista-spa': 10.5,
-      'pista-imola': 9.8,
+      'pista-imola': 24.5, // PR 2b: Imola da linha central real.
       'pista-red-bull-ring': 8.5,
     };
     for (const [pistaId, esperado] of Object.entries(PISTAS_COM_FUSAO_DE_LIMITE)) {
@@ -766,7 +767,7 @@ describe('zebra (3.9)', () => {
     'pista-suzuka': { candidatos: 24, candidatosPorJanela: 47, escolhidos: 30, coberturaPct: 39.1, indices: [2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15, 16, 20, 21, 26, 27, 28, 30, 31, 32, 38, 39, 40, 41, 42, 43, 48, 54] },
     'pista-interlagos': { candidatos: 21, candidatosPorJanela: 42, escolhidos: 33, coberturaPct: 40.0, indices: [1, 2, 3, 4, 5, 6, 8, 12, 13, 14, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 39, 40, 41, 45] },
     'pista-nurburgring': { candidatos: 23, candidatosPorJanela: 29, escolhidos: 24, coberturaPct: 38.7, indices: [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 21, 25, 26, 32, 33, 34, 40, 41, 42, 43, 44, 45, 46] },
-    'pista-imola': { candidatos: 19, candidatosPorJanela: 23, escolhidos: 22, coberturaPct: 39.3, indices: [6, 7, 8, 9, 10, 13, 14, 15, 18, 19, 20, 26, 27, 29, 30, 31, 34, 35, 36, 41, 42, 43] },
+    'pista-imola': { candidatos: 16, candidatosPorJanela: 21, escolhidos: 19, coberturaPct: 39.6, indices: [5, 6, 8, 9, 10, 11, 12, 15, 16, 17, 19, 20, 21, 22, 23, 27, 28, 29, 30] }, // PR 2b: Imola da linha central real.
     'pista-red-bull-ring': { candidatos: 13, candidatosPorJanela: 13, escolhidos: 13, coberturaPct: 28.0, indices: [2, 7, 8, 9, 13, 14, 18, 21, 22, 24, 28, 29, 30] },
     'pista-montreal': { candidatos: 20, candidatosPorJanela: 29, escolhidos: 24, coberturaPct: 39.3, indices: [4, 5, 6, 7, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 24, 25, 30, 31, 32, 38, 39, 40, 41] },
   };
@@ -879,7 +880,7 @@ describe('zebra (3.9)', () => {
     'pista-suzuka': [7, 8, 10, 14, 15, 16, 18, 22, 26, 29, 32, 35, 36, 38, 43, 48, 49, 50, 51, 52, 53, 55, 56], // PR 2b: Suzuka da linha central real.
     'pista-interlagos': [1, 6, 7, 8, 9, 12, 14, 15, 18, 20, 22, 23, 29, 31, 34, 36, 38, 41, 44, 45, 46], // PR 2b: Interlagos da linha central real.
     'pista-nurburgring': [12, 13, 33, 41, 43, 44],
-    'pista-imola': [6, 9, 18, 31],
+    'pista-imola': [12, 17, 18, 21, 28], // PR 2b: Imola da linha central real.
     'pista-montreal': [3, 7, 8, 9, 10, 15, 29, 33, 38],
   };
 
