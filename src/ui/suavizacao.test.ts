@@ -201,7 +201,7 @@ const ANGULO_MEDIDO: Record<string, { controle: number; suavizado: number }> = {
   'pista-silverstone': { controle: 86.1, suavizado: 15.38 }, // PR 2b: Silverstone da linha central real.
   'pista-suzuka': { controle: 101.28, suavizado: 19.42 }, // PR 2b: Suzuka da linha central real.
   'pista-interlagos': { controle: 87.51, suavizado: 17.18 }, // PR 2b: Interlagos da linha central real.
-  'pista-nurburgring': { controle: 91.74, suavizado: 16.64 },
+  'pista-nurburgring': { controle: 81.99, suavizado: 20.76 }, // PR 2b: Nürburgring da linha central real.
   'pista-imola': { controle: 73.42, suavizado: 15.48 }, // PR 2b: Imola da linha central real.
   'pista-red-bull-ring': { controle: 90.97, suavizado: 17.34 },
   'pista-montreal': { controle: 126.2, suavizado: 37.15 },
@@ -363,7 +363,7 @@ const OVERSHOOT_MEDIDO: Record<string, number> = {
   'pista-monza': 0.29, // PR 2b: Monza da linha central real.
   'pista-silverstone': 2.91, // PR 2b: Silverstone da linha central real.
   'pista-suzuka': 0.5, // PR 2b: Suzuka da linha central real (era 2,54).
-  'pista-nurburgring': 3.4,
+  'pista-nurburgring': 0.96, // PR 2b: Nürburgring da linha central real.
 };
 
 describe('overshoot da Catmull-Rom (a PARADA OBRIGATÓRIA do 7.4)', () => {
@@ -487,7 +487,7 @@ describe('auto-interseção da curva suavizada', () => {
  */
 const SEPARACAO_MEDIDA: Record<string, number> = {
   'pista-red-bull-ring': 48.0,
-  'pista-nurburgring': 36.43,
+  'pista-nurburgring': 29.24, // PR 2b: Nürburgring da linha central real.
   // Fatia 1 do redesenho (PR 7.7): Interlagos era o pior caso NÃO-exceção da
   // tabela, a 20,1 — 3,1 acima do limiar de 17. Foi a restrição que mandou no
   // desenho do miolo (T6→T12): sete curvas lentas em pouco espaço tinham que

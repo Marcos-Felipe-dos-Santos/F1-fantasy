@@ -523,9 +523,10 @@ describe('viewBox contém todas as 10 pistas (3.7 — reapertado no 7.4)', () =>
    *
    * PR 2b: Suzuka, redesenhada da linha central real, deixou de ser a pior; a
    * pior passou a ser Imola, que o lote 1 não tocou, com 4,5. Com Imola
-   * redesenhada (lote 2), a pior passou a ser o Red Bull Ring, também com 4,5.
+   * redesenhada (lote 2), a pior passou a ser o Red Bull Ring, também com 4,5;
+   * com o Nürburgring redesenhado, passou a ser ele, com 3,9.
    */
-  it('pior folga real é 4,5 (Red Bull Ring, PR 2b)', () => {
+  it('pior folga real é 3,9 (Nürburgring, PR 2b)', () => {
     let piorFolga = Infinity;
     for (const pista of dataset.pistas) {
       const e = envelope(pista.id);
@@ -537,7 +538,7 @@ describe('viewBox contém todas as 10 pistas (3.7 — reapertado no 7.4)', () =>
         maxYViewbox - e.maxY,
       );
     }
-    expect(piorFolga).toBeCloseTo(4.5, 1);
+    expect(piorFolga).toBeCloseTo(3.91, 1);
   });
 
   /**
@@ -628,7 +629,7 @@ describe('fusão de asfalto (3.8 — documenta e trava o que foi medido)', () =>
     'pista-imola': 17.5, // PR 2b: Imola da linha central real.
     'pista-spa': 19.8, // PR 2b: Spa da linha central real.
     'pista-interlagos': 19.8, // PR 2b: Interlagos da linha central real (era 29,7).
-    'pista-nurburgring': 29.5,
+    'pista-nurburgring': 17.3, // PR 2b: Nürburgring da linha central real.
     'pista-monaco': 17.8, // PR 2b: Mônaco da linha central real (era 29,1).
     'pista-monza': 19.6, // PR 2b: Monza da linha central real (era 21,5).
     'pista-silverstone': 19.1, // PR 2b: Silverstone da linha central real.
@@ -711,7 +712,7 @@ describe('fusão de asfalto (3.8 — documenta e trava o que foi medido)', () =>
       'pista-silverstone': 22.9, // PR 2b: Silverstone da linha central real.
       'pista-monza': 22.4, // PR 2b: Monza da linha central real (era 20,5).
       'pista-monaco': 24.2, // PR 2b: Mônaco da linha central real (era 12,9).
-      'pista-nurburgring': 12.5,
+      'pista-nurburgring': 24.7, // PR 2b: Nürburgring da linha central real.
       'pista-interlagos': 22.2, // PR 2b: Interlagos da linha central real (era 12,3).
       'pista-spa': 22.2, // PR 2b: Spa da linha central real.
       'pista-imola': 24.5, // PR 2b: Imola da linha central real.
@@ -766,7 +767,7 @@ describe('zebra (3.9)', () => {
     'pista-silverstone': { candidatos: 22, candidatosPorJanela: 41, escolhidos: 29, coberturaPct: 39.3, indices: [0, 5, 6, 7, 8, 9, 10, 11, 13, 14, 15, 16, 17, 18, 19, 24, 25, 31, 32, 34, 35, 36, 40, 41, 42, 44, 45, 46, 47] }, // PR 2b: Silverstone da linha central real.
     'pista-suzuka': { candidatos: 24, candidatosPorJanela: 47, escolhidos: 30, coberturaPct: 39.1, indices: [2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15, 16, 20, 21, 26, 27, 28, 30, 31, 32, 38, 39, 40, 41, 42, 43, 48, 54] },
     'pista-interlagos': { candidatos: 21, candidatosPorJanela: 42, escolhidos: 33, coberturaPct: 40.0, indices: [1, 2, 3, 4, 5, 6, 8, 12, 13, 14, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 39, 40, 41, 45] },
-    'pista-nurburgring': { candidatos: 23, candidatosPorJanela: 29, escolhidos: 24, coberturaPct: 38.7, indices: [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 21, 25, 26, 32, 33, 34, 40, 41, 42, 43, 44, 45, 46] },
+    'pista-nurburgring': { candidatos: 23, candidatosPorJanela: 37, escolhidos: 27, coberturaPct: 39.9, indices: [2, 3, 4, 6, 7, 9, 10, 11, 12, 16, 17, 22, 23, 24, 25, 26, 28, 32, 33, 34, 35, 39, 40, 41, 42, 43, 44] }, // PR 2b: Nürburgring da linha central real.
     'pista-imola': { candidatos: 16, candidatosPorJanela: 21, escolhidos: 19, coberturaPct: 39.6, indices: [5, 6, 8, 9, 10, 11, 12, 15, 16, 17, 19, 20, 21, 22, 23, 27, 28, 29, 30] }, // PR 2b: Imola da linha central real.
     'pista-red-bull-ring': { candidatos: 13, candidatosPorJanela: 13, escolhidos: 13, coberturaPct: 28.0, indices: [2, 7, 8, 9, 13, 14, 18, 21, 22, 24, 28, 29, 30] },
     'pista-montreal': { candidatos: 20, candidatosPorJanela: 29, escolhidos: 24, coberturaPct: 39.3, indices: [4, 5, 6, 7, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 24, 25, 30, 31, 32, 38, 39, 40, 41] },
@@ -879,7 +880,7 @@ describe('zebra (3.9)', () => {
     'pista-silverstone': [1, 3, 5, 7, 10, 13, 19, 21, 22, 23, 25, 26, 31, 32, 34, 36, 37, 38, 40], // PR 2b: Silverstone da linha central real.
     'pista-suzuka': [7, 8, 10, 14, 15, 16, 18, 22, 26, 29, 32, 35, 36, 38, 43, 48, 49, 50, 51, 52, 53, 55, 56], // PR 2b: Suzuka da linha central real.
     'pista-interlagos': [1, 6, 7, 8, 9, 12, 14, 15, 18, 20, 22, 23, 29, 31, 34, 36, 38, 41, 44, 45, 46], // PR 2b: Interlagos da linha central real.
-    'pista-nurburgring': [12, 13, 33, 41, 43, 44],
+    'pista-nurburgring': [4, 5, 8, 9, 14, 26, 28, 29, 30, 31, 33, 36, 37, 41], // PR 2b: Nürburgring da linha central real.
     'pista-imola': [12, 17, 18, 21, 28], // PR 2b: Imola da linha central real.
     'pista-montreal': [3, 7, 8, 9, 10, 15, 29, 33, 38],
   };
@@ -985,16 +986,20 @@ describe('zebra (3.9)', () => {
    * pista que mais candidata zebra, e **o teto de 40% continua sendo o que
    * impede a faixa contínua** que o dev reprovou — 29 trechos / 50,0% sem teto
    * contra 24 / 38,7% com ele.
+   *
+   * PR 2b: com o Nürburgring da linha central real (46 pontos), o teto segue
+   * vinculante e o corte ficou maior: 37 trechos / 56,2% sem teto contra
+   * 27 / 39,9% com ele.
    */
-  it('anti-regressão nomeada: sem o teto de 40% o Nürburgring vai a 50% do perímetro — é a "faixa contínua" que o dev reprovou', () => {
+  it('anti-regressão nomeada: sem o teto de 40% o Nürburgring vai a 56% do perímetro — é a "faixa contínua" que o dev reprovou', () => {
     const tracado = tracadoDaPista('pista-nurburgring');
     const trechos = trechosDeZebra(tracado);
-    expect(trechos.length).toBe(24);
-    expect(coberturaAprox(tracado, trechos)).toBeCloseTo(38.7, 0);
+    expect(trechos.length).toBe(27);
+    expect(coberturaAprox(tracado, trechos)).toBeCloseTo(39.9, 0);
 
     const semTeto = trechosDeZebra(tracado, { coberturaMaxima: 1 });
-    expect(semTeto).toHaveLength(29);
-    expect(coberturaAprox(tracado, semTeto)).toBeCloseTo(50.0, 0);
+    expect(semTeto).toHaveLength(37);
+    expect(coberturaAprox(tracado, semTeto)).toBeCloseTo(56.2, 0);
     expect(trechos.length).toBeLessThan(tracado.length);
   });
 

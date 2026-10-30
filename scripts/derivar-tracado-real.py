@@ -63,6 +63,10 @@
 #     Bruxelles, Pouhon, Fagnes, Stavelot e Bus Stop desbastados; reta da
 #     largada (#0, #1) afastada 10 u da Eau Rouge (degrau 5 do box); pontos
 #     SOBRE a reta da largada (162,473) e o Kemmel (564,97), pro N=8.
+#   Nürburgring: script 63 -> commitada 45. Três trechos colados abertos:
+#     descida da Mercedes Arena x subida de volta (as duas diagonais, ~10 u
+#     cada), pernas da Dunlop-Kehre (ida ~20 u pra baixo, volta ~5 u pra cima)
+#     e laço x reta de cima; T1 recuada ~14 u pra direita (garganta do ômega).
 """Deriva pontos de controle de uma pista a partir da linha central real (GeoJSON),
 alinhada ao traçado ATUAL do jogo (mesma orientação, sentido e largada), reescalada
 uniformemente pra moldura [56,924]x[36,564] e simplificada (Douglas-Peucker).

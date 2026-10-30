@@ -431,66 +431,69 @@ const TRACADO_INTERLAGOS: TracadoImutavel = [
  * Dois elementos-assinatura: a Mercedes Arena, um laço em ômega que sai da reta,
  * dobra sobre si mesmo e volta — sem ele o traçado vira genérico —, e a
  * Dunlop-Kehre, o único hairpin, fazendo o gancho no lado oposto.
+ *
+ * PR 2b: derivada da linha central real. Na escala da moldura três trechos
+ * colavam: a descida da Mercedes Arena e a subida de volta (as duas diagonais
+ * do meio, −16 u na base), as pernas da Dunlop-Kehre (−21 u) e o laço da
+ * Mercedes Arena contra a reta de cima. As diagonais foram afastadas ~10 u
+ * cada, a T1 recuou ~14 u pra direita (abre a garganta do ômega: a cerca a
+ * conta como "mesma curva", mas as zebras da T1 e da descida se tocavam), e as
+ * pernas do grampo abriram (a de ida ~20 u pra baixo, a de volta ~5 u pra
+ * cima). Ordem e sentido intocados.
  */
 const TRACADO_NURBURGRING: TracadoImutavel = [
-  // Reta principal (direita → esquerda) → Yokohama-S.
-  { x: 768, y: 212 },
-  { x: 686, y: 240 },
-  { x: 602, y: 264 },
-  { x: 536, y: 276 },
-  // Haug-Haken → Mercedes Arena: o ômega, laço que dobra sobre si mesmo.
-  // Fica TODO à direita de x≈330: a subida da Michelin (T10) corre por ali
-  // e as duas se cruzavam.
-  { x: 496, y: 296 },
-  { x: 474, y: 274 },
-  { x: 470, y: 234 },
-  { x: 486, y: 200 },
-  { x: 524, y: 188 },
-  { x: 556, y: 200 },
-  { x: 570, y: 174 },
-  { x: 556, y: 140 },
-  { x: 520, y: 124 },
-  { x: 474, y: 124 },
-  { x: 434, y: 140 },
-  { x: 410, y: 180 },
-  { x: 410, y: 228 },
-  // Reta do estádio, saindo do laço.
-  { x: 414, y: 280 },
-  { x: 400, y: 340 },
-  { x: 370, y: 390 },
-  // Ford-Kurve → Dunlop-Kehre (hairpin em descida).
-  { x: 358, y: 440 },
-  { x: 378, y: 488 },
-  { x: 324, y: 522 },
-  { x: 238, y: 538 },
-  { x: 152, y: 548 },
-  { x: 86, y: 548 },
-  { x: 56, y: 518 },
-  { x: 90, y: 486 },
-  { x: 162, y: 472 },
-  // Subida → Michael-Schumacher-S.
-  { x: 234, y: 452 },
-  { x: 272, y: 406 },
-  { x: 318, y: 340 },
-  { x: 370, y: 256 },
-  // Michelin / Warsteiner / ADVAN.
-  { x: 348, y: 194 },
-  { x: 338, y: 164 },
-  { x: 384, y: 124 },
-  { x: 456, y: 88 },
-  { x: 544, y: 52 },
-  // Reta traseira (Tiergarten).
-  { x: 630, y: 64 },
-  { x: 708, y: 108 },
-  { x: 752, y: 128 },
-  // NGK-Schikane em "Z" → Coca-Cola Kurve.
-  { x: 778, y: 94 },
-  { x: 812, y: 68 },
-  { x: 854, y: 74 },
-  { x: 894, y: 102 },
-  { x: 924, y: 132 },
-  { x: 900, y: 170 },
-  { x: 838, y: 194 },
+  // Reta dos boxes → Yokohama-S (T1), recuada ~14 u pra direita pra abrir a garganta do ômega.
+  { x: 798, y: 192 },
+  { x: 563, y: 261 },
+  { x: 514, y: 288 },
+  { x: 502, y: 272 },
+  { x: 518, y: 254 },
+  // Mercedes Arena: o ômega.
+  { x: 540, y: 211 },
+  { x: 544, y: 190 },
+  { x: 530, y: 170 },
+  { x: 494, y: 158 },
+  { x: 465, y: 153 },
+  { x: 447, y: 155 },
+  { x: 436, y: 172 },
+  // Descida em diagonal (afastada da subida de volta) → Ford-Kurve.
+  { x: 452, y: 198 },
+  { x: 392, y: 300 },
+  { x: 332, y: 380 },
+  { x: 322, y: 406 },
+  { x: 352, y: 464 },
+  { x: 331, y: 485 },
+  // Reta até a Dunlop-Kehre; as pernas do grampo foram afastadas.
+  { x: 263, y: 495 },
+  { x: 224, y: 503 },
+  { x: 172, y: 518 },
+  { x: 136, y: 533 },
+  { x: 82, y: 553 },
+  { x: 60, y: 546 },
+  { x: 54, y: 524 },
+  { x: 64, y: 501 },
+  // Schumacher-S e a subida de volta, em diagonal, afastada da descida.
+  { x: 205, y: 450 },
+  { x: 222, y: 444 },
+  { x: 234, y: 425 },
+  { x: 236, y: 402 },
+  { x: 244, y: 380 },
+  { x: 365, y: 226 },
+  { x: 370, y: 205 },
+  // Kumho / Bit-Kurve → reta de cima.
+  { x: 355, y: 170 },
+  { x: 352, y: 150 },
+  { x: 366, y: 128 },
+  { x: 540, y: 57 },
+  { x: 557, y: 54 },
+  { x: 607, y: 64 },
+  // Chicane Veedol (NGK) → Coca-Cola, fechando na reta.
+  { x: 780, y: 106 },
+  { x: 790, y: 86 },
+  { x: 829, y: 90 },
+  { x: 909, y: 112 },
+  { x: 922, y: 130 },
+  { x: 918, y: 152 },
 ];
 /**
  * Imola (4,909 km, layout pós-1995) — ANTI-HORÁRIO. Alongada e serpenteante.
@@ -811,6 +814,25 @@ export const BOXES_POR_PISTA: Readonly<Record<string, BoxDeclarado>> = {
     afastamento: 36,
     rampa: 60,
     livre: { juncaoEntrada: 0.986, pontosEntrada: [], pontosSaida: [], juncaoSaida: 0.054 },
+    garagens: false,
+    larguraBox: 12,
+  },
+  // MODELO LIVRE. Lado real (dentro, acima da reta dos boxes). Degraus 2 (sem
+  // garagens), 3 (afastamento 36) e 4 (box de 12 u): com 48 e garagens, o box
+  // batia na chicane Veedol. A entrada nasce DEPOIS da Coca-Cola (a real é
+  // antes: por dentro da curva não cabe); a saída entra antes da T1, como a real.
+  'pista-nurburgring': {
+    entrada: 0.0,
+    saida: 0.05,
+    lado: 1,
+    afastamento: 36,
+    rampa: 60,
+    livre: {
+      juncaoEntrada: 0.962,
+      pontosEntrada: [{ x: 830, y: 138 }],
+      pontosSaida: [{ x: 600, y: 212 }],
+      juncaoSaida: 0.085,
+    },
     garagens: false,
     larguraBox: 12,
   },
