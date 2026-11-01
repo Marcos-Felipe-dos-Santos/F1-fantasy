@@ -110,7 +110,7 @@ describe('tracadoDaPista', () => {
        *
        * ESCOPO: guarda de que a INTENÇÃO DE DESENHO cabe na moldura. Não é a
        * guarda do que se DESENHA — a curva suavizada estoura o bounding box do
-       * controle em até 15,1 u (Mônaco) e cada camada espalha
+       * controle em até 2,91 u (Silverstone, desde o PR 2b) e cada camada espalha
        * `MEIA_CAMADA_MAIS_LARGA` pra cada lado. Essa restrição, medida sobre a
        * curva, é do PR de infra do redesenho.
        */

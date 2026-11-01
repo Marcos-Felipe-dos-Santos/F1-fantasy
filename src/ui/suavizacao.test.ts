@@ -195,16 +195,16 @@ describe('tracadoSuavizado', () => {
  * exceção indo a ZERO, que é o critério declarado.
  */
 const ANGULO_MEDIDO: Record<string, { controle: number; suavizado: number }> = {
-  'pista-monaco': { controle: 117.41, suavizado: 29.37 },
-  'pista-spa': { controle: 113.28, suavizado: 25.6 },
-  'pista-monza': { controle: 75.68, suavizado: 15.73 },
-  'pista-silverstone': { controle: 100.6, suavizado: 23.6 },
-  'pista-suzuka': { controle: 116.92, suavizado: 29.32 },
-  'pista-interlagos': { controle: 124.96, suavizado: 32.4 },
-  'pista-nurburgring': { controle: 91.74, suavizado: 16.64 },
-  'pista-imola': { controle: 110.38, suavizado: 27.4 },
-  'pista-red-bull-ring': { controle: 90.97, suavizado: 17.34 },
-  'pista-montreal': { controle: 126.2, suavizado: 37.15 },
+  'pista-monaco': { controle: 124.99, suavizado: 39.0 }, // PR 2b: Mônaco da linha central real.
+  'pista-spa': { controle: 99.63, suavizado: 24.63 }, // PR 2b: Spa da linha central real.
+  'pista-monza': { controle: 74.58, suavizado: 14.27 }, // PR 2b: Monza da linha central real.
+  'pista-silverstone': { controle: 86.1, suavizado: 15.38 }, // PR 2b: Silverstone da linha central real.
+  'pista-suzuka': { controle: 101.28, suavizado: 19.42 }, // PR 2b: Suzuka da linha central real.
+  'pista-interlagos': { controle: 87.51, suavizado: 17.18 }, // PR 2b: Interlagos da linha central real.
+  'pista-nurburgring': { controle: 81.99, suavizado: 20.76 }, // PR 2b: Nürburgring da linha central real.
+  'pista-imola': { controle: 73.42, suavizado: 15.48 }, // PR 2b: Imola da linha central real.
+  'pista-red-bull-ring': { controle: 89.09, suavizado: 15.27 }, // PR 2b: Red Bull Ring da linha central real.
+  'pista-montreal': { controle: 90.0, suavizado: 18.0 }, // PR 2b: Montreal da linha central real.
 };
 
 /** A silhueta com espinho de ~180° no vértice #0. Ver `ANGULO_MEDIDO`. */
@@ -301,7 +301,7 @@ describe('fidelidade da amostragem (escolha de AMOSTRAS_POR_SEGMENTO)', () => {
    * conserto. Nas silhuetas de 16 pontos, N=8 desviava MAIS que o teto de 0,7u,
    * e era isso que provava que N=12 não era chute. Com as 10 redesenhadas
    * (34-48 pontos), as cordas encolheram, a sagita escala com a corda e **N=8
-   * agora desvia 0,539u — passa folgado**. A justificativa de N=12 caiu por
+   * agora desvia 0,539u — passava folgado** (ver o PR 2b abaixo). A justificativa de N=12 caiu por
    * terra.
    *
    * O teto de 0,7u NÃO foi mexido, e `AMOSTRAS_POR_SEGMENTO` continua 12: baixar
@@ -309,6 +309,9 @@ describe('fidelidade da amostragem (escolha de AMOSTRAS_POR_SEGMENTO)', () => {
    * `ESTADO.md` já registra "AMOSTRAS_POR_SEGMENTO cai de 12 pra 4-6" como
    * decisão travada esperando execução própria. Este teste passa a MEDIR a
    * folga, pra a redução ser feita depois com o número em mãos.
+   *
+   * PR 2b: subiu pra 0,681u, ainda abaixo do teto de 0,7u, e quem manda agora
+   * é Mônaco (redesenhada da linha central real). Era 0,539, do Red Bull Ring.
    */
   it('N=8 já não reprova depois do redesenho — a folga que habilita reduzir o N', () => {
     const piorEmN8 = Math.max(
@@ -327,7 +330,7 @@ describe('fidelidade da amostragem (escolha de AMOSTRAS_POR_SEGMENTO)', () => {
         return maior;
       }),
     );
-    expect(piorEmN8).toBeCloseTo(0.539, 2);
+    expect(piorEmN8).toBeCloseTo(0.681, 2);
     expect(piorEmN8, 'N=8 voltou a estourar o teto — reabrir a escolha do N').toBeLessThan(
       DESVIO_MAXIMO,
     );
@@ -339,28 +342,29 @@ describe('fidelidade da amostragem (escolha de AMOSTRAS_POR_SEGMENTO)', () => {
 /**
  * O quanto a curva escapa do bounding box da polilinha de controle. Era a
  * **PARADA OBRIGATÓRIA** do PR 7.4: "se o overshoot em Mônaco/Nürburgring não
- * fechar com Catmull-Rom centrípeta, PARAR e mostrar ao dev". FECHOU — Mônaco
- * é o pior das 10 com 15,1 unidades e Nürburgring não faz overshoot nenhum,
- * contra os 70 de margem que o 7.3 reservava no viewBox.
+ * fechar com Catmull-Rom centrípeta, PARAR e mostrar ao dev". FECHOU — na
+ * época, Mônaco era o pior das 10 com 15,1 unidades. Desde o PR 2b, o pior é
+ * Silverstone, com 2,91 (Mônaco 0,54, Nürburgring 0,96), contra os 70 de
+ * margem que o 7.3 reservava no viewBox.
  *
  * Medido com N=64 (mais fino que a produção): amostrar mais só pode ACHAR mais
  * extremo, então o golden é conservador em relação ao que se desenha.
  */
 const OVERSHOOT_MEDIDO: Record<string, number> = {
-  'pista-monaco': 1.12,
-  'pista-red-bull-ring': 3.09,
-  'pista-montreal': 1.32,
-  'pista-imola': 2.32,
-  'pista-spa': 1.78,
+  'pista-monaco': 0.54, // PR 2b: Mônaco da linha central real (era 1,12).
+  'pista-red-bull-ring': 0.94, // PR 2b: Red Bull Ring da linha central real.
+  'pista-montreal': 0.56, // PR 2b: Montreal da linha central real.
+  'pista-imola': 1.2, // PR 2b: Imola da linha central real.
+  'pista-spa': 0.88, // PR 2b: Spa da linha central real.
   // Fatia 1 do redesenho (PR 7.7): Interlagos 10,53 ⇒ 3,96 e Monza 14,03 ⇒
   // 0,91 — as duas saíram do topo da tabela. Menos overshoot é consequência
   // direta de pontos de controle mais densos: a Catmull-Rom extrapola menos
   // quando a corda é mais curta.
-  'pista-interlagos': 1.47,
-  'pista-monza': 1.49,
-  'pista-silverstone': 0.89,
-  'pista-suzuka': 2.54,
-  'pista-nurburgring': 3.4,
+  'pista-interlagos': 1.08, // PR 2b: Interlagos da linha central real (era 1,47).
+  'pista-monza': 0.29, // PR 2b: Monza da linha central real.
+  'pista-silverstone': 2.91, // PR 2b: Silverstone da linha central real.
+  'pista-suzuka': 0.5, // PR 2b: Suzuka da linha central real (era 2,54).
+  'pista-nurburgring': 0.96, // PR 2b: Nürburgring da linha central real.
 };
 
 describe('overshoot da Catmull-Rom (a PARADA OBRIGATÓRIA do 7.4)', () => {
@@ -400,6 +404,9 @@ describe('overshoot da Catmull-Rom (a PARADA OBRIGATÓRIA do 7.4)', () => {
  * mudou: continua havendo EXATAMENTE UM par de vértices coincidentes, e é ele
  * que faz o X. Um segundo par aqui seria bug de desenho, não golden velho.
  *
+ * PR 2b: Suzuka redesenhada da linha central real; o X passou pros vértices
+ * 22 e 47 em (430,372).
+ *
  * Como a curva é interpolante e `amostrarSegmento` emite o ponto de controle
  * por CÓPIA (não pela fórmula), os dois vértices continuam bit a bit iguais
  * depois de suavizar — é isso que mantém o X de Suzuka num vértice
@@ -407,7 +414,7 @@ describe('overshoot da Catmull-Rom (a PARADA OBRIGATÓRIA do 7.4)', () => {
  * flutuante. O teste logo abaixo trava essa propriedade.
  */
 const AUTOCONTATOS_INTENCIONAIS: Record<string, readonly Ponto[]> = {
-  'pista-suzuka': [{ x: 452, y: 376 }],
+  'pista-suzuka': [{ x: 430, y: 372 }],
 };
 
 describe('auto-interseção da curva suavizada', () => {
@@ -446,24 +453,24 @@ describe('auto-interseção da curva suavizada', () => {
     expect(Object.keys(AUTOCONTATOS_INTENCIONAIS)).toEqual(['pista-suzuka']);
   });
 
-  it('Suzuka: o X do "8" ainda existe na curva e cai exatamente em (452,376)', () => {
+  it('Suzuka: o X do "8" ainda existe na curva e cai exatamente em (430,372)', () => {
     const achados = cruzamentos(tracadoSuavizado('pista-suzuka'), {
       inclusivo: true,
       ignorarVerticeCompartilhado: false,
     });
     expect(achados.length).toBeGreaterThan(0);
     for (const p of achados) {
-      expect(Math.hypot(p.x - 452, p.y - 376)).toBeLessThanOrEqual(TOLERANCIA);
+      expect(Math.hypot(p.x - 430, p.y - 372)).toBeLessThanOrEqual(TOLERANCIA);
     }
   });
 
-  it('Suzuka: os vértices 16 e 33 seguem BIT A BIT iguais depois de suavizar', () => {
+  it('Suzuka: os vértices 22 e 47 seguem BIT A BIT iguais depois de suavizar', () => {
     const curva = tracadoSuavizado('pista-suzuka');
     const coincidentes = curva
       .map((p, i) => [p, i] as const)
-      .filter(([p]) => p.x === 452 && p.y === 376)
+      .filter(([p]) => p.x === 430 && p.y === 372)
       .map(([, i]) => i);
-    expect(coincidentes).toEqual([indiceDoVertice(16), indiceDoVertice(33)]);
+    expect(coincidentes).toEqual([indiceDoVertice(22), indiceDoVertice(47)]);
   });
 });
 
@@ -480,20 +487,20 @@ describe('auto-interseção da curva suavizada', () => {
  * diferentes da pista" quer dizer de fato.
  */
 const SEPARACAO_MEDIDA: Record<string, number> = {
-  'pista-red-bull-ring': 48.0,
-  'pista-nurburgring': 36.43,
+  'pista-red-bull-ring': 43.06, // PR 2b: Red Bull Ring da linha central real.
+  'pista-nurburgring': 29.24, // PR 2b: Nürburgring da linha central real.
   // Fatia 1 do redesenho (PR 7.7): Interlagos era o pior caso NÃO-exceção da
   // tabela, a 20,1 — 3,1 acima do limiar de 17. Foi a restrição que mandou no
   // desenho do miolo (T6→T12): sete curvas lentas em pouco espaço tinham que
   // caber sem que dois ramos do traçado se aproximassem. Deu 53,9. Monza subiu
   // de 40,5 pra 51,8 no mesmo movimento.
-  'pista-interlagos': 35.72,
-  'pista-monza': 50.3,
-  'pista-montreal': 31.46,
-  'pista-silverstone': 31.48,
-  'pista-imola': 39.62,
-  'pista-monaco': 35.96,
-  'pista-spa': 39.67,
+  'pista-interlagos': 37.94, // PR 2b: Interlagos da linha central real (era 35,72).
+  'pista-monza': 50.62, // PR 2b: Monza da linha central real (era 50,3).
+  'pista-montreal': 23.01, // PR 2b: Montreal da linha central real.
+  'pista-silverstone': 37.72, // PR 2b: Silverstone da linha central real.
+  'pista-imola': 44.43, // PR 2b: Imola da linha central real.
+  'pista-monaco': 35.81, // PR 2b: Mônaco da linha central real (era 35,96).
+  'pista-spa': 43.69, // PR 2b: Spa da linha central real.
   'pista-suzuka': 0.0,
 };
 
