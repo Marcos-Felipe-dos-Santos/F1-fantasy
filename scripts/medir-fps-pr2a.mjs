@@ -155,7 +155,7 @@ try {
     await aba.cdp('Emulation.setDeviceMetricsOverride', {
       width: Number(opcoes.largura),
       height: Number(opcoes.altura),
-      deviceScaleFactor: 1,
+      deviceScaleFactor: Number(opcoes.densidade ?? 1),
       mobile: false,
     });
     if (opcoes.reduzido === '1') {

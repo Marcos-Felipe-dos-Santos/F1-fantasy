@@ -204,6 +204,14 @@ export function progressoNoReplay(
   return (k + fracaoDentroDaVolta) / voltasTotais;
 }
 
+/** Instante em que quem tem `historico` completou `voltas` (fracionárias): o inverso de `progressoNoReplay`. */
+export function instanteNasVoltas(historico: number[], voltas: number): number {
+  const acumulado = acumularVoltas(historico);
+  const k = Math.floor(voltas);
+  if (k >= historico.length) return acumulado.at(-1) ?? 0;
+  return (k === 0 ? 0 : acumulado[k - 1]) + (voltas - k) * historico[k];
+}
+
 /**
  * Fração 0..1 AO LONGO DO TRAÇADO (não da corrida inteira) no instante
  * `tempoSimMs` — o valor a passar pra `pontoNoTracado` (decisão de design:

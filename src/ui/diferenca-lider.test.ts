@@ -150,6 +150,38 @@ describe('diferença para o líder (PR 2a)', () => {
   });
 });
 
+describe('diferença com o LÍDER na janela do pit', () => {
+  it.each(['pista-spa', 'pista-monaco', 'pista-imola'])(
+    '%s: é o tempo real até o líder ter estado ali, pela mesma linha do mapa',
+    (id) => {
+      const { pista, resultado } = corridaReal(3, id);
+      const linha = linhaDoTempoDoPit(resultado, pista);
+      const ids = resultado.classificacao.map((c) => c.jogadorId);
+      const fim = resultado.classificacao[0].tempoTotal;
+      let casos = 0;
+      for (let t = 1000; t < fim; t += 1500) {
+        const ordem = classificacaoAoVivo(resultado, ids, t, pista.voltas, linha);
+        const lider = ordem.find((i) => i.status !== 'dnf')!.jogadorId;
+        const hL = resultado.historicoVoltas[lider];
+        if (!linha.paradas(lider).some((p) => t >= p.inicio && t < p.fim)) continue;
+        const d = diferencasParaLider(resultado, ordem, t, pista.voltas, linha);
+        for (const [i, x] of d.entries()) {
+          if (x?.tipo !== 'tempo') continue;
+          const j = ordem[i].jogadorId;
+          const v = linha.progresso(j, resultado.historicoVoltas[j], t);
+          // A diferença crua passa no piso; só a primeira da fila é garantidamente a própria.
+          const anterior = i > 1 && d[i - 1]?.tipo === 'tempo' ? (d[i - 1] as { ms: number }).ms : 0;
+          if (x.ms > anterior) {
+            expect(linha.progresso(lider, hL, t - x.ms) * pista.voltas).toBeCloseTo(v * pista.voltas, 3);
+            casos++;
+          }
+        }
+      }
+      expect(casos).toBeGreaterThan(0);
+    },
+  );
+});
+
 describe('formatarDiferenca', () => {
   it.each<[DiferencaAoLider, string]>([
     [{ tipo: 'lider' }, 'Líder'],

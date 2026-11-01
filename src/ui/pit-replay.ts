@@ -33,6 +33,7 @@ import { caminhoDoBox } from './box';
 import {
   acumularVoltas,
   fracaoVisual,
+  instanteNasVoltas,
   lutDoTracado,
   pontoNoTracado,
   progressoNoReplay,
@@ -50,6 +51,8 @@ export const ESPACO_VAGA = 13;
 export const PISO_PARADO_MS = 4000;
 /** Arco de pista onde o carro freia antes do box e acelera depois dele. */
 export const DISTANCIA_RAMPA = 60;
+/** Dá menos de 1 ms na janela mais longa do pit. */
+const PASSOS_BISSECAO = 18;
 /** Meia janela do rumo: suaviza a polilinha sem atrasar o carro numa curva (PR 2a). */
 const MEIA_JANELA_RUMO = 8;
 
@@ -98,6 +101,8 @@ export interface LinhaDoTempoPit extends PitDoReplay {
     tempoSimMs: number,
     reduzido: boolean,
   ): PosicaoNoReplay;
+  /** Instante em que o carro completou `voltas` (fracionárias): o inverso de `progresso`. */
+  instanteDoProgresso(jogadorId: string, historico: number[], voltas: number): number;
   vagaEmX(indice: number): Ponto;
   totalDeVagas: number;
 }
@@ -408,6 +413,22 @@ export function linhaDoTempoDoPit(
       if (p === undefined || c === null) return progressoNoReplay(historico, tempoSimMs, pista.voltas);
       if (tempoSimMs < p.inicio) return (p.volta - 1 + (tempoSimMs - p.inicioVolta) / p.tLimpo) / pista.voltas;
       return voltasDoCaminho(c, p, xDaParada(c, p, tempoSimMs)) / pista.voltas;
+    },
+
+    instanteDoProgresso(jogadorId, historico, voltas) {
+      const janela = c === null
+        ? undefined
+        : porCarro.get(jogadorId)?.find((p) => voltas >= p.volta - 1 && voltas < voltasDoCaminho(c, p, c.total));
+      if (janela === undefined) return instanteNasVoltas(historico, voltas);
+      // Dentro da janela o progresso não tem inversa fechada: o pedaço parado é plano.
+      let antes = janela.inicioVolta;
+      let depois = janela.fim;
+      for (let i = 0; i < PASSOS_BISSECAO; i++) {
+        const meio = (antes + depois) / 2;
+        if (linha.progresso(jogadorId, historico, meio) * pista.voltas < voltas) antes = meio;
+        else depois = meio;
+      }
+      return depois;
     },
 
     posicao(jogadorId, historico, status, tempoSimMs, reduzido) {

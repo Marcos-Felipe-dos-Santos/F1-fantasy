@@ -3,20 +3,22 @@
  * resultado congelado e o mesmo progresso que ordena `classificacaoAoVivo`, senão
  * o número contradiria a linha em que aparece.
  *
- * Em tempo: quanto faz que o líder esteve onde o carro está agora. O histórico do
- * líder não traz a janela do pit, então a conta pode dar negativa com ele nos
- * boxes; o piso é o valor da linha de cima, e por isso a coluna nunca desce.
+ * Em tempo: quanto faz que o líder esteve onde o carro está agora, pela mesma linha
+ * do tempo do mapa. Pelo histórico não dá: ele espalha o custo do pit pela volta e,
+ * com o líder na parada, a tela mostrava +0,0s para quem vinha atrás. O piso é o valor
+ * da linha de cima: a punição de quem já chegou não faz a coluna descer.
  *
  * Na chegada vale `tempoTotal`, que tem a punição que `historicoVoltas` não tem.
  */
 
 import type { ResultadoCorrida } from '../engine/types';
 import {
-  acumularVoltas,
+  instanteNasVoltas,
   progressoNoReplay,
   type ItemClassificacaoAoVivo,
   type PitDoReplay,
 } from './fluxo-corrida';
+import type { LinhaDoTempoPit } from './pit-replay';
 
 export type DiferencaAoLider =
   | { tipo: 'lider' }
@@ -24,21 +26,13 @@ export type DiferencaAoLider =
   | { tipo: 'voltas'; voltas: number }
   | null;
 
-/** Instante em que quem tem `historico` completou `voltas` (fracionárias). */
-function tempoNasVoltas(historico: number[], voltas: number): number {
-  const acumulado = acumularVoltas(historico);
-  const k = Math.floor(voltas);
-  if (k >= historico.length) return acumulado.at(-1) ?? 0;
-  return (k === 0 ? 0 : acumulado[k - 1]) + (voltas - k) * historico[k];
-}
-
 /** Uma entrada por item de `ordem`, na mesma ordem. */
 export function diferencasParaLider(
   resultado: ResultadoCorrida,
   ordem: readonly ItemClassificacaoAoVivo[],
   tempoSimMs: number,
   voltasTotais: number,
-  pit?: PitDoReplay,
+  pit?: PitDoReplay & Pick<LinhaDoTempoPit, 'instanteDoProgresso'>,
 ): DiferencaAoLider[] {
   const lider = ordem.find((item) => item.status !== 'dnf');
   if (lider === undefined) return ordem.map(() => null);
@@ -65,7 +59,10 @@ export function diferencasParaLider(
       const voltas = voltasDe(item.jogadorId);
       const atras = Math.floor(voltasLider - voltas);
       if (atras >= 1) return { tipo: 'voltas', voltas: atras };
-      ms = tempoSimMs - tempoNasVoltas(historicoLider, voltas);
+      ms =
+        tempoSimMs -
+        (pit?.instanteDoProgresso(lider.jogadorId, historicoLider, voltas) ??
+          instanteNasVoltas(historicoLider, voltas));
     }
     piso = Math.max(piso, ms);
     return { tipo: 'tempo', ms: piso };
