@@ -416,16 +416,20 @@ export function escalaReplay(
 
 /**
  * Um item da classificação ao vivo (PR 2.6; status 'pit' no PR 2.7).
- * 'pit' é um rótulo visual sobre 'correndo' — carro ainda rodando cuja volta
- * atual coincide com uma parada registrada em `ResultadoCorrida.voltasDePit`.
- * Não muda a ordenação (ver `classificacaoAoVivo`); 'terminou'/'dnf' têm
- * precedência — um carro já congelado nunca vira 'pit'. O badge dura a volta
- * inteira do pit (aproximação visual — o custo real do pit já está embutido
- * no tempo daquela volta, não é um evento pontual no meio dela).
+ * 'pit' é um rótulo visual sobre 'correndo': carro dentro do box na linha do
+ * tempo do pit (`pit-replay.ts`, PR 2c). 'terminou'/'dnf' têm precedência — um
+ * carro já congelado nunca vira 'pit'. A janela do box atravessa a largada,
+ * então o badge invade a volta seguinte à do pit.
  */
 export interface ItemClassificacaoAoVivo {
   jogadorId: string;
   status: 'correndo' | 'pit' | 'terminou' | 'dnf';
+}
+
+/** O que `classificacaoAoVivo` lê da linha do tempo do pit (`pit-replay.ts`). */
+export interface PitDoReplay {
+  progresso(jogadorId: string, historico: number[], tempoSimMs: number): number;
+  noBox(jogadorId: string, tempoSimMs: number): boolean;
 }
 
 /**
@@ -452,13 +456,15 @@ export interface ItemClassificacaoAoVivo {
  *
  * O status 'pit' (PR 2.7) é calculado DEPOIS da ordenação — o critério de
  * ordenação usa só 'terminou' vs. o resto, então rotular um carro 'correndo'
- * como 'pit' nunca desloca a posição dele na lista.
+ * como 'pit' nunca desloca a posição dele na lista. Quem reordena é `pit`: com
+ * ele, o progresso é o mesmo do mapa, e a perda do pit aparece na parada (PR 2c).
  */
 export function classificacaoAoVivo(
   resultado: ResultadoCorrida,
   gridLargada: string[],
   tempoSimMs: number,
   voltasTotais: number,
+  pit?: PitDoReplay,
 ): ItemClassificacaoAoVivo[] {
   const posicaoLargada = new Map(gridLargada.map((jogadorId, indice) => [jogadorId, indice]));
   const tempoTotalPorJogador = new Map(
@@ -474,17 +480,15 @@ export function classificacaoAoVivo(
       : item.status === 'dnf'
         ? 'dnf'
         : 'terminou';
-    if (status === 'correndo') {
-      const voltasPit = resultado.voltasDePit[item.jogadorId] ?? [];
-      const volta = voltaAtual(historico, tempoSimMs, voltasTotais);
-      if (voltasPit.includes(volta)) {
-        status = 'pit';
-      }
+    if (status === 'correndo' && pit?.noBox(item.jogadorId, tempoSimMs)) {
+      status = 'pit';
     }
     return {
       jogadorId: item.jogadorId,
       status,
-      progresso: progressoNoReplay(historico, tempoSimMs, voltasTotais),
+      progresso:
+        pit?.progresso(item.jogadorId, historico, tempoSimMs) ??
+        progressoNoReplay(historico, tempoSimMs, voltasTotais),
     };
   });
 

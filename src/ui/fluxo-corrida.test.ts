@@ -22,6 +22,7 @@ import {
   melhorVoltaDoJogador,
   type Ponto,
 } from './fluxo-corrida';
+import { linhaDoTempoDoPit } from './pit-replay';
 import { tracadoSuavizado } from './suavizacao';
 
 const dataset = criarDataset(equipeAnosReal, pecasReal, pistasReal);
@@ -492,66 +493,41 @@ describe('classificacaoAoVivo', () => {
     )!.jogadorId;
     const historicoComParada = resultadoComDnf.historicoVoltas[idComParada];
     const primeiraVoltaPit = resultadoComDnf.voltasDePit[idComParada][0];
-    const acumuladoComParada = acumularVoltas(historicoComParada);
-    const inicioVoltaPit = primeiraVoltaPit === 1 ? 0 : acumuladoComParada[primeiraVoltaPit - 2];
-    const fimVoltaPit = acumuladoComParada[primeiraVoltaPit - 1];
-    const tempoDentroDoPit = (inicioVoltaPit + fimVoltaPit) / 2;
+    // PR 2c: o badge vem da janela do box em `pit-replay.ts`, não mais da volta inteira.
+    const linhaDoPit = linhaDoTempoDoPit(resultadoComDnf, pistaComDnf);
+    const parada = linhaDoPit.paradas(idComParada)[0];
+    const tempoDentroDoPit = (parada.chegada + parada.partida) / 2;
+    const inicioVoltaPit = acumularVoltas(historicoComParada)[primeiraVoltaPit - 2] ?? 0;
 
     it('pré-condição do teste: a 1a parada não é na volta 1 (garante um t "fora do pit" trivial em t=1)', () => {
       expect(primeiraVoltaPit).toBeGreaterThan(1);
     });
 
-    it('no meio da volta do 1o pit, o carro aparece com status "pit"', () => {
-      const classificacao = classificacaoAoVivo(
-        resultadoComDnf,
-        gridLargadaComDnf,
-        tempoDentroDoPit,
-        pistaComDnf.voltas,
-      );
-      const item = classificacao.find((i) => i.jogadorId === idComParada)!;
-      expect(item.status).toBe('pit');
+    const statusEm = (t: number) =>
+      classificacaoAoVivo(resultadoComDnf, gridLargadaComDnf, t, pistaComDnf.voltas, linhaDoPit).find(
+        (i) => i.jogadorId === idComParada,
+      )!.status;
+
+    it('parado no box, o carro aparece com status "pit"', () => {
+      expect(statusEm(tempoDentroDoPit)).toBe('pit');
+    });
+
+    it('no começo da volta do pit, antes de entrar no box, o status segue "correndo"', () => {
+      expect(statusEm(inicioVoltaPit + 1)).toBe('correndo');
     });
 
     it('fora de qualquer volta de pit, o status volta a "correndo"', () => {
-      const classificacao = classificacaoAoVivo(resultadoComDnf, gridLargadaComDnf, 1, pistaComDnf.voltas);
-      const item = classificacao.find((i) => i.jogadorId === idComParada)!;
-      expect(item.status).toBe('correndo');
+      expect(statusEm(1)).toBe('correndo');
     });
 
-    it('a ORDEM da classificação ao vivo é idêntica com e sem o carro em pit — pit não reordena', () => {
-      const resultadoSemPit = {
-        ...resultadoComDnf,
-        voltasDePit: { ...resultadoComDnf.voltasDePit, [idComParada]: [] },
-      };
-      const ordemComPit = classificacaoAoVivo(
-        resultadoComDnf,
-        gridLargadaComDnf,
-        tempoDentroDoPit,
-        pistaComDnf.voltas,
-      ).map((i) => i.jogadorId);
-      const ordemSemPit = classificacaoAoVivo(
-        resultadoSemPit,
-        gridLargadaComDnf,
-        tempoDentroDoPit,
-        pistaComDnf.voltas,
-      ).map((i) => i.jogadorId);
-      expect(ordemComPit).toEqual(ordemSemPit);
-
-      // A diferença é só o rótulo do carro em pit — 'pit' vs 'correndo' — não a posição.
-      const itemComPit = classificacaoAoVivo(
+    it('sem linha do tempo do pit não há badge: ele não sai mais da volta inteira', () => {
+      const item = classificacaoAoVivo(
         resultadoComDnf,
         gridLargadaComDnf,
         tempoDentroDoPit,
         pistaComDnf.voltas,
       ).find((i) => i.jogadorId === idComParada)!;
-      const itemSemPit = classificacaoAoVivo(
-        resultadoSemPit,
-        gridLargadaComDnf,
-        tempoDentroDoPit,
-        pistaComDnf.voltas,
-      ).find((i) => i.jogadorId === idComParada)!;
-      expect(itemComPit.status).toBe('pit');
-      expect(itemSemPit.status).toBe('correndo');
+      expect(item.status).toBe('correndo');
     });
   });
 });
