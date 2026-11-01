@@ -12,16 +12,21 @@
 
 ## Estado atual
 
-**2026-11-01, branch `docs/plano-pr2b-silhuetas`**, com o PR 2b fechado sobre `origin/main`
-`4d530e6`. Sem push: o Marcos faz o push e abre o PR.
+**2026-11-01, `main` `d9e8916`**, com o PR 1 e o PR 2b mesclados, publicados e testados em
+produção. Próximo: **PR 2c** (pit stop animado), que passou à frente do PR 2a por decisão do Marcos.
+~~**2026-11-01, branch `docs/plano-pr2b-silhuetas`**, com o PR 2b fechado sobre `origin/main`
+`4d530e6`. Sem push: o Marcos faz o push e abre o PR.~~
 ~~**2026-10-28, branch `codex/pr1-resultados` em `d6f77cf`** (sobre `26ad532`, que está sobre a
 `main` `ef8c520`). Sem push: a branch existe só localmente até o Marcos decidir.~~
 
 - **Produção pública desde 2026-10-17:** https://f1-fantasy-sala.marcosfeliperigoto.workers.dev.
   `ALLOWED_ORIGINS` = essa origem exata; `ENVIRONMENT=production`. Marcos relatou o online
   testado com sucesso por jogadores reais. Em 2026-10-28, o que estava no ar era a `main` `ef8c520`.
-  O PR 1 entrou na `main` depois (`4d530e6`, PR #3); **esta sessão não conferiu qual commit está
-  publicado hoje.**
+  ~~O PR 1 entrou na `main` depois (`4d530e6`, PR #3); **esta sessão não conferiu qual commit está
+  publicado hoje.**~~ **Corrigido em 2026-11-01, relato do Marcos: o PR 1 e o PR 2b foram mesclados
+  e publicados, e testados em produção num campeonato curto online com 2 jogadores.** Os merges
+  conferem no `git log`; o commit em produção vem do relato, não de consulta ao Worker.
+- **`main` `d9e8916`:** merge do PR #4 (PR 2b pistas + box).
 - **`main` `4d530e6`:** merge do PR #3 (PR 1 Resultados).
 - **`main` `ef8c520`:** merge do PR #2 (nomes reais restaurados). CI em `.github/workflows/ci.yml`;
   CI da main `39053132098` verde. Medido na main em 2026-10-18: 1730 testes principais, 46 Worker.
@@ -32,8 +37,9 @@
 - **Medido pela sessão principal em 2026-10-28, sobre o PR 1:** `npm test` **1764/81**,
   `npm run test:party` **46/8**, typecheck, lint e build com exit 0, `versao.test.ts` 3/3;
   `git diff --stat` vazio em `src/engine/`, `src/data/`, `src/net/` e `party/`.
-- **PR 2b (pistas + box):** fechado na branch, aprovado pelo Marcos. Ver §"Onde parei".
-- **PR 1 Resultados:** commitado em `d6f77cf` com os prints aprovados pelo Marcos, na `main` desde o PR #3.
+- **PR 2b (pistas + box):** ~~fechado na branch, aprovado pelo Marcos. Ver §"Onde parei".~~ na `main`
+  desde o PR #4 (`d9e8916`) e em produção, aprovado pelo Marcos.
+- **PR 1 Resultados:** commitado em `d6f77cf` com os prints aprovados pelo Marcos, na `main` desde o PR #3 e em produção.
 - **Abertas que importam agora:** `0(ar)`-`0(ax)`, do PR 2b; FPS do PR 1 em aparelho real (não medido); `0(v)` continua 🟡
   aberta (o flake de `comandos.test.ts` corrigido em 2026-10-17 é outro); `0(aq)`, a URL do
   rename, aguarda escolha do Marcos.
@@ -415,6 +421,12 @@ dependência).
 
 ## Onde parei
 
+### 2026-11-01 — PR 1 e PR 2b em produção; PR 2c à frente do PR 2a
+
+Relato do Marcos: PR 1 e PR 2b mesclados, publicados e testados em produção (campeonato curto
+online com 2 jogadores). Por decisão dele, o **PR 2c (pit stop animado) vem antes do PR 2a**
+(§"🔒 DECISÕES DO MARCOS — VIGENTES"). O PR 2c está na medição prévia, sem código de produto.
+
 ### 2026-11-01 — PR 2b FECHADO na branch, aguardando o push do Marcos
 
 Branch `docs/plano-pr2b-silhuetas`, sobre `origin/main` `4d530e6`. Sem push, merge ou deploy: **o
@@ -440,7 +452,8 @@ Marcos faz o push e abre o PR.** Detalhe completo, com a nota de passagem do PR,
   `scripts/propostas-pr2b.ts`, `scripts/preview-pr2b-box.preview.test.ts`,
   `scripts/preview-pr2b-pistas.preview.test.ts` e os 5 `.txt` da raiz (dumps do Marcos de 21/10, ele
   apaga à mão). Nenhum arquivo commitado importa os rascunhos.
-- **Próximo:** PR 2a, na ordem de §"🔒 DECISÕES DO MARCOS — VIGENTES". O PR R segue sem posição.
+- **Próximo:** ~~PR 2a, na ordem de §"🔒 DECISÕES DO MARCOS — VIGENTES".~~ PR 2c, ver a entrada
+  acima. O PR R segue sem posição.
 
 ### 2026-10-29 — Ciclo de regras de doc (sem PR de produto)
 
@@ -2116,8 +2129,10 @@ carros/chuva/spray/incidentes → PR 2b pit lane → PR 3 sons.~~ **Substituída
 (decisão do Marcos):** PR 1 Resultados ✅ → PR R Rename → PR 2a carros/chuva/spray/incidentes →
 **PR 2b redesenho de pistas** → **PR 2c pit lane (antes chamado 2b)** → PR 3 sons. Toda menção
 anterior a "PR 2b pit lane" neste arquivo e em `docs/auditoria-pre-pr1.md` passa a ler **PR 2c**.
-**Ordem vigente, também de 2026-10-29:** PR 1 ✅ → PR 2b ✅ (fechado, aguardando push) → PR 2a → PR 2c
-(só a animação do pit) → PR 3. O PR R segue pendente, sem posição.
+~~**Ordem vigente, também de 2026-10-29:** PR 1 ✅ → PR 2b ✅ (fechado, aguardando push) → PR 2a → PR 2c
+(só a animação do pit) → PR 3. O PR R segue pendente, sem posição.~~
+**Ordem vigente, decisão do Marcos de 2026-11-01:** PR 1 ✅ → PR 2b ✅ → **PR 2c (pit stop animado) →
+PR 2a (carros/chuva/spray/incidentes)** → PR 3. O PR R segue pendente, sem posição.
 Regras completas em
 `docs/auditoria-pre-pr1.md`: zero engine/dados; digest verde; risco e vermelho
 onde houver lógica nova; reduced-motion/velocidades; FPS antes/depois com
@@ -2180,6 +2195,15 @@ passagem do PR):
 **🔒 DECISÃO DO MARCOS, 2026-11-01 — VEREDITO DO PR 2b:** as 10 pistas aprovadas como estão no
 preview, incluindo a zebra mais contínua do miolo de Interlagos e o box curto de Spa. Os achados
 🟡 da revisão entraram como correção ou pendência (`0(ar)`-`0(ax)`), por escolha dele.
+
+**🔒 DECISÃO DO MARCOS, 2026-11-01 — PR 2c ANTES DO PR 2a E ESCOPO DO PR 2c:** o pit stop animado
+vem antes dos carros. O PR 2c é só apresentação: zero alteração em `src/engine/` e `src/data/`, sem
+bump de versão, resultado da corrida idêntico. O carro entra pelo caminho do box do PR 2b no limite
+de velocidade, para numa vaga ao longo do trecho com garagens, fica parado (toda a variação de
+tempo entre os carros acontece ali), sai no limite e acelera ao voltar à pista. Regras: respeitar
+`prefers-reduced-motion` e as velocidades do replay; FPS medido com CPU limitada; teste que prova
+que resultado e hashes não mudam; no máximo 3 prints no repositório; doc pela sessão principal;
+nada de push, merge ou deploy. Antes de código: medição apresentada ao Marcos, risco classificado.
 
 **LIÇÃO DO PR 2b, registrada a pedido do Marcos em 2026-11-01:** cerca nova vai em **PR próprio** da
 próxima vez. `scripts/folga-pistas.*` era um PR independente e entrou junto das 10 pistas, do box e
