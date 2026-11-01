@@ -24,7 +24,10 @@ declare module 'node:crypto' {
 declare module 'node:fs' {
   export function existsSync(path: string): boolean;
   export function readFileSync(path: string, encoding: 'utf8'): string;
-  export function writeFileSync(path: string, data: string, encoding?: 'utf8'): void;
+  export function writeFileSync(path: string, data: string | Uint8Array, encoding?: 'utf8'): void;
+  /** Adicionados no PR 2b (`preview-pr2b-box-aberto`): as cópias temporárias de `gerar_referencias.py`. */
+  export function cpSync(origem: string, destino: string, options?: { recursive?: boolean }): void;
+  export function mkdtempSync(prefixo: string): string;
   export function renameSync(oldPath: string, newPath: string): void;
   export function unlinkSync(path: string): void;
   export function mkdirSync(path: string, options?: { recursive?: boolean }): void;
@@ -51,6 +54,10 @@ declare module 'node:child_process' {
     argumentos: string[],
     opcoes?: { stdio?: 'pipe' | 'inherit' | 'ignore' },
   ): Uint8Array;
+}
+
+declare module 'node:os' {
+  export function tmpdir(): string;
 }
 
 declare module 'node:path' {
