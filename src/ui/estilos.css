@@ -661,8 +661,33 @@ button.card {
      `pista-camadas.test.ts` (guarda de CSS anti-raridade) trava que nenhuma
      regra `.tracado-svg*` volte a referenciar um token de raridade. */
   fill: var(--carro-bot);
-  stroke: var(--cor-fundo);
-  stroke-width: 1.5;
+  /* PR 2a: contorno e cores chegam por herança ao `<use>`. `stroke-width` vem como
+     atributo de `CarroNaPista`: depende da tela. `paint-order` pinta o corpo por cima
+     e deixa do traço só a metade de fora. */
+  stroke: var(--carro-contorno);
+  stroke-linejoin: round;
+  paint-order: stroke;
+  --carro-cockpit: var(--carro-contorno);
+  --carro-traco-roda: none;
+}
+
+.carro-c__roda {
+  fill: var(--carro-contorno);
+  stroke: var(--carro-traco-roda);
+  stroke-width: 1.2;
+}
+
+.carro-c__cockpit {
+  fill: var(--carro-cockpit);
+  stroke: none;
+}
+
+/* Anel do carro de quem joga neste aparelho: sem ele, o vermelho some na zebra. */
+.tracado-svg__halo {
+  fill: var(--carro-halo);
+  fill-opacity: 0.14;
+  stroke: var(--carro-halo);
+  stroke-width: 2;
 }
 
 .tracado-svg__carro--humano {
@@ -671,6 +696,9 @@ button.card {
      exige asfalto <= 0,0397, e foi por isso que a pista inteira escureceu
      junto com a paleta. Ver `tokens.ts`. */
   fill: var(--primaria);
+  stroke: var(--carro-halo);
+  --carro-cockpit: var(--carro-cockpit-humano);
+  --carro-traco-roda: var(--carro-halo);
 }
 
 .tracado-svg__carro--congelado {

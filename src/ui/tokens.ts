@@ -161,6 +161,11 @@ export const cores = {
    * `carroBot !== raridadeComum`.
    */
   carroBot: '#B0B0B0',
+  /** Contorno dos bots, rodas e cockpit (PR 2a): separa carros sobrepostos e o bot da zebra. */
+  carroContorno: '#111111',
+  /** Halo e contorno do carro do jogador (PR 2a). */
+  carroHalo: '#FFFFFF',
+  carroCockpitHumano: '#2A0A06',
 } as const;
 
 export type NomeCor = keyof typeof cores;

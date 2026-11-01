@@ -7,6 +7,8 @@
 
 import { Fragment } from 'react';
 import type { DraftState, Pista, ResultadoCorrida, ResultadoQuali } from '../engine/types';
+import { CONTORNO_HUMANO, ESCALA_CARRO, contornoDoBot } from './carro-replay';
+import { CarroNaPista, DefsDoCarro } from './CarroReplay';
 import { dataset } from './dataset-app';
 import { diferencasParaLider, formatarDiferenca } from './diferenca-lider';
 import {
@@ -19,8 +21,6 @@ import { nomeJogador } from './loadout-view';
 import { narrarEventos } from './narracao';
 import {
   CAMADAS_PISTA,
-  RAIO_CARRO_BOT,
-  RAIO_CARRO_HUMANO,
   VIEWBOX_ALTURA,
   VIEWBOX_LARGURA,
   VIEWBOX_PISTA,
@@ -32,6 +32,7 @@ import {
 } from './pista-camadas';
 import { linhaDoTempoDoPit } from './pit-replay';
 import { useMovimentoReduzido } from './useMovimentoReduzido';
+import { useTelaEstreita } from './useTelaEstreita';
 import {
   ESPESSURA_BORDA_BOX,
   LARGURA_GARAGEM,
@@ -194,6 +195,11 @@ interface TelaCorridaProps {
   /** Velocidade atual do replay (PR 2.6) — irrelevante na fase 'grid'. */
   velocidade: VelocidadeReplay;
   onVelocidade: (velocidade: VelocidadeReplay) => void;
+  /**
+   * Quem está jogando neste aparelho: é o carro do halo. `undefined` no Single,
+   * onde todo humano é o jogador; `null` no online para o espectador.
+   */
+  jogadorLocalId?: string | null;
 }
 
 /** Botões de velocidade do replay (PR 2.6) — trocável durante a corrida, não só antes. */
@@ -231,8 +237,10 @@ export function TelaCorrida({
   onAcelerar,
   velocidade,
   onVelocidade,
+  jogadorLocalId,
 }: TelaCorridaProps) {
   const movimentoReduzido = useMovimentoReduzido();
+  const telaEstreita = useTelaEstreita();
 
   if (fase === 'grid') {
     return (
@@ -286,13 +294,14 @@ export function TelaCorrida({
   const classificacaoAtual = classificacaoAoVivo(resultado, gridLargada, tempoSimMs, pista.voltas, linhaDoPit);
   const diferencas = diferencasParaLider(resultado, classificacaoAtual, tempoSimMs, pista.voltas, linhaDoPit);
 
+  const escalas = telaEstreita ? ESCALA_CARRO.estreita : ESCALA_CARRO.larga;
   const carrosDoReplay = resultado.classificacao.map((item) => {
     const historico = resultado.historicoVoltas[item.jogadorId] ?? [];
     // Curva SUAVIZADA, a mesma geometria que `pathDaVolta` desenha
     // (PR 7.4): usar a polilinha de controle aqui deixaria os carros
     // cortando as curvas por fora do asfalto desenhado. No pit, o caminho do
     // box (PR 2c).
-    const { ponto, sob } = linhaDoPit.posicao(
+    const { ponto, sob, rumo } = linhaDoPit.posicao(
       item.jogadorId,
       historico,
       item.status,
@@ -302,6 +311,7 @@ export function TelaCorrida({
     const somaHistorico = acumularVoltas(historico).at(-1) ?? 0;
     const congelado = item.status === 'dnf' && tempoSimMs >= somaHistorico;
     const ehHumano = ehHumanoId(state, item.jogadorId);
+    const ehLocal = jogadorLocalId === undefined ? ehHumano : item.jogadorId === jogadorLocalId;
     const classes = [
       'tracado-svg__carro',
       ehHumano ? 'tracado-svg__carro--humano' : '',
@@ -309,23 +319,26 @@ export function TelaCorrida({
     ]
       .filter(Boolean)
       .join(' ');
+    const transform = `translate(${ponto.x.toFixed(2)} ${ponto.y.toFixed(2)}) rotate(${rumo.toFixed(1)}) scale(${ehHumano ? escalas.humano : escalas.bot})`;
     return {
       // PR 2b: carro na passagem de baixo de um viaduto é desenhado ANTES do
       // tabuleiro, pra aparecer através dele e não por cima.
       sob,
+      // No fim da lista, para o pelotão não cobrir o carro do jogador.
+      prioridade: (ehHumano ? 1 : 0) + (ehLocal ? 1 : 0),
       el: (
-        <circle
+        <CarroNaPista
           key={item.jogadorId}
-          cx={ponto.x}
-          cy={ponto.y}
-          r={ehHumano ? RAIO_CARRO_HUMANO : RAIO_CARRO_BOT}
-          className={classes}
-        >
-          <title>{`${nomeDoJogadorId(state, item.jogadorId)} — ${nomePiloto(state, item.jogadorId)}`}</title>
-        </circle>
+          transform={transform}
+          classes={classes}
+          contorno={ehHumano ? CONTORNO_HUMANO : contornoDoBot(telaEstreita)}
+          halo={ehLocal}
+          titulo={`${nomeDoJogadorId(state, item.jogadorId)} — ${nomePiloto(state, item.jogadorId)}`}
+        />
       ),
     };
   });
+  carrosDoReplay.sort((a, b) => a.prioridade - b.prioridade);
 
   return (
     <div className="tela-corrida">
@@ -360,6 +373,7 @@ export function TelaCorrida({
               height={VIEWBOX_ALTURA}
               className="tracado-svg__chao"
             />
+            <DefsDoCarro estreita={telaEstreita} />
             <CamadasDaPista pistaId={pista.id} />
             {carrosDoReplay.filter((c) => c.sob).map((c) => c.el)}
             <ViadutosDaPista pistaId={pista.id} />

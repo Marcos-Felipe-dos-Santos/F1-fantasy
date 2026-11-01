@@ -71,6 +71,9 @@
   --pista-zebra-a: #FF1801;
   --pista-zebra-b: #F5F0EB;
   --carro-bot: #B0B0B0;
+  --carro-contorno: #111111;
+  --carro-halo: #FFFFFF;
+  --carro-cockpit-humano: #2A0A06;
 
   --espaco-xs: 4px;
   --espaco-sm: 8px;
