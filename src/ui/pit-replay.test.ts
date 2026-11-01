@@ -410,3 +410,86 @@ describe('o resultado não muda (zero engine)', () => {
     expect(hashDaCorrida(corrida)).toBe(HASHES[id]);
   });
 });
+
+describe('rumo do carro (PR 2a)', () => {
+  /** Diferença entre dois ângulos em graus, no menor sentido. */
+  const giro = (a: number, b: number) => Math.abs(((a - b + 540) % 360) - 180);
+
+  it.each(PISTAS)('%s: aponta para onde o carro anda, na pista e no box', (id) => {
+    const { pista, resultado } = corridaReal(3, id);
+    const linha = linhaDoTempoDoPit(resultado, pista);
+    const { jogadorId, status } = resultado.classificacao[0];
+    const historico = resultado.historicoVoltas[jogadorId];
+    const paradas = Object.keys(resultado.voltasDePit).flatMap((j) =>
+      linha.paradas(j).map((p) => ({ j, p })),
+    );
+    const casos: [string, number, 'terminou' | 'dnf'][] = [
+      [jogadorId, acumularVoltas(historico)[1] * 0.3, status],
+      [jogadorId, acumularVoltas(historico)[1] * 0.8, status],
+    ];
+    if (paradas.length > 0) {
+      const { j, p } = paradas[0];
+      casos.push([j, (p.entrada + p.chegada) / 2, 'terminou'], [j, (p.partida + p.retorno) / 2, 'terminou']);
+    }
+    for (const [j, t, st] of casos) {
+      const h = resultado.historicoVoltas[j];
+      const antes = linha.posicao(j, h, st, t - 400, false).ponto;
+      const depois = linha.posicao(j, h, st, t + 400, false).ponto;
+      const andado = (Math.atan2(depois.y - antes.y, depois.x - antes.x) * 180) / Math.PI;
+      expect(giro(linha.posicao(j, h, st, t, false).rumo, andado)).toBeLessThan(25);
+    }
+  });
+
+  it.each(PISTAS)('%s: atravessa a janela do pit sem girar de repente', (id) => {
+    const { pista, resultado } = corridaReal(3, id);
+    const linha = linhaDoTempoDoPit(resultado, pista);
+    for (const j of Object.keys(resultado.voltasDePit)) {
+      const h = resultado.historicoVoltas[j];
+      for (const p of linha.paradas(j)) {
+        let anterior = linha.posicao(j, h, 'terminou', p.inicio, false);
+        for (let t = p.inicio; t <= p.fim; t += 150) {
+          const agora = linha.posicao(j, h, 'terminou', t, false);
+          const andado = Math.hypot(agora.ponto.x - anterior.ponto.x, agora.ponto.y - anterior.ponto.y);
+          // Girar exige andar: 4° por u cobre a curva mais fechada do box e pega um salto.
+          expect(giro(agora.rumo, anterior.rumo)).toBeLessThanOrEqual(12 + andado * 4);
+          anterior = agora;
+        }
+      }
+    }
+  });
+
+  it('parado na vaga mantém o rumo, com e sem movimento reduzido', () => {
+    const { pista, resultado } = corridaReal(3, 'pista-spa');
+    const linha = linhaDoTempoDoPit(resultado, pista);
+    const j = Object.keys(resultado.voltasDePit).find((x) => linha.paradas(x).length > 0)!;
+    const h = resultado.historicoVoltas[j];
+    const p = linha.paradas(j)[0];
+    const meio = (p.chegada + p.partida) / 2;
+    const parado = linha.posicao(j, h, 'terminou', meio, false);
+    expect(linha.posicao(j, h, 'terminou', p.chegada + 1, false).rumo).toBe(parado.rumo);
+    expect(linha.posicao(j, h, 'terminou', p.partida - 1, false).rumo).toBe(parado.rumo);
+    // Reduzido: o carro já aparece na vaga, e aponta como quem está nela.
+    expect(linha.posicao(j, h, 'terminou', p.entrada + 1, true).rumo).toBe(parado.rumo);
+  });
+
+  it('só o carro na pista tem fração de pista: no box ela é nula', () => {
+    const { pista, resultado } = corridaReal(3, 'pista-spa');
+    const linha = linhaDoTempoDoPit(resultado, pista);
+    const j = Object.keys(resultado.voltasDePit).find((x) => linha.paradas(x).length > 0)!;
+    const h = resultado.historicoVoltas[j];
+    const p = linha.paradas(j)[0];
+    expect(linha.posicao(j, h, 'terminou', (p.chegada + p.partida) / 2, false).fracaoNaPista).toBeNull();
+    expect(linha.posicao(j, h, 'terminou', p.inicio + 1, false).fracaoNaPista).not.toBeNull();
+    expect(linha.posicao(j, h, 'terminou', p.fim + 1, false).fracaoNaPista).not.toBeNull();
+  });
+
+  it('o DNF parado e o carro na chegada seguem com rumo definido', () => {
+    const { pista, resultado } = corridaReal(3, 'pista-spa');
+    const linha = linhaDoTempoDoPit(resultado, pista);
+    const { jogadorId } = resultado.classificacao[0];
+    const h = resultado.historicoVoltas[jogadorId];
+    const fim = acumularVoltas(h).at(-1)! + 1000;
+    expect(Number.isFinite(linha.posicao(jogadorId, h, 'terminou', fim, false).rumo)).toBe(true);
+    expect(Number.isFinite(linha.posicao(jogadorId, h, 'dnf', fim, false).rumo)).toBe(true);
+  });
+});

@@ -50,6 +50,8 @@ export const ESPACO_VAGA = 13;
 export const PISO_PARADO_MS = 4000;
 /** Arco de pista onde o carro freia antes do box e acelera depois dele. */
 export const DISTANCIA_RAMPA = 60;
+/** Meia janela do rumo: suaviza a polilinha sem atrasar o carro numa curva (PR 2a). */
+const MEIA_JANELA_RUMO = 8;
 
 /**
  * As duas exceções da opção A: nessas pistas o box é mais longo que o arco que
@@ -81,6 +83,10 @@ export interface PosicaoNoReplay {
   ponto: Ponto;
   /** Passa por baixo de um viaduto (só na pista: o box nunca passa). */
   sob: boolean;
+  /** Direção do movimento, em graus no sistema do viewBox (PR 2a). */
+  rumo: number;
+  /** Posição na volta, ou `null` no box: o spray só existe na pista (PR 2a). */
+  fracaoNaPista: number | null;
 }
 
 export interface LinhaDoTempoPit extends PitDoReplay {
@@ -123,6 +129,10 @@ function pontoNoBox(c: Caminho, distancia: number): Ponto {
   const trecho = c.s[i] - c.s[i - 1];
   const k = trecho > 0 ? (distancia - c.s[i - 1]) / trecho : 0;
   return { x: a.x + (b.x - a.x) * k, y: a.y + (b.y - a.y) * k };
+}
+
+function angulo(a: Ponto, b: Ponto): number {
+  return (Math.atan2(b.y - a.y, b.x - a.x) * 180) / Math.PI;
 }
 
 const CACHE_CAMINHO = new Map<string, Caminho | null>();
@@ -339,6 +349,18 @@ function voltasDoCaminho(c: Caminho, p: ParadaInterna, x: number): number {
   return p.volta - 1 + fracao;
 }
 
+function pontoNoCaminho(c: Caminho, x: number): Ponto {
+  const noBox = x - DISTANCIA_RAMPA;
+  return noBox < 0 || noBox > c.comprimentoBox
+    ? pontoNoTracado(c.curva, fracaoNaPista(c, x))
+    : pontoNoBox(c, noBox);
+}
+
+/** A janela atravessa a emenda da pista com o box: cortada nela, o rumo saltava até 44°. */
+function rumoNoCaminho(c: Caminho, x: number): number {
+  return angulo(pontoNoCaminho(c, x - MEIA_JANELA_RUMO), pontoNoCaminho(c, x + MEIA_JANELA_RUMO));
+}
+
 const CACHE_LINHA = new WeakMap<ResultadoCorrida, { pistaId: string; linha: LinhaDoTempoPit }>();
 
 /**
@@ -354,6 +376,7 @@ export function linhaDoTempoDoPit(
 
   const c = caminhoDaPista(pista.id);
   const curva = tracadoSuavizado(pista.id);
+  const perimetro = lutDoTracado(curva).comprimentoTotal;
   const porCarro = new Map<string, ParadaInterna[]>();
   if (c !== null) {
     const todas: ParadaInterna[] = [];
@@ -390,6 +413,7 @@ export function linhaDoTempoDoPit(
     posicao(jogadorId, historico, status, tempoSimMs, reduzido) {
       const p = ativa(jogadorId, tempoSimMs);
       let fracao: number;
+      let rumoDoPit: number | null = null;
       if (p === undefined || c === null) {
         fracao = fracaoVisual(historico, tempoSimMs, status, pista.voltas);
       } else if (tempoSimMs < p.inicio) {
@@ -397,14 +421,24 @@ export function linhaDoTempoDoPit(
       } else {
         const x = xDaParada(c, p, tempoSimMs);
         if (x >= DISTANCIA_RAMPA && x <= DISTANCIA_RAMPA + c.comprimentoBox) {
+          const naVaga = reduzido || x === p.xVaga;
           return {
-            ponto: reduzido || x === p.xVaga ? c.pontosVagas[p.vaga] : pontoNoBox(c, x - DISTANCIA_RAMPA),
+            ponto: naVaga ? c.pontosVagas[p.vaga] : pontoNoBox(c, x - DISTANCIA_RAMPA),
             sob: false,
+            rumo: rumoNoCaminho(c, naVaga ? p.xVaga : x),
+            fracaoNaPista: null,
           };
         }
         fracao = fracaoNaPista(c, x);
+        rumoDoPit = rumoNoCaminho(c, x);
       }
-      return { ponto: pontoNoTracado(curva, fracao), sob: estaSobViaduto(pista.id, fracao) };
+      const janela = MEIA_JANELA_RUMO / perimetro;
+      return {
+        ponto: pontoNoTracado(curva, fracao),
+        sob: estaSobViaduto(pista.id, fracao),
+        rumo: rumoDoPit ?? angulo(pontoNoTracado(curva, fracao - janela), pontoNoTracado(curva, fracao + janela)),
+        fracaoNaPista: ((fracao % 1) + 1) % 1,
+      };
     },
   };
   CACHE_LINHA.set(resultado, { pistaId: pista.id, linha });
