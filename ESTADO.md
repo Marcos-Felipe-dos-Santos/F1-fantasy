@@ -40,7 +40,8 @@ produção. Próximo: **PR 2c** (pit stop animado), que passou à frente do PR 2
 - **PR 2b (pistas + box):** ~~fechado na branch, aprovado pelo Marcos. Ver §"Onde parei".~~ na `main`
   desde o PR #4 (`d9e8916`) e em produção, aprovado pelo Marcos.
 - **PR 1 Resultados:** commitado em `d6f77cf` com os prints aprovados pelo Marcos, na `main` desde o PR #3 e em produção.
-- **Abertas que importam agora:** `0(ar)`-`0(ax)`, do PR 2b; FPS do PR 1 em aparelho real (não medido); `0(v)` continua 🟡
+- **PR 2c (pit stop animado):** implementado em `feat/pr2c-pit-stop`, sem commit de produto, aguardando o veredito visual do Marcos. Ver §"Onde parei".
+- **Abertas que importam agora:** `0(ar)`-`0(ax)`, do PR 2b; `0(ay)`-`0(ba)`, do PR 2c; FPS do PR 1 em aparelho real (não medido); `0(v)` continua 🟡
   aberta (o flake de `comandos.test.ts` corrigido em 2026-10-17 é outro); `0(aq)`, a URL do
   rename, aguarda escolha do Marcos.
 - **Decisões vigentes:** §"🔒 DECISÕES DO MARCOS — VIGENTES".
@@ -420,6 +421,35 @@ dependência).
 
 
 ## Onde parei
+
+### 2026-11-01 — PR 2c IMPLEMENTADO, sem commit de produto, aguardando o veredito visual do Marcos
+
+Branch `feat/pr2c-pit-stop`. Risco ALTO. **Produto na árvore de trabalho, SEM commit**, pela regra de
+aguardar o veredito visual: `src/ui/pit-replay.ts` e `.test.ts`, `src/ui/useMovimentoReduzido.ts`,
+`src/ui/TelaCorrida.tsx`, `src/ui/fluxo-corrida.ts` e `.test.ts`. Instrumentos e evidência, também
+sem commit: `scripts/preview-pit.{tsx,html,config.ts}`, `scripts/medir-fps-pr2c.mjs`,
+`scripts/mutar-pr2c.mjs`, `docs/pr2c-{baseline-vermelho.txt,fps-antes.json,fps-depois.json,mutacoes.json}`,
+`docs/pr2c-imagens/` (3 prints). `docs/pr2c-medicao.json` e `scripts/medir-pr2c.preview.test.ts`
+foram regenerados: o `deriveSeed` do instrumento reprovava `namespaces-seed.test.ts`, e a seed virou
+aritmética (26.307 paradas, mesmos limites propostos, erro do estimador < 1 s).
+
+- **Medido em 2026-11-01:** `npm test` 1874 + 1 skipped em 84 arquivos, duas vezes seguidas;
+  `test:party` 46/8; typecheck, lint e build com saída 0; `versao.test.ts` 3/3; `VERSAO_APP` 3.4.7;
+  `git diff` vazio em `src/engine/`, `src/data/`, `src/net/` e `party/`. Hashes golden das 10 pistas
+  calculados com `src/` igual a `d9e8916`.
+- **Mutação:** 18/18 detectadas, com rodada de controle. A 1ª rodada deu 16/18; os 2 sobreviventes
+  viraram teste, e a revisão pegou que o JSON estava velho. Reexecutado.
+- **FPS, CPU 6×, 360×800, 22 carros, chuva, 5 repetições, mediana antes → depois:** Spa média
+  64,7 → 60,0; Montreal média 68,6 → 62,2; Spa rápida 63,4 → 60,1; Montreal rápida 63,1 → 62,0.
+  Render p50 +0,4 a +0,7 ms. Quadros > 33 ms: 1 a 4 antes e 3 a 4 depois, em 600. ⚠️ É emulação em
+  desktop, não aparelho real, e a máquina é ruidosa (mesmo caso, 53 a 102 fps em rodadas soltas).
+- **`senior-reviewer`:** sem defeito de runtime. O 🔴 era o JSON de mutação velho (resolvido). Aplicados:
+  controle no script de mutação, cruzamento da largada nas 10 pistas, convergência final do painel.
+  Viraram pendência `0(ay)` e `0(az)`. Não aplicado: guarda de `matchMedia` (sem jsdom no projeto).
+- **Preview:** `npx vite build --config scripts/preview-pit.config.ts`, depois `npx vite preview --config
+  scripts/preview-pit.config.ts --host 127.0.0.1 --port 4175 --strictPort`, e abrir
+  `http://127.0.0.1:4175/scripts/preview-pit.html`.
+- **Próximo:** veredito do Marcos. Aprovado: commit de produto + instrumentos, `HISTORICO.md`, parar.
 
 ### 2026-11-01 — PR 1 e PR 2b em produção; PR 2c à frente do PR 2a
 
@@ -3711,7 +3741,7 @@ que agora ela é tomada com o número na mão.**
    continuidade, pontas, isenção e lado. Efeito conhecido: em Suzuka (afastamento 35, box 12 u), a
    invariante "pit wall sem cobrir o limite" é falsa por **1 u** (0,32 px a 360px), pela aritmética
    das constantes. Cosmético, e já no preview aprovado.
-   (av) 🟡 **NOVA (PR 2b, revisão), PARA O PR 2c — NADA TRAVA QUE O BOX CAIBA NA MOLDURA.** As guardas
+   (av) ✅ **FECHADA no PR 2c, quando commitado:** `pit-replay.test.ts` trava as amostras de `caminhoDoBox` das 10 pistas no viewBox. *(Texto original:)* 🟡 **NOVA (PR 2b, revisão), PARA O PR 2c — NADA TRAVA QUE O BOX CAIBA NA MOLDURA.** As guardas
    de viewBox e moldura só veem o traçado. Montreal declara ponto em `{ x: 958, y: 335 }`, fora da
    moldura dos traçados (x ≤ 924); a folga do box até o viewBox é de **10,9 u** (medida em 2026-11-01,
    amostras + meia largura). Hoje passa; um ponto mal digitado sairia cortado em silêncio. Sugestão:
@@ -3723,7 +3753,17 @@ que agora ela é tomada com o número na mão.**
    são código morto em produção, só os testes usam; a banda de isenção "mesma curva" da cerca não tem
    asserção que trave o argumento do comentário; a cerca não mede o box contra ele mesmo; os ids da
    máscara da ponte são por pista, não por instância (só importa com duas pistas na mesma tela).
-   `0(ax)` é a última ocupada; próxima livre agora `0(ay)`.
+   ~~`0(ax)` é a última ocupada; próxima livre agora `0(ay)`.~~
+   (ay) 🟢 **NOVA (PR 2c, revisão) — PARADAS EM VOLTAS SEGUIDAS DARIAM SALTO.** Com duas paradas em voltas
+   consecutivas, `ativa()` em `src/ui/pit-replay.ts` pega a primeira janela e o progresso salta em
+   `fim`. Hoje inalcançável: `corrida.ts` zera o desgaste na parada, e a medição deu 0 consecutivas.
+   (az) 🟡 **NOVA (PR 2c, revisão) — A LIGAÇÃO EM `TelaCorrida.tsx` NÃO TEM TESTE:** nenhum teste renderiza
+   `TelaCorrida` (sem jsdom). A evidência de `movimentoReduzido`, da linha do pit e do badge na tela é o
+   preview. Mesma família de `0(m)`.
+   (ba) 🟡 **NOVA (PR 2c) — UMA FALHA ÚNICA SEM CAUSA ACHADA.** Logo depois da mutação, um `npm test`
+   reprovou `src/net/cerca-lint.test.ts` e um `test:party` reprovou 1 teste. Os dois passaram isolados e
+   em 2 rodadas completas seguidas, com os servidores de preview desligados. A mensagem não foi guardada.
+   `0(ba)` é a última ocupada; próxima livre agora `0(bb)`.
 
 1. **Abertas pelo 7.8:** (a) o `BotaoTema` é um botão discreto no canto do `app-shell` — posição e
    forma **não passaram por veredito de arte**; (b) `erro` (salmão `#FF7B85`) e `raridadeProibido`
