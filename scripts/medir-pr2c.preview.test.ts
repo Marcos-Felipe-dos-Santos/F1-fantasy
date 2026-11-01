@@ -19,7 +19,6 @@ import pistasReal from '../src/data/pistas.json';
 import { CORRIDA_CONFIG, simularCorrida } from '../src/engine/corrida';
 import { criarDataset } from '../src/engine/dataset';
 import { simularQuali } from '../src/engine/quali';
-import { deriveSeed } from '../src/engine/rng';
 import type { Loadout, Pista, ResultadoCorrida } from '../src/engine/types';
 import { caminhoDoBox } from '../src/ui/box';
 import { lutDoTracado, MS_REPLAY_POR_VOLTA, type VelocidadeReplay } from '../src/ui/fluxo-corrida';
@@ -250,7 +249,7 @@ describe('medição do PR 2c', () => {
       let carros = 0;
       let consecutivas = 0;
       for (let k = 0; k < N_GRIDS; k++) {
-        const seed = deriveSeed(7000 + k, `pr2c:${pista.id}`);
+        const seed = (7000 + k) * 1009 + pistas.indexOf(pista);
         const grid = simularQuali(dataset, loadouts[k], pista, seed);
         const r = simularCorrida(dataset, loadouts[k], pista, grid, seed);
         const r0 = comPitZerado(() => simularCorrida(dataset, loadouts[k], pista, grid, seed));
