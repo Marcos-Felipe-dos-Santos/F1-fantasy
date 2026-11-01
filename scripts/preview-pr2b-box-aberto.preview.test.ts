@@ -75,6 +75,8 @@ function kebab(nome: string): string {
 interface Render {
   /** Corpo SVG (sem o `<svg>`) da pista inteira, com `var(--x)` já resolvido pro hex. */
   readonly corpo: string;
+  /** `d` da volta no grafo de módulos do render: só depende do traçado, ao contrário de `corpo`, que muda com o box. */
+  readonly volta: string;
   /** Zooms (viewBox) no box e na ponte, quando a pista tem. */
   readonly zooms: readonly { readonly titulo: string; readonly viewBox: string }[];
   /** Linha da cerca do box, ou aviso de que não há box. */
@@ -95,6 +97,7 @@ function viewBoxEm(pontos: readonly { x: number; y: number }[], margem: number):
 async function renderizar(pistaIds: readonly string[]): Promise<Record<string, Render>> {
   const { CamadasDaPista, ViadutosDaPista } = await import('../src/ui/TelaCorrida');
   const { BOXES_POR_PISTA, VIADUTOS_POR_PISTA, tracadoDaPista } = await import('../src/ui/tracados');
+  const { pathDaVolta } = await import('../src/ui/pista-camadas');
   const { caminhoDoBox } = await import('../src/ui/box');
   const { tracadoSuavizado } = await import('../src/ui/suavizacao');
   const { medirFolgaDoBox } = await import('./folga-pistas');
@@ -122,7 +125,7 @@ async function renderizar(pistaIds: readonly string[]): Promise<Record<string, R
     if (zebra !== undefined) {
       zooms.push({ titulo: zebra.titulo, viewBox: viewBoxEm(tracadoDaPista(pistaId).slice(zebra.de, zebra.ate + 1), 40) });
     }
-    saida[pistaId] = { corpo, zooms, cerca, box };
+    saida[pistaId] = { corpo, volta: pathDaVolta(pistaId), zooms, cerca, box };
   }
   return saida;
 }
@@ -257,9 +260,11 @@ describe('preview antes × depois (PR 2b)', () => {
     for (const pistaId of PISTAS) {
       console.log(`${pistaId}: desvio ${dados.desvioAntes[pistaId]} -> ${dados.desvioDepois[pistaId]}; ${depois[pistaId].cerca}`);
     }
-    // Anti-vacuidade: as 10 mudaram, e o "antes" é mesmo o traçado sem box.
+    // Anti-vacuidade: as 10 mudaram, e o "antes" é mesmo o traçado sem box. Comparar `corpo`
+    // não prova o mock: ele difere só por faltar o box, mesmo com o traçado novo nos dois lados.
     for (const pistaId of PISTAS) {
-      expect(antes[pistaId].corpo, `${pistaId}: antes == depois (o mock não pegou?)`).not.toBe(depois[pistaId].corpo);
+      expect(antes[pistaId].volta, `${pistaId}: mesmo traçado nos dois lados (o mock não pegou?)`).not.toBe(depois[pistaId].volta);
+      expect(antes[pistaId].corpo, `${pistaId}: o desenho não usa o traçado do "antes"`).toContain(antes[pistaId].volta);
       expect(antes[pistaId].corpo, pistaId).not.toContain('tracado-svg__camada--box');
       expect(depois[pistaId].corpo, pistaId).toContain('tracado-svg__camada--box');
       expect(dados.desvioAntes[pistaId], pistaId).toBeDefined();

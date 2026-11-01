@@ -342,9 +342,10 @@ describe('fidelidade da amostragem (escolha de AMOSTRAS_POR_SEGMENTO)', () => {
 /**
  * O quanto a curva escapa do bounding box da polilinha de controle. Era a
  * **PARADA OBRIGATÓRIA** do PR 7.4: "se o overshoot em Mônaco/Nürburgring não
- * fechar com Catmull-Rom centrípeta, PARAR e mostrar ao dev". FECHOU — Mônaco
- * é o pior das 10 com 15,1 unidades e Nürburgring não faz overshoot nenhum,
- * contra os 70 de margem que o 7.3 reservava no viewBox.
+ * fechar com Catmull-Rom centrípeta, PARAR e mostrar ao dev". FECHOU — na
+ * época, Mônaco era o pior das 10 com 15,1 unidades. Desde o PR 2b, o pior é
+ * Silverstone, com 2,91 (Mônaco 0,54, Nürburgring 0,96), contra os 70 de
+ * margem que o 7.3 reservava no viewBox.
  *
  * Medido com N=64 (mais fino que a produção): amostrar mais só pode ACHAR mais
  * extremo, então o golden é conservador em relação ao que se desenha.

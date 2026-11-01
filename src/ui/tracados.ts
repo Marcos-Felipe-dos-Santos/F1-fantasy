@@ -208,13 +208,13 @@ const TRACADO_SPA: TracadoImutavel = [
  * Village, Luffield, Copse e Stowe desbastadas. Ordem e sentido intocados.
  */
 const TRACADO_SILVERSTONE: TracadoImutavel = [
-  // Hamilton Straight (reta dos boxes) â†’ Abbey / Farm.
+  // Hamilton Straight (reta dos boxes) → Abbey / Farm.
   { x: 722, y: 530 },
   { x: 527, y: 424 },
   { x: 508, y: 400 },
   { x: 502, y: 330 },
   { x: 493, y: 300 },
-  // Village â†’ The Loop (o grampo Ã  esquerda) â†’ Aintree.
+  // Village → The Loop (o grampo à esquerda) → Aintree.
   { x: 418, y: 228 },
   { x: 406, y: 210 },
   { x: 420, y: 196 },
@@ -223,7 +223,7 @@ const TRACADO_SILVERSTONE: TracadoImutavel = [
   { x: 412, y: 152 },
   { x: 370, y: 162 },
   { x: 282, y: 297 },
-  // Wellington Straight desemboca em Brooklands â†’ Luffield, arco longo e lento.
+  // Wellington Straight desemboca em Brooklands → Luffield, arco longo e lento.
   { x: 193, y: 433 },
   { x: 191, y: 453 },
   { x: 205, y: 476 },
@@ -231,7 +231,7 @@ const TRACADO_SILVERSTONE: TracadoImutavel = [
   { x: 274, y: 500 },
   { x: 262, y: 526 },
   { x: 238, y: 529 },
-  // Woodcote â†’ reta National, subindo pela esquerda atÃ© Copse.
+  // Woodcote → reta National, subindo pela esquerda até Copse.
   { x: 170, y: 506 },
   { x: 132, y: 479 },
   { x: 110, y: 446 },
@@ -241,7 +241,7 @@ const TRACADO_SILVERSTONE: TracadoImutavel = [
   { x: 100, y: 180 },
   { x: 150, y: 159 },
   { x: 198, y: 145 },
-  // Maggotts-Becketts-Chapel, erguidos ~14 u pra abrir o vÃ£o atÃ© o Loop.
+  // Maggotts-Becketts-Chapel, erguidos ~14 u pra abrir o vão até o Loop.
   { x: 296, y: 116 },
   { x: 338, y: 82 },
   { x: 357, y: 80 },
@@ -251,13 +251,13 @@ const TRACADO_SILVERSTONE: TracadoImutavel = [
   { x: 482, y: 46 },
   { x: 502, y: 56 },
   { x: 532, y: 96 },
-  // Hangar Straight â†’ Stowe.
+  // Hangar Straight → Stowe.
   { x: 548, y: 108 },
   { x: 825, y: 214 },
   { x: 895, y: 246 },
   { x: 920, y: 272 },
   { x: 918, y: 305 },
-  // Vale â†’ Club, fechando na reta dos boxes.
+  // Vale → Club, fechando na reta dos boxes.
   { x: 866, y: 354 },
   { x: 786, y: 452 },
   { x: 804, y: 484 },
