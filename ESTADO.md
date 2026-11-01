@@ -12,20 +12,29 @@
 
 ## Estado atual
 
-**2026-10-28, branch `codex/pr1-resultados` em `d6f77cf`** (sobre `26ad532`, que está sobre a
-`main` `ef8c520`). Sem push: a branch existe só localmente até o Marcos decidir.
+**2026-11-01, branch `docs/plano-pr2b-silhuetas`**, com o PR 2b fechado sobre `origin/main`
+`4d530e6`. Sem push: o Marcos faz o push e abre o PR.
+~~**2026-10-28, branch `codex/pr1-resultados` em `d6f77cf`** (sobre `26ad532`, que está sobre a
+`main` `ef8c520`). Sem push: a branch existe só localmente até o Marcos decidir.~~
 
 - **Produção pública desde 2026-10-17:** https://f1-fantasy-sala.marcosfeliperigoto.workers.dev.
   `ALLOWED_ORIGINS` = essa origem exata; `ENVIRONMENT=production`. Marcos relatou o online
-  testado com sucesso por jogadores reais. O que está no ar é a `main` `ef8c520`; o PR 1 **não**.
+  testado com sucesso por jogadores reais. Em 2026-10-28, o que estava no ar era a `main` `ef8c520`.
+  O PR 1 entrou na `main` depois (`4d530e6`, PR #3); **esta sessão não conferiu qual commit está
+  publicado hoje.**
+- **`main` `4d530e6`:** merge do PR #3 (PR 1 Resultados).
 - **`main` `ef8c520`:** merge do PR #2 (nomes reais restaurados). CI em `.github/workflows/ci.yml`;
   CI da main `39053132098` verde. Medido na main em 2026-10-18: 1730 testes principais, 46 Worker.
 - **Versões:** `VERSAO_APP` **3.4.7**, digest **`61184d3b`**, `VERSAO_FORMATO` **4**.
+- **Medido pela sessão principal em 2026-11-01, sobre o PR 2b:** `npm test` **1824/83** (1 skipped),
+  `npm run test:party` **46/8**, typecheck, lint e build com exit 0, `versao.test.ts` 3/3; nada
+  alterado em `src/engine/`, `src/data/`, `src/net/` e `party/`.
 - **Medido pela sessão principal em 2026-10-28, sobre o PR 1:** `npm test` **1764/81**,
   `npm run test:party` **46/8**, typecheck, lint e build com exit 0, `versao.test.ts` 3/3;
   `git diff --stat` vazio em `src/engine/`, `src/data/`, `src/net/` e `party/`.
-- **PR 1 Resultados:** commitado em `d6f77cf` com os prints aprovados pelo Marcos. Ver §"Onde parei".
-- **Abertas que importam agora:** FPS do PR 1 em aparelho real (não medido); `0(v)` continua 🟡
+- **PR 2b (pistas + box):** fechado na branch, aprovado pelo Marcos. Ver §"Onde parei".
+- **PR 1 Resultados:** commitado em `d6f77cf` com os prints aprovados pelo Marcos, na `main` desde o PR #3.
+- **Abertas que importam agora:** `0(ar)`-`0(ax)`, do PR 2b; FPS do PR 1 em aparelho real (não medido); `0(v)` continua 🟡
   aberta (o flake de `comandos.test.ts` corrigido em 2026-10-17 é outro); `0(aq)`, a URL do
   rename, aguarda escolha do Marcos.
 - **Decisões vigentes:** §"🔒 DECISÕES DO MARCOS — VIGENTES".
@@ -406,57 +415,32 @@ dependência).
 
 ## Onde parei
 
-### 2026-10-29 — PR 2b EM ANDAMENTO (redesenho das pistas + box): lote 0 (`82bac6a`) e lote 1 (`971ce2e`) commitados
+### 2026-11-01 — PR 2b FECHADO na branch, aguardando o push do Marcos
 
-> Nota de passagem entre sessões, escrita pela sessão principal. **Não é a doc de fechamento do
-> PR** (essa vem no fim, com `HISTORICO.md`).
+Branch `docs/plano-pr2b-silhuetas`, sobre `origin/main` `4d530e6`. Sem push, merge ou deploy: **o
+Marcos faz o push e abre o PR.** Detalhe completo, com a nota de passagem do PR, em `HISTORICO.md`
+§"2026-11-01 — PR 2b".
 
-- **Decisões do Marcos de 2026-10-29** (registrar na doc de fechamento, §DECISÕES):
-  - nova ordem: PR 1 ✅ → **PR 2b (pistas, este)** → PR 2a → PR 2c (só a animação do pit) → PR 3. O PR R segue pendente, sem posição. Motivo: arrumar a geometria antes de desenhar carros e spray.
-  - **o traçado do box entra no 2b**;
-  - traçados **derivados da linha central real** (bacinger/f1-circuits, MIT), simplificados, chicanes estilizadas; pit lane posicionada pelo OSM, sem copiar pontos (`THIRD_PARTY_NOTICES.md`, GDD §14.2);
-  - ponte de Suzuka **semitransparente, nível A (75%)**;
-  - **"mesma curva" FORA do PR**: pendência nova a abrir (zebras internas de grampo/chicane se tocando em 9 das 10 pistas);
-  - **MODELO LIVRE do box, para todas as pistas** (Monza fica no modelo de rampas, aprovado): trecho PARALELO só ao longo da reta dos boxes, onde cabe; ENTRADA e SAÍDA como caminhos livres (curvas suaves declaradas por pontos) até o ponto real de entrada/saída; a cerca vale para tudo, isentas só as duas pontas onde o box encontra a pista; estilo aprovado mantido (rampas abertas, pit wall 9 u, garagens só no paralelo). **Boxes na posição mais real possível.**
-  - **ESCADA quando o box não cabe no lado real** (registrar na doc qual degrau e a folga, por pista): 1. modelo livre; 2. sem garagens; 3. afastamento mínimo; 4. box mais estreito só naquela pista (regra dos 360px); 5. ajuste de traçado de até 10 u num trecho que não seja o mais característico; 6. lado oposto. **Só parar se nenhum degrau resolver ou se precisar deformar trecho característico.**
-  - **Autonomia para terminar o PR**: as 10 pistas (Monza fica), na ordem do `desvios.txt`; **um commit por pista na branch**, sem push; Silverstone e Nürburgring têm trechos colados, resolver no redesenho delas. Se o contexto apertar: parar num commit, atualizar esta nota e avisar.
-- **Feito no lote 0 (`82bac6a`, `b52a8af`):** cerca `scripts/folga-pistas.test.ts`, Monza nova (desvio 1,1% → 0,4%; script 36 → estilizada 43 → commitada 40, lista ponto a ponto no topo de `scripts/derivar-tracado-real.py`; a base só se reproduz com `tracados.ts` e `fluxo-corrida.ts` de `82bac6a~1`) com box no modelo de rampas, `box.ts`, `viaduto.ts`, box aberto nas rampas e pit wall.
-- **Feito no lote 1 (`971ce2e`)** — degrau usado e folga medida na cerca de produção (mínimo 3,125 u = 1 px a 360px):
-
-  | pista | box | degraus | folga do box | trechos distintos |
-  |---|---|---|---|---|
-  | Interlagos | lado real; paralelo 0,99→0,035; entrada na reta (a Subida real não cabe: corredor ~57 u, precisa ~82); saída livre pelo miolo até a Reta Oposta, DEPOIS do S do Senna | 1 | 6,0 u | 6,2 u |
-  | Mônaco | lado real; entrada depois da Rascasse; saída DEPOIS da Sainte Dévote | 1 + 5 (perna da Piscina #40-43 afastada 8-10 u, aprovado) | 4,5 u | 8,5 u |
-  | Suzuka | lado real (decisão do Marcos); paralelo curto 0,99→0,03 | 2 (sem garagens), 3 (afastamento 35), 4 (box 12 u = 3,8 px), 5 (crista dos Esses #8-9 −6 u) | 3,9 u | 4,8 u |
-
-  Suzuka: grampo refeito em **V** (era um "pirulito"), ponte no vértice compartilhado **(430,372), #22 e #47**. Desvio médio ao real (antes dos ajustes finais de Mônaco/Suzuka): Interlagos 3,4%→1,1%, Mônaco 2,6%→2,1%, Suzuka 2,0%→1,1% — **remedir no fim**. `npm test` 1803 passam / **8 falham, todas da cerca, pistas fora do lote**; typecheck e lint verdes.
-- **Próximo: Silverstone, Imola, Spa, Nürburgring, Montreal, Red Bull Ring** (ordem do `desvios.txt`), um commit por pista.
-- **Lote 2 (sessão de 2026-10-29, noite):** Silverstone em `4a0da81` (degrau 1; box 4,2 u; trechos 6,3 u). Imola em `9b5a90d` (degrau 1, box POR FORA, lado real; box 4,4 u). Spa em `fbcb6f0` (degraus 2, 3 (afastamento 36), 4 (box 12 u) e 5 (reta da largada afastada 10 u da Eau Rouge); box 3,2 u; entrada depois da Bus Stop e saída antes da La Source, as reais não cabem; lado oposto medido e pior). Nürburgring em `d8e5812` (três trechos colados abertos; T1 recuada ~14 u pra abrir a garganta do ômega, que a cerca conta como "mesma curva" mas tinha zebras se tocando; box nos degraus 2, 3 (36) e 4 (12 u), 5,0 u; entrada depois da Coca-Cola). Montreal em `8f15f5b` (pernas da L'Épingle afastadas; box POR FORA, degrau 1, 5,2 u; saída contorna o Senna por fora, como a real). Red Bull Ring em `039c0b5` (degrau 1, box 3,6 u; Remus com 2 pontos: fundido, o N=8 ia a 0,705 por CURVA, não reta). **As 10 pistas feitas; `npm test` inteiro verde (1824/1 skipped). Falta o fechamento** (itens do "No fim do PR" abaixo).
-- **🔒 Decisão do Marcos (2026-10-29): box no LADO REAL também quando a pit lane real fica POR FORA** (Imola e Montreal, pelo OSM). `box-viaduto.test.ts` ganhou a lista FECHADA `BOX_REAL_POR_FORA`; as demais continuam obrigadas a ficar dentro.
-- **🔒 Regra do N=8, decisão do Marcos (2026-10-29), teto 0,7 mantido; reabrir o N fica FORA do PR 2b:** se o N=8 passar do teto por causa de uma RETA LONGA, pode-se inserir pontos SOBRE a reta, sem pedir, desde que (a) a silhueta não mude (ponto praticamente em cima da reta), (b) a cerca de folga continue passando, (c) o máximo das 10 volte a ficar abaixo de 0,7. Registrar cada ponto (pista, trecho, coordenada, valor antes e depois). Se o estouro não vier de reta longa, ou se ponto na reta não resolver: PARAR e mostrar.
-  | pista | trecho | ponto inserido | N=8 da pista antes → depois | máximo das 10 depois |
-  |---|---|---|---|---|
-  | Silverstone | Wellington Straight, #11 (370,162) → (193,433) | (282,297) | 0,739 → 0,451 | 0,681 (Mônaco) |
-  | Spa | Kemmel, (414,157) → (714,37) | (564,97) | 0,900 → (com o de baixo) 0,462 | 0,681 (Mônaco) |
-  | Spa | reta da largada, (235,419) → (88,528) (antes do degrau 5) | (162,473) | 0,712 → 0,462 | 0,681 (Mônaco) |
-
-  Remedido em 2026-11-01 sobre `8073151`: máximo 0,681 (Mônaco), Silverstone 0,739 → 0,451 (ponto a 0,15 u da corda) e Kemmel 0,900 → 0,462 (0,00 u) conferem. ⚠️ **A linha da reta da largada de Spa descreve a geometria ANTERIOR ao degrau 5:** o ponto hoje é **#1 (168,481)**, a **4,85 u** da corda (241,427) → (88,528), e sem ele o N=8 de Spa daria 0,659. Ou seja, na geometria commitada ele é desenho do degrau 5 (ajuste de até 10 u), não ponto "sobre a reta" exigido pelo teto. Ficou como está. N=8 por pista: Mônaco 0,681, Nürburgring 0,672, Montreal 0,665, Imola 0,531, Spa 0,462, Interlagos 0,459, Silverstone 0,451, Monza 0,403, Suzuka 0,403, Red Bull Ring 0,279.
-
-- **Pendência NOVA (decisão do Marcos, 2026-10-29), não mexer no PR 2b:** a guarda que mede o menor segmento de controle (`minNaoAdj`, "sobreposição de asfalto") degenerou; a cerca de folga cobre a distância entre trechos. Abrir em §"Pendências ATIVAS" na doc de fechamento.
-- **Método por pista:**
-  1. `python -I scripts/derivar-tracado-real.py <pista> 2 referencias/pistas-2b .` dá a BASE (pontos alinhados + pit lane OSM). Nas pistas ainda não trocadas, rodar direto funciona. Guardar a base (as do lote 1 estão em `referencias/pistas-2b/bases-lote1/`).
-  2. Estilizar (chicanes como degrau; ABRIR trechos que na escala da moldura ficam colados) e afinar (guarda de asfalto ≤ 17 é por índice: na prática exige segmento de controle ≥ 17 u).
-  3. Box: medir o PARALELO primeiro (é ele que decide se cabe); depois entrada/saída livres. Caminho livre de 26 u precisa de corredor de ~74–90 u entre eixos.
-  4. Gravar em `tracados.ts`, rodar a cerca, recapturar goldens (só valores medidos), regerar o preview, olhar.
-- **Ferramentas de rascunho (NÃO versionadas, `preview/_aval/`, gitignored):** `cand.aval.test.ts` (avalia candidato: cerca, asfalto, ângulo, cruzamento, PNG), `livre.aval.test.ts` (protótipo do box livre), `captura.aval.test.ts`/`esc.aval.test.ts` (capturam goldens). Rodar com `npx vitest run --config preview/_aval/vitest.config.ts <arquivo> --reporter=verbose --silent=false`. ⚠️ **`npm run lint` falha por causa delas** (`any` em rascunho): mover/apagar `preview/_aval/` antes do lint final.
-- **Preview:** `npm run preview` → `preview/pr2b-<pista>-{escuro,claro}.html` (antes do git em `994f1de` × depois). Hoje cobre Interlagos, Mônaco e Suzuka; estender `PISTAS` para as 10 no fim.
-- **Pendências do `senior-reviewer` do lote 1** (decisão do Marcos, não resolvidas):
-  - a guarda "sobreposição de asfalto" (`minNaoAdj`) **degenerou**: com pistas densas mede o menor segmento de controle, não trechos próximos (docblock já diz isso); propor migrar para arco;
-  - margem do N=8 caiu para 0,681 (teto 0,7, Mônaco) — tira a base da decisão travada "AMOSTRAS_POR_SEGMENTO 12 → 4-6";
-  - zebra mais contínua nas pistas densas (Interlagos no teto de 40%, 19 vértices seguidos no miolo) — olhar no veredito.
-- **Rascunhos NÃO rastreados, não commitar:** `scripts/redesenho-pr2b.ts`, `scripts/propostas-pr2b.ts`, `scripts/preview-pr2b-box.preview.test.ts`, `scripts/preview-pr2b-pistas.preview.test.ts` (os dois últimos importam os dois primeiros), e os 5 `.txt` da raiz (dumps do Marcos de 21/10, ele apaga à mão).
-- ⚠️ **Lições:** NÃO rodar `prettier --write` em arquivo existente; gravar em LF (Python: `newline='\n'`); typecheck é `--noEmit` (nunca `tsc -b`); heredoc com código TS quebrou duas vezes no Bash desta máquina — gravar o script Python num arquivo e rodar.
-- **No fim do PR:** cerca e `npm test` verdes; typecheck, lint; `desvios.txt` antes/depois das 10 (`gerar_referencias.py` numa cópia); preview das 10 (celular e desktop, dois temas); regerar `docs/img/silhuetas.svg`; `senior-reviewer` no diff completo do PR; escrever a doc. Sem push, merge ou deploy.
+- **Entregue:** as 10 pistas derivadas da linha central real, box em todas (Monza no modelo de
+  rampas, as outras 9 no modelo livre), ponte de Suzuka a 75%, cerca `scripts/folga-pistas.*`.
+- **Veredito do Marcos, 2026-11-01:** aprovadas as 10 como estão no preview, incluindo a zebra mais
+  contínua do miolo de Interlagos e o box curto de Spa.
+- **`senior-reviewer` no diff completo:** sem 🔴, 6 🟡. Os dois que eram correção entraram em
+  `7234dcc` (acentos de Silverstone; prova do mock no preview). Os demais viraram pendência:
+  `0(ar)`, `0(au)`, `0(av)` e `0(aw)`; as sugestões, `0(ax)`.
+- **Medido em 2026-11-01:** `npm test` 1824 passam / 1 skipped em 83 arquivos, `test:party` 46/8,
+  typecheck, lint puro e build com saída 0, `versao.test.ts` 3/3, `VERSAO_APP` 3.4.7 e digest
+  `61184d3b`, sem bump: nada mudou em `src/engine/`, `src/data/`, `src/net/` ou `party/`.
+- **Instrumento de aprovação:** `npx vitest run --config vitest.preview.config.ts
+  scripts/preview-pr2b-box-aberto.preview.test.ts` gera `preview/pr2b-10-pistas-{escuro,claro}.html`
+  (antes = `origin/main`, ou `PREVIEW_ANTES_REF`). Precisa de `referencias/` (gitignored) e de
+  `src/` igual ao `HEAD`. ⚠️ Depois do merge, `origin/main` deixa de ser o "antes" do PR 2b.
+- **Prints no repositório (3, a regra de 2026-10-28):** `docs/pr2b-imagens/`.
+- **Rascunhos NÃO rastreados, não commitar:** `scripts/redesenho-pr2b.ts`,
+  `scripts/propostas-pr2b.ts`, `scripts/preview-pr2b-box.preview.test.ts`,
+  `scripts/preview-pr2b-pistas.preview.test.ts` e os 5 `.txt` da raiz (dumps do Marcos de 21/10, ele
+  apaga à mão). Nenhum arquivo commitado importa os rascunhos.
+- **Próximo:** PR 2a, na ordem de §"🔒 DECISÕES DO MARCOS — VIGENTES". O PR R segue sem posição.
 
 ### 2026-10-29 — Ciclo de regras de doc (sem PR de produto)
 
@@ -2132,6 +2116,8 @@ carros/chuva/spray/incidentes → PR 2b pit lane → PR 3 sons.~~ **Substituída
 (decisão do Marcos):** PR 1 Resultados ✅ → PR R Rename → PR 2a carros/chuva/spray/incidentes →
 **PR 2b redesenho de pistas** → **PR 2c pit lane (antes chamado 2b)** → PR 3 sons. Toda menção
 anterior a "PR 2b pit lane" neste arquivo e em `docs/auditoria-pre-pr1.md` passa a ler **PR 2c**.
+**Ordem vigente, também de 2026-10-29:** PR 1 ✅ → PR 2b ✅ (fechado, aguardando push) → PR 2a → PR 2c
+(só a animação do pit) → PR 3. O PR R segue pendente, sem posição.
 Regras completas em
 `docs/auditoria-pre-pr1.md`: zero engine/dados; digest verde; risco e vermelho
 onde houver lógica nova; reduced-motion/velocidades; FPS antes/depois com
@@ -2168,6 +2154,36 @@ de destino); usa só isso e o que ler nos arquivos. Saída: rascunho em texto, c
 fonte entre colchetes (`[FATOS #3]`, `[ESTADO.md:120]`), o que não tiver fonte vira
 `[FALTA: o quê]`; nunca apaga nem reescreve seção, só propõe acréscimo ou a substituição da
 §"Onde parei". Contrato completo em `.claude/agents/doc-writer.md`.
+
+**🔒 DECISÕES DO MARCOS NO PR 2b, 2026-10-29 a 2026-11-01** (trazidas literalmente da nota de
+passagem do PR):
+
+- **Decisões do Marcos de 2026-10-29** (registrar na doc de fechamento, §DECISÕES):
+  - nova ordem: PR 1 ✅ → **PR 2b (pistas, este)** → PR 2a → PR 2c (só a animação do pit) → PR 3. O PR R segue pendente, sem posição. Motivo: arrumar a geometria antes de desenhar carros e spray.
+  - **o traçado do box entra no 2b**;
+  - traçados **derivados da linha central real** (bacinger/f1-circuits, MIT), simplificados, chicanes estilizadas; pit lane posicionada pelo OSM, sem copiar pontos (`THIRD_PARTY_NOTICES.md`, GDD §14.2);
+  - ponte de Suzuka **semitransparente, nível A (75%)**;
+  - **"mesma curva" FORA do PR**: pendência nova a abrir (zebras internas de grampo/chicane se tocando em 9 das 10 pistas);
+  - **MODELO LIVRE do box, para todas as pistas** (Monza fica no modelo de rampas, aprovado): trecho PARALELO só ao longo da reta dos boxes, onde cabe; ENTRADA e SAÍDA como caminhos livres (curvas suaves declaradas por pontos) até o ponto real de entrada/saída; a cerca vale para tudo, isentas só as duas pontas onde o box encontra a pista; estilo aprovado mantido (rampas abertas, pit wall 9 u, garagens só no paralelo). **Boxes na posição mais real possível.**
+  - **ESCADA quando o box não cabe no lado real** (registrar na doc qual degrau e a folga, por pista): 1. modelo livre; 2. sem garagens; 3. afastamento mínimo; 4. box mais estreito só naquela pista (regra dos 360px); 5. ajuste de traçado de até 10 u num trecho que não seja o mais característico; 6. lado oposto. **Só parar se nenhum degrau resolver ou se precisar deformar trecho característico.**
+  - **Autonomia para terminar o PR**: as 10 pistas (Monza fica), na ordem do `desvios.txt`; **um commit por pista na branch**, sem push; Silverstone e Nürburgring têm trechos colados, resolver no redesenho delas. Se o contexto apertar: parar num commit, atualizar esta nota e avisar.
+- **🔒 Decisão do Marcos (2026-10-29): box no LADO REAL também quando a pit lane real fica POR FORA** (Imola e Montreal, pelo OSM). `box-viaduto.test.ts` ganhou a lista FECHADA `BOX_REAL_POR_FORA`; as demais continuam obrigadas a ficar dentro.
+- **🔒 Regra do N=8, decisão do Marcos (2026-10-29), teto 0,7 mantido; reabrir o N fica FORA do PR 2b:** se o N=8 passar do teto por causa de uma RETA LONGA, pode-se inserir pontos SOBRE a reta, sem pedir, desde que (a) a silhueta não mude (ponto praticamente em cima da reta), (b) a cerca de folga continue passando, (c) o máximo das 10 volte a ficar abaixo de 0,7. Registrar cada ponto (pista, trecho, coordenada, valor antes e depois). Se o estouro não vier de reta longa, ou se ponto na reta não resolver: PARAR e mostrar.
+  | pista | trecho | ponto inserido | N=8 da pista antes → depois | máximo das 10 depois |
+  |---|---|---|---|---|
+  | Silverstone | Wellington Straight, #11 (370,162) → (193,433) | (282,297) | 0,739 → 0,451 | 0,681 (Mônaco) |
+  | Spa | Kemmel, (414,157) → (714,37) | (564,97) | 0,900 → (com o de baixo) 0,462 | 0,681 (Mônaco) |
+  | Spa | reta da largada, (235,419) → (88,528) (antes do degrau 5) | (162,473) | 0,712 → 0,462 | 0,681 (Mônaco) |
+
+  Remedido em 2026-11-01 sobre `8073151`: máximo 0,681 (Mônaco), Silverstone 0,739 → 0,451 (ponto a 0,15 u da corda) e Kemmel 0,900 → 0,462 (0,00 u) conferem. ⚠️ **A linha da reta da largada de Spa descreve a geometria ANTERIOR ao degrau 5:** o ponto hoje é **#1 (168,481)**, a **4,85 u** da corda (241,427) → (88,528), e sem ele o N=8 de Spa daria 0,659. Ou seja, na geometria commitada ele é desenho do degrau 5 (ajuste de até 10 u), não ponto "sobre a reta" exigido pelo teto. Ficou como está. N=8 por pista: Mônaco 0,681, Nürburgring 0,672, Montreal 0,665, Imola 0,531, Spa 0,462, Interlagos 0,459, Silverstone 0,451, Monza 0,403, Suzuka 0,403, Red Bull Ring 0,279.
+
+**🔒 DECISÃO DO MARCOS, 2026-11-01 — VEREDITO DO PR 2b:** as 10 pistas aprovadas como estão no
+preview, incluindo a zebra mais contínua do miolo de Interlagos e o box curto de Spa. Os achados
+🟡 da revisão entraram como correção ou pendência (`0(ar)`-`0(ax)`), por escolha dele.
+
+**LIÇÃO DO PR 2b, registrada a pedido do Marcos em 2026-11-01:** cerca nova vai em **PR próprio** da
+próxima vez. `scripts/folga-pistas.*` era um PR independente e entrou junto das 10 pistas, do box e
+do viaduto: foram quatro mudanças lógicas em 2.989 inserções.
 
 ## 🔒 NOMES FICTÍCIOS — DECISÕES DO DEV, ditadas em 2026-08-25. Não reabrir sem ele.
 
@@ -2807,8 +2823,9 @@ sem cobertura). **Corrigida no lugar, não contradita ao lado** — duas coisas 
 o defeito do `C1` ambíguo que a §"MEDIÇÕES E AUDITORIAS" já catalogou.
 ~~✅ **A próxima livre é `0(ap)`**, conferido em 2026-09-02: a última ocupada passou a ser `0(ao)`.~~
 ✅ **CORRIGIDA NO LUGAR em 2026-09-02, no mesmo dia: `0(ap)` FOI OCUPADA** pelo PR pré-deploy (as
-três capturas PNG a regerar). **A próxima livre é `0(ar)`**, após ocupar `0(aq)`
-com o rename ditado pelo Marcos em 2026-10-18. É a segunda vez que esta linha
+três capturas PNG a regerar). ~~**A próxima livre é `0(ar)`**, após ocupar `0(aq)`
+com o rename ditado pelo Marcos em 2026-10-18.~~ **A próxima livre é `0(ay)`**, após o PR 2b ocupar
+`0(ar)` a `0(ax)` em 2026-11-01. É a segunda vez que esta linha
 envelhece em dois dias — a anterior apontava `0(ak)`, que o H4 ocupou. 🔑 **Ela é riscada no lugar
 pelo mesmo motivo das outras:** duas pendências com o mesmo rótulo é o defeito do `C1` ambíguo que a
 §"MEDIÇÕES E AUDITORIAS" já catalogou. ⚠️ **Quem for promover esta dívida a pendência confere a
@@ -3637,7 +3654,37 @@ que agora ela é tomada com o número na mão.**
    nova URL com redirect antigo, ou nova URL aceitando quebra dos links.
    Custos e efeitos em salas/DO, saves, tema e reentrada estão no relatório.
    O PR R depende dessa escolha; não trocar `name`/`ALLOWED_ORIGINS` de passagem.
-   `0(ap)` era a última ocupada; próxima livre agora `0(ar)`.
+   ~~`0(ap)` era a última ocupada; próxima livre agora `0(ar)`.~~
+   (ar) 🟡 **NOVA (PR 2b, 2026-11-01) — A GUARDA DO SEGMENTO DE CONTROLE DEGENEROU E ESTÁ A 0,3 u DO
+   VERMELHO.** `minNaoAdj`, em `src/ui/pista-camadas.test.ts`, deixou de medir "sobreposição de
+   asfalto": nas pistas densas, ela mede o menor segmento de controle. O portão continua ativo, então
+   hoje significa "nenhum segmento menor que 17 u", e Nürburgring está em **17,3**. Quando reprovar,
+   a mensagem vai apontar a causa errada. Sugestão do `senior-reviewer`: renomear para o que mede
+   (comprimento mínimo de corda) e deixar a proximidade real para a cerca de folga, que mede em arco.
+   (as) 🟡 **NOVA (PR 2b) — ZEBRAS INTERNAS DE GRAMPO/CHICANE SE TOCANDO** ("mesma curva"), em 9 das
+   10 pistas. Decisão do Marcos de 2026-10-29: fora do PR 2b. A zebra mais contínua do miolo de
+   Interlagos não entra aqui: foi aprovada no veredito de 2026-11-01.
+   (at) 🟡 **NOVA (PR 2b) — SPA E RED BULL RING NO LIMITE DA CERCA DO BOX.** Folga de **3,2 u** em Spa
+   e **3,6 u** no Red Bull Ring, contra o mínimo de **3,125 u** (1 px a 360px). Aprovadas como estão,
+   mas qualquer ajuste de traçado ou de box nessas duas tende a reprovar a cerca.
+   (au) 🟡 **NOVA (PR 2b, revisão) — A GEOMETRIA DO BOX SÓ TEM ASSERÇÃO EM MONZA.** O bloco "desenho
+   do box aberto" de `src/ui/box-viaduto.test.ts` só roda na pista de rampas; as 9 do modelo livre têm
+   continuidade, pontas, isenção e lado. Efeito conhecido: em Suzuka (afastamento 35, box 12 u), a
+   invariante "pit wall sem cobrir o limite" é falsa por **1 u** (0,32 px a 360px), pela aritmética
+   das constantes. Cosmético, e já no preview aprovado.
+   (av) 🟡 **NOVA (PR 2b, revisão), PARA O PR 2c — NADA TRAVA QUE O BOX CAIBA NA MOLDURA.** As guardas
+   de viewBox e moldura só veem o traçado. Montreal declara ponto em `{ x: 958, y: 335 }`, fora da
+   moldura dos traçados (x ≤ 924); a folga do box até o viewBox é de **10,9 u** (medida em 2026-11-01,
+   amostras + meia largura). Hoje passa; um ponto mal digitado sairia cortado em silêncio. Sugestão:
+   estender a guarda às amostras de `caminhoDoBox` das 10 pistas.
+   (aw) 🟡 **NOVA (PR 2b) — RESSALVA DE LICENÇA DOS TRAÇADOS.** O `bacinger/f1-circuits` declara MIT e
+   não cita o OpenStreetMap; a origem anterior dos dados não está documentada. Decisão do Marcos: segue
+   como está, com a ressalva em `THIRD_PARTY_NOTICES.md`.
+   (ax) 🟢 **NOVA (PR 2b, revisão), BAIXA PRIORIDADE:** `pathDoBox` e `CACHE_PATH_BOX` (`src/ui/box.ts`)
+   são código morto em produção, só os testes usam; a banda de isenção "mesma curva" da cerca não tem
+   asserção que trave o argumento do comentário; a cerca não mede o box contra ele mesmo; os ids da
+   máscara da ponte são por pista, não por instância (só importa com duas pistas na mesma tela).
+   `0(ax)` é a última ocupada; próxima livre agora `0(ay)`.
 
 1. **Abertas pelo 7.8:** (a) o `BotaoTema` é um botão discreto no canto do `app-shell` — posição e
    forma **não passaram por veredito de arte**; (b) `erro` (salmão `#FF7B85`) e `raridadeProibido`
@@ -3649,6 +3696,10 @@ que agora ela é tomada com o número na mão.**
 2. **`AMOSTRAS_POR_SEGMENTO` pode cair de 12 pra 4-6 — COM o número.** A justificativa de N=12 era
    que N=8 estourava o teto de 0,7 u; com as silhuetas novas **N=8 desvia 0,539 u**. Baixar move
    todos os goldens, então é execução própria.
+   **Atualização do PR 2b:** com as pistas novas, o máximo do N=8 subiu para **0,681 u** (Mônaco), a
+   2,7% do teto, e a tabela por pista está em §"🔒 DECISÕES DO MARCOS — VIGENTES". Isso enfraquece a
+   base desta pendência; o teto 0,7 fica, e reabrir o N é decisão fora do PR 2b. Vale lembrar que o
+   teste do N=8 é portão: ajuste de traçado pode avermelhá-lo.
 3. **Fusão de camadas — o ASFALTO está resolvido, o resto não.** As 10 passam a guarda do asfalto
    (34), mas **as 10 fundem a camada de LIMITE** (42), de 8,5 (Red Bull Ring) a 21,1 (Suzuka).
    Report-only.

@@ -8,6 +8,10 @@ A partir do PR 2b, os traçados de `src/ui/tracados.ts` (e a Monza, em `TRACADO_
 simplificados e com as chicanes estilizadas para a escala do jogo. Os dados de origem não
 estão neste repositório.
 
+Ressalva registrada em 2026-11-01: o bacinger/f1-circuits declara licença MIT e não cita o
+OpenStreetMap; a origem anterior dos dados não está documentada (o README aponta como fonte
+inicial um mapa do Google My Maps).
+
 ```
 Copyright (c) 2019-2025 Tomislav Bacinger
 
@@ -35,4 +39,5 @@ SOFTWARE.
 O lado da pista, a entrada e a saída das pit lanes (`BOXES_POR_PISTA`, `src/ui/tracados.ts`)
 foram posicionados de forma aproximada consultando o OpenStreetMap
 (© colaboradores do OpenStreetMap, dados sob a licença ODbL, <https://www.openstreetmap.org/copyright>).
-Nenhum ponto foi copiado: a pit lane do jogo é o próprio traçado deslocado a uma distância fixa.
+Nenhum ponto foi copiado: a pit lane do jogo é um trecho paralelo, deslocado do próprio traçado, e
+caminhos de entrada e saída declarados à mão.
