@@ -818,6 +818,15 @@ button.card {
   font-size: 0.9rem;
 }
 
+/* Largura fixa (PR 2a): o número muda durante a corrida, e sem ela o nome ao lado
+   tremeria e cada troca custaria layout na lista inteira. */
+.classificacao-ao-vivo__diferenca {
+  flex: 0 0 3.6rem;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--cor-texto-fraco);
+}
+
 .badge-dnf {
   background: var(--erro); /* PREENCHIMENTO do badge: cor cheia, nao a tinta */
   color: var(--texto-escuro);

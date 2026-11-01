@@ -8,6 +8,7 @@
 import { Fragment } from 'react';
 import type { DraftState, Pista, ResultadoCorrida, ResultadoQuali } from '../engine/types';
 import { dataset } from './dataset-app';
+import { diferencasParaLider, formatarDiferenca } from './diferenca-lider';
 import {
   acumularVoltas,
   classificacaoAoVivo,
@@ -283,6 +284,7 @@ export function TelaCorrida({
   const gridLargada = grid.grid.map((item) => item.jogadorId);
   const linhaDoPit = linhaDoTempoDoPit(resultado, pista);
   const classificacaoAtual = classificacaoAoVivo(resultado, gridLargada, tempoSimMs, pista.voltas, linhaDoPit);
+  const diferencas = diferencasParaLider(resultado, classificacaoAtual, tempoSimMs, pista.voltas, linhaDoPit);
 
   const carrosDoReplay = resultado.classificacao.map((item) => {
     const historico = resultado.historicoVoltas[item.jogadorId] ?? [];
@@ -383,6 +385,7 @@ export function TelaCorrida({
                 {item.status === 'dnf' && <span className="badge-dnf">DNF</span>}
                 {item.status === 'pit' && <span className="badge-pit">🔧 PIT</span>}
                 {item.status === 'terminou' && <span className="classificacao-ao-vivo__chegou">🏁</span>}
+                <span className="classificacao-ao-vivo__diferenca">{formatarDiferenca(diferencas[idx])}</span>
               </li>
             );
           })}
