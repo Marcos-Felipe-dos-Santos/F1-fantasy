@@ -7163,6 +7163,67 @@ typecheck, lint puro e build com saída 0, `versao.test.ts` 3/3, `VERSAO_APP` 3.
 - ⚠️ **Lições:** NÃO rodar `prettier --write` em arquivo existente; gravar em LF (Python: `newline='\n'`); typecheck é `--noEmit` (nunca `tsc -b`); heredoc com código TS quebrou duas vezes no Bash desta máquina — gravar o script Python num arquivo e rodar.
 - **No fim do PR:** cerca e `npm test` verdes; typecheck, lint; `desvios.txt` antes/depois das 10 (`gerar_referencias.py` numa cópia); preview das 10 (celular e desktop, dois temas); regerar `docs/img/silhuetas.svg`; `senior-reviewer` no diff completo do PR; escrever a doc. Sem push, merge ou deploy.
 
+### 2026-11-01 — PR 2c: pit stop animado no replay
+
+Branch `feat/pr2c-pit-stop`, sobre a `main` `d9e8916`. Risco ALTO. Produto em `aa4a372`, instrumentos e
+evidência em `87a923d`. Sem push, merge ou deploy. **Veredito do Marcos, 2026-11-01: aprovado.**
+
+**O que entrou.** `src/ui/pit-replay.ts` transforma o custo do pit numa janela: freia na pista, entra
+no box, para numa vaga, sai no limite e acelera. Antes, o custo se espalhava pela volta inteira.
+`classificacaoAoVivo` recebeu o parâmetro opcional `pit` e usa o mesmo progresso do mapa; o badge PIT
+vale só dentro do box, e invade a volta seguinte porque o box cruza a largada nas 10 pistas.
+`TelaCorrida` lê posição e `prefers-reduced-motion` (`useMovimentoReduzido.ts`). Zero em `src/engine/`,
+`src/data/`, `src/net/` e `party/`; `VERSAO_APP` 3.4.7, sem bump.
+
+**O que a medição mudou no pedido** (`docs/pr2c-medicao.json`, instrumento
+`scripts/medir-pr2c.preview.test.ts`, 100 grids de 22 bots, 10 pistas, 26.307 paradas):
+
+- `ResultadoCorrida` não expõe o custo do pit. A medição o obteve exato, rodando a corrida de novo
+  com as constantes de pit zeradas (aborta se outra volta divergir). Em produção ele é estimado pelas
+  voltas vizinhas sem incidentes: erro máximo de 0,60 a 0,95 s por pista. O erro não afeta `fim`.
+- A fórmula inicial, `custo − tempo no box`, dava negativo na maioria das pistas e omitia o trecho de
+  pista que o box substitui. O Marcos adotou `custo + trecho substituído − tempo no box`.
+- 22 vagas pediriam 264 u, e só Imola tem isso. O Marcos adotou vagas dinâmicas de 13 u, primeira
+  livre, com sobreposição rara aceita em pico. Decisões completas em `ESTADO.md` §DECISÕES.
+
+**Três correções vieram do próprio fluxo:**
+
+- Os testes pegaram um bug da implementação antes do commit: `retorno` não somava o tempo parado.
+- A mutação deu 16/18. Os sobreviventes (`box-cheio-primeira`, `estimador-volta1`) viraram teste. O
+  `senior-reviewer` apontou que o JSON tinha ficado velho e que o script contava comando quebrado como
+  detecção: o script ganhou rodada de controle, e o resultado final é **18/18**.
+- Olhar o preview pegou o print "claro" saindo escuro: o medidor gravava `data-tema` antes de o
+  documento existir. É a armadilha do PR 3.4.1 de novo, desta vez no instrumento.
+
+**Revisão:** `senior-reviewer` sem defeito de runtime. Viraram teste: o cruzamento da largada nas 10
+pistas, a convergência final do painel e o mínimo de vagas. Não aplicada: guarda de `matchMedia`, por
+não haver jsdom no projeto. Sem `balance-harness`: nada de nota ou lógica de corrida mudou.
+
+**Medido em 2026-11-01:** `npm test` 1874 + 1 skipped em 84 arquivos; `test:party` 46/8; typecheck,
+lint e build com saída 0; `versao.test.ts` 3/3. Hashes golden das 10 pistas calculados com `src/`
+igual a `d9e8916`. Baseline vermelho em `docs/pr2c-baseline-vermelho.txt`, com stub de API final.
+
+**FPS** (`docs/pr2c-fps-{antes,depois}.json`, `scripts/medir-fps-pr2c.mjs`, CPU 6× por
+`Emulation.setCPUThrottlingRate`, 360×800, 22 carros, chuva, 5 repetições, mediana, antes → depois):
+
+| Caso | Antes | Depois |
+|---|---:|---:|
+| Spa, média | 64,7 | 60,0 |
+| Montreal, média | 68,6 | 62,2 |
+| Spa, rápida | 63,4 | 60,1 |
+| Montreal, rápida | 63,1 | 62,0 |
+
+Queda real de 2% a 9%, render p50 +0,4 a +0,7 ms. Quadros > 33 ms em 600: 1 a 4 antes, 3 a 4 depois.
+⚠️ As rodadas foram todas as do "antes" e depois todas as do "depois", sem intercalar. É emulação em
+desktop, não aparelho real; **FPS em aparelho real segue não medido.** Em rodadas soltas, o mesmo caso
+variou de 53 a 102 fps nesta máquina: medição de uma rodada só não sustenta conclusão.
+
+**Instrumento de aprovação:** `npx vite build --config scripts/preview-pit.config.ts`, `npx vite preview
+--config scripts/preview-pit.config.ts --host 127.0.0.1 --port 4175 --strictPort`, abrir
+`http://127.0.0.1:4175/scripts/preview-pit.html`. Prints (3, regra de 2026-10-28): `docs/pr2c-imagens/`.
+
+**Pendências abertas:** `0(ay)`, `0(az)`, `0(ba)`. Fechada: `0(av)`.
+
 ## ARQUIVADO DO `ESTADO.md` em 2026-10-28 — §"Estado atual", medições de 2026-08-18 a 2026-09-02
 
 > Movido sem alteração pela sessão principal, a pedido do Marcos. Antes da cópia, 18,8% dos

@@ -12,16 +12,23 @@
 
 ## Estado atual
 
-**2026-11-01, branch `docs/plano-pr2b-silhuetas`**, com o PR 2b fechado sobre `origin/main`
-`4d530e6`. Sem push: o Marcos faz o push e abre o PR.
+**2026-11-01, branch `feat/pr2c-pit-stop`**, com o PR 2c aprovado e commitado sobre a `main` `d9e8916`.
+Sem push: o push, o PR e o deploy aguardam o Marcos.
+~~**2026-11-01, `main` `d9e8916`**, com o PR 1 e o PR 2b mesclados, publicados e testados em
+produção. Próximo: **PR 2c** (pit stop animado), que passou à frente do PR 2a por decisão do Marcos.~~
+~~**2026-11-01, branch `docs/plano-pr2b-silhuetas`**, com o PR 2b fechado sobre `origin/main`
+`4d530e6`. Sem push: o Marcos faz o push e abre o PR.~~
 ~~**2026-10-28, branch `codex/pr1-resultados` em `d6f77cf`** (sobre `26ad532`, que está sobre a
 `main` `ef8c520`). Sem push: a branch existe só localmente até o Marcos decidir.~~
 
 - **Produção pública desde 2026-10-17:** https://f1-fantasy-sala.marcosfeliperigoto.workers.dev.
   `ALLOWED_ORIGINS` = essa origem exata; `ENVIRONMENT=production`. Marcos relatou o online
   testado com sucesso por jogadores reais. Em 2026-10-28, o que estava no ar era a `main` `ef8c520`.
-  O PR 1 entrou na `main` depois (`4d530e6`, PR #3); **esta sessão não conferiu qual commit está
-  publicado hoje.**
+  ~~O PR 1 entrou na `main` depois (`4d530e6`, PR #3); **esta sessão não conferiu qual commit está
+  publicado hoje.**~~ **Corrigido em 2026-11-01, relato do Marcos: o PR 1 e o PR 2b foram mesclados
+  e publicados, e testados em produção num campeonato curto online com 2 jogadores.** Os merges
+  conferem no `git log`; o commit em produção vem do relato, não de consulta ao Worker.
+- **`main` `d9e8916`:** merge do PR #4 (PR 2b pistas + box).
 - **`main` `4d530e6`:** merge do PR #3 (PR 1 Resultados).
 - **`main` `ef8c520`:** merge do PR #2 (nomes reais restaurados). CI em `.github/workflows/ci.yml`;
   CI da main `39053132098` verde. Medido na main em 2026-10-18: 1730 testes principais, 46 Worker.
@@ -32,9 +39,11 @@
 - **Medido pela sessão principal em 2026-10-28, sobre o PR 1:** `npm test` **1764/81**,
   `npm run test:party` **46/8**, typecheck, lint e build com exit 0, `versao.test.ts` 3/3;
   `git diff --stat` vazio em `src/engine/`, `src/data/`, `src/net/` e `party/`.
-- **PR 2b (pistas + box):** fechado na branch, aprovado pelo Marcos. Ver §"Onde parei".
-- **PR 1 Resultados:** commitado em `d6f77cf` com os prints aprovados pelo Marcos, na `main` desde o PR #3.
-- **Abertas que importam agora:** `0(ar)`-`0(ax)`, do PR 2b; FPS do PR 1 em aparelho real (não medido); `0(v)` continua 🟡
+- **PR 2b (pistas + box):** ~~fechado na branch, aprovado pelo Marcos. Ver §"Onde parei".~~ na `main`
+  desde o PR #4 (`d9e8916`) e em produção, aprovado pelo Marcos.
+- **PR 1 Resultados:** commitado em `d6f77cf` com os prints aprovados pelo Marcos, na `main` desde o PR #3 e em produção.
+- **PR 2c (pit stop animado):** ~~implementado em `feat/pr2c-pit-stop`, sem commit de produto, aguardando o veredito visual do Marcos.~~ aprovado pelo Marcos e commitado em `aa4a372`, sem push. Ver §"Onde parei".
+- **Abertas que importam agora:** `0(ar)`-`0(ax)`, do PR 2b; `0(ay)`-`0(ba)`, do PR 2c; FPS do PR 1 em aparelho real (não medido); `0(v)` continua 🟡
   aberta (o flake de `comandos.test.ts` corrigido em 2026-10-17 é outro); `0(aq)`, a URL do
   rename, aguarda escolha do Marcos.
 - **Decisões vigentes:** §"🔒 DECISÕES DO MARCOS — VIGENTES".
@@ -415,6 +424,48 @@ dependência).
 
 ## Onde parei
 
+### 2026-11-01 — PR 2c APROVADO e commitado, aguardando o push do Marcos
+
+Branch `feat/pr2c-pit-stop`, sobre a `main` `d9e8916`. Produto em `aa4a372`, instrumentos e evidência
+em `87a923d`. Sem push, merge ou deploy: decisão do Marcos. Detalhe em `HISTORICO.md` §"2026-11-01 —
+PR 2c". Os rascunhos do PR 2b e os `.txt` da raiz seguem fora dos commits.
+**Próximo:** PR 2a, em sessão nova, depois do merge, na ordem de §"🔒 DECISÕES DO MARCOS — VIGENTES".
+
+### 2026-11-01 — PR 2c IMPLEMENTADO, depois aprovado (entrada acima)
+
+Branch `feat/pr2c-pit-stop`. Risco ALTO. ~~**Produto na árvore de trabalho, SEM commit**, pela regra de
+aguardar o veredito visual:~~ Commitado depois do veredito (entrada acima). Arquivos: `src/ui/pit-replay.ts` e `.test.ts`, `src/ui/useMovimentoReduzido.ts`,
+`src/ui/TelaCorrida.tsx`, `src/ui/fluxo-corrida.ts` e `.test.ts`. Instrumentos e evidência, também
+sem commit: `scripts/preview-pit.{tsx,html,config.ts}`, `scripts/medir-fps-pr2c.mjs`,
+`scripts/mutar-pr2c.mjs`, `docs/pr2c-{baseline-vermelho.txt,fps-antes.json,fps-depois.json,mutacoes.json}`,
+`docs/pr2c-imagens/` (3 prints). `docs/pr2c-medicao.json` e `scripts/medir-pr2c.preview.test.ts`
+foram regenerados: o `deriveSeed` do instrumento reprovava `namespaces-seed.test.ts`, e a seed virou
+aritmética (26.307 paradas, mesmos limites propostos, erro do estimador < 1 s).
+
+- **Medido em 2026-11-01:** `npm test` 1874 + 1 skipped em 84 arquivos, duas vezes seguidas;
+  `test:party` 46/8; typecheck, lint e build com saída 0; `versao.test.ts` 3/3; `VERSAO_APP` 3.4.7;
+  `git diff` vazio em `src/engine/`, `src/data/`, `src/net/` e `party/`. Hashes golden das 10 pistas
+  calculados com `src/` igual a `d9e8916`.
+- **Mutação:** 18/18 detectadas, com rodada de controle. A 1ª rodada deu 16/18; os 2 sobreviventes
+  viraram teste, e a revisão pegou que o JSON estava velho. Reexecutado.
+- **FPS, CPU 6×, 360×800, 22 carros, chuva, 5 repetições, mediana antes → depois:** Spa média
+  64,7 → 60,0; Montreal média 68,6 → 62,2; Spa rápida 63,4 → 60,1; Montreal rápida 63,1 → 62,0.
+  Render p50 +0,4 a +0,7 ms. Quadros > 33 ms: 1 a 4 antes e 3 a 4 depois, em 600. ⚠️ É emulação em
+  desktop, não aparelho real, e a máquina é ruidosa (mesmo caso, 53 a 102 fps em rodadas soltas).
+- **`senior-reviewer`:** sem defeito de runtime. O 🔴 era o JSON de mutação velho (resolvido). Aplicados:
+  controle no script de mutação, cruzamento da largada nas 10 pistas, convergência final do painel.
+  Viraram pendência `0(ay)` e `0(az)`. Não aplicado: guarda de `matchMedia` (sem jsdom no projeto).
+- **Preview:** `npx vite build --config scripts/preview-pit.config.ts`, depois `npx vite preview --config
+  scripts/preview-pit.config.ts --host 127.0.0.1 --port 4175 --strictPort`, e abrir
+  `http://127.0.0.1:4175/scripts/preview-pit.html`.
+- ~~**Próximo:** veredito do Marcos. Aprovado: commit de produto + instrumentos, `HISTORICO.md`, parar.~~ Feito.
+
+### 2026-11-01 — PR 1 e PR 2b em produção; PR 2c à frente do PR 2a
+
+Relato do Marcos: PR 1 e PR 2b mesclados, publicados e testados em produção (campeonato curto
+online com 2 jogadores). Por decisão dele, o **PR 2c (pit stop animado) vem antes do PR 2a**
+(§"🔒 DECISÕES DO MARCOS — VIGENTES"). O PR 2c está na medição prévia, sem código de produto.
+
 ### 2026-11-01 — PR 2b FECHADO na branch, aguardando o push do Marcos
 
 Branch `docs/plano-pr2b-silhuetas`, sobre `origin/main` `4d530e6`. Sem push, merge ou deploy: **o
@@ -440,7 +491,8 @@ Marcos faz o push e abre o PR.** Detalhe completo, com a nota de passagem do PR,
   `scripts/propostas-pr2b.ts`, `scripts/preview-pr2b-box.preview.test.ts`,
   `scripts/preview-pr2b-pistas.preview.test.ts` e os 5 `.txt` da raiz (dumps do Marcos de 21/10, ele
   apaga à mão). Nenhum arquivo commitado importa os rascunhos.
-- **Próximo:** PR 2a, na ordem de §"🔒 DECISÕES DO MARCOS — VIGENTES". O PR R segue sem posição.
+- **Próximo:** ~~PR 2a, na ordem de §"🔒 DECISÕES DO MARCOS — VIGENTES".~~ PR 2c, ver a entrada
+  acima. O PR R segue sem posição.
 
 ### 2026-10-29 — Ciclo de regras de doc (sem PR de produto)
 
@@ -2116,8 +2168,10 @@ carros/chuva/spray/incidentes → PR 2b pit lane → PR 3 sons.~~ **Substituída
 (decisão do Marcos):** PR 1 Resultados ✅ → PR R Rename → PR 2a carros/chuva/spray/incidentes →
 **PR 2b redesenho de pistas** → **PR 2c pit lane (antes chamado 2b)** → PR 3 sons. Toda menção
 anterior a "PR 2b pit lane" neste arquivo e em `docs/auditoria-pre-pr1.md` passa a ler **PR 2c**.
-**Ordem vigente, também de 2026-10-29:** PR 1 ✅ → PR 2b ✅ (fechado, aguardando push) → PR 2a → PR 2c
-(só a animação do pit) → PR 3. O PR R segue pendente, sem posição.
+~~**Ordem vigente, também de 2026-10-29:** PR 1 ✅ → PR 2b ✅ (fechado, aguardando push) → PR 2a → PR 2c
+(só a animação do pit) → PR 3. O PR R segue pendente, sem posição.~~
+**Ordem vigente, decisão do Marcos de 2026-11-01:** PR 1 ✅ → PR 2b ✅ → **PR 2c (pit stop animado) →
+PR 2a (carros/chuva/spray/incidentes)** → PR 3. O PR R segue pendente, sem posição.
 Regras completas em
 `docs/auditoria-pre-pr1.md`: zero engine/dados; digest verde; risco e vermelho
 onde houver lógica nova; reduced-motion/velocidades; FPS antes/depois com
@@ -2180,6 +2234,33 @@ passagem do PR):
 **🔒 DECISÃO DO MARCOS, 2026-11-01 — VEREDITO DO PR 2b:** as 10 pistas aprovadas como estão no
 preview, incluindo a zebra mais contínua do miolo de Interlagos e o box curto de Spa. Os achados
 🟡 da revisão entraram como correção ou pendência (`0(ar)`-`0(ax)`), por escolha dele.
+
+**🔒 DECISÃO DO MARCOS, 2026-11-01 — PR 2c ANTES DO PR 2a E ESCOPO DO PR 2c:** o pit stop animado
+vem antes dos carros. O PR 2c é só apresentação: zero alteração em `src/engine/` e `src/data/`, sem
+bump de versão, resultado da corrida idêntico. O carro entra pelo caminho do box do PR 2b no limite
+de velocidade, para numa vaga ao longo do trecho com garagens, fica parado (toda a variação de
+tempo entre os carros acontece ali), sai no limite e acelera ao voltar à pista. Regras: respeitar
+`prefers-reduced-motion` e as velocidades do replay; FPS medido com CPU limitada; teste que prova
+que resultado e hashes não mudam; no máximo 3 prints no repositório; doc pela sessão principal;
+nada de push, merge ou deploy. Antes de código: medição apresentada ao Marcos, risco classificado.
+
+**🔒 DECISÕES DO MARCOS, 2026-11-01 — PR 2c, sobre a medição** (`docs/pr2c-medicao.json`, 100 grids,
+10 pistas, 26.301 paradas; instrumento `scripts/medir-pr2c.preview.test.ts`):
+
+- **Fórmula:** `parado = custo + tempo do trecho de pista substituído − tempo no box no limite`. A
+  fórmula inicial (`custo − tempo no box`) foi trocada por ele: o custo do motor é tempo A MAIS sobre
+  uma volta limpa, não o tempo total no box. A variação entre carros fica toda no tempo parado.
+- **Limite (opção A):** 50% da velocidade de corrida da pista, no caminho inteiro do box, em 8 pistas.
+  **Exceções registradas: Imola (55%) e Montreal (50%), com o limite só no trecho paralelo.** Trava:
+  parado nunca abaixo de 4 s simulados.
+- **Vagas:** dinâmicas, primeira livre, 13 u cada; nas pistas sem garagens (Spa, Suzuka, Nürburgring),
+  o trecho paralelo. Sobreposição rara em pico aceita.
+- **`prefers-reduced-motion`:** o carro aparece direto na vaga, fica o mesmo tempo e reaparece na saída.
+- **Aceitos:** estimar o custo do pit sem mexer no motor (erro < 1 s); classificação usando o mesmo
+  progresso do mapa; badge PIT só na janela do box (mudança de contrato com baseline vermelho).
+
+**🔒 DECISÃO DO MARCOS, 2026-11-01 — VEREDITO DO PR 2c:** aprovado depois do preview. Mandou registrar
+a `0(ba)` como pendência.
 
 **LIÇÃO DO PR 2b, registrada a pedido do Marcos em 2026-11-01:** cerca nova vai em **PR próprio** da
 próxima vez. `scripts/folga-pistas.*` era um PR independente e entrou junto das 10 pistas, do box e
@@ -3672,7 +3753,7 @@ que agora ela é tomada com o número na mão.**
    continuidade, pontas, isenção e lado. Efeito conhecido: em Suzuka (afastamento 35, box 12 u), a
    invariante "pit wall sem cobrir o limite" é falsa por **1 u** (0,32 px a 360px), pela aritmética
    das constantes. Cosmético, e já no preview aprovado.
-   (av) 🟡 **NOVA (PR 2b, revisão), PARA O PR 2c — NADA TRAVA QUE O BOX CAIBA NA MOLDURA.** As guardas
+   (av) ✅ **FECHADA no PR 2c (`aa4a372`):** `pit-replay.test.ts` trava as amostras de `caminhoDoBox` das 10 pistas no viewBox. *(Texto original:)* 🟡 **NOVA (PR 2b, revisão), PARA O PR 2c — NADA TRAVA QUE O BOX CAIBA NA MOLDURA.** As guardas
    de viewBox e moldura só veem o traçado. Montreal declara ponto em `{ x: 958, y: 335 }`, fora da
    moldura dos traçados (x ≤ 924); a folga do box até o viewBox é de **10,9 u** (medida em 2026-11-01,
    amostras + meia largura). Hoje passa; um ponto mal digitado sairia cortado em silêncio. Sugestão:
@@ -3684,7 +3765,17 @@ que agora ela é tomada com o número na mão.**
    são código morto em produção, só os testes usam; a banda de isenção "mesma curva" da cerca não tem
    asserção que trave o argumento do comentário; a cerca não mede o box contra ele mesmo; os ids da
    máscara da ponte são por pista, não por instância (só importa com duas pistas na mesma tela).
-   `0(ax)` é a última ocupada; próxima livre agora `0(ay)`.
+   ~~`0(ax)` é a última ocupada; próxima livre agora `0(ay)`.~~
+   (ay) 🟢 **NOVA (PR 2c, revisão) — PARADAS EM VOLTAS SEGUIDAS DARIAM SALTO.** Com duas paradas em voltas
+   consecutivas, `ativa()` em `src/ui/pit-replay.ts` pega a primeira janela e o progresso salta em
+   `fim`. Hoje inalcançável: `corrida.ts` zera o desgaste na parada, e a medição deu 0 consecutivas.
+   (az) 🟡 **NOVA (PR 2c, revisão) — A LIGAÇÃO EM `TelaCorrida.tsx` NÃO TEM TESTE:** nenhum teste renderiza
+   `TelaCorrida` (sem jsdom). A evidência de `movimentoReduzido`, da linha do pit e do badge na tela é o
+   preview. Mesma família de `0(m)`.
+   (ba) 🟡 **NOVA (PR 2c) — UMA FALHA ÚNICA SEM CAUSA ACHADA.** Logo depois da mutação, um `npm test`
+   reprovou `src/net/cerca-lint.test.ts` e um `test:party` reprovou 1 teste. Os dois passaram isolados e
+   em 2 rodadas completas seguidas, com os servidores de preview desligados. A mensagem não foi guardada.
+   `0(ba)` é a última ocupada; próxima livre agora `0(bb)`.
 
 1. **Abertas pelo 7.8:** (a) o `BotaoTema` é um botão discreto no canto do `app-shell` — posição e
    forma **não passaram por veredito de arte**; (b) `erro` (salmão `#FF7B85`) e `raridadeProibido`

@@ -11,8 +11,6 @@ import { dataset } from './dataset-app';
 import {
   acumularVoltas,
   classificacaoAoVivo,
-  fracaoVisual,
-  pontoNoTracado,
   voltaAtual,
   type VelocidadeReplay,
 } from './fluxo-corrida';
@@ -31,7 +29,8 @@ import {
   pathsDeZebraDaPista,
   varDeCor,
 } from './pista-camadas';
-import { tracadoSuavizado } from './suavizacao';
+import { linhaDoTempoDoPit } from './pit-replay';
+import { useMovimentoReduzido } from './useMovimentoReduzido';
 import {
   ESPESSURA_BORDA_BOX,
   LARGURA_GARAGEM,
@@ -43,7 +42,6 @@ import {
   LARGURA_ESCAPE as LARGURA_ESCAPE_VIADUTO,
   OPACIDADE_SOMBRA,
   OPACIDADE_TABULEIRO,
-  estaSobViaduto,
   pathsDosViadutos,
 } from './viaduto';
 
@@ -233,6 +231,8 @@ export function TelaCorrida({
   velocidade,
   onVelocidade,
 }: TelaCorridaProps) {
+  const movimentoReduzido = useMovimentoReduzido();
+
   if (fase === 'grid') {
     return (
       <div className="tela-corrida">
@@ -281,15 +281,22 @@ export function TelaCorrida({
     (narrada) => narrada.evento.volta <= volta,
   );
   const gridLargada = grid.grid.map((item) => item.jogadorId);
-  const classificacaoAtual = classificacaoAoVivo(resultado, gridLargada, tempoSimMs, pista.voltas);
+  const linhaDoPit = linhaDoTempoDoPit(resultado, pista);
+  const classificacaoAtual = classificacaoAoVivo(resultado, gridLargada, tempoSimMs, pista.voltas, linhaDoPit);
 
   const carrosDoReplay = resultado.classificacao.map((item) => {
     const historico = resultado.historicoVoltas[item.jogadorId] ?? [];
-    const fracao = fracaoVisual(historico, tempoSimMs, item.status, pista.voltas);
     // Curva SUAVIZADA, a mesma geometria que `pathDaVolta` desenha
     // (PR 7.4): usar a polilinha de controle aqui deixaria os carros
-    // cortando as curvas por fora do asfalto desenhado.
-    const ponto = pontoNoTracado(tracadoSuavizado(pista.id), fracao);
+    // cortando as curvas por fora do asfalto desenhado. No pit, o caminho do
+    // box (PR 2c).
+    const { ponto, sob } = linhaDoPit.posicao(
+      item.jogadorId,
+      historico,
+      item.status,
+      tempoSimMs,
+      movimentoReduzido,
+    );
     const somaHistorico = acumularVoltas(historico).at(-1) ?? 0;
     const congelado = item.status === 'dnf' && tempoSimMs >= somaHistorico;
     const ehHumano = ehHumanoId(state, item.jogadorId);
@@ -303,7 +310,7 @@ export function TelaCorrida({
     return {
       // PR 2b: carro na passagem de baixo de um viaduto é desenhado ANTES do
       // tabuleiro, pra aparecer através dele e não por cima.
-      sob: estaSobViaduto(pista.id, fracao),
+      sob,
       el: (
         <circle
           key={item.jogadorId}

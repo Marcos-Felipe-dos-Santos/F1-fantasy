@@ -1,0 +1,22 @@
+Baseline vermelho do PR 2c, com stub de pit-replay.ts (API final, comportamento antigo), sobre d9e8916.
+Comando: npx vitest run src/ui/pit-replay.test.ts src/ui/fluxo-corrida.test.ts
+
+      Tests  16 failed | 21 passed (37)
+ FAIL  src/ui/fluxo-corrida.test.ts [ src/ui/fluxo-corrida.test.ts ]
+ FAIL  src/ui/pit-replay.test.ts > classificação e badge (contrato novo do PR 2c) > a ordem usa o progresso do mapa: quem vai parar segue na frente até a janela
+ FAIL  src/ui/pit-replay.test.ts > classificação e badge (contrato novo do PR 2c) > badge só na janela do box, inclusive na volta seguinte, depois da largada
+ FAIL  src/ui/pit-replay.test.ts > custo estimado > desconta incidente nas voltas vizinhas e na própria
+ FAIL  src/ui/pit-replay.test.ts > custo estimado > vizinhas sem incidente: lê o custo dentro de 1 s na corrida real
+ FAIL  src/ui/pit-replay.test.ts > fórmula do tempo parado (decisão do Marcos, 2026-11-01) > a diferença de custo entre dois carros fica TODA no tempo parado
+ FAIL  src/ui/pit-replay.test.ts > fórmula do tempo parado (decisão do Marcos, 2026-11-01) > a trava segura o parado em 4 s simulados, acelerando o carro no box
+ FAIL  src/ui/pit-replay.test.ts > fórmula do tempo parado (decisão do Marcos, 2026-11-01) > parado = custo + trecho de pista substituído − tempo no box (no limite, e as rampas)
+ FAIL  src/ui/pit-replay.test.ts > limite de velocidade (opção A) > 50% em 8 pistas; Imola e Montreal só no paralelo
+ FAIL  src/ui/pit-replay.test.ts > limite de velocidade (opção A) > pista-imola: anda no limite nos trechos que a decisão manda, e para na vaga
+ FAIL  src/ui/pit-replay.test.ts > limite de velocidade (opção A) > pista-spa: anda no limite nos trechos que a decisão manda, e para na vaga
+ FAIL  src/ui/pit-replay.test.ts > prefers-reduced-motion > aparece direto na vaga, fica o mesmo tempo e reaparece na saída
+ FAIL  src/ui/pit-replay.test.ts > progresso do replay > o carro não adianta: a janela termina exatamente na linha do tempo do motor
+ FAIL  src/ui/pit-replay.test.ts > progresso do replay > parado, o progresso congela e os outros passam
+ FAIL  src/ui/pit-replay.test.ts > vagas dinâmicas > box cheio: sobrepõe na vaga que libera primeiro, sem sumir com ninguém
+ FAIL  src/ui/pit-replay.test.ts > vagas dinâmicas > dois carros juntos pegam vagas diferentes, e a vaga livre volta a ser a primeira
+ FAIL  src/ui/pit-replay.test.ts > vagas dinâmicas > primeira livre, a 13 u, dentro do trecho paralelo das 10 pistas
+ Test Files  2 failed (2)

@@ -1,0 +1,92 @@
+[
+  {
+    "nome": "formula-sem-trecho",
+    "detectada": true,
+    "falha": "src/ui/pit-replay.test.ts > fórmula do tempo parado (decisão do Marcos, 2026-11-01) > parado = custo + trecho de pista substituído − tempo no box (no limite, e as rampas)"
+  },
+  {
+    "nome": "limite-sem-excecao",
+    "detectada": true,
+    "falha": "src/ui/pit-replay.test.ts > limite de velocidade (opção A) > 50% em 8 pistas; Imola e Montreal só no paralelo"
+  },
+  {
+    "nome": "imola-razao",
+    "detectada": true,
+    "falha": "src/ui/pit-replay.test.ts > limite de velocidade (opção A) > 50% em 8 pistas; Imola e Montreal só no paralelo"
+  },
+  {
+    "nome": "sem-trava",
+    "detectada": true,
+    "falha": "src/ui/pit-replay.test.ts > fórmula do tempo parado (decisão do Marcos, 2026-11-01) > a trava segura o parado em 4 s simulados, acelerando o carro no box"
+  },
+  {
+    "nome": "vaga-fixa",
+    "detectada": true,
+    "falha": "src/ui/pit-replay.test.ts > vagas dinâmicas > dois carros juntos pegam vagas diferentes, e a vaga livre volta a ser a primeira"
+  },
+  {
+    "nome": "vaga-nunca-libera",
+    "detectada": true,
+    "falha": "src/ui/pit-replay.test.ts > vagas dinâmicas > dois carros juntos pegam vagas diferentes, e a vaga livre volta a ser a primeira"
+  },
+  {
+    "nome": "box-cheio-primeira",
+    "detectada": true,
+    "falha": "src/ui/pit-replay.test.ts > vagas dinâmicas > box cheio: quem sobra vai para a vaga que libera antes, não para a primeira"
+  },
+  {
+    "nome": "espaco-vaga",
+    "detectada": true,
+    "falha": "src/ui/pit-replay.test.ts > vagas dinâmicas > primeira livre, a 13 u, dentro do trecho paralelo das 10 pistas"
+  },
+  {
+    "nome": "estimador-com-incidente",
+    "detectada": true,
+    "falha": "src/ui/pit-replay.test.ts > custo estimado > desconta incidente nas voltas vizinhas e na própria"
+  },
+  {
+    "nome": "estimador-volta1",
+    "detectada": true,
+    "falha": "src/ui/pit-replay.test.ts > custo estimado > parada na volta 2 não usa a volta 1, que carrega o atraso de grid"
+  },
+  {
+    "nome": "reduzido-ignorado",
+    "detectada": true,
+    "falha": "src/ui/pit-replay.test.ts > prefers-reduced-motion > aparece direto na vaga, fica o mesmo tempo e reaparece na saída"
+  },
+  {
+    "nome": "sem-aceleracao",
+    "detectada": true,
+    "falha": "src/ui/pit-replay.test.ts > fórmula do tempo parado (decisão do Marcos, 2026-11-01) > parado = custo + trecho de pista substituído − tempo no box (no limite, e as rampas)"
+  },
+  {
+    "nome": "retorno-sem-parado",
+    "detectada": true,
+    "falha": "src/ui/pit-replay.test.ts > fórmula do tempo parado (decisão do Marcos, 2026-11-01) > a diferença de custo entre dois carros fica TODA no tempo parado"
+  },
+  {
+    "nome": "progresso-parado-anda",
+    "detectada": true,
+    "falha": "src/ui/pit-replay.test.ts > limite de velocidade (opção A) > pista-spa: anda no limite nos trechos que a decisão manda, e para na vaga"
+  },
+  {
+    "nome": "ritmo-antigo-na-volta",
+    "detectada": true,
+    "falha": "src/ui/pit-replay.test.ts > fórmula do tempo parado (decisão do Marcos, 2026-11-01) > parado = custo + trecho de pista substituído − tempo no box (no limite, e as rampas)"
+  },
+  {
+    "nome": "badge-volta-inteira",
+    "detectada": true,
+    "falha": "src/ui/fluxo-corrida.test.ts > classificacaoAoVivo > status \"pit\" (PR 2.7) > no começo da volta do pit, antes de entrar no box, o status segue \"correndo\""
+  },
+  {
+    "nome": "classificacao-progresso-antigo",
+    "detectada": true,
+    "falha": "src/ui/pit-replay.test.ts > classificação e badge (contrato novo do PR 2c) > a ordem usa o progresso do mapa: quem vai parar segue na frente até a janela"
+  },
+  {
+    "nome": "classificacao-sem-badge",
+    "detectada": true,
+    "falha": "src/ui/fluxo-corrida.test.ts > classificacaoAoVivo > status \"pit\" (PR 2.7) > parado no box, o carro aparece com status \"pit\""
+  }
+]
