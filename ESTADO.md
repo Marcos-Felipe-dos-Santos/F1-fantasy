@@ -439,6 +439,9 @@ dependência).
   | Silverstone | Wellington Straight, #11 (370,162) → (193,433) | (282,297) | 0,739 → 0,451 | 0,681 (Mônaco) |
   | Spa | Kemmel, (414,157) → (714,37) | (564,97) | 0,900 → (com o de baixo) 0,462 | 0,681 (Mônaco) |
   | Spa | reta da largada, (235,419) → (88,528) (antes do degrau 5) | (162,473) | 0,712 → 0,462 | 0,681 (Mônaco) |
+
+  Remedido em 2026-11-01 sobre `8073151`: máximo 0,681 (Mônaco), Silverstone 0,739 → 0,451 (ponto a 0,15 u da corda) e Kemmel 0,900 → 0,462 (0,00 u) conferem. ⚠️ **A linha da reta da largada de Spa descreve a geometria ANTERIOR ao degrau 5:** o ponto hoje é **#1 (168,481)**, a **4,85 u** da corda (241,427) → (88,528), e sem ele o N=8 de Spa daria 0,659. Ou seja, na geometria commitada ele é desenho do degrau 5 (ajuste de até 10 u), não ponto "sobre a reta" exigido pelo teto. Ficou como está. N=8 por pista: Mônaco 0,681, Nürburgring 0,672, Montreal 0,665, Imola 0,531, Spa 0,462, Interlagos 0,459, Silverstone 0,451, Monza 0,403, Suzuka 0,403, Red Bull Ring 0,279.
+
 - **Pendência NOVA (decisão do Marcos, 2026-10-29), não mexer no PR 2b:** a guarda que mede o menor segmento de controle (`minNaoAdj`, "sobreposição de asfalto") degenerou; a cerca de folga cobre a distância entre trechos. Abrir em §"Pendências ATIVAS" na doc de fechamento.
 - **Método por pista:**
   1. `python -I scripts/derivar-tracado-real.py <pista> 2 referencias/pistas-2b .` dá a BASE (pontos alinhados + pit lane OSM). Nas pistas ainda não trocadas, rodar direto funciona. Guardar a base (as do lote 1 estão em `referencias/pistas-2b/bases-lote1/`).
