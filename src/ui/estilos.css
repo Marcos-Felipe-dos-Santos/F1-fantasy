@@ -682,6 +682,63 @@ button.card {
   stroke: none;
 }
 
+/* Chuva (PR 2a): sobrescreve só o token, então tabuleiro de viaduto e zebra seguem iguais. */
+.tracado-svg--molhado {
+  --pista-asfalto: var(--pista-asfalto-molhado);
+}
+
+.tracado-svg__reflexo {
+  fill: none;
+  stroke: var(--pista-limite);
+  stroke-opacity: 0.4;
+  stroke-linecap: round;
+}
+
+/* A chuva é HTML por cima do SVG, não parte dele: duas camadas de um ladrilho fixo que só
+   mudam `transform`, no compositor, sem tocar na pista nem custar repintura a cada frame.
+   O passo da animação é exatamente um ladrilho para cada lado, por isso não há emenda. */
+.tracado-chuva {
+  position: relative;
+}
+
+.chuva-replay {
+  position: absolute;
+  inset: 3px;
+  overflow: hidden;
+  border-radius: var(--raio-lg);
+  pointer-events: none;
+}
+
+.chuva-replay__camada {
+  position: absolute;
+  top: -320px;
+  right: -80px;
+  bottom: 0;
+  left: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='320'%3E%3Cpath d='M62 18l-5 20M24 96l-5 20M72 170l-5 20M38 246l-5 20' stroke='white' stroke-opacity='.5'/%3E%3C/svg%3E");
+  background-size: 80px 320px;
+  will-change: transform;
+  animation: chuva-queda 0.5s linear infinite;
+  --chuva-x: -80px;
+  --chuva-y: 320px;
+}
+
+.chuva-replay__camada--fundo {
+  top: -220px;
+  right: -55px;
+  background-size: 55px 220px;
+  opacity: 0.55;
+  animation-duration: 0.8s;
+  --chuva-x: -55px;
+  --chuva-y: 220px;
+}
+
+@keyframes chuva-queda {
+  to {
+    transform: translate3d(var(--chuva-x), var(--chuva-y), 0);
+  }
+}
+
 /* Anel do carro de quem joga neste aparelho: sem ele, o vermelho some na zebra. */
 .tracado-svg__halo {
   fill: var(--carro-halo);

@@ -5,7 +5,14 @@
  */
 
 import { memo } from 'react';
-import { CORPO_DO_CARRO, RAIO_HALO, RODAS_DO_CARRO, asasDoCarro } from './carro-replay';
+import {
+  CORPO_DO_CARRO,
+  RAIO_HALO,
+  RODAS_DO_CARRO,
+  SPRAY_POR_NIVEL,
+  asasDoCarro,
+  type NivelSpray,
+} from './carro-replay';
 
 export const DefsDoCarro = memo(function DefsDoCarro({ estreita }: { estreita: boolean }) {
   const { dianteira, traseira } = asasDoCarro(estreita);
@@ -20,6 +27,19 @@ export const DefsDoCarro = memo(function DefsDoCarro({ estreita }: { estreita: b
         <path d={CORPO_DO_CARRO} />
         <ellipse className="carro-c__cockpit" cx={-1} cy={0} rx={3.4} ry={2} />
       </g>
+      <linearGradient id="spray-gradiente" x1="1" x2="0" y1="0" y2="0">
+        <stop offset="0" stopColor="var(--carro-halo)" />
+        <stop offset="1" stopColor="var(--carro-halo)" stopOpacity="0" />
+      </linearGradient>
+      {Object.entries(SPRAY_POR_NIVEL).map(([nivel, { comprimento, meiaLargura, opacidade }]) => (
+        <path
+          key={nivel}
+          id={`spray-${nivel}`}
+          d={`M-13 -6 L${-13 - comprimento} ${-meiaLargura} L${-13 - comprimento} ${meiaLargura} L-13 6 Z`}
+          fill="url(#spray-gradiente)"
+          fillOpacity={opacidade}
+        />
+      ))}
     </defs>
   );
 });
@@ -30,6 +50,10 @@ interface CarroNaPistaProps {
   contorno: number;
   halo: boolean;
   titulo: string;
+}
+
+export function SprayDoCarro({ transform, nivel }: { transform: string; nivel: Exclude<NivelSpray, 0> }) {
+  return <use className="tracado-svg__spray" href={`#spray-${nivel}`} transform={transform} />;
 }
 
 export function CarroNaPista({ transform, classes, contorno, halo, titulo }: CarroNaPistaProps) {

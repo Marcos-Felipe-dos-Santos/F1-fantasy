@@ -84,3 +84,39 @@ export const RODAS_DO_CARRO: readonly Retangulo[] = [
 ];
 
 export const CORPO_DO_CARRO = 'M13 -1.6 L3 -3 L-1 -5.4 L-9 -5 L-13 -2.2 L-13 2.2 L-9 5 L-1 5.4 L3 3 L13 1.6 Z';
+
+/**
+ * Cortes do spray em u até o carro da frente, das distâncias medidas em 400
+ * corridas: 35% dos pares andam a menos de 30 u e 62% a menos de 60 u.
+ */
+export const CORTE_SPRAY_FORTE = 30;
+export const CORTE_SPRAY_MEDIO = 60;
+
+/** Comprimento, meia largura e opacidade por nível: é um desenho só em cada `<use>`. */
+export const SPRAY_POR_NIVEL = {
+  1: { comprimento: 20, meiaLargura: 8, opacidade: 0.3 },
+  2: { comprimento: 32, meiaLargura: 10, opacidade: 0.45 },
+  3: { comprimento: 46, meiaLargura: 12, opacidade: 0.6 },
+} as const;
+
+export type NivelSpray = 0 | keyof typeof SPRAY_POR_NIVEL;
+
+/**
+ * Spray de cada carro pela distância até o carro à frente dele NA PISTA, por isso
+ * em anel: a volta em que cada um está não importa. Decisão do Marcos para "mais
+ * forte para quem vem atrás": quanto mais perto, mais spray. `null` é carro fora da
+ * pista (box, chegada, abandono), que não solta spray nem conta como carro da frente.
+ * Em nível, não em valor contínuo: o atributo só muda quando cruza um corte.
+ */
+export function niveisDeSpray(fracoes: readonly (number | null)[], perimetro: number): NivelSpray[] {
+  const naPista = fracoes.flatMap((fracao, indice) => (fracao === null ? [] : [{ fracao, indice }]));
+  naPista.sort((a, b) => a.fracao - b.fracao || a.indice - b.indice);
+  const niveis = fracoes.map((): NivelSpray => 0);
+  naPista.forEach(({ fracao, indice }, i) => {
+    const frente = naPista[i + 1] ?? naPista[0];
+    const voltaCompleta = i === naPista.length - 1 ? 1 : 0;
+    const distancia = (frente.fracao + voltaCompleta - fracao) * perimetro;
+    niveis[indice] = distancia < CORTE_SPRAY_FORTE ? 3 : distancia < CORTE_SPRAY_MEDIO ? 2 : 1;
+  });
+  return niveis;
+}

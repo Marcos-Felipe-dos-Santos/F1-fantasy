@@ -7,13 +7,14 @@
 
 import { Fragment } from 'react';
 import type { DraftState, Pista, ResultadoCorrida, ResultadoQuali } from '../engine/types';
-import { CONTORNO_HUMANO, ESCALA_CARRO, contornoDoBot } from './carro-replay';
-import { CarroNaPista, DefsDoCarro } from './CarroReplay';
+import { CONTORNO_HUMANO, ESCALA_CARRO, contornoDoBot, niveisDeSpray } from './carro-replay';
+import { CarroNaPista, DefsDoCarro, SprayDoCarro } from './CarroReplay';
 import { dataset } from './dataset-app';
 import { diferencasParaLider, formatarDiferenca } from './diferenca-lider';
 import {
   acumularVoltas,
   classificacaoAoVivo,
+  lutDoTracado,
   voltaAtual,
   type VelocidadeReplay,
 } from './fluxo-corrida';
@@ -30,7 +31,9 @@ import {
   pathsDeZebraDaPista,
   varDeCor,
 } from './pista-camadas';
+import { LARGURA_REFLEXO, reflexosDaPista } from './molhado';
 import { linhaDoTempoDoPit } from './pit-replay';
+import { tracadoSuavizado } from './suavizacao';
 import { useMovimentoReduzido } from './useMovimentoReduzido';
 import { useTelaEstreita } from './useTelaEstreita';
 import {
@@ -183,6 +186,17 @@ export function ViadutosDaPista({ pistaId }: { pistaId: string }) {
   );
 }
 
+/** Asfalto molhado: estático, então fica também com movimento reduzido (ver `molhado.ts`). */
+function ReflexosMolhados({ pistaId }: { pistaId: string }) {
+  return (
+    <>
+      {reflexosDaPista(pistaId).map(({ d, tracejado }) => (
+        <path key={tracejado} d={d} strokeWidth={LARGURA_REFLEXO} strokeDasharray={tracejado} className="tracado-svg__reflexo" />
+      ))}
+    </>
+  );
+}
+
 interface TelaCorridaProps {
   state: DraftState;
   pista: Pista;
@@ -295,21 +309,26 @@ export function TelaCorrida({
   const diferencas = diferencasParaLider(resultado, classificacaoAtual, tempoSimMs, pista.voltas, linhaDoPit);
 
   const escalas = telaEstreita ? ESCALA_CARRO.estreita : ESCALA_CARRO.larga;
-  const carrosDoReplay = resultado.classificacao.map((item) => {
+  const posicoes = resultado.classificacao.map((item) => {
     const historico = resultado.historicoVoltas[item.jogadorId] ?? [];
     // Curva SUAVIZADA, a mesma geometria que `pathDaVolta` desenha
     // (PR 7.4): usar a polilinha de controle aqui deixaria os carros
     // cortando as curvas por fora do asfalto desenhado. No pit, o caminho do
     // box (PR 2c).
-    const { ponto, sob, rumo } = linhaDoPit.posicao(
-      item.jogadorId,
-      historico,
-      item.status,
-      tempoSimMs,
-      movimentoReduzido,
-    );
-    const somaHistorico = acumularVoltas(historico).at(-1) ?? 0;
-    const congelado = item.status === 'dnf' && tempoSimMs >= somaHistorico;
+    const posicao = linhaDoPit.posicao(item.jogadorId, historico, item.status, tempoSimMs, movimentoReduzido);
+    return { ...posicao, parou: tempoSimMs >= (acumularVoltas(historico).at(-1) ?? 0) };
+  });
+  const niveisSpray =
+    resultado.chuva && !movimentoReduzido
+      ? niveisDeSpray(
+          posicoes.map((p) => (p.parou ? null : p.fracaoNaPista)),
+          lutDoTracado(tracadoSuavizado(pista.id)).comprimentoTotal,
+        )
+      : null;
+
+  const carrosDoReplay = resultado.classificacao.map((item, indice) => {
+    const { ponto, sob, rumo, parou } = posicoes[indice];
+    const congelado = item.status === 'dnf' && parou;
     const ehHumano = ehHumanoId(state, item.jogadorId);
     const ehLocal = jogadorLocalId === undefined ? ehHumano : item.jogadorId === jogadorLocalId;
     const classes = [
@@ -320,12 +339,14 @@ export function TelaCorrida({
       .filter(Boolean)
       .join(' ');
     const transform = `translate(${ponto.x.toFixed(2)} ${ponto.y.toFixed(2)}) rotate(${rumo.toFixed(1)}) scale(${ehHumano ? escalas.humano : escalas.bot})`;
+    const nivelSpray = niveisSpray?.[indice] ?? 0;
     return {
       // PR 2b: carro na passagem de baixo de um viaduto é desenhado ANTES do
       // tabuleiro, pra aparecer através dele e não por cima.
       sob,
       // No fim da lista, para o pelotão não cobrir o carro do jogador.
       prioridade: (ehHumano ? 1 : 0) + (ehLocal ? 1 : 0),
+      spray: nivelSpray === 0 ? null : <SprayDoCarro key={item.jogadorId} transform={transform} nivel={nivelSpray} />,
       el: (
         <CarroNaPista
           key={item.jogadorId}
@@ -339,6 +360,16 @@ export function TelaCorrida({
     };
   });
   carrosDoReplay.sort((a, b) => a.prioridade - b.prioridade);
+  // O spray de cada camada vem antes dos carros dela: spray nenhum cobre carro.
+  const camadaDeCarros = (sob: boolean) => {
+    const carros = carrosDoReplay.filter((c) => c.sob === sob);
+    return (
+      <>
+        {carros.map((c) => c.spray)}
+        {carros.map((c) => c.el)}
+      </>
+    );
+  };
 
   return (
     <div className="tela-corrida">
@@ -365,20 +396,34 @@ export function TelaCorrida({
 
       <div className="tela-corrida__area-replay">
         <div className="coluna-tracado">
-          <svg className="tracado-svg" viewBox={VIEWBOX_PISTA} role="img" aria-label={`Traçado de ${pista.nome}`}>
-            <rect
-              x={VIEWBOX_X}
-              y={VIEWBOX_Y}
-              width={VIEWBOX_LARGURA}
-              height={VIEWBOX_ALTURA}
-              className="tracado-svg__chao"
-            />
-            <DefsDoCarro estreita={telaEstreita} />
-            <CamadasDaPista pistaId={pista.id} />
-            {carrosDoReplay.filter((c) => c.sob).map((c) => c.el)}
-            <ViadutosDaPista pistaId={pista.id} />
-            {carrosDoReplay.filter((c) => !c.sob).map((c) => c.el)}
-          </svg>
+          <div className="tracado-chuva">
+            <svg
+              className={`tracado-svg${resultado.chuva ? ' tracado-svg--molhado' : ''}`}
+              viewBox={VIEWBOX_PISTA}
+              role="img"
+              aria-label={`Traçado de ${pista.nome}`}
+            >
+              <rect
+                x={VIEWBOX_X}
+                y={VIEWBOX_Y}
+                width={VIEWBOX_LARGURA}
+                height={VIEWBOX_ALTURA}
+                className="tracado-svg__chao"
+              />
+              <DefsDoCarro estreita={telaEstreita} />
+              <CamadasDaPista pistaId={pista.id} />
+              {resultado.chuva && <ReflexosMolhados pistaId={pista.id} />}
+              {camadaDeCarros(true)}
+              <ViadutosDaPista pistaId={pista.id} />
+              {camadaDeCarros(false)}
+            </svg>
+            {resultado.chuva && !movimentoReduzido && (
+              <div className="chuva-replay" aria-hidden="true">
+                <div className="chuva-replay__camada chuva-replay__camada--fundo" />
+                <div className="chuva-replay__camada" />
+              </div>
+            )}
+          </div>
           <p className="tracado-svg__legenda">{pista.nome}</p>
         </div>
 

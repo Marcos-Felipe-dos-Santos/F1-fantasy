@@ -75,6 +75,100 @@ describe('painel: diferença para o líder', () => {
   });
 });
 
+describe('chuva e asfalto molhado', () => {
+  const chuva = corridaCom(true);
+  const seco = corridaCom(false);
+  const meio = (c: typeof chuva) => c.resultado.classificacao[0].tempoTotal / 2;
+  const camadasDeChuva = (html: string) => html.match(/class="chuva-replay__camada/g)?.length ?? 0;
+  const reflexos = (html: string) => html.match(/tracado-svg__reflexo/g)?.length ?? 0;
+
+  it('corrida com chuva: chuva caindo, asfalto molhado e reflexos', () => {
+    const html = tela(chuva, meio(chuva));
+    expect(camadasDeChuva(html)).toBe(2);
+    expect(html).toMatch(/<svg class="tracado-svg tracado-svg--molhado"/);
+    expect(reflexos(html)).toBe(2);
+  });
+
+  it('corrida seca: nada disso', () => {
+    const html = tela(seco, meio(seco));
+    expect(camadasDeChuva(html)).toBe(0);
+    expect(html).not.toContain('tracado-svg--molhado');
+    expect(reflexos(html)).toBe(0);
+  });
+
+  it('movimento reduzido: tira a chuva e o spray, e fica o asfalto molhado, que é estático', () => {
+    tela_.reduzido = true;
+    const html = tela(chuva, meio(chuva));
+    expect(camadasDeChuva(html)).toBe(0);
+    expect(html).not.toContain('href="#spray-');
+    expect(html).toContain('tracado-svg--molhado');
+    expect(reflexos(html)).toBe(2);
+  });
+
+  it('os reflexos ficam sobre a pista e sob os carros', () => {
+    const html = tela(chuva, meio(chuva));
+    expect(html.indexOf('tracado-svg__reflexo')).toBeGreaterThan(html.indexOf('tracado-svg__camada'));
+    expect(html.lastIndexOf('tracado-svg__reflexo')).toBeLessThan(html.indexOf('<g class="tracado-svg__carro'));
+  });
+
+  it('a chuva cai fora do SVG, para o quadro não repintar a pista', () => {
+    const html = tela(chuva, meio(chuva));
+    expect(html.indexOf('chuva-replay')).toBeGreaterThan(html.indexOf('</svg>'));
+  });
+});
+
+describe('spray', () => {
+  const chuva = corridaCom(true);
+  const seco = corridaCom(false);
+  const meio = chuva.resultado.classificacao[0].tempoTotal / 2;
+  const sprays = (html: string) => [...html.matchAll(/<use class="tracado-svg__spray" href="#spray-(\d)"/g)].map((m) => Number(m[1]));
+
+  it('um por carro na pista, com intensidade 1 a 3, só na chuva', () => {
+    const niveis = sprays(tela(chuva, meio));
+    expect(niveis.length).toBeGreaterThan(15);
+    expect(niveis.every((n) => n >= 1 && n <= 3)).toBe(true);
+    expect(sprays(tela(seco, seco.resultado.classificacao[0].tempoTotal / 2)).length).toBe(0);
+  });
+
+  it('todo spray vem antes do carro: nenhum cobre carro', () => {
+    const html = tela(chuva, meio);
+    expect(html.lastIndexOf('tracado-svg__spray')).toBeLessThan(html.indexOf('<g class="tracado-svg__carro'));
+  });
+
+  it('o spray tem o transform do carro dele', () => {
+    const html = tela(chuva, meio);
+    const primeiro = /<use class="tracado-svg__spray" href="#spray-\d" transform="([^"]+)"/.exec(html)![1];
+    expect(html).toContain(`<g class="tracado-svg__carro" transform="${primeiro}"`);
+  });
+
+  it('carro parado na vaga e carro que já chegou não soltam spray', () => {
+    const linha = linhaDoTempoDoPit(chuva.resultado, chuva.pista);
+    const fim = Math.max(...chuva.resultado.classificacao.map((c) => c.tempoTotal));
+    expect(sprays(tela(chuva, fim + 1000)).length).toBe(0);
+    const j = Object.keys(chuva.resultado.voltasDePit).find((x) => linha.paradas(x).length > 0)!;
+    const p = linha.paradas(j)[0];
+    const t = (p.chegada + p.partida) / 2;
+    const ativos = chuva.resultado.classificacao.filter(
+      (c) => linha.posicao(c.jogadorId, chuva.resultado.historicoVoltas[c.jogadorId], c.status, t, false).fracaoNaPista !== null,
+    );
+    expect(ativos.length).toBeLessThan(22);
+    expect(sprays(tela(chuva, t)).length).toBeLessThanOrEqual(ativos.length);
+  });
+
+  it('Suzuka: spray sob a ponte fica antes do tabuleiro, com o carro', () => {
+    const suzuka = corridaCom(true, 'pista-suzuka');
+    const linha = linhaDoTempoDoPit(suzuka.resultado, suzuka.pista);
+    const fim = suzuka.resultado.classificacao[0].tempoTotal;
+    const id = suzuka.resultado.classificacao[1].jogadorId;
+    const h = suzuka.resultado.historicoVoltas[id];
+    let t = 0;
+    while (t < fim && !linha.posicao(id, h, 'terminou', t, false).sob) t += 50;
+    expect(t).toBeLessThan(fim);
+    const html = tela(suzuka, t);
+    expect(html.indexOf('tracado-svg__spray')).toBeLessThan(html.indexOf('<mask'));
+  });
+});
+
 describe('carros', () => {
   const carrosEm = (html: string) => [...html.matchAll(/<g class="tracado-svg__carro[^"]*"[^>]*>/g)].map((m) => m[0]);
   const corrida = corridaCom(false);
