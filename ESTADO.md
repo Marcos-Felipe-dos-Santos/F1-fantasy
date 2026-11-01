@@ -2205,6 +2205,21 @@ tempo entre os carros acontece ali), sai no limite e acelera ao voltar à pista.
 que resultado e hashes não mudam; no máximo 3 prints no repositório; doc pela sessão principal;
 nada de push, merge ou deploy. Antes de código: medição apresentada ao Marcos, risco classificado.
 
+**🔒 DECISÕES DO MARCOS, 2026-11-01 — PR 2c, sobre a medição** (`docs/pr2c-medicao.json`, 100 grids,
+10 pistas, 26.301 paradas; instrumento `scripts/medir-pr2c.preview.test.ts`):
+
+- **Fórmula:** `parado = custo + tempo do trecho de pista substituído − tempo no box no limite`. A
+  fórmula inicial (`custo − tempo no box`) foi trocada por ele: o custo do motor é tempo A MAIS sobre
+  uma volta limpa, não o tempo total no box. A variação entre carros fica toda no tempo parado.
+- **Limite (opção A):** 50% da velocidade de corrida da pista, no caminho inteiro do box, em 8 pistas.
+  **Exceções registradas: Imola (55%) e Montreal (50%), com o limite só no trecho paralelo.** Trava:
+  parado nunca abaixo de 4 s simulados.
+- **Vagas:** dinâmicas, primeira livre, 13 u cada; nas pistas sem garagens (Spa, Suzuka, Nürburgring),
+  o trecho paralelo. Sobreposição rara em pico aceita.
+- **`prefers-reduced-motion`:** o carro aparece direto na vaga, fica o mesmo tempo e reaparece na saída.
+- **Aceitos:** estimar o custo do pit sem mexer no motor (erro < 1 s); classificação usando o mesmo
+  progresso do mapa; badge PIT só na janela do box (mudança de contrato com baseline vermelho).
+
 **LIÇÃO DO PR 2b, registrada a pedido do Marcos em 2026-11-01:** cerca nova vai em **PR próprio** da
 próxima vez. `scripts/folga-pistas.*` era um PR independente e entrou junto das 10 pistas, do box e
 do viaduto: foram quatro mudanças lógicas em 2.989 inserções.
