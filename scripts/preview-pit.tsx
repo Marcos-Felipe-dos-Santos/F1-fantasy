@@ -220,8 +220,10 @@ function Preview() {
   };
   const noBoxAgora = paradas.filter((p) => p.chegada <= t && t < p.partida).length;
 
+  // `.app-shell` como em `App.tsx`: sem ela a página mostra outra largura que a do jogo,
+  // com vão no desktop e pista 10% maior no celular.
   return (
-    <>
+    <div className="app-shell">
       <nav style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', padding: 8 }}>
         {PISTAS_DO_PREVIEW.map(([id, rotulo]) => (
           <a key={id} href={`?pista=${id}&velocidade=${velocidade}`} aria-current={id === estaUrl}>
@@ -255,7 +257,7 @@ function Preview() {
         velocidade={velocidade}
         onVelocidade={setVelocidade}
       />
-    </>
+    </div>
   );
 }
 

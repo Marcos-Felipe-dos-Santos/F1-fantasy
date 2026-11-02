@@ -156,7 +156,8 @@ try {
       width: Number(opcoes.largura),
       height: Number(opcoes.altura),
       deviceScaleFactor: Number(opcoes.densidade ?? 1),
-      mobile: false,
+      // Sem isto a barra de rolagem do desktop tira 15 px da "tela de 360".
+      mobile: Number(opcoes.largura) <= 700,
     });
     if (opcoes.reduzido === '1') {
       await aba.cdp('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'reduce' }] });
