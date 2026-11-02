@@ -6,7 +6,7 @@
  * rodada morta no meio deixaria `src/` mutado, então cabe rodar em pedaços curtos.
  */
 
-import { spawnSync } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
 
 const FIM = 'src/ui/fim-da-corrida.ts';
@@ -51,15 +51,38 @@ const MUTACOES = [
   ['selo-na-cor-de-preenchimento', CSS, 'color: var(--cor-erro);\n  border: 1px solid currentColor;', 'color: var(--erro);\n  border: 1px solid currentColor;'],
 ];
 
+// A suíte inteira leva 13 s. Laço infinito é síncrono: o `testTimeout` do vitest não o interrompe.
+const LIMITE_MS = 90_000;
+
+/**
+ * Async de propósito: o `timeout` do `spawnSync` só mataria o shell, e o worker preso
+ * no laço ficaria órfão. `taskkill /T` leva a árvore inteira.
+ */
 const rodar = () =>
-  spawnSync(
-    'npx',
-    ['vitest', 'run', 'src/ui/fim-da-corrida.test.ts', 'src/ui/tela-corrida-render.test.ts', 'src/ui/fluxo-corrida.test.ts', 'src/ui/diferenca-lider.test.ts', 'src/ui/pit-replay.test.ts', '--bail=1'],
-    { encoding: 'utf8', shell: true, stdio: ['ignore', 'pipe', 'pipe'] },
-  );
+  new Promise((resolver, rejeitar) => {
+    const filho = spawn(
+      'npx',
+      ['vitest', 'run', 'src/ui/fim-da-corrida.test.ts', 'src/ui/tela-corrida-render.test.ts', 'src/ui/fluxo-corrida.test.ts', 'src/ui/diferenca-lider.test.ts', 'src/ui/pit-replay.test.ts', '--bail=1'],
+      { shell: true, stdio: ['ignore', 'pipe', 'pipe'] },
+    );
+    let saida = '';
+    filho.stdout.on('data', (d) => (saida += d));
+    filho.stderr.on('data', (d) => (saida += d));
+    let estourou = false;
+    const limite = setTimeout(() => {
+      estourou = true;
+      spawnSync('taskkill', ['/PID', String(filho.pid), '/T', '/F'], { stdio: 'ignore' });
+    }, LIMITE_MS);
+    filho.on('error', rejeitar);
+    filho.on('close', (status) => {
+      clearTimeout(limite);
+      resolver({ status, estourou, saida: saida.replace(/\x1b\[[0-9;]*m/g, '') });
+    });
+  });
 
 // Controle: sem isto, "31/31 detectadas" não se distingue de "o comando não roda".
-if (rodar().status !== 0) throw new Error('controle sem mutação não passou: nada a medir');
+const controle = await rodar();
+if (controle.status !== 0 || controle.estourou) throw new Error('controle sem mutação não passou: nada a medir');
 
 const JSON_SAIDA = 'docs/pr2e-mutacoes.json';
 const indiceFatia = process.argv.indexOf('--fatia');
@@ -73,16 +96,18 @@ for (const [nome, arquivo, de, para] of MUTACOES.slice(de_, ate_)) {
   const mutado = original.replace(de, () => para);
   writeFileSync(arquivo, crlf ? mutado.replace(/\n/g, '\r\n') : mutado);
   try {
-    const r = rodar();
-    const limpa = `${r.stdout}${r.stderr}`.replace(/\x1b\[[0-9;]*m/g, '');
-    const falha = limpa.match(/^ FAIL +(.*)$/m)?.[1] ?? null;
+    const r = await rodar();
+    const falha = r.saida.match(/^ FAIL +(.*)$/m)?.[1] ?? null;
     // Só conta como detectada a falha de um teste nomeado, nunca o comando quebrado.
     const detectada = r.status !== 0 && falha !== null;
-    resultado.push({ nome, detectada, falha });
-    console.log(`${detectada ? 'DETECTADA ' : 'SOBREVIVEU'} ${nome}${falha ? ` | ${falha.slice(0, 110)}` : ''}`);
+    if (!r.estourou && r.status !== 0 && falha === null) throw new Error(`vitest caiu sem falha nomeada: ${nome}`);
+    // Travar não é passar, mas também não é um teste apontando o defeito: conta à parte.
+    resultado.push({ nome, detectada, travou: r.estourou, falha });
+    const rotulo = r.estourou ? 'TRAVOU    ' : detectada ? 'DETECTADA ' : 'SOBREVIVEU';
+    console.log(`${rotulo} ${nome}${falha ? ` | ${falha.slice(0, 110)}` : ''}`);
   } finally {
     writeFileSync(arquivo, cru);
   }
 }
 writeFileSync(JSON_SAIDA, `${JSON.stringify(resultado, null, 2)}\n`);
-console.log(`${resultado.filter((m) => m.detectada).length}/${resultado.length} detectadas de ${MUTACOES.length}`);
+console.log(`${resultado.filter((m) => m.detectada).length}/${resultado.length} detectadas, ${resultado.filter((m) => m.travou).length} travaram, de ${MUTACOES.length}`);
