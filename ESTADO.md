@@ -428,6 +428,12 @@ dependência).
 
 ## Onde parei
 
+### 2026-11-02 — PR 2e (a corrida termina quando todos cruzam) em medição, sem código de produto
+
+Sobre a `main` `a49cb78`, merge do PR 2a conferido na `main` e em `origin/main`. Medição prévia pronta e
+apresentada ao Marcos: `docs/pr2e-medicao.json`, instrumento `scripts/medir-pr2e.preview.test.ts`
+(100 grids, 10 pistas, sem alterar `src/`). Risco ALTO. Decisões em §"🔒 DECISÕES DO MARCOS — VIGENTES".
+
 ### 2026-11-02 — PR 2a APROVADO no celular e fechado, aguardando o push do Marcos
 
 Branch `feat/pr2a-carros-chuva`, sobre a `main` `c3f7dcb`. Risco ALTO. O push é do Marcos; sem merge ou deploy.
@@ -2201,6 +2207,17 @@ encerramento** — encerrada não quer dizer sem dívida.
 > Movido do fim do arquivo em 2026-10-28, sem alteração de conteúdo, exceto "spray" no PR 2a,
 > que constava no pedido original do Marcos e faltava aqui.
 
+**🔒 DECISÕES DO MARCOS, 2026-11-02 — PR 2e (a corrida termina quando todos cruzam a linha):** só
+apresentação, zero alteração em `src/engine/` e `src/data/`, resultado e hashes idênticos. Depois que o
+vencedor cruza, cada carro termina na próxima passagem pela linha; DNF fica de fora. O replay termina
+quando o último carro cruza, mesmo com outros na volta lenta. Sobre a medição:
+
+- **D1:** sem box depois da linha. Fica só a volta lenta, a 60% da velocidade, sem ultrapassar. Em 1000
+  corridas, nenhum carro chegaria à vaga antes do fim do replay.
+- **D2:** o painel segue a ordem oficial, com selo `+Xs` no carro punido.
+- **D3:** a tela de resultado fica como está.
+- **D4:** os saltos do DNF ficam até o PR 2d (46 em 800).
+
 **🔒 DECISÃO DO MARCOS — ASFALTO MOLHADO `#313131` (2026-11-02).** "Asfalto fica #313131 como
 exceção da chuva." Vale só para `pistaAsfaltoMolhado`: fica a 1,124 do muro, abaixo dos 1,25 de
 `SEPARACAO_MINIMA_LUMINANCIA`, com a exceção travada em `molhado.test.ts`. O asfalto seco segue
@@ -2986,10 +3003,18 @@ que agora ela é tomada com o número na mão.**
 
 **Abertas no PR 2a (2026-11-02):**
 - **DNF para o PR 2d:** o carro que abandona ainda salta da linha para o meio da pista no fim da volta.
-  Resolver com o local do incidente, junto dos incidentes na pista.
+  Resolver com o local do incidente, junto dos incidentes na pista. **O PR 2e aumenta os saltos visíveis:
+  46 em 800 DNFs** (`docs/pr2e-medicao.json`) aconteciam depois do fim do replay e passam a aparecer na
+  tela. Aceito pelo Marcos em 2026-11-02 até o PR 2d.
 - **Aparelho real:** desempenho não medido no celular; o custo de raster e composição da chuva e do spray
   não está verificado no freio de CPU. O FPS do PR foi medido com a pista 10% maior que a do jogo.
 - **iOS:** não testado, em especial `paint-order` e `var()` em `stop-color` dentro de `<use>`.
+
+**Para o PR 2d, pedido do Marcos em 2026-11-02 — melhorar a narração do ticker:**
+- nome do piloto em destaque, em vez de "bot-18";
+- consequência do evento na frase (tempo perdido, posições caídas);
+- pit integrado à frase ("…e foi para os boxes");
+- variedade de frases para o mesmo tipo de erro.
 
 0. **Abertas na Fase 3:**
    (a) **`montarJogadores` está duplicado** entre `fluxo-draft.ts:117` (UI) e `congelarRoster`
