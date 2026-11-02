@@ -238,6 +238,7 @@ function ConteudoOnline({
             onChegouAoResultado={online.atestarFimDaCorrida}
             rotuloReiniciar="← Voltar ao início"
             onReiniciar={onVoltar}
+            jogadorLocalId={euSou}
             extraResultado={
               <ResumoDaEtapaOnline
                 state={draft}

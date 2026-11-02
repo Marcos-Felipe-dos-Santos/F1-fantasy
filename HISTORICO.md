@@ -7224,6 +7224,59 @@ variou de 53 a 102 fps nesta máquina: medição de uma rodada só não sustenta
 
 **Pendências abertas:** `0(ay)`, `0(az)`, `0(ba)`. Fechada: `0(av)`.
 
+### 2026-11-01 — PR 2a: carros, chuva, spray e diferença para o líder
+
+Branch `feat/pr2a-carros-chuva`, sobre `c3f7dcb`. Risco ALTO. Nenhuma linha em `src/engine/` nem em
+`src/data/`: tudo é apresentação sobre `ResultadoCorrida`.
+
+**Escolha do carro, em três rodadas de folha.** Na primeira, o Marcos escolheu o C entre 4 opções. Na
+segunda, os compactos C1 a C3, com peças de 2 px, ficaram feios: asas grossas demais. A regra de 2 px
+foi descartada para o carro, porque ela supõe 1 pixel físico por px e os celulares têm 2 a 3. Na
+terceira, servida na LAN e vista no aparelho dele, ganhou o C proporcional com contorno: asa de 4,1 u
+contra 3 u, crescendo só para dentro, sem mudar envergadura nem comprimento. Desktop segue com o C completo.
+
+**O que entrou.**
+- **Rumo** em `linhaDoPit.posicao()`. A primeira versão cortava a janela na emenda pista/box e saltava
+  até 44°; o teste pegou, e o rumo passou a ser calculado sobre o caminho contínuo.
+- **Carro** como `<defs>` + `<use>`: 22 elementos por frame, não 176. Cor e contorno por herança.
+  Tamanho e desenho por `useTelaEstreita` (700 px). `jogadorLocalId` decide o halo: `undefined` no
+  Single, `euSou` no online, `null` para espectador. Humano desenhado por último.
+- **Chuva** como duas camadas HTML fora do SVG, só com `transform`. Sai com movimento reduzido.
+- **Asfalto molhado** por override do token em `.tracado-svg--molhado`, com dois reflexos estáticos
+  (`molhado.ts`), tratados como marcação. Ficam com movimento reduzido.
+- **Spray** em 3 níveis pela distância em anel até o carro da frente, cortes de 30 u e 60 u medidos em
+  400 corridas. Sem filtro SVG. Antes dos carros de cada camada, o que mantém a ordem da ponte.
+- **Diferença para o líder** em `diferenca-lider.ts`: mesmo progresso do painel, `+N V` para
+  retardatário, nada para DNF, `tempoTotal` na chegada. Só o preview pegou o `+0,0s` de quem vinha
+  atrás do líder na janela do pit: o histórico espalha o custo da parada. Virou
+  `instanteDoProgresso`, que inverte a linha do tempo do pit por bissecção só dentro da janela.
+
+**Exceção registrada.** `#313131` é escolha do Marcos e fica a 1,124 do muro, sob os 1,25 de
+`SEPARACAO_MINIMA_LUMINANCIA`. Na tela os dois não se tocam, porque o limite corre entre eles, e a ordem
+e os 3:1 valem. A exceção é só da chuva, e `molhado.test.ts` a trava com condição de saída.
+
+**Medições.** FPS intercalado A B A B: a thread principal subiu ~4 ms por frame (7,7 → 11,9 em Spa
+média na rodada final), sem quadro acima de 33 ms em 40 rodadas (`docs/pr2a-fps.json`). A métrica é custo
+por frame, porque o fps desta máquina não se compara entre sessões. O memo de `acumularVoltas` e o
+`matchMedia` único vieram da revisão e não deram ganho mensurável: o acréscimo seguiu em ~4 ms.
+Mutação 42/42 (`docs/pr2a-mutacoes.json`). Evidência em `docs/pr2a-imagens/` (3 prints).
+
+**Não verificado.** Aparelho real em desempenho. Raster e composição sob o freio de CPU. iOS, em
+especial `paint-order` e `var()` em `stop-color` dentro de `<use>`.
+
+**Veredito, 2026-11-02.** Aprovado pelo Marcos no celular, com `#313131` mantido como exceção da chuva.
+Ele apontou um vão no desktop, entre a pista e a classificação. Medido com o `App` real jogado até o replay
+por CDP: 16 px em 1280, 1440 e 1920, contra 260, 420 e 900 px no preview. Era só o preview, que não usava
+`.app-shell`; corrigido em `0286dc8`, sem tocar no jogo.
+
+A mesma causa mudou o que ele aprovou: em tela de 360, o preview desenhava a pista com 360 px de largura e o
+jogo com 328. Na área interna, 354 contra 322 px, ou seja, no jogo pista e carro ficam 9% menores que no
+aparelho dele, com asa de bot de ~1,39 px contra ~1,52. O jogo cumpre os 1,3-1,5 px decididos. O FPS foi medido na
+página antiga e não foi refeito; os 3 prints de `docs/pr2a-imagens/` foram.
+
+**Pendência para o PR 2d.** O carro em DNF ainda salta da linha para o meio da pista no fim da volta;
+resolver com o local do incidente.
+
 ## ARQUIVADO DO `ESTADO.md` em 2026-10-28 — §"Estado atual", medições de 2026-08-18 a 2026-09-02
 
 > Movido sem alteração pela sessão principal, a pedido do Marcos. Antes da cópia, 18,8% dos

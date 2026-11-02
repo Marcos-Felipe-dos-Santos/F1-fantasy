@@ -40,6 +40,8 @@ interface FluxoCorridaProps {
   /** Repassado a `TelaResultadoCorrida` — no online, `onReiniciar` sai da sala. */
   rotuloReiniciar?: string;
   onReiniciar: () => void;
+  /** Repassado a `TelaCorrida`: quem leva o halo. No online, `euSou`. */
+  jogadorLocalId?: string | null;
 }
 
 export function FluxoCorrida({
@@ -50,6 +52,7 @@ export function FluxoCorrida({
   onChegouAoResultado,
   rotuloReiniciar,
   onReiniciar,
+  jogadorLocalId,
 }: FluxoCorridaProps) {
   const { fase, pista, grid, resultado, tempoSimMs, largar, acelerar, velocidade, setVelocidade } = useCorrida(
     state,
@@ -101,6 +104,7 @@ export function FluxoCorrida({
       onAcelerar={acelerar}
       velocidade={velocidade}
       onVelocidade={setVelocidade}
+      jogadorLocalId={jogadorLocalId}
     />
   );
 }

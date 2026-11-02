@@ -772,6 +772,17 @@ describe('🏆 3.5.4 — a `key` da etapa e o fim do `naCorrida` (cerca textual)
    * que **o hash sai correto** (vem de `etapas[k]`, não da tela) e portanto o
    * detector não acusa nada.
    */
+  /**
+   * Mesmo motivo da `key`: o render estático nasce em `fase === 'grid'` e não chega
+   * nos carros. Sem o fio, `TelaCorrida` cai no Single e todo humano leva halo.
+   */
+  it('🔴 o halo do online chega a `TelaCorrida`: `euSou` passa por `FluxoCorrida`', () => {
+    const online = semComentarios(readFileSync(join(AQUI, 'FluxoOnline.tsx'), 'utf8'));
+    const corrida = semComentarios(readFileSync(join(AQUI, 'FluxoCorrida.tsx'), 'utf8'));
+    expect(online.includes('jogadorLocalId={euSou}')).toBe(true);
+    expect(corrida.includes('jogadorLocalId={jogadorLocalId}')).toBe(true);
+  });
+
   it('🔴 `FluxoOnline.tsx` monta o `FluxoCorrida` da etapa com uma `key` por etapa', () => {
     const fonte = semComentarios(readFileSync(join(AQUI, 'FluxoOnline.tsx'), 'utf8'));
     expect(

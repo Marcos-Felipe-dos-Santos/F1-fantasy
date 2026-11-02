@@ -161,6 +161,17 @@ export const cores = {
    * `carroBot !== raridadeComum`.
    */
   carroBot: '#B0B0B0',
+  /**
+   * Asfalto em corrida com chuva (PR 2a, decisão do Marcos). Abaixo do seco e acima do
+   * muro, mas a 1,124 dele, sob os 1,25 de `SEPARACAO_MINIMA_LUMINANCIA`: é exceção
+   * consciente, travada em `molhado.test.ts`. Os dois não se tocam, o limite corre entre eles.
+   */
+  pistaAsfaltoMolhado: '#313131',
+  /** Contorno dos bots, rodas e cockpit (PR 2a): separa carros sobrepostos e o bot da zebra. */
+  carroContorno: '#111111',
+  /** Halo e contorno do carro do jogador (PR 2a). */
+  carroHalo: '#FFFFFF',
+  carroCockpitHumano: '#2A0A06',
 } as const;
 
 export type NomeCor = keyof typeof cores;

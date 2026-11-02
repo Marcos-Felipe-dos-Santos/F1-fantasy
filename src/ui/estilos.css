@@ -661,8 +661,91 @@ button.card {
      `pista-camadas.test.ts` (guarda de CSS anti-raridade) trava que nenhuma
      regra `.tracado-svg*` volte a referenciar um token de raridade. */
   fill: var(--carro-bot);
-  stroke: var(--cor-fundo);
-  stroke-width: 1.5;
+  /* PR 2a: contorno e cores chegam por herança ao `<use>`. `stroke-width` vem como
+     atributo de `CarroNaPista`: depende da tela. `paint-order` pinta o corpo por cima
+     e deixa do traço só a metade de fora. */
+  stroke: var(--carro-contorno);
+  stroke-linejoin: round;
+  paint-order: stroke;
+  --carro-cockpit: var(--carro-contorno);
+  --carro-traco-roda: none;
+}
+
+.carro-c__roda {
+  fill: var(--carro-contorno);
+  stroke: var(--carro-traco-roda);
+  stroke-width: 1.2;
+}
+
+.carro-c__cockpit {
+  fill: var(--carro-cockpit);
+  stroke: none;
+}
+
+/* Chuva (PR 2a): sobrescreve só o token, então tabuleiro de viaduto e zebra seguem iguais. */
+.tracado-svg--molhado {
+  --pista-asfalto: var(--pista-asfalto-molhado);
+}
+
+.tracado-svg__reflexo {
+  fill: none;
+  stroke: var(--pista-limite);
+  stroke-opacity: 0.4;
+  stroke-linecap: round;
+}
+
+/* A chuva é HTML por cima do SVG, não parte dele: duas camadas de um ladrilho fixo que só
+   mudam `transform`, no compositor, sem tocar na pista nem custar repintura a cada frame.
+   O passo da animação é exatamente um ladrilho para cada lado, por isso não há emenda. */
+.tracado-chuva {
+  position: relative;
+  max-width: 700px; /* o do `.tracado-svg`: numa coluna mais larga, a chuva sairia da pista */
+}
+
+.chuva-replay {
+  position: absolute;
+  inset: 3px;
+  overflow: hidden;
+  border-radius: var(--raio-lg);
+  pointer-events: none;
+}
+
+.chuva-replay__camada {
+  position: absolute;
+  top: -320px;
+  right: -80px;
+  bottom: 0;
+  left: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='320'%3E%3Cpath d='M62 18l-5 20M24 96l-5 20M72 170l-5 20M38 246l-5 20' stroke='white' stroke-opacity='.5'/%3E%3C/svg%3E");
+  background-size: 80px 320px;
+  will-change: transform;
+  animation: chuva-queda 0.5s linear infinite;
+  --chuva-x: -80px;
+  --chuva-y: 320px;
+}
+
+.chuva-replay__camada--fundo {
+  top: -220px;
+  right: -55px;
+  background-size: 55px 220px;
+  opacity: 0.55;
+  animation-duration: 0.8s;
+  --chuva-x: -55px;
+  --chuva-y: 220px;
+}
+
+@keyframes chuva-queda {
+  to {
+    transform: translate3d(var(--chuva-x), var(--chuva-y), 0);
+  }
+}
+
+/* Anel do carro de quem joga neste aparelho: sem ele, o vermelho some na zebra. */
+.tracado-svg__halo {
+  fill: var(--carro-halo);
+  fill-opacity: 0.14;
+  stroke: var(--carro-halo);
+  stroke-width: 2;
 }
 
 .tracado-svg__carro--humano {
@@ -671,6 +754,9 @@ button.card {
      exige asfalto <= 0,0397, e foi por isso que a pista inteira escureceu
      junto com a paleta. Ver `tokens.ts`. */
   fill: var(--primaria);
+  stroke: var(--carro-halo);
+  --carro-cockpit: var(--carro-cockpit-humano);
+  --carro-traco-roda: var(--carro-halo);
 }
 
 .tracado-svg__carro--congelado {
@@ -816,6 +902,15 @@ button.card {
 
 .classificacao-ao-vivo__chegou {
   font-size: 0.9rem;
+}
+
+/* Largura fixa (PR 2a): o número muda durante a corrida, e sem ela o nome ao lado
+   tremeria e cada troca custaria layout na lista inteira. */
+.classificacao-ao-vivo__diferenca {
+  flex: 0 0 3.6rem;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--cor-texto-fraco);
 }
 
 .badge-dnf {

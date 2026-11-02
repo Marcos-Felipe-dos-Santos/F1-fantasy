@@ -128,6 +128,8 @@ describe('separação mínima de luminância da hierarquia (3.1 — fecha a pend
    * É por isso que a guarda de ORDEM não basta — ela não pega separação
    * insuficiente entre vizinhos. Esta guarda TEM que reprovar isso.
    */
+  // Vale para o asfalto SECO. O #313131 existe como `pistaAsfaltoMolhado`, exceção da chuva
+  // decidida pelo dev no PR 2a e travada em `molhado.test.ts`.
   it('mutante nomeado: #313131 no lugar de pistaAsfalto reprova contra pistaMuro (razão 1,124 < 1,25)', () => {
     const MUTANTE_ASFALTO = '#313131';
     const razao = razaoSeparacao(MUTANTE_ASFALTO, cores.pistaMuro);
@@ -313,10 +315,12 @@ describe('guarda de CSS anti-raridade (3.4 — fecha a pendência 2)', () => {
   }
 
   const blocos = blocosCss(cssSemComentarios);
-  const blocosTracadoSvg = blocos.filter((b) => b.seletor.includes('.tracado-svg'));
+  // `.carro-c` desde o PR 2a: as rodas e o cockpit são pintados fora do prefixo `.tracado-svg`.
+  const blocosTracadoSvg = blocos.filter((b) => b.seletor.includes('.tracado-svg') || b.seletor.includes('.carro-c'));
 
   it('anti-tautologia: encontrou pelo menos 4 regras .tracado-svg* (senão um rename de classe faria a guarda passar vazia)', () => {
     expect(blocosTracadoSvg.length).toBeGreaterThanOrEqual(4);
+    expect(blocos.filter((b) => b.seletor.includes('.carro-c')).length).toBeGreaterThanOrEqual(2);
   });
 
   it('nenhuma regra .tracado-svg* referencia var(--raridade-', () => {
