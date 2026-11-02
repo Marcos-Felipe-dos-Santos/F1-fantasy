@@ -169,6 +169,10 @@ try {
     const t = opcoes.t ? Number(opcoes.t) : await aba.avaliar('window.__picoDoBox()');
     await aba.avaliar(`window.__irPara(${t})`);
     await esperar(600);
+    if (opcoes.clicar) {
+      await aba.avaliar(`[...document.querySelectorAll('button')].find((b) => b.textContent.includes('${opcoes.clicar}')).click()`);
+      await esperar(600);
+    }
     const texto = await aba.avaliar(`document.querySelector('nav').innerText`);
     console.log(`t=${t} | ${texto?.replaceAll('\n', ' ')}`);
     const { data } = await aba.cdp('Page.captureScreenshot', { format: 'png' });

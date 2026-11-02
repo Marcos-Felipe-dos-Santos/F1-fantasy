@@ -1,5 +1,5 @@
 /**
- * Preview e medição de FPS do PR 2c: `TelaCorrida` REAL, dataset real, 22 carros.
+ * Preview e medição de FPS dos PRs 2c e 2a: `TelaCorrida` REAL, dataset real, 22 carros.
  *
  * Build: npx vite build --config scripts/preview-pit.config.ts
  * Servir: npx vite preview --config scripts/preview-pit.config.ts --host 127.0.0.1 --port 4175 --strictPort
@@ -42,20 +42,27 @@ interface ParadaLida {
   partida: number;
 }
 interface ModuloPit {
-  linhaDoTempoDoPit(r: ResultadoCorrida, p: Pista): { paradas(id: string): readonly ParadaLida[] };
+  linhaDoTempoDoPit(
+    r: ResultadoCorrida,
+    p: Pista,
+  ): {
+    paradas(id: string): readonly ParadaLida[];
+    posicao(id: string, h: number[], s: 'terminou' | 'dnf', t: number, reduzido: boolean): { sob: boolean };
+  };
 }
 
 const moduloPit = import.meta.glob<ModuloPit>('../src/ui/pit-replay.ts');
 
 const PISTAS_DO_PREVIEW: [string, string][] = [
-  ['pista-spa', 'Spa, box curto'],
-  ['pista-imola', 'Imola, box longo'],
-  ['pista-suzuka', 'Suzuka'],
+  ['pista-spa&chuva=1', 'Spa, chuva'],
+  ['pista-monza', 'Monza, seca'],
+  ['pista-suzuka&chuva=1', 'Suzuka, chuva'],
 ];
 
 const q = new URLSearchParams(location.search);
 const pistaId = q.get('pista') ?? 'pista-spa';
 const querChuva = q.get('chuva') === '1';
+const estaUrl = `${pistaId}${querChuva ? '&chuva=1' : ''}`;
 const medirFps = q.get('fps') === '1';
 const AQUECIMENTO = 60;
 const FRAMES = 600;
@@ -104,6 +111,7 @@ function Preview() {
   );
   const [pausado, setPausado] = useState(false);
   const [paradas, setParadas] = useState<readonly ParadaLida[]>([]);
+  const [modulo, setModulo] = useState<ModuloPit | null>(null);
   const tRef = useRef(0);
   const pausadoRef = useRef(false);
   const escala = useMemo(
@@ -123,6 +131,7 @@ function Preview() {
     const carregar = moduloPit['../src/ui/pit-replay.ts'];
     if (carregar === undefined) return;
     void carregar().then((m) => {
+      setModulo(m);
       const linha = m.linhaDoTempoDoPit(resultado, pista);
       setParadas(Object.keys(resultado.voltasDePit).flatMap((id) => [...linha.paradas(id)]));
     });
@@ -195,19 +204,38 @@ function Preview() {
     const alvo = pits.find((fim) => fim - 30000 > tRef.current) ?? pits[0];
     if (alvo !== undefined) irPara(alvo - 30000);
   };
+  const proximaPonte = () => {
+    if (modulo === null) return;
+    const linha = modulo.linhaDoTempoDoPit(resultado, pista);
+    for (let t = tRef.current + 3000; t < fimDaCorrida; t += 400) {
+      const sob = resultado.classificacao.some(
+        (c) => linha.posicao(c.jogadorId, resultado.historicoVoltas[c.jogadorId], c.status, t, false).sob,
+      );
+      if (sob) {
+        setPausado(true);
+        irPara(t);
+        return;
+      }
+    }
+  };
   const noBoxAgora = paradas.filter((p) => p.chegada <= t && t < p.partida).length;
 
   return (
     <>
       <nav style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', padding: 8 }}>
         {PISTAS_DO_PREVIEW.map(([id, rotulo]) => (
-          <a key={id} href={`?pista=${id}&velocidade=${velocidade}`} aria-current={id === pistaId}>
-            {id === pistaId ? <strong>{rotulo}</strong> : rotulo}
+          <a key={id} href={`?pista=${id}&velocidade=${velocidade}`} aria-current={id === estaUrl}>
+            {id === estaUrl ? <strong>{rotulo}</strong> : rotulo}
           </a>
         ))}
         <button type="button" onClick={proximoPit}>
           Próximo pit
         </button>
+        {pistaId === 'pista-suzuka' && (
+          <button type="button" onClick={proximaPonte}>
+            Carro sob a ponte
+          </button>
+        )}
         <button type="button" onClick={() => setPausado((p) => !p)}>
           {pausado ? 'Continuar' : 'Pausar'}
         </button>

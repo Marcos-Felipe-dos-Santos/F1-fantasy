@@ -97,6 +97,16 @@ describe('diferença para o líder (PR 2a)', () => {
     expect(d.c).toEqual({ tipo: 'tempo', ms: expect.any(Number) });
   });
 
+  it('o DNF ainda na frente do painel não vira a referência de quem corre', () => {
+    const r = sintetica({ a: [1000, 3], b: [1050, 10], c: [1100, 10] });
+    // A parou em 3000 com 3 voltas; em 3050 ainda não foi alcançado por B.
+    const ordem = classificacaoAoVivo(r, ['a', 'b', 'c'], 3050, 10);
+    expect(ordem[0]).toEqual({ jogadorId: 'a', status: 'dnf' });
+    const [a, b] = diferencasParaLider(r, ordem, 3050, 10);
+    expect(a).toBeNull();
+    expect(b).toEqual({ tipo: 'lider' });
+  });
+
   it.each(['pista-suzuka', 'pista-spa', 'pista-monaco', 'pista-imola'])(
     '%s: em qualquer instante o número nunca contradiz a ordem do painel',
     (id) => {

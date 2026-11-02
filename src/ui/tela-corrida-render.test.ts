@@ -11,7 +11,8 @@ import { atribuirPerfis } from '../engine/bots';
 import { criarDraft, resolverBots } from '../engine/draft';
 import type { DraftState, Jogador } from '../engine/types';
 import { dataset } from './dataset-app';
-import { prepararCorrida } from './fluxo-corrida';
+import { diferencasParaLider, formatarDiferenca } from './diferenca-lider';
+import { classificacaoAoVivo, prepararCorrida } from './fluxo-corrida';
 import { linhaDoTempoDoPit } from './pit-replay';
 import { TelaCorrida } from './TelaCorrida';
 
@@ -72,6 +73,23 @@ describe('painel: diferença para o líder', () => {
     expect(celulas.length).toBe(22);
     expect(celulas[0]).toBe('Líder');
     expect(celulas.slice(1).filter((c) => /^\+\d+,\ds$|^\+\d+ V$/.test(c)).length).toBeGreaterThan(15);
+  });
+
+  it('o número da tela vem da linha do pit, a mesma que ordena o painel', () => {
+    const corrida = corridaCom(false);
+    const { pista, grid, resultado } = corrida;
+    const linha = linhaDoTempoDoPit(resultado, pista);
+    const ordemGrid = grid.grid.map((g) => g.jogadorId);
+    const textos = (t: number, comPit: boolean) => {
+      const ordem = classificacaoAoVivo(resultado, ordemGrid, t, pista.voltas, linha);
+      return diferencasParaLider(resultado, ordem, t, pista.voltas, comPit ? linha : undefined).map(formatarDiferenca);
+    };
+    // Um instante em que o líder está parado: é onde as duas contas divergem.
+    const paradas = Object.keys(resultado.voltasDePit).flatMap((j) => linha.paradas(j));
+    const t = paradas.map((p) => (p.chegada + p.partida) / 2).find((x) => textos(x, true).join() !== textos(x, false).join());
+    expect(t).toBeDefined();
+    const celulas = [...tela(corrida, t!).matchAll(/classificacao-ao-vivo__diferenca">([^<]*)</g)].map((m) => m[1]);
+    expect(celulas).toEqual(textos(t!, true));
   });
 });
 
