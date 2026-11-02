@@ -1,0 +1,212 @@
+[
+  {
+    "nome": "rumo-janela-cortada-no-box",
+    "detectada": true,
+    "falha": "src/ui/pit-replay.test.ts > rumo do carro (PR 2a) > pista-spa: atravessa a janela do pit sem girar de repente"
+  },
+  {
+    "nome": "rumo-invertido",
+    "detectada": true,
+    "falha": "src/ui/pit-replay.test.ts > rumo do carro (PR 2a) > pista-monaco: aponta para onde o carro anda, na pista e no box"
+  },
+  {
+    "nome": "rumo-vaga-reduzido",
+    "detectada": true,
+    "falha": "src/ui/pit-replay.test.ts > rumo do carro (PR 2a) > parado na vaga mantém o rumo, com e sem movimento reduzido"
+  },
+  {
+    "nome": "fracao-no-box",
+    "detectada": true,
+    "falha": "src/ui/tela-corrida-render.test.ts > spray > carro parado na vaga e carro que já chegou não soltam spray"
+  },
+  {
+    "nome": "instante-pelo-historico",
+    "detectada": true,
+    "falha": "src/ui/diferenca-lider.test.ts > diferença com o LÍDER na janela do pit > pista-spa: é o tempo real até o líder ter estado ali, pela mesma linha do mapa"
+  },
+  {
+    "nome": "asa-celular-grossa",
+    "detectada": true,
+    "falha": "src/ui/carro-replay.test.ts > asas: C completo e C proporcional > no celular a asa do bot fica entre 1,3 e 1,5 px (escolha do Marcos no aparelho)"
+  },
+  {
+    "nome": "asa-desktop-troca",
+    "detectada": true,
+    "falha": "src/ui/carro-replay.test.ts > asas: C completo e C proporcional > a tela larga usa o C completo, a estreita o proporcional"
+  },
+  {
+    "nome": "asa-cresce-para-fora",
+    "detectada": true,
+    "falha": "src/ui/carro-replay.test.ts > asas: C completo e C proporcional > a asa engrossa só para dentro: nem envergadura nem comprimento do carro mudam"
+  },
+  {
+    "nome": "escala-bot-celular",
+    "detectada": true,
+    "falha": "src/ui/carro-replay.test.ts > tamanho do carro (decisão do Marcos: bot 30 u e jogador 43 u no celular) > comprimento e largura por tela"
+  },
+  {
+    "nome": "escala-humano-celular",
+    "detectada": true,
+    "falha": "src/ui/carro-replay.test.ts > tamanho do carro (decisão do Marcos: bot 30 u e jogador 43 u no celular) > comprimento e largura por tela"
+  },
+  {
+    "nome": "contorno-grosso",
+    "detectada": true,
+    "falha": "src/ui/carro-replay.test.ts > contorno dos bots > estreita=true: 0,65 px visíveis, metade do traço fica sob o corpo"
+  },
+  {
+    "nome": "spray-corte-forte",
+    "detectada": true,
+    "falha": "src/ui/carro-replay.test.ts > spray por proximidade (decisão do Marcos) > os cortes são 30 u e 60 u"
+  },
+  {
+    "nome": "spray-corte-medio",
+    "detectada": true,
+    "falha": "src/ui/carro-replay.test.ts > spray por proximidade (decisão do Marcos) > os cortes são 30 u e 60 u"
+  },
+  {
+    "nome": "spray-sem-anel",
+    "detectada": true,
+    "falha": "src/ui/carro-replay.test.ts > spray por proximidade (decisão do Marcos) > quanto mais perto do carro da frente, mais forte"
+  },
+  {
+    "nome": "spray-conta-quem-saiu",
+    "detectada": true,
+    "falha": "src/ui/carro-replay.test.ts > spray por proximidade (decisão do Marcos) > carro fora da pista não solta nem conta como carro da frente"
+  },
+  {
+    "nome": "spray-niveis-invertidos",
+    "detectada": true,
+    "falha": "src/ui/carro-replay.test.ts > spray por proximidade (decisão do Marcos) > quanto mais perto do carro da frente, mais forte"
+  },
+  {
+    "nome": "spray-no-seco",
+    "detectada": true,
+    "falha": "src/ui/tela-corrida-render.test.ts > spray > um por carro na pista, com intensidade 1 a 3, só na chuva"
+  },
+  {
+    "nome": "spray-com-reduzido",
+    "detectada": true,
+    "falha": "src/ui/tela-corrida-render.test.ts > chuva e asfalto molhado > movimento reduzido: tira a chuva e o spray, e fica o asfalto molhado, que é estático"
+  },
+  {
+    "nome": "spray-de-quem-chegou",
+    "detectada": true,
+    "falha": "src/ui/tela-corrida-render.test.ts > spray > carro parado na vaga e carro que já chegou não soltam spray"
+  },
+  {
+    "nome": "spray-sobre-os-carros",
+    "detectada": true,
+    "falha": "src/ui/tela-corrida-render.test.ts > spray > todo spray vem antes do carro: nenhum cobre carro"
+  },
+  {
+    "nome": "chuva-com-reduzido",
+    "detectada": true,
+    "falha": "src/ui/tela-corrida-render.test.ts > chuva e asfalto molhado > movimento reduzido: tira a chuva e o spray, e fica o asfalto molhado, que é estático"
+  },
+  {
+    "nome": "molhado-sempre",
+    "detectada": true,
+    "falha": "src/ui/tela-corrida-render.test.ts > chuva e asfalto molhado > corrida seca: nada disso"
+  },
+  {
+    "nome": "reflexo-no-seco",
+    "detectada": true,
+    "falha": "src/ui/tela-corrida-render.test.ts > chuva e asfalto molhado > corrida seca: nada disso"
+  },
+  {
+    "nome": "sob-a-ponte-ignorado",
+    "detectada": true,
+    "falha": "src/ui/tela-corrida-render.test.ts > spray > Suzuka: spray sob a ponte fica antes do tabuleiro, com o carro"
+  },
+  {
+    "nome": "halo-em-todo-humano",
+    "detectada": true,
+    "falha": "src/ui/tela-corrida-render.test.ts > carros > halo: no Single, o humano; no online, só quem está jogando"
+  },
+  {
+    "nome": "humano-sem-prioridade",
+    "detectada": true,
+    "falha": "src/ui/tela-corrida-render.test.ts > carros > o humano é desenhado por último, para o pelotão não o cobrir"
+  },
+  {
+    "nome": "painel-sem-pit",
+    "detectada": true,
+    "falha": "src/ui/tela-corrida-render.test.ts > painel: diferença para o líder > o número da tela vem da linha do pit, a mesma que ordena o painel"
+  },
+  {
+    "nome": "escala-sempre-larga",
+    "detectada": true,
+    "falha": "src/ui/tela-corrida-render.test.ts > carros > tela larga: C completo e escala de desktop; estreita: C proporcional e escala de celular"
+  },
+  {
+    "nome": "desenho-sempre-largo",
+    "detectada": true,
+    "falha": "src/ui/tela-corrida-render.test.ts > carros > tela larga: C completo e escala de desktop; estreita: C proporcional e escala de celular"
+  },
+  {
+    "nome": "spray-sem-transform",
+    "detectada": true,
+    "falha": "src/ui/tela-corrida-render.test.ts > spray > o spray tem o transform do carro dele"
+  },
+  {
+    "nome": "lider-dnf",
+    "detectada": true,
+    "falha": "src/ui/diferenca-lider.test.ts > diferença para o líder (PR 2a) > o DNF ainda na frente do painel não vira a referência de quem corre"
+  },
+  {
+    "nome": "sem-piso",
+    "detectada": true,
+    "falha": "src/ui/diferenca-lider.test.ts > diferença para o líder (PR 2a) > o carro que já chegou com punição não fica atrás do número de quem vem depois"
+  },
+  {
+    "nome": "chegada-sem-punicao",
+    "detectada": true,
+    "falha": "src/ui/diferenca-lider.test.ts > diferença para o líder (PR 2a) > na chegada vale o tempo total, que traz a punição que o histórico não tem"
+  },
+  {
+    "nome": "voltas-por-arredondamento",
+    "detectada": true,
+    "falha": "src/ui/diferenca-lider.test.ts > diferença para o líder (PR 2a) > com o líder uma volta ou mais à frente, conta voltas inteiras"
+  },
+  {
+    "nome": "formato-ponto",
+    "detectada": true,
+    "falha": "src/ui/tela-corrida-render.test.ts > painel: diferença para o líder > toda linha traz a coluna, com o líder identificado"
+  },
+  {
+    "nome": "reflexo-fora-do-asfalto",
+    "detectada": true,
+    "falha": "src/ui/molhado.test.ts > reflexos do asfalto molhado > pista-monaco: dois traços finos, dentro do asfalto"
+  },
+  {
+    "nome": "reflexo-um-lado-so",
+    "detectada": true,
+    "falha": "src/ui/molhado.test.ts > reflexos do asfalto molhado > lados opostos do eixo, à mesma distância"
+  },
+  {
+    "nome": "css-molhado-sem-override",
+    "detectada": true,
+    "falha": "src/ui/molhado.test.ts > asfalto molhado (decisão do Marcos: #313131) > entra só por cima do token da pista: o seco continua intacto"
+  },
+  {
+    "nome": "halo-fio-online",
+    "detectada": true,
+    "falha": "src/ui/contrato-corrida-online.test.ts > 🏆 3.5.4 — a `key` da etapa e o fim do `naCorrida` (cerca textual) > 🔴 o halo do online chega a `TelaCorrida`: `euSou` passa por `FluxoCorrida`"
+  },
+  {
+    "nome": "halo-fio-fluxo",
+    "detectada": true,
+    "falha": "src/ui/contrato-corrida-online.test.ts > 🏆 3.5.4 — a `key` da etapa e o fim do `naCorrida` (cerca textual) > 🔴 o halo do online chega a `TelaCorrida`: `euSou` passa por `FluxoCorrida`"
+  },
+  {
+    "nome": "acumulado-sem-memo",
+    "detectada": true,
+    "falha": "src/ui/fluxo-corrida.test.ts > acumularVoltas > é memoizado pelo histórico: o replay pede isto dezenas de vezes por frame (PR 2a)"
+  },
+  {
+    "nome": "token-molhado",
+    "detectada": true,
+    "falha": "src/ui/tokens.test.ts > sincronia tokens.ts <-> tokens.css > dark (:root) > --pista-asfalto-molhado = #2E2E2E"
+  }
+]

@@ -12,8 +12,10 @@
 
 ## Estado atual
 
-**2026-11-01, branch `feat/pr2c-pit-stop`**, com o PR 2c aprovado e commitado sobre a `main` `d9e8916`.
-Sem push: o push, o PR e o deploy aguardam o Marcos.
+**2026-11-01, branch `feat/pr2a-carros-chuva`**, com o PR 2a implementado sobre a `main` `c3f7dcb`,
+aguardando o veredito do Marcos no celular. Sem push, merge ou deploy.
+~~**2026-11-01, branch `feat/pr2c-pit-stop`**, com o PR 2c aprovado e commitado sobre a `main` `d9e8916`.
+Sem push: o push, o PR e o deploy aguardam o Marcos.~~ O PR 2c foi mesclado na `main` (`c3f7dcb`).
 ~~**2026-11-01, `main` `d9e8916`**, com o PR 1 e o PR 2b mesclados, publicados e testados em
 produção. Próximo: **PR 2c** (pit stop animado), que passou à frente do PR 2a por decisão do Marcos.~~
 ~~**2026-11-01, branch `docs/plano-pr2b-silhuetas`**, com o PR 2b fechado sobre `origin/main`
@@ -423,6 +425,40 @@ dependência).
 
 
 ## Onde parei
+
+### 2026-11-01 — PR 2a IMPLEMENTADO, aguardando o veredito do Marcos no celular
+
+Branch `feat/pr2a-carros-chuva`, sobre a `main` `c3f7dcb`. Risco ALTO. Sem push, merge ou deploy.
+Commits por etapa: `b586a3d` rumo, `f31832c` diferença, `a5a3bdc` carros, `77ef107` diferença pelo pit,
+`6100984` chuva e spray, `7b6fb9b` instrumentos, `37bb694` achados da revisão. Detalhe e decisões em
+`HISTORICO.md` §"2026-11-01 — PR 2a".
+
+- **Decisões do Marcos:** C proporcional no celular (asa de 1,3-1,5 px no bot a 360), escolhido no
+  aparelho real; C completo no desktop; contorno nos bots; halo no jogador; asfalto molhado `#313131`
+  com reflexos finos; spray por proximidade; **incidentes na pista vão para o PR 2d**.
+- ⚠️ **Exceção de luminância:** `#313131` fica a 1,124 do muro, abaixo dos 1,25 de
+  `SEPARACAO_MINIMA_LUMINANCIA`. Só na chuva, travada em `molhado.test.ts`. É o mesmo tom que
+  `pista-camadas.test.ts` reprova como asfalto seco. Eu não avisei disso quando recomendei a cor;
+  o relatório do PR avisa. Alternativa de uma linha, se ele quiser: `#343434` (1,25).
+- **Medido em 2026-11-01:** `npm test` 1974 + 1 skipped em 88 arquivos; `test:party` 46/8; typecheck,
+  lint e build com saída 0; `git diff` vazio em `src/engine/` e `src/data/`; `VERSAO_APP` 3.4.7.
+- **Mutação:** 42/42 com controle (`docs/pr2a-mutacoes.json`). A 1ª rodada deu 37/39; os 2 sobreviventes
+  viraram teste, e 3 mutantes entraram com a revisão.
+- **FPS, CPU 6×, 360×800, 22 carros, chuva, 5 repetições, A B A B, mediana (`docs/pr2a-fps.json`):**
+  thread principal por frame antes → depois: Spa média 7,7 → 11,9; Montreal média 7,4 → 11,8; Spa
+  rápida 7,8 → 12,4; Montreal rápida 7,8 → 11,8 ms. Zero quadro > 33 ms. A rodada anterior ao ajuste
+  deu 6,2 → 10,2: os valores absolutos mudam entre rodadas, o acréscimo de ~4 ms se repete. ⚠️ Emulação
+  em desktop; o custo de raster e composição da chuva e do spray não está verificado no freio de CPU.
+- **`senior-reviewer`:** sem bug de lógica. Aplicados todos os achados de código, inclusive o crítico
+  (cerca anti-raridade cega para `.carro-c__*`). Aceito sem mudar: tela de 361-700 px usa o carro de
+  celular com contorno até 2× mais visível; olhado a 690 px, sem defeito.
+- **Pendências novas:** DNF ainda salta da linha para o meio da pista no fim da volta, resolver no
+  PR 2d com o local do incidente; medir no aparelho real.
+- **Preview:** `npx vite build --config scripts/preview-pit.config.ts` com `PREVIEW_PIT_SAIDA`, depois
+  `npx vite preview --config scripts/preview-pit.config.ts --outDir <saída> --host <IP da LAN> --port 5173
+  --strictPort`, e abrir `/scripts/preview-pit.html`.
+- **Próximo:** veredito do Marcos no celular. Aprovado: push e PR são decisão dele. O `HISTORICO.md` já
+  tem a entrada.
 
 ### 2026-11-01 — PR 2c APROVADO e commitado, aguardando o push do Marcos
 
