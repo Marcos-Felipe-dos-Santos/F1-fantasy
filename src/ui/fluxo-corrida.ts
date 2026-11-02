@@ -155,14 +155,24 @@ export function perfilPista(pista: Pista): PerfilPista {
   };
 }
 
+/**
+ * Memo por IDENTIDADE do histórico, no mesmo espírito de `CACHE_LUT`: o replay pede
+ * isto da ordem de 150 vezes por frame, e os históricos vêm do `resultado` congelado.
+ * A premissa é a mesma: histórico e acumulado são imutáveis depois de criados.
+ */
+const CACHE_ACUMULADO = new WeakMap<readonly number[], number[]>();
+
 /** Tempos acumulados por volta (ms), a partir do histórico de voltas de um carro (`ResultadoCorrida.historicoVoltas[id]`). */
 export function acumularVoltas(historico: number[]): number[] {
+  const existente = CACHE_ACUMULADO.get(historico);
+  if (existente !== undefined) return existente;
   const acumulado: number[] = [];
   let soma = 0;
   for (const tempoVolta of historico) {
     soma += tempoVolta;
     acumulado.push(soma);
   }
+  CACHE_ACUMULADO.set(historico, acumulado);
   return acumulado;
 }
 

@@ -9,6 +9,8 @@
  * envergadura nem comprimento mudam.
  */
 
+import { VIEWBOX_LARGURA } from './pista-camadas';
+
 /** Abaixo disto a `.tela-corrida` é a do celular; o mesmo corte do `@media` de `estilos.css`. */
 export const LARGURA_TELA_ESTREITA = 700;
 
@@ -42,7 +44,7 @@ const CONTORNO_BOT_VISIVEL_PX = 0.65;
 export function contornoDoBot(estreita: boolean): number {
   const larguraPx = estreita ? PISTA_PX_ESTREITA : PISTA_PX_LARGA;
   const escala = estreita ? ESCALA_CARRO.estreita.bot : ESCALA_CARRO.larga.bot;
-  return (2 * CONTORNO_BOT_VISIVEL_PX * 1000) / (larguraPx * escala);
+  return (2 * CONTORNO_BOT_VISIVEL_PX * VIEWBOX_LARGURA) / (larguraPx * escala);
 }
 
 export interface Retangulo {

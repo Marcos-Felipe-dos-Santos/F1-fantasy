@@ -427,10 +427,12 @@ describe('rumo do carro (PR 2a)', () => {
       [jogadorId, acumularVoltas(historico)[1] * 0.3, status],
       [jogadorId, acumularVoltas(historico)[1] * 0.8, status],
     ];
-    if (paradas.length > 0) {
-      const { j, p } = paradas[0];
-      casos.push([j, (p.entrada + p.chegada) / 2, 'terminou'], [j, (p.partida + p.retorno) / 2, 'terminou']);
-    }
+    expect(paradas.length).toBeGreaterThan(0);
+    const { j: quemParou, p } = paradas[0];
+    casos.push(
+      [quemParou, (p.entrada + p.chegada) / 2, 'terminou'],
+      [quemParou, (p.partida + p.retorno) / 2, 'terminou'],
+    );
     for (const [j, t, st] of casos) {
       const h = resultado.historicoVoltas[j];
       const antes = linha.posicao(j, h, st, t - 400, false).ponto;
@@ -443,9 +445,11 @@ describe('rumo do carro (PR 2a)', () => {
   it.each(PISTAS)('%s: atravessa a janela do pit sem girar de repente', (id) => {
     const { pista, resultado } = corridaReal(3, id);
     const linha = linhaDoTempoDoPit(resultado, pista);
+    let janelas = 0;
     for (const j of Object.keys(resultado.voltasDePit)) {
       const h = resultado.historicoVoltas[j];
       for (const p of linha.paradas(j)) {
+        janelas++;
         let anterior = linha.posicao(j, h, 'terminou', p.inicio, false);
         for (let t = p.inicio; t <= p.fim; t += 150) {
           const agora = linha.posicao(j, h, 'terminou', t, false);
@@ -456,6 +460,7 @@ describe('rumo do carro (PR 2a)', () => {
         }
       }
     }
+    expect(janelas).toBeGreaterThan(0);
   });
 
   it('parado na vaga mantém o rumo, com e sem movimento reduzido', () => {

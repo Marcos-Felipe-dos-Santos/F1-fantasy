@@ -7,16 +7,24 @@ import { useSyncExternalStore } from 'react';
 
 const CONSULTA = '(prefers-reduced-motion: reduce)';
 
+let consulta: MediaQueryList | null = null;
+
+/** Uma só: `getSnapshot` roda a cada render, e o replay renderiza a cada frame. */
+function media(): MediaQueryList {
+  consulta ??= window.matchMedia(CONSULTA);
+  return consulta;
+}
+
 function assinar(avisar: () => void): () => void {
-  const media = window.matchMedia(CONSULTA);
-  media.addEventListener('change', avisar);
-  return () => media.removeEventListener('change', avisar);
+  const lista = media();
+  lista.addEventListener('change', avisar);
+  return () => lista.removeEventListener('change', avisar);
 }
 
 export function useMovimentoReduzido(): boolean {
   return useSyncExternalStore(
     assinar,
-    () => window.matchMedia(CONSULTA).matches,
+    () => media().matches,
     () => false,
   );
 }

@@ -336,6 +336,11 @@ describe('acumularVoltas', () => {
     expect(acumularVoltas([100, 200, 50])).toEqual([100, 300, 350]);
     expect(acumularVoltas([])).toEqual([]);
   });
+
+  it('é memoizado pelo histórico: o replay pede isto dezenas de vezes por frame (PR 2a)', () => {
+    const historico = [100, 200];
+    expect(acumularVoltas(historico)).toBe(acumularVoltas(historico));
+  });
 });
 
 describe('escalaReplay', () => {

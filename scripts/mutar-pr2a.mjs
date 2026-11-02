@@ -15,6 +15,9 @@ const DIF = 'src/ui/diferenca-lider.ts';
 const MOLHADO = 'src/ui/molhado.ts';
 const CSS = 'src/ui/estilos.css';
 const TOKENS = 'src/ui/tokens.ts';
+const ONLINE = 'src/ui/FluxoOnline.tsx';
+const FLUXO = 'src/ui/FluxoCorrida.tsx';
+const BASE = 'src/ui/fluxo-corrida.ts';
 
 const MUTACOES = [
   ['rumo-janela-cortada-no-box', PIT, 'return angulo(pontoNoCaminho(c, x - MEIA_JANELA_RUMO), pontoNoCaminho(c, x + MEIA_JANELA_RUMO));', 'return angulo(pontoNoCaminho(c, x), pontoNoCaminho(c, x + MEIA_JANELA_RUMO));'],
@@ -55,6 +58,9 @@ const MUTACOES = [
   ['reflexo-fora-do-asfalto', MOLHADO, 'export const DESLOCAMENTO_REFLEXO = 9;', 'export const DESLOCAMENTO_REFLEXO = 18;'],
   ['reflexo-um-lado-so', MOLHADO, '[DESLOCAMENTO_REFLEXO, -DESLOCAMENTO_REFLEXO].map', '[DESLOCAMENTO_REFLEXO, DESLOCAMENTO_REFLEXO].map'],
   ['css-molhado-sem-override', CSS, '--pista-asfalto: var(--pista-asfalto-molhado);', '--pista-asfalto-x: var(--pista-asfalto-molhado);'],
+  ['halo-fio-online', ONLINE, '            jogadorLocalId={euSou}\n', ''],
+  ['halo-fio-fluxo', FLUXO, '      jogadorLocalId={jogadorLocalId}\n', ''],
+  ['acumulado-sem-memo', BASE, 'CACHE_ACUMULADO.set(historico, acumulado);', ''],
   ['token-molhado', TOKENS, "pistaAsfaltoMolhado: '#313131',", "pistaAsfaltoMolhado: '#2E2E2E',"],
 ];
 
@@ -70,6 +76,8 @@ const rodar = () =>
       'src/ui/diferenca-lider.test.ts',
       'src/ui/tela-corrida-render.test.ts',
       'src/ui/tokens.test.ts',
+      'src/ui/contrato-corrida-online.test.ts',
+      'src/ui/fluxo-corrida.test.ts',
       '--bail=1',
     ],
     { encoding: 'utf8', shell: true, stdio: ['ignore', 'pipe', 'pipe'] },

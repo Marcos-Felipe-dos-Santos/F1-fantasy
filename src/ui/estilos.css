@@ -699,6 +699,7 @@ button.card {
    O passo da animação é exatamente um ladrilho para cada lado, por isso não há emenda. */
 .tracado-chuva {
   position: relative;
+  max-width: 700px; /* o do `.tracado-svg`: numa coluna mais larga, a chuva sairia da pista */
 }
 
 .chuva-replay {
