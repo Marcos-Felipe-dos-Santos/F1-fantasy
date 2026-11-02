@@ -436,10 +436,17 @@ Branch `feat/pr2e-fim-da-corrida`, sobre a `main` `a49cb78`, merge do PR 2a conf
 Commits: `b20b0a5` implementação, `ac3572c` timeout por mutante, `a8a4d5d` FPS. Sem push. `HISTORICO.md`
 fica para o fechamento do PR.
 
-- **Falta para fechar:** `senior-reviewer` (sem registro de que rodou no 2e) e veredito do Marcos no preview.
-- **Em aberto com o Marcos:** `saidaDoBoxPassou` = 189 inversões em 1000 corridas, carro ainda correndo que
-  sai do box e passa quem já está na volta lenta. A D1 fala em "sem ultrapassar"; "exceção aceita" é texto
-  do comentário de `scripts/verificar-pr2e.preview.test.ts`, não decisão registrada dele.
+- **RETOMADA, nesta ordem (pedido do Marcos):** ele vai reiniciar o PC para limpar processos e medir o FPS de novo.
+  1. FPS intercalado de novo com a máquina limpa; se os quadros lentos no fim persistirem (pior 133 ms),
+     investigar a causa.
+  2. `senior-reviewer` no diff completo do PR 2e (sem registro de que tenha rodado).
+  3. Veredito do Marcos no preview. Comando: `npx vite preview --config scripts/preview-pit.config.ts --outDir
+     .wrangler/pr2e-preview --host 192.168.0.3 --port 5173`; URL `/scripts/preview-pit.html?cena=retardatario`,
+     `punicao` ou `normal`. Capturas em `preview/pr2e/`.
+  4. `HISTORICO.md` no fechamento.
+- **Decidido pelo Marcos em 2026-11-02:** `saidaDoBoxPassou` = 189 inversões em 1000 corridas, carro ainda
+  correndo que sai do box e passa quem já está na volta lenta, é aceito. "Sem ultrapassar" vale entre carros
+  que já terminaram. Ver D1 em §"🔒 DECISÕES DO MARCOS — VIGENTES".
 - **Medido:** `npm test` 2029 + 1 skipped em 89 arquivos; `test:party` 46; typecheck e eslint com saída 0;
   `git diff 99ae1f3 HEAD` vazio em `src/engine/` e `src/data/`. Verificação em 1000 corridas: ordem
   divergente 0, retardatário acima 0, volta lenta passou 0, corrido passou 0, bandeira no box 1.
@@ -2235,6 +2242,9 @@ quando o último carro cruza, mesmo com outros na volta lenta. Sobre a medição
 
 - **D1:** sem box depois da linha. Fica só a volta lenta, a 60% da velocidade, sem ultrapassar. Em 1000
   corridas, nenhum carro chegaria à vaga antes do fim do replay.
+- **D1, alcance (decisão do Marcos, 2026-11-02, depois de ver as 189 inversões em 1000 corridas):** "Aceito
+  que um carro ainda correndo, saindo do box, passe quem já está na volta lenta. 'Sem ultrapassar' vale
+  entre carros que já terminaram."
 - **D2:** o painel segue a ordem oficial, com selo `+Xs` no carro punido.
 - **D3:** a tela de resultado fica como está.
 - **D4:** os saltos do DNF ficam até o PR 2d (46 em 800).
