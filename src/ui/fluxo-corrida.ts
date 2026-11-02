@@ -462,7 +462,7 @@ export interface PitDoReplay {
  * visual dela ao longo do tempo):
  * 1. progresso decrescente (`progressoNoReplay` — fração da corrida inteira
  *    já percorrida, 0..1; carro que terminou fica parado em 1, carro em DNF
- *    congela em `voltasCompletadas / voltasTotais` < 1);
+ *    congela em `voltasCompletadas / voltasTotais`);
  * 2. empate em progresso: posição de largada (`gridLargada`);
  * 3. depois da primeira chegada, todo DNF fica atrás de quem não abandonou: o DNF
  *    da última volta congela em progresso 1 e tomaria a frente de quem ainda corre

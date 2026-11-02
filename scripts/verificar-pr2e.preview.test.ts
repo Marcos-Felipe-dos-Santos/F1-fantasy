@@ -26,7 +26,7 @@ const AMOSTRAS = 80;
 
 describe('verificação do PR 2e', () => {
   it('1000 corridas', () => {
-    const conta = { corridas: 0, ordemDivergente: 0, retardatarioAcima: 0, retardatarios: 0, voltaLentaPassou: 0, lentoPassouQuemCorre: 0, saidaDoBoxPassou: 0, corridoPassou: 0, maiorSaltoU: 0, bandeiraNoBox: 0 };
+    const conta = { corridas: 0, ordemDivergente: 0, retardatarioAcima: 0, retardatarios: 0, voltaLentaPassou: 0, lentoPassouQuemCorre: 0, saidaDoBoxPassou: 0, corridoPassou: 0, maiorSaltoU: 0, bandeiraNoBox: 0, fimAntesDaLenta: 0 };
     dataset.pistas.forEach((pista, indice) => {
       for (let k = 0; k < 100; k++) {
         const loadouts = draftarCampeonato(dataset, 7000 + k).loadouts;
@@ -45,6 +45,8 @@ describe('verificação do PR 2e', () => {
         const dados = terminaram.map((id) => ({ id, h: r.historicoVoltas[id], c: replay.chegada(id)! }));
         conta.retardatarios += dados.filter((d) => d.c.voltas < pista.voltas).length;
         conta.bandeiraNoBox += dados.filter((d) => d.c.inicioLenta !== d.c.instante).length;
+        // `fim` vem de `instante`: o último a cruzar não pode estar ainda saindo do box.
+        conta.fimAntesDaLenta += dados.filter((d) => replay.fim < d.c.inicioLenta).length;
 
         // Salto: a passagem pela linha, de 5 ms em 5 ms simulados, não pode teleportar o carro.
         for (const { id, h, c } of dados) {
@@ -105,6 +107,7 @@ describe('verificação do PR 2e', () => {
     expect(conta.lentoPassouQuemCorre).toBe(0);
     expect(conta.maiorSaltoU).toBeLessThan(1);
     expect(conta.bandeiraNoBox).toBe(1);
+    expect(conta.fimAntesDaLenta).toBe(0);
     expect(conta.retardatarios).toBeGreaterThan(0);
   }, 300000);
 });

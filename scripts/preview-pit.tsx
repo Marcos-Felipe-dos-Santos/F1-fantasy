@@ -11,6 +11,8 @@
  * PR 2e: `cena=retardatario|punicao|normal` acha a corrida e começa perto da bandeirada;
  * `cauda=1` faz o relógio repetir o trecho final; `real=1` monta o `FluxoCorrida` de verdade,
  * do grid ao resultado, que é o único jeito de ver a ligação de `useCorrida`.
+ * `glifos=1` desenha 🏁 e 🔧 invisíveis desde o início: prova que o quadro lento da bandeirada é
+ * a busca da fonte de emoji (`docs/pr2e-fps-passagem.json`).
  * Sem `pit-replay.ts` (build do "antes") a página funciona igual, sem o HUD do box.
  */
 
@@ -103,6 +105,7 @@ const cena = CENAS[q.get('cena') ?? ''];
 const pistaId = cena?.pistaId ?? q.get('pista') ?? 'pista-spa';
 const fluxoReal = q.get('real') === '1';
 const repetirCauda = q.get('cauda') === '1';
+const glifosProntos = q.get('glifos') === '1';
 const querChuva = q.get('chuva') === '1';
 const estaUrl = `${pistaId}${querChuva ? '&chuva=1' : ''}`;
 const medirFps = q.get('fps') === '1';
@@ -217,6 +220,8 @@ function Preview() {
     let anterior: number | null = null;
     const intervalos: number[] = [];
     const trabalho: number[] = [];
+    const tempos: number[] = [];
+    const voltas: boolean[] = [];
     if (medirFps) tRef.current = Math.max(0, (pits[Math.floor(pits.length / 2)] ?? 0) - 90000);
     if (repetirCauda) tRef.current = replay.bandeirada;
     if (cena !== undefined) tRef.current = inicioDaCena;
@@ -224,6 +229,7 @@ function Preview() {
       if (anterior !== null && !pausadoRef.current) {
         const delta = agora - anterior;
         const antes = performance.now();
+        const tAntes = tRef.current;
         tRef.current += delta * escalaRef.current;
         if (tRef.current >= fimDaCorrida) {
           if (cena !== undefined) {
@@ -237,6 +243,8 @@ function Preview() {
         if (medirFps) {
           intervalos.push(delta);
           trabalho.push(performance.now() - antes);
+          tempos.push(tRef.current);
+          voltas.push(tRef.current < tAntes);
           if (intervalos.length === AQUECIMENTO + FRAMES) {
             const iv = intervalos.slice(AQUECIMENTO).sort((a, b) => a - b);
             const tb = trabalho.slice(AQUECIMENTO).sort((a, b) => a - b);
@@ -254,6 +262,13 @@ function Preview() {
               renderP50: pct(tb, 0.5),
               renderP95: pct(tb, 0.95),
               renderMax: tb[tb.length - 1],
+              // O intervalo mede o que travou ENTRE este quadro e o anterior.
+              voltasDoRelogio: voltas.slice(AQUECIMENTO).filter(Boolean).length,
+              lentos: intervalos.flatMap((d, i) =>
+                i < AQUECIMENTO || d <= 33.34
+                  ? []
+                  : [{ i: i - AQUECIMENTO, delta: d, render: trabalho[i], renderAnterior: trabalho[i - 1], t: tempos[i], voltou: voltas[i], voltouAntes: voltas[i - 1] }],
+              ),
             };
             return;
           }
@@ -290,6 +305,16 @@ function Preview() {
   // com vão no desktop e pista 10% maior no celular.
   return (
     <div className="app-shell">
+      {glifosProntos && (
+        // Com as classes reais: a busca é por fonte e tamanho, e um span qualquer não a poupa.
+        <div aria-hidden className="tela-corrida" style={{ position: 'absolute', opacity: 0, pointerEvents: 'none' }}>
+          <div className="tela-corrida__cabecalho">
+            <h2>🏁</h2>
+          </div>
+          <span className="classificacao-ao-vivo__chegou">🏁</span>
+          <span className="badge-pit">🔧 PIT</span>
+        </div>
+      )}
       <nav style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', padding: 8 }}>
         {Object.entries(CENAS).map(([id, c]) => (
           <a key={id} href={`?cena=${id}&velocidade=${velocidade}`} aria-current={c === cena}>

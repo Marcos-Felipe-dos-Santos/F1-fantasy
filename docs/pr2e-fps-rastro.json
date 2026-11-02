@@ -1,0 +1,244 @@
+{
+ "condicoes": "CPU 6x, 360x800, chuva, lenta, retardatario",
+ "semGlifos": {
+  "cena": "retardatario",
+  "tempos": {
+   "bandeirada": 1158767.0552510307,
+   "fim": 1223082.5786566217,
+   "vencedor": 1158767.0552510307,
+   "voltas": 14,
+   "destaque": "j09",
+   "instante": 1160388.5813271499
+  },
+  "lentos": [
+   {
+    "i": 180,
+    "delta": 34.19999999999982,
+    "render": 7.199999999953434,
+    "renderAnterior": 7.699999999953434,
+    "t": 1154513.6444331403,
+    "voltou": false,
+    "voltouAntes": false
+   },
+   {
+    "i": 223,
+    "delta": 67.59999999999991,
+    "render": 5.699999999953434,
+    "renderAnterior": 6.899999999906868,
+    "t": 1159475.1906736796,
+    "voltou": false,
+    "voltouAntes": false
+   },
+   {
+    "i": 390,
+    "delta": 41.5,
+    "render": 3.9000000001396984,
+    "renderAnterior": 3,
+    "t": 1173255.3220672319,
+    "voltou": false,
+    "voltouAntes": false
+   }
+  ],
+  "tarefasDepoisDaCarga": [
+   {
+    "msAntesDoUltimoRaf": 3225,
+    "duracaoMs": 70,
+    "layout": [
+     [
+      52.6,
+      65
+     ]
+    ],
+    "buscasDeFallback": [
+     13.3,
+     14
+    ],
+    "maiores": [
+     [
+      "Layout",
+      52.6
+     ],
+     [
+      "FontCache::FallbackFontForCharacter",
+      27.3
+     ],
+     [
+      "v8.callFunction",
+      7.5
+     ],
+     [
+      "FunctionCall",
+      7.5
+     ],
+     [
+      "FireAnimationFrame",
+      7.3
+     ]
+    ]
+   },
+   {
+    "msAntesDoUltimoRaf": 1698,
+    "duracaoMs": 39.6,
+    "layout": [
+     [
+      27.3,
+      52
+     ]
+    ],
+    "buscasDeFallback": [
+     14
+    ],
+    "maiores": [
+     [
+      "Layout",
+      27.3
+     ],
+     [
+      "FontCache::FallbackFontForCharacter",
+      14
+     ],
+     [
+      "Paint",
+      4.4
+     ],
+     [
+      "v8.callFunction",
+      3.4
+     ],
+     [
+      "FireAnimationFrame",
+      3.2
+     ]
+    ]
+   }
+  ]
+ },
+ "comGlifosNasClassesReais": {
+  "cena": "retardatario",
+  "tempos": {
+   "bandeirada": 1158767.0552510307,
+   "fim": 1223082.5786566217,
+   "vencedor": 1158767.0552510307,
+   "voltas": 14,
+   "destaque": "j09",
+   "instante": 1160388.5813271499
+  },
+  "lentos": [
+   {
+    "i": 403,
+    "delta": 40.20000000000073,
+    "render": 3.800000000046566,
+    "renderAnterior": 3.1000000000931323,
+    "t": 1173244.2861905133,
+    "voltou": false,
+    "voltouAntes": false
+   }
+  ],
+  "tarefasDepoisDaCarga": [
+   {
+    "msAntesDoUltimoRaf": 3123,
+    "duracaoMs": 24.9,
+    "layout": [
+     [
+      6.3,
+      65
+     ]
+    ],
+    "buscasDeFallback": [
+     0,
+     0
+    ],
+    "maiores": [
+     [
+      "v8.callFunction",
+      8.1
+     ],
+     [
+      "FunctionCall",
+      7.6
+     ],
+     [
+      "FireAnimationFrame",
+      7.5
+     ],
+     [
+      "Layout",
+      6.3
+     ],
+     [
+      "Paint",
+      5.4
+     ]
+    ]
+   },
+   {
+    "msAntesDoUltimoRaf": 1595,
+    "duracaoMs": 36,
+    "layout": [
+     [
+      25.3,
+      52
+     ]
+    ],
+    "buscasDeFallback": [
+     13.4
+    ],
+    "maiores": [
+     [
+      "Layout",
+      25.3
+     ],
+     [
+      "FontCache::FallbackFontForCharacter",
+      13.4
+     ],
+     [
+      "Paint",
+      4
+     ],
+     [
+      "v8.callFunction",
+      3.2
+     ],
+     [
+      "FireAnimationFrame",
+      3.2
+     ]
+    ]
+   },
+   {
+    "msAntesDoUltimoRaf": 889,
+    "duracaoMs": 20,
+    "layout": [
+     [
+      0.4,
+      38
+     ]
+    ],
+    "buscasDeFallback": [],
+    "maiores": [
+     [
+      "v8.callFunction",
+      14.1
+     ],
+     [
+      "FireAnimationFrame",
+      14
+     ],
+     [
+      "FunctionCall",
+      13.9
+     ],
+     [
+      "MajorGC",
+      6.9
+     ],
+     [
+      "V8.GCFinalizeMC",
+      6.5
+     ]
+    ]
+   }
+  ]
+ }
+}
