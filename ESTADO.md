@@ -12,8 +12,10 @@
 
 ## Estado atual
 
-**2026-11-01, branch `feat/pr2a-carros-chuva`**, com o PR 2a implementado sobre a `main` `c3f7dcb`,
-aguardando o veredito do Marcos no celular. Sem push, merge ou deploy.
+**2026-11-02, branch `feat/pr2a-carros-chuva`**, com o PR 2a aprovado no celular e fechado sobre a
+`main` `c3f7dcb`. O push é do Marcos. Sem merge ou deploy.
+~~**2026-11-01, branch `feat/pr2a-carros-chuva`**, com o PR 2a implementado sobre a `main` `c3f7dcb`,
+aguardando o veredito do Marcos no celular. Sem push, merge ou deploy.~~
 ~~**2026-11-01, branch `feat/pr2c-pit-stop`**, com o PR 2c aprovado e commitado sobre a `main` `d9e8916`.
 Sem push: o push, o PR e o deploy aguardam o Marcos.~~ O PR 2c foi mesclado na `main` (`c3f7dcb`).
 ~~**2026-11-01, `main` `d9e8916`**, com o PR 1 e o PR 2b mesclados, publicados e testados em
@@ -426,12 +428,23 @@ dependência).
 
 ## Onde parei
 
-### 2026-11-01 — PR 2a IMPLEMENTADO, aguardando o veredito do Marcos no celular
+### 2026-11-02 — PR 2a APROVADO no celular e fechado, aguardando o push do Marcos
 
-Branch `feat/pr2a-carros-chuva`, sobre a `main` `c3f7dcb`. Risco ALTO. Sem push, merge ou deploy.
+Branch `feat/pr2a-carros-chuva`, sobre a `main` `c3f7dcb`. Risco ALTO. O push é do Marcos; sem merge ou deploy.
 Commits por etapa: `b586a3d` rumo, `f31832c` diferença, `a5a3bdc` carros, `77ef107` diferença pelo pit,
-`6100984` chuva e spray, `7b6fb9b` instrumentos, `37bb694` achados da revisão. Detalhe e decisões em
-`HISTORICO.md` §"2026-11-01 — PR 2a".
+`6100984` chuva e spray, `7b6fb9b` instrumentos, `37bb694` achados da revisão, `0286dc8` preview na
+largura do jogo. Detalhe e decisões em `HISTORICO.md` §"2026-11-01 — PR 2a".
+
+- **Veredito do Marcos (2026-11-02):** aprovado no celular; asfalto fica `#313131` como exceção da chuva.
+- **Vão no desktop: era só do preview.** Com o `App` real jogado até o replay, a pista fica a 16 px da
+  classificação em 1280, 1440 e 1920; no preview eram 260, 420 e 900 px, porque a página não usava
+  `.app-shell`. Corrigido no preview em `0286dc8`, sem tocar no jogo. A pista do jogo segue em 632 px no
+  desktop, dentro do limite de 1000 px da `.app-shell`.
+- ⚠️ **O que o Marcos aprovou no celular estava maior que o jogo.** A mesma causa fazia o preview desenhar
+  a pista com 360 px de largura contra 328 no jogo, numa tela de 360. Na área interna, 354 contra
+  322 px: no jogo, pista e carro ficam 9% menores que no aparelho dele, e a asa do bot dá cerca de 1,39 px
+  contra 1,52. Os 1,39 px cumprem os 1,3-1,5 px decididos. A medição de FPS foi feita na página antiga e não
+  foi refeita. Os 3 prints de `docs/pr2a-imagens/` foram refeitos com a largura real.
 
 - **Decisões do Marcos:** C proporcional no celular (asa de 1,3-1,5 px no bot a 360), escolhido no
   aparelho real; C completo no desktop; contorno nos bots; halo no jogador; asfalto molhado `#313131`
@@ -439,9 +452,10 @@ Commits por etapa: `b586a3d` rumo, `f31832c` diferença, `a5a3bdc` carros, `77ef
 - ⚠️ **Exceção de luminância:** `#313131` fica a 1,124 do muro, abaixo dos 1,25 de
   `SEPARACAO_MINIMA_LUMINANCIA`. Só na chuva, travada em `molhado.test.ts`. É o mesmo tom que
   `pista-camadas.test.ts` reprova como asfalto seco. Eu não avisei disso quando recomendei a cor;
-  o relatório do PR avisa. Alternativa de uma linha, se ele quiser: `#343434` (1,25).
+  o relatório do PR avisou, e o Marcos manteve a cor em 2026-11-02, conhecendo a alternativa `#343434`.
 - **Medido em 2026-11-01:** `npm test` 1974 + 1 skipped em 88 arquivos; `test:party` 46/8; typecheck,
   lint e build com saída 0; `git diff` vazio em `src/engine/` e `src/data/`; `VERSAO_APP` 3.4.7.
+  Em 2026-11-02, depois de `0286dc8`: `npm test`, typecheck e lint dos 2 scripts repetidos, mesmo resultado.
 - **Mutação:** 42/42 com controle (`docs/pr2a-mutacoes.json`). A 1ª rodada deu 37/39; os 2 sobreviventes
   viraram teste, e 3 mutantes entraram com a revisão.
 - **FPS, CPU 6×, 360×800, 22 carros, chuva, 5 repetições, A B A B, mediana (`docs/pr2a-fps.json`):**
@@ -452,13 +466,13 @@ Commits por etapa: `b586a3d` rumo, `f31832c` diferença, `a5a3bdc` carros, `77ef
 - **`senior-reviewer`:** sem bug de lógica. Aplicados todos os achados de código, inclusive o crítico
   (cerca anti-raridade cega para `.carro-c__*`). Aceito sem mudar: tela de 361-700 px usa o carro de
   celular com contorno até 2× mais visível; olhado a 690 px, sem defeito.
-- **Pendências novas:** DNF ainda salta da linha para o meio da pista no fim da volta, resolver no
-  PR 2d com o local do incidente; medir no aparelho real.
+- **Pendências novas:** ver §"Pendências ATIVAS", bloco do PR 2a.
 - **Preview:** `npx vite build --config scripts/preview-pit.config.ts` com `PREVIEW_PIT_SAIDA`, depois
   `npx vite preview --config scripts/preview-pit.config.ts --outDir <saída> --host <IP da LAN> --port 5173
   --strictPort`, e abrir `/scripts/preview-pit.html`.
-- **Próximo:** veredito do Marcos no celular. Aprovado: push e PR são decisão dele. O `HISTORICO.md` já
-  tem a entrada.
+- **Servidores:** 5173 e 4175 derrubados em 2026-11-02. A 4176 (PID 11800, origem desconhecida) segue
+  ligada: não fazia parte do pedido.
+- **Próximo:** push e abertura do PR pelo Marcos.
 
 ### 2026-11-01 — PR 2c APROVADO e commitado, aguardando o push do Marcos
 
@@ -2187,6 +2201,11 @@ encerramento** — encerrada não quer dizer sem dívida.
 > Movido do fim do arquivo em 2026-10-28, sem alteração de conteúdo, exceto "spray" no PR 2a,
 > que constava no pedido original do Marcos e faltava aqui.
 
+**🔒 DECISÃO DO MARCOS — ASFALTO MOLHADO `#313131` (2026-11-02).** "Asfalto fica #313131 como
+exceção da chuva." Vale só para `pistaAsfaltoMolhado`: fica a 1,124 do muro, abaixo dos 1,25 de
+`SEPARACAO_MINIMA_LUMINANCIA`, com a exceção travada em `molhado.test.ts`. O asfalto seco segue
+obrigado à regra.
+
 **🔒 DECISÃO DO MARCOS — NOMES REAIS, reafirmada nesta sessão após pesquisa dele.**
 Usar nomes históricos reais de pilotos e equipes: razão ditada
 **fato histórico + uso nominativo**. Não reverter a restauração. Esta é decisão de produto do
@@ -2964,6 +2983,13 @@ ser o padrão que se está seguindo. **Rodar ou não rodar segue sendo decisão 
 que agora ela é tomada com o número na mão.**
 
 ## Pendências ATIVAS
+
+**Abertas no PR 2a (2026-11-02):**
+- **DNF para o PR 2d:** o carro que abandona ainda salta da linha para o meio da pista no fim da volta.
+  Resolver com o local do incidente, junto dos incidentes na pista.
+- **Aparelho real:** desempenho não medido no celular; o custo de raster e composição da chuva e do spray
+  não está verificado no freio de CPU. O FPS do PR foi medido com a pista 10% maior que a do jogo.
+- **iOS:** não testado, em especial `paint-order` e `var()` em `stop-color` dentro de `<use>`.
 
 0. **Abertas na Fase 3:**
    (a) **`montarJogadores` está duplicado** entre `fluxo-draft.ts:117` (UI) e `congelarRoster`

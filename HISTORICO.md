@@ -7264,6 +7264,19 @@ Mutação 42/42 (`docs/pr2a-mutacoes.json`). Evidência em `docs/pr2a-imagens/` 
 **Não verificado.** Aparelho real em desempenho. Raster e composição sob o freio de CPU. iOS, em
 especial `paint-order` e `var()` em `stop-color` dentro de `<use>`.
 
+**Veredito, 2026-11-02.** Aprovado pelo Marcos no celular, com `#313131` mantido como exceção da chuva.
+Ele apontou um vão no desktop, entre a pista e a classificação. Medido com o `App` real jogado até o replay
+por CDP: 16 px em 1280, 1440 e 1920, contra 260, 420 e 900 px no preview. Era só o preview, que não usava
+`.app-shell`; corrigido em `0286dc8`, sem tocar no jogo.
+
+A mesma causa mudou o que ele aprovou: em tela de 360, o preview desenhava a pista com 360 px de largura e o
+jogo com 328. Na área interna, 354 contra 322 px, ou seja, no jogo pista e carro ficam 9% menores que no
+aparelho dele, com asa de bot de ~1,39 px contra ~1,52. O jogo cumpre os 1,3-1,5 px decididos. O FPS foi medido na
+página antiga e não foi refeito; os 3 prints de `docs/pr2a-imagens/` foram.
+
+**Pendência para o PR 2d.** O carro em DNF ainda salta da linha para o meio da pista no fim da volta;
+resolver com o local do incidente.
+
 ## ARQUIVADO DO `ESTADO.md` em 2026-10-28 — §"Estado atual", medições de 2026-08-18 a 2026-09-02
 
 > Movido sem alteração pela sessão principal, a pedido do Marcos. Antes da cópia, 18,8% dos
