@@ -11,6 +11,7 @@ import { CONTORNO_HUMANO, ESCALA_CARRO, contornoDoBot, niveisDeSpray } from './c
 import { CarroNaPista, DefsDoCarro, SprayDoCarro } from './CarroReplay';
 import { dataset } from './dataset-app';
 import { diferencasParaLider, formatarDiferenca } from './diferenca-lider';
+import { replayDaCorrida } from './fim-da-corrida';
 import {
   acumularVoltas,
   classificacaoAoVivo,
@@ -32,7 +33,6 @@ import {
   varDeCor,
 } from './pista-camadas';
 import { LARGURA_REFLEXO, reflexosDaPista } from './molhado';
-import { linhaDoTempoDoPit } from './pit-replay';
 import { tracadoSuavizado } from './suavizacao';
 import { useMovimentoReduzido } from './useMovimentoReduzido';
 import { useTelaEstreita } from './useTelaEstreita';
@@ -304,9 +304,10 @@ export function TelaCorrida({
     (narrada) => narrada.evento.volta <= volta,
   );
   const gridLargada = grid.grid.map((item) => item.jogadorId);
-  const linhaDoPit = linhaDoTempoDoPit(resultado, pista);
-  const classificacaoAtual = classificacaoAoVivo(resultado, gridLargada, tempoSimMs, pista.voltas, linhaDoPit);
-  const diferencas = diferencasParaLider(resultado, classificacaoAtual, tempoSimMs, pista.voltas, linhaDoPit);
+  const replay = replayDaCorrida(resultado, pista);
+  const depoisDaBandeirada = tempoSimMs >= replay.bandeirada;
+  const classificacaoAtual = classificacaoAoVivo(resultado, gridLargada, tempoSimMs, pista.voltas, replay);
+  const diferencas = diferencasParaLider(resultado, classificacaoAtual, tempoSimMs, pista.voltas, replay);
 
   const escalas = telaEstreita ? ESCALA_CARRO.estreita : ESCALA_CARRO.larga;
   const posicoes = resultado.classificacao.map((item) => {
@@ -314,9 +315,12 @@ export function TelaCorrida({
     // Curva SUAVIZADA, a mesma geometria que `pathDaVolta` desenha
     // (PR 7.4): usar a polilinha de controle aqui deixaria os carros
     // cortando as curvas por fora do asfalto desenhado. No pit, o caminho do
-    // box (PR 2c).
-    const posicao = linhaDoPit.posicao(item.jogadorId, historico, item.status, tempoSimMs, movimentoReduzido);
-    return { ...posicao, parou: tempoSimMs >= (acumularVoltas(historico).at(-1) ?? 0) };
+    // box (PR 2c); depois da linha, a volta lenta (PR 2e).
+    const posicao = replay.posicao(item.jogadorId, historico, item.status, tempoSimMs, movimentoReduzido);
+    return {
+      ...posicao,
+      parou: replay.chegou(item.jogadorId, tempoSimMs) || tempoSimMs >= (acumularVoltas(historico).at(-1) ?? 0),
+    };
   });
   const niveisSpray =
     resultado.chuva && !movimentoReduzido
@@ -375,7 +379,13 @@ export function TelaCorrida({
     <div className="tela-corrida">
       <div className="tela-corrida__cabecalho">
         <h2>
-          Volta {volta}/{pista.voltas}
+          {depoisDaBandeirada ? (
+            '🏁 Bandeirada'
+          ) : (
+            <>
+              Volta {volta}/{pista.voltas}
+            </>
+          )}
         </h2>
         {resultado.chuva && <span className="badge-chuva">🌧️ Chuva</span>}
       </div>
@@ -437,6 +447,8 @@ export function TelaCorrida({
             ]
               .filter(Boolean)
               .join(' ');
+            const punicaoMs = item.status === 'terminou' ? replay.punicaoMs(item.jogadorId) : 0;
+            const punicao = formatarDiferenca({ tipo: 'tempo', ms: punicaoMs });
             return (
               <li key={item.jogadorId} className={classes}>
                 <span className="classificacao-ao-vivo__posicao">{idx + 1}</span>
@@ -444,6 +456,11 @@ export function TelaCorrida({
                 {item.status === 'dnf' && <span className="badge-dnf">DNF</span>}
                 {item.status === 'pit' && <span className="badge-pit">🔧 PIT</span>}
                 {item.status === 'terminou' && <span className="classificacao-ao-vivo__chegou">🏁</span>}
+                {punicaoMs > 0 && (
+                  <span className="badge-punicao" title={`Punição de ${punicao.slice(1, -1)} segundos`}>
+                    {punicao}
+                  </span>
+                )}
                 <span className="classificacao-ao-vivo__diferenca">{formatarDiferenca(diferencas[idx])}</span>
               </li>
             );
@@ -479,7 +496,7 @@ export function TelaCorrida({
       </ul>
 
       <button type="button" className="botao-primario" onClick={onAcelerar}>
-        Acelerar ⏩
+        {depoisDaBandeirada ? 'Ir para o resultado →' : 'Acelerar ⏩'}
       </button>
     </div>
   );

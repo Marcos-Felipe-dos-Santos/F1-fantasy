@@ -263,7 +263,8 @@ export const CARENCIA_VAZIO_MS = 2 * 60_000;
  *
  * **5 minutos, dimensionado contra o replay real:** a pista mais longa do
  * dataset tem 15 voltas e a velocidade mais lenta gasta 9 s por volta
- * (`MS_REPLAY_POR_VOLTA.lenta`), ou seja ~2min15s de relógio no pior caso.
+ * (`MS_REPLAY_POR_VOLTA.lenta`), ou seja ~2min15s até o vencedor cruzar, e
+ * ~2min24s até o último (143,8 s, o pior de `docs/pr2e-medicao.json`, PR 2e).
  * 5 min dá folga de mais de 2× para a tela de grid, pausas e a leitura do
  * resultado, e ainda fica bem abaixo da `JANELA_DE_GRACA_MS` — que só começa
  * a contar depois disto.

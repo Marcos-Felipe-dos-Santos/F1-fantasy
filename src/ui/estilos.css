@@ -938,6 +938,19 @@ button.card {
   letter-spacing: 0.03em;
 }
 
+/* Selo da punição (PR 2e): o carro cruzou antes e cai na ordem oficial. Contorno, e
+   não cor cheia, para não disputar com a 🏁 nem se ler como abandono. */
+.badge-punicao {
+  flex: none;
+  color: var(--cor-erro);
+  border: 1px solid currentColor;
+  border-radius: var(--raio-pill);
+  padding: 0 var(--espaco-xs);
+  font-size: 0.7rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
 .ticker-eventos {
   list-style: none;
   margin: 0 0 var(--espaco-lg);

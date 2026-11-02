@@ -12,6 +12,11 @@
  *
  *   node scripts/medir-fps-pr2a.mjs fps --portas 4177,4178 --rotulos antes,depois --repeticoes 5 --saida docs/pr2a-fps.json
  *   node scripts/medir-fps-pr2a.mjs print --porta 4178 --url "?pista=pista-spa" --largura 360 --altura 800 --saida x.png
+ *   node scripts/medir-fps-pr2a.mjs fluxo --porta 4178 --url "?cena=retardatario&real=1"
+ *
+ * `--extras` (fps) soma um trecho à URL de cada porta, na ordem de `--portas`: o PR 2e repete
+ * a mesma porta com `,cauda=1` para medir o trecho depois da bandeirada.
+ * `fluxo` joga o `FluxoCorrida` real na velocidade rápida e cronometra do "Largar" ao resultado.
  */
 
 import { spawn } from 'node:child_process';
@@ -130,8 +135,9 @@ try {
       for (const pista of (opcoes.pistas ?? 'pista-spa,pista-montreal').split(',')) {
         for (let i = 0; i < Number(opcoes.repeticoes ?? 5); i++) {
           for (const [k, porta] of portas.entries()) {
+            const extra = (opcoes.extras ?? '').split(',')[k] ?? '';
             const r = await medirUma(
-              `${baseDe(porta)}?fps=1&chuva=1&pista=${pista}&velocidade=${velocidade}`,
+              `${baseDe(porta)}?fps=1&chuva=1&pista=${pista}&velocidade=${velocidade}${extra === '' ? '' : `&${extra}`}`,
               360,
               800,
               Number(opcoes.freio ?? 6),
@@ -150,6 +156,41 @@ try {
       `${JSON.stringify({ freioCpu: Number(opcoes.freio ?? 6), viewport: [360, 800], carros: 22, medicoes: linhas }, null, 1)}
 `,
     );
+  } else if (modo === 'fluxo') {
+    const aba = await novaAba();
+    await aba.cdp('Emulation.setDeviceMetricsOverride', { width: 1280, height: 800, deviceScaleFactor: 1, mobile: false });
+    await aba.cdp('Page.enable');
+    await aba.cdp('Page.navigate', { url: `${baseDe(opcoes.porta ?? 4178)}${opcoes.url}` });
+    await esperar(2500);
+    const clicar = (texto) =>
+      aba.avaliar(`[...document.querySelectorAll('button')].find((b) => b.textContent.includes('${texto}')).click()`);
+    await clicar('Largar');
+    await esperar(300);
+    await clicar('Rápida');
+    const inicio = Date.now();
+    let viuBandeirada = 0;
+    let viuBotao = false;
+    for (let i = 0; i < 1200; i++) {
+      await esperar(50);
+      const h2 = await aba.avaliar(`document.querySelector('h2')?.textContent ?? ''`);
+      if (viuBandeirada === 0 && h2.includes('Bandeirada')) {
+        viuBandeirada = Date.now() - inicio;
+        viuBotao = await aba.avaliar(`document.body.innerText.includes('Ir para o resultado')`);
+      }
+      if (await aba.avaliar(`document.querySelector('.resultado-tabela') !== null`)) break;
+    }
+    const total = Date.now() - inicio;
+    const tempos = await aba.avaliar('window.__tempos');
+    const escala = tempos.vencedor / (tempos.voltas * 2200);
+    console.log(JSON.stringify({
+      bandeiradaMs: viuBandeirada,
+      botaoNaBandeirada: viuBotao,
+      resultadoMs: total,
+      esperadoBandeiradaMs: Math.round(tempos.bandeirada / escala),
+      esperadoResultadoMs: Math.round(tempos.fim / escala) + 1000,
+      seParasseNoVencedorMs: Math.round(tempos.vencedor / escala) + 1000,
+    }));
+    await aba.fechar();
   } else if (modo === 'print') {
     const aba = await novaAba();
     await aba.cdp('Emulation.setDeviceMetricsOverride', {
@@ -167,7 +208,7 @@ try {
     await esperar(3000);
     // Depois do carregamento: antes dele, `documentElement` ainda não existe.
     if (opcoes.tema) await aba.avaliar(`document.documentElement.setAttribute('data-tema','${opcoes.tema}')`);
-    const t = opcoes.t ? Number(opcoes.t) : await aba.avaliar('window.__picoDoBox()');
+    const t = opcoes.t === undefined ? await aba.avaliar('window.__picoDoBox()') : Number.isNaN(Number(opcoes.t)) ? await aba.avaliar(`window.__tempos.${opcoes.t}`) : Number(opcoes.t);
     await aba.avaliar(`window.__irPara(${t})`);
     await esperar(600);
     if (opcoes.clicar) {

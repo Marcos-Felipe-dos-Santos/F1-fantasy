@@ -11,6 +11,7 @@ import type { Dataset } from '../engine/dataset';
 import type { DraftState, Pista, ResultadoCorrida, ResultadoQuali } from '../engine/types';
 import type { CorridaPreparada } from './corrida-online';
 import { dataset } from './dataset-app';
+import { avancarRelogio, replayDaCorrida } from './fim-da-corrida';
 import { escalaReplay, MS_REPLAY_POR_VOLTA, prepararCorrida, type VelocidadeReplay } from './fluxo-corrida';
 
 export type FaseCorrida = 'grid' | 'replay' | 'resultado';
@@ -107,6 +108,9 @@ export function useCorrida(
   const tempoSimRef = useRef(0);
 
   const tempoVencedorMs = resultado.classificacao[0].tempoTotal;
+  // Onde o replay para (PR 2e). A escala segue no tempo do vencedor: a velocidade
+  // da corrida não muda, o replay só dura até o último cruzar a linha.
+  const tempoFimMs = replayDaCorrida(resultado, pista).fim;
   // Fator de escala espelhado numa ref (mesmo motivo do `tempoSimRef`): o
   // passo do rAF (`largar`) lê daqui a cada frame, então trocar a
   // velocidade DURANTE o replay (PR 2.6) só precisa atualizar esta ref —
@@ -150,23 +154,26 @@ export function useCorrida(
       const deltaRealMs = timestamp - ultimoTimestamp;
       ultimoTimestamp = timestamp;
 
-      const proximo = tempoSimRef.current + deltaRealMs * fatorEscalaRef.current;
+      const { tempoMs, acabou } = avancarRelogio(
+        tempoSimRef.current,
+        deltaRealMs,
+        fatorEscalaRef.current,
+        tempoFimMs,
+      );
+      tempoSimRef.current = tempoMs;
+      setTempoSimMs(tempoMs);
 
-      if (proximo >= tempoVencedorMs) {
-        tempoSimRef.current = tempoVencedorMs;
-        setTempoSimMs(tempoVencedorMs);
+      if (acabou) {
         rafRef.current = null;
         timeoutRef.current = window.setTimeout(() => setFase('resultado'), PAUSA_FINAL_MS);
         return;
       }
 
-      tempoSimRef.current = proximo;
-      setTempoSimMs(proximo);
       rafRef.current = requestAnimationFrame(passo);
     };
 
     rafRef.current = requestAnimationFrame(passo);
-  }, [tempoVencedorMs, pararAnimacao]);
+  }, [tempoFimMs, pararAnimacao]);
 
   // Auto-largada (PR C). Roda uma vez, na fase 'grid': a guarda de fase evita
   // relargar se `largar` mudar de identidade no meio do replay. `largar` já
@@ -179,10 +186,10 @@ export function useCorrida(
 
   const acelerar = useCallback(() => {
     pararAnimacao();
-    tempoSimRef.current = tempoVencedorMs;
-    setTempoSimMs(tempoVencedorMs);
+    tempoSimRef.current = tempoFimMs;
+    setTempoSimMs(tempoFimMs);
     setFase('resultado');
-  }, [pararAnimacao, tempoVencedorMs]);
+  }, [pararAnimacao, tempoFimMs]);
 
   return { fase, pista, grid, resultado, tempoSimMs, largar, acelerar, velocidade, setVelocidade };
 }

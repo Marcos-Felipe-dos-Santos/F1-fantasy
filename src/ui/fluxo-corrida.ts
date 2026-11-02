@@ -448,6 +448,8 @@ export interface ItemClassificacaoAoVivo {
 export interface PitDoReplay {
   progresso(jogadorId: string, historico: number[], tempoSimMs: number): number;
   noBox(jogadorId: string, tempoSimMs: number): boolean;
+  /** Recebeu a bandeirada (`fim-da-corrida.ts`, PR 2e). Sem isto, chega ao fim do histórico. */
+  chegou?(jogadorId: string, tempoSimMs: number): boolean;
 }
 
 /**
@@ -461,16 +463,19 @@ export interface PitDoReplay {
  * 1. progresso decrescente (`progressoNoReplay` — fração da corrida inteira
  *    já percorrida, 0..1; carro que terminou fica parado em 1, carro em DNF
  *    congela em `voltasCompletadas / voltasTotais` < 1);
- * 2. empate em progresso: se AMBOS terminaram a corrida (status 'terminou'
- *    — logo ambos com progresso exatamente 1), desempata por `tempoTotal`
- *    crescente — a ordem real de chegada; senão (ainda correndo, ou um dos
- *    dois em DNF), desempata pela posição de largada (`gridLargada`).
+ * 2. empate em progresso: posição de largada (`gridLargada`);
+ * 3. depois da primeira chegada, todo DNF fica atrás de quem não abandonou: o DNF
+ *    da última volta congela em progresso 1 e tomaria a frente de quem ainda corre
+ *    (PR 2e). Antes disso ele segue onde parou;
+ * 4. quem já parou ('terminou' ou 'dnf') fica na ORDEM OFICIAL entre si: as
+ *    posições que esses carros ocupam são preenchidas na ordem de
+ *    `resultado.classificacao`, que traz a punição.
  *
  * Consequências do contrato: em `tempoSimMs = 0` todo mundo empata em
  * progresso 0 e nenhum terminou ainda, então o desempate por grid reproduz
  * exatamente a ordem de largada; ao final da corrida, quem terminou converge
- * pra ordem exata de `resultado.classificacao` (chegada real) e todo DNF
- * (progresso < 1 pra sempre) afunda naturalmente atrás de quem terminou.
+ * pra ordem exata de `resultado.classificacao` (chegada real, com a punição), e
+ * todo DNF fica atrás de quem terminou.
  *
  * O status 'pit' (PR 2.7) é calculado DEPOIS da ordenação — o critério de
  * ordenação usa só 'terminou' vs. o resto, então rotular um carro 'correndo'
@@ -485,19 +490,17 @@ export function classificacaoAoVivo(
   pit?: PitDoReplay,
 ): ItemClassificacaoAoVivo[] {
   const posicaoLargada = new Map(gridLargada.map((jogadorId, indice) => [jogadorId, indice]));
-  const tempoTotalPorJogador = new Map(
-    resultado.classificacao.map((item) => [item.jogadorId, item.tempoTotal]),
-  );
 
   const itens = resultado.classificacao.map((item) => {
     const historico = resultado.historicoVoltas[item.jogadorId] ?? [];
     const somaHistorico = acumularVoltas(historico).at(-1) ?? 0;
     const congelado = tempoSimMs >= somaHistorico;
-    let status: ItemClassificacaoAoVivo['status'] = !congelado
-      ? 'correndo'
-      : item.status === 'dnf'
+    const chegou = pit?.chegou?.(item.jogadorId, tempoSimMs) ?? (congelado && item.status === 'terminou');
+    let status: ItemClassificacaoAoVivo['status'] = chegou
+      ? 'terminou'
+      : congelado && item.status === 'dnf'
         ? 'dnf'
-        : 'terminou';
+        : 'correndo';
     if (status === 'correndo' && pit?.noBox(item.jogadorId, tempoSimMs)) {
       status = 'pit';
     }
@@ -510,20 +513,23 @@ export function classificacaoAoVivo(
     };
   });
 
+  const parou = (item: { status: ItemClassificacaoAoVivo['status'] }) =>
+    item.status === 'terminou' || item.status === 'dnf';
+  // Antes do sort: `itens` ainda está na ordem oficial.
+  const paradosNaOrdemOficial = itens.filter(parou);
+  const alguemChegou = itens.some((item) => item.status === 'terminou');
+
   itens.sort((a, b) => {
+    if (alguemChegou && (a.status === 'dnf') !== (b.status === 'dnf')) return a.status === 'dnf' ? 1 : -1;
     if (b.progresso !== a.progresso) return b.progresso - a.progresso;
-
-    const ambosTerminaram = a.status === 'terminou' && b.status === 'terminou';
-    if (ambosTerminaram) {
-      return (
-        (tempoTotalPorJogador.get(a.jogadorId) ?? 0) - (tempoTotalPorJogador.get(b.jogadorId) ?? 0)
-      );
-    }
-
     return (posicaoLargada.get(a.jogadorId) ?? 0) - (posicaoLargada.get(b.jogadorId) ?? 0);
   });
 
-  return itens.map(({ jogadorId, status }) => ({ jogadorId, status }));
+  let proximoParado = 0;
+  return itens.map((item) => {
+    const { jogadorId, status } = parou(item) ? paradosNaOrdemOficial[proximoParado++] : item;
+    return { jogadorId, status };
+  });
 }
 
 /**
