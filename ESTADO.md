@@ -428,11 +428,32 @@ dependência).
 
 ## Onde parei
 
-### 2026-11-02 — PR 2e (a corrida termina quando todos cruzam) em medição, sem código de produto
+### 2026-11-02 — PR 2e (a corrida termina quando todos cruzam) implementado, aguardando revisão e veredito
 
-Sobre a `main` `a49cb78`, merge do PR 2a conferido na `main` e em `origin/main`. Medição prévia pronta e
-apresentada ao Marcos: `docs/pr2e-medicao.json`, instrumento `scripts/medir-pr2e.preview.test.ts`
+Branch `feat/pr2e-fim-da-corrida`, sobre a `main` `a49cb78`, merge do PR 2a conferido na `main` e em
+`origin/main`. Medição prévia: `docs/pr2e-medicao.json`, instrumento `scripts/medir-pr2e.preview.test.ts`
 (100 grids, 10 pistas, sem alterar `src/`). Risco ALTO. Decisões em §"🔒 DECISÕES DO MARCOS — VIGENTES".
+Commits: `b20b0a5` implementação, `ac3572c` timeout por mutante, `a8a4d5d` FPS. Sem push. `HISTORICO.md`
+fica para o fechamento do PR.
+
+- **Falta para fechar:** `senior-reviewer` (sem registro de que rodou no 2e) e veredito do Marcos no preview.
+- **Em aberto com o Marcos:** `saidaDoBoxPassou` = 189 inversões em 1000 corridas, carro ainda correndo que
+  sai do box e passa quem já está na volta lenta. A D1 fala em "sem ultrapassar"; "exceção aceita" é texto
+  do comentário de `scripts/verificar-pr2e.preview.test.ts`, não decisão registrada dele.
+- **Medido:** `npm test` 2029 + 1 skipped em 89 arquivos; `test:party` 46; typecheck e eslint com saída 0;
+  `git diff 99ae1f3 HEAD` vazio em `src/engine/` e `src/data/`. Verificação em 1000 corridas: ordem
+  divergente 0, retardatário acima 0, volta lenta passou 0, corrido passou 0, bandeira no box 1.
+- **Mutação (`docs/pr2e-mutacoes.json`):** 31/32 por teste nomeado e 1 travou por timeout
+  (`bandeirada-no-tempo-oficial`, laço síncrono: a bandeirada fica acima da soma saturada do punido).
+  Nenhum sobrevivente. `dif-sem-folga`, da rodada anterior, saiu da tabela porque o código dele não existe
+  mais: `folga` não aparece em `src/ui/`.
+- **FPS, CPU 6×, 360×800, 22 carros, chuva, 5 repetições, mediana.** A/B intercalado com `99ae1f3`
+  (`docs/pr2e-fps-ab.json`), SÓ MEIO DE CORRIDA, a bandeirada não entra na janela: thread principal por
+  frame antes → depois: Spa média 17,4 → 17,6; Montreal média 16,7 → 17,5; Spa rápida 17,9 → 18,4;
+  Montreal rápida 18,6 → 17,7 ms. Corrida × cauda (`docs/pr2e-fps.json`): 17,1 × 16,1; 16,4 × 15,1;
+  18,2 × 18,9; 19,2 × 18,1 ms, mas quadros > 33 ms em 600 sobem na cauda: 2 × 2; 0 × 1; 0 × 3; 2 × 5, pior
+  quadro 133 ms. Causa não isolada; o salto do relógio de `cauda=1` é candidato, não conclusão. ⚠️ Thread
+  principal a 99% nos dois lados: os absolutos não se comparam com os ~12 ms do PR 2a.
 
 ### 2026-11-02 — PR 2a APROVADO no celular e fechado, aguardando o push do Marcos
 
@@ -3015,6 +3036,16 @@ que agora ela é tomada com o número na mão.**
 - consequência do evento na frase (tempo perdido, posições caídas);
 - pit integrado à frase ("…e foi para os boxes");
 - variedade de frases para o mesmo tipo de erro.
+
+**Para o PR 2d, pedido do Marcos em 2026-11-02 — PUNIÇÃO CUMPRIDA NO BOX, como na F1.** Só apresentação:
+o tempo total e a classificação final continuam os do motor. O replay mostra a punição sendo cumprida
+durante a corrida:
+1. se o carro ainda tem pit stop depois da infração: fica parado X s a mais na vaga (mecânicos esperam);
+2. se não tem: stop-and-go (entra, para X s, sai sem trocar pneu);
+3. se não houver voltas suficientes: somada no fim, com o selo `+Xs` do PR 2e.
+
+O ticker narra a punição e o cumprimento. **Medir antes:** os valores de punição do motor e em que volta
+as investigações saem.
 
 0. **Abertas na Fase 3:**
    (a) **`montarJogadores` está duplicado** entre `fluxo-draft.ts:117` (UI) e `congelarRoster`

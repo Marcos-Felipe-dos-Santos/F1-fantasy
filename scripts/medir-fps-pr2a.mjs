@@ -215,6 +215,11 @@ try {
       await aba.avaliar(`[...document.querySelectorAll('button')].find((b) => b.textContent.includes('${opcoes.clicar}')).click()`);
       await esperar(600);
     }
+    // O painel rola a partir da linha 12: sem isto o carro da cena pode ficar fora da captura.
+    if (opcoes.rolar) {
+      await aba.avaliar(`[...document.querySelectorAll('li')].find((l) => l.textContent.includes('${opcoes.rolar}')).scrollIntoView({ block: 'center' })`);
+      await esperar(200);
+    }
     const texto = await aba.avaliar(`document.querySelector('nav').innerText`);
     console.log(`t=${t} | ${texto?.replaceAll('\n', ' ')}`);
     const { data } = await aba.cdp('Page.captureScreenshot', { format: 'png' });
