@@ -763,6 +763,19 @@ button.card {
   opacity: 0.35;
 }
 
+/* Incidente (PR 2d): a opacidade e o tamanho vêm do tempo do replay, em `CarroReplay.tsx`. */
+.tracado-svg__efeito {
+  pointer-events: none;
+}
+
+.tracado-svg__efeito--fumaca {
+  fill: var(--pista-limite);
+}
+
+.tracado-svg__efeito--spray {
+  fill: var(--carro-halo);
+}
+
 /* Velocidade do replay + classificação ao vivo (PR 2.6; restilizada arcade na 5.1c) */
 
 .grupo-velocidade {
@@ -1185,10 +1198,13 @@ button.card {
   color: var(--cor-texto-fraco);
 }
 
-/* Consequência causal no ticker (PR B da narração): só aparece quando o
-   critério contrafactual confirma que o incidente explica a troca de posição.
-   Fraseado relacional ("caiu atrás de Y"), nunca posição absoluta — o painel
-   ao lado ordena por progresso contínuo e um número aqui brigaria com ele. */
+/* Piloto em destaque (PR 2d). */
+.ticker-eventos__piloto {
+  font-weight: 700;
+}
+
+/* Consequência no ticker (PR 2d): tempo e posições perdidos na parada, nunca
+   posição absoluta. */
 .ticker-eventos__consequencia {
   color: var(--primaria-texto); /* TEXTO -> tinta */
   font-weight: 700;

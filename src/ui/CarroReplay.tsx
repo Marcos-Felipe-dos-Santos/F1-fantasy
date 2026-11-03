@@ -7,12 +7,15 @@
 import { memo } from 'react';
 import {
   CORPO_DO_CARRO,
+  CRESCIMENTO_EFEITO,
+  NUVENS_DO_EFEITO,
   RAIO_HALO,
   RODAS_DO_CARRO,
   SPRAY_POR_NIVEL,
   asasDoCarro,
   type NivelSpray,
 } from './carro-replay';
+import type { EfeitoNoReplay } from './incidentes-replay';
 
 export const DefsDoCarro = memo(function DefsDoCarro({ estreita }: { estreita: boolean }) {
   const { dianteira, traseira } = asasDoCarro(estreita);
@@ -54,6 +57,22 @@ interface CarroNaPistaProps {
 
 export function SprayDoCarro({ transform, nivel }: { transform: string; nivel: Exclude<NivelSpray, 0> }) {
   return <use className="tracado-svg__spray" href={`#spray-${nivel}`} transform={transform} />;
+}
+
+/** Três nuvens que crescem e somem: a idade vem do tempo do replay, sem animação de CSS. */
+export function EfeitoDeIncidente({ tipo, ponto, rumo, idade }: Omit<EfeitoNoReplay, 'chave'>) {
+  const cresce = 1 + idade * CRESCIMENTO_EFEITO;
+  return (
+    <g
+      className={`tracado-svg__efeito tracado-svg__efeito--${tipo}`}
+      transform={`translate(${ponto.x.toFixed(2)} ${ponto.y.toFixed(2)}) rotate(${rumo.toFixed(1)})`}
+      opacity={(1 - idade).toFixed(2)}
+    >
+      {NUVENS_DO_EFEITO.map(({ x, y, r }) => (
+        <circle key={`${x}${y}`} cx={(x * cresce).toFixed(1)} cy={(y * cresce).toFixed(1)} r={(r * cresce).toFixed(1)} />
+      ))}
+    </g>
+  );
 }
 
 export function CarroNaPista({ transform, classes, contorno, halo, titulo }: CarroNaPistaProps) {

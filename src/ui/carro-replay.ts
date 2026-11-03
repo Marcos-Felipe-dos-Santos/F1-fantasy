@@ -87,6 +87,14 @@ export const RODAS_DO_CARRO: readonly Retangulo[] = [
 
 export const CORPO_DO_CARRO = 'M13 -1.6 L3 -3 L-1 -5.4 L-9 -5 L-13 -2.2 L-13 2.2 L-9 5 L-1 5.4 L3 3 L13 1.6 Z';
 
+/** Nuvens do efeito de incidente, no sistema do carro: atrás dele e para os lados (PR 2d). */
+export const NUVENS_DO_EFEITO = [
+  { x: -10, y: 0, r: 13 },
+  { x: -24, y: -9, r: 10 },
+  { x: -22, y: 10, r: 9 },
+] as const;
+export const CRESCIMENTO_EFEITO = 1.2;
+
 /**
  * Cortes do spray em u até o carro da frente, das distâncias medidas em 400
  * corridas: 35% dos pares andam a menos de 30 u e 62% a menos de 60 u.

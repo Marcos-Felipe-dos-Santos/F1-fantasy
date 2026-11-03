@@ -13,6 +13,10 @@
  * INFRAÇÃO: o motor não tem volta da infração (ver §Punição no relatório). `L` é
  * enumerado em todas as voltas possíveis, para a tabela não depender de um sorteio.
  *
+ * ⚠️ `docs/pr2d-medicao.json` foi gerado sobre a `main` `03ed7ed`, antes do PR 2d. Com o PR, o
+ * produto já concentra o custo e este protótipo roda por cima dele: não regerar o JSON aqui.
+ * A verificação do que entrou é `verificar-pr2d.preview.test.ts`.
+ *
  * Comando: npx vitest run --config vitest.preview.config.ts scripts/medir-pr2d.preview.test.ts --reporter=verbose --silent=false
  */
 
@@ -38,7 +42,7 @@ import { draftarCampeonato } from './balance';
 const dataset = criarDataset(equipeAnosReal, pecasReal, pistasReal);
 const N_GRIDS = 100;
 const GRIDS_DA_ORDEM = 30;
-const SAIDA = process.env.MEDIR_PR2D_SAIDA ?? 'docs/pr2d-medicao.json';
+const SAIDA = process.env.MEDIR_PR2D_SAIDA ?? 'preview/pr2d-medicao.json';
 const TIMEOUT_S = 300;
 const MARGEM_LOCAL = 0.08;
 const FOLGA_PIT = 0.02;
@@ -329,11 +333,11 @@ describe('medição do PR 2d', () => {
 
         // Narração de hoje: tempo por chamada, repetição, consequência.
         const t0 = performance.now();
-        const narradas = narrarEventos(r);
+        const narradas = narrarEventos(r, replay);
         msNarrar += performance.now() - t0;
         chamadasNarrar++;
-        caiuAtrasDe += narradas.filter((n) => n.caiuAtrasDe !== null).length;
-        entrouNosBoxes += narradas.filter((n) => n.entrouNosBoxes).length;
+        caiuAtrasDe += narradas.filter((n) => (n.posicoesPerdidas ?? 0) > 0).length;
+        entrouNosBoxes += narradas.filter((n) => n.foiParaOsBoxes).length;
         const frases = r.eventos
           .filter((e) => e.tipo === 'erro-piloto')
           .map((e) => narrarEvento(e, r.seed, r.chuva));

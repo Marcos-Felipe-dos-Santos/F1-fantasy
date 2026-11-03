@@ -234,7 +234,8 @@ export function instanteNasVoltas(historico: number[], voltas: number): number {
  * `progressoNoReplay`):
  * - terminou a corrida ⇒ 0 (congela na linha de chegada/largada);
  * - deu DNF ⇒ 0.5 fixo (congela no meio do traçado, estilização "parou na
- *   pista"). Não reaproveita o `% 1` genérico aqui de propósito: o progresso
+ *   pista"; o replay do jogo não chega aqui: para antes, no ponto do abandono,
+ *   `incidentes-replay.ts`, PR 2d). Não reaproveita o `% 1` genérico aqui de propósito: o progresso
  *   de um DNF congelado é sempre `voltasCompletadas / voltasTotais`, uma
  *   fração cujo numerador ao multiplicar por `voltasTotais` vira inteiro
  *   (`voltasCompletadas`) — `% 1` daria 0 e o carro "saltaria" de volta pra
@@ -450,6 +451,8 @@ export interface PitDoReplay {
   noBox(jogadorId: string, tempoSimMs: number): boolean;
   /** Recebeu a bandeirada (`fim-da-corrida.ts`, PR 2e). Sem isto, chega ao fim do histórico. */
   chegou?(jogadorId: string, tempoSimMs: number): boolean;
+  /** Parou no ponto do abandono (`incidentes-replay.ts`, PR 2d). Sem isto, no fim do histórico. */
+  abandonou?(jogadorId: string, tempoSimMs: number): boolean;
 }
 
 /**
@@ -496,11 +499,8 @@ export function classificacaoAoVivo(
     const somaHistorico = acumularVoltas(historico).at(-1) ?? 0;
     const congelado = tempoSimMs >= somaHistorico;
     const chegou = pit?.chegou?.(item.jogadorId, tempoSimMs) ?? (congelado && item.status === 'terminou');
-    let status: ItemClassificacaoAoVivo['status'] = chegou
-      ? 'terminou'
-      : congelado && item.status === 'dnf'
-        ? 'dnf'
-        : 'correndo';
+    const abandonou = pit?.abandonou?.(item.jogadorId, tempoSimMs) ?? (congelado && item.status === 'dnf');
+    let status: ItemClassificacaoAoVivo['status'] = chegou ? 'terminou' : abandonou ? 'dnf' : 'correndo';
     if (status === 'correndo' && pit?.noBox(item.jogadorId, tempoSimMs)) {
       status = 'pit';
     }

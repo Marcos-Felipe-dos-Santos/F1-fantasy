@@ -80,6 +80,10 @@ export interface ParadaNoReplay {
   partida: number;
   retorno: number;
   fim: number;
+  /** Fração da volta `volta` onde a janela começa (PR 2d). */
+  fracaoInicio: number;
+  /** Fração da volta seguinte onde a janela termina (PR 2d). */
+  fracaoFim: number;
 }
 
 export interface PosicaoNoReplay {
@@ -315,6 +319,8 @@ function montarParada(
     partida: 0,
     retorno: inicio + parado + escala * tempoEmX(c, perfil, DISTANCIA_RAMPA + c.comprimentoBox),
     fim,
+    fracaoInicio: c.fracaoEntrada - rampa,
+    fracaoFim: c.fracaoSaida - 1 + rampa,
     inicioVolta,
     tLimpo,
     perfil,
