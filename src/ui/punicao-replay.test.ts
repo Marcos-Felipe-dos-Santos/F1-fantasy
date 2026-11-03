@@ -145,6 +145,12 @@ describe('punição cumprida no último pit (PR 2f)', () => {
     expect(punicao()?.voltaDaInfracao).toBeGreaterThanOrEqual(anterior.volta);
     expect(punicao()?.voltaDaInfracao).toBeLessThanOrEqual(7);
   });
+
+  it('a volta da infração é a do carro naquele instante, fora das janelas de pit', () => {
+    const infracao = punicao()?.infracao ?? NaN;
+    const completas = acumularVoltas(h).filter((t) => t <= infracao).length;
+    expect(punicao()?.voltaDaInfracao).toBe(completas + 1);
+  });
 });
 
 describe('selo de reserva: punido sem pit', () => {
@@ -221,6 +227,7 @@ describe('vagas', () => {
     expect(replay.paradas('c')[0].vaga).not.toBe(replay.paradas('b')[0].vaga);
     const todas = ['b', 'c'].flatMap((id) => replay.paradas(id).map((p) => ({ ...p, id })));
     expect(colisoesForaDoBoxCheio(todas)).toBe(0);
+    expect(todas.some((p) => p.boxCheio)).toBe(false);
   });
 
   it.each(PISTAS)('%s: corridas reais, sem colisão fora do box cheio', (pistaId) => {
