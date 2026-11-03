@@ -137,7 +137,8 @@ try {
     await esperar(3000);
     // Depois do carregamento: antes dele, `documentElement` ainda não existe.
     if (opcoes.tema) await aba.avaliar(`document.documentElement.setAttribute('data-tema','${opcoes.tema}')`);
-    const t = opcoes.t ? Number(opcoes.t) : await aba.avaliar('window.__picoDoBox()');
+    // `--expr` (PR 2f): o instante sai de uma expressão na página, como `window.__punicao.inicio`.
+    const t = opcoes.t ? Number(opcoes.t) : await aba.avaliar(opcoes.expr ?? 'window.__picoDoBox()');
     await aba.avaliar(`window.__irPara(${t})`);
     await esperar(600);
     const texto = await aba.avaliar(`document.querySelector('nav').innerText`);

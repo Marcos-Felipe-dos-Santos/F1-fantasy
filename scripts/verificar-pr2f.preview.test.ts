@@ -152,7 +152,9 @@ describe('verificação do PR 2f', () => {
           if (visiveis.at(-1)?.volta !== punicao.parada.volta) conta.naoEhOUltimoPit++;
           const base = antes.paradas(id).find((p) => p.volta === punicao.parada.volta);
           const anteriorPit = antes.paradas(id).filter((p) => p.volta < punicao.parada.volta).at(-1);
-          // A espera é exata, e o carro está na vaga dele no meio dela.
+          // A espera é exata, e o carro está na vaga dele no meio dela. A diferença partida − inicio
+          // é cópia da própria camada e não falha sozinha: quem prende a espera em X s de fato é a
+          // posição no meio dela e, depois da janela, `punidoForaDoDeslocado` (revisão do PR 2f).
           const meio = punicao.inicio + ms / 2;
           const naVaga = replay.posicao(id, h, 'terminou', meio, false).ponto;
           const vaga = replay.vagaEmX(punicao.parada.vaga);
@@ -195,6 +197,7 @@ describe('verificação do PR 2f', () => {
             }
           }
 
+          // Os instantes também são cópia de `punicao`: aqui o que conta é haver as duas linhas, na ordem.
           if (dela.length !== 2 || dela[0].instante !== punicao.infracao || dela[1].instante !== punicao.parada.partida) {
             conta.narracaoErrada++;
           }

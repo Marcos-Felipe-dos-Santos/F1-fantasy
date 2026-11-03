@@ -68,7 +68,8 @@ export function linhaComPunicoes(
   for (const [jogadorId, { evento, volta }] of cumprir) {
     const doCarro = base.paradas(jogadorId);
     const indice = doCarro.findIndex((p) => p.volta === volta);
-    if (indice === -1) continue;
+    // As duas passagens de `linhaDoTempoDoPit` saem do mesmo `voltasDePit`: o pit existe.
+    if (indice === -1) throw new Error(`replay: ${jogadorId} sem o pit ${volta} da punição`);
     const p = doCarro[indice];
     const ms = evento.custoMs;
     const desloca = (t: number) => (t >= p.partida ? t + ms : t);

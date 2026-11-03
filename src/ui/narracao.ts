@@ -86,7 +86,7 @@ export const VARIANTES_SECO: Record<TipoEvento, readonly string[]> = {
   ],
   investigacao: [
     'foi punido pelos comissários',
-    'pagou por uma infração',
+    'foi punido por uma infração',
     'recebeu a punição dos comissários',
   ],
 };

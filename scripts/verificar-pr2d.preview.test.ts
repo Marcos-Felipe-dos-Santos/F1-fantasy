@@ -10,7 +10,9 @@
  *
  * PR 2f: o punido cumpre a punição no box e dali em diante é a corrida de antes atrasada X.
  * Para ele, `linhaMudou` e `fimMudou` comparam com a linha de antes DESLOCADA de X depois do
- * cumprimento, e o ritmo limpo é conferido no replay sem a punição. Para os outros, segue a
+ * cumprimento, e o ritmo limpo é conferido no replay sem a punição. A cobertura do punido ficou
+ * repartida: o replay REAL dele é conferido incidente a incidente em `verificar-pr2f`
+ * (`punidoForaDoDeslocado`). Para os outros, segue a
  * comparação direta, exceto a passagem pela linha DENTRO do box de quem mudou de vaga
  * (`linhaNoBoxComOutraVaga`, medição): a espera de um punido pode mudar a vaga de outro, e a
  * linha passa entre vagas. A frase fixa do cumprimento fica fora de `fraseRepetida`.

@@ -1,0 +1,33 @@
+
+ RUN  v4.1.10 E:/projetos/F1 fantasy
+
+ ❯ src/ui/punicao-replay.test.ts (52 tests | 1 failed) 265ms
+     × o pit seguinte do punido ocupa a vaga no instante em que aparece, e ninguém a divide 5ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/ui/punicao-replay.test.ts > pit da punição: o último visível pela chegada ANTES da punição (decisão do Marcos) > o pit seguinte do punido ocupa a vaga no instante em que aparece, e ninguém a divide
+AssertionError: expected 1 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ src/ui/punicao-replay.test.ts:319:43
+    317|     expect(y9.chegada).toBeLessThan(rep.chegada('y')?.instante ?? 0);
+    318|     const todas = ['a', 'c', 'y'].flatMap((id) => rep.paradas(id).map(…
+    319|     expect(colisoesForaDoBoxCheio(todas)).toBe(0);
+       |                                           ^
+    320|     expect(y9.vaga === c9.vaga && y9.chegada < c9.partida && y9.chegad…
+    321|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 51 passed (52)
+   Start at  11:11:48
+   Duration  717ms (transform 179ms, setup 0ms, import 314ms, tests 265ms, environment 0ms)
+

@@ -301,6 +301,24 @@ describe('pit da punição: o último visível pela chegada ANTES da punição (
   it('a punição de `c` é cumprida no pit da volta 5', () => {
     expect(replay.punicao('c')?.parada.volta).toBe(5);
   });
+
+  // Revisão do PR 2f: o pit da volta 9 de `c` vem DEPOIS do pit da punição e aparece atrasado
+  // X na tela. `y` chega ao box nesse intervalo: a vaga tem que contar com o atraso.
+  it('o pit seguinte do punido ocupa a vaga no instante em que aparece, e ninguém a divide', () => {
+    const comY = sintetica({
+      a: { ms: 90_000, pits: [5], punicao: 10_000 },
+      c: { ms: 112_600, pits: [5, 9], punicao: 5000 },
+      y: { ms: 116_650, pits: [9] },
+    });
+    const rep = replayDaCorrida(comY, PISTA);
+    expect(rep.chegada('c')?.voltas).toBe(9);
+    const c9 = rep.paradas('c')[1];
+    const y9 = rep.paradas('y')[0];
+    expect(y9.chegada).toBeLessThan(rep.chegada('y')?.instante ?? 0);
+    const todas = ['a', 'c', 'y'].flatMap((id) => rep.paradas(id).map((p) => ({ ...p, id })));
+    expect(colisoesForaDoBoxCheio(todas)).toBe(0);
+    expect(y9.vaga === c9.vaga && y9.chegada < c9.partida && y9.chegada >= c9.chegada).toBe(false);
+  });
 });
 
 describe('vagas', () => {
@@ -384,6 +402,14 @@ describe('narração da punição cumprida', () => {
     expect(narradas[1].frase).toBe('cumpriu a punição no box');
     expect(textoDaConsequencia(narradas[1])).toBe(' e ficou +7,4 s a mais parado');
     expect(narradas.every((n) => !n.foiParaOsBoxes)).toBe(true);
+  });
+
+  it('em corridas reais, nenhuma chave de linha do ticker se repete', () => {
+    for (const pistaId of PISTAS) {
+      const { resultado, pista } = corridaReal(1, pistaId);
+      const todas = narrarEventos(resultado, replayDaCorrida(resultado, pista)).map((n) => n.chave);
+      expect(new Set(todas).size).toBe(todas.length);
+    }
   });
 
   it('determinismo: mesma corrida, mesmo instante da infração', () => {

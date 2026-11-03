@@ -45,6 +45,7 @@ declare global {
     __fps?: unknown;
     __irPara?: (t: number) => void;
     __picoDoBox?: () => number | null;
+    __punicao?: { infracao: number; inicio: number; ms: number; partida: number; chegada: number | null } | null;
     __tempos?: { bandeirada: number; fim: number; vencedor: number; voltas: number; destaque: string | null; instante: number | null; efeito: number | null };
   }
 }
@@ -237,6 +238,18 @@ const inicioDaCena =
     ? Math.max(0, instanteDaCena - 2000 * escalaReplay(tempoVencedor, pista.voltas, MS_REPLAY_POR_VOLTA[(q.get('velocidade') as VelocidadeReplay | null) ?? 'media']))
     : Math.max(0, replay.bandeirada - tempoVencedor / pista.voltas / 3);
 const simPorReal = escalaReplay(tempoVencedor, pista.voltas, MS_REPLAY_POR_VOLTA[(q.get('velocidade') as VelocidadeReplay | null) ?? 'media']);
+// PR 2f: os instantes da punição do carro em destaque, para as capturas.
+const punicaoDoDestaque = destaque === null ? undefined : replay.punicao(destaque);
+window.__punicao =
+  destaque === null
+    ? null
+    : {
+        infracao: punicaoDoDestaque?.infracao ?? NaN,
+        inicio: punicaoDoDestaque?.inicio ?? NaN,
+        ms: punicaoDoDestaque?.ms ?? replay.punicaoMs(destaque),
+        partida: punicaoDoDestaque?.parada.partida ?? NaN,
+        chegada: replay.chegada(destaque)?.instante ?? null,
+      };
 window.__tempos = {
   // 200 ms reais depois do incidente: a guinada no pico e a fumaça já aberta.
   efeito: instanteDaCena === undefined ? null : instanteDaCena + 200 * simPorReal,

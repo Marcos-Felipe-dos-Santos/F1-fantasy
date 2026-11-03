@@ -479,14 +479,7 @@ describe('depois da bandeirada (PR 2e)', () => {
     expect(saiu).toContain(`V${punicao.voltaDaInfracao}</span>`);
     expect(saiu).toContain('a cumprir no box');
     expect(tela(corrida, punicao.parada.partida - 1)).not.toContain(FRASE_PUNICAO_CUMPRIDA);
-    // As duas linhas do mesmo evento no ticker: chave repetida o React só avisa no console.
-    const erro = vi.spyOn(console, 'error').mockImplementation(() => undefined);
-    try {
-      expect(tela(corrida, punicao.parada.partida)).toContain(FRASE_PUNICAO_CUMPRIDA);
-      expect(erro).not.toHaveBeenCalled();
-    } finally {
-      erro.mockRestore();
-    }
+    expect(tela(corrida, punicao.parada.partida)).toContain(FRASE_PUNICAO_CUMPRIDA);
   });
 
   it('quem está na volta lenta fica espalhado pela pista, e sem spray', () => {

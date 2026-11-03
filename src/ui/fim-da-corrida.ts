@@ -84,6 +84,8 @@ function chegadaDoCarro(
   let instante = linha.instanteDoProgresso(jogadorId, historico, voltas);
   while (instante < bandeirada) {
     voltas++;
+    // Uma passagem que nunca alcança a bandeirada penduraria a aba (revisão do PR 2f).
+    if (voltas > historico.length) throw new Error(`replay: ${jogadorId} não alcança a bandeirada`);
     instante = linha.instanteDoProgresso(jogadorId, historico, voltas);
   }
   const parada = linha.paradas(jogadorId).find((p) => instante >= p.inicio && instante < p.fim);
@@ -137,7 +139,8 @@ export function replayDaCorrida(
     cumprir.size === 0 ? semPunicao : linhaDeIncidentes(resultado, pista, linhaDoTempoDoPit(resultado, pista, esperas)),
     cumprir,
   );
-  const bandeirada = Math.min(...terminaram.map((c) => somaDe(c.jogadorId) + (esperas.get(c.jogadorId)?.ms ?? 0)));
+  // Da mesma fonte que atrasa a passagem pela linha: as duas não têm como divergir.
+  const bandeirada = Math.min(...terminaram.map((c) => somaDe(c.jogadorId) + (linha.punicao(c.jogadorId)?.ms ?? 0)));
   const chegadas = chegadasEm(linha, bandeirada);
 
   const perimetro = lutDoTracado(tracadoSuavizado(pista.id)).comprimentoTotal;
