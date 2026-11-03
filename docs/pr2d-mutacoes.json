@@ -25,9 +25,9 @@
   },
   {
     "nome": "fracao-nao-acumula",
-    "detectada": false,
+    "detectada": true,
     "travou": false,
-    "falha": null
+    "falha": "src/ui/incidentes-replay.test.ts > custo concentrado num ponto da volta (PR 2d) > dois incidentes na mesma volta: duas paradas, e a volta fecha no tempo do motor"
   },
   {
     "nome": "inverso-sem-custo",
@@ -43,21 +43,21 @@
   },
   {
     "nome": "margem-do-local",
-    "detectada": false,
+    "detectada": true,
     "travou": false,
-    "falha": null
+    "falha": "src/ui/incidentes-replay.test.ts > custo concentrado num ponto da volta (PR 2d) > o local fica entre 8% e 92% da volta, em qualquer seed"
   },
   {
     "nome": "sem-folga-pit-depois",
     "detectada": true,
     "travou": false,
-    "falha": "src/ui/incidentes-replay.test.ts > corridas reais: sem teleporte, e a linha é a do motor > incidente na volta seguinte ao pit: acontece depois da janela do box"
+    "falha": "src/ui/incidentes-replay.test.ts > corridas reais: sem teleporte, e a linha é a do motor > varredura: nenhum incidente encosta numa janela de pit"
   },
   {
     "nome": "sem-folga-pit-antes",
-    "detectada": false,
+    "detectada": true,
     "travou": false,
-    "falha": null
+    "falha": "src/ui/incidentes-replay.test.ts > corridas reais: sem teleporte, e a linha é a do motor > varredura: nenhum incidente encosta numa janela de pit"
   },
   {
     "nome": "plano-ignora-pit-antes",
@@ -79,21 +79,21 @@
   },
   {
     "nome": "abandono-nao-corta-o-plano",
-    "detectada": false,
+    "detectada": true,
     "travou": false,
-    "falha": null
+    "falha": "src/ui/incidentes-replay.test.ts > DNF: para no ponto do abandono (PR 2d) > erro e abandono na mesma volta, em qualquer seed: primeiro o erro, e o carro chega ao ponto sem salto"
   },
   {
     "nome": "erro-depois-do-abandono",
-    "detectada": false,
+    "detectada": true,
     "travou": false,
-    "falha": null
+    "falha": "src/ui/incidentes-replay.test.ts > DNF: para no ponto do abandono (PR 2d) > erro e abandono na mesma volta, em qualquer seed: primeiro o erro, e o carro chega ao ponto sem salto"
   },
   {
     "nome": "dnf-sem-plano",
     "detectada": true,
     "travou": false,
-    "falha": "src/ui/fim-da-corrida.test.ts > painel depois da bandeirada > o DNF da última volta fica atrás de quem terminou"
+    "falha": "src/ui/narracao.test.ts > narrarEventos — consequência na parada (PR 2d) > quebra e punição não têm consequência na parada"
   },
   {
     "nome": "progresso-do-dnf-na-volta",
@@ -133,9 +133,9 @@
   },
   {
     "nome": "efeito-duracao",
-    "detectada": false,
+    "detectada": true,
     "travou": false,
-    "falha": null
+    "falha": "src/ui/incidentes-replay.test.ts > efeito no momento: duração em tempo REAL (decisão do Marcos, ~700 ms) > as durações são as decididas"
   },
   {
     "nome": "efeito-chuva-em-tudo",
@@ -169,15 +169,15 @@
   },
   {
     "nome": "guinada-sem-voltar",
-    "detectada": false,
+    "detectada": true,
     "travou": false,
-    "falha": null
+    "falha": "src/ui/incidentes-replay.test.ts > efeito no momento: duração em tempo REAL (decisão do Marcos, ~700 ms) > guinada: curta, volta a zero, e só no erro de piloto"
   },
   {
     "nome": "guinada-em-tempo-simulado",
     "detectada": true,
     "travou": false,
-    "falha": "src/ui/incidentes-replay.test.ts > efeito no momento: duração em tempo REAL (decisão do Marcos, ~700 ms) > guinada: curta, volta a zero, e só no erro de piloto"
+    "falha": "src/ui/tela-corrida-render.test.ts > incidentes na tela (PR 2d) > a guinada entra no rumo; com movimento reduzido, o carro só para"
   },
   {
     "nome": "incidente-depois-da-linha",
@@ -199,9 +199,9 @@
   },
   {
     "nome": "hash-sem-jogador",
-    "detectada": false,
+    "detectada": true,
     "travou": false,
-    "falha": null
+    "falha": "src/ui/incidentes-replay.test.ts > custo concentrado num ponto da volta (PR 2d) > carros diferentes na mesma volta e do mesmo tipo param em pontos diferentes"
   },
   {
     "nome": "hash-sem-divisao",
@@ -228,16 +228,10 @@
     "falha": "src/ui/narracao.test.ts > narrarEventos — consequência na parada (PR 2d) > conta quem passa durante a parada: Y e Z vêm logo atrás e passam, W não chega"
   },
   {
-    "nome": "posicoes-inclui-o-carro",
-    "detectada": false,
-    "travou": false,
-    "falha": null
-  },
-  {
     "nome": "ordem-por-volta",
-    "detectada": false,
+    "detectada": true,
     "travou": false,
-    "falha": null
+    "falha": "src/ui/narracao.test.ts > narrarEventos — consequência na parada (PR 2d) > o carro lento, na mesma volta, vem depois do rápido, mesmo antes dele nos eventos"
   },
   {
     "nome": "sem-memo",
@@ -249,7 +243,7 @@
     "nome": "frase-repete",
     "detectada": true,
     "travou": false,
-    "falha": "src/ui/narracao.test.ts > narrarEventos — consequência na parada (PR 2d) > mesmo tipo na mesma corrida não repete frase enquanto houver frase nova"
+    "falha": "src/ui/narracao.test.ts > narrarEventos — consequência na parada (PR 2d) > mais erros que frases: o pool recomeça, sem travar"
   },
   {
     "nome": "frase-trava-no-pool-cheio",
@@ -379,9 +373,9 @@
   },
   {
     "nome": "tela-sem-boxes",
-    "detectada": false,
+    "detectada": true,
     "travou": false,
-    "falha": null
+    "falha": "src/ui/tela-corrida-render.test.ts > incidentes na tela (PR 2d) > a frase do incidente na volta de pit termina em \"e foi para os boxes\""
   },
   {
     "nome": "reduzido-com-guinada",
@@ -397,9 +391,9 @@
   },
   {
     "nome": "tela-sem-guinada",
-    "detectada": false,
+    "detectada": true,
     "travou": false,
-    "falha": null
+    "falha": "src/ui/tela-corrida-render.test.ts > incidentes na tela (PR 2d) > a guinada entra no rumo; com movimento reduzido, o carro só para"
   },
   {
     "nome": "spray-no-carro-parado",
@@ -415,20 +409,20 @@
   },
   {
     "nome": "efeito-sem-opacidade",
-    "detectada": false,
+    "detectada": true,
     "travou": false,
-    "falha": null
+    "falha": "src/ui/tela-corrida-render.test.ts > incidentes na tela (PR 2d) > o efeito cresce e some com a idade"
   },
   {
     "nome": "efeito-sem-crescer",
-    "detectada": false,
+    "detectada": true,
     "travou": false,
-    "falha": null
+    "falha": "src/ui/tela-corrida-render.test.ts > incidentes na tela (PR 2d) > o efeito cresce e some com a idade"
   },
   {
     "nome": "css-sem-fumaca",
-    "detectada": false,
+    "detectada": true,
     "travou": false,
-    "falha": null
+    "falha": "src/ui/tela-corrida-render.test.ts > incidentes na tela (PR 2d) > as cores do efeito são tokens da pista, não de raridade"
   }
 ]
