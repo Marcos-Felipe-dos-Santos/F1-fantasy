@@ -119,8 +119,8 @@ export function linhaDeIncidentes(
       const pitNaVolta = paradas.find((p) => p.volta === volta);
       const ta = pitAntes?.fim ?? (volta >= 2 ? acumulado[volta - 2] : 0);
       const sa = pitAntes?.fracaoFim ?? 0;
-      let tb = pitNaVolta?.inicio ?? acumulado[volta - 1];
-      let sb = pitNaVolta?.fracaoInicio ?? 1;
+      const tb = pitNaVolta?.inicio ?? acumulado[volta - 1];
+      const sb = pitNaVolta?.fracaoInicio ?? 1;
       const de = Math.max(MARGEM_LOCAL, sa + FOLGA_DO_PIT);
       let ate = Math.min(1 - MARGEM_LOCAL, sb - FOLGA_DO_PIT);
       const daVolta = doCarro.filter((e) => e.volta === volta && custaNaVolta(e));
@@ -134,8 +134,7 @@ export function linhaDeIncidentes(
         const fracao = de + sorteioDeLocal(resultado.seed, 'abandono', jogadorId, volta, evento?.tipo ?? 'quebra') * (ate - de);
         const instante = ta + (fracao - sa) / ritmo + custo;
         abandonos.set(jogadorId, { evento, volta, fracao, instante });
-        sb = fracao;
-        tb = instante;
+        // Daqui em diante vale o abandono, que progresso, posição e `parado` olham antes do plano.
         ate = fracao - FOLGA_DO_PIT;
       }
 

@@ -33,7 +33,6 @@ const MUTACOES = [
   ['plano-ignora-pit-antes', INC, 'const ta = pitAntes?.fim ?? (volta >= 2 ? acumulado[volta - 2] : 0);', 'const ta = volta >= 2 ? acumulado[volta - 2] : 0;'],
   ['plano-ignora-pit-na-volta', INC, 'let tb = pitNaVolta?.inicio ?? acumulado[volta - 1];', 'let tb = acumulado[volta - 1];'],
   ['abandono-na-volta-inteira', INC, 'const instante = ta + (fracao - sa) / ritmo + custo;', 'const instante = ta + ((fracao - sa) / (sb - sa)) * (tb - ta);'],
-  ['abandono-nao-corta-o-plano', INC, 'sb = fracao;\n        tb = instante;', ''],
   ['erro-depois-do-abandono', INC, 'ate = fracao - FOLGA_DO_PIT;', ''],
   ['dnf-sem-plano', INC, 'if (voltaFinal !== null) voltas.add(voltaFinal);', ''],
   ['progresso-do-dnf-na-volta', INC, 'return (abandono.volta - 1 + abandono.fracao) / pista.voltas;', 'return abandono.volta / pista.voltas;'],
