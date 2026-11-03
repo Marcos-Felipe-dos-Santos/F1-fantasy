@@ -136,7 +136,9 @@ for (const [nome, arquivo, de, para] of MUTACOES.slice(de_, ate_)) {
   const mutado = original.replace(de, () => para);
   writeFileSync(arquivo, crlf ? mutado.replace(/\n/g, '\r\n') : mutado);
   try {
-    const r = await rodar();
+    let r = await rodar();
+    // Com `--bail=1` a linha FAIL às vezes não chega à saída: tenta de novo uma vez antes de abortar.
+    if (!r.estourou && r.status !== 0 && !/^ FAIL /m.test(r.saida)) r = await rodar();
     const falha = r.saida.match(/^ FAIL +(.*)$/m)?.[1] ?? null;
     const detectada = r.status !== 0 && falha !== null;
     if (!r.estourou && r.status !== 0 && falha === null) throw new Error(`vitest caiu sem falha nomeada: ${nome}`);

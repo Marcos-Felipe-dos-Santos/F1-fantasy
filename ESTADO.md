@@ -430,6 +430,42 @@ dependência).
 
 ## Onde parei
 
+### 2026-11-03 — PR 2d (incidentes, DNF, narração) IMPLEMENTADO, sessão interrompida antes do preview no celular
+
+Branch `feat/pr2d-incidentes`, sobre a `main` `03ed7ed` (merge do PR 2e conferido). Risco ALTO. Sem push, merge ou
+deploy. Decisões D1-D5 em §"🔒 DECISÕES DO MARCOS — VIGENTES"; PR 2f (punição no box) registrado em
+§"Pendências ATIVAS" com a medição.
+
+Commits: `a39a4f3` medição e decisões; `82d30a4` implementação; `f6ab704` testes dos sobreviventes;
+`0d493b9` mutação; `96a350e` correção da revisão + FPS; `32aed82` mutação; `562b197` código morto;
+⚠️ **`df73590` está ERRADO:** diz "mutação final, 70/71", mas o `docs/pr2d-mutacoes.json` dele tem só 15 entradas,
+porque a rodada abortou em `dnf-sem-plano` (vitest falhou sem a linha FAIL na saída). Não foi reescrito: corrigir
+com commit novo quando a mutação final terminar.
+
+- **Medido (último ponto verde, código de `562b197`):** `npm test` 2099 + 1 skipped em 90 arquivos; `test:party` 46;
+  typecheck, lint e build com saída 0; `git diff 03ed7ed` vazio em `src/engine/`, `src/data/`, `src/net/` e
+  `party/`. `verificar-pr2d` (1000 corridas, dataset real): tudo 0, inclusive `ritmoForaDoLimpo`, que a revisão
+  pediu e que acusa 15 com o defeito recolocado. `verificar-pr2e` igual ao do PR 2e (189 aceitas).
+- **Mutação:** 2ª rodada 70/71 + 1 travada (`frase-trava-no-pool-cheio`, laço síncrono). Depois da correção, 70/72
+  com `abandono-nao-corta-o-plano` sobrevivendo: era código morto, removido em `562b197`.
+- **FPS** (`docs/pr2d-fps.json`, `docs/pr2d-fps-media.json`, A/B intercalado com `03ed7ed`, CPU 6×, 360×800, chuva):
+  rápida 80-86 fps nos dois; média refeita 83-87 fps nos dois, 0 quadro > 33 ms no PR. A 1ª rodada da média foi de
+  máquina suja (35-40 fps nos DOIS braços).
+- **`senior-reviewer`:** 1 🔴 corrigido em `96a350e` (ritmo acima do limpo, até negativo, na volta de erro +
+  abandono; baseline vermelho em `docs/pr2d-baseline-vermelho-revisao.txt`). 🟡 aplicados: cerca de lint com teste,
+  comentário de contrato, cabeçalho do portão. Sugestões não aplicadas: alocação por frame de `incidentes()`,
+  cache da narração só por `resultado`, efeito por cima do viaduto, `namespaces-seed.ts` (em `src/engine/`, fora).
+- **Na árvore, sem commit:** `scripts/mutar-pr2d.mjs`, com uma nova tentativa quando o vitest falha sem linha FAIL.
+
+**RETOMADA, nesta ordem:**
+1. `node scripts/mutar-pr2d.mjs` (~15 min; não desligar no meio: um mutante fica aplicado em `src/`, conferir
+   `git status -- src`). Commitar o script e o JSON corrigindo o `df73590`.
+2. Preview no celular para o veredito do Marcos: `PREVIEW_PIT_SAIDA=.wrangler/pr2d-preview npx vite build --config
+   scripts/preview-pit.config.ts`, depois `npx vite preview --config scripts/preview-pit.config.ts --outDir
+   .wrangler/pr2d-preview --host 192.168.0.3 --port 5173 --strictPort`; cenas `/scripts/preview-pit.html?cena=lider`,
+   `?cena=dnf`, `?cena=chuvoso`. Capturas olhadas em `preview/pr2d/` (gitignored); escolher 3 para `docs/pr2d-imagens/`.
+3. `HISTORICO.md` e o fechamento desta entrada, depois do veredito.
+
 ### 2026-11-02 — PR 2e (a corrida termina quando todos cruzam) APROVADO no celular e fechado, aguardando o push do Marcos
 
 **Veredito do Marcos (2026-11-02):** "aprovado, funcionou perfeitamente". Detalhe em `HISTORICO.md`
