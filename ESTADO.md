@@ -12,8 +12,10 @@
 
 ## Estado atual
 
-**2026-11-02, branch `feat/pr2a-carros-chuva`**, com o PR 2a aprovado no celular e fechado sobre a
-`main` `c3f7dcb`. O push é do Marcos. Sem merge ou deploy.
+**2026-11-02, branch `feat/pr2e-fim-da-corrida`**, com o PR 2e aprovado no celular e fechado sobre a
+`main` `a49cb78`. O push é do Marcos. Sem merge ou deploy.
+~~**2026-11-02, branch `feat/pr2a-carros-chuva`**, com o PR 2a aprovado no celular e fechado sobre a
+`main` `c3f7dcb`. O push é do Marcos. Sem merge ou deploy.~~ O PR 2a foi mesclado na `main` (`a49cb78`).
 ~~**2026-11-01, branch `feat/pr2a-carros-chuva`**, com o PR 2a implementado sobre a `main` `c3f7dcb`,
 aguardando o veredito do Marcos no celular. Sem push, merge ou deploy.~~
 ~~**2026-11-01, branch `feat/pr2c-pit-stop`**, com o PR 2c aprovado e commitado sobre a `main` `d9e8916`.
@@ -427,6 +429,60 @@ dependência).
 
 
 ## Onde parei
+
+### 2026-11-02 — PR 2e (a corrida termina quando todos cruzam) APROVADO no celular e fechado, aguardando o push do Marcos
+
+**Veredito do Marcos (2026-11-02):** "aprovado, funcionou perfeitamente". Detalhe em `HISTORICO.md`
+§"2026-11-02 — PR 2e". Servidores 5173, 4181 e 4182 derrubados. **Próximo:** push e abertura do PR pelo Marcos.
+
+Branch `feat/pr2e-fim-da-corrida`, sobre a `main` `a49cb78`, merge do PR 2a conferido na `main` e em
+`origin/main`. Medição prévia: `docs/pr2e-medicao.json`, instrumento `scripts/medir-pr2e.preview.test.ts`
+(100 grids, 10 pistas, sem alterar `src/`). Risco ALTO. Decisões em §"🔒 DECISÕES DO MARCOS — VIGENTES".
+Commits: `b20b0a5` implementação, `ac3572c` timeout por mutante, `a8a4d5d` FPS. Sem push.
+
+- **FPS refeito com o PC reiniciado (2026-11-02), `docs/pr2e-fps-3bracos.json`, base × PR × cauda intercalados,
+  CPU 6×, 360×800, 22 carros, chuva, 5 repetições, 36.000 quadros:** render p50 2,8-3,0 ms e p95 3,8-4,4 ms nos 3
+  braços; 1 quadro > 33 ms, na base; 0 no PR e na cauda. Os 133 ms e os 2×5 de antes eram a máquina suja. Essa
+  rodada pedia cauda acima do PR nas 4 condições: não persiste. ⚠️ A thread principal segue a ~99%, agora a
+  ~115 fps: `mainPorFrame` é o período do quadro e não mede custo, inclusive nos números da entrada abaixo.
+- **Mas a cauda não enxergava a bandeirada, e numa passada só há quadro lento repetível** (velocidade lenta,
+  `docs/pr2e-fps-passagem.json`, `docs/pr2e-fps-rastro.json`, instrumento `scripts/rastrear-pr2e.mjs`): 2 quadros
+  em toda repetição, nos mesmos instantes simulados. O da bandeirada dá 61-74 ms. **Causa:** a primeira busca da
+  fonte de fallback do 🏁 no `h2` e no selo do painel (`FontCache::FallbackFontForCharacter`, ~13 ms cada a 6×,
+  dentro do `Layout`). **Prova:** com os glifos desenhados invisíveis nas classes reais (`glifos=1`, só no preview), o
+  quadro some em 10 de 10 e o pior cai para 33-41 ms. Span com outra fonte não resolve: a busca é por fonte e tamanho.
+  O outro quadro (~40 ms) é o mesmo mecanismo, 1 busca, glifo não identificado. Uma vez por combinação na
+  mesma página (a cauda, que refaz as chegadas, dá 0). Aparelho real não medido. ~~**Produto não alterado:
+  corrigir é decisão do Marcos, junto do veredito.**~~ **Decidido pelo Marcos: não notou travada, fica como está.**
+- **`senior-reviewer` no diff completo (`a49cb78`, 2026-11-02): sem 🔴.** Aviso 1 aplicado (`< 1` falso em
+  `fluxo-corrida.ts`). Aviso 4 (replay acabar antes da volta lenta) medido: 0 em 1000 corridas, travado em
+  `fimAntesDaLenta` no `verificar-pr2e`. Aviso 3 recusado: o carro que cruza a linha já terminou e entra atrás
+  no perfil único, não é ultrapassagem. Aviso 2 fica: a ligação de `useCorrida` é coberta por cerca textual e pelo
+  modo `fluxo` manual; os 2 mutantes do hook não são evidência de comportamento. Commit `7cba6d6`.
+- **RETOMADA, nesta ordem (pedido do Marcos):**
+  1. ~~FPS intercalado de novo com a máquina limpa.~~ Feito, acima.
+  2. ~~`senior-reviewer` no diff completo do PR 2e.~~ Feito, acima.
+  3. ~~Veredito do Marcos no preview.~~ Aprovado, acima. Comando: `npx vite preview --config scripts/preview-pit.config.ts --outDir
+     .wrangler/pr2e-preview --host 192.168.0.3 --port 5173`; URL `/scripts/preview-pit.html?cena=retardatario`,
+     `punicao` ou `normal`. Capturas em `preview/pr2e/`.
+  4. ~~`HISTORICO.md` no fechamento.~~ Feito.
+- **Decidido pelo Marcos em 2026-11-02:** `saidaDoBoxPassou` = 189 inversões em 1000 corridas, carro ainda
+  correndo que sai do box e passa quem já está na volta lenta, é aceito. "Sem ultrapassar" vale entre carros
+  que já terminaram. Ver D1 em §"🔒 DECISÕES DO MARCOS — VIGENTES".
+- **Medido:** `npm test` 2029 + 1 skipped em 89 arquivos; `test:party` 46; typecheck e eslint com saída 0;
+  `git diff 99ae1f3 HEAD` vazio em `src/engine/` e `src/data/`. Verificação em 1000 corridas: ordem
+  divergente 0, retardatário acima 0, volta lenta passou 0, corrido passou 0, bandeira no box 1.
+- **Mutação (`docs/pr2e-mutacoes.json`):** 31/32 por teste nomeado e 1 travou por timeout
+  (`bandeirada-no-tempo-oficial`, laço síncrono: a bandeirada fica acima da soma saturada do punido).
+  Nenhum sobrevivente. `dif-sem-folga`, da rodada anterior, saiu da tabela porque o código dele não existe
+  mais: `folga` não aparece em `src/ui/`.
+- **FPS, CPU 6×, 360×800, 22 carros, chuva, 5 repetições, mediana.** A/B intercalado com `99ae1f3`
+  (`docs/pr2e-fps-ab.json`), SÓ MEIO DE CORRIDA, a bandeirada não entra na janela: thread principal por
+  frame antes → depois: Spa média 17,4 → 17,6; Montreal média 16,7 → 17,5; Spa rápida 17,9 → 18,4;
+  Montreal rápida 18,6 → 17,7 ms. Corrida × cauda (`docs/pr2e-fps.json`): 17,1 × 16,1; 16,4 × 15,1;
+  18,2 × 18,9; 19,2 × 18,1 ms, mas quadros > 33 ms em 600 sobem na cauda: 2 × 2; 0 × 1; 0 × 3; 2 × 5, pior
+  quadro 133 ms. Causa não isolada; o salto do relógio de `cauda=1` é candidato, não conclusão. ⚠️ Thread
+  principal a 99% nos dois lados: os absolutos não se comparam com os ~12 ms do PR 2a.
 
 ### 2026-11-02 — PR 2a APROVADO no celular e fechado, aguardando o push do Marcos
 
@@ -2201,6 +2257,23 @@ encerramento** — encerrada não quer dizer sem dívida.
 > Movido do fim do arquivo em 2026-10-28, sem alteração de conteúdo, exceto "spray" no PR 2a,
 > que constava no pedido original do Marcos e faltava aqui.
 
+**🔒 DECISÕES DO MARCOS, 2026-11-02 — PR 2e (a corrida termina quando todos cruzam a linha):** só
+apresentação, zero alteração em `src/engine/` e `src/data/`, resultado e hashes idênticos. Depois que o
+vencedor cruza, cada carro termina na próxima passagem pela linha; DNF fica de fora. O replay termina
+quando o último carro cruza, mesmo com outros na volta lenta. Sobre a medição:
+
+- **D1:** sem box depois da linha. Fica só a volta lenta, a 60% da velocidade, sem ultrapassar. Em 1000
+  corridas, nenhum carro chegaria à vaga antes do fim do replay.
+- **D1, alcance (decisão do Marcos, 2026-11-02, depois de ver as 189 inversões em 1000 corridas):** "Aceito
+  que um carro ainda correndo, saindo do box, passe quem já está na volta lenta. 'Sem ultrapassar' vale
+  entre carros que já terminaram."
+- **D2:** o painel segue a ordem oficial, com selo `+Xs` no carro punido.
+- **D3:** a tela de resultado fica como está.
+- **D4:** os saltos do DNF ficam até o PR 2d (46 em 800).
+- **D5, veredito do PR 2e (2026-11-02):** aprovado no celular. Quadro lento da bandeirada, 61-74 ms com CPU 6×,
+  causado pela fonte de fallback do 🏁: "não notei travada; deixe como está". Spray na volta lenta: o carro
+  segue sem spray depois da linha, na chuva, "como está".
+
 **🔒 DECISÃO DO MARCOS — ASFALTO MOLHADO `#313131` (2026-11-02).** "Asfalto fica #313131 como
 exceção da chuva." Vale só para `pistaAsfaltoMolhado`: fica a 1,124 do muro, abaixo dos 1,25 de
 `SEPARACAO_MINIMA_LUMINANCIA`, com a exceção travada em `molhado.test.ts`. O asfalto seco segue
@@ -2984,12 +3057,42 @@ que agora ela é tomada com o número na mão.**
 
 ## Pendências ATIVAS
 
+**Abertas no PR 2e (2026-11-02), sugestões do `senior-reviewer`, nenhuma com defeito hoje:**
+- **Ligação de `useCorrida`:** só cerca textual e o modo `fluxo` manual. Falta teste de comportamento, que hoje
+  esbarra na falta de jsdom.
+- **`fim-da-corrida.ts`:** `DISTANCIA_RAMPA` vem do pit, então mexer na rampa do box muda a volta lenta. A punição
+  soma eventos de `investigacao`; `tempoTotal − soma do histórico` se corrigiria sozinho. `acumularVoltas` sem o
+  `?? []` lança com resultado corrompido.
+- **Bandeira no box (1 em 1000):** o painel troca 🔧 PIT por 🏁 com o carro ainda parado.
+- **`verificar-pr2e`:** `parados` inclui `'pit'`; `bandeiraNoBox` mede a janela da parada, não o box.
+- **`medir-fps-pr2a.mjs`:** `2200` cravado no lugar de `MS_REPLAY_POR_VOLTA.rapida`. `TelaCorrida`: `formatarDiferenca`
+  roda nas 22 linhas mesmo sem punição.
+- **Preview:** `inicioDaCena` vira `Infinity` em corrida sem ninguém terminando.
+
 **Abertas no PR 2a (2026-11-02):**
 - **DNF para o PR 2d:** o carro que abandona ainda salta da linha para o meio da pista no fim da volta.
-  Resolver com o local do incidente, junto dos incidentes na pista.
+  Resolver com o local do incidente, junto dos incidentes na pista. **O PR 2e aumenta os saltos visíveis:
+  46 em 800 DNFs** (`docs/pr2e-medicao.json`) aconteciam depois do fim do replay e passam a aparecer na
+  tela. Aceito pelo Marcos em 2026-11-02 até o PR 2d.
 - **Aparelho real:** desempenho não medido no celular; o custo de raster e composição da chuva e do spray
   não está verificado no freio de CPU. O FPS do PR foi medido com a pista 10% maior que a do jogo.
 - **iOS:** não testado, em especial `paint-order` e `var()` em `stop-color` dentro de `<use>`.
+
+**Para o PR 2d, pedido do Marcos em 2026-11-02 — melhorar a narração do ticker:**
+- nome do piloto em destaque, em vez de "bot-18";
+- consequência do evento na frase (tempo perdido, posições caídas);
+- pit integrado à frase ("…e foi para os boxes");
+- variedade de frases para o mesmo tipo de erro.
+
+**Para o PR 2d, pedido do Marcos em 2026-11-02 — PUNIÇÃO CUMPRIDA NO BOX, como na F1.** Só apresentação:
+o tempo total e a classificação final continuam os do motor. O replay mostra a punição sendo cumprida
+durante a corrida:
+1. se o carro ainda tem pit stop depois da infração: fica parado X s a mais na vaga (mecânicos esperam);
+2. se não tem: stop-and-go (entra, para X s, sai sem trocar pneu);
+3. se não houver voltas suficientes: somada no fim, com o selo `+Xs` do PR 2e.
+
+O ticker narra a punição e o cumprimento. **Medir antes:** os valores de punição do motor e em que volta
+as investigações saem.
 
 0. **Abertas na Fase 3:**
    (a) **`montarJogadores` está duplicado** entre `fluxo-draft.ts:117` (UI) e `congelarRoster`

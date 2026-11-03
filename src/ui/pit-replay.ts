@@ -140,6 +140,18 @@ function angulo(a: Ponto, b: Ponto): number {
   return (Math.atan2(b.y - a.y, b.x - a.x) * 180) / Math.PI;
 }
 
+/** Carro na pista, em `fracao` de volta: na curva suavizada que `pathDaVolta` desenha. */
+export function posicaoNaPista(pistaId: string, fracao: number): PosicaoNoReplay {
+  const curva = tracadoSuavizado(pistaId);
+  const janela = MEIA_JANELA_RUMO / lutDoTracado(curva).comprimentoTotal;
+  return {
+    ponto: pontoNoTracado(curva, fracao),
+    sob: estaSobViaduto(pistaId, fracao),
+    rumo: angulo(pontoNoTracado(curva, fracao - janela), pontoNoTracado(curva, fracao + janela)),
+    fracaoNaPista: ((fracao % 1) + 1) % 1,
+  };
+}
+
 const CACHE_CAMINHO = new Map<string, Caminho | null>();
 
 /** Memoizado pelo mesmo motivo de `desenhoDoBox`: `TelaCorrida` renderiza a cada frame. */
@@ -380,8 +392,6 @@ export function linhaDoTempoDoPit(
   if (cache !== undefined && cache.pistaId === pista.id) return cache.linha;
 
   const c = caminhoDaPista(pista.id);
-  const curva = tracadoSuavizado(pista.id);
-  const perimetro = lutDoTracado(curva).comprimentoTotal;
   const porCarro = new Map<string, ParadaInterna[]>();
   if (c !== null) {
     const todas: ParadaInterna[] = [];
@@ -453,13 +463,8 @@ export function linhaDoTempoDoPit(
         fracao = fracaoNaPista(c, x);
         rumoDoPit = rumoNoCaminho(c, x);
       }
-      const janela = MEIA_JANELA_RUMO / perimetro;
-      return {
-        ponto: pontoNoTracado(curva, fracao),
-        sob: estaSobViaduto(pista.id, fracao),
-        rumo: rumoDoPit ?? angulo(pontoNoTracado(curva, fracao - janela), pontoNoTracado(curva, fracao + janela)),
-        fracaoNaPista: ((fracao % 1) + 1) % 1,
-      };
+      const naPista = posicaoNaPista(pista.id, fracao);
+      return rumoDoPit === null ? naPista : { ...naPista, rumo: rumoDoPit };
     },
   };
   CACHE_LINHA.set(resultado, { pistaId: pista.id, linha });

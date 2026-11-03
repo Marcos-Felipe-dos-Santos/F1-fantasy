@@ -7277,6 +7277,60 @@ página antiga e não foi refeito; os 3 prints de `docs/pr2a-imagens/` foram.
 **Pendência para o PR 2d.** O carro em DNF ainda salta da linha para o meio da pista no fim da volta;
 resolver com o local do incidente.
 
+### 2026-11-02 — PR 2e: a corrida termina quando todos cruzam a linha
+
+Branch `feat/pr2e-fim-da-corrida`, sobre `a49cb78`. Risco ALTO. Só apresentação: `git diff` vazio em
+`src/engine/`, `src/data/` e `party/`; em `src/net/`, só o comentário de `tipos.ts`. `VERSAO_APP` 3.4.7.
+
+**O problema.** A engine dá as N voltas a todo carro que termina, sem bandeirada, e o replay cortava quando
+o vencedor oficial chegava. Medição prévia em `docs/pr2e-medicao.json` (100 grids, 10 pistas), com as
+decisões D1 a D4 do Marcos em `ESTADO.md` §"🔒 DECISÕES DO MARCOS — VIGENTES".
+
+**O que entrou.**
+- **`src/ui/fim-da-corrida.ts`, novo.** A bandeirada vem do primeiro a completar as voltas NA PISTA, não de
+  `classificacao[0].tempoTotal`, que traz a punição: em 28 de 1000 corridas o primeiro a cruzar não é o vencedor
+  oficial. Cada carro termina na passagem seguinte pela linha, lida do progresso do mapa, e o DNF fica de fora.
+- **Volta lenta a 60%, com perfil único.** O perfil depende só do tempo desde a passagem do carro, e é isso
+  que impede ultrapassagem entre quem terminou. Parte do ritmo da pista, não do carro, de propósito. Sem box
+  depois da linha. Com movimento reduzido, quem chega fica parado na linha.
+- **Relógio.** `avancarRelogio`, puro, e `useCorrida` param em `replay.fim`; a escala segue a do vencedor.
+- **Tela.** Título e botão mudam na bandeirada, 🏁 por carro, `+N V` para retardatário e selo `+Xs` na ordem
+  oficial. A tela de resultado não mudou.
+- **Online.** A barreira do fim chega até ~9 s mais tarde: 143,8 s no pior caso, contra `TIMEOUT_FIM_DE_CORRIDA_MS`
+  de 300 s. Só o comentário de `src/net/tipos.ts` mudou.
+
+**Verificação.** `npm test` 2029 + 1 skipped em 89 arquivos; `test:party` 46; typecheck, lint e build com saída 0.
+`scripts/verificar-pr2e.preview.test.ts`, 1000 corridas no dataset real: ordem divergente 0, retardatário acima
+0, volta lenta passou 0, corrido passou 0, `fimAntesDaLenta` 0, bandeira no box 1. Baseline vermelho em
+`docs/pr2e-baseline-vermelho.txt`. Mutação em `docs/pr2e-mutacoes.json`: 31/32 por teste nomeado e 1 por timeout,
+sem sobrevivente, rodada antes de `7cba6d6`, que no produto só corrige um comentário. Prints em
+`docs/pr2e-imagens/` (3).
+
+**FPS.** A 1ª rodada (`docs/pr2e-fps-ab.json`, `docs/pr2e-fps.json`) tinha a thread principal a 99% e a métrica por
+frame presa ao período do quadro: não provou nada, e o pior quadro de 133 ms veio de uma única repetição. Refeita com
+o PC reiniciado, em `docs/pr2e-fps-3bracos.json`: base, PR e cauda intercalados, CPU 6×, 360×800, 22 carros, chuva,
+5 repetições, 36.000 quadros. Render p50 de 2,8 a 3,0 ms nos três braços, 1 quadro > 33 ms na base e 0 nos outros.
+`mainPorFrame` segue preso ao período, agora a ~115 fps; a comparação usa render e quadros lentos.
+
+**O quadro da bandeirada.** A cauda começa depois da bandeirada e não a enxerga. Numa passada só
+(`docs/pr2e-fps-passagem.json`, `docs/pr2e-fps-rastro.json`, `scripts/rastrear-pr2e.mjs`), há 2 quadros lentos
+repetíveis. O da bandeirada dá 61-74 ms: primeira busca da fonte de fallback do 🏁, uma no `h2` e outra no selo,
+~13 ms cada dentro do `Layout`. A hipótese falhou no primeiro teste, com um span qualquer, porque a busca é por
+fonte e tamanho; com os glifos invisíveis nas classes reais o quadro sumiu em 10 de 10 e o pior caiu para 33-41 ms.
+O outro quadro, de ~40 ms, tem 1 busca, com o glifo não identificado. O Marcos não notou travada no celular e mandou
+deixar como está, sem mudar o produto.
+
+**`senior-reviewer` no diff completo: sem 🔴.** Aviso 1 aplicado (`< 1` falso no contrato do painel). Aviso 4,
+replay acabar antes da volta lenta, medido: 0 em 1000, agora asserção. Aviso 3 recusado: o carro que cruza a
+linha já terminou e entra atrás no perfil único. Aviso 2 aceito como limite: a ligação de `useCorrida` é coberta
+por cerca textual e pelo modo `fluxo` manual, então os 2 mutantes do hook não contam como cobertura de comportamento.
+As sugestões viraram pendência em `ESTADO.md` §"Pendências ATIVAS".
+
+**Não verificado.** Desempenho em aparelho real, inclusive o custo do 🏁; iOS.
+
+**Veredito, 2026-11-02.** Aprovado pelo Marcos no celular, nas cenas de retardatário, punição e normal: "funcionou
+perfeitamente". Decisões dele: o quadro da bandeirada fica; o carro na volta lenta fica sem spray na chuva.
+
 ## ARQUIVADO DO `ESTADO.md` em 2026-10-28 — §"Estado atual", medições de 2026-08-18 a 2026-09-02
 
 > Movido sem alteração pela sessão principal, a pedido do Marcos. Antes da cópia, 18,8% dos

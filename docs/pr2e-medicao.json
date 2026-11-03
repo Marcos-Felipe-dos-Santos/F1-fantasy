@@ -1,0 +1,1606 @@
+{
+ "N_GRIDS": 100,
+ "RAZOES_VOLTA_LENTA": [
+  0.5,
+  0.6,
+  0.7,
+  0.8
+ ],
+ "pista-monaco": {
+  "voltas": 15,
+  "tempoBaseS": 78,
+  "fracaoEntradaBox": 0.925,
+  "intervaloLiderUltimoS": {
+   "n": 100,
+   "min": 51.03296925604041,
+   "media": 65.33491207652247,
+   "p50": 65.83006180764664,
+   "p95": 74.55253736898582,
+   "max": 77.99156024059211
+  },
+  "caudaSobreHojeS": {
+   "n": 100,
+   "min": 51.03296925604041,
+   "media": 65.14433245866768,
+   "p50": 65.64409893391328,
+   "p95": 74.55253736898582,
+   "max": 77.99156024059211
+  },
+  "telaAMaisS": {
+   "lenta": {
+    "p50": 7.289832803452299,
+    "p95": 8.396486731077232,
+    "max": 8.775293332185441
+   },
+   "media": {
+    "p50": 3.6449164017261495,
+    "p95": 4.198243365538616,
+    "max": 4.387646666092721
+   },
+   "rapida": {
+    "p50": 1.7819591297327833,
+    "p95": 2.0524745342633253,
+    "max": 2.1450717034231133
+   }
+  },
+  "replayTotalS": {
+   "lenta": {
+    "n": 100,
+    "min": 140.71083103552493,
+    "media": 142.24998870691022,
+    "p50": 142.2898328034523,
+    "p95": 143.39648673107723,
+    "max": 143.77529333218544
+   },
+   "media": {
+    "n": 100,
+    "min": 70.35541551776247,
+    "media": 71.12499435345511,
+    "p50": 71.14491640172615,
+    "p95": 71.69824336553862,
+    "max": 71.88764666609272
+   },
+   "rapida": {
+    "n": 100,
+    "min": 34.39598091979498,
+    "media": 34.772219461689176,
+    "p50": 34.78195912973278,
+    "p95": 35.052474534263325,
+    "max": 35.14507170342311
+   }
+  },
+  "atrasadosPorCorrida": {
+   "n": 100,
+   "min": 0,
+   "media": 0.01,
+   "p50": 0,
+   "p95": 0,
+   "max": 1
+  },
+  "corridasSemAtrasado": 99,
+  "corridasComAtrasado": 1,
+  "corridasSoUmCarro": 0,
+  "voltasAMenosMax": 1,
+  "primeiroNaoEOficial": 5,
+  "carrosPunidos": 57,
+  "corridasComInversao": 39,
+  "inversoes": 48,
+  "corridasInversaoSoPunicao": 39,
+  "inversaoComVoltasDiferentes": 0,
+  "noPitNaBandeira": 0,
+  "noBoxNaBandeira": 0,
+  "paradoNaBandeira": 0,
+  "bandeiraNaJanela": 0,
+  "bandeiraNoBox": 0,
+  "casosBandeiraNoBox": [],
+  "boxNoFim": 0,
+  "paradasInvisiveis": 0,
+  "eventosDepoisDaBandeira": 0,
+  "dnfTotal": 90,
+  "dnfDepoisDoFimHoje": 4,
+  "dnfNaCauda": 4,
+  "dnfDepoisDoFimNovo": 0,
+  "dnfCruzaAntesDeQuebrar": 0,
+  "voltaLenta": [
+   {
+    "razao": 0.5,
+    "corridasComEntrada": 0,
+    "corridasComVaga": 0,
+    "carrosEntrada": 0,
+    "carrosVaga": 0,
+    "fracaoVoltaDoVencedor": {
+     "n": 100,
+     "min": 0.32318857966464287,
+     "media": 0.4117554221476607,
+     "p50": 0.4140540883385048,
+     "p95": 0.4749135004572014,
+     "max": 0.4976746307949297
+    }
+   },
+   {
+    "razao": 0.6,
+    "corridasComEntrada": 0,
+    "corridasComVaga": 0,
+    "carrosEntrada": 0,
+    "carrosVaga": 0,
+    "fracaoVoltaDoVencedor": {
+     "n": 100,
+     "min": 0.3878262955975714,
+     "media": 0.4941065065771925,
+     "p50": 0.49686490600620575,
+     "p95": 0.5698962005486415,
+     "max": 0.5972095569539155
+    }
+   },
+   {
+    "razao": 0.7,
+    "corridasComEntrada": 0,
+    "corridasComVaga": 0,
+    "carrosEntrada": 0,
+    "carrosVaga": 0,
+    "fracaoVoltaDoVencedor": {
+     "n": 100,
+     "min": 0.45246401153050003,
+     "media": 0.5764575910067249,
+     "p50": 0.5796757236739066,
+     "p95": 0.6648789006400818,
+     "max": 0.6967444831129015
+    }
+   },
+   {
+    "razao": 0.8,
+    "corridasComEntrada": 0,
+    "corridasComVaga": 0,
+    "carrosEntrada": 0,
+    "carrosVaga": 0,
+    "fracaoVoltaDoVencedor": {
+     "n": 100,
+     "min": 0.5171017274634286,
+     "media": 0.6588086754362572,
+     "p50": 0.6624865413416077,
+     "p95": 0.7598616007315222,
+     "max": 0.7962794092718875
+    }
+   }
+  ]
+ },
+ "pista-spa": {
+  "voltas": 12,
+  "tempoBaseS": 106,
+  "fracaoEntradaBox": 0.986,
+  "intervaloLiderUltimoS": {
+   "n": 100,
+   "min": 40.403207644127775,
+   "media": 57.46101198569778,
+   "p50": 55.58682912218734,
+   "p95": 76.99208113207318,
+   "max": 90.90197292547231
+  },
+  "caudaSobreHojeS": {
+   "n": 100,
+   "min": 36.89369099615398,
+   "media": 57.37797391041005,
+   "p50": 55.57558794795582,
+   "p95": 76.99208113207318,
+   "max": 90.90197292547231
+  },
+  "telaAMaisS": {
+   "lenta": {
+    "p50": 4.45872305519282,
+    "p95": 6.257885640623471,
+    "max": 7.129175417237008
+   },
+   "media": {
+    "p50": 2.22936152759641,
+    "p95": 3.1289428203117353,
+    "max": 3.564587708618504
+   },
+   "rapida": {
+    "p50": 1.0899100801582478,
+    "p95": 1.5297053788190738,
+    "max": 1.7426873242134953
+   }
+  },
+  "replayTotalS": {
+   "lenta": {
+    "n": 100,
+    "min": 111.02933168582383,
+    "media": 112.60734219372561,
+    "p50": 112.45872305519282,
+    "p95": 114.25788564062348,
+    "max": 115.12917541723701
+   },
+   "media": {
+    "n": 100,
+    "min": 55.51466584291192,
+    "media": 56.30367109686281,
+    "p50": 56.22936152759641,
+    "p95": 57.12894282031174,
+    "max": 57.564587708618504
+   },
+   "rapida": {
+    "n": 100,
+    "min": 27.14050330097916,
+    "media": 27.526239202910716,
+    "p50": 27.489910080158246,
+    "p95": 27.929705378819072,
+    "max": 28.142687324213494
+   }
+  },
+  "atrasadosPorCorrida": {
+   "n": 100,
+   "min": 0,
+   "media": 0,
+   "p50": 0,
+   "p95": 0,
+   "max": 0
+  },
+  "corridasSemAtrasado": 100,
+  "corridasComAtrasado": 0,
+  "corridasSoUmCarro": 0,
+  "voltasAMenosMax": 0,
+  "primeiroNaoEOficial": 2,
+  "carrosPunidos": 43,
+  "corridasComInversao": 28,
+  "inversoes": 31,
+  "corridasInversaoSoPunicao": 28,
+  "inversaoComVoltasDiferentes": 0,
+  "noPitNaBandeira": 0,
+  "noBoxNaBandeira": 0,
+  "paradoNaBandeira": 0,
+  "bandeiraNaJanela": 0,
+  "bandeiraNoBox": 0,
+  "casosBandeiraNoBox": [],
+  "boxNoFim": 0,
+  "paradasInvisiveis": 0,
+  "eventosDepoisDaBandeira": 0,
+  "dnfTotal": 66,
+  "dnfDepoisDoFimHoje": 5,
+  "dnfNaCauda": 4,
+  "dnfDepoisDoFimNovo": 1,
+  "dnfCruzaAntesDeQuebrar": 0,
+  "voltaLenta": [
+   {
+    "razao": 0.5,
+    "corridasComEntrada": 0,
+    "corridasComVaga": 0,
+    "carrosEntrada": 0,
+    "carrosVaga": 0,
+    "fracaoVoltaDoVencedor": {
+     "n": 100,
+     "min": 0.18782815942603845,
+     "media": 0.26057246131152484,
+     "p50": 0.25261916602287826,
+     "p95": 0.3541213056183776,
+     "max": 0.40207818710685966
+    }
+   },
+   {
+    "razao": 0.6,
+    "corridasComEntrada": 0,
+    "corridasComVaga": 0,
+    "carrosEntrada": 0,
+    "carrosVaga": 0,
+    "fracaoVoltaDoVencedor": {
+     "n": 100,
+     "min": 0.22539379131124612,
+     "media": 0.31268695357382986,
+     "p50": 0.3031429992274539,
+     "p95": 0.4249455667420531,
+     "max": 0.4824938245282316
+    }
+   },
+   {
+    "razao": 0.7,
+    "corridasComEntrada": 0,
+    "corridasComVaga": 0,
+    "carrosEntrada": 0,
+    "carrosVaga": 0,
+    "fracaoVoltaDoVencedor": {
+     "n": 100,
+     "min": 0.2629594231964538,
+     "media": 0.3648014458361347,
+     "p50": 0.3536668324320295,
+     "p95": 0.49576982786572865,
+     "max": 0.5629094619496036
+    }
+   },
+   {
+    "razao": 0.8,
+    "corridasComEntrada": 0,
+    "corridasComVaga": 0,
+    "carrosEntrada": 0,
+    "carrosVaga": 0,
+    "fracaoVoltaDoVencedor": {
+     "n": 100,
+     "min": 0.30052505508166155,
+     "media": 0.41691593809843985,
+     "p50": 0.4041906656366052,
+     "p95": 0.5665940889894041,
+     "max": 0.6433250993709756
+    }
+   }
+  ]
+ },
+ "pista-monza": {
+  "voltas": 14,
+  "tempoBaseS": 82,
+  "fracaoEntradaBox": 0.9026000000000001,
+  "intervaloLiderUltimoS": {
+   "n": 100,
+   "min": 26.671552588257704,
+   "media": 37.508180964116775,
+   "p50": 37.501652619445466,
+   "p95": 47.3479291035973,
+   "max": 52.501871126961895
+  },
+  "caudaSobreHojeS": {
+   "n": 100,
+   "min": 26.671552588257704,
+   "media": 37.46777892942802,
+   "p50": 37.501652619445466,
+   "p95": 47.3479291035973,
+   "max": 52.501871126961895
+  },
+  "telaAMaisS": {
+   "lenta": {
+    "p50": 4.005150849649354,
+    "p95": 5.083947110510451,
+    "max": 5.304595308207894
+   },
+   "media": {
+    "p50": 2.002575424824677,
+    "p95": 2.5419735552552254,
+    "max": 2.652297654103947
+   },
+   "rapida": {
+    "p50": 0.9790368743587337,
+    "p95": 1.2427426270136657,
+    "max": 1.2966788531174913
+   }
+  },
+  "replayTotalS": {
+   "lenta": {
+    "n": 100,
+    "min": 128.80494276526,
+    "media": 129.96179338533972,
+    "p50": 130.00515084964937,
+    "p95": 131.08394711051045,
+    "max": 131.3045953082079
+   },
+   "media": {
+    "n": 100,
+    "min": 64.40247138263,
+    "media": 64.98089669266986,
+    "p50": 65.00257542482468,
+    "p95": 65.54197355525523,
+    "max": 65.65229765410395
+   },
+   "rapida": {
+    "n": 100,
+    "min": 31.48565267595244,
+    "media": 31.768438383083044,
+    "p50": 31.779036874358734,
+    "p95": 32.042742627013666,
+    "max": 32.096678853117496
+   }
+  },
+  "atrasadosPorCorrida": {
+   "n": 100,
+   "min": 0,
+   "media": 0,
+   "p50": 0,
+   "p95": 0,
+   "max": 0
+  },
+  "corridasSemAtrasado": 100,
+  "corridasComAtrasado": 0,
+  "corridasSoUmCarro": 0,
+  "voltasAMenosMax": 0,
+  "primeiroNaoEOficial": 1,
+  "carrosPunidos": 56,
+  "corridasComInversao": 44,
+  "inversoes": 54,
+  "corridasInversaoSoPunicao": 44,
+  "inversaoComVoltasDiferentes": 0,
+  "noPitNaBandeira": 0,
+  "noBoxNaBandeira": 0,
+  "paradoNaBandeira": 0,
+  "bandeiraNaJanela": 0,
+  "bandeiraNoBox": 0,
+  "casosBandeiraNoBox": [],
+  "boxNoFim": 0,
+  "paradasInvisiveis": 0,
+  "eventosDepoisDaBandeira": 0,
+  "dnfTotal": 88,
+  "dnfDepoisDoFimHoje": 6,
+  "dnfNaCauda": 6,
+  "dnfDepoisDoFimNovo": 0,
+  "dnfCruzaAntesDeQuebrar": 0,
+  "voltaLenta": [
+   {
+    "razao": 0.5,
+    "corridasComEntrada": 0,
+    "corridasComVaga": 0,
+    "carrosEntrada": 0,
+    "carrosVaga": 0,
+    "fracaoVoltaDoVencedor": {
+     "n": 100,
+     "min": 0.15875647001145396,
+     "media": 0.22454509907632178,
+     "p50": 0.22650190875219942,
+     "p95": 0.28766715913207846,
+     "max": 0.3001216584271664
+    }
+   },
+   {
+    "razao": 0.6,
+    "corridasComEntrada": 0,
+    "corridasComVaga": 0,
+    "carrosEntrada": 0,
+    "carrosVaga": 0,
+    "fracaoVoltaDoVencedor": {
+     "n": 100,
+     "min": 0.19050776401374475,
+     "media": 0.26945411889158605,
+     "p50": 0.2718022905026393,
+     "p95": 0.34520059095849415,
+     "max": 0.3601459901125996
+    }
+   },
+   {
+    "razao": 0.7,
+    "corridasComEntrada": 0,
+    "corridasComVaga": 0,
+    "carrosEntrada": 0,
+    "carrosVaga": 0,
+    "fracaoVoltaDoVencedor": {
+     "n": 100,
+     "min": 0.22225905801603554,
+     "media": 0.3143631387068504,
+     "p50": 0.3171026722530792,
+     "p95": 0.4027340227849098,
+     "max": 0.42017032179803293
+    }
+   },
+   {
+    "razao": 0.8,
+    "corridasComEntrada": 0,
+    "corridasComVaga": 0,
+    "carrosEntrada": 0,
+    "carrosVaga": 0,
+    "fracaoVoltaDoVencedor": {
+     "n": 100,
+     "min": 0.2540103520183264,
+     "media": 0.35927215852211497,
+     "p50": 0.3624030540035191,
+     "p95": 0.4602674546113255,
+     "max": 0.4801946534834663
+    }
+   }
+  ]
+ },
+ "pista-silverstone": {
+  "voltas": 13,
+  "tempoBaseS": 88,
+  "fracaoEntradaBox": 0.893,
+  "intervaloLiderUltimoS": {
+   "n": 100,
+   "min": 58.63708225139138,
+   "media": 75.68823494627419,
+   "p50": 75.95414616134879,
+   "p95": 84.80551890156558,
+   "max": 111.3814771639118
+  },
+  "caudaSobreHojeS": {
+   "n": 100,
+   "min": 58.63708225139138,
+   "media": 75.68020746252691,
+   "p50": 75.95414616134879,
+   "p95": 84.80551890156558,
+   "max": 111.3814771639118
+  },
+  "telaAMaisS": {
+   "lenta": {
+    "p50": 7.276234542862738,
+    "p95": 8.450437127017054,
+    "max": 10.436762498502404
+   },
+   "media": {
+    "p50": 3.638117271431369,
+    "p95": 4.225218563508527,
+    "max": 5.218381249251202
+   },
+   "rapida": {
+    "p50": 1.778635110477559,
+    "p95": 2.065662408826391,
+    "max": 2.5512086107450322
+   }
+  },
+  "replayTotalS": {
+   "lenta": {
+    "n": 100,
+    "min": 122.42267452497201,
+    "media": 124.35954140789794,
+    "p50": 124.27623454286274,
+    "p95": 125.45043712701705,
+    "max": 127.43676249850242
+   },
+   "media": {
+    "n": 100,
+    "min": 61.211337262486005,
+    "media": 62.17977070394897,
+    "p50": 62.13811727143137,
+    "p95": 62.72521856350853,
+    "max": 63.71838124925121
+   },
+   "rapida": {
+    "n": 100,
+    "min": 29.925542661659822,
+    "media": 30.398999010819516,
+    "p50": 30.37863511047756,
+    "p95": 30.66566240882639,
+    "max": 31.151208610745034
+   }
+  },
+  "atrasadosPorCorrida": {
+   "n": 100,
+   "min": 0,
+   "media": 0,
+   "p50": 0,
+   "p95": 0,
+   "max": 0
+  },
+  "corridasSemAtrasado": 100,
+  "corridasComAtrasado": 0,
+  "corridasSoUmCarro": 0,
+  "voltasAMenosMax": 0,
+  "primeiroNaoEOficial": 1,
+  "carrosPunidos": 41,
+  "corridasComInversao": 30,
+  "inversoes": 36,
+  "corridasInversaoSoPunicao": 30,
+  "inversaoComVoltasDiferentes": 0,
+  "noPitNaBandeira": 7,
+  "noBoxNaBandeira": 3,
+  "paradoNaBandeira": 1,
+  "bandeiraNaJanela": 0,
+  "bandeiraNoBox": 0,
+  "casosBandeiraNoBox": [],
+  "boxNoFim": 0,
+  "paradasInvisiveis": 0,
+  "eventosDepoisDaBandeira": 0,
+  "dnfTotal": 71,
+  "dnfDepoisDoFimHoje": 3,
+  "dnfNaCauda": 3,
+  "dnfDepoisDoFimNovo": 0,
+  "dnfCruzaAntesDeQuebrar": 0,
+  "voltaLenta": [
+   {
+    "razao": 0.5,
+    "corridasComEntrada": 0,
+    "corridasComVaga": 0,
+    "carrosEntrada": 0,
+    "carrosVaga": 0,
+    "fracaoVoltaDoVencedor": {
+     "n": 100,
+     "min": 0.30887436955493625,
+     "media": 0.41690254701394713,
+     "p50": 0.412717224785238,
+     "p95": 0.478431244623353,
+     "max": 0.590065413041451
+    }
+   },
+   {
+    "razao": 0.6,
+    "corridasComEntrada": 0,
+    "corridasComVaga": 0,
+    "carrosEntrada": 0,
+    "carrosVaga": 0,
+    "fracaoVoltaDoVencedor": {
+     "n": 100,
+     "min": 0.3706492434659235,
+     "media": 0.5002830564167369,
+     "p50": 0.49526066974228555,
+     "p95": 0.5741174935480235,
+     "max": 0.7080784956497411
+    }
+   },
+   {
+    "razao": 0.7,
+    "corridasComEntrada": 0,
+    "corridasComVaga": 0,
+    "carrosEntrada": 0,
+    "carrosVaga": 0,
+    "fracaoVoltaDoVencedor": {
+     "n": 100,
+     "min": 0.43242411737691067,
+     "media": 0.5836635658195262,
+     "p50": 0.5778041146993331,
+     "p95": 0.6698037424726941,
+     "max": 0.8260915782580314
+    }
+   },
+   {
+    "razao": 0.8,
+    "corridasComEntrada": 1,
+    "corridasComVaga": 0,
+    "carrosEntrada": 3,
+    "carrosVaga": 0,
+    "fracaoVoltaDoVencedor": {
+     "n": 100,
+     "min": 0.49419899128789807,
+     "media": 0.6670440752223158,
+     "p50": 0.6603475596563808,
+     "p95": 0.7654899913973648,
+     "max": 0.9441046608663216
+    }
+   }
+  ]
+ },
+ "pista-suzuka": {
+  "voltas": 14,
+  "tempoBaseS": 92,
+  "fracaoEntradaBox": 0.9750000000000001,
+  "intervaloLiderUltimoS": {
+   "n": 100,
+   "min": 75.3837461899533,
+   "media": 85.62053454554461,
+   "p50": 85.82311425491726,
+   "p95": 93.6829081446738,
+   "max": 97.17553590486199
+  },
+  "caudaSobreHojeS": {
+   "n": 100,
+   "min": 69.3787977509778,
+   "media": 85.51618807490631,
+   "p50": 85.82311425491726,
+   "p95": 93.6829081446738,
+   "max": 97.17553590486199
+  },
+  "telaAMaisS": {
+   "lenta": {
+    "p50": 8.029475115857025,
+    "p95": 8.862214045081302,
+    "max": 8.982701793287518
+   },
+   "media": {
+    "p50": 4.0147375579285125,
+    "p95": 4.431107022540651,
+    "max": 4.491350896643759
+   },
+   "rapida": {
+    "p50": 1.9627605838761646,
+    "p95": 2.166318988797645,
+    "max": 2.195771549470283
+   }
+  },
+  "replayTotalS": {
+   "lenta": {
+    "n": 100,
+    "min": 132.15448705097256,
+    "media": 133.98687866984534,
+    "p50": 134.02947511585703,
+    "p95": 134.86221404508132,
+    "max": 134.9827017932875
+   },
+   "media": {
+    "n": 100,
+    "min": 66.07724352548628,
+    "media": 66.99343933492267,
+    "p50": 67.01473755792851,
+    "p95": 67.43110702254066,
+    "max": 67.49135089664375
+   },
+   "rapida": {
+    "n": 100,
+    "min": 32.304430168015514,
+    "media": 32.75234811929552,
+    "p50": 32.762760583876165,
+    "p95": 32.966318988797646,
+    "max": 32.995771549470284
+   }
+  },
+  "atrasadosPorCorrida": {
+   "n": 100,
+   "min": 0,
+   "media": 0.08,
+   "p50": 0,
+   "p95": 1,
+   "max": 1
+  },
+  "corridasSemAtrasado": 92,
+  "corridasComAtrasado": 8,
+  "corridasSoUmCarro": 0,
+  "voltasAMenosMax": 1,
+  "primeiroNaoEOficial": 3,
+  "carrosPunidos": 54,
+  "corridasComInversao": 31,
+  "inversoes": 36,
+  "corridasInversaoSoPunicao": 31,
+  "inversaoComVoltasDiferentes": 0,
+  "noPitNaBandeira": 0,
+  "noBoxNaBandeira": 0,
+  "paradoNaBandeira": 0,
+  "bandeiraNaJanela": 0,
+  "bandeiraNoBox": 0,
+  "casosBandeiraNoBox": [],
+  "boxNoFim": 0,
+  "paradasInvisiveis": 0,
+  "eventosDepoisDaBandeira": 0,
+  "dnfTotal": 65,
+  "dnfDepoisDoFimHoje": 4,
+  "dnfNaCauda": 4,
+  "dnfDepoisDoFimNovo": 0,
+  "dnfCruzaAntesDeQuebrar": 0,
+  "voltaLenta": [
+   {
+    "razao": 0.5,
+    "corridasComEntrada": 0,
+    "corridasComVaga": 0,
+    "carrosEntrada": 0,
+    "carrosVaga": 0,
+    "fracaoVoltaDoVencedor": {
+     "n": 100,
+     "min": 0.37905499816558497,
+     "media": 0.4521314284152717,
+     "p50": 0.45380046919203854,
+     "p95": 0.49980774556067353,
+     "max": 0.5080174510087918
+    }
+   },
+   {
+    "razao": 0.6,
+    "corridasComEntrada": 0,
+    "corridasComVaga": 0,
+    "carrosEntrada": 0,
+    "carrosVaga": 0,
+    "fracaoVoltaDoVencedor": {
+     "n": 100,
+     "min": 0.4548659977987019,
+     "media": 0.5425577140983261,
+     "p50": 0.5445605630304463,
+     "p95": 0.5997692946728082,
+     "max": 0.6096209412105501
+    }
+   },
+   {
+    "razao": 0.7,
+    "corridasComEntrada": 0,
+    "corridasComVaga": 0,
+    "carrosEntrada": 0,
+    "carrosVaga": 0,
+    "fracaoVoltaDoVencedor": {
+     "n": 100,
+     "min": 0.530676997431819,
+     "media": 0.6329839997813802,
+     "p50": 0.635320656868854,
+     "p95": 0.6997308437849429,
+     "max": 0.7112244314123085
+    }
+   },
+   {
+    "razao": 0.8,
+    "corridasComEntrada": 0,
+    "corridasComVaga": 0,
+    "carrosEntrada": 0,
+    "carrosVaga": 0,
+    "fracaoVoltaDoVencedor": {
+     "n": 100,
+     "min": 0.606487997064936,
+     "media": 0.7234102854644349,
+     "p50": 0.7260807507072617,
+     "p95": 0.7996923928970776,
+     "max": 0.8128279216140669
+    }
+   }
+  ]
+ },
+ "pista-interlagos": {
+  "voltas": 12,
+  "tempoBaseS": 70,
+  "fracaoEntradaBox": 0.9700000000000002,
+  "intervaloLiderUltimoS": {
+   "n": 100,
+   "min": 24.25554197070969,
+   "media": 35.62114370842598,
+   "p50": 33.96417134298338,
+   "p95": 54.470403344405696,
+   "max": 60.409193347590396
+  },
+  "caudaSobreHojeS": {
+   "n": 100,
+   "min": 24.25554197070969,
+   "media": 35.57154031212351,
+   "p50": 33.964112460504055,
+   "p95": 53.96412917118159,
+   "max": 60.409193347590396
+  },
+  "telaAMaisS": {
+   "lenta": {
+    "p50": 4.075768972595029,
+    "p95": 6.544379991433686,
+    "max": 7.058968181752377
+   },
+   "media": {
+    "p50": 2.0378844862975143,
+    "p95": 3.272189995716843,
+    "max": 3.5294840908761884
+   },
+   "rapida": {
+    "p50": 0.9962990821898963,
+    "p95": 1.5997373312393464,
+    "max": 1.7255255555394697
+   }
+  },
+  "replayTotalS": {
+   "lenta": {
+    "n": 100,
+    "min": 110.83710128912176,
+    "media": 112.26638305093928,
+    "p50": 112.07576897259503,
+    "p95": 114.54437999143369,
+    "max": 115.05896818175239
+   },
+   "media": {
+    "n": 100,
+    "min": 55.41855064456088,
+    "media": 56.13319152546964,
+    "p50": 56.037884486297514,
+    "p95": 57.27218999571684,
+    "max": 57.529484090876196
+   },
+   "rapida": {
+    "n": 100,
+    "min": 27.093513648451985,
+    "media": 27.442893634674032,
+    "p50": 27.396299082189895,
+    "p95": 27.999737331239345,
+    "max": 28.12552555553947
+   }
+  },
+  "atrasadosPorCorrida": {
+   "n": 100,
+   "min": 0,
+   "media": 0,
+   "p50": 0,
+   "p95": 0,
+   "max": 0
+  },
+  "corridasSemAtrasado": 100,
+  "corridasComAtrasado": 0,
+  "corridasSoUmCarro": 0,
+  "voltasAMenosMax": 0,
+  "primeiroNaoEOficial": 4,
+  "carrosPunidos": 51,
+  "corridasComInversao": 35,
+  "inversoes": 46,
+  "corridasInversaoSoPunicao": 35,
+  "inversaoComVoltasDiferentes": 0,
+  "noPitNaBandeira": 5,
+  "noBoxNaBandeira": 2,
+  "paradoNaBandeira": 0,
+  "bandeiraNaJanela": 0,
+  "bandeiraNoBox": 0,
+  "casosBandeiraNoBox": [],
+  "boxNoFim": 0,
+  "paradasInvisiveis": 0,
+  "eventosDepoisDaBandeira": 0,
+  "dnfTotal": 67,
+  "dnfDepoisDoFimHoje": 8,
+  "dnfNaCauda": 7,
+  "dnfDepoisDoFimNovo": 1,
+  "dnfCruzaAntesDeQuebrar": 0,
+  "voltaLenta": [
+   {
+    "razao": 0.5,
+    "corridasComEntrada": 0,
+    "corridasComVaga": 0,
+    "carrosEntrada": 0,
+    "carrosVaga": 0,
+    "fracaoVoltaDoVencedor": {
+     "n": 100,
+     "min": 0.1611646577028655,
+     "media": 0.24330606242461653,
+     "p50": 0.23216483967496487,
+     "p95": 0.3807348985953525,
+     "max": 0.40204399686912573
+    }
+   },
+   {
+    "razao": 0.6,
+    "corridasComEntrada": 0,
+    "corridasComVaga": 0,
+    "carrosEntrada": 0,
+    "carrosVaga": 0,
+    "fracaoVoltaDoVencedor": {
+     "n": 100,
+     "min": 0.1933975892434386,
+     "media": 0.2919672749095398,
+     "p50": 0.27859780760995784,
+     "p95": 0.45688187831442295,
+     "max": 0.4824527962429509
+    }
+   },
+   {
+    "razao": 0.7,
+    "corridasComEntrada": 0,
+    "corridasComVaga": 0,
+    "carrosEntrada": 0,
+    "carrosVaga": 0,
+    "fracaoVoltaDoVencedor": {
+     "n": 100,
+     "min": 0.2256305207840117,
+     "media": 0.3406284873944631,
+     "p50": 0.3250307755449508,
+     "p95": 0.5330288580334934,
+     "max": 0.5628615956167761
+    }
+   },
+   {
+    "razao": 0.8,
+    "corridasComEntrada": 0,
+    "corridasComVaga": 0,
+    "carrosEntrada": 0,
+    "carrosVaga": 0,
+    "fracaoVoltaDoVencedor": {
+     "n": 100,
+     "min": 0.25786345232458485,
+     "media": 0.3892896998793867,
+     "p50": 0.3714637434799438,
+     "p95": 0.609175837752564,
+     "max": 0.6432703949906012
+    }
+   }
+  ]
+ },
+ "pista-nurburgring": {
+  "voltas": 13,
+  "tempoBaseS": 88,
+  "fracaoEntradaBox": 0.962,
+  "intervaloLiderUltimoS": {
+   "n": 100,
+   "min": 40.39665687988373,
+   "media": 56.15689791268951,
+   "p50": 54.488548495413504,
+   "p95": 73.94248607012956,
+   "max": 88.19881375752273
+  },
+  "caudaSobreHojeS": {
+   "n": 100,
+   "min": 40.39665687988373,
+   "media": 56.102700819992926,
+   "p50": 54.42677402287419,
+   "p95": 73.94248607012956,
+   "max": 88.19881375752273
+  },
+  "telaAMaisS": {
+   "lenta": {
+    "p50": 5.281697806259913,
+    "p95": 7.065459512091863,
+    "max": 8.274690194580302
+   },
+   "media": {
+    "p50": 2.6408489031299567,
+    "p95": 3.5327297560459314,
+    "max": 4.137345097290151
+   },
+   "rapida": {
+    "p50": 1.291081685974639,
+    "p95": 1.727112325178009,
+    "max": 2.0227020475640742
+   }
+  },
+  "replayTotalS": {
+   "lenta": {
+    "n": 100,
+    "min": 120.99158601000649,
+    "media": 122.3753383555829,
+    "p50": 122.28169780625991,
+    "p95": 124.06545951209185,
+    "max": 125.2746901945803
+   },
+   "media": {
+    "n": 100,
+    "min": 60.49579300500324,
+    "media": 61.18766917779145,
+    "p50": 61.14084890312996,
+    "p95": 62.032729756045924,
+    "max": 62.63734509729015
+   },
+   "rapida": {
+    "n": 100,
+    "min": 29.57572102466825,
+    "media": 29.913971598031363,
+    "p50": 29.89108168597464,
+    "p95": 30.32711232517801,
+    "max": 30.622702047564076
+   }
+  },
+  "atrasadosPorCorrida": {
+   "n": 100,
+   "min": 0,
+   "media": 0,
+   "p50": 0,
+   "p95": 0,
+   "max": 0
+  },
+  "corridasSemAtrasado": 100,
+  "corridasComAtrasado": 0,
+  "corridasSoUmCarro": 0,
+  "voltasAMenosMax": 0,
+  "primeiroNaoEOficial": 2,
+  "carrosPunidos": 46,
+  "corridasComInversao": 35,
+  "inversoes": 42,
+  "corridasInversaoSoPunicao": 35,
+  "inversaoComVoltasDiferentes": 0,
+  "noPitNaBandeira": 1,
+  "noBoxNaBandeira": 0,
+  "paradoNaBandeira": 0,
+  "bandeiraNaJanela": 0,
+  "bandeiraNoBox": 0,
+  "casosBandeiraNoBox": [],
+  "boxNoFim": 0,
+  "paradasInvisiveis": 0,
+  "eventosDepoisDaBandeira": 0,
+  "dnfTotal": 99,
+  "dnfDepoisDoFimHoje": 3,
+  "dnfNaCauda": 3,
+  "dnfDepoisDoFimNovo": 0,
+  "dnfCruzaAntesDeQuebrar": 0,
+  "voltaLenta": [
+   {
+    "razao": 0.5,
+    "corridasComEntrada": 0,
+    "corridasComVaga": 0,
+    "carrosEntrada": 0,
+    "carrosVaga": 0,
+    "fracaoVoltaDoVencedor": {
+     "n": 100,
+     "min": 0.2272775510388151,
+     "media": 0.3046231806395074,
+     "p50": 0.29872927382425146,
+     "p95": 0.40021882836702694,
+     "max": 0.4676721281912213
+    }
+   },
+   {
+    "razao": 0.6,
+    "corridasComEntrada": 0,
+    "corridasComVaga": 0,
+    "carrosEntrada": 0,
+    "carrosVaga": 0,
+    "fracaoVoltaDoVencedor": {
+     "n": 100,
+     "min": 0.27273306124657815,
+     "media": 0.3655478167674089,
+     "p50": 0.3584751285891017,
+     "p95": 0.4802625940404323,
+     "max": 0.5612065538294655
+    }
+   },
+   {
+    "razao": 0.7,
+    "corridasComEntrada": 0,
+    "corridasComVaga": 0,
+    "carrosEntrada": 0,
+    "carrosVaga": 0,
+    "fracaoVoltaDoVencedor": {
+     "n": 100,
+     "min": 0.31818857145434115,
+     "media": 0.4264724528953102,
+     "p50": 0.418220983353952,
+     "p95": 0.5603063597138377,
+     "max": 0.6547409794677097
+    }
+   },
+   {
+    "razao": 0.8,
+    "corridasComEntrada": 0,
+    "corridasComVaga": 0,
+    "carrosEntrada": 0,
+    "carrosVaga": 0,
+    "fracaoVoltaDoVencedor": {
+     "n": 100,
+     "min": 0.3636440816621042,
+     "media": 0.4873970890232117,
+     "p50": 0.4779668381188023,
+     "p95": 0.6403501253872431,
+     "max": 0.7482754051059541
+    }
+   }
+  ]
+ },
+ "pista-imola": {
+  "voltas": 14,
+  "tempoBaseS": 76,
+  "fracaoEntradaBox": 0.94,
+  "intervaloLiderUltimoS": {
+   "n": 100,
+   "min": 48.51950551154721,
+   "media": 68.81170018121279,
+   "p50": 66.93014653928135,
+   "p95": 86.41701783903595,
+   "max": 88.11262291759323
+  },
+  "caudaSobreHojeS": {
+   "n": 100,
+   "min": 48.51950551154721,
+   "media": 68.5575854970014,
+   "p50": 66.90251257295954,
+   "p95": 86.08356782314787,
+   "max": 88.11262291759323
+  },
+  "telaAMaisS": {
+   "lenta": {
+    "p50": 7.608260267961754,
+    "p95": 9.643818200992769,
+    "max": 10.058922579633105
+   },
+   "media": {
+    "p50": 3.804130133980877,
+    "p95": 4.821909100496384,
+    "max": 5.0294612898165525
+   },
+   "rapida": {
+    "p50": 1.8597969543906494,
+    "p95": 2.357377782464898,
+    "max": 2.4588477416880927
+   }
+  },
+  "replayTotalS": {
+   "lenta": {
+    "n": 100,
+    "min": 131.55175033156564,
+    "media": 133.74647620701566,
+    "p50": 133.60826026796175,
+    "p95": 135.64381820099277,
+    "max": 136.0589225796331
+   },
+   "media": {
+    "n": 100,
+    "min": 65.77587516578282,
+    "media": 66.87323810350783,
+    "p50": 66.80413013398088,
+    "p95": 67.82190910049638,
+    "max": 68.02946128981655
+   },
+   "rapida": {
+    "n": 100,
+    "min": 32.157094525493825,
+    "media": 32.69358307282605,
+    "p50": 32.65979695439065,
+    "p95": 33.1573777824649,
+    "max": 33.25884774168809
+   }
+  },
+  "atrasadosPorCorrida": {
+   "n": 100,
+   "min": 0,
+   "media": 0.11,
+   "p50": 0,
+   "p95": 1,
+   "max": 1
+  },
+  "corridasSemAtrasado": 89,
+  "corridasComAtrasado": 11,
+  "corridasSoUmCarro": 0,
+  "voltasAMenosMax": 1,
+  "primeiroNaoEOficial": 4,
+  "carrosPunidos": 65,
+  "corridasComInversao": 43,
+  "inversoes": 56,
+  "corridasInversaoSoPunicao": 43,
+  "inversaoComVoltasDiferentes": 0,
+  "noPitNaBandeira": 49,
+  "noBoxNaBandeira": 43,
+  "paradoNaBandeira": 0,
+  "bandeiraNaJanela": 0,
+  "bandeiraNoBox": 0,
+  "casosBandeiraNoBox": [],
+  "boxNoFim": 0,
+  "paradasInvisiveis": 0,
+  "eventosDepoisDaBandeira": 0,
+  "dnfTotal": 80,
+  "dnfDepoisDoFimHoje": 6,
+  "dnfNaCauda": 6,
+  "dnfDepoisDoFimNovo": 0,
+  "dnfCruzaAntesDeQuebrar": 0,
+  "voltaLenta": [
+   {
+    "razao": 0.5,
+    "corridasComEntrada": 0,
+    "corridasComVaga": 0,
+    "carrosEntrada": 0,
+    "carrosVaga": 0,
+    "fracaoVoltaDoVencedor": {
+     "n": 100,
+     "min": 0.31515480231952303,
+     "media": 0.4409090707378986,
+     "p50": 0.4306236813126469,
+     "p95": 0.5598656147346383,
+     "max": 0.5701915720227111
+    }
+   },
+   {
+    "razao": 0.6,
+    "corridasComEntrada": 0,
+    "corridasComVaga": 0,
+    "carrosEntrada": 0,
+    "carrosVaga": 0,
+    "fracaoVoltaDoVencedor": {
+     "n": 100,
+     "min": 0.37818576278342764,
+     "media": 0.5290908848854784,
+     "p50": 0.5167484175751762,
+     "p95": 0.6718387376815659,
+     "max": 0.6842298864272534
+    }
+   },
+   {
+    "razao": 0.7,
+    "corridasComEntrada": 0,
+    "corridasComVaga": 0,
+    "carrosEntrada": 0,
+    "carrosVaga": 0,
+    "fracaoVoltaDoVencedor": {
+     "n": 100,
+     "min": 0.4412167232473322,
+     "media": 0.6172726990330579,
+     "p50": 0.6028731538377056,
+     "p95": 0.7838118606284935,
+     "max": 0.7982682008317956
+    }
+   },
+   {
+    "razao": 0.8,
+    "corridasComEntrada": 0,
+    "corridasComVaga": 0,
+    "carrosEntrada": 0,
+    "carrosVaga": 0,
+    "fracaoVoltaDoVencedor": {
+     "n": 100,
+     "min": 0.504247683711237,
+     "media": 0.705454513180638,
+     "p50": 0.688997890100235,
+     "p95": 0.8957849835754212,
+     "max": 0.9123065152363378
+    }
+   }
+  ]
+ },
+ "pista-red-bull-ring": {
+  "voltas": 15,
+  "tempoBaseS": 66,
+  "fracaoEntradaBox": 0.845,
+  "intervaloLiderUltimoS": {
+   "n": 100,
+   "min": 23.39435399895604,
+   "media": 35.08194466520083,
+   "p50": 35.307152521182786,
+   "p95": 41.72421729866322,
+   "max": 47.92161769559397
+  },
+  "caudaSobreHojeS": {
+   "n": 100,
+   "min": 23.39435399895604,
+   "media": 35.03094853008217,
+   "p50": 35.17582474198099,
+   "p95": 41.72421729866322,
+   "max": 47.92161769559397
+  },
+  "telaAMaisS": {
+   "lenta": {
+    "p50": 4.586744544627123,
+    "p95": 5.327928776406054,
+    "max": 5.987690317845306
+   },
+   "media": {
+    "p50": 2.2933722723135617,
+    "p95": 2.663964388203027,
+    "max": 2.993845158922653
+   },
+   "rapida": {
+    "p50": 1.121204222019962,
+    "p95": 1.302382589788138,
+    "max": 1.4636576332510671
+   }
+  },
+  "replayTotalS": {
+   "lenta": {
+    "n": 100,
+    "min": 138.07740224090418,
+    "media": 139.54400415569327,
+    "p50": 139.58674454462712,
+    "p95": 140.32792877640605,
+    "max": 140.9876903178453
+   },
+   "media": {
+    "n": 100,
+    "min": 69.03870112045209,
+    "media": 69.77200207784664,
+    "p50": 69.79337227231356,
+    "p95": 70.16396438820303,
+    "max": 70.49384515892265
+   },
+   "rapida": {
+    "n": 100,
+    "min": 33.75225388110991,
+    "media": 34.11075657139168,
+    "p50": 34.12120422201996,
+    "p95": 34.30238258978814,
+    "max": 34.46365763325107
+   }
+  },
+  "atrasadosPorCorrida": {
+   "n": 100,
+   "min": 0,
+   "media": 0,
+   "p50": 0,
+   "p95": 0,
+   "max": 0
+  },
+  "corridasSemAtrasado": 100,
+  "corridasComAtrasado": 0,
+  "corridasSoUmCarro": 0,
+  "voltasAMenosMax": 0,
+  "primeiroNaoEOficial": 3,
+  "carrosPunidos": 53,
+  "corridasComInversao": 36,
+  "inversoes": 48,
+  "corridasInversaoSoPunicao": 36,
+  "inversaoComVoltasDiferentes": 0,
+  "noPitNaBandeira": 0,
+  "noBoxNaBandeira": 0,
+  "paradoNaBandeira": 0,
+  "bandeiraNaJanela": 0,
+  "bandeiraNoBox": 0,
+  "casosBandeiraNoBox": [],
+  "boxNoFim": 0,
+  "paradasInvisiveis": 0,
+  "eventosDepoisDaBandeira": 0,
+  "dnfTotal": 92,
+  "dnfDepoisDoFimHoje": 4,
+  "dnfNaCauda": 3,
+  "dnfDepoisDoFimNovo": 1,
+  "dnfCruzaAntesDeQuebrar": 0,
+  "voltaLenta": [
+   {
+    "razao": 0.5,
+    "corridasComEntrada": 0,
+    "corridasComVaga": 0,
+    "carrosEntrada": 0,
+    "carrosVaga": 0,
+    "fracaoVoltaDoVencedor": {
+     "n": 100,
+     "min": 0.1750051937173721,
+     "media": 0.25833576472909064,
+     "p50": 0.2609122357041931,
+     "p95": 0.30277685256291487,
+     "max": 0.33939465958422754
+    }
+   },
+   {
+    "razao": 0.6,
+    "corridasComEntrada": 0,
+    "corridasComVaga": 0,
+    "carrosEntrada": 0,
+    "carrosVaga": 0,
+    "fracaoVoltaDoVencedor": {
+     "n": 100,
+     "min": 0.21000623246084651,
+     "media": 0.31000291767490873,
+     "p50": 0.31309468284503167,
+     "p95": 0.3633322230754978,
+     "max": 0.407273591501073
+    }
+   },
+   {
+    "razao": 0.7,
+    "corridasComEntrada": 0,
+    "corridasComVaga": 0,
+    "carrosEntrada": 0,
+    "carrosVaga": 0,
+    "fracaoVoltaDoVencedor": {
+     "n": 100,
+     "min": 0.24500727120432095,
+     "media": 0.36167007062072676,
+     "p50": 0.3652771299858703,
+     "p95": 0.42388759358808076,
+     "max": 0.4751525234179185
+    }
+   },
+   {
+    "razao": 0.8,
+    "corridasComEntrada": 0,
+    "corridasComVaga": 0,
+    "carrosEntrada": 0,
+    "carrosVaga": 0,
+    "fracaoVoltaDoVencedor": {
+     "n": 100,
+     "min": 0.2800083099477954,
+     "media": 0.41333722356654495,
+     "p50": 0.41745957712670895,
+     "p95": 0.4844429641006638,
+     "max": 0.5430314553347642
+    }
+   }
+  ]
+ },
+ "pista-montreal": {
+  "voltas": 13,
+  "tempoBaseS": 74,
+  "fracaoEntradaBox": 0.95,
+  "intervaloLiderUltimoS": {
+   "n": 100,
+   "min": 43.16656027758378,
+   "media": 56.05527711810523,
+   "p50": 55.77865911546885,
+   "p95": 66.27139522328821,
+   "max": 77.63812583079282
+  },
+  "caudaSobreHojeS": {
+   "n": 100,
+   "min": 43.16656027758378,
+   "media": 56.01730777947449,
+   "p50": 55.77865911546885,
+   "p95": 66.27139522328821,
+   "max": 77.63812583079282
+  },
+  "telaAMaisS": {
+   "lenta": {
+    "p50": 6.359692449201006,
+    "p95": 7.428450896826746,
+    "max": 9.151716691824603
+   },
+   "media": {
+    "p50": 3.179846224600503,
+    "p95": 3.714225448413373,
+    "max": 4.575858345912302
+   },
+   "rapida": {
+    "p50": 1.5545914875824636,
+    "p95": 1.8158435525576486,
+    "max": 2.237086302446013
+   }
+  },
+  "replayTotalS": {
+   "lenta": {
+    "n": 100,
+    "min": 122.03954375180548,
+    "media": 123.44782585307317,
+    "p50": 123.35969244920099,
+    "p95": 124.42845089682675,
+    "max": 126.1517166918246
+   },
+   "media": {
+    "n": 100,
+    "min": 61.01977187590274,
+    "media": 61.723912926536585,
+    "p50": 61.679846224600496,
+    "p95": 62.21422544841337,
+    "max": 63.0758583459123
+   },
+   "rapida": {
+    "n": 100,
+    "min": 29.83188847266356,
+    "media": 30.176135208529004,
+    "p50": 30.15459148758246,
+    "p95": 30.415843552557654,
+    "max": 30.83708630244601
+   }
+  },
+  "atrasadosPorCorrida": {
+   "n": 100,
+   "min": 0,
+   "media": 0.01,
+   "p50": 0,
+   "p95": 0,
+   "max": 1
+  },
+  "corridasSemAtrasado": 99,
+  "corridasComAtrasado": 1,
+  "corridasSoUmCarro": 0,
+  "voltasAMenosMax": 1,
+  "primeiroNaoEOficial": 3,
+  "carrosPunidos": 61,
+  "corridasComInversao": 43,
+  "inversoes": 56,
+  "corridasInversaoSoPunicao": 43,
+  "inversaoComVoltasDiferentes": 0,
+  "noPitNaBandeira": 3,
+  "noBoxNaBandeira": 3,
+  "paradoNaBandeira": 1,
+  "bandeiraNaJanela": 1,
+  "bandeiraNoBox": 1,
+  "casosBandeiraNoBox": [
+   {
+    "grid": 7029,
+    "seed": 7092270,
+    "jogadorId": "j09",
+    "volta": 12
+   }
+  ],
+  "boxNoFim": 0,
+  "paradasInvisiveis": 0,
+  "eventosDepoisDaBandeira": 0,
+  "dnfTotal": 82,
+  "dnfDepoisDoFimHoje": 6,
+  "dnfNaCauda": 6,
+  "dnfDepoisDoFimNovo": 0,
+  "dnfCruzaAntesDeQuebrar": 0,
+  "voltaLenta": [
+   {
+    "razao": 0.5,
+    "corridasComEntrada": 0,
+    "corridasComVaga": 0,
+    "carrosEntrada": 0,
+    "carrosVaga": 0,
+    "fracaoVoltaDoVencedor": {
+     "n": 100,
+     "min": 0.2875392336523997,
+     "media": 0.36655611650024544,
+     "p50": 0.36176763237211107,
+     "p95": 0.4220313793831173,
+     "max": 0.5196440887130496
+    }
+   },
+   {
+    "razao": 0.6,
+    "corridasComEntrada": 0,
+    "corridasComVaga": 0,
+    "carrosEntrada": 0,
+    "carrosVaga": 0,
+    "fracaoVoltaDoVencedor": {
+     "n": 100,
+     "min": 0.34504708038287957,
+     "media": 0.4398673398002944,
+     "p50": 0.43412115884653324,
+     "p95": 0.5064376552597407,
+     "max": 0.6235729064556595
+    }
+   },
+   {
+    "razao": 0.7,
+    "corridasComEntrada": 0,
+    "corridasComVaga": 0,
+    "carrosEntrada": 0,
+    "carrosVaga": 0,
+    "fracaoVoltaDoVencedor": {
+     "n": 100,
+     "min": 0.4025549271133595,
+     "media": 0.5131785631003436,
+     "p50": 0.5064746853209554,
+     "p95": 0.5908439311363641,
+     "max": 0.7275017241982694
+    }
+   },
+   {
+    "razao": 0.8,
+    "corridasComEntrada": 0,
+    "corridasComVaga": 0,
+    "carrosEntrada": 0,
+    "carrosVaga": 0,
+    "fracaoVoltaDoVencedor": {
+     "n": 100,
+     "min": 0.46006277384383953,
+     "media": 0.5864897864003927,
+     "p50": 0.5788282117953778,
+     "p95": 0.6752502070129877,
+     "max": 0.8314305419408794
+    }
+   }
+  ]
+ },
+ "piorReplayS": {
+  "lenta": 143.77529333218544,
+  "media": 71.88764666609272,
+  "rapida": 35.14507170342311
+ },
+ "margemTimeoutS": {
+  "lenta": 156.22470666781456,
+  "media": 228.11235333390727,
+  "rapida": 264.8549282965769
+ }
+}

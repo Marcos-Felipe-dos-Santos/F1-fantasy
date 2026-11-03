@@ -8,7 +8,9 @@
  * com o líder na parada, a tela mostrava +0,0s para quem vinha atrás. O piso é o valor
  * da linha de cima: a punição de quem já chegou não faz a coluna descer.
  *
- * Na chegada vale `tempoTotal`, que tem a punição que `historicoVoltas` não tem.
+ * Na chegada vale `tempoTotal`, que tem a punição que `historicoVoltas` não tem. O
+ * retardatário que recebeu a bandeirada segue em voltas (PR 2e): o tempo total dele
+ * conta voltas que a tela não mostrou.
  */
 
 import type { ResultadoCorrida } from '../engine/types';
@@ -52,13 +54,13 @@ export function diferencasParaLider(
   return ordem.map((item): DiferencaAoLider => {
     if (item.status === 'dnf') return null;
     if (item === lider) return { tipo: 'lider' };
+    const voltas = voltasDe(item.jogadorId);
+    const atras = Math.floor(voltasLider - voltas);
+    if (atras >= 1) return { tipo: 'voltas', voltas: atras };
     let ms: number;
     if (item.status === 'terminou' && lider.status === 'terminou') {
       ms = (tempoTotal.get(item.jogadorId) ?? 0) - (tempoTotal.get(lider.jogadorId) ?? 0);
     } else {
-      const voltas = voltasDe(item.jogadorId);
-      const atras = Math.floor(voltasLider - voltas);
-      if (atras >= 1) return { tipo: 'voltas', voltas: atras };
       ms =
         tempoSimMs -
         (pit?.instanteDoProgresso(lider.jogadorId, historicoLider, voltas) ??

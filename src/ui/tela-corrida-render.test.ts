@@ -12,8 +12,11 @@ import { criarDraft, resolverBots } from '../engine/draft';
 import type { DraftState, Jogador } from '../engine/types';
 import { dataset } from './dataset-app';
 import { diferencasParaLider, formatarDiferenca } from './diferenca-lider';
-import { classificacaoAoVivo, prepararCorrida } from './fluxo-corrida';
+import { replayDaCorrida } from './fim-da-corrida';
+import { classificacaoAoVivo, pontoNoTracado, prepararCorrida } from './fluxo-corrida';
+import { nomeJogador } from './loadout-view';
 import { linhaDoTempoDoPit } from './pit-replay';
+import { tracadoSuavizado } from './suavizacao';
 import { TelaCorrida } from './TelaCorrida';
 
 const tela_ = vi.hoisted(() => ({ estreita: false, reduzido: false }));
@@ -38,6 +41,9 @@ function estadoComHumano(): DraftState {
 }
 
 const estado = estadoComHumano();
+
+/** Mesmo nome que o painel escreve: `nomeJogador`. */
+const nomeNoPainel = (id: string) => nomeJogador(estado.jogadores.find((j) => j.id === id)!);
 
 function corridaCom(chuva: boolean, pistaId = 'pista-spa') {
   for (let seed = 1; seed < 200; seed++) {
@@ -255,5 +261,94 @@ describe('carros', () => {
     expect(tabuleiro).toBeGreaterThan(0);
     expect(primeiro).toBeLessThan(tabuleiro);
     expect(html.lastIndexOf('<g class="tracado-svg__carro')).toBeGreaterThan(tabuleiro);
+  });
+});
+
+describe('depois da bandeirada (PR 2e)', () => {
+  /** Linhas do painel, de cima para baixo. */
+  const linhas = (html: string) =>
+    [...html.matchAll(/<li class="classificacao-ao-vivo__linha[^"]*">(.*?)<\/li>/g)].map((m) => m[1]);
+  const achar = (criterio: (r: ReturnType<typeof replayDaCorrida>, c: ReturnType<typeof corridaCom>) => string | undefined) => {
+    for (const pistaId of ['pista-imola', 'pista-suzuka']) {
+      for (let seed = 1; seed < 400; seed++) {
+        const corrida = prepararCorrida(dataset, estado, pistaId, seed);
+        const id = criterio(replayDaCorrida(corrida.resultado, corrida.pista), corrida);
+        if (id !== undefined) return { corrida, id, replay: replayDaCorrida(corrida.resultado, corrida.pista) };
+      }
+    }
+    throw new Error('sem corrida com esse caso');
+  };
+
+  it('o título e o botão mudam na bandeirada, não antes', () => {
+    const corrida = corridaCom(false);
+    const { bandeirada } = replayDaCorrida(corrida.resultado, corrida.pista);
+    const antes = tela(corrida, bandeirada - 1);
+    expect(antes).toContain(`Volta ${corrida.pista.voltas}/${corrida.pista.voltas}`);
+    expect(antes).toContain('Acelerar ⏩');
+    expect(antes).not.toContain('Ir para o resultado');
+    const depois = tela(corrida, bandeirada);
+    expect(depois).toContain('🏁 Bandeirada');
+    expect(depois).toContain('Ir para o resultado →');
+    expect(depois).not.toContain('Acelerar ⏩');
+  });
+
+  it('o retardatário recebe a 🏁 ao cruzar e fica com +1 V', () => {
+    const { corrida, id, replay } = achar(
+      (r, c) => c.resultado.classificacao.find((x) => (r.chegada(x.jogadorId)?.voltas ?? c.pista.voltas) < c.pista.voltas)?.jogadorId,
+    );
+    const instante = replay.chegada(id)?.instante ?? 0;
+    const nome = nomeNoPainel(id);
+    const linhaDele = (t: number) => linhas(tela(corrida, t)).find((l) => l.includes(`>${nome}<`)) ?? '';
+    expect(linhaDele(instante - 1)).not.toContain('🏁');
+    expect(linhaDele(instante)).toContain('🏁');
+    expect(linhaDele(replay.fim)).toContain('+1 V');
+  });
+
+  it('o selo da punição aparece com a 🏁, com o valor, e só no punido', () => {
+    const { corrida, id, replay } = achar(
+      (r, c) => c.resultado.classificacao.find((x) => r.punicaoMs(x.jogadorId) > 0)?.jogadorId,
+    );
+    const instante = replay.chegada(id)?.instante ?? 0;
+    const nome = nomeNoPainel(id);
+    const linhaDele = (t: number) => linhas(tela(corrida, t)).find((l) => l.includes(`>${nome}<`)) ?? '';
+    const texto = `+${(replay.punicaoMs(id) / 1000).toFixed(1).replace('.', ',')}s`;
+    expect(linhaDele(instante - 1)).not.toContain('badge-punicao');
+    expect(linhaDele(instante)).toContain(`class="badge-punicao"`);
+    expect(linhaDele(instante)).toContain(`>${texto}<`);
+    expect(linhaDele(instante)).toContain(`Punição de ${texto.slice(1, -1)} segundos`);
+    const punidos = corrida.resultado.classificacao.filter((c) => replay.punicaoMs(c.jogadorId) > 0).length;
+    expect(tela(corrida, replay.fim).match(/class="badge-punicao"/g)).toHaveLength(punidos);
+  });
+
+  it('quem está na volta lenta fica espalhado pela pista, e sem spray', () => {
+    const chuva = corridaCom(true);
+    const replay = replayDaCorrida(chuva.resultado, chuva.pista);
+    const html = tela(chuva, replay.fim);
+    expect(html.match(/<g class="tracado-svg__carro/g)?.length).toBe(22);
+    expect(html).not.toContain('tracado-svg__spray');
+    const transforms = new Set([...html.matchAll(/<g class="tracado-svg__carro[^"]*" transform="translate\(([^)]+)\)/g)].map((m) => m[1]));
+    expect(transforms.size).toBeGreaterThan(15);
+  });
+
+  it('o retardatário que chegou não solta spray, mesmo com histórico sobrando', () => {
+    const { corrida, replay } = achar(
+      (r, c) =>
+        c.resultado.chuva
+          ? c.resultado.classificacao.find((x) => (r.chegada(x.jogadorId)?.voltas ?? c.pista.voltas) < c.pista.voltas)?.jogadorId
+          : undefined,
+    );
+    expect(tela(corrida, replay.fim)).not.toContain('tracado-svg__spray');
+  });
+
+  it('com movimento reduzido, quem chegou fica na linha', () => {
+    tela_.reduzido = true;
+    const corrida = corridaCom(false);
+    const replay = replayDaCorrida(corrida.resultado, corrida.pista);
+    const transforms = [...tela(corrida, replay.fim).matchAll(/<g class="tracado-svg__carro[^"]*" transform="translate\(([^)]+)\)/g)].map((m) => m[1]);
+    const linha = pontoNoTracado(tracadoSuavizado(corrida.pista.id), 0);
+    const naLinha = `${linha.x.toFixed(2)} ${linha.y.toFixed(2)}`;
+    const chegaram = corrida.resultado.classificacao.filter((c) => c.status === 'terminou').length;
+    expect(chegaram).toBeGreaterThan(10);
+    expect(transforms.filter((t) => t === naLinha)).toHaveLength(chegaram);
   });
 });

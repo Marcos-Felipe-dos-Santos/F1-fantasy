@@ -280,6 +280,7 @@ export const PARES_CONTRASTE: ParContraste[] = [
   { nome: 'sucessoTexto/fundoElevado', fg: 'sucessoTexto', bg: 'fundoElevado', minimo: 4.5, escopo: 'ambos' },
   { nome: 'erroTexto/fundo', fg: 'erroTexto', bg: 'fundo', minimo: 4.5, escopo: 'ambos' },
   { nome: 'erroTexto/fundoAfundado', fg: 'erroTexto', bg: 'fundoAfundado', minimo: 4.5, escopo: 'ambos' }, // texto do painel .erro
+  { nome: 'erroTexto/fundoElevado', fg: 'erroTexto', bg: 'fundoElevado', minimo: 4.5, escopo: 'ambos' }, // selo de punição no painel do replay
   { nome: 'raridadeLendarioTexto/fundo', fg: 'raridadeLendarioTexto', bg: 'fundo', minimo: 4.5, escopo: 'ambos' },
   { nome: 'raridadeLendarioTexto/fundoElevado', fg: 'raridadeLendarioTexto', bg: 'fundoElevado', minimo: 4.5, escopo: 'ambos' },
 

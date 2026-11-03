@@ -8,6 +8,7 @@ import pecasReal from '../fixtures/dataset-semente/pecas.json';
 import pistasReal from '../fixtures/dataset-semente/pistas.json';
 import { hashDaCorrida } from '../net/hash-corrida';
 import { caminhoDoBox } from './box';
+import { replayDaCorrida } from './fim-da-corrida';
 import {
   acumularVoltas,
   classificacaoAoVivo,
@@ -398,10 +399,10 @@ describe('o resultado não muda (zero engine)', () => {
       return o;
     };
     congelar(preparada.resultado);
-    const linha = linhaDoTempoDoPit(preparada.resultado, preparada.pista);
-    const fim = preparada.resultado.classificacao[0].tempoTotal;
+    const linha = replayDaCorrida(preparada.resultado, preparada.pista);
+    const fim = Math.max(linha.fim, preparada.resultado.classificacao[0].tempoTotal);
     const grid = preparada.grid.grid.map((g) => g.jogadorId);
-    for (let t = 0; t < fim; t += fim / 400) {
+    for (let t = 0; t <= fim; t += fim / 400) {
       classificacaoAoVivo(preparada.resultado, grid, t, preparada.pista.voltas, linha);
       for (const c of preparada.resultado.classificacao)
         linha.posicao(c.jogadorId, preparada.resultado.historicoVoltas[c.jogadorId], c.status, t, false);

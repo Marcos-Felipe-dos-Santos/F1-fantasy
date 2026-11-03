@@ -1,0 +1,194 @@
+[
+  {
+    "nome": "bandeirada-no-tempo-oficial",
+    "detectada": false,
+    "travou": true,
+    "falha": null
+  },
+  {
+    "nome": "fim-na-bandeirada",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/fim-da-corrida.test.ts > quem termina, e quando (PR 2e) > quem está na volta do líder faz as N voltas; o retardatário, até a próxima passagem pela linha"
+  },
+  {
+    "nome": "fim-sem-ninguem",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/fim-da-corrida.test.ts > quem termina, e quando (PR 2e) > sem ninguém terminar, o replay acaba onde sempre acabou"
+  },
+  {
+    "nome": "retardatario-faz-todas",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/fim-da-corrida.test.ts > quem termina, e quando (PR 2e) > quem está na volta do líder faz as N voltas; o retardatário, até a próxima passagem pela linha"
+  },
+  {
+    "nome": "dnf-recebe-bandeirada",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/fim-da-corrida.test.ts > quem termina, e quando (PR 2e) > o DNF fica de fora, mesmo quebrando depois do último"
+  },
+  {
+    "nome": "box-sem-regra",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/fim-da-corrida.test.ts > bandeirada dentro do box > conta como chegada ao cruzar a linha no box, e completa a saída antes da volta lenta"
+  },
+  {
+    "nome": "box-sem-esperar-a-parada",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/fim-da-corrida.test.ts > bandeirada dentro do box > conta como chegada ao cruzar a linha no box, e completa a saída antes da volta lenta"
+  },
+  {
+    "nome": "box-fracao-zero",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/fim-da-corrida.test.ts > bandeirada dentro do box > entra na volta lenta sem salto"
+  },
+  {
+    "nome": "punicao-de-qualquer-evento",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/fim-da-corrida.test.ts > quem termina, e quando (PR 2e) > a punição vem dos eventos da engine"
+  },
+  {
+    "nome": "progresso-nao-congela",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/fim-da-corrida.test.ts > painel depois da bandeirada > o progresso congela na bandeirada, mesmo com histórico sobrando"
+  },
+  {
+    "nome": "chegou-so-na-lenta",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/fim-da-corrida.test.ts > bandeirada dentro do box > conta como chegada ao cruzar a linha no box, e completa a saída antes da volta lenta"
+  },
+  {
+    "nome": "razao-lenta",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/fim-da-corrida.test.ts > volta lenta > depois da rampa anda a 70% da velocidade da pista"
+  },
+  {
+    "nome": "sem-rampa",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/fim-da-corrida.test.ts > volta lenta > cruza a linha na velocidade da pista e desacelera aos poucos, sem degrau"
+  },
+  {
+    "nome": "reduzido-anda",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/fim-da-corrida.test.ts > volta lenta > com movimento reduzido fica parado na linha, também o retardatário"
+  },
+  {
+    "nome": "perfil-por-carro",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/fim-da-corrida.test.ts > volta lenta > depois da rampa anda a 60% da velocidade da pista"
+  },
+  {
+    "nome": "lenta-desde-a-bandeirada",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/fim-da-corrida.test.ts > volta lenta > o retardatário também desacelera, em vez de seguir o histórico que sobrou"
+  },
+  {
+    "nome": "relogio-passa-do-fim",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/fim-da-corrida.test.ts > relógio do replay > avança pela escala, sem passar do fim"
+  },
+  {
+    "nome": "hook-fim-antigo",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/fim-da-corrida.test.ts > relógio do replay > useCorrida para no fim novo e mantém a escala pelo tempo do vencedor"
+  },
+  {
+    "nome": "hook-escala-nova",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/fim-da-corrida.test.ts > relógio do replay > useCorrida para no fim novo e mantém a escala pelo tempo do vencedor"
+  },
+  {
+    "nome": "painel-sem-chegou",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/fim-da-corrida.test.ts > painel depois da bandeirada > a 🏁 aparece quando o carro cruza, não quando o histórico dele acaba"
+  },
+  {
+    "nome": "painel-dnf-nao-afunda",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/fim-da-corrida.test.ts > painel depois da bandeirada > depois da bandeirada, o DNF da última volta não empurra o retardatário para cima de quem corre"
+  },
+  {
+    "nome": "painel-dnf-afunda-sempre",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/diferenca-lider.test.ts > diferença para o líder (PR 2a) > o DNF ainda na frente do painel não vira a referência de quem corre"
+  },
+  {
+    "nome": "painel-sem-ordem-oficial",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/diferenca-lider.test.ts > diferença para o líder (PR 2a) > na chegada vale o tempo total, que traz a punição que o histórico não tem"
+  },
+  {
+    "nome": "dif-retardatario-em-tempo",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/fim-da-corrida.test.ts > painel depois da bandeirada > o retardatário que chegou segue +1 V, e quem está na volta do líder segue no tempo total"
+  },
+  {
+    "nome": "tela-sem-selo",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/tela-corrida-render.test.ts > depois da bandeirada (PR 2e) > o selo da punição aparece com a 🏁, com o valor, e só no punido"
+  },
+  {
+    "nome": "selo-antes-da-chegada",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/tela-corrida-render.test.ts > depois da bandeirada (PR 2e) > o selo da punição aparece com a 🏁, com o valor, e só no punido"
+  },
+  {
+    "nome": "botao-sempre-acelerar",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/tela-corrida-render.test.ts > depois da bandeirada (PR 2e) > o título e o botão mudam na bandeirada, não antes"
+  },
+  {
+    "nome": "titulo-sem-bandeirada",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/tela-corrida-render.test.ts > depois da bandeirada (PR 2e) > o título e o botão mudam na bandeirada, não antes"
+  },
+  {
+    "nome": "spray-na-volta-lenta",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/tela-corrida-render.test.ts > depois da bandeirada (PR 2e) > o retardatário que chegou não solta spray, mesmo com histórico sobrando"
+  },
+  {
+    "nome": "tela-painel-sem-replay",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/tela-corrida-render.test.ts > painel: diferença para o líder > o número da tela vem da linha do pit, a mesma que ordena o painel"
+  },
+  {
+    "nome": "tela-diferenca-sem-replay",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/tela-corrida-render.test.ts > painel: diferença para o líder > o número da tela vem da linha do pit, a mesma que ordena o painel"
+  },
+  {
+    "nome": "selo-na-cor-de-preenchimento",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/fim-da-corrida.test.ts > quem termina, e quando (PR 2e) > o selo usa a tinta de erro: `--erro` é preenchimento e some no tema claro"
+  }
+]
