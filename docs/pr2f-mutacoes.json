@@ -25,9 +25,9 @@
   },
   {
     "nome": "inverso-sem-deslocar",
-    "detectada": false,
-    "travou": true,
-    "falha": null
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/punicao-replay.test.ts [ src/ui/punicao-replay.test.ts ]"
   },
   {
     "nome": "inverso-desloca-tudo",
@@ -117,7 +117,7 @@
     "nome": "vagas-sem-espera",
     "detectada": true,
     "travou": false,
-    "falha": "src/ui/punicao-replay.test.ts > vagas > com a espera, `c` vai para outra vaga, e ninguém divide vaga fora do box cheio"
+    "falha": "src/ui/punicao-replay.test.ts > pit da punição: o último visível pela chegada ANTES da punição (decisão do Marcos) > o pit seguinte do punido ocupa a vaga no instante em que aparece, e ninguém a divide"
   },
   {
     "nome": "chegadas-de-antes",
@@ -130,6 +130,24 @@
     "detectada": true,
     "travou": false,
     "falha": "src/ui/punicao-replay.test.ts > vagas > com a espera, `c` vai para outra vaga, e ninguém divide vaga fora do box cheio"
+  },
+  {
+    "nome": "pit-seguinte-sem-atraso",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/punicao-replay.test.ts > pit da punição: o último visível pela chegada ANTES da punição (decisão do Marcos) > o pit seguinte do punido ocupa a vaga no instante em que aparece, e ninguém a divide"
+  },
+  {
+    "nome": "chegada-sem-atraso",
+    "detectada": false,
+    "travou": false,
+    "falha": null
+  },
+  {
+    "nome": "ordem-sem-atraso",
+    "detectada": false,
+    "travou": false,
+    "falha": null
   },
   {
     "nome": "box-cheio-nunca",
@@ -145,9 +163,9 @@
   },
   {
     "nome": "espera-em-todo-pit",
-    "detectada": true,
+    "detectada": false,
     "travou": false,
-    "falha": "src/ui/punicao-replay.test.ts > a espera prende só a vaga do pit da punição > `c` fica na mesma vaga de antes"
+    "falha": null
   },
   {
     "nome": "cumprida-na-infracao",
