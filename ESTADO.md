@@ -436,10 +436,28 @@ Branch `feat/pr2e-fim-da-corrida`, sobre a `main` `a49cb78`, merge do PR 2a conf
 Commits: `b20b0a5` implementação, `ac3572c` timeout por mutante, `a8a4d5d` FPS. Sem push. `HISTORICO.md`
 fica para o fechamento do PR.
 
-- **RETOMADA, nesta ordem (pedido do Marcos):** ele vai reiniciar o PC para limpar processos e medir o FPS de novo.
-  1. FPS intercalado de novo com a máquina limpa; se os quadros lentos no fim persistirem (pior 133 ms),
-     investigar a causa.
-  2. `senior-reviewer` no diff completo do PR 2e (sem registro de que tenha rodado).
+- **FPS refeito com o PC reiniciado (2026-11-02), `docs/pr2e-fps-3bracos.json`, base × PR × cauda intercalados,
+  CPU 6×, 360×800, 22 carros, chuva, 5 repetições, 36.000 quadros:** render p50 2,8-3,0 ms e p95 3,8-4,4 ms nos 3
+  braços; 1 quadro > 33 ms, na base; 0 no PR e na cauda. Os 133 ms e os 2×5 de antes eram a máquina suja. Essa
+  rodada pedia cauda acima do PR nas 4 condições: não persiste. ⚠️ A thread principal segue a ~99%, agora a
+  ~115 fps: `mainPorFrame` é o período do quadro e não mede custo, inclusive nos números da entrada abaixo.
+- **Mas a cauda não enxergava a bandeirada, e numa passada só há quadro lento repetível** (velocidade lenta,
+  `docs/pr2e-fps-passagem.json`, `docs/pr2e-fps-rastro.json`, instrumento `scripts/rastrear-pr2e.mjs`): 2 quadros
+  em toda repetição, nos mesmos instantes simulados. O da bandeirada dá 61-74 ms. **Causa:** a primeira busca da
+  fonte de fallback do 🏁 no `h2` e no selo do painel (`FontCache::FallbackFontForCharacter`, ~13 ms cada a 6×,
+  dentro do `Layout`). **Prova:** com os glifos desenhados invisíveis nas classes reais (`glifos=1`, só no preview), o
+  quadro some em 10 de 10 e o pior cai para 33-41 ms. Span com outra fonte não resolve: a busca é por fonte e tamanho.
+  O outro quadro (~40 ms) é o mesmo mecanismo, 1 busca, glifo não identificado. Uma vez por combinação na
+  mesma página (a cauda, que refaz as chegadas, dá 0). Aparelho real não medido. **Produto não alterado:
+  corrigir é decisão do Marcos, junto do veredito.**
+- **`senior-reviewer` no diff completo (`a49cb78`, 2026-11-02): sem 🔴.** Aviso 1 aplicado (`< 1` falso em
+  `fluxo-corrida.ts`). Aviso 4 (replay acabar antes da volta lenta) medido: 0 em 1000 corridas, travado em
+  `fimAntesDaLenta` no `verificar-pr2e`. Aviso 3 recusado: o carro que cruza a linha já terminou e entra atrás
+  no perfil único, não é ultrapassagem. Aviso 2 fica: a ligação de `useCorrida` é coberta por cerca textual e pelo
+  modo `fluxo` manual; os 2 mutantes do hook não são evidência de comportamento. Commit `7cba6d6`.
+- **RETOMADA, nesta ordem (pedido do Marcos):**
+  1. ~~FPS intercalado de novo com a máquina limpa.~~ Feito, acima.
+  2. ~~`senior-reviewer` no diff completo do PR 2e.~~ Feito, acima.
   3. Veredito do Marcos no preview. Comando: `npx vite preview --config scripts/preview-pit.config.ts --outDir
      .wrangler/pr2e-preview --host 192.168.0.3 --port 5173`; URL `/scripts/preview-pit.html?cena=retardatario`,
      `punicao` ou `normal`. Capturas em `preview/pr2e/`.
