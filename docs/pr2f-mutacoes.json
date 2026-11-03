@@ -73,9 +73,9 @@
   },
   {
     "nome": "infracao-ate-o-fim-do-pit",
-    "detectada": false,
+    "detectada": true,
     "travou": false,
-    "falha": null
+    "falha": "src/ui/punicao-replay.test.ts > a infração em corridas reais > o ponto é o sorteio `narracao:punicao:` sobre esse trecho"
   },
   {
     "nome": "infracao-sem-margem",
