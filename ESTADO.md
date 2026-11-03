@@ -2257,6 +2257,20 @@ encerramento** — encerrada não quer dizer sem dívida.
 > Movido do fim do arquivo em 2026-10-28, sem alteração de conteúdo, exceto "spray" no PR 2a,
 > que constava no pedido original do Marcos e faltava aqui.
 
+**🔒 DECISÕES DO MARCOS, 2026-11-02 — PR 2d (incidentes na pista) e PR 2f (punição no box),** sobre a
+medição `docs/pr2d-medicao.json` (instrumento `scripts/medir-pr2d.preview.test.ts`, 1000 corridas). Só
+apresentação nos dois: zero alteração em `src/engine/` e `src/data/`, resultado e hashes idênticos, sem bump.
+
+- **D1, divisão:** PR 2d = incidentes, DNF e narração; PR 2f = punição no box.
+- **D2, efeito:** carro parado pelo tempo do custo, guinada curta e fumaça ou spray de ~700 ms reais.
+  Movimento reduzido: só parar.
+- **D3, nome:** piloto em destaque, ano só quando o nome se repete na corrida. Vale também para o painel
+  (fim do "bot-18").
+- **D4, consequência:** "perdeu 3,2 s e 2 posições", contada na parada. Autoriza mudar a regra de
+  `narracao.ts`, que só permitia fraseado relacional. Posição absoluta segue fora.
+- **D5, punição (para o PR 2f):** infração sorteada sempre antes do último pit, cumprida no pit; selo `+Xs`
+  só como reserva; sem stop-and-go.
+
 **🔒 DECISÕES DO MARCOS, 2026-11-02 — PR 2e (a corrida termina quando todos cruzam a linha):** só
 apresentação, zero alteração em `src/engine/` e `src/data/`, resultado e hashes idênticos. Depois que o
 vencedor cruza, cada carro termina na próxima passagem pela linha; DNF fica de fora. O replay termina
@@ -2269,7 +2283,8 @@ quando o último carro cruza, mesmo com outros na volta lenta. Sobre a medição
   entre carros que já terminaram."
 - **D2:** o painel segue a ordem oficial, com selo `+Xs` no carro punido.
 - **D3:** a tela de resultado fica como está.
-- **D4:** os saltos do DNF ficam até o PR 2d (46 em 800).
+- **D4:** os saltos do DNF ficam até o PR 2d. ~~(46 em 800)~~ **Corrigido em 2026-11-02:** o salto aparece
+  em **797 de 800** DNFs (`docs/pr2d-medicao.json`). Os 46 eram só os que o PR 2e passou a mostrar a mais.
 - **D5, veredito do PR 2e (2026-11-02):** aprovado no celular. Quadro lento da bandeirada, 61-74 ms com CPU 6×,
   causado pela fonte de fallback do 🏁: "não notei travada; deixe como está". Spray na volta lenta: o carro
   segue sem spray depois da linha, na chuva, "como está".
@@ -3071,9 +3086,10 @@ que agora ela é tomada com o número na mão.**
 
 **Abertas no PR 2a (2026-11-02):**
 - **DNF para o PR 2d:** o carro que abandona ainda salta da linha para o meio da pista no fim da volta.
-  Resolver com o local do incidente, junto dos incidentes na pista. **O PR 2e aumenta os saltos visíveis:
-  46 em 800 DNFs** (`docs/pr2e-medicao.json`) aconteciam depois do fim do replay e passam a aparecer na
-  tela. Aceito pelo Marcos em 2026-11-02 até o PR 2d.
+  Resolver com o local do incidente, junto dos incidentes na pista. **O salto aparece em 797 de 800 DNFs**
+  (`docs/pr2d-medicao.json`). ~~**O PR 2e aumenta os saltos visíveis: 46 em 800 DNFs**~~ Os 46 de
+  `docs/pr2e-medicao.json` são só o acréscimo do PR 2e: aconteciam depois do fim do replay e passaram a
+  aparecer na tela. Aceito pelo Marcos em 2026-11-02 até o PR 2d.
 - **Aparelho real:** desempenho não medido no celular; o custo de raster e composição da chuva e do spray
   não está verificado no freio de CPU. O FPS do PR foi medido com a pista 10% maior que a do jogo.
 - **iOS:** não testado, em especial `paint-order` e `var()` em `stop-color` dentro de `<use>`.
@@ -3083,16 +3099,33 @@ que agora ela é tomada com o número na mão.**
 - consequência do evento na frase (tempo perdido, posições caídas);
 - pit integrado à frase ("…e foi para os boxes");
 - variedade de frases para o mesmo tipo de erro.
+A punição narrada e cumprida saiu daqui: vai para o PR 2f, abaixo. No PR 2d, ela é narrada quando o carro
+cruza a linha, com o selo `+Xs`.
 
-**Para o PR 2d, pedido do Marcos em 2026-11-02 — PUNIÇÃO CUMPRIDA NO BOX, como na F1.** Só apresentação:
-o tempo total e a classificação final continuam os do motor. O replay mostra a punição sendo cumprida
-durante a corrida:
-1. se o carro ainda tem pit stop depois da infração: fica parado X s a mais na vaga (mecânicos esperam);
+**PR 2f, depois do PR 2d — PUNIÇÃO CUMPRIDA NO BOX, como na F1.** ~~Para o PR 2d, pedido do Marcos em
+2026-11-02.~~ Separado do PR 2d por decisão do Marcos (D1 do PR 2d). Só apresentação: o tempo total e a
+classificação final continuam os do motor. O replay mostra a punição sendo cumprida durante a corrida.
+~~1. se o carro ainda tem pit stop depois da infração: fica parado X s a mais na vaga (mecânicos esperam);
 2. se não tem: stop-and-go (entra, para X s, sai sem trocar pneu);
-3. se não houver voltas suficientes: somada no fim, com o selo `+Xs` do PR 2e.
+3. se não houver voltas suficientes: somada no fim, com o selo `+Xs` do PR 2e.~~
+**Regra decidida (D5 do PR 2d):** infração sorteada por hash sempre antes do último pit, cumprida no pit
+(X s a mais parado na vaga); selo `+Xs` só como reserva; sem stop-and-go. O ticker narra a punição e o
+cumprimento.
 
-O ticker narra a punição e o cumprimento. **Medir antes:** os valores de punição do motor e em que volta
-as investigações saem.
+**Medido para o PR 2f** (`docs/pr2d-medicao.json`, 1000 corridas):
+- **Valores:** 527 punidos, 0,53 por corrida, 401 corridas com pelo menos um; de 5,0 a 10,0 s, p50 7,4.
+- **O motor não tem volta da infração:** as 527 saem com `volta = última`, e a rolagem é anterior à largada.
+  Só quem termina recebe. A volta da infração é invenção da apresentação, por hash `narracao:`.
+- **Pit disponível:** os 527 têm pit visível (417 com 1 parada, 110 com 2), então a regra cobre 100%.
+- **Stop-and-go, motivo de ter saído:** atravessar o box custa 7,5 a 14 s (p50 por pista) contra 5 a 10 s de
+  punição; só 9 de 527 sobram com pelo menos 2 s parado no limite vigente. Na F1, punição de tempo sem pit
+  seguinte soma no tempo final, e stop-and-go é outra punição (fontes secundárias, não o regulamento atual).
+- **Efeito:** a punição não está em `historicoVoltas`. Cumpri-la atrasa o carro X s dali em diante, e o
+  primeiro a cruzar que não é o vencedor oficial cai de 28 para 0 em 1000 corridas.
+- **Online:** o fim do replay sobe no máximo 18,6 s simulados; o pior replay segue 143,8 s na lenta, margem
+  de 156 s. O hash lê só o resultado do motor.
+- **Código tocado:** `bandeirada`, `fim`, vagas (`alocarVagas`), `diferencasParaLider` e o `parou` de
+  `TelaCorrida`, aprovados nos PRs 2c e 2e. Estimativa: ~250 linhas de produção, ~300 de teste.
 
 0. **Abertas na Fase 3:**
    (a) **`montarJogadores` está duplicado** entre `fluxo-draft.ts:117` (UI) e `congelarRoster`
