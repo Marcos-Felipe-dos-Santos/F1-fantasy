@@ -12,8 +12,10 @@
 
 ## Estado atual
 
-**2026-11-02, branch `feat/pr2a-carros-chuva`**, com o PR 2a aprovado no celular e fechado sobre a
-`main` `c3f7dcb`. O push é do Marcos. Sem merge ou deploy.
+**2026-11-02, branch `feat/pr2e-fim-da-corrida`**, com o PR 2e aprovado no celular e fechado sobre a
+`main` `a49cb78`. O push é do Marcos. Sem merge ou deploy.
+~~**2026-11-02, branch `feat/pr2a-carros-chuva`**, com o PR 2a aprovado no celular e fechado sobre a
+`main` `c3f7dcb`. O push é do Marcos. Sem merge ou deploy.~~ O PR 2a foi mesclado na `main` (`a49cb78`).
 ~~**2026-11-01, branch `feat/pr2a-carros-chuva`**, com o PR 2a implementado sobre a `main` `c3f7dcb`,
 aguardando o veredito do Marcos no celular. Sem push, merge ou deploy.~~
 ~~**2026-11-01, branch `feat/pr2c-pit-stop`**, com o PR 2c aprovado e commitado sobre a `main` `d9e8916`.
@@ -428,13 +430,15 @@ dependência).
 
 ## Onde parei
 
-### 2026-11-02 — PR 2e (a corrida termina quando todos cruzam) implementado, aguardando revisão e veredito
+### 2026-11-02 — PR 2e (a corrida termina quando todos cruzam) APROVADO no celular e fechado, aguardando o push do Marcos
+
+**Veredito do Marcos (2026-11-02):** "aprovado, funcionou perfeitamente". Detalhe em `HISTORICO.md`
+§"2026-11-02 — PR 2e". Servidores 5173, 4181 e 4182 derrubados. **Próximo:** push e abertura do PR pelo Marcos.
 
 Branch `feat/pr2e-fim-da-corrida`, sobre a `main` `a49cb78`, merge do PR 2a conferido na `main` e em
 `origin/main`. Medição prévia: `docs/pr2e-medicao.json`, instrumento `scripts/medir-pr2e.preview.test.ts`
 (100 grids, 10 pistas, sem alterar `src/`). Risco ALTO. Decisões em §"🔒 DECISÕES DO MARCOS — VIGENTES".
-Commits: `b20b0a5` implementação, `ac3572c` timeout por mutante, `a8a4d5d` FPS. Sem push. `HISTORICO.md`
-fica para o fechamento do PR.
+Commits: `b20b0a5` implementação, `ac3572c` timeout por mutante, `a8a4d5d` FPS. Sem push.
 
 - **FPS refeito com o PC reiniciado (2026-11-02), `docs/pr2e-fps-3bracos.json`, base × PR × cauda intercalados,
   CPU 6×, 360×800, 22 carros, chuva, 5 repetições, 36.000 quadros:** render p50 2,8-3,0 ms e p95 3,8-4,4 ms nos 3
@@ -448,8 +452,8 @@ fica para o fechamento do PR.
   dentro do `Layout`). **Prova:** com os glifos desenhados invisíveis nas classes reais (`glifos=1`, só no preview), o
   quadro some em 10 de 10 e o pior cai para 33-41 ms. Span com outra fonte não resolve: a busca é por fonte e tamanho.
   O outro quadro (~40 ms) é o mesmo mecanismo, 1 busca, glifo não identificado. Uma vez por combinação na
-  mesma página (a cauda, que refaz as chegadas, dá 0). Aparelho real não medido. **Produto não alterado:
-  corrigir é decisão do Marcos, junto do veredito.**
+  mesma página (a cauda, que refaz as chegadas, dá 0). Aparelho real não medido. ~~**Produto não alterado:
+  corrigir é decisão do Marcos, junto do veredito.**~~ **Decidido pelo Marcos: não notou travada, fica como está.**
 - **`senior-reviewer` no diff completo (`a49cb78`, 2026-11-02): sem 🔴.** Aviso 1 aplicado (`< 1` falso em
   `fluxo-corrida.ts`). Aviso 4 (replay acabar antes da volta lenta) medido: 0 em 1000 corridas, travado em
   `fimAntesDaLenta` no `verificar-pr2e`. Aviso 3 recusado: o carro que cruza a linha já terminou e entra atrás
@@ -458,10 +462,10 @@ fica para o fechamento do PR.
 - **RETOMADA, nesta ordem (pedido do Marcos):**
   1. ~~FPS intercalado de novo com a máquina limpa.~~ Feito, acima.
   2. ~~`senior-reviewer` no diff completo do PR 2e.~~ Feito, acima.
-  3. Veredito do Marcos no preview. Comando: `npx vite preview --config scripts/preview-pit.config.ts --outDir
+  3. ~~Veredito do Marcos no preview.~~ Aprovado, acima. Comando: `npx vite preview --config scripts/preview-pit.config.ts --outDir
      .wrangler/pr2e-preview --host 192.168.0.3 --port 5173`; URL `/scripts/preview-pit.html?cena=retardatario`,
      `punicao` ou `normal`. Capturas em `preview/pr2e/`.
-  4. `HISTORICO.md` no fechamento.
+  4. ~~`HISTORICO.md` no fechamento.~~ Feito.
 - **Decidido pelo Marcos em 2026-11-02:** `saidaDoBoxPassou` = 189 inversões em 1000 corridas, carro ainda
   correndo que sai do box e passa quem já está na volta lenta, é aceito. "Sem ultrapassar" vale entre carros
   que já terminaram. Ver D1 em §"🔒 DECISÕES DO MARCOS — VIGENTES".
@@ -2266,6 +2270,9 @@ quando o último carro cruza, mesmo com outros na volta lenta. Sobre a medição
 - **D2:** o painel segue a ordem oficial, com selo `+Xs` no carro punido.
 - **D3:** a tela de resultado fica como está.
 - **D4:** os saltos do DNF ficam até o PR 2d (46 em 800).
+- **D5, veredito do PR 2e (2026-11-02):** aprovado no celular. Quadro lento da bandeirada, 61-74 ms com CPU 6×,
+  causado pela fonte de fallback do 🏁: "não notei travada; deixe como está". Spray na volta lenta: o carro
+  segue sem spray depois da linha, na chuva, "como está".
 
 **🔒 DECISÃO DO MARCOS — ASFALTO MOLHADO `#313131` (2026-11-02).** "Asfalto fica #313131 como
 exceção da chuva." Vale só para `pistaAsfaltoMolhado`: fica a 1,124 do muro, abaixo dos 1,25 de
@@ -3049,6 +3056,18 @@ ser o padrão que se está seguindo. **Rodar ou não rodar segue sendo decisão 
 que agora ela é tomada com o número na mão.**
 
 ## Pendências ATIVAS
+
+**Abertas no PR 2e (2026-11-02), sugestões do `senior-reviewer`, nenhuma com defeito hoje:**
+- **Ligação de `useCorrida`:** só cerca textual e o modo `fluxo` manual. Falta teste de comportamento, que hoje
+  esbarra na falta de jsdom.
+- **`fim-da-corrida.ts`:** `DISTANCIA_RAMPA` vem do pit, então mexer na rampa do box muda a volta lenta. A punição
+  soma eventos de `investigacao`; `tempoTotal − soma do histórico` se corrigiria sozinho. `acumularVoltas` sem o
+  `?? []` lança com resultado corrompido.
+- **Bandeira no box (1 em 1000):** o painel troca 🔧 PIT por 🏁 com o carro ainda parado.
+- **`verificar-pr2e`:** `parados` inclui `'pit'`; `bandeiraNoBox` mede a janela da parada, não o box.
+- **`medir-fps-pr2a.mjs`:** `2200` cravado no lugar de `MS_REPLAY_POR_VOLTA.rapida`. `TelaCorrida`: `formatarDiferenca`
+  roda nas 22 linhas mesmo sem punição.
+- **Preview:** `inicioDaCena` vira `Infinity` em corrida sem ninguém terminando.
 
 **Abertas no PR 2a (2026-11-02):**
 - **DNF para o PR 2d:** o carro que abandona ainda salta da linha para o meio da pista no fim da volta.
