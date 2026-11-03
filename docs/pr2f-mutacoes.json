@@ -1,9 +1,9 @@
 [
   {
     "nome": "espera-anda-para-tras",
-    "detectada": false,
+    "detectada": true,
     "travou": false,
-    "falha": null
+    "falha": "src/ui/punicao-replay.test.ts > espera maior que a parada de antes > fica na vaga a espera inteira, sem recuar"
   },
   {
     "nome": "sem-atraso-depois",
@@ -31,9 +31,9 @@
   },
   {
     "nome": "inverso-desloca-tudo",
-    "detectada": false,
+    "detectada": true,
     "travou": false,
-    "falha": null
+    "falha": "src/ui/punicao-replay.test.ts > punição cumprida no último pit (PR 2f) > antes da espera, nada muda"
   },
   {
     "nome": "paradas-sem-deslocar",
@@ -43,9 +43,9 @@
   },
   {
     "nome": "incidentes-sem-deslocar",
-    "detectada": false,
+    "detectada": true,
     "travou": false,
-    "falha": null
+    "falha": "src/ui/punicao-replay.test.ts > incidente depois do pit da punição > acontece X s depois, no mesmo ponto da volta"
   },
   {
     "nome": "desloca-estrito",
@@ -55,9 +55,9 @@
   },
   {
     "nome": "nobox-sem-relogio",
-    "detectada": false,
+    "detectada": true,
     "travou": false,
-    "falha": null
+    "falha": "src/ui/punicao-replay.test.ts > punição cumprida no último pit (PR 2f) > segue no box X s a mais: sai dele e da janela X s depois"
   },
   {
     "nome": "posicao-sem-relogio",
@@ -79,9 +79,9 @@
   },
   {
     "nome": "infracao-sem-margem",
-    "detectada": false,
+    "detectada": true,
     "travou": false,
-    "falha": null
+    "falha": "src/ui/punicao-replay.test.ts > a infração em corridas reais > sai entre 10% e 90% do trecho entre o pit anterior e o da punição"
   },
   {
     "nome": "volta-da-infracao-a-menos",
@@ -145,9 +145,9 @@
   },
   {
     "nome": "espera-em-todo-pit",
-    "detectada": false,
+    "detectada": true,
     "travou": false,
-    "falha": null
+    "falha": "src/ui/punicao-replay.test.ts > a espera prende só a vaga do pit da punição > `c` fica na mesma vaga de antes"
   },
   {
     "nome": "cumprida-na-infracao",
@@ -175,9 +175,9 @@
   },
   {
     "nome": "chave-repetida",
-    "detectada": false,
+    "detectada": true,
     "travou": false,
-    "falha": null
+    "falha": "src/ui/punicao-replay.test.ts > narração da punição cumprida > as duas linhas têm chave própria e dizem o valor"
   },
   {
     "nome": "cumprida-gasta-pool",
@@ -201,7 +201,7 @@
     "nome": "texto-do-selo",
     "detectada": true,
     "travou": false,
-    "falha": "src/ui/punicao-replay.test.ts > selo de reserva: punido sem pit > o ticker narra uma vez, na passagem pela linha"
+    "falha": "src/ui/narracao.test.ts > narrarEventos — consequência na parada (PR 2d) > quebra e punição não têm consequência na parada"
   },
   {
     "nome": "cumprida-vai-aos-boxes",

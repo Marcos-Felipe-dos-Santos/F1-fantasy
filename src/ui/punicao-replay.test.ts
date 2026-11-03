@@ -10,7 +10,7 @@ import { hashDaCorrida } from '../net/hash-corrida';
 import { diferencasParaLider } from './diferenca-lider';
 import { replayDaCorrida } from './fim-da-corrida';
 import { acumularVoltas, classificacaoAoVivo, prepararCorrida } from './fluxo-corrida';
-import { narrarEventos, textoDaConsequencia } from './narracao';
+import { narrarEventos, sorteioDeLocal, textoDaConsequencia } from './narracao';
 import { linhaDoTempoDoPit, type ParadaNoReplay } from './pit-replay';
 
 const dataset = criarDataset(equipeAnosReal, pecasReal, pistasReal);
@@ -220,7 +220,7 @@ describe('a infração em corridas reais', () => {
         if (punicao === undefined) return [];
         const paradas = replay.paradas(c.jogadorId);
         const indice = paradas.findIndex((p) => p.volta === punicao.parada.volta);
-        return [{ punicao, de: paradas[indice - 1]?.fim ?? 0, ate: paradas[indice].inicio }];
+        return [{ punicao, seed: resultado.seed, id: c.jogadorId, de: paradas[indice - 1]?.fim ?? 0, ate: paradas[indice].inicio }];
       });
     }),
   );
@@ -233,6 +233,13 @@ describe('a infração em corridas reais', () => {
     for (const { punicao, de, ate } of casos) {
       expect(punicao.infracao).toBeGreaterThanOrEqual(de + 0.1 * (ate - de) - 1e-6);
       expect(punicao.infracao).toBeLessThanOrEqual(de + 0.9 * (ate - de) + 1e-6);
+    }
+  });
+
+  it('o ponto é o sorteio `narracao:punicao:` sobre esse trecho', () => {
+    for (const { punicao, seed, id, de, ate } of casos) {
+      const u = sorteioDeLocal(seed, 'punicao', id, punicao.parada.volta, 'investigacao');
+      expect(punicao.infracao).toBeCloseTo(de + (0.1 + 0.8 * u) * (ate - de), 6);
     }
   });
 });
