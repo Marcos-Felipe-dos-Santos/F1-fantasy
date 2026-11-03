@@ -13,6 +13,7 @@
  * do grid ao resultado, que é o único jeito de ver a ligação de `useCorrida`.
  * `glifos=1` desenha 🏁 e 🔧 invisíveis desde o início: prova que o quadro lento da bandeirada é
  * a busca da fonte de emoji (`docs/pr2e-fps-passagem.json`).
+ * PR 2d: `cena=lider|dnf|chuvoso` começa 2 s reais antes do incidente, parando nele com `pausa=1`.
  * Sem `pit-replay.ts` (build do "antes") a página funciona igual, sem o HUD do box.
  */
 
@@ -33,6 +34,7 @@ import {
 } from '../src/ui/fluxo-corrida';
 import { FluxoCorrida } from '../src/ui/FluxoCorrida';
 import { replayDaCorrida, type ReplayDaCorrida } from '../src/ui/fim-da-corrida';
+import { rotulosDosPilotos } from '../src/ui/loadout-view';
 import { TelaCorrida } from '../src/ui/TelaCorrida';
 import '../src/ui/estilos.css';
 
@@ -41,7 +43,7 @@ declare global {
     __fps?: unknown;
     __irPara?: (t: number) => void;
     __picoDoBox?: () => number | null;
-    __tempos?: { bandeirada: number; fim: number; vencedor: number; voltas: number; destaque: string | null; instante: number | null };
+    __tempos?: { bandeirada: number; fim: number; vencedor: number; voltas: number; destaque: string | null; instante: number | null; efeito: number | null };
   }
 }
 
@@ -64,7 +66,45 @@ const moduloPit = import.meta.glob<ModuloPit>('../src/ui/pit-replay.ts');
 /** O carro que a cena mostra, ou `undefined` se a corrida não serve. */
 type Criterio = (r: ResultadoCorrida, replay: ReplayDaCorrida, voltas: number) => string | undefined | null;
 
-const CENAS: Record<string, { rotulo: string; pistaId: string; criterio: Criterio }> = {
+/** Onde a cena do PR 2d começa: o instante do incidente do carro em destaque. */
+type Momento = (replay: ReplayDaCorrida, id: string) => number;
+
+const primeiroErro: Momento = (replay, id) =>
+  replay.incidentes(id).find((i) => i.evento.tipo === 'erro-piloto')?.inicio ?? 0;
+
+/** Na corrida inteira, quem perde a liderança parado: é o incidente que mais aparece. */
+const liderQueErra: Criterio = (r, replay) => {
+  for (const c of r.classificacao) {
+    const h = r.historicoVoltas[c.jogadorId];
+    const erro = replay.incidentes(c.jogadorId).find((i) => i.evento.tipo === 'erro-piloto' && i.evento.volta >= 2);
+    if (erro === undefined) continue;
+    const ali = replay.progresso(c.jogadorId, h, erro.inicio);
+    const lidera = r.classificacao.every((o) => o === c || replay.progresso(o.jogadorId, r.historicoVoltas[o.jogadorId], erro.inicio) < ali);
+    const perde = r.classificacao.some((o) => replay.progresso(o.jogadorId, r.historicoVoltas[o.jogadorId], erro.fim) > ali);
+    if (lidera && perde) return c.jogadorId;
+  }
+  return undefined;
+};
+
+const CENAS: Record<string, { rotulo: string; pistaId: string; criterio: Criterio; chuva?: boolean; momento?: Momento }> = {
+  lider: { rotulo: 'Incidente do líder', pistaId: 'pista-monza', criterio: liderQueErra, momento: primeiroErro },
+  dnf: {
+    rotulo: 'DNF',
+    pistaId: 'pista-spa',
+    criterio: (r) => {
+      const quebra = r.classificacao.find((c) => c.status === 'dnf' && c.voltasCompletadas >= 4);
+      return quebra?.jogadorId;
+    },
+    momento: (replay, id) => replay.abandono(id)?.instante ?? 0,
+  },
+  chuvoso: {
+    rotulo: 'Incidente na chuva',
+    pistaId: 'pista-suzuka',
+    chuva: true,
+    criterio: (r, replay) =>
+      r.classificacao.slice(0, 8).find((c) => replay.incidentes(c.jogadorId).some((i) => i.evento.tipo === 'erro-piloto' && i.evento.volta >= 3))?.jogadorId,
+    momento: primeiroErro,
+  },
   retardatario: {
     rotulo: 'Com retardatário',
     pistaId: 'pista-imola',
@@ -106,7 +146,7 @@ const pistaId = cena?.pistaId ?? q.get('pista') ?? 'pista-spa';
 const fluxoReal = q.get('real') === '1';
 const repetirCauda = q.get('cauda') === '1';
 const glifosProntos = q.get('glifos') === '1';
-const querChuva = q.get('chuva') === '1';
+const querChuva = cena?.chuva ?? q.get('chuva') === '1';
 const estaUrl = `${pistaId}${querChuva ? '&chuva=1' : ''}`;
 const medirFps = q.get('fps') === '1';
 const AQUECIMENTO = 60;
@@ -153,14 +193,21 @@ const pits = fimDasVoltasDePit(resultado);
 const tempoVencedor = resultado.classificacao[0].tempoTotal;
 const replay = replayDaCorrida(resultado, pista);
 const fimDaCorrida = replay.fim;
-const inicioDaCena = Math.max(0, replay.bandeirada - tempoVencedor / pista.voltas / 3);
+const instanteDaCena = destaque !== null ? cena?.momento?.(replay, destaque) : undefined;
+const inicioDaCena =
+  instanteDaCena !== undefined
+    ? Math.max(0, instanteDaCena - 2000 * escalaReplay(tempoVencedor, pista.voltas, MS_REPLAY_POR_VOLTA[(q.get('velocidade') as VelocidadeReplay | null) ?? 'media']))
+    : Math.max(0, replay.bandeirada - tempoVencedor / pista.voltas / 3);
+const simPorReal = escalaReplay(tempoVencedor, pista.voltas, MS_REPLAY_POR_VOLTA[(q.get('velocidade') as VelocidadeReplay | null) ?? 'media']);
 window.__tempos = {
+  // 200 ms reais depois do incidente: a guinada no pico e a fumaça já aberta.
+  efeito: instanteDaCena === undefined ? null : instanteDaCena + 200 * simPorReal,
   bandeirada: replay.bandeirada,
   fim: replay.fim,
   vencedor: tempoVencedor,
   voltas: pista.voltas,
   destaque,
-  instante: destaque === null ? null : (replay.chegada(destaque)?.instante ?? null),
+  instante: instanteDaCena ?? (destaque === null ? null : (replay.chegada(destaque)?.instante ?? null)),
 };
 
 function Preview() {
@@ -331,7 +378,7 @@ function Preview() {
                 setPausado(false);
               }}
             >
-              Ver o fim de novo
+              Ver de novo
             </button>
           </>
         )}
@@ -353,7 +400,7 @@ function Preview() {
         </button>
         <span>
           {(t / 1000).toFixed(0)} s simulados · parados no box: {noBoxAgora} · seed {seed}
-          {destaque !== null && ` · olhe ${estado.jogadores.find((j) => j.id === destaque)?.nome ?? destaque}`}
+          {destaque !== null && ` · olhe ${rotulosDosPilotos(estado.loadouts, dataset).get(destaque) ?? destaque}`}
         </span>
       </nav>
       <TelaCorrida

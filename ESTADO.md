@@ -12,8 +12,10 @@
 
 ## Estado atual
 
-**2026-11-02, branch `feat/pr2e-fim-da-corrida`**, com o PR 2e aprovado no celular e fechado sobre a
-`main` `a49cb78`. O push é do Marcos. Sem merge ou deploy.
+**2026-11-03, branch `feat/pr2d-incidentes`**, com o PR 2d aprovado no celular e fechado sobre a
+`main` `03ed7ed`. O push é do Marcos. Sem merge ou deploy. Próximo: PR 2f (punição cumprida no box).
+~~**2026-11-02, branch `feat/pr2e-fim-da-corrida`**, com o PR 2e aprovado no celular e fechado sobre a
+`main` `a49cb78`. O push é do Marcos. Sem merge ou deploy.~~ O PR 2e foi mesclado na `main` (`03ed7ed`).
 ~~**2026-11-02, branch `feat/pr2a-carros-chuva`**, com o PR 2a aprovado no celular e fechado sobre a
 `main` `c3f7dcb`. O push é do Marcos. Sem merge ou deploy.~~ O PR 2a foi mesclado na `main` (`a49cb78`).
 ~~**2026-11-01, branch `feat/pr2a-carros-chuva`**, com o PR 2a implementado sobre a `main` `c3f7dcb`,
@@ -429,6 +431,54 @@ dependência).
 
 
 ## Onde parei
+
+### 2026-11-03 — PR 2d (incidentes, DNF, narração) APROVADO no celular e fechado, aguardando o push do Marcos
+
+**Veredito do Marcos (2026-11-03):** "aprovado, tudo certo", nas cenas de líder, DNF e chuva. Ele conferiu no
+celular que o selo de DNF aparece na classificação. Detalhe em `HISTORICO.md` §"2026-11-03 — PR 2d". Servidor de
+preview derrubado (porta 5173 fora). **Próximo:** push e abertura do PR pelo Marcos. Depois, o PR 2f.
+
+Branch `feat/pr2d-incidentes`, sobre a `main` `03ed7ed` (merge do PR 2e conferido). Risco ALTO. Sem push, merge ou
+deploy. Decisões D1-D5 em §"🔒 DECISÕES DO MARCOS — VIGENTES"; PR 2f (punição no box) registrado em
+§"Pendências ATIVAS" com a medição.
+
+Commits: `a39a4f3` medição e decisões; `82d30a4` implementação; `f6ab704` testes dos sobreviventes;
+`0d493b9` mutação; `96a350e` correção da revisão + FPS; `32aed82` mutação; `562b197` código morto;
+`99ee553` nota de retomada e nova tentativa no script; `8945b2a` mutação final completa; mais o commit desta doc.
+⚠️ **`df73590` está ERRADO:** diz "mutação final, 70/71", mas o `docs/pr2d-mutacoes.json` dele tem só 15 entradas,
+porque a rodada abortou em `dnf-sem-plano` (vitest falhou sem a linha FAIL na saída). Não foi reescrito: ~~corrigir
+com commit novo quando a mutação final terminar.~~ corrigido por `8945b2a`, com as 71 entradas.
+
+- **Medido (último ponto verde, código de `562b197`; depois dele só `scripts/mutar-pr2d.mjs` mudou):** `npm test`
+  2099 + 1 skipped em 90 arquivos; `test:party` 46; typecheck, lint e build com saída 0; `git diff 03ed7ed` vazio em
+  `src/engine/`, `src/data/` e `party/`. ~~e `src/net/`~~ **Corrigido em 2026-11-03:** em `src/net/` mudou só
+  `cerca-lint.test.ts` (+10, o teste da cerca de `incidentes-replay.ts`). `verificar-pr2d` (1000 corridas, dataset real): tudo 0, inclusive `ritmoForaDoLimpo`, que a revisão
+  pediu e que acusa 15 com o defeito recolocado. `verificar-pr2e` igual ao do PR 2e (189 aceitas).
+- **Mutação:** 2ª rodada 70/71 + 1 travada (`frase-trava-no-pool-cheio`, laço síncrono). Depois da correção, 70/72
+  com `abandono-nao-corta-o-plano` sobrevivendo: era código morto, removido em `562b197`. **Final (2026-11-03,
+  `8945b2a`): 70/71 + 1 travada, a mesma; nenhuma sobrevivente.** `git status -- src` limpo depois da rodada.
+- **FPS** (`docs/pr2d-fps.json`, `docs/pr2d-fps-media.json`, A/B intercalado com `03ed7ed`, CPU 6×, 360×800, chuva):
+  rápida 80-86 fps nos dois; média refeita 83-87 fps nos dois, 0 quadro > 33 ms no PR. A 1ª rodada da média foi de
+  máquina suja (35-40 fps nos DOIS braços).
+- **`senior-reviewer`:** 1 🔴 corrigido em `96a350e` (ritmo acima do limpo, até negativo, na volta de erro +
+  abandono; baseline vermelho em `docs/pr2d-baseline-vermelho-revisao.txt`). 🟡 aplicados: cerca de lint com teste,
+  comentário de contrato, cabeçalho do portão. Sugestões não aplicadas: alocação por frame de `incidentes()`,
+  cache da narração só por `resultado`, efeito por cima do viaduto, `namespaces-seed.ts` (em `src/engine/`, fora).
+- ~~**Na árvore, sem commit:** `scripts/mutar-pr2d.mjs`, com uma nova tentativa quando o vitest falha sem linha FAIL.~~
+  Commitado em `99ee553`.
+- **Preview:** as capturas de `preview/pr2d/` de 2026-11-02 eram anteriores a `96a350e`. Foram refeitas sobre
+  `8945b2a` em `preview/pr2d/rodada2/` (gitignored), por CDP no Chrome headless, 360×800, DPR 2, sem erro no
+  console. Três em `docs/pr2d-imagens/`. O selo de DNF fica abaixo da dobra da lista e não saiu nas capturas:
+  quem o conferiu foi o Marcos.
+
+**RETOMADA, nesta ordem:** (todos feitos em 2026-11-03)
+1. ~~`node scripts/mutar-pr2d.mjs` (~15 min; não desligar no meio: um mutante fica aplicado em `src/`, conferir
+   `git status -- src`). Commitar o script e o JSON corrigindo o `df73590`.~~ Feito, `8945b2a`.
+2. ~~Preview no celular para o veredito do Marcos~~ Feito, aprovado: `PREVIEW_PIT_SAIDA=.wrangler/pr2d-preview npx vite build --config
+   scripts/preview-pit.config.ts`, depois `npx vite preview --config scripts/preview-pit.config.ts --outDir
+   .wrangler/pr2d-preview --host 192.168.0.3 --port 5173 --strictPort`; cenas `/scripts/preview-pit.html?cena=lider`,
+   `?cena=dnf`, `?cena=chuvoso`. Capturas olhadas em `preview/pr2d/` (gitignored); escolher 3 para `docs/pr2d-imagens/`.
+3. ~~`HISTORICO.md` e o fechamento desta entrada, depois do veredito.~~ Feito.
 
 ### 2026-11-02 — PR 2e (a corrida termina quando todos cruzam) APROVADO no celular e fechado, aguardando o push do Marcos
 
@@ -2257,6 +2307,20 @@ encerramento** — encerrada não quer dizer sem dívida.
 > Movido do fim do arquivo em 2026-10-28, sem alteração de conteúdo, exceto "spray" no PR 2a,
 > que constava no pedido original do Marcos e faltava aqui.
 
+**🔒 DECISÕES DO MARCOS, 2026-11-02 — PR 2d (incidentes na pista) e PR 2f (punição no box),** sobre a
+medição `docs/pr2d-medicao.json` (instrumento `scripts/medir-pr2d.preview.test.ts`, 1000 corridas). Só
+apresentação nos dois: zero alteração em `src/engine/` e `src/data/`, resultado e hashes idênticos, sem bump.
+
+- **D1, divisão:** PR 2d = incidentes, DNF e narração; PR 2f = punição no box.
+- **D2, efeito:** carro parado pelo tempo do custo, guinada curta e fumaça ou spray de ~700 ms reais.
+  Movimento reduzido: só parar.
+- **D3, nome:** piloto em destaque, ano só quando o nome se repete na corrida. Vale também para o painel
+  (fim do "bot-18").
+- **D4, consequência:** "perdeu 3,2 s e 2 posições", contada na parada. Autoriza mudar a regra de
+  `narracao.ts`, que só permitia fraseado relacional. Posição absoluta segue fora.
+- **D5, punição (para o PR 2f):** infração sorteada sempre antes do último pit, cumprida no pit; selo `+Xs`
+  só como reserva; sem stop-and-go.
+
 **🔒 DECISÕES DO MARCOS, 2026-11-02 — PR 2e (a corrida termina quando todos cruzam a linha):** só
 apresentação, zero alteração em `src/engine/` e `src/data/`, resultado e hashes idênticos. Depois que o
 vencedor cruza, cada carro termina na próxima passagem pela linha; DNF fica de fora. O replay termina
@@ -2269,7 +2333,8 @@ quando o último carro cruza, mesmo com outros na volta lenta. Sobre a medição
   entre carros que já terminaram."
 - **D2:** o painel segue a ordem oficial, com selo `+Xs` no carro punido.
 - **D3:** a tela de resultado fica como está.
-- **D4:** os saltos do DNF ficam até o PR 2d (46 em 800).
+- **D4:** os saltos do DNF ficam até o PR 2d. ~~(46 em 800)~~ **Corrigido em 2026-11-02:** o salto aparece
+  em **797 de 800** DNFs (`docs/pr2d-medicao.json`). Os 46 eram só os que o PR 2e passou a mostrar a mais.
 - **D5, veredito do PR 2e (2026-11-02):** aprovado no celular. Quadro lento da bandeirada, 61-74 ms com CPU 6×,
   causado pela fonte de fallback do 🏁: "não notei travada; deixe como está". Spray na volta lenta: o carro
   segue sem spray depois da linha, na chuva, "como está".
@@ -3071,9 +3136,12 @@ que agora ela é tomada com o número na mão.**
 
 **Abertas no PR 2a (2026-11-02):**
 - **DNF para o PR 2d:** o carro que abandona ainda salta da linha para o meio da pista no fim da volta.
-  Resolver com o local do incidente, junto dos incidentes na pista. **O PR 2e aumenta os saltos visíveis:
-  46 em 800 DNFs** (`docs/pr2e-medicao.json`) aconteciam depois do fim do replay e passam a aparecer na
-  tela. Aceito pelo Marcos em 2026-11-02 até o PR 2d.
+  Resolver com o local do incidente, junto dos incidentes na pista. **O salto aparece em 797 de 800 DNFs**
+  (`docs/pr2d-medicao.json`). ~~**O PR 2e aumenta os saltos visíveis: 46 em 800 DNFs**~~ Os 46 de
+  `docs/pr2e-medicao.json` são só o acréscimo do PR 2e: aconteciam depois do fim do replay e passaram a
+  aparecer na tela. Aceito pelo Marcos em 2026-11-02 até o PR 2d.
+  ✅ **Fechada pelo PR 2d (2026-11-03, sem push):** o carro para no ponto do abandono; `dnfForaDoPonto` e
+  `dnfDepoisDoFim` dão 0 em 800 DNFs no `verificar-pr2d`.
 - **Aparelho real:** desempenho não medido no celular; o custo de raster e composição da chuva e do spray
   não está verificado no freio de CPU. O FPS do PR foi medido com a pista 10% maior que a do jogo.
 - **iOS:** não testado, em especial `paint-order` e `var()` em `stop-color` dentro de `<use>`.
@@ -3083,16 +3151,35 @@ que agora ela é tomada com o número na mão.**
 - consequência do evento na frase (tempo perdido, posições caídas);
 - pit integrado à frase ("…e foi para os boxes");
 - variedade de frases para o mesmo tipo de erro.
+A punição narrada e cumprida saiu daqui: vai para o PR 2f, abaixo. No PR 2d, ela é narrada quando o carro
+cruza a linha, com o selo `+Xs`.
+✅ **Os quatro itens entraram no PR 2d (2026-11-03, sem push).** A variedade vale sem repetir frase na
+corrida enquanto houver frase nova (`fraseRepetida` 0 no `verificar-pr2d`).
 
-**Para o PR 2d, pedido do Marcos em 2026-11-02 — PUNIÇÃO CUMPRIDA NO BOX, como na F1.** Só apresentação:
-o tempo total e a classificação final continuam os do motor. O replay mostra a punição sendo cumprida
-durante a corrida:
-1. se o carro ainda tem pit stop depois da infração: fica parado X s a mais na vaga (mecânicos esperam);
+**PR 2f, depois do PR 2d — PUNIÇÃO CUMPRIDA NO BOX, como na F1.** ~~Para o PR 2d, pedido do Marcos em
+2026-11-02.~~ Separado do PR 2d por decisão do Marcos (D1 do PR 2d). Só apresentação: o tempo total e a
+classificação final continuam os do motor. O replay mostra a punição sendo cumprida durante a corrida.
+~~1. se o carro ainda tem pit stop depois da infração: fica parado X s a mais na vaga (mecânicos esperam);
 2. se não tem: stop-and-go (entra, para X s, sai sem trocar pneu);
-3. se não houver voltas suficientes: somada no fim, com o selo `+Xs` do PR 2e.
+3. se não houver voltas suficientes: somada no fim, com o selo `+Xs` do PR 2e.~~
+**Regra decidida (D5 do PR 2d):** infração sorteada por hash sempre antes do último pit, cumprida no pit
+(X s a mais parado na vaga); selo `+Xs` só como reserva; sem stop-and-go. O ticker narra a punição e o
+cumprimento.
 
-O ticker narra a punição e o cumprimento. **Medir antes:** os valores de punição do motor e em que volta
-as investigações saem.
+**Medido para o PR 2f** (`docs/pr2d-medicao.json`, 1000 corridas):
+- **Valores:** 527 punidos, 0,53 por corrida, 401 corridas com pelo menos um; de 5,0 a 10,0 s, p50 7,4.
+- **O motor não tem volta da infração:** as 527 saem com `volta = última`, e a rolagem é anterior à largada.
+  Só quem termina recebe. A volta da infração é invenção da apresentação, por hash `narracao:`.
+- **Pit disponível:** os 527 têm pit visível (417 com 1 parada, 110 com 2), então a regra cobre 100%.
+- **Stop-and-go, motivo de ter saído:** atravessar o box custa 7,5 a 14 s (p50 por pista) contra 5 a 10 s de
+  punição; só 9 de 527 sobram com pelo menos 2 s parado no limite vigente. Na F1, punição de tempo sem pit
+  seguinte soma no tempo final, e stop-and-go é outra punição (fontes secundárias, não o regulamento atual).
+- **Efeito:** a punição não está em `historicoVoltas`. Cumpri-la atrasa o carro X s dali em diante, e o
+  primeiro a cruzar que não é o vencedor oficial cai de 28 para 0 em 1000 corridas.
+- **Online:** o fim do replay sobe no máximo 18,6 s simulados; o pior replay segue 143,8 s na lenta, margem
+  de 156 s. O hash lê só o resultado do motor.
+- **Código tocado:** `bandeirada`, `fim`, vagas (`alocarVagas`), `diferencasParaLider` e o `parou` de
+  `TelaCorrida`, aprovados nos PRs 2c e 2e. Estimativa: ~250 linhas de produção, ~300 de teste.
 
 0. **Abertas na Fase 3:**
    (a) **`montarJogadores` está duplicado** entre `fluxo-draft.ts:117` (UI) e `congelarRoster`

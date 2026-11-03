@@ -5,22 +5,24 @@
  * componente só resolve nomes pro dataset e desenha.
  */
 
-import { Fragment } from 'react';
+import { Fragment, useMemo } from 'react';
 import type { DraftState, Pista, ResultadoCorrida, ResultadoQuali } from '../engine/types';
 import { CONTORNO_HUMANO, ESCALA_CARRO, contornoDoBot, niveisDeSpray } from './carro-replay';
-import { CarroNaPista, DefsDoCarro, SprayDoCarro } from './CarroReplay';
+import { CarroNaPista, DefsDoCarro, EfeitoDeIncidente, SprayDoCarro } from './CarroReplay';
 import { dataset } from './dataset-app';
 import { diferencasParaLider, formatarDiferenca } from './diferenca-lider';
 import { replayDaCorrida } from './fim-da-corrida';
 import {
-  acumularVoltas,
   classificacaoAoVivo,
+  escalaReplay,
   lutDoTracado,
+  MS_REPLAY_POR_VOLTA,
   voltaAtual,
   type VelocidadeReplay,
 } from './fluxo-corrida';
-import { nomeJogador } from './loadout-view';
-import { narrarEventos } from './narracao';
+import { efeitosNoInstante, guinadaNoInstante } from './incidentes-replay';
+import { nomeJogador, rotulosDosPilotos } from './loadout-view';
+import { narrarEventos, textoDaConsequencia } from './narracao';
 import {
   CAMADAS_PISTA,
   VIEWBOX_ALTURA,
@@ -255,6 +257,7 @@ export function TelaCorrida({
 }: TelaCorridaProps) {
   const movimentoReduzido = useMovimentoReduzido();
   const telaEstreita = useTelaEstreita();
+  const pilotos = useMemo(() => rotulosDosPilotos(state.loadouts, dataset), [state.loadouts]);
 
   if (fase === 'grid') {
     return (
@@ -296,15 +299,14 @@ export function TelaCorrida({
   const historicoLider = resultado.historicoVoltas[lider.jogadorId] ?? [];
   const volta = voltaAtual(historicoLider, tempoSimMs, pista.voltas);
 
-  // Narração completa da corrida (PR A/B), filtrada pela volta já revelada.
-  // O enriquecimento causal é calculado sobre a corrida INTEIRA e só depois
-  // filtrado — o critério compara fronteiras de volta, não depende de até onde
-  // o replay chegou.
-  const eventosOcorridos = narrarEventos(resultado).filter(
-    (narrada) => narrada.evento.volta <= volta,
-  );
-  const gridLargada = grid.grid.map((item) => item.jogadorId);
   const replay = replayDaCorrida(resultado, pista);
+  // Narração da corrida inteira, memoizada, filtrada pelo instante do carro (PR 2d).
+  const eventosOcorridos = narrarEventos(resultado, replay).filter((narrada) => narrada.instante <= tempoSimMs);
+  const gridLargada = grid.grid.map((item) => item.jogadorId);
+  /** O piloto (PR 2d); o humano segue com o nome dele, que é como a sala o conhece. */
+  const nomeNoPainel = (jogadorId: string) =>
+    ehHumanoId(state, jogadorId) ? nomeDoJogadorId(state, jogadorId) : (pilotos.get(jogadorId) ?? jogadorId);
+  const simPorReal = escalaReplay(resultado.classificacao[0].tempoTotal, pista.voltas, MS_REPLAY_POR_VOLTA[velocidade]);
   const depoisDaBandeirada = tempoSimMs >= replay.bandeirada;
   const classificacaoAtual = classificacaoAoVivo(resultado, gridLargada, tempoSimMs, pista.voltas, replay);
   const diferencas = diferencasParaLider(resultado, classificacaoAtual, tempoSimMs, pista.voltas, replay);
@@ -319,7 +321,8 @@ export function TelaCorrida({
     const posicao = replay.posicao(item.jogadorId, historico, item.status, tempoSimMs, movimentoReduzido);
     return {
       ...posicao,
-      parou: replay.chegou(item.jogadorId, tempoSimMs) || tempoSimMs >= (acumularVoltas(historico).at(-1) ?? 0),
+      abandonou: replay.abandonou(item.jogadorId, tempoSimMs),
+      parou: replay.chegou(item.jogadorId, tempoSimMs) || replay.parado(item.jogadorId, tempoSimMs),
     };
   });
   const niveisSpray =
@@ -331,18 +334,18 @@ export function TelaCorrida({
       : null;
 
   const carrosDoReplay = resultado.classificacao.map((item, indice) => {
-    const { ponto, sob, rumo, parou } = posicoes[indice];
-    const congelado = item.status === 'dnf' && parou;
+    const { ponto, sob, rumo, abandonou } = posicoes[indice];
+    const guinada = movimentoReduzido ? 0 : guinadaNoInstante(replay, item.jogadorId, tempoSimMs, simPorReal);
     const ehHumano = ehHumanoId(state, item.jogadorId);
     const ehLocal = jogadorLocalId === undefined ? ehHumano : item.jogadorId === jogadorLocalId;
     const classes = [
       'tracado-svg__carro',
       ehHumano ? 'tracado-svg__carro--humano' : '',
-      congelado ? 'tracado-svg__carro--congelado' : '',
+      abandonou ? 'tracado-svg__carro--congelado' : '',
     ]
       .filter(Boolean)
       .join(' ');
-    const transform = `translate(${ponto.x.toFixed(2)} ${ponto.y.toFixed(2)}) rotate(${rumo.toFixed(1)}) scale(${ehHumano ? escalas.humano : escalas.bot})`;
+    const transform = `translate(${ponto.x.toFixed(2)} ${ponto.y.toFixed(2)}) rotate(${(rumo + guinada).toFixed(1)}) scale(${ehHumano ? escalas.humano : escalas.bot})`;
     const nivelSpray = niveisSpray?.[indice] ?? 0;
     return {
       // PR 2b: carro na passagem de baixo de um viaduto é desenhado ANTES do
@@ -358,7 +361,7 @@ export function TelaCorrida({
           classes={classes}
           contorno={ehHumano ? CONTORNO_HUMANO : contornoDoBot(telaEstreita)}
           halo={ehLocal}
-          titulo={`${nomeDoJogadorId(state, item.jogadorId)} — ${nomePiloto(state, item.jogadorId)}`}
+          titulo={ehHumano ? `${nomeDoJogadorId(state, item.jogadorId)} — ${nomePiloto(state, item.jogadorId)}` : nomeNoPainel(item.jogadorId)}
         />
       ),
     };
@@ -426,6 +429,10 @@ export function TelaCorrida({
               {camadaDeCarros(true)}
               <ViadutosDaPista pistaId={pista.id} />
               {camadaDeCarros(false)}
+              {!movimentoReduzido &&
+                efeitosNoInstante(replay, resultado, pista.id, tempoSimMs, simPorReal).map(({ chave, ...efeito }) => (
+                  <EfeitoDeIncidente key={chave} {...efeito} />
+                ))}
             </svg>
             {resultado.chuva && !movimentoReduzido && (
               <div className="chuva-replay" aria-hidden="true">
@@ -452,7 +459,7 @@ export function TelaCorrida({
             return (
               <li key={item.jogadorId} className={classes}>
                 <span className="classificacao-ao-vivo__posicao">{idx + 1}</span>
-                <span className="classificacao-ao-vivo__nome">{nomeDoJogadorId(state, item.jogadorId)}</span>
+                <span className="classificacao-ao-vivo__nome">{nomeNoPainel(item.jogadorId)}</span>
                 {item.status === 'dnf' && <span className="badge-dnf">DNF</span>}
                 {item.status === 'pit' && <span className="badge-pit">🔧 PIT</span>}
                 {item.status === 'terminou' && <span className="classificacao-ao-vivo__chegou">🏁</span>}
@@ -473,26 +480,21 @@ export function TelaCorrida({
         {eventosOcorridos
           .slice()
           .reverse()
-          .map(({ evento, frase, caiuAtrasDe, entrouNosBoxes }, idx) => (
-            <li key={`${evento.jogadorId}-${evento.tipo}-${evento.volta}-${idx}`}>
-              <span className="ticker-eventos__volta">V{evento.volta}</span>
-              <span>
-                {nomeDoJogadorId(state, evento.jogadorId)} ({nomePiloto(state, evento.jogadorId)}) —{' '}
-                {frase}
-                {/* Fraseado RELACIONAL, nunca posição absoluta ("caiu para
-                    8º"): o painel ao lado ordena por progresso contínuo no
-                    instante do replay, e esta comparação é na fronteira da
-                    volta — um número aqui brigaria com o número de lá. */}
-                {caiuAtrasDe !== null && (
-                  <span className="ticker-eventos__consequencia">
-                    {' '}
-                    e caiu atrás de {nomeDoJogadorId(state, caiuAtrasDe)}
-                  </span>
-                )}
-                {entrouNosBoxes && <span className="ticker-eventos__pit"> · entrou nos boxes</span>}
-              </span>
-            </li>
-          ))}
+          .map((narrada) => {
+            const { evento, frase, foiParaOsBoxes } = narrada;
+            const consequencia = textoDaConsequencia(narrada);
+            return (
+              <li key={`${evento.jogadorId}-${evento.tipo}-${evento.volta}`}>
+                <span className="ticker-eventos__volta">V{evento.volta}</span>
+                <span>
+                  <span className="ticker-eventos__piloto">{pilotos.get(evento.jogadorId) ?? '?'}</span>
+                  {ehHumanoId(state, evento.jogadorId) && ` (${nomeDoJogadorId(state, evento.jogadorId)})`} {frase}
+                  {consequencia !== '' && <span className="ticker-eventos__consequencia">{consequencia}</span>}
+                  {foiParaOsBoxes && <span className="ticker-eventos__pit"> e foi para os boxes</span>}
+                </span>
+              </li>
+            );
+          })}
       </ul>
 
       <button type="button" className="botao-primario" onClick={onAcelerar}>

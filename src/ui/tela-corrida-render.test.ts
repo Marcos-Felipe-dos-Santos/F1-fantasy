@@ -4,17 +4,20 @@
  * com `createElement` em vez de JSX.
  */
 
+import { readFileSync } from 'node:fs';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { atribuirPerfis } from '../engine/bots';
 import { criarDraft, resolverBots } from '../engine/draft';
 import type { DraftState, Jogador } from '../engine/types';
+import { EfeitoDeIncidente } from './CarroReplay';
 import { dataset } from './dataset-app';
 import { diferencasParaLider, formatarDiferenca } from './diferenca-lider';
 import { replayDaCorrida } from './fim-da-corrida';
-import { classificacaoAoVivo, pontoNoTracado, prepararCorrida } from './fluxo-corrida';
-import { nomeJogador } from './loadout-view';
+import { classificacaoAoVivo, MS_REPLAY_POR_VOLTA, pontoNoTracado, prepararCorrida } from './fluxo-corrida';
+import { efeitosNoInstante } from './incidentes-replay';
+import { nomeJogador, rotulosDosPilotos } from './loadout-view';
 import { linhaDoTempoDoPit } from './pit-replay';
 import { tracadoSuavizado } from './suavizacao';
 import { TelaCorrida } from './TelaCorrida';
@@ -42,8 +45,13 @@ function estadoComHumano(): DraftState {
 
 const estado = estadoComHumano();
 
-/** Mesmo nome que o painel escreve: `nomeJogador`. */
-const nomeNoPainel = (id: string) => nomeJogador(estado.jogadores.find((j) => j.id === id)!);
+const rotulos = rotulosDosPilotos(estado.loadouts, dataset);
+
+/** Mesmo nome que o painel escreve: o piloto; o humano segue com o nome dele (PR 2d). */
+const nomeNoPainel = (id: string) => {
+  const jogador = estado.jogadores.find((j) => j.id === id)!;
+  return jogador.tipo === 'humano' ? nomeJogador(jogador) : rotulos.get(id)!;
+};
 
 function corridaCom(chuva: boolean, pistaId = 'pista-spa') {
   for (let seed = 1; seed < 200; seed++) {
@@ -261,6 +269,138 @@ describe('carros', () => {
     expect(tabuleiro).toBeGreaterThan(0);
     expect(primeiro).toBeLessThan(tabuleiro);
     expect(html.lastIndexOf('<g class="tracado-svg__carro')).toBeGreaterThan(tabuleiro);
+  });
+});
+
+describe('incidentes na tela (PR 2d)', () => {
+  const achar = (criterio: (c: ReturnType<typeof corridaCom>, r: ReturnType<typeof replayDaCorrida>) => string | undefined) => {
+    for (let seed = 1; seed < 400; seed++) {
+      const corrida = prepararCorrida(dataset, estado, 'pista-spa', seed);
+      const replay = replayDaCorrida(corrida.resultado, corrida.pista);
+      const id = criterio(corrida, replay);
+      if (id !== undefined) return { corrida, id, replay };
+    }
+    throw new Error('sem corrida com esse caso');
+  };
+  const linhasDoTicker = (html: string) => [...html.matchAll(/<li><span class="ticker-eventos__volta">.*?<\/li>/g)].map((m) => m[0]);
+  const comIncidente = (chuva: boolean) =>
+    achar((c, r) => (c.resultado.chuva === chuva ? c.resultado.classificacao.find((x) => x.jogadorId !== 'j01' && r.incidentes(x.jogadorId).length > 0)?.jogadorId : undefined));
+
+  it('o painel e o ticker não mostram "bot-" nem o id do jogador', () => {
+    const corrida = corridaCom(false);
+    const html = tela(corrida, corrida.resultado.classificacao[0].tempoTotal);
+    const nomes = [...html.matchAll(/classificacao-ao-vivo__nome">([^<]*)</g)].map((m) => m[1]);
+    expect(nomes).toHaveLength(22);
+    for (const n of nomes) expect(n).not.toMatch(/^(bot-\d+|j\d+)$/);
+    expect(nomes).toContain('Você');
+    expect(html).toContain('ticker-eventos__piloto');
+  });
+
+  it('o evento entra no ticker no instante do carro, não na volta do líder', () => {
+    const { corrida, id, replay } = comIncidente(false);
+    const [inc] = replay.incidentes(id);
+    const nome = rotulos.get(id)!;
+    const conta = (t: number) => linhasDoTicker(tela(corrida, t)).filter((l) => l.includes(`>${nome}<`) && l.includes(`>V${inc.evento.volta}<`)).length;
+    expect(conta(inc.inicio - 1)).toBe(0);
+    expect(conta(inc.inicio)).toBe(1);
+  });
+
+  it('a frase traz o piloto em destaque e a consequência', () => {
+    const { corrida, id, replay } = comIncidente(false);
+    const [inc] = replay.incidentes(id);
+    const nome = rotulos.get(id)!;
+    const linha = linhasDoTicker(tela(corrida, inc.fim)).find((l) => l.includes(`>${nome}<`))!;
+    expect(linha).toContain(`<span class="ticker-eventos__piloto">${nome}</span>`);
+    expect(linha).toMatch(/perdeu \d+,\d s/);
+    expect(linha).not.toContain('bot-');
+  });
+
+  it('o ticker do humano diz o piloto e o nome do jogador', () => {
+    const { corrida, replay } = achar((_c, r) => (r.incidentes('j01').length > 0 ? 'j01' : undefined));
+    const [inc] = replay.incidentes('j01');
+    const linha = linhasDoTicker(tela(corrida, inc.fim)).find((l) => l.includes(`>${rotulos.get('j01')}<`))!;
+    expect(linha).toContain('(Você)');
+  });
+
+  it('desenha o efeito no momento e o tira no fim; com movimento reduzido, nada', () => {
+    const { corrida, id, replay } = comIncidente(false);
+    const [inc] = replay.incidentes(id);
+    expect(tela(corrida, inc.inicio)).toContain('tracado-svg__efeito--fumaca');
+    expect(tela(corrida, inc.inicio - 1)).not.toContain('tracado-svg__efeito');
+    tela_.reduzido = true;
+    expect(tela(corrida, inc.inicio)).not.toContain('tracado-svg__efeito');
+  });
+
+  it('na chuva o erro de piloto solta spray', () => {
+    const { corrida, id, replay } = achar((c, r) =>
+      c.resultado.chuva && r.incidentes('j02').some((i) => i.evento.tipo === 'erro-piloto') ? 'j02' : undefined,
+    );
+    const inc = replay.incidentes(id).find((i) => i.evento.tipo === 'erro-piloto')!;
+    expect(tela(corrida, inc.inicio)).toContain('tracado-svg__efeito--spray');
+  });
+
+  it('a guinada entra no rumo; com movimento reduzido, o carro só para', () => {
+    const { corrida, id, replay } = achar((_c, r) => (r.incidentes('j01').some((i) => i.evento.tipo === 'erro-piloto') ? 'j01' : undefined));
+    const inc = replay.incidentes(id).find((i) => i.evento.tipo === 'erro-piloto')!;
+    const h = corrida.resultado.historicoVoltas[id];
+    const rotacao = (html: string) => /<g class="tracado-svg__carro tracado-svg__carro--humano[^"]*" transform="[^"]*rotate\(([-\d.]+)\)/.exec(html)![1];
+    const escala = corrida.resultado.classificacao[0].tempoTotal / (corrida.pista.voltas * MS_REPLAY_POR_VOLTA.media);
+    const t = inc.inicio + 175 * escala;
+    const { rumo } = replay.posicao(id, h, 'terminou', t, false);
+    expect(rotacao(tela(corrida, t))).not.toBe(rumo.toFixed(1));
+    tela_.reduzido = true;
+    expect(rotacao(tela(corrida, t))).toBe(replay.posicao(id, h, 'terminou', t, true).rumo.toFixed(1));
+  });
+
+  it('carro parado no incidente não solta spray', () => {
+    const { corrida, replay } = achar((c, r) => (c.resultado.chuva && r.incidentes('j01').length > 0 ? 'j01' : undefined));
+    const [inc] = replay.incidentes('j01');
+    const html = tela(corrida, inc.inicio + 1);
+    const transform = /<g class="tracado-svg__carro tracado-svg__carro--humano[^"]*" transform="([^"]+)"/.exec(html)![1];
+    for (const nivel of [1, 2, 3]) expect(html).not.toContain(`href="#spray-${nivel}" transform="${transform}"`);
+  });
+
+  it('DNF: congelado e parado no ponto, com o selo de DNF no instante do abandono', () => {
+    const { corrida, id, replay } = achar((c) => c.resultado.classificacao.find((x) => x.status === 'dnf')?.jogadorId);
+    const ab = replay.abandono(id)!;
+    const nome = nomeNoPainel(id);
+    const linha = (t: number) => [...tela(corrida, t).matchAll(/<li class="classificacao-ao-vivo__linha[^"]*">(.*?)<\/li>/g)].map((m) => m[1]).find((l) => l.includes(`>${nome}<`))!;
+    expect(linha(ab.instante - 1)).not.toContain('badge-dnf');
+    expect(linha(ab.instante)).toContain('badge-dnf');
+    expect(tela(corrida, ab.instante)).toContain('tracado-svg__carro--congelado');
+  });
+
+  it('a frase do incidente na volta de pit termina em "e foi para os boxes"', () => {
+    const { corrida, id, replay } = achar((c, r) =>
+      c.resultado.classificacao.find((x) => r.incidentes(x.jogadorId).some((i) => c.resultado.voltasDePit[x.jogadorId].includes(i.evento.volta)))?.jogadorId,
+    );
+    const inc = replay.incidentes(id).find((i) => corrida.resultado.voltasDePit[id].includes(i.evento.volta))!;
+    const linha = linhasDoTicker(tela(corrida, inc.fim)).find((l) => l.includes(`>${rotulos.get(id)}<`) && l.includes(`>V${inc.evento.volta}<`))!;
+    expect(linha).toContain('e foi para os boxes');
+  });
+
+  it('o efeito cresce e some com a idade', () => {
+    const efeito = (idade: number) =>
+      renderToStaticMarkup(createElement(EfeitoDeIncidente, { tipo: 'fumaca', ponto: { x: 1, y: 2 }, rumo: 0, idade }));
+    const raios = (html: string) => [...html.matchAll(/ r="([\d.]+)"/g)].map((m) => Number(m[1]));
+    expect(efeito(0)).toContain('opacity="1.00"');
+    expect(efeito(0.5)).toContain('opacity="0.50"');
+    expect(raios(efeito(0.5))[0]).toBeGreaterThan(raios(efeito(0))[0]);
+    expect(efeito(0)).toContain('tracado-svg__efeito--fumaca');
+  });
+
+  it('as cores do efeito são tokens da pista, não de raridade', () => {
+    const css = readFileSync('src/ui/estilos.css', 'utf8');
+    expect(css).toMatch(/\.tracado-svg__efeito--fumaca \{\s*fill: var\(--pista-limite\);/);
+    expect(css).toMatch(/\.tracado-svg__efeito--spray \{\s*fill: var\(--carro-halo\);/);
+  });
+
+  it('a tela desenha a mesma lista pura que os testes de duração cobrem', () => {
+    const { corrida, id, replay } = comIncidente(false);
+    const [inc] = replay.incidentes(id);
+    const escala = corrida.resultado.classificacao[0].tempoTotal / (corrida.pista.voltas * MS_REPLAY_POR_VOLTA.media);
+    const lista = efeitosNoInstante(replay, corrida.resultado, corrida.pista.id, inc.inicio, escala);
+    expect(tela(corrida, inc.inicio).match(/tracado-svg__efeito--/g)).toHaveLength(lista.length);
   });
 });
 

@@ -7,7 +7,7 @@
  */
 
 import type { Dataset } from '../engine/dataset';
-import type { Jogador, ProgressoJogador } from '../engine/types';
+import type { Jogador, Loadout, ProgressoJogador } from '../engine/types';
 
 /**
  * Nome de exibição de um jogador (PR 2.1a): usa `jogador.nome` (aparado)
@@ -17,6 +17,36 @@ import type { Jogador, ProgressoJogador } from '../engine/types';
  */
 export function nomeJogador(jogador: Jogador): string {
   return jogador.nome?.trim() || (jogador.tipo === 'humano' ? 'Você' : jogador.id);
+}
+
+/**
+ * Nome do piloto de cada carro, para o painel e o ticker (PR 2d). Decisão do Marcos: o
+ * ano só entra quando o nome se repete no grid, em ~1,45 nomes por corrida. A mesma
+ * temporada em dois carros (26% das corridas) deixaria o ano igual: daí o "(2)".
+ */
+export function rotulosDosPilotos(
+  loadouts: Readonly<Record<string, Loadout>>,
+  dataset: Pick<Dataset, 'pilotosById'>,
+): Map<string, string> {
+  const pilotos = Object.entries(loadouts).map(([jogadorId, l]) => ({ jogadorId, piloto: dataset.pilotosById.get(l.pilotoId) }));
+  const vezes = new Map<string, number>();
+  for (const { piloto } of pilotos) {
+    if (piloto !== undefined) vezes.set(piloto.nome, (vezes.get(piloto.nome) ?? 0) + 1);
+  }
+  const jaUsados = new Map<string, number>();
+  const rotulos = new Map<string, string>();
+  // Ordem de `jogadorId`: `Object.entries` segue a de criação, e o rótulo não pode depender dela.
+  for (const { jogadorId, piloto } of [...pilotos].sort((a, b) => (a.jogadorId < b.jogadorId ? -1 : 1))) {
+    if (piloto === undefined) {
+      rotulos.set(jogadorId, '?');
+      continue;
+    }
+    const base = (vezes.get(piloto.nome) ?? 0) > 1 ? `${piloto.nome} ${piloto.ano}` : piloto.nome;
+    const vez = (jaUsados.get(base) ?? 0) + 1;
+    jaUsados.set(base, vez);
+    rotulos.set(jogadorId, vez === 1 ? base : `${base} (${vez})`);
+  }
+  return rotulos;
 }
 
 /** Um slot do carro já preenchido, pronto pra exibição. */

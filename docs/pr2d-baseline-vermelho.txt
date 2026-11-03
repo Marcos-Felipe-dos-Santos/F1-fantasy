@@ -1,0 +1,243 @@
+
+ RUN  v4.1.10 E:/projetos/F1 fantasy
+
+ ❯ src/ui/incidentes-replay.test.ts (0 test)
+ ❯ src/ui/tela-corrida-render.test.ts (0 test)
+ ❯ src/ui/narracao.test.ts (24 tests | 11 failed) 35ms
+     × conta quem passa durante a parada: Y e Z vêm logo atrás e passam, W não chega 7ms
+     × uma posição: singular; nenhuma: só o tempo 1ms
+     × quem já estava à frente não conta como posição perdida 1ms
+     × quebra e punição não têm consequência na parada 0ms
+     × nunca diz posição absoluta 0ms
+     × o evento sai no instante do CARRO: parada, abandono ou passagem pela linha 0ms
+     × incidente na volta de pit vira "e foi para os boxes"; fora dela, não 1ms
+     × incidente depois da linha do retardatário não é narrado 3ms
+     × mesmo tipo na mesma corrida não repete frase enquanto houver frase nova 1ms
+     × frase nenhuma repete o que a consequência diz 0ms
+     × determinismo: mesma entrada, mesma saída, e memoizado pela corrida 2ms
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/ui/incidentes-replay.test.ts [ src/ui/incidentes-replay.test.ts ]
+Error: Cannot find module './incidentes-replay' imported from E:/projetos/F1 fantasy/src/ui/incidentes-replay.test.ts
+ ❯ src/ui/incidentes-replay.test.ts:11:1
+      9| import { replayDaCorrida } from './fim-da-corrida';
+     10| import { acumularVoltas, classificacaoAoVivo, prepararCorrida } from '…
+     11| import {
+       | ^
+     12|   DURACAO_EFEITO_MS,
+     13|   DURACAO_GUINADA_MS,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/13]⎯
+
+ FAIL  src/ui/tela-corrida-render.test.ts [ src/ui/tela-corrida-render.test.ts ]
+Error: Cannot find module '/src/ui/incidentes-replay' imported from E:/projetos/F1 fantasy/src/ui/tela-corrida-render.test.ts
+ ❯ src/ui/tela-corrida-render.test.ts:17:1
+     15| import { replayDaCorrida } from './fim-da-corrida';
+     16| import { classificacaoAoVivo, pontoNoTracado, prepararCorrida } from '…
+     17| import { efeitosNoInstante } from './incidentes-replay';
+       | ^
+     18| import { nomeJogador, rotulosDosPilotos } from './loadout-view';
+     19| import { linhaDoTempoDoPit } from './pit-replay';
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/13]⎯
+
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 11 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/ui/narracao.test.ts > narrarEventos — consequência na parada (PR 2d) > conta quem passa durante a parada: Y e Z vêm logo atrás e passam, W não chega
+AssertionError: expected undefined to be 300 // Object.is equality
+
+- Expected:
+300
+
++ Received:
+undefined
+
+ ❯ src/ui/narracao.test.ts:207:30
+    205|     );
+    206|     const [n] = narrar(r);
+    207|     expect(n.tempoPerdidoMs).toBe(300);
+       |                              ^
+    208|     expect(n.posicoesPerdidas).toBe(2);
+    209|     expect(textoDaConsequencia(n)).toBe(', perdeu 0,3 s e 2 posições');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/13]⎯
+
+ FAIL  src/ui/narracao.test.ts > narrarEventos — consequência na parada (PR 2d) > uma posição: singular; nenhuma: só o tempo
+TypeError: textoDaConsequencia is not a function
+ ❯ src/ui/narracao.test.ts:214:12
+    212|   it('uma posição: singular; nenhuma: só o tempo', () => {
+    213|     const uma = resultadoDe({ X: dez(1000, { 3: 300 }), Y: dez(1010), …
+    214|     expect(textoDaConsequencia(narrar(uma)[0])).toBe(', perdeu 0,3 s e…
+       |            ^
+    215|     const nenhuma = resultadoDe({ X: dez(1000, { 3: 300 }), Y: dez(140…
+    216|     expect(narrar(nenhuma)[0].posicoesPerdidas).toBe(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/13]⎯
+
+ FAIL  src/ui/narracao.test.ts > narrarEventos — consequência na parada (PR 2d) > quem já estava à frente não conta como posição perdida
+AssertionError: expected undefined to be +0 // Object.is equality
+
+- Expected:
+0
+
++ Received:
+undefined
+
+ ❯ src/ui/narracao.test.ts:222:43
+    220|   it('quem já estava à frente não conta como posição perdida', () => {
+    221|     const r = resultadoDe({ Y: dez(900), X: dez(1000, { 3: 300 }) }, […
+    222|     expect(narrar(r)[0].posicoesPerdidas).toBe(0);
+       |                                           ^
+    223|   });
+    224|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/13]⎯
+
+ FAIL  src/ui/narracao.test.ts > narrarEventos — consequência na parada (PR 2d) > quebra e punição não têm consequência na parada
+AssertionError: expected undefined to be null
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ src/ui/narracao.test.ts:239:35
+    237|     const quebra = narradas.find((n) => n.evento.tipo === 'quebra-chas…
+    238|     const punicao = narradas.find((n) => n.evento.tipo === 'investigac…
+    239|     expect(quebra.tempoPerdidoMs).toBeNull();
+       |                                   ^
+    240|     expect(quebra.posicoesPerdidas).toBeNull();
+    241|     expect(textoDaConsequencia(quebra)).toBe('');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/13]⎯
+
+ FAIL  src/ui/narracao.test.ts > narrarEventos — consequência na parada (PR 2d) > nunca diz posição absoluta
+TypeError: textoDaConsequencia is not a function
+ ❯ src/ui/narracao.test.ts:248:12
+    246|   it('nunca diz posição absoluta', () => {
+    247|     const r = resultadoDe({ X: dez(1000, { 3: 300 }), Y: dez(1010) }, …
+    248|     expect(textoDaConsequencia(narrar(r)[0])).not.toMatch(/\d+º|para \…
+       |            ^
+    249|   });
+    250|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/13]⎯
+
+ FAIL  src/ui/narracao.test.ts > narrarEventos — consequência na parada (PR 2d) > o evento sai no instante do CARRO: parada, abandono ou passagem pela linha
+TypeError: replay.incidentes is not a function
+ ❯ src/ui/narracao.test.ts:265:43
+    263|     const replay = replayDaCorrida(r, PISTA);
+    264|     const em = (tipo: TipoEvento) => narrar(r).find((n) => n.evento.ti…
+    265|     expect(em('erro-piloto')).toBe(replay.incidentes('X')[0].inicio);
+       |                                           ^
+    266|     expect(em('quebra-motor')).toBe(replay.abandono('D')!.instante);
+    267|     expect(em('investigacao')).toBe(replay.chegada('X')!.instante);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/13]⎯
+
+ FAIL  src/ui/narracao.test.ts > narrarEventos — consequência na parada (PR 2d) > incidente na volta de pit vira "e foi para os boxes"; fora dela, não
+AssertionError: expected undefined to be true // Object.is equality
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ src/ui/narracao.test.ts:281:41
+    279|   it('incidente na volta de pit vira "e foi para os boxes"; fora dela,…
+    280|     const r = resultadoDe({ X: dez(1000, { 3: 300 }) }, [erro('X', 3, …
+    281|     expect(narrar(r)[0].foiParaOsBoxes).toBe(true);
+       |                                         ^
+    282|     const fora = resultadoDe({ X: dez(1000, { 3: 300 }) }, [erro('X', …
+    283|     expect(narrar(fora)[0].foiParaOsBoxes).toBe(false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/13]⎯
+
+ FAIL  src/ui/narracao.test.ts > narrarEventos — consequência na parada (PR 2d) > incidente depois da linha do retardatário não é narrado
+AssertionError: expected [ { evento: { …(4) }, …(3) } ] to have a length of +0 but got 1
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ src/ui/narracao.test.ts:291:23
+    289|       [erro('C', 10, 200)],
+    290|     );
+    291|     expect(narrar(r)).toHaveLength(0);
+       |                       ^
+    292|   });
+    293|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/13]⎯
+
+ FAIL  src/ui/narracao.test.ts > narrarEventos — consequência na parada (PR 2d) > mesmo tipo na mesma corrida não repete frase enquanto houver frase nova
+AssertionError: expected 6 to be 10 // Object.is equality
+
+- Expected
++ Received
+
+- 10
++ 6
+
+ ❯ src/ui/narracao.test.ts:298:34
+    296|     const historicos = Object.fromEntries(eventos.map((e) => [e.jogado…
+    297|     const frases = narrar(resultadoDe(historicos, eventos)).map((n) =>…
+    298|     expect(new Set(frases).size).toBe(frases.length);
+       |                                  ^
+    299|     for (const f of frases) expect(VARIANTES_SECO['erro-piloto']).toCo…
+    300|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/13]⎯
+
+ FAIL  src/ui/narracao.test.ts > narrarEventos — consequência na parada (PR 2d) > frase nenhuma repete o que a consequência diz
+AssertionError: expected 'alargou demais e perdeu tempo' not to match /perdeu tempo/
+
+- Expected:
+/perdeu tempo/
+
++ Received:
+"alargou demais e perdeu tempo"
+
+ ❯ src/ui/narracao.test.ts:304:42
+    302|   it('frase nenhuma repete o que a consequência diz', () => {
+    303|     const todas = [...Object.values(VARIANTES_SECO), ...Object.values(…
+    304|     for (const f of todas) expect(f).not.toMatch(/perdeu tempo/);
+       |                                          ^
+    305|   });
+    306|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/13]⎯
+
+ FAIL  src/ui/narracao.test.ts > narrarEventos — consequência na parada (PR 2d) > determinismo: mesma entrada, mesma saída, e memoizado pela corrida
+AssertionError: expected [ { evento: { …(4) }, …(3) } ] to be [ { evento: { …(4) }, …(3) } ] // Object.is equality
+
+If it should pass with deep equality, replace "toBe" with "toStrictEqual"
+
+Expected: [ { evento: { …(4) }, …(3) } ]
+Received: serializes to the same string
+
+
+Compared values have no visual difference.
+
+ ❯ src/ui/narracao.test.ts:309:23
+    307|   it('determinismo: mesma entrada, mesma saída, e memoizado pela corri…
+    308|     const r = resultadoDe({ X: dez(1000, { 3: 300 }), Y: dez(1010) }, …
+    309|     expect(narrar(r)).toBe(narrar(r));
+       |                       ^
+    310|     const copia = JSON.parse(JSON.stringify(r)) as ResultadoCorrida;
+    311|     expect(narrar(copia)).toEqual(narrar(r));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/13]⎯
+
+
+ Test Files  3 failed (3)
+      Tests  11 failed | 13 passed (24)
+   Start at  22:48:00
+   Duration  509ms (transform 608ms, setup 0ms, import 289ms, tests 35ms, environment 0ms)
+

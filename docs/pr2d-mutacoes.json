@@ -1,0 +1,428 @@
+[
+  {
+    "nome": "custo-espalhado",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/incidentes-replay.test.ts > custo concentrado num ponto da volta (PR 2d) > o carro fica parado na fração sorteada pelo tempo exato do custo"
+  },
+  {
+    "nome": "ritmo-sem-custo",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/incidentes-replay.test.ts > custo concentrado num ponto da volta (PR 2d) > fora da parada ele anda no ritmo limpo, não no da volta com o custo"
+  },
+  {
+    "nome": "abandono-sem-custo",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/incidentes-replay.test.ts > DNF: para no ponto do abandono (PR 2d) > erro e abandono na mesma volta, em qualquer seed: primeiro o erro, e o carro chega ao ponto sem salto"
+  },
+  {
+    "nome": "inicio-sem-ritmo",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/incidentes-replay.test.ts > custo concentrado num ponto da volta (PR 2d) > fora da parada ele anda no ritmo limpo, não no da volta com o custo"
+  },
+  {
+    "nome": "fim-sem-custo",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/incidentes-replay.test.ts > custo concentrado num ponto da volta (PR 2d) > o carro fica parado na fração sorteada pelo tempo exato do custo"
+  },
+  {
+    "nome": "fracao-nao-acumula",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/incidentes-replay.test.ts > custo concentrado num ponto da volta (PR 2d) > dois incidentes na mesma volta: duas paradas, e a volta fecha no tempo do motor"
+  },
+  {
+    "nome": "inverso-sem-custo",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/incidentes-replay.test.ts > custo concentrado num ponto da volta (PR 2d) > o inverso do progresso pula a parada: antes dela, o início; depois, soma o custo"
+  },
+  {
+    "nome": "inverso-ignora-plano",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/incidentes-replay.test.ts > custo concentrado num ponto da volta (PR 2d) > o inverso do progresso pula a parada: antes dela, o início; depois, soma o custo"
+  },
+  {
+    "nome": "margem-do-local",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/incidentes-replay.test.ts > custo concentrado num ponto da volta (PR 2d) > o local fica entre 8% e 92% da volta, em qualquer seed"
+  },
+  {
+    "nome": "sem-folga-pit-depois",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/incidentes-replay.test.ts > corridas reais: sem teleporte, e a linha é a do motor > varredura: nenhum incidente encosta numa janela de pit"
+  },
+  {
+    "nome": "sem-folga-pit-antes",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/incidentes-replay.test.ts > corridas reais: sem teleporte, e a linha é a do motor > varredura: nenhum incidente encosta numa janela de pit"
+  },
+  {
+    "nome": "plano-ignora-pit-antes",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/incidentes-replay.test.ts > corridas reais: sem teleporte, e a linha é a do motor > pista-spa: o progresso nunca volta nem salta"
+  },
+  {
+    "nome": "plano-ignora-pit-na-volta",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/incidentes-replay.test.ts > corridas reais: sem teleporte, e a linha é a do motor > incidente na volta de pit: acontece antes da janela do box, que não muda"
+  },
+  {
+    "nome": "abandono-na-volta-inteira",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/incidentes-replay.test.ts > DNF: para no ponto do abandono (PR 2d) > erro e abandono na mesma volta, em qualquer seed: primeiro o erro, e o carro chega ao ponto sem salto"
+  },
+  {
+    "nome": "erro-depois-do-abandono",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/incidentes-replay.test.ts > DNF: para no ponto do abandono (PR 2d) > erro e abandono na mesma volta, em qualquer seed: primeiro o erro, e o carro chega ao ponto sem salto"
+  },
+  {
+    "nome": "dnf-sem-plano",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/narracao.test.ts > narrarEventos — consequência na parada (PR 2d) > quebra e punição não têm consequência na parada"
+  },
+  {
+    "nome": "progresso-do-dnf-na-volta",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/fim-da-corrida.test.ts > painel depois da bandeirada > antes da bandeirada, o DNF segue onde parou"
+  },
+  {
+    "nome": "posicao-sem-abandono",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/incidentes-replay.test.ts > DNF: para no ponto do abandono (PR 2d) > fica parado na fração sorteada, sem saltar: nem para a linha nem para o meio da pista"
+  },
+  {
+    "nome": "posicao-sem-plano",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/incidentes-replay.test.ts > custo concentrado num ponto da volta (PR 2d) > o carro no ponto do incidente fica no mesmo lugar do mapa, com ou sem movimento reduzido"
+  },
+  {
+    "nome": "parado-sem-incidente",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/incidentes-replay.test.ts > custo concentrado num ponto da volta (PR 2d) > o carro no ponto do incidente fica no mesmo lugar do mapa, com ou sem movimento reduzido"
+  },
+  {
+    "nome": "parado-sem-abandono",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/tela-corrida-render.test.ts > spray > carro parado na vaga e carro que já chegou não soltam spray"
+  },
+  {
+    "nome": "efeito-em-tempo-simulado",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/incidentes-replay.test.ts > efeito no momento: duração em tempo REAL (decisão do Marcos, ~700 ms) > dura 700 ms reais em qualquer velocidade, mesmo com o custo menor que isso"
+  },
+  {
+    "nome": "efeito-duracao",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/incidentes-replay.test.ts > efeito no momento: duração em tempo REAL (decisão do Marcos, ~700 ms) > as durações são as decididas"
+  },
+  {
+    "nome": "efeito-chuva-em-tudo",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/incidentes-replay.test.ts > efeito no momento: duração em tempo REAL (decisão do Marcos, ~700 ms) > erro no seco: fumaça; erro na chuva: spray; pane e quebra: fumaça também na chuva"
+  },
+  {
+    "nome": "efeito-sem-chuva",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/tela-corrida-render.test.ts > incidentes na tela (PR 2d) > na chuva o erro de piloto solta spray"
+  },
+  {
+    "nome": "efeito-sem-abandono",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/incidentes-replay.test.ts > efeito no momento: duração em tempo REAL (decisão do Marcos, ~700 ms) > erro no seco: fumaça; erro na chuva: spray; pane e quebra: fumaça também na chuva"
+  },
+  {
+    "nome": "efeito-idade",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/incidentes-replay.test.ts > efeito no momento: duração em tempo REAL (decisão do Marcos, ~700 ms) > a idade vai de 0 a 1 e o efeito fica no ponto do incidente, não no carro que já saiu"
+  },
+  {
+    "nome": "guinada-em-toda-pane",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/incidentes-replay.test.ts > efeito no momento: duração em tempo REAL (decisão do Marcos, ~700 ms) > guinada: curta, volta a zero, e só no erro de piloto"
+  },
+  {
+    "nome": "guinada-sem-voltar",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/incidentes-replay.test.ts > efeito no momento: duração em tempo REAL (decisão do Marcos, ~700 ms) > guinada: curta, volta a zero, e só no erro de piloto"
+  },
+  {
+    "nome": "guinada-em-tempo-simulado",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/tela-corrida-render.test.ts > incidentes na tela (PR 2d) > a guinada entra no rumo; com movimento reduzido, o carro só para"
+  },
+  {
+    "nome": "incidente-depois-da-linha",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/narracao.test.ts > narrarEventos — consequência na parada (PR 2d) > incidente depois da linha do retardatário não é narrado"
+  },
+  {
+    "nome": "replay-sem-incidentes",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/incidentes-replay.test.ts > custo concentrado num ponto da volta (PR 2d) > o carro fica parado na fração sorteada pelo tempo exato do custo"
+  },
+  {
+    "nome": "painel-dnf-no-fim-do-historico",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/fim-da-corrida.test.ts > painel depois da bandeirada > antes da bandeirada, o DNF segue onde parou"
+  },
+  {
+    "nome": "hash-sem-jogador",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/incidentes-replay.test.ts > custo concentrado num ponto da volta (PR 2d) > carros diferentes na mesma volta e do mesmo tipo param em pontos diferentes"
+  },
+  {
+    "nome": "hash-sem-divisao",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/incidentes-replay.test.ts > custo concentrado num ponto da volta (PR 2d) > o carro fica parado na fração sorteada pelo tempo exato do custo"
+  },
+  {
+    "nome": "hash-sem-seed",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/incidentes-replay.test.ts > custo concentrado num ponto da volta (PR 2d) > o local é determinístico e sai do hash da corrida"
+  },
+  {
+    "nome": "posicoes-sem-parada",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/narracao.test.ts > narrarEventos — consequência na parada (PR 2d) > quem já estava à frente não conta como posição perdida"
+  },
+  {
+    "nome": "posicoes-conta-sem-passar",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/narracao.test.ts > narrarEventos — consequência na parada (PR 2d) > conta quem passa durante a parada: Y e Z vêm logo atrás e passam, W não chega"
+  },
+  {
+    "nome": "ordem-por-volta",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/narracao.test.ts > narrarEventos — consequência na parada (PR 2d) > o carro lento, na mesma volta, vem depois do rápido, mesmo antes dele nos eventos"
+  },
+  {
+    "nome": "sem-memo",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/narracao.test.ts > narrarEventos — consequência na parada (PR 2d) > determinismo: mesma entrada, mesma saída, e memoizado pela corrida"
+  },
+  {
+    "nome": "frase-repete",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/narracao.test.ts > narrarEventos — consequência na parada (PR 2d) > mais erros que frases: o pool recomeça, sem travar"
+  },
+  {
+    "nome": "frase-trava-no-pool-cheio",
+    "detectada": false,
+    "travou": true,
+    "falha": null
+  },
+  {
+    "nome": "boxes-em-toda-volta",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/narracao.test.ts > narrarEventos — consequência na parada (PR 2d) > incidente na volta de pit vira \"e foi para os boxes\"; fora dela, não"
+  },
+  {
+    "nome": "quebra-com-tempo",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/narracao.test.ts > narrarEventos — consequência na parada (PR 2d) > quebra e punição não têm consequência na parada"
+  },
+  {
+    "nome": "punicao-com-posicoes",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/narracao.test.ts > narrarEventos — consequência na parada (PR 2d) > quebra e punição não têm consequência na parada"
+  },
+  {
+    "nome": "punicao-sem-frase-propria",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/narracao.test.ts > narrarEventos — consequência na parada (PR 2d) > quebra e punição não têm consequência na parada"
+  },
+  {
+    "nome": "posicao-no-plural",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/narracao.test.ts > narrarEventos — consequência na parada (PR 2d) > uma posição: singular; nenhuma: só o tempo"
+  },
+  {
+    "nome": "zero-posicoes-escrito",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/narracao.test.ts > narrarEventos — consequência na parada (PR 2d) > uma posição: singular; nenhuma: só o tempo"
+  },
+  {
+    "nome": "evento-sem-chegada-narrado",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/narracao.test.ts > narrarEventos — consequência na parada (PR 2d) > incidente depois da linha do retardatário não é narrado"
+  },
+  {
+    "nome": "instante-da-punicao",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/narracao.test.ts > narrarEventos — consequência na parada (PR 2d) > o evento sai no instante do CARRO: parada, abandono ou passagem pela linha"
+  },
+  {
+    "nome": "instante-da-quebra",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/narracao.test.ts > narrarEventos — consequência na parada (PR 2d) > o evento sai no instante do CARRO: parada, abandono ou passagem pela linha"
+  },
+  {
+    "nome": "frase-com-perdeu-tempo",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/narracao.test.ts > narrarEventos — consequência na parada (PR 2d) > frase nenhuma repete o que a consequência diz"
+  },
+  {
+    "nome": "ano-sempre",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/loadout-view.test.ts > rotulosDosPilotos (PR 2d) > nome único fica sem ano; nome repetido ganha o ano"
+  },
+  {
+    "nome": "ano-nunca",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/loadout-view.test.ts > rotulosDosPilotos (PR 2d) > nome único fica sem ano; nome repetido ganha o ano"
+  },
+  {
+    "nome": "sem-numero-na-copia",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/loadout-view.test.ts > rotulosDosPilotos (PR 2d) > a mesma temporada em dois carros: o segundo leva o número, pela ordem do id"
+  },
+  {
+    "nome": "ordem-de-criacao",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/loadout-view.test.ts > rotulosDosPilotos (PR 2d) > a mesma temporada em dois carros: o segundo leva o número, pela ordem do id"
+  },
+  {
+    "nome": "painel-com-id",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/tela-corrida-render.test.ts > incidentes na tela (PR 2d) > o painel e o ticker não mostram \"bot-\" nem o id do jogador"
+  },
+  {
+    "nome": "painel-humano-vira-piloto",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/tela-corrida-render.test.ts > incidentes na tela (PR 2d) > o painel e o ticker não mostram \"bot-\" nem o id do jogador"
+  },
+  {
+    "nome": "ticker-na-volta-do-lider",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/tela-corrida-render.test.ts > incidentes na tela (PR 2d) > o evento entra no ticker no instante do carro, não na volta do líder"
+  },
+  {
+    "nome": "ticker-sem-destaque",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/tela-corrida-render.test.ts > incidentes na tela (PR 2d) > o painel e o ticker não mostram \"bot-\" nem o id do jogador"
+  },
+  {
+    "nome": "ticker-sem-jogador",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/tela-corrida-render.test.ts > incidentes na tela (PR 2d) > o ticker do humano diz o piloto e o nome do jogador"
+  },
+  {
+    "nome": "ticker-sem-consequencia",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/tela-corrida-render.test.ts > incidentes na tela (PR 2d) > a frase traz o piloto em destaque e a consequência"
+  },
+  {
+    "nome": "tela-sem-boxes",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/tela-corrida-render.test.ts > incidentes na tela (PR 2d) > a frase do incidente na volta de pit termina em \"e foi para os boxes\""
+  },
+  {
+    "nome": "reduzido-com-guinada",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/tela-corrida-render.test.ts > incidentes na tela (PR 2d) > a guinada entra no rumo; com movimento reduzido, o carro só para"
+  },
+  {
+    "nome": "reduzido-com-efeito",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/tela-corrida-render.test.ts > incidentes na tela (PR 2d) > desenha o efeito no momento e o tira no fim; com movimento reduzido, nada"
+  },
+  {
+    "nome": "tela-sem-guinada",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/tela-corrida-render.test.ts > incidentes na tela (PR 2d) > a guinada entra no rumo; com movimento reduzido, o carro só para"
+  },
+  {
+    "nome": "spray-no-carro-parado",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/tela-corrida-render.test.ts > spray > carro parado na vaga e carro que já chegou não soltam spray"
+  },
+  {
+    "nome": "congelado-sem-abandono",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/tela-corrida-render.test.ts > incidentes na tela (PR 2d) > DNF: congelado e parado no ponto, com o selo de DNF no instante do abandono"
+  },
+  {
+    "nome": "efeito-sem-opacidade",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/tela-corrida-render.test.ts > incidentes na tela (PR 2d) > o efeito cresce e some com a idade"
+  },
+  {
+    "nome": "efeito-sem-crescer",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/tela-corrida-render.test.ts > incidentes na tela (PR 2d) > o efeito cresce e some com a idade"
+  },
+  {
+    "nome": "css-sem-fumaca",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/tela-corrida-render.test.ts > incidentes na tela (PR 2d) > as cores do efeito são tokens da pista, não de raridade"
+  }
+]

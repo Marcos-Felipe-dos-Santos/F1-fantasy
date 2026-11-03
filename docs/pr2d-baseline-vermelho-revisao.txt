@@ -1,0 +1,6 @@
+ FAIL  src/net/cerca-lint.test.ts > cerca de lint — o replay determinístico (src/ui/) > src/ui/incidentes-replay.ts proíbe Math.random e Date.now
+AssertionError: Math.random passou: : expected false to be true // Object.is equality
+ FAIL  src/ui/incidentes-replay.test.ts > DNF: para no ponto do abandono (PR 2d) > achado da revisão: volta curta com erro e abandono, o carro anda no ritmo LIMPO e o er
+AssertionError: expected 214.95253875479875 to be close to 302.00152549082173, received difference is 87.04898673602298, but expected 5e-7
+ Test Files  2 failed (2)
+      Tests  2 failed | 56 passed (58)

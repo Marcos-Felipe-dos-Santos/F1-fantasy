@@ -28,12 +28,8 @@
 
 import type { Pista, ResultadoCorrida } from '../engine/types';
 import { acumularVoltas, lutDoTracado } from './fluxo-corrida';
-import {
-  DISTANCIA_RAMPA,
-  linhaDoTempoDoPit,
-  posicaoNaPista,
-  type LinhaDoTempoPit,
-} from './pit-replay';
+import { linhaDeIncidentes, type LinhaDeIncidentes } from './incidentes-replay';
+import { DISTANCIA_RAMPA, linhaDoTempoDoPit, posicaoNaPista } from './pit-replay';
 import { tracadoSuavizado } from './suavizacao';
 
 /** Fração da velocidade de corrida da pista (decisão do Marcos). */
@@ -50,7 +46,7 @@ export interface ChegadaDoCarro {
   fracaoInicial: number;
 }
 
-export interface ReplayDaCorrida extends LinhaDoTempoPit {
+export interface ReplayDaCorrida extends LinhaDeIncidentes {
   /** Quando o primeiro completa as voltas na pista. `Infinity` se ninguém terminou. */
   bandeirada: number;
   /** Onde o replay para: a passagem do último pela linha. */
@@ -70,7 +66,7 @@ function distanciaNaVoltaLenta(decorrido: number, velocidade: number): number {
 }
 
 function chegadaDoCarro(
-  linha: LinhaDoTempoPit,
+  linha: LinhaDeIncidentes,
   jogadorId: string,
   historico: number[],
   bandeirada: number,
@@ -103,7 +99,7 @@ export function replayDaCorrida(
   const cache = CACHE_REPLAY.get(resultado);
   if (cache !== undefined && cache.pistaId === pista.id) return cache.replay;
 
-  const linha = linhaDoTempoDoPit(resultado, pista);
+  const linha = linhaDeIncidentes(resultado, pista, linhaDoTempoDoPit(resultado, pista));
   const terminaram = resultado.classificacao.filter((c) => c.status === 'terminou');
   const somaDe = (id: string) => acumularVoltas(resultado.historicoVoltas[id]).at(-1) ?? 0;
   const bandeirada = Math.min(...terminaram.map((c) => somaDe(c.jogadorId)));
@@ -138,6 +134,12 @@ export function replayDaCorrida(
       return chegada !== undefined && tempoSimMs >= chegada.instante;
     },
     punicaoMs: (jogadorId) => punicoes.get(jogadorId) ?? 0,
+    // Depois da linha o carro não anda mais na história dele: o incidente não acontece.
+    incidentes(jogadorId) {
+      const todos = linha.incidentes(jogadorId);
+      const chegada = chegadas.get(jogadorId);
+      return chegada === undefined ? todos : todos.filter((i) => i.inicio < chegada.instante);
+    },
 
     progresso(jogadorId, historico, tempoSimMs) {
       const chegada = chegadas.get(jogadorId);

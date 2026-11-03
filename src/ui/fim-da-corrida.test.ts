@@ -195,7 +195,10 @@ describe('painel depois da bandeirada', () => {
 
   it('antes da bandeirada, o DNF segue onde parou', () => {
     const r = sintetica({ a: { ms: 1000, voltas: 3, dnf: true }, b: { ms: 1050 }, c: { ms: 1100 } });
-    expect(painel(r, 3050)[0]).toEqual({ jogadorId: 'a', status: 'dnf' });
+    const { instante } = replayDaCorrida(r, PISTA).abandono('a')!;
+    expect(painel(r, instante)[0]).toEqual({ jogadorId: 'a', status: 'dnf' });
+    // Parado no ponto do abandono (PR 2d): quem vem atrás passa um a um, sem salto.
+    expect(painel(r, 3050).map((i) => i.jogadorId).indexOf('a')).toBeGreaterThan(0);
   });
 
   it('o retardatário que chegou segue +1 V, e quem está na volta do líder segue no tempo total', () => {

@@ -234,7 +234,8 @@ export function instanteNasVoltas(historico: number[], voltas: number): number {
  * `progressoNoReplay`):
  * - terminou a corrida ⇒ 0 (congela na linha de chegada/largada);
  * - deu DNF ⇒ 0.5 fixo (congela no meio do traçado, estilização "parou na
- *   pista"). Não reaproveita o `% 1` genérico aqui de propósito: o progresso
+ *   pista"; o replay do jogo não chega aqui: para antes, no ponto do abandono,
+ *   `incidentes-replay.ts`, PR 2d). Não reaproveita o `% 1` genérico aqui de propósito: o progresso
  *   de um DNF congelado é sempre `voltasCompletadas / voltasTotais`, uma
  *   fração cujo numerador ao multiplicar por `voltasTotais` vira inteiro
  *   (`voltasCompletadas`) — `% 1` daria 0 e o carro "saltaria" de volta pra
@@ -450,6 +451,8 @@ export interface PitDoReplay {
   noBox(jogadorId: string, tempoSimMs: number): boolean;
   /** Recebeu a bandeirada (`fim-da-corrida.ts`, PR 2e). Sem isto, chega ao fim do histórico. */
   chegou?(jogadorId: string, tempoSimMs: number): boolean;
+  /** Parou no ponto do abandono (`incidentes-replay.ts`, PR 2d). Sem isto, no fim do histórico. */
+  abandonou?(jogadorId: string, tempoSimMs: number): boolean;
 }
 
 /**
@@ -461,11 +464,12 @@ export interface PitDoReplay {
  * CONTRATO de ordenação (não é a posição final da engine, é uma projeção
  * visual dela ao longo do tempo):
  * 1. progresso decrescente (`progressoNoReplay` — fração da corrida inteira
- *    já percorrida, 0..1; carro que terminou fica parado em 1, carro em DNF
- *    congela em `voltasCompletadas / voltasTotais`);
+ *    já percorrida, 0..1; carro que terminou fica parado em 1; carro em DNF
+ *    congela em `voltasCompletadas / voltasTotais` sem `pit`, e no ponto do
+ *    abandono, antes disso, com o replay do jogo, PR 2d);
  * 2. empate em progresso: posição de largada (`gridLargada`);
  * 3. depois da primeira chegada, todo DNF fica atrás de quem não abandonou: o DNF
- *    da última volta congela em progresso 1 e tomaria a frente de quem ainda corre
+ *    da última volta, parado perto da linha, tomaria a frente de quem ainda corre
  *    (PR 2e). Antes disso ele segue onde parou;
  * 4. quem já parou ('terminou' ou 'dnf') fica na ORDEM OFICIAL entre si: as
  *    posições que esses carros ocupam são preenchidas na ordem de
@@ -496,11 +500,8 @@ export function classificacaoAoVivo(
     const somaHistorico = acumularVoltas(historico).at(-1) ?? 0;
     const congelado = tempoSimMs >= somaHistorico;
     const chegou = pit?.chegou?.(item.jogadorId, tempoSimMs) ?? (congelado && item.status === 'terminou');
-    let status: ItemClassificacaoAoVivo['status'] = chegou
-      ? 'terminou'
-      : congelado && item.status === 'dnf'
-        ? 'dnf'
-        : 'correndo';
+    const abandonou = pit?.abandonou?.(item.jogadorId, tempoSimMs) ?? (congelado && item.status === 'dnf');
+    let status: ItemClassificacaoAoVivo['status'] = chegou ? 'terminou' : abandonou ? 'dnf' : 'correndo';
     if (status === 'correndo' && pit?.noBox(item.jogadorId, tempoSimMs)) {
       status = 'pit';
     }

@@ -13,7 +13,15 @@
 
 import { describe, expect, it } from 'vitest';
 import type { EventoCorrida, ResultadoCorrida, TipoEvento } from '../engine/types';
-import { narrarEvento, narrarEventos, VARIANTES_CHUVA, VARIANTES_SECO, variantesDe } from './narracao';
+import { replayDaCorrida } from './fim-da-corrida';
+import {
+  narrarEvento,
+  narrarEventos,
+  textoDaConsequencia,
+  VARIANTES_CHUVA,
+  VARIANTES_SECO,
+  variantesDe,
+} from './narracao';
 
 const TIPOS: TipoEvento[] = [
   'erro-piloto',
@@ -150,159 +158,172 @@ describe('cobertura dos tipos', () => {
 });
 
 /**
- * PR B — causalidade CONTRAFACTUAL. Baseline vermelho: `narrarEventos` ainda
- * não existe quando este bloco foi escrito.
- *
- * O critério NÃO é "erro e troca de posição na mesma volta" — isso ainda
- * mentiria, porque Y podia vir 3s mais rápido e passar de qualquer jeito. Só
- * há causalidade se, DESCONTADO o custo do erro, X continuaria à frente.
- * Fixtures sintéticas, números escolhidos à mão, pra que cada caso isole uma
- * condição.
+ * PR 2d — consequência contada na parada, no instante do carro. Substitui o "caiu
+ * atrás de Y" do PR B, por decisão do Marcos: quem passa o carro parado passa por causa
+ * da parada, e a conta é o mesmo progresso que ordena o painel. Segue valendo o que o
+ * PR B garantia: nada de posição absoluta, nada de consequência em punição ou quebra.
  */
-describe('narrarEventos — causalidade contrafactual (PR B)', () => {
-  /** Monta um `ResultadoCorrida` mínimo com o que a narração lê. */
+describe('narrarEventos — consequência na parada (PR 2d)', () => {
+  const PISTA = { id: 'pista-monza', voltas: 10, tempoBaseMs: 1000 };
+
   function resultadoDe(
     historicoVoltas: Record<string, number[]>,
     eventos: EventoCorrida[],
     voltasDePit: Record<string, number[]> = {},
     chuva = false,
+    dnfs: string[] = [],
   ): ResultadoCorrida {
+    const ordem = Object.keys(historicoVoltas).sort((a, b) => Number(dnfs.includes(a)) - Number(dnfs.includes(b)));
     return {
       seed: 42,
-      classificacao: Object.keys(historicoVoltas).map((jogadorId, i) => ({
+      classificacao: ordem.map((jogadorId, i) => ({
         jogadorId,
         posicao: i + 1,
         pontos: 0,
         tempoTotal: historicoVoltas[jogadorId].reduce((a, b) => a + b, 0),
         paradas: (voltasDePit[jogadorId] ?? []).length,
-        status: 'terminou' as const,
+        status: dnfs.includes(jogadorId) ? ('dnf' as const) : ('terminou' as const),
         voltasCompletadas: historicoVoltas[jogadorId].length,
       })),
-      voltaMaisRapida: { jogadorId: Object.keys(historicoVoltas)[0], tempo: 90_000 },
+      voltaMaisRapida: { jogadorId: ordem[0], tempo: 900 },
       eventos,
       chuva,
       historicoVoltas,
-      voltasDePit,
+      voltasDePit: Object.fromEntries(ordem.map((id) => [id, voltasDePit[id] ?? []])),
     };
   }
 
-  const erro = (jogadorId: string, volta: number, custoMs: number): EventoCorrida => ({
-    jogadorId,
-    volta,
-    tipo: 'erro-piloto',
-    custoMs,
-  });
+  const dez = (ms: number, extra: Record<number, number> = {}) =>
+    Array.from({ length: 10 }, (_, i) => ms + (extra[i + 1] ?? 0));
+  const erro = (jogadorId: string, volta: number, custoMs: number): EventoCorrida => ({ jogadorId, volta, tipo: 'erro-piloto', custoMs });
+  const narrar = (r: ResultadoCorrida) => narrarEventos(r, replayDaCorrida(r, PISTA));
 
-  it('CASO 1 — flip que passa no contrafactual vira linha causal', () => {
-    // V1: X 90.000, Y 91.000  → X à frente (90.000 < 91.000)
-    // V2: X 92.000 (inclui erro de 3.000), Y 90.000
-    //     cum X = 182.000, cum Y = 181.000 → Y à frente agora
-    //     sem o erro: X estaria em 179.000 < 181.000 → X seguiria à frente. CAUSAL.
-    const resultado = resultadoDe(
-      { X: [90_000, 92_000], Y: [91_000, 90_000] },
-      [erro('X', 2, 3_000)],
+  it('conta quem passa durante a parada: Y e Z vêm logo atrás e passam, W não chega', () => {
+    const r = resultadoDe(
+      { X: dez(1000, { 3: 300 }), Y: dez(1010), Z: dez(1020), W: dez(1400) },
+      [erro('X', 3, 300)],
     );
-    const narradas = narrarEventos(resultado);
-    expect(narradas).toHaveLength(1);
-    expect(narradas[0].caiuAtrasDe).toBe('Y');
+    const [n] = narrar(r);
+    expect(n.tempoPerdidoMs).toBe(300);
+    expect(n.posicoesPerdidas).toBe(2);
+    expect(textoDaConsequencia(n)).toBe(', perdeu 0,3 s e 2 posições');
   });
 
-  it('CASO 2 (DISCRIMINANTE) — flip que NÃO passa no contrafactual narra só o erro', () => {
-    // Mesmo flip, mas Y veio MUITO mais rápido: sem o erro X ainda perderia.
-    // V1: X 90.000, Y 91.000 → X à frente
-    // V2: X 92.000 (erro de 1.000), Y 85.000
-    //     cum X = 182.000, cum Y = 176.000 → Y à frente
-    //     sem o erro: X em 181.000, ainda ATRÁS de 176.000 → não foi o erro.
-    const resultado = resultadoDe(
-      { X: [90_000, 92_000], Y: [91_000, 85_000] },
-      [erro('X', 2, 1_000)],
+  it('uma posição: singular; nenhuma: só o tempo', () => {
+    const uma = resultadoDe({ X: dez(1000, { 3: 300 }), Y: dez(1010), Z: dez(1400) }, [erro('X', 3, 300)]);
+    expect(textoDaConsequencia(narrar(uma)[0])).toBe(', perdeu 0,3 s e 1 posição');
+    const nenhuma = resultadoDe({ X: dez(1000, { 3: 300 }), Y: dez(1400) }, [erro('X', 3, 300)]);
+    expect(narrar(nenhuma)[0].posicoesPerdidas).toBe(0);
+    expect(textoDaConsequencia(narrar(nenhuma)[0])).toBe(', perdeu 0,3 s');
+  });
+
+  it('quem já estava à frente não conta como posição perdida', () => {
+    const r = resultadoDe({ Y: dez(900), X: dez(1000, { 3: 300 }) }, [erro('X', 3, 300)]);
+    expect(narrar(r)[0].posicoesPerdidas).toBe(0);
+  });
+
+  it('quebra e punição não têm consequência na parada', () => {
+    const r = resultadoDe(
+      { X: dez(1000), D: [1000, 1000] },
+      [
+        { jogadorId: 'D', volta: 2, tipo: 'quebra-chassi', custoMs: 0 },
+        { jogadorId: 'X', volta: 10, tipo: 'investigacao', custoMs: 7400 },
+      ],
+      {},
+      false,
+      ['D'],
     );
-    const narradas = narrarEventos(resultado);
-    expect(narradas).toHaveLength(1);
-    expect(narradas[0].caiuAtrasDe).toBeNull();
+    const narradas = narrar(r);
+    const quebra = narradas.find((n) => n.evento.tipo === 'quebra-chassi')!;
+    const punicao = narradas.find((n) => n.evento.tipo === 'investigacao')!;
+    expect(quebra.tempoPerdidoMs).toBeNull();
+    expect(quebra.posicoesPerdidas).toBeNull();
+    expect(textoDaConsequencia(quebra)).toBe('');
+    expect(punicao.posicoesPerdidas).toBeNull();
+    expect(textoDaConsequencia(punicao)).toBe(' e levou +7,4 s');
   });
 
-  it('CASO 3 — erro sem flip nenhum narra só o erro', () => {
-    const resultado = resultadoDe(
-      { X: [90_000, 92_000], Y: [95_000, 95_000] },
-      [erro('X', 2, 3_000)],
+  it('nunca diz posição absoluta', () => {
+    const r = resultadoDe({ X: dez(1000, { 3: 300 }), Y: dez(1010) }, [erro('X', 3, 300)]);
+    expect(textoDaConsequencia(narrar(r)[0])).not.toMatch(/\d+º|para \d/);
+  });
+
+  it('o evento sai no instante do CARRO: parada, abandono ou passagem pela linha', () => {
+    const r = resultadoDe(
+      { X: dez(1000, { 3: 300 }), D: [1000, 1000] },
+      [
+        erro('X', 3, 300),
+        { jogadorId: 'D', volta: 2, tipo: 'quebra-motor', custoMs: 0 },
+        { jogadorId: 'X', volta: 10, tipo: 'investigacao', custoMs: 5000 },
+      ],
+      {},
+      false,
+      ['D'],
     );
-    expect(narrarEventos(resultado)[0].caiuAtrasDe).toBeNull();
+    const replay = replayDaCorrida(r, PISTA);
+    const em = (tipo: TipoEvento) => narrar(r).find((n) => n.evento.tipo === tipo)!.instante;
+    expect(em('erro-piloto')).toBe(replay.incidentes('X')[0].inicio);
+    expect(em('quebra-motor')).toBe(replay.abandono('D')!.instante);
+    expect(em('investigacao')).toBe(replay.chegada('X')!.instante);
   });
 
-  it('CASO 4 — flip na volta do PIT do próprio carro não afirma causalidade, e marca os boxes', () => {
-    const resultado = resultadoDe(
-      { X: [90_000, 112_000], Y: [91_000, 90_000] },
-      [erro('X', 2, 3_000)],
-      { X: [2] },
+  it('vem em ordem de instante, não de volta', () => {
+    const r = resultadoDe(
+      { X: dez(1000, { 3: 300 }), Y: dez(1000, { 3: 200 }), Z: dez(1000, { 2: 100 }) },
+      [erro('Z', 2, 100), erro('X', 3, 300), erro('Y', 3, 200)],
     );
-    const narrada = narrarEventos(resultado)[0];
-    expect(narrada.caiuAtrasDe).toBeNull();
-    expect(narrada.entrouNosBoxes).toBe(true);
+    const instantes = narrar(r).map((n) => n.instante);
+    expect(instantes).toEqual([...instantes].sort((a, b) => a - b));
   });
 
-  it('CASO 5 — carro com menos voltas que V nunca é nomeado como Y', () => {
-    // Z abandonou na volta 1: não pode ser "quem passou" na volta 2.
-    const resultado = resultadoDe(
-      { X: [90_000, 92_000], Z: [80_000] },
-      [erro('X', 2, 3_000)],
+  it('o carro lento, na mesma volta, vem depois do rápido, mesmo antes dele nos eventos', () => {
+    const r = resultadoDe(
+      { A: dez(1500, { 3: 100 }), B: dez(1000, { 3: 100 }) },
+      [erro('A', 3, 100), erro('B', 3, 100)],
     );
-    expect(narrarEventos(resultado)[0].caiuAtrasDe).toBeNull();
+    expect(narrar(r).map((n) => n.evento.jogadorId)).toEqual(['B', 'A']);
   });
 
-  it('CASO 6 — investigacao NUNCA produz linha causal (a penalidade não está no histórico)', () => {
-    const resultado = resultadoDe(
-      { X: [90_000, 92_000], Y: [91_000, 90_000] },
-      [{ jogadorId: 'X', volta: 2, tipo: 'investigacao', custoMs: 5_000 }],
+  it('mais erros que frases: o pool recomeça, sem travar', () => {
+    const eventos = Array.from({ length: VARIANTES_SECO['erro-piloto'].length + 3 }, (_, i) => erro(`c${i}`, 3, 100));
+    const historicos = Object.fromEntries(eventos.map((e) => [e.jogadorId, dez(1000, { 3: 100 })]));
+    const frases = narrar(resultadoDe(historicos, eventos)).map((n) => n.frase);
+    expect(frases).toHaveLength(eventos.length);
+    expect(new Set(frases).size).toBe(VARIANTES_SECO['erro-piloto'].length);
+  });
+
+  it('incidente na volta de pit vira "e foi para os boxes"; fora dela, não', () => {
+    const r = resultadoDe({ X: dez(1000, { 3: 300 }) }, [erro('X', 3, 300)], { X: [3] });
+    expect(narrar(r)[0].foiParaOsBoxes).toBe(true);
+    const fora = resultadoDe({ X: dez(1000, { 3: 300 }) }, [erro('X', 3, 300)], { X: [5] });
+    expect(narrar(fora)[0].foiParaOsBoxes).toBe(false);
+  });
+
+  it('incidente depois da linha do retardatário não é narrado', () => {
+    const r = resultadoDe(
+      { A: dez(1000), C: Array.from({ length: 10 }, (_, i) => (i === 9 ? 1350 : 1150)) },
+      [erro('C', 10, 200)],
     );
-    expect(narrarEventos(resultado)[0].caiuAtrasDe).toBeNull();
+    expect(narrar(r)).toHaveLength(0);
   });
 
-  it('CASO 7 — dois eventos do mesmo carro na mesma volta dão UMA linha causal, no de maior custo', () => {
-    const resultado = resultadoDe(
-      { X: [90_000, 92_000], Y: [91_000, 90_000] },
-      [erro('X', 2, 500), { jogadorId: 'X', volta: 2, tipo: 'problema-tecnico', custoMs: 2_500 }],
-    );
-    const narradas = narrarEventos(resultado);
-    expect(narradas).toHaveLength(2);
-    const comConsequencia = narradas.filter((n) => n.caiuAtrasDe !== null);
-    expect(comConsequencia).toHaveLength(1);
-    expect(comConsequencia[0].evento.tipo).toBe('problema-tecnico');
+  it('mesmo tipo na mesma corrida não repete frase enquanto houver frase nova', () => {
+    const eventos = Array.from({ length: 10 }, (_, i) => erro(`c${i}`, 3, 100));
+    const historicos = Object.fromEntries(eventos.map((e) => [e.jogadorId, dez(1000, { 3: 100 })]));
+    const frases = narrar(resultadoDe(historicos, eventos)).map((n) => n.frase);
+    expect(new Set(frases).size).toBe(frases.length);
+    for (const f of frases) expect(VARIANTES_SECO['erro-piloto']).toContain(f);
   });
 
-  it('CASO 8 — volta 1 nunca tem causalidade (não há volta anterior pra comparar)', () => {
-    const resultado = resultadoDe({ X: [95_000], Y: [90_000] }, [erro('X', 1, 3_000)]);
-    expect(narrarEventos(resultado)[0].caiuAtrasDe).toBeNull();
+  it('frase nenhuma repete o que a consequência diz', () => {
+    const todas = [...Object.values(VARIANTES_SECO), ...Object.values(VARIANTES_CHUVA)].flat();
+    for (const f of todas) expect(f).not.toMatch(/perdeu tempo/);
   });
 
-  it('CASO 8b — X que JÁ estava atrás de Y não "cai atrás" dele (não se perde o que não se tinha)', () => {
-    // Escolhido pra passar no contrafactual e ser barrado SÓ pela condição 1:
-    // V1: X 95.000, Y 90.000 → X já vinha ATRÁS.
-    // V2: X 92.000 (erro de 10.000), Y 96.000
-    //     cum X = 187.000, cum Y = 186.000 → Y à frente (como já estava).
-    //     sem o erro: X em 177.000 < 186.000 → o contrafactual PASSARIA.
-    // Sem a condição "X estava à frente", sairia a linha falsa "X caiu atrás
-    // de Y" — quando X nunca esteve na frente dele.
-    const resultado = resultadoDe(
-      { X: [95_000, 92_000], Y: [90_000, 96_000] },
-      [erro('X', 2, 10_000)],
-    );
-    expect(narrarEventos(resultado)[0].caiuAtrasDe).toBeNull();
-  });
-
-  it('CASO 9 — determinismo: mesma entrada, mesma saída', () => {
-    const resultado = resultadoDe(
-      { X: [90_000, 92_000], Y: [91_000, 90_000] },
-      [erro('X', 2, 3_000)],
-    );
-    expect(narrarEventos(resultado)).toEqual(narrarEventos(resultado));
-  });
-
-  it('a frase da variante continua vindo do pool (PR A segue valendo)', () => {
-    const resultado = resultadoDe(
-      { X: [90_000, 92_000], Y: [91_000, 90_000] },
-      [erro('X', 2, 3_000)],
-    );
-    expect(VARIANTES_SECO['erro-piloto']).toContain(narrarEventos(resultado)[0].frase);
+  it('determinismo: mesma entrada, mesma saída, e memoizado pela corrida', () => {
+    const r = resultadoDe({ X: dez(1000, { 3: 300 }), Y: dez(1010) }, [erro('X', 3, 300)]);
+    expect(narrar(r)).toBe(narrar(r));
+    const copia = JSON.parse(JSON.stringify(r)) as ResultadoCorrida;
+    expect(narrar(copia)).toEqual(narrar(r));
   });
 });
