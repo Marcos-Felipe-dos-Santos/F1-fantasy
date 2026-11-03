@@ -12,6 +12,12 @@
     "falha": "src/ui/incidentes-replay.test.ts > custo concentrado num ponto da volta (PR 2d) > fora da parada ele anda no ritmo limpo, não no da volta com o custo"
   },
   {
+    "nome": "abandono-sem-custo",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/incidentes-replay.test.ts > DNF: para no ponto do abandono (PR 2d) > erro e abandono na mesma volta, em qualquer seed: primeiro o erro, e o carro chega ao ponto sem salto"
+  },
+  {
     "nome": "inicio-sem-ritmo",
     "detectada": true,
     "travou": false,
@@ -75,13 +81,13 @@
     "nome": "abandono-na-volta-inteira",
     "detectada": true,
     "travou": false,
-    "falha": "src/ui/fim-da-corrida.test.ts > painel depois da bandeirada > antes da bandeirada, o DNF segue onde parou"
+    "falha": "src/ui/incidentes-replay.test.ts > DNF: para no ponto do abandono (PR 2d) > erro e abandono na mesma volta, em qualquer seed: primeiro o erro, e o carro chega ao ponto sem salto"
   },
   {
     "nome": "abandono-nao-corta-o-plano",
-    "detectada": true,
+    "detectada": false,
     "travou": false,
-    "falha": "src/ui/incidentes-replay.test.ts > DNF: para no ponto do abandono (PR 2d) > erro e abandono na mesma volta, em qualquer seed: primeiro o erro, e o carro chega ao ponto sem salto"
+    "falha": null
   },
   {
     "nome": "erro-depois-do-abandono",
