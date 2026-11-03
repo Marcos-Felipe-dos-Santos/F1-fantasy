@@ -6,6 +6,7 @@ import type { Jogador, ResultadoCorrida } from '../engine/types';
 import equipeAnosReal from '../fixtures/dataset-semente/equipe-anos.json';
 import pecasReal from '../fixtures/dataset-semente/pecas.json';
 import pistasReal from '../fixtures/dataset-semente/pistas.json';
+import { hashDaCorrida } from '../net/hash-corrida';
 import { diferencasParaLider } from './diferenca-lider';
 import { replayDaCorrida } from './fim-da-corrida';
 import { acumularVoltas, classificacaoAoVivo, prepararCorrida } from './fluxo-corrida';
@@ -273,5 +274,51 @@ describe('narração da punição cumprida', () => {
   it('determinismo: mesma corrida, mesmo instante da infração', () => {
     const outra = replayDaCorrida(sintetica({ a: { ms: 90_000 }, b: { ms: 91_000, pits: [3, 7], punicao: 7400 } }), PISTA);
     expect(outra.punicao('b')?.infracao).toBe(punicao()?.infracao);
+  });
+});
+
+describe('o resultado não muda (zero engine)', () => {
+  /**
+   * Seed 1: tem punição cumprida nas 10 pistas. Hashes calculados nesta branch, com
+   * `git diff e1cfba8` (a `main` com o PR 2d) vazio em `src/engine/`, `src/data/`,
+   * `src/fixtures/`, `hash-corrida.ts` e `fluxo-corrida.ts`, que é tudo o que o hash lê.
+   */
+  const HASHES: Record<string, string> = {
+    'pista-monaco': 'fc9d8e2ad5bc9617',
+    'pista-spa': '3359192ca897faca',
+    'pista-monza': '4ba65c036f8e6076',
+    'pista-silverstone': '7cd9afa893918c8e',
+    'pista-suzuka': '9aa381e0895e4c8e',
+    'pista-interlagos': 'a1ac4532c4ae5a2a',
+    'pista-nurburgring': '537a0bb804a1cd9a',
+    'pista-imola': '5622c0945fe80c27',
+    'pista-red-bull-ring': 'e5ec62b1709b4ab3',
+    'pista-montreal': 'e92ebcdea32b32a1',
+  };
+
+  it.each(PISTAS)('%s: com punição cumprida, o replay inteiro não toca no resultado, e o hash é o mesmo', (id) => {
+    const preparada = corridaReal(1, id);
+    const antes = JSON.stringify(preparada.resultado);
+    const congelar = <T>(o: T): T => {
+      if (typeof o === 'object' && o !== null) {
+        Object.values(o).forEach(congelar);
+        Object.freeze(o);
+      }
+      return o;
+    };
+    congelar(preparada.resultado);
+    const replay = replayDaCorrida(preparada.resultado, preparada.pista);
+    const ids = preparada.resultado.classificacao.map((c) => c.jogadorId);
+    expect(ids.some((j) => replay.punicao(j) !== undefined)).toBe(true);
+    narrarEventos(preparada.resultado, replay);
+    for (let t = 0; t <= replay.fim; t += replay.fim / 300) {
+      const ordem = classificacaoAoVivo(preparada.resultado, ids, t, preparada.pista.voltas, replay);
+      diferencasParaLider(preparada.resultado, ordem, t, preparada.pista.voltas, replay);
+      for (const c of preparada.resultado.classificacao) {
+        replay.posicao(c.jogadorId, preparada.resultado.historicoVoltas[c.jogadorId], c.status, t, false);
+      }
+    }
+    expect(JSON.stringify(preparada.resultado)).toBe(antes);
+    expect(hashDaCorrida({ pistaId: id, ...preparada })).toBe(HASHES[id]);
   });
 });
