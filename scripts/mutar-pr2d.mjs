@@ -21,6 +21,7 @@ const CSS = 'src/ui/estilos.css';
 const MUTACOES = [
   ['custo-espalhado', INC, 'if (tempoSimMs < i.fim) return fracao;', 'if (tempoSimMs < i.fim) continue;'],
   ['ritmo-sem-custo', INC, 'const ritmo = (sb - sa) / (tb - ta - custo);', 'const ritmo = (sb - sa) / (tb - ta);'],
+  ['abandono-sem-custo', INC, 'const instante = ta + (fracao - sa) / ritmo + custo;', 'const instante = ta + (fracao - sa) / ritmo;'],
   ['inicio-sem-ritmo', INC, 'const inicio = t + (fracao - fracaoAtual) / ritmo;', 'const inicio = t;'],
   ['fim-sem-custo', INC, 't = inicio + evento.custoMs;', 't = inicio;'],
   ['fracao-nao-acumula', INC, 'fracaoAtual = fracao;\n        return', 'return'],
@@ -31,7 +32,7 @@ const MUTACOES = [
   ['sem-folga-pit-antes', INC, 'let ate = Math.min(1 - MARGEM_LOCAL, sb - FOLGA_DO_PIT);', 'let ate = 1 - MARGEM_LOCAL;'],
   ['plano-ignora-pit-antes', INC, 'const ta = pitAntes?.fim ?? (volta >= 2 ? acumulado[volta - 2] : 0);', 'const ta = volta >= 2 ? acumulado[volta - 2] : 0;'],
   ['plano-ignora-pit-na-volta', INC, 'let tb = pitNaVolta?.inicio ?? acumulado[volta - 1];', 'let tb = acumulado[volta - 1];'],
-  ['abandono-na-volta-inteira', INC, 'const instante = ta + ((fracao - sa) / (sb - sa)) * (tb - ta);', 'const instante = tb;'],
+  ['abandono-na-volta-inteira', INC, 'const instante = ta + (fracao - sa) / ritmo + custo;', 'const instante = ta + ((fracao - sa) / (sb - sa)) * (tb - ta);'],
   ['abandono-nao-corta-o-plano', INC, 'sb = fracao;\n        tb = instante;', ''],
   ['erro-depois-do-abandono', INC, 'ate = fracao - FOLGA_DO_PIT;', ''],
   ['dnf-sem-plano', INC, 'if (voltaFinal !== null) voltas.add(voltaFinal);', ''],

@@ -196,8 +196,10 @@ export default tseslint.config(
     // texto do evento por HASH (`deriveSeed`) sobre dados congelados. Um
     // `Math.random` ali faria a mesma corrida narrar diferente a cada render
     // do React — e nenhum teste de simulação pegaria, porque nada na engine
-    // teria mudado.
-    files: ['src/ui/persistencia.ts', 'src/ui/fluxo-campeonato.ts', 'src/ui/narracao.ts'],
+    // teria mudado. `incidentes-replay.ts` entrou no PR 2d: decide por hash onde
+    // cada incidente e abandono aparecem, e no online os clientes derivam o
+    // mesmo replay do mesmo resultado (testado em `src/net/cerca-lint.test.ts`).
+    files: ['src/ui/persistencia.ts', 'src/ui/fluxo-campeonato.ts', 'src/ui/narracao.ts', 'src/ui/incidentes-replay.ts'],
     rules: {
       'no-restricted-properties': [
         'error',

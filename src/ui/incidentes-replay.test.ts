@@ -328,6 +328,25 @@ describe('DNF: para no ponto do abandono (PR 2d)', () => {
     }
   });
 
+  it('achado da revisão: volta curta com erro e abandono, o carro anda no ritmo LIMPO e o erro não vaza para trás', () => {
+    // Volta de 1200 com 200 de erro: o ritmo limpo é 1/1000. Antes, o instante do abandono
+    // saía da volta cheia e o custo inteiro era tirado do trecho curto: ritmo de até 3,9× e,
+    // com folga menor que o custo, negativo, com o incidente começando antes da volta.
+    const base = sintetica({ a: {}, d: { voltas: [1000, 1200], dnf: true } }, [
+      erro('d', 2, 200),
+      { volta: 2, jogadorId: 'd', tipo: 'quebra-chassi', custoMs: 0 },
+    ]);
+    for (let seed = 1; seed <= 200; seed++) {
+      const rep = replayDaCorrida({ ...base, seed }, PISTA);
+      const [inc] = rep.incidentes('d');
+      const fim = rep.abandono('d')!;
+      expect(inc.inicio).toBeGreaterThanOrEqual(1000);
+      expect(inc.inicio - 1000).toBeCloseTo(inc.fracao * 1000, 6);
+      expect(fim.instante).toBeCloseTo(1000 + fim.fracao * 1000 + 200, 6);
+      expect(fim.instante).toBeLessThanOrEqual(2200);
+    }
+  });
+
   it('corridas reais: todo DNF para antes da soma do histórico e dentro do replay', () => {
     for (const id of PISTAS) {
       for (let seed = 1; seed <= 12; seed++) {

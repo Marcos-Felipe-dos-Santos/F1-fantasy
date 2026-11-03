@@ -92,6 +92,16 @@ describe('cerca de lint — a casca (party/)', () => {
   });
 });
 
+describe('cerca de lint — o replay determinístico (src/ui/)', () => {
+  // PR 2d: `incidentes-replay.ts` decide por hash onde cada incidente e abandono
+  // aparecem; no online, os clientes precisam derivar o mesmo a partir do resultado.
+  it.each(['src/ui/narracao.ts', 'src/ui/incidentes-replay.ts'])('%s proíbe Math.random e Date.now', async (caminho) => {
+    const msgs = await regrasDisparadas(caminho, VIOLACOES);
+    expect(contem(msgs, 'Math.random'), `Math.random passou: ${msgs.join(' | ')}`).toBe(true);
+    expect(contem(msgs, 'Date.now'), `Date.now passou: ${msgs.join(' | ')}`).toBe(true);
+  });
+});
+
 describe('anti-vacuidade', () => {
   it('código limpo não dispara nenhuma dessas regras', async () => {
     // Se este teste falhar, os de cima podem estar passando por acidente de

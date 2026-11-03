@@ -123,26 +123,28 @@ export function linhaDeIncidentes(
       let sb = pitNaVolta?.fracaoInicio ?? 1;
       const de = Math.max(MARGEM_LOCAL, sa + FOLGA_DO_PIT);
       let ate = Math.min(1 - MARGEM_LOCAL, sb - FOLGA_DO_PIT);
+      const daVolta = doCarro.filter((e) => e.volta === volta && custaNaVolta(e));
+      const custo = daVolta.reduce((s, e) => s + e.custoMs, 0);
+      // O ritmo limpo do trecho inteiro, antes de o abandono cortá-lo: o custo da volta
+      // inteira sai das paradas, que caem todas antes do abandono.
+      const ritmo = (sb - sa) / (tb - ta - custo);
 
       if (volta === voltaFinal) {
         const evento = doCarro.find((e) => e.volta === volta && e.tipo.startsWith('quebra'));
         const fracao = de + sorteioDeLocal(resultado.seed, 'abandono', jogadorId, volta, evento?.tipo ?? 'quebra') * (ate - de);
-        const instante = ta + ((fracao - sa) / (sb - sa)) * (tb - ta);
+        const instante = ta + (fracao - sa) / ritmo + custo;
         abandonos.set(jogadorId, { evento, volta, fracao, instante });
         sb = fracao;
         tb = instante;
         ate = fracao - FOLGA_DO_PIT;
       }
 
-      const sorteados = doCarro
-        .filter((e) => e.volta === volta && custaNaVolta(e))
+      const sorteados = daVolta
         .map((evento) => ({
           evento,
           fracao: de + sorteioDeLocal(resultado.seed, 'local', jogadorId, volta, evento.tipo) * Math.max(0, ate - de),
         }))
         .sort((a, b) => a.fracao - b.fracao);
-      const custo = sorteados.reduce((s, x) => s + x.evento.custoMs, 0);
-      const ritmo = (sb - sa) / (tb - ta - custo);
       let t = ta;
       let fracaoAtual = sa;
       const incidentes = sorteados.map(({ evento, fracao }): IncidenteNoReplay => {

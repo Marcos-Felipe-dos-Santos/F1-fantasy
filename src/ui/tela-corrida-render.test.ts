@@ -15,7 +15,7 @@ import { EfeitoDeIncidente } from './CarroReplay';
 import { dataset } from './dataset-app';
 import { diferencasParaLider, formatarDiferenca } from './diferenca-lider';
 import { replayDaCorrida } from './fim-da-corrida';
-import { classificacaoAoVivo, pontoNoTracado, prepararCorrida } from './fluxo-corrida';
+import { classificacaoAoVivo, MS_REPLAY_POR_VOLTA, pontoNoTracado, prepararCorrida } from './fluxo-corrida';
 import { efeitosNoInstante } from './incidentes-replay';
 import { nomeJogador, rotulosDosPilotos } from './loadout-view';
 import { linhaDoTempoDoPit } from './pit-replay';
@@ -344,7 +344,7 @@ describe('incidentes na tela (PR 2d)', () => {
     const inc = replay.incidentes(id).find((i) => i.evento.tipo === 'erro-piloto')!;
     const h = corrida.resultado.historicoVoltas[id];
     const rotacao = (html: string) => /<g class="tracado-svg__carro tracado-svg__carro--humano[^"]*" transform="[^"]*rotate\(([-\d.]+)\)/.exec(html)![1];
-    const escala = corrida.resultado.classificacao[0].tempoTotal / (corrida.pista.voltas * 4500);
+    const escala = corrida.resultado.classificacao[0].tempoTotal / (corrida.pista.voltas * MS_REPLAY_POR_VOLTA.media);
     const t = inc.inicio + 175 * escala;
     const { rumo } = replay.posicao(id, h, 'terminou', t, false);
     expect(rotacao(tela(corrida, t))).not.toBe(rumo.toFixed(1));
@@ -398,7 +398,7 @@ describe('incidentes na tela (PR 2d)', () => {
   it('a tela desenha a mesma lista pura que os testes de duração cobrem', () => {
     const { corrida, id, replay } = comIncidente(false);
     const [inc] = replay.incidentes(id);
-    const escala = corrida.resultado.classificacao[0].tempoTotal / (corrida.pista.voltas * 4500);
+    const escala = corrida.resultado.classificacao[0].tempoTotal / (corrida.pista.voltas * MS_REPLAY_POR_VOLTA.media);
     const lista = efeitosNoInstante(replay, corrida.resultado, corrida.pista.id, inc.inicio, escala);
     expect(tela(corrida, inc.inicio).match(/tracado-svg__efeito--/g)).toHaveLength(lista.length);
   });

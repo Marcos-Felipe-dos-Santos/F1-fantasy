@@ -464,11 +464,12 @@ export interface PitDoReplay {
  * CONTRATO de ordenação (não é a posição final da engine, é uma projeção
  * visual dela ao longo do tempo):
  * 1. progresso decrescente (`progressoNoReplay` — fração da corrida inteira
- *    já percorrida, 0..1; carro que terminou fica parado em 1, carro em DNF
- *    congela em `voltasCompletadas / voltasTotais`);
+ *    já percorrida, 0..1; carro que terminou fica parado em 1; carro em DNF
+ *    congela em `voltasCompletadas / voltasTotais` sem `pit`, e no ponto do
+ *    abandono, antes disso, com o replay do jogo, PR 2d);
  * 2. empate em progresso: posição de largada (`gridLargada`);
  * 3. depois da primeira chegada, todo DNF fica atrás de quem não abandonou: o DNF
- *    da última volta congela em progresso 1 e tomaria a frente de quem ainda corre
+ *    da última volta, parado perto da linha, tomaria a frente de quem ainda corre
  *    (PR 2e). Antes disso ele segue onde parou;
  * 4. quem já parou ('terminou' ou 'dnf') fica na ORDEM OFICIAL entre si: as
  *    posições que esses carros ocupam são preenchidas na ordem de

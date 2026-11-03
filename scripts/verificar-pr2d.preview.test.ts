@@ -1,8 +1,9 @@
 /**
  * Verificação do PR 2d nas 1000 corridas da medição, com o dataset REAL (os testes de
  * `src/` rodam na fixture). Falha se o progresso recuar ou saltar, se uma passagem pela
- * linha mudar, se o incidente cair numa janela de pit, se o DNF não parar no ponto, se a
- * consequência divergir do painel ou se um nome ficar ambíguo.
+ * linha mudar, se o incidente cair numa janela de pit, se o DNF não parar no ponto, se o
+ * carro não andar no ritmo limpo da volta (conta exata por volta, achado da revisão) ou se
+ * um nome ficar ambíguo. A consequência × painel é medida em `medir-pr2d`, não aqui.
  *
  * `reordenacaoDeParados`: quantas vezes a ordem oficial troca dois carros parados de lugar no
  * painel. Medição, não portão: a regra é do PR 2e e o abandono antecipado pode acioná-la.
@@ -45,6 +46,7 @@ describe('verificação do PR 2d', () => {
       nomesAmbiguos: 0,
       gruposNomeAno: 0,
       fraseRepetida: 0,
+      ritmoForaDoLimpo: 0,
     };
     let maiorPassoEmVoltas = 0;
     dataset.pistas.forEach((pista, indice) => {
@@ -99,6 +101,25 @@ describe('verificação do PR 2d', () => {
             if (Math.abs(replay.instanteDoProgresso(id, h, v) - pit.instanteDoProgresso(id, h, v)) >= 1) conta.linhaMudou++;
           }
 
+          // Conta exata, por volta: até a primeira parada (ou o abandono), o ritmo limpo do trecho.
+          const paradasDoCarro = replay.paradas(id);
+          const ab = replay.abandono(id);
+          const voltasComPlano = new Set([...incidentes.map((i) => i.evento.volta), ...(ab ? [ab.volta] : [])]);
+          for (const v of voltasComPlano) {
+            const antes = paradasDoCarro.find((p) => p.volta === v - 1);
+            const na = paradasDoCarro.find((p) => p.volta === v);
+            const ta = antes?.fim ?? (v >= 2 ? acum[v - 2] : 0);
+            const sa = antes?.fracaoFim ?? 0;
+            const tb = na?.inicio ?? acum[v - 1];
+            const sb = na?.fracaoInicio ?? 1;
+            const custo = r.eventos.filter((e) => e.jogadorId === id && e.volta === v && (e.tipo === 'erro-piloto' || e.tipo === 'problema-tecnico')).reduce((s, e) => s + e.custoMs, 0);
+            const limpo = (sb - sa) / (tb - ta - custo);
+            if (!(limpo > 0)) conta.ritmoForaDoLimpo++;
+            const primeiro = incidentes.find((i) => i.evento.volta === v);
+            if (primeiro !== undefined && (primeiro.inicio < ta || Math.abs(primeiro.inicio - ta - (primeiro.fracao - sa) / limpo) > 1)) conta.ritmoForaDoLimpo++;
+            if (ab !== undefined && ab.volta === v && Math.abs(ab.instante - (ta + (ab.fracao - sa) / limpo + custo)) > 1) conta.ritmoForaDoLimpo++;
+          }
+
           const chegada = replay.chegada(id);
           if (chegada !== undefined && Math.abs(chegada.instante - pit.instanteDoProgresso(id, h, chegada.voltas)) >= 1) conta.fimMudou++;
 
@@ -140,5 +161,6 @@ describe('verificação do PR 2d', () => {
     expect(conta.dnfDepoisDoFim).toBe(0);
     expect(conta.carroNaoNarrado).toBe(0);
     expect(conta.fraseRepetida).toBe(0);
+    expect(conta.ritmoForaDoLimpo).toBe(0);
   }, 590000);
 });
