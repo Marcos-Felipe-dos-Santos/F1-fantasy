@@ -7331,6 +7331,63 @@ As sugestões viraram pendência em `ESTADO.md` §"Pendências ATIVAS".
 **Veredito, 2026-11-02.** Aprovado pelo Marcos no celular, nas cenas de retardatário, punição e normal: "funcionou
 perfeitamente". Decisões dele: o quadro da bandeirada fica; o carro na volta lenta fica sem spray na chuva.
 
+### 2026-11-03 — PR 2d: incidentes na pista, DNF no ponto do abandono e narração
+
+Branch `feat/pr2d-incidentes`, sobre a `main` `03ed7ed` (merge do PR 2e). Risco ALTO. Só apresentação:
+`git diff 03ed7ed` vazio em `src/engine/`, `src/data/` e `party/`; em `src/net/`, só `cerca-lint.test.ts`.
+Resultado e hashes iguais, sem bump. Decisões D1-D4 do Marcos em `ESTADO.md` §"🔒 DECISÕES DO MARCOS — VIGENTES",
+tomadas sobre a medição `docs/pr2d-medicao.json` (`scripts/medir-pr2d.preview.test.ts`, 1000 corridas). A
+punição cumprida no box (D5) foi separada para o PR 2f.
+
+**O problema.** O erro não aparecia na pista (adiado do PR 2a para este). O carro em DNF saltava da
+linha para o meio da pista no fim da volta: 797 de 800 DNFs na medição. O ticker dizia "bot-18" e não contava a
+consequência.
+
+**O que entrou.**
+- **`src/ui/incidentes-replay.ts`, novo.** O custo do evento fica concentrado num ponto da volta, sorteado por
+  hash com namespace `narracao:`, sem RNG novo na engine. Guinada curta e fumaça (seco) ou spray (chuva) de
+  ~700 ms reais. Com movimento reduzido, o carro só para. Entrou na cerca de lint de determinismo, com teste.
+- **DNF.** O carro para na fração sorteada da última volta, fica congelado no ponto e ganha o selo de DNF na
+  classificação no instante do abandono. Acabou o salto.
+- **Narração (`narracao.ts`).** A frase entra no instante do carro, com o piloto em destaque (ano só quando o
+  nome se repete) e o tempo e as posições perdidos na parada. Na volta de pit, termina em "e foi para os boxes".
+  Não repete frase na corrida enquanto houver frase nova. No painel, saiu o "bot-".
+
+**Verificação.** Medido sobre `562b197`; depois dele só `scripts/mutar-pr2d.mjs` mudou. `npm test` 2099 + 1 skipped
+em 90 arquivos; `test:party` 46; typecheck, lint e build com saída 0. `scripts/verificar-pr2d.preview.test.ts`, 1000
+corridas no dataset real, com 800 DNFs: recuo e salto de progresso, linha e fim mudados, nome ambíguo, incidente na
+janela do pit, DNF fora do ponto ou depois do fim, carro não narrado, frase repetida e `ritmoForaDoLimpo` todos 0.
+`verificar-pr2e` igual ao do PR 2e (189 aceitas). Baseline vermelho em `docs/pr2d-baseline-vermelho.txt`.
+
+**Mutação (`docs/pr2d-mutacoes.json`, `scripts/mutar-pr2d.mjs`).** A 1ª rodada deixou sobreviventes, fechados
+em `f6ab704`. A rodada final deu 70/71 detectadas e 1 travada por timeout (`frase-trava-no-pool-cheio`, laço
+síncrono), sem sobrevivente. O mutante `abandono-nao-corta-o-plano` sobreviveu depois da correção da revisão
+porque o código era morto, e saiu junto com ele em `562b197`. ⚠️ O commit `df73590` diz 70/71, mas o JSON dele
+tem só 15 entradas, de uma rodada que abortou quando o vitest caiu sem a linha FAIL. O script ganhou uma nova
+tentativa (`99ee553`) e o JSON completo entrou em `8945b2a`. O `df73590` não foi reescrito.
+
+**FPS** (`docs/pr2d-fps.json`, `docs/pr2d-fps-media.json`, A/B intercalado com `03ed7ed`, CPU 6×, 360×800, chuva):
+rápida 80-86 fps nos dois braços; média refeita 83-87 fps nos dois, 0 quadro > 33 ms no PR. A 1ª rodada da média
+veio de máquina suja, com 35-40 fps nos dois braços, e foi descartada.
+
+**`senior-reviewer`: 1 🔴, corrigido em `96a350e`.** Na volta com erro e abandono, o instante do abandono saía da
+volta cheia, que já tinha o custo, e o custo inteiro era tirado do trecho curto. O resultado era ritmo acima do
+limpo e, com folga menor que o custo, negativo. Agora o ritmo limpo do trecho vem primeiro e o abandono soma o
+custo. Baseline vermelho em `docs/pr2d-baseline-vermelho-revisao.txt`; `ritmoForaDoLimpo` acusa 15 com o
+defeito recolocado. 🟡 aplicados: cerca de lint com teste, comentário do contrato de `classificacaoAoVivo` e
+cabeçalho do portão. Não aplicados: alocação por frame de `incidentes()`, cache da narração só por `resultado`,
+efeito desenhado por cima do viaduto e `namespaces-seed.ts`, que fica em `src/engine/`, fora do PR.
+
+**Preview.** As capturas de 2026-11-02 eram anteriores a `96a350e` e foram refeitas sobre `8945b2a` por CDP no
+Chrome headless (360×800, DPR 2). Sem erro no console nas três cenas. Três delas estão em `docs/pr2d-imagens/`:
+`dnf-fumaca-360.png`, `dnf-parado-360.png` e `chuva-spray-360.png`. O selo de DNF fica abaixo da dobra da lista,
+que rola por dentro, e não saiu nas capturas: quem o conferiu foi o Marcos, no celular.
+
+**Não verificado.** Desempenho em aparelho real; iOS.
+
+**Veredito, 2026-11-03.** Aprovado pelo Marcos no celular, nas cenas de líder, DNF e chuva: "aprovado, tudo
+certo". Ele conferiu que o selo de DNF aparece na classificação.
+
 ## ARQUIVADO DO `ESTADO.md` em 2026-10-28 — §"Estado atual", medições de 2026-08-18 a 2026-09-02
 
 > Movido sem alteração pela sessão principal, a pedido do Marcos. Antes da cópia, 18,8% dos

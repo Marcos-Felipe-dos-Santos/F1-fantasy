@@ -12,8 +12,10 @@
 
 ## Estado atual
 
-**2026-11-02, branch `feat/pr2e-fim-da-corrida`**, com o PR 2e aprovado no celular e fechado sobre a
-`main` `a49cb78`. O push é do Marcos. Sem merge ou deploy.
+**2026-11-03, branch `feat/pr2d-incidentes`**, com o PR 2d aprovado no celular e fechado sobre a
+`main` `03ed7ed`. O push é do Marcos. Sem merge ou deploy. Próximo: PR 2f (punição cumprida no box).
+~~**2026-11-02, branch `feat/pr2e-fim-da-corrida`**, com o PR 2e aprovado no celular e fechado sobre a
+`main` `a49cb78`. O push é do Marcos. Sem merge ou deploy.~~ O PR 2e foi mesclado na `main` (`03ed7ed`).
 ~~**2026-11-02, branch `feat/pr2a-carros-chuva`**, com o PR 2a aprovado no celular e fechado sobre a
 `main` `c3f7dcb`. O push é do Marcos. Sem merge ou deploy.~~ O PR 2a foi mesclado na `main` (`a49cb78`).
 ~~**2026-11-01, branch `feat/pr2a-carros-chuva`**, com o PR 2a implementado sobre a `main` `c3f7dcb`,
@@ -430,7 +432,11 @@ dependência).
 
 ## Onde parei
 
-### 2026-11-03 — PR 2d (incidentes, DNF, narração) IMPLEMENTADO, sessão interrompida antes do preview no celular
+### 2026-11-03 — PR 2d (incidentes, DNF, narração) APROVADO no celular e fechado, aguardando o push do Marcos
+
+**Veredito do Marcos (2026-11-03):** "aprovado, tudo certo", nas cenas de líder, DNF e chuva. Ele conferiu no
+celular que o selo de DNF aparece na classificação. Detalhe em `HISTORICO.md` §"2026-11-03 — PR 2d". Servidor de
+preview derrubado (porta 5173 fora). **Próximo:** push e abertura do PR pelo Marcos. Depois, o PR 2f.
 
 Branch `feat/pr2d-incidentes`, sobre a `main` `03ed7ed` (merge do PR 2e conferido). Risco ALTO. Sem push, merge ou
 deploy. Decisões D1-D5 em §"🔒 DECISÕES DO MARCOS — VIGENTES"; PR 2f (punição no box) registrado em
@@ -438,16 +444,19 @@ deploy. Decisões D1-D5 em §"🔒 DECISÕES DO MARCOS — VIGENTES"; PR 2f (pun
 
 Commits: `a39a4f3` medição e decisões; `82d30a4` implementação; `f6ab704` testes dos sobreviventes;
 `0d493b9` mutação; `96a350e` correção da revisão + FPS; `32aed82` mutação; `562b197` código morto;
+`99ee553` nota de retomada e nova tentativa no script; `8945b2a` mutação final completa; mais o commit desta doc.
 ⚠️ **`df73590` está ERRADO:** diz "mutação final, 70/71", mas o `docs/pr2d-mutacoes.json` dele tem só 15 entradas,
-porque a rodada abortou em `dnf-sem-plano` (vitest falhou sem a linha FAIL na saída). Não foi reescrito: corrigir
-com commit novo quando a mutação final terminar.
+porque a rodada abortou em `dnf-sem-plano` (vitest falhou sem a linha FAIL na saída). Não foi reescrito: ~~corrigir
+com commit novo quando a mutação final terminar.~~ corrigido por `8945b2a`, com as 71 entradas.
 
-- **Medido (último ponto verde, código de `562b197`):** `npm test` 2099 + 1 skipped em 90 arquivos; `test:party` 46;
-  typecheck, lint e build com saída 0; `git diff 03ed7ed` vazio em `src/engine/`, `src/data/`, `src/net/` e
-  `party/`. `verificar-pr2d` (1000 corridas, dataset real): tudo 0, inclusive `ritmoForaDoLimpo`, que a revisão
+- **Medido (último ponto verde, código de `562b197`; depois dele só `scripts/mutar-pr2d.mjs` mudou):** `npm test`
+  2099 + 1 skipped em 90 arquivos; `test:party` 46; typecheck, lint e build com saída 0; `git diff 03ed7ed` vazio em
+  `src/engine/`, `src/data/` e `party/`. ~~e `src/net/`~~ **Corrigido em 2026-11-03:** em `src/net/` mudou só
+  `cerca-lint.test.ts` (+10, o teste da cerca de `incidentes-replay.ts`). `verificar-pr2d` (1000 corridas, dataset real): tudo 0, inclusive `ritmoForaDoLimpo`, que a revisão
   pediu e que acusa 15 com o defeito recolocado. `verificar-pr2e` igual ao do PR 2e (189 aceitas).
 - **Mutação:** 2ª rodada 70/71 + 1 travada (`frase-trava-no-pool-cheio`, laço síncrono). Depois da correção, 70/72
-  com `abandono-nao-corta-o-plano` sobrevivendo: era código morto, removido em `562b197`.
+  com `abandono-nao-corta-o-plano` sobrevivendo: era código morto, removido em `562b197`. **Final (2026-11-03,
+  `8945b2a`): 70/71 + 1 travada, a mesma; nenhuma sobrevivente.** `git status -- src` limpo depois da rodada.
 - **FPS** (`docs/pr2d-fps.json`, `docs/pr2d-fps-media.json`, A/B intercalado com `03ed7ed`, CPU 6×, 360×800, chuva):
   rápida 80-86 fps nos dois; média refeita 83-87 fps nos dois, 0 quadro > 33 ms no PR. A 1ª rodada da média foi de
   máquina suja (35-40 fps nos DOIS braços).
@@ -455,16 +464,21 @@ com commit novo quando a mutação final terminar.
   abandono; baseline vermelho em `docs/pr2d-baseline-vermelho-revisao.txt`). 🟡 aplicados: cerca de lint com teste,
   comentário de contrato, cabeçalho do portão. Sugestões não aplicadas: alocação por frame de `incidentes()`,
   cache da narração só por `resultado`, efeito por cima do viaduto, `namespaces-seed.ts` (em `src/engine/`, fora).
-- **Na árvore, sem commit:** `scripts/mutar-pr2d.mjs`, com uma nova tentativa quando o vitest falha sem linha FAIL.
+- ~~**Na árvore, sem commit:** `scripts/mutar-pr2d.mjs`, com uma nova tentativa quando o vitest falha sem linha FAIL.~~
+  Commitado em `99ee553`.
+- **Preview:** as capturas de `preview/pr2d/` de 2026-11-02 eram anteriores a `96a350e`. Foram refeitas sobre
+  `8945b2a` em `preview/pr2d/rodada2/` (gitignored), por CDP no Chrome headless, 360×800, DPR 2, sem erro no
+  console. Três em `docs/pr2d-imagens/`. O selo de DNF fica abaixo da dobra da lista e não saiu nas capturas:
+  quem o conferiu foi o Marcos.
 
-**RETOMADA, nesta ordem:**
-1. `node scripts/mutar-pr2d.mjs` (~15 min; não desligar no meio: um mutante fica aplicado em `src/`, conferir
-   `git status -- src`). Commitar o script e o JSON corrigindo o `df73590`.
-2. Preview no celular para o veredito do Marcos: `PREVIEW_PIT_SAIDA=.wrangler/pr2d-preview npx vite build --config
+**RETOMADA, nesta ordem:** (todos feitos em 2026-11-03)
+1. ~~`node scripts/mutar-pr2d.mjs` (~15 min; não desligar no meio: um mutante fica aplicado em `src/`, conferir
+   `git status -- src`). Commitar o script e o JSON corrigindo o `df73590`.~~ Feito, `8945b2a`.
+2. ~~Preview no celular para o veredito do Marcos~~ Feito, aprovado: `PREVIEW_PIT_SAIDA=.wrangler/pr2d-preview npx vite build --config
    scripts/preview-pit.config.ts`, depois `npx vite preview --config scripts/preview-pit.config.ts --outDir
    .wrangler/pr2d-preview --host 192.168.0.3 --port 5173 --strictPort`; cenas `/scripts/preview-pit.html?cena=lider`,
    `?cena=dnf`, `?cena=chuvoso`. Capturas olhadas em `preview/pr2d/` (gitignored); escolher 3 para `docs/pr2d-imagens/`.
-3. `HISTORICO.md` e o fechamento desta entrada, depois do veredito.
+3. ~~`HISTORICO.md` e o fechamento desta entrada, depois do veredito.~~ Feito.
 
 ### 2026-11-02 — PR 2e (a corrida termina quando todos cruzam) APROVADO no celular e fechado, aguardando o push do Marcos
 
@@ -3126,6 +3140,8 @@ que agora ela é tomada com o número na mão.**
   (`docs/pr2d-medicao.json`). ~~**O PR 2e aumenta os saltos visíveis: 46 em 800 DNFs**~~ Os 46 de
   `docs/pr2e-medicao.json` são só o acréscimo do PR 2e: aconteciam depois do fim do replay e passaram a
   aparecer na tela. Aceito pelo Marcos em 2026-11-02 até o PR 2d.
+  ✅ **Fechada pelo PR 2d (2026-11-03, sem push):** o carro para no ponto do abandono; `dnfForaDoPonto` e
+  `dnfDepoisDoFim` dão 0 em 800 DNFs no `verificar-pr2d`.
 - **Aparelho real:** desempenho não medido no celular; o custo de raster e composição da chuva e do spray
   não está verificado no freio de CPU. O FPS do PR foi medido com a pista 10% maior que a do jogo.
 - **iOS:** não testado, em especial `paint-order` e `var()` em `stop-color` dentro de `<use>`.
@@ -3137,6 +3153,8 @@ que agora ela é tomada com o número na mão.**
 - variedade de frases para o mesmo tipo de erro.
 A punição narrada e cumprida saiu daqui: vai para o PR 2f, abaixo. No PR 2d, ela é narrada quando o carro
 cruza a linha, com o selo `+Xs`.
+✅ **Os quatro itens entraram no PR 2d (2026-11-03, sem push).** A variedade vale sem repetir frase na
+corrida enquanto houver frase nova (`fraseRepetida` 0 no `verificar-pr2d`).
 
 **PR 2f, depois do PR 2d — PUNIÇÃO CUMPRIDA NO BOX, como na F1.** ~~Para o PR 2d, pedido do Marcos em
 2026-11-02.~~ Separado do PR 2d por decisão do Marcos (D1 do PR 2d). Só apresentação: o tempo total e a
