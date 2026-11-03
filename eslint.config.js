@@ -199,7 +199,14 @@ export default tseslint.config(
     // teria mudado. `incidentes-replay.ts` entrou no PR 2d: decide por hash onde
     // cada incidente e abandono aparecem, e no online os clientes derivam o
     // mesmo replay do mesmo resultado (testado em `src/net/cerca-lint.test.ts`).
-    files: ['src/ui/persistencia.ts', 'src/ui/fluxo-campeonato.ts', 'src/ui/narracao.ts', 'src/ui/incidentes-replay.ts'],
+    // `punicao-replay.ts` entrou no PR 2f: decide por hash quando a infração sai.
+    files: [
+      'src/ui/persistencia.ts',
+      'src/ui/fluxo-campeonato.ts',
+      'src/ui/narracao.ts',
+      'src/ui/incidentes-replay.ts',
+      'src/ui/punicao-replay.ts',
+    ],
     rules: {
       'no-restricted-properties': [
         'error',

@@ -1,0 +1,275 @@
+
+ RUN  v4.1.10 E:/projetos/F1 fantasy
+
+ ❯ src/ui/punicao-replay.test.ts (30 tests | 16 failed) 81ms
+     × é cumprida no último pit, e o selo some 3ms
+     × o carro fica X s a mais parado na vaga 3ms
+     × sai da vaga sem salto, e dali em diante é a corrida de antes atrasada X 1ms
+     × cruza a linha no tempo total oficial 0ms
+     × a infração sai antes do pit da punição e depois do pit anterior 0ms
+     × não há pit para cumprir: o selo leva a punição, e a linha é a de antes 0ms
+     × o primeiro a cruzar é o vencedor oficial 0ms
+     × pré-condição: com a bandeirada nova, `c` faz a volta 9 e o pit dela aparece 0ms
+     × a punição de `c` é cumprida no pit da volta 5 0ms
+     × com a espera, `c` vai para outra vaga, e ninguém divide vaga fora do box cheio 0ms
+     × pista-spa: corridas reais, sem colisão fora do box cheio 6ms
+     × pista-interlagos: corridas reais, sem colisão fora do box cheio 4ms
+     × não salta X quando ele cruza a linha: a punição já foi paga na pista 1ms
+     × narra duas vezes: quando sai e quando é cumprida, nessa ordem 1ms
+     × as duas linhas têm chave própria e dizem o valor 0ms
+     × determinismo: mesma corrida, mesmo instante da infração 0ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 16 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/ui/punicao-replay.test.ts > punição cumprida no último pit (PR 2f) > é cumprida no último pit, e o selo some
+TypeError: replay.punicao is not a function
+ ❯ punicao src/ui/punicao-replay.test.ts:94:32
+     92|   const h = r.historicoVoltas.b;
+     93|   const base = antes.paradas('b')[1];
+     94|   const punicao = () => replay.punicao('b');
+       |                                ^
+     95|
+     96|   it('é cumprida no último pit, e o selo some', () => {
+ ❯ src/ui/punicao-replay.test.ts:97:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/16]⎯
+
+ FAIL  src/ui/punicao-replay.test.ts > punição cumprida no último pit (PR 2f) > o carro fica X s a mais parado na vaga
+AssertionError: expected 668433.05424453 to be 675433.05424453 // Object.is equality
+
+- Expected
++ Received
+
+- 675433.05424453
++ 668433.05424453
+
+ ❯ src/ui/punicao-replay.test.ts:105:28
+    103|     const parada = replay.paradas('b')[1];
+    104|     expect(parada.chegada).toBe(base.chegada);
+    105|     expect(parada.partida).toBe(base.partida + 7000);
+       |                            ^
+    106|     expect(parada.fim).toBe(base.fim + 7000);
+    107|     for (const t of [base.partida, base.partida + 3500, base.partida +…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/16]⎯
+
+ FAIL  src/ui/punicao-replay.test.ts > punição cumprida no último pit (PR 2f) > sai da vaga sem salto, e dali em diante é a corrida de antes atrasada X
+AssertionError: expected 0.6973288841678971 to be 0.6938171958128506 // Object.is equality
+
+- Expected
++ Received
+
+- 0.6938171958128506
++ 0.6973288841678971
+
+ ❯ src/ui/punicao-replay.test.ts:124:43
+    122|     expect(distancia(ponto(t0 - 1), ponto(t0 + 1))).toBeLessThan(1);
+    123|     for (const t of [t0, t0 + 10_000, t0 + 100_000, soma(r, 'b')]) {
+    124|       expect(replay.progresso('b', h, t)).toBe(antes.progresso('b', h,…
+       |                                           ^
+    125|     }
+    126|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/16]⎯
+
+ FAIL  src/ui/punicao-replay.test.ts > punição cumprida no último pit (PR 2f) > cruza a linha no tempo total oficial
+AssertionError: expected 958000 to be close to 965000, received difference is 7000, but expected 0.0005
+ ❯ src/ui/punicao-replay.test.ts:135:43
+    133|
+    134|   it('cruza a linha no tempo total oficial', () => {
+    135|     expect(replay.chegada('b')?.instante).toBeCloseTo(soma(r, 'b') + 7…
+       |                                           ^
+    136|     const oficial = r.classificacao.find((c) => c.jogadorId === 'b')?.…
+    137|     expect(replay.chegada('b')?.instante).toBeCloseTo(oficial, 3);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/16]⎯
+
+ FAIL  src/ui/punicao-replay.test.ts > punição cumprida no último pit (PR 2f) > a infração sai antes do pit da punição e depois do pit anterior
+TypeError: replay.punicao is not a function
+ ❯ punicao src/ui/punicao-replay.test.ts:94:32
+     92|   const h = r.historicoVoltas.b;
+     93|   const base = antes.paradas('b')[1];
+     94|   const punicao = () => replay.punicao('b');
+       |                                ^
+     95|
+     96|   it('é cumprida no último pit, e o selo some', () => {
+ ❯ src/ui/punicao-replay.test.ts:142:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/16]⎯
+
+ FAIL  src/ui/punicao-replay.test.ts > selo de reserva: punido sem pit > não há pit para cumprir: o selo leva a punição, e a linha é a de antes
+TypeError: replay.punicao is not a function
+ ❯ src/ui/punicao-replay.test.ts:154:19
+    152|
+    153|   it('não há pit para cumprir: o selo leva a punição, e a linha é a de…
+    154|     expect(replay.punicao('b')).toBeUndefined();
+       |                   ^
+    155|     expect(replay.punicaoMs('b')).toBe(6000);
+    156|     expect(replay.chegada('b')?.instante).toBe(soma(r, 'b'));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/16]⎯
+
+ FAIL  src/ui/punicao-replay.test.ts > bandeirada com a punição cumprida > o primeiro a cruzar é o vencedor oficial
+AssertionError: expected 924000 to be close to 929000, received difference is 5000, but expected 0.0005
+ ❯ src/ui/punicao-replay.test.ts:178:31
+    176|
+    177|   it('o primeiro a cruzar é o vencedor oficial', () => {
+    178|     expect(replay.bandeirada).toBeCloseTo(soma(r, 'b'), 3);
+       |                               ^
+    179|     expect(replay.chegada('b')?.instante).toBeLessThan(replay.chegada(…
+    180|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/16]⎯
+
+ FAIL  src/ui/punicao-replay.test.ts > pit da punição: o último visível pela chegada ANTES da punição (decisão do Marcos) > pré-condição: com a bandeirada nova, `c` faz a volta 9 e o pit dela aparece
+AssertionError: expected 8 to be 9 // Object.is equality
+
+- Expected
++ Received
+
+- 9
++ 8
+
+ ❯ src/ui/punicao-replay.test.ts:199:41
+    197|
+    198|   it('pré-condição: com a bandeirada nova, `c` faz a volta 9 e o pit d…
+    199|     expect(replay.chegada('c')?.voltas).toBe(9);
+       |                                         ^
+    200|     expect(replay.paradas('c')[1].inicio).toBeLessThan(replay.chegada(…
+    201|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/16]⎯
+
+ FAIL  src/ui/punicao-replay.test.ts > pit da punição: o último visível pela chegada ANTES da punição (decisão do Marcos) > a punição de `c` é cumprida no pit da volta 5
+TypeError: replay.punicao is not a function
+ ❯ src/ui/punicao-replay.test.ts:204:19
+    202|
+    203|   it('a punição de `c` é cumprida no pit da volta 5', () => {
+    204|     expect(replay.punicao('c')?.parada.volta).toBe(5);
+       |                   ^
+    205|   });
+    206| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/16]⎯
+
+ FAIL  src/ui/punicao-replay.test.ts > vagas > com a espera, `c` vai para outra vaga, e ninguém divide vaga fora do box cheio
+AssertionError: expected +0 not to be +0 // Object.is equality
+ ❯ src/ui/punicao-replay.test.ts:220:45
+    218|
+    219|   it('com a espera, `c` vai para outra vaga, e ninguém divide vaga for…
+    220|     expect(replay.paradas('c')[0].vaga).not.toBe(replay.paradas('b')[0…
+       |                                             ^
+    221|     const todas = ['b', 'c'].flatMap((id) => replay.paradas(id).map((p…
+    222|     expect(colisoesForaDoBoxCheio(todas)).toBe(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/16]⎯
+
+ FAIL  src/ui/punicao-replay.test.ts > vagas > pista-spa: corridas reais, sem colisão fora do box cheio
+ FAIL  src/ui/punicao-replay.test.ts > vagas > pista-interlagos: corridas reais, sem colisão fora do box cheio
+AssertionError: expected 3 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 3
+
+ ❯ src/ui/punicao-replay.test.ts:230:45
+    228|       const rep = replayDaCorrida(resultado, pista);
+    229|       const todas = Object.keys(resultado.historicoVoltas).flatMap((id…
+    230|       expect(colisoesForaDoBoxCheio(todas)).toBe(0);
+       |                                             ^
+    231|     }
+    232|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/16]⎯
+
+ FAIL  src/ui/punicao-replay.test.ts > diferença para o líder na chegada do punido > não salta X quando ele cruza a linha: a punição já foi paga na pista
+AssertionError: expected 8000.0109890110325 to be less than 500
+ ❯ src/ui/punicao-replay.test.ts:247:59
+    245|   it('não salta X quando ele cruza a linha: a punição já foi paga na p…
+    246|     const t = replay.chegada('b')?.instante ?? 0;
+    247|     expect(Math.abs(diferenca(t + 1) - diferenca(t - 1))).toBeLessThan…
+       |                                                           ^
+    248|   });
+    249| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/16]⎯
+
+ FAIL  src/ui/punicao-replay.test.ts > narração da punição cumprida > narra duas vezes: quando sai e quando é cumprida, nessa ordem
+AssertionError: expected [ { …(6) } ] to have a length of 2 but got 1
+
+- Expected
++ Received
+
+- 2
++ 1
+
+ ❯ src/ui/punicao-replay.test.ts:258:22
+    256|
+    257|   it('narra duas vezes: quando sai e quando é cumprida, nessa ordem', …
+    258|     expect(narradas).toHaveLength(2);
+       |                      ^
+    259|     expect(narradas[0].instante).toBe(punicao()?.infracao);
+    260|     expect(narradas[1].instante).toBe(punicao()?.parada.partida);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/16]⎯
+
+ FAIL  src/ui/punicao-replay.test.ts > narração da punição cumprida > as duas linhas têm chave própria e dizem o valor
+TypeError: Cannot read properties of undefined (reading 'chave')
+ ❯ src/ui/punicao-replay.test.ts:266:52
+    264|
+    265|   it('as duas linhas têm chave própria e dizem o valor', () => {
+    266|     expect(narradas[0].chave).not.toBe(narradas[1].chave);
+       |                                                    ^
+    267|     expect(textoDaConsequencia(narradas[0])).toBe(': +7,4 s, a cumprir…
+    268|     expect(narradas[1].frase).toBe('cumpriu a punição no box');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/16]⎯
+
+ FAIL  src/ui/punicao-replay.test.ts > narração da punição cumprida > determinismo: mesma corrida, mesmo instante da infração
+TypeError: outra.punicao is not a function
+ ❯ src/ui/punicao-replay.test.ts:275:18
+    273|   it('determinismo: mesma corrida, mesmo instante da infração', () => {
+    274|     const outra = replayDaCorrida(sintetica({ a: { ms: 90_000 }, b: { …
+    275|     expect(outra.punicao('b')?.infracao).toBe(punicao()?.infracao);
+       |                  ^
+    276|   });
+    277| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/16]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  16 failed | 14 passed (30)
+   Start at  09:55:31
+   Duration  473ms (transform 187ms, setup 0ms, import 242ms, tests 81ms, environment 0ms)
+
+
+ RUN  v4.1.10 E:/projetos/F1 fantasy
+
+ ❯ scripts/verificar-pr2f.preview.test.ts (1 test | 1 failed) 20ms
+     × 1000 corridas 18ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  scripts/verificar-pr2f.preview.test.ts > verificação do PR 2f > 1000 corridas
+TypeError: replay.punicao is not a function
+ ❯ scripts/verificar-pr2f.preview.test.ts:105:93
+    103|         const narradas = narrarEventos(r, replay);
+    104|         const ordemOficial = r.classificacao.filter((c) => c.status ==…
+    105|         const comPunicaoServida = r.eventos.some((e) => e.tipo === 'in…
+       |                                                                                             ^
+    106|         const primeiro = [...ordemOficial].sort(
+    107|           (a, b) => (replay.chegada(a)?.instante ?? Infinity) - (repla…
+ ❯ scripts/verificar-pr2f.preview.test.ts:105:45
+ ❯ scripts/verificar-pr2f.preview.test.ts:83:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  09:55:33
+   Duration  457ms (transform 210ms, setup 0ms, import 290ms, tests 20ms, environment 0ms)
+

@@ -484,8 +484,8 @@ export function TelaCorrida({
             const { evento, frase, foiParaOsBoxes } = narrada;
             const consequencia = textoDaConsequencia(narrada);
             return (
-              <li key={`${evento.jogadorId}-${evento.tipo}-${evento.volta}`}>
-                <span className="ticker-eventos__volta">V{evento.volta}</span>
+              <li key={narrada.chave}>
+                <span className="ticker-eventos__volta">V{narrada.volta}</span>
                 <span>
                   <span className="ticker-eventos__piloto">{pilotos.get(evento.jogadorId) ?? '?'}</span>
                   {ehHumanoId(state, evento.jogadorId) && ` (${nomeDoJogadorId(state, evento.jogadorId)})`} {frase}

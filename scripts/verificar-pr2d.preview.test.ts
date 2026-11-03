@@ -8,6 +8,13 @@
  * `reordenacaoDeParados`: quantas vezes a ordem oficial troca dois carros parados de lugar no
  * painel. Medição, não portão: a regra é do PR 2e e o abandono antecipado pode acioná-la.
  *
+ * PR 2f: o punido cumpre a punição no box e dali em diante é a corrida de antes atrasada X.
+ * Para ele, `linhaMudou` e `fimMudou` comparam com a linha de antes DESLOCADA de X depois do
+ * cumprimento, e o ritmo limpo é conferido no replay sem a punição. Para os outros, segue a
+ * comparação direta, exceto a passagem pela linha DENTRO do box de quem mudou de vaga
+ * (`linhaNoBoxComOutraVaga`, medição): a espera de um punido pode mudar a vaga de outro, e a
+ * linha passa entre vagas. A frase fixa do cumprimento fica fora de `fraseRepetida`.
+ *
  * Comando: npx vitest run --config vitest.preview.config.ts scripts/verificar-pr2d.preview.test.ts --reporter=verbose --silent=false
  */
 
@@ -18,6 +25,7 @@ import pistasReal from '../src/data/pistas.json';
 import { simularCorrida } from '../src/engine/corrida';
 import { criarDataset } from '../src/engine/dataset';
 import { simularQuali } from '../src/engine/quali';
+import type { ResultadoCorrida } from '../src/engine/types';
 import { replayDaCorrida } from '../src/ui/fim-da-corrida';
 import { acumularVoltas, classificacaoAoVivo } from '../src/ui/fluxo-corrida';
 import { rotulosDosPilotos } from '../src/ui/loadout-view';
@@ -47,6 +55,7 @@ describe('verificação do PR 2d', () => {
       gruposNomeAno: 0,
       fraseRepetida: 0,
       ritmoForaDoLimpo: 0,
+      linhaNoBoxComOutraVaga: 0,
     };
     let maiorPassoEmVoltas = 0;
     dataset.pistas.forEach((pista, indice) => {
@@ -58,6 +67,8 @@ describe('verificação do PR 2d', () => {
         const r = simularCorrida(dataset, loadouts, pista, grid, seed);
         const replay = replayDaCorrida(r, pista);
         const pit = linhaDoTempoDoPit(r, pista);
+        const sem: ResultadoCorrida = { ...r, eventos: r.eventos.filter((e) => e.tipo !== 'investigacao') };
+        const semPunicao = replayDaCorrida(sem, pista);
         conta.corridas++;
 
         const rotulos = rotulosDosPilotos(Object.fromEntries(loadouts.map((l) => [l.jogadorId, l])), dataset);
@@ -68,8 +79,8 @@ describe('verificação do PR 2d', () => {
         }
 
         const narradas = narrarEventos(r, replay);
-        for (const n of narradas) {
-          const lista = narradas.filter((m) => m.evento.tipo === n.evento.tipo);
+        for (const n of narradas.filter((m) => m.momento !== 'cumprida')) {
+          const lista = narradas.filter((m) => m.evento.tipo === n.evento.tipo && m.momento !== 'cumprida');
           if (lista.length <= variantesDe(n.evento.tipo, r.chuva).length && lista.filter((m) => m.frase === n.frase).length > 1) conta.fraseRepetida++;
         }
 
@@ -78,6 +89,9 @@ describe('verificação do PR 2d', () => {
           const h = r.historicoVoltas[id];
           const acum = acumularVoltas(h);
           const incidentes = replay.incidentes(id);
+          const punicao = replay.punicao(id);
+          const desloca = (t: number) => (punicao !== undefined && t >= punicao.inicio ? t + punicao.ms : t);
+          const ref = punicao === undefined ? replay : semPunicao;
           conta.incidentes += incidentes.length;
           for (const i of incidentes) {
             if (!narradas.some((n) => n.evento === i.evento)) conta.carroNaoNarrado++;
@@ -98,13 +112,20 @@ describe('verificação do PR 2d', () => {
           const inteiras = c.status === 'dnf' ? h.length - 1 : h.length;
           for (let v = 1; v <= inteiras; v++) {
             // 1 ms: a volta do box é achada por bisseção, com erro abaixo disso (`PASSOS_BISSECAO`).
-            if (Math.abs(replay.instanteDoProgresso(id, h, v) - pit.instanteDoProgresso(id, h, v)) >= 1) conta.linhaMudou++;
+            const passagem = pit.instanteDoProgresso(id, h, v);
+            if (Math.abs(replay.instanteDoProgresso(id, h, v) - desloca(passagem)) < 1) continue;
+            // PR 2f: o box cruza a linha, e com outra vaga o carro a cruza antes ou depois de parar.
+            const janela = pit.paradas(id).find((p) => passagem >= p.inicio && passagem < p.fim);
+            if (janela !== undefined && replay.paradas(id).find((p) => p.volta === janela.volta)?.vaga !== janela.vaga) {
+              conta.linhaNoBoxComOutraVaga++;
+            } else conta.linhaMudou++;
           }
 
           // Conta exata, por volta: até a primeira parada (ou o abandono), o ritmo limpo do trecho.
-          const paradasDoCarro = replay.paradas(id);
-          const ab = replay.abandono(id);
-          const voltasComPlano = new Set([...incidentes.map((i) => i.evento.volta), ...(ab ? [ab.volta] : [])]);
+          const paradasDoCarro = ref.paradas(id);
+          const ab = ref.abandono(id);
+          const incidentesRef = ref.incidentes(id);
+          const voltasComPlano = new Set([...incidentesRef.map((i) => i.evento.volta), ...(ab ? [ab.volta] : [])]);
           for (const v of voltasComPlano) {
             const antes = paradasDoCarro.find((p) => p.volta === v - 1);
             const na = paradasDoCarro.find((p) => p.volta === v);
@@ -115,13 +136,13 @@ describe('verificação do PR 2d', () => {
             const custo = r.eventos.filter((e) => e.jogadorId === id && e.volta === v && (e.tipo === 'erro-piloto' || e.tipo === 'problema-tecnico')).reduce((s, e) => s + e.custoMs, 0);
             const limpo = (sb - sa) / (tb - ta - custo);
             if (!(limpo > 0)) conta.ritmoForaDoLimpo++;
-            const primeiro = incidentes.find((i) => i.evento.volta === v);
+            const primeiro = incidentesRef.find((i) => i.evento.volta === v);
             if (primeiro !== undefined && (primeiro.inicio < ta || Math.abs(primeiro.inicio - ta - (primeiro.fracao - sa) / limpo) > 1)) conta.ritmoForaDoLimpo++;
             if (ab !== undefined && ab.volta === v && Math.abs(ab.instante - (ta + (ab.fracao - sa) / limpo + custo)) > 1) conta.ritmoForaDoLimpo++;
           }
 
           const chegada = replay.chegada(id);
-          if (chegada !== undefined && Math.abs(chegada.instante - pit.instanteDoProgresso(id, h, chegada.voltas)) >= 1) conta.fimMudou++;
+          if (chegada !== undefined && Math.abs(chegada.instante - desloca(pit.instanteDoProgresso(id, h, chegada.voltas))) >= 1) conta.fimMudou++;
 
           if (c.status === 'dnf') {
             conta.dnf++;

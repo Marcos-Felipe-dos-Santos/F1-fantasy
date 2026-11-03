@@ -84,6 +84,14 @@ export interface ParadaNoReplay {
   fracaoInicio: number;
   /** Fração da volta seguinte onde a janela termina (PR 2d). */
   fracaoFim: number;
+  /** Nenhuma vaga livre na chegada: a única forma de dividir vaga (PR 2f). */
+  boxCheio: boolean;
+}
+
+/** Tempo a mais na vaga, que só ela ocupa (a punição do PR 2f): a linha do tempo não muda. */
+export interface EsperaNaVaga {
+  volta: number;
+  ms: number;
 }
 
 export interface PosicaoNoReplay {
@@ -321,6 +329,7 @@ function montarParada(
     fim,
     fracaoInicio: c.fracaoEntrada - rampa,
     fracaoFim: c.fracaoSaida - 1 + rampa,
+    boxCheio: false,
     inicioVolta,
     tLimpo,
     perfil,
@@ -330,8 +339,11 @@ function montarParada(
   };
 }
 
-/** Primeira vaga livre na chegada, por ordem de início; box cheio: a que libera antes. */
-function alocarVagas(c: Caminho, paradas: ParadaInterna[]): void {
+/**
+ * Primeira vaga livre na chegada, por ordem de início; box cheio: a que libera antes.
+ * A espera da punição (PR 2f) prende a vaga depois da partida.
+ */
+function alocarVagas(c: Caminho, paradas: ParadaInterna[], esperaDe: (p: ParadaInterna) => number): void {
   const livreEm = c.xVagas.map(() => -Infinity);
   const ordem = [...paradas].sort(
     (a, b) => a.inicio - b.inicio || (a.jogadorId < b.jogadorId ? -1 : 1),
@@ -339,12 +351,13 @@ function alocarVagas(c: Caminho, paradas: ParadaInterna[]): void {
   for (const p of ordem) {
     const chegadaEm = (k: number) => p.inicio + p.escala * tempoEmX(c, p.perfil, c.xVagas[k]);
     let vaga = livreEm.findIndex((livre, k) => livre <= chegadaEm(k));
+    p.boxCheio = vaga === -1;
     if (vaga === -1) vaga = livreEm.indexOf(Math.min(...livreEm));
     p.vaga = vaga;
     p.xVaga = c.xVagas[vaga];
     p.chegada = chegadaEm(vaga);
     p.partida = p.chegada + p.parado;
-    livreEm[vaga] = p.partida;
+    livreEm[vaga] = p.partida + esperaDe(p);
   }
 }
 
@@ -389,12 +402,14 @@ const CACHE_LINHA = new WeakMap<ResultadoCorrida, { pistaId: string; linha: Linh
 /**
  * Linha do tempo do pit da corrida, MEMOIZADA pela identidade de `resultado`:
  * as vagas dependem de todas as paradas e o replay pede isto a cada frame.
+ * Com `esperas` não memoiza: quem passa (`replayDaCorrida`) já memoiza o resultado.
  */
 export function linhaDoTempoDoPit(
   resultado: ResultadoCorrida,
   pista: Pick<Pista, 'id' | 'voltas' | 'tempoBaseMs'>,
+  esperas?: ReadonlyMap<string, EsperaNaVaga>,
 ): LinhaDoTempoPit {
-  const cache = CACHE_LINHA.get(resultado);
+  const cache = esperas === undefined ? CACHE_LINHA.get(resultado) : undefined;
   if (cache !== undefined && cache.pistaId === pista.id) return cache.linha;
 
   const c = caminhoDaPista(pista.id);
@@ -408,7 +423,10 @@ export function linhaDoTempoDoPit(
       porCarro.set(jogadorId, paradas);
       todas.push(...paradas);
     }
-    alocarVagas(c, todas);
+    alocarVagas(c, todas, (p) => {
+      const espera = esperas?.get(p.jogadorId);
+      return espera !== undefined && espera.volta === p.volta ? espera.ms : 0;
+    });
   }
 
   const ativa = (jogadorId: string, tempoSimMs: number) =>
@@ -473,6 +491,6 @@ export function linhaDoTempoDoPit(
       return rumoDoPit === null ? naPista : { ...naPista, rumo: rumoDoPit };
     },
   };
-  CACHE_LINHA.set(resultado, { pistaId: pista.id, linha });
+  if (esperas === undefined) CACHE_LINHA.set(resultado, { pistaId: pista.id, linha });
   return linha;
 }

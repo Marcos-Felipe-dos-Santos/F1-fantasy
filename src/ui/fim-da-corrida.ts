@@ -9,8 +9,15 @@
  * DNF fica de fora: segue a própria história até quebrar.
  *
  * BANDEIRADA NA PISTA: `classificacao[0].tempoTotal` traz a punição, que
- * `historicoVoltas` não tem. Em 28 de 1000 corridas o primeiro a cruzar nem é o
- * vencedor oficial (`docs/pr2e-medicao.json`).
+ * `historicoVoltas` não tem. ~~Em 28 de 1000 corridas o primeiro a cruzar nem é o
+ * vencedor oficial (`docs/pr2e-medicao.json`).~~ Desde o PR 2f a punição é cumprida
+ * no box (`punicao-replay.ts`) e o punido cruza a linha no tempo total oficial: o
+ * primeiro a cruzar só não é o vencedor oficial quando a punição fica no selo.
+ *
+ * PIT DA PUNIÇÃO (decisão do Marcos, 2026-11-03): o último pit visível pela chegada
+ * ANTES da punição. A ordem importa: a punição cumprida move a bandeirada, e um
+ * retardatário pode ganhar uma volta na tela (2 em 1000 corridas, aceito pelo Marcos).
+ * Por isso as chegadas são contadas duas vezes, sem e com a punição.
  *
  * PASSAGEM PELA LINHA: vem do progresso do MAPA (`instanteDoProgresso`), não da soma
  * do histórico. O box cruza a linha, e na volta do pit as duas diferem.
@@ -29,7 +36,8 @@
 import type { Pista, ResultadoCorrida } from '../engine/types';
 import { acumularVoltas, lutDoTracado } from './fluxo-corrida';
 import { linhaDeIncidentes, type LinhaDeIncidentes } from './incidentes-replay';
-import { DISTANCIA_RAMPA, linhaDoTempoDoPit, posicaoNaPista } from './pit-replay';
+import { DISTANCIA_RAMPA, linhaDoTempoDoPit, posicaoNaPista, type EsperaNaVaga } from './pit-replay';
+import { linhaComPunicoes, type LinhaComPunicoes, type PunicaoACumprir } from './punicao-replay';
 import { tracadoSuavizado } from './suavizacao';
 
 /** Fração da velocidade de corrida da pista (decisão do Marcos). */
@@ -46,14 +54,14 @@ export interface ChegadaDoCarro {
   fracaoInicial: number;
 }
 
-export interface ReplayDaCorrida extends LinhaDeIncidentes {
+export interface ReplayDaCorrida extends LinhaComPunicoes {
   /** Quando o primeiro completa as voltas na pista. `Infinity` se ninguém terminou. */
   bandeirada: number;
   /** Onde o replay para: a passagem do último pela linha. */
   fim: number;
   chegada(jogadorId: string): ChegadaDoCarro | undefined;
   chegou(jogadorId: string, tempoSimMs: number): boolean;
-  /** Punição somada ao tempo final, que o histórico não tem. */
+  /** Punição somada na chegada, com o selo `+Xs`: só a de quem não tem pit para cumpri-la (PR 2f). */
   punicaoMs(jogadorId: string): number;
 }
 
@@ -99,22 +107,38 @@ export function replayDaCorrida(
   const cache = CACHE_REPLAY.get(resultado);
   if (cache !== undefined && cache.pistaId === pista.id) return cache.replay;
 
-  const linha = linhaDeIncidentes(resultado, pista, linhaDoTempoDoPit(resultado, pista));
+  const semPunicao = linhaDeIncidentes(resultado, pista, linhaDoTempoDoPit(resultado, pista));
   const terminaram = resultado.classificacao.filter((c) => c.status === 'terminou');
   const somaDe = (id: string) => acumularVoltas(resultado.historicoVoltas[id]).at(-1) ?? 0;
-  const bandeirada = Math.min(...terminaram.map((c) => somaDe(c.jogadorId)));
-  const chegadas = new Map(
-    terminaram.map((c) => [
-      c.jogadorId,
-      chegadaDoCarro(linha, c.jogadorId, resultado.historicoVoltas[c.jogadorId], bandeirada),
-    ]),
-  );
-  const punicoes = new Map<string, number>();
+  const chegadasEm = (linha: LinhaDeIncidentes, bandeirada: number) =>
+    new Map(
+      terminaram.map((c) => [
+        c.jogadorId,
+        chegadaDoCarro(linha, c.jogadorId, resultado.historicoVoltas[c.jogadorId], bandeirada),
+      ]),
+    );
+  const chegadasAntes = chegadasEm(semPunicao, Math.min(...terminaram.map((c) => somaDe(c.jogadorId))));
+
+  const cumprir = new Map<string, PunicaoACumprir>();
+  const selos = new Map<string, number>();
   for (const e of resultado.eventos) {
-    if (e.tipo === 'investigacao') {
-      punicoes.set(e.jogadorId, (punicoes.get(e.jogadorId) ?? 0) + e.custoMs);
-    }
+    if (e.tipo !== 'investigacao') continue;
+    const chegada = chegadasAntes.get(e.jogadorId);
+    const pit = semPunicao.paradas(e.jogadorId).filter((p) => chegada !== undefined && p.inicio < chegada.instante).at(-1);
+    if (pit !== undefined && !cumprir.has(e.jogadorId)) cumprir.set(e.jogadorId, { evento: e, volta: pit.volta });
+    else selos.set(e.jogadorId, (selos.get(e.jogadorId) ?? 0) + e.custoMs);
   }
+  const esperas = new Map<string, EsperaNaVaga>(
+    [...cumprir].map(([id, { evento, volta }]) => [id, { volta, ms: evento.custoMs }]),
+  );
+  const linha = linhaComPunicoes(
+    resultado,
+    pista,
+    cumprir.size === 0 ? semPunicao : linhaDeIncidentes(resultado, pista, linhaDoTempoDoPit(resultado, pista, esperas)),
+    cumprir,
+  );
+  const bandeirada = Math.min(...terminaram.map((c) => somaDe(c.jogadorId) + (esperas.get(c.jogadorId)?.ms ?? 0)));
+  const chegadas = chegadasEm(linha, bandeirada);
 
   const perimetro = lutDoTracado(tracadoSuavizado(pista.id)).comprimentoTotal;
   const velocidade = perimetro / pista.tempoBaseMs;
@@ -133,7 +157,7 @@ export function replayDaCorrida(
       const chegada = chegadas.get(jogadorId);
       return chegada !== undefined && tempoSimMs >= chegada.instante;
     },
-    punicaoMs: (jogadorId) => punicoes.get(jogadorId) ?? 0,
+    punicaoMs: (jogadorId) => selos.get(jogadorId) ?? 0,
     // Depois da linha o carro não anda mais na história dele: o incidente não acontece.
     incidentes(jogadorId) {
       const todos = linha.incidentes(jogadorId);
