@@ -1,0 +1,224 @@
+[
+  {
+    "nome": "espera-anda-para-tras",
+    "detectada": false,
+    "travou": false,
+    "falha": null
+  },
+  {
+    "nome": "sem-atraso-depois",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/punicao-replay.test.ts > punição cumprida no último pit (PR 2f) > sai da vaga sem salto, e dali em diante é a corrida de antes atrasada X"
+  },
+  {
+    "nome": "espera-na-partida",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/punicao-replay.test.ts > punição cumprida no último pit (PR 2f) > o carro fica X s a mais parado na vaga"
+  },
+  {
+    "nome": "sem-espera",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/punicao-replay.test.ts > punição cumprida no último pit (PR 2f) > o carro fica X s a mais parado na vaga"
+  },
+  {
+    "nome": "inverso-sem-deslocar",
+    "detectada": false,
+    "travou": true,
+    "falha": null
+  },
+  {
+    "nome": "inverso-desloca-tudo",
+    "detectada": false,
+    "travou": false,
+    "falha": null
+  },
+  {
+    "nome": "paradas-sem-deslocar",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/punicao-replay.test.ts > punição cumprida no último pit (PR 2f) > o carro fica X s a mais parado na vaga"
+  },
+  {
+    "nome": "incidentes-sem-deslocar",
+    "detectada": false,
+    "travou": false,
+    "falha": null
+  },
+  {
+    "nome": "desloca-estrito",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/punicao-replay.test.ts > punição cumprida no último pit (PR 2f) > o carro fica X s a mais parado na vaga"
+  },
+  {
+    "nome": "nobox-sem-relogio",
+    "detectada": false,
+    "travou": false,
+    "falha": null
+  },
+  {
+    "nome": "posicao-sem-relogio",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/punicao-replay.test.ts > punição cumprida no último pit (PR 2f) > o carro fica X s a mais parado na vaga"
+  },
+  {
+    "nome": "infracao-da-largada",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/punicao-replay.test.ts > punição cumprida no último pit (PR 2f) > a infração sai antes do pit da punição e depois do pit anterior"
+  },
+  {
+    "nome": "infracao-ate-o-fim-do-pit",
+    "detectada": false,
+    "travou": false,
+    "falha": null
+  },
+  {
+    "nome": "infracao-sem-margem",
+    "detectada": false,
+    "travou": false,
+    "falha": null
+  },
+  {
+    "nome": "volta-da-infracao-a-menos",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/punicao-replay.test.ts > punição cumprida no último pit (PR 2f) > a volta da infração é a do carro naquele instante, fora das janelas de pit"
+  },
+  {
+    "nome": "pit-sem-filtro-da-chegada",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/punicao-replay.test.ts > pit da punição: o último visível pela chegada ANTES da punição (decisão do Marcos) > a punição de `c` é cumprida no pit da volta 5"
+  },
+  {
+    "nome": "nunca-cumpre",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/punicao-replay.test.ts > punição cumprida no último pit (PR 2f) > é cumprida no último pit, e o selo some"
+  },
+  {
+    "nome": "selo-tambem-no-cumprido",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/punicao-replay.test.ts > punição cumprida no último pit (PR 2f) > é cumprida no último pit, e o selo some"
+  },
+  {
+    "nome": "bandeirada-sem-espera",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/punicao-replay.test.ts > bandeirada com a punição cumprida > o primeiro a cruzar é o vencedor oficial"
+  },
+  {
+    "nome": "vagas-sem-espera",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/punicao-replay.test.ts > vagas > com a espera, `c` vai para outra vaga, e ninguém divide vaga fora do box cheio"
+  },
+  {
+    "nome": "chegadas-de-antes",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/punicao-replay.test.ts > punição cumprida no último pit (PR 2f) > sai da vaga sem salto, e dali em diante é a corrida de antes atrasada X"
+  },
+  {
+    "nome": "vaga-livre-na-partida",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/punicao-replay.test.ts > vagas > com a espera, `c` vai para outra vaga, e ninguém divide vaga fora do box cheio"
+  },
+  {
+    "nome": "box-cheio-nunca",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/punicao-replay.test.ts > vagas > pista-spa: corridas reais, sem colisão fora do box cheio"
+  },
+  {
+    "nome": "box-cheio-sempre",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/punicao-replay.test.ts > vagas > com a espera, `c` vai para outra vaga, e ninguém divide vaga fora do box cheio"
+  },
+  {
+    "nome": "espera-em-todo-pit",
+    "detectada": false,
+    "travou": false,
+    "falha": null
+  },
+  {
+    "nome": "cumprida-na-infracao",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/punicao-replay.test.ts > narração da punição cumprida > narra duas vezes: quando sai e quando é cumprida, nessa ordem"
+  },
+  {
+    "nome": "infracao-no-cumprimento",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/punicao-replay.test.ts > narração da punição cumprida > narra duas vezes: quando sai e quando é cumprida, nessa ordem"
+  },
+  {
+    "nome": "volta-do-evento",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/punicao-replay.test.ts > narração da punição cumprida > narra duas vezes: quando sai e quando é cumprida, nessa ordem"
+  },
+  {
+    "nome": "volta-do-cumprimento",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/punicao-replay.test.ts > narração da punição cumprida > narra duas vezes: quando sai e quando é cumprida, nessa ordem"
+  },
+  {
+    "nome": "chave-repetida",
+    "detectada": false,
+    "travou": false,
+    "falha": null
+  },
+  {
+    "nome": "cumprida-gasta-pool",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/punicao-replay.test.ts > narração da punição cumprida > as duas linhas têm chave própria e dizem o valor"
+  },
+  {
+    "nome": "texto-da-infracao",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/punicao-replay.test.ts > narração da punição cumprida > as duas linhas têm chave própria e dizem o valor"
+  },
+  {
+    "nome": "texto-do-cumprimento",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/punicao-replay.test.ts > narração da punição cumprida > as duas linhas têm chave própria e dizem o valor"
+  },
+  {
+    "nome": "texto-do-selo",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/punicao-replay.test.ts > selo de reserva: punido sem pit > o ticker narra uma vez, na passagem pela linha"
+  },
+  {
+    "nome": "cumprida-vai-aos-boxes",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/punicao-replay.test.ts > narração da punição cumprida > as duas linhas têm chave própria e dizem o valor"
+  },
+  {
+    "nome": "ticker-volta-do-evento",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/tela-corrida-render.test.ts > depois da bandeirada (PR 2e) > a punição cumprida no pit não tem selo, e o ticker narra quando sai e quando é cumprida (PR 2f)"
+  },
+  {
+    "nome": "ticker-chave-do-evento",
+    "detectada": false,
+    "travou": false,
+    "falha": null
+  }
+]

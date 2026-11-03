@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { atribuirPerfis } from '../engine/bots';
 import { criarDataset } from '../engine/dataset';
 import { criarDraft, resolverBots } from '../engine/draft';
-import type { Jogador, ResultadoCorrida } from '../engine/types';
+import type { EventoCorrida, Jogador, ResultadoCorrida } from '../engine/types';
 import equipeAnosReal from '../fixtures/dataset-semente/equipe-anos.json';
 import pecasReal from '../fixtures/dataset-semente/pecas.json';
 import pistasReal from '../fixtures/dataset-semente/pistas.json';
@@ -34,11 +34,17 @@ interface CarroSintetico {
 }
 
 /** Voltas constantes; a volta de pit custa `CUSTO_PIT` a mais. Classificação pela regra da engine. */
-function sintetica(carros: Record<string, CarroSintetico>): ResultadoCorrida {
+function sintetica(carros: Record<string, CarroSintetico>, extras: EventoCorrida[] = []): ResultadoCorrida {
   const historico = Object.fromEntries(
     Object.entries(carros).map(([id, c]) => [
       id,
-      Array.from({ length: PISTA.voltas }, (_, i) => c.ms + ((c.pits ?? []).includes(i + 1) ? CUSTO_PIT : 0)),
+      Array.from(
+        { length: PISTA.voltas },
+        (_, i) =>
+          c.ms +
+          ((c.pits ?? []).includes(i + 1) ? CUSTO_PIT : 0) +
+          extras.filter((e) => e.jogadorId === id && e.volta === i + 1).reduce((s, e) => s + e.custoMs, 0),
+      ),
     ]),
   );
   const classificacao = Object.entries(carros)
@@ -59,9 +65,12 @@ function sintetica(carros: Record<string, CarroSintetico>): ResultadoCorrida {
     voltaMaisRapida: { jogadorId: classificacao[0].jogadorId, tempo: 1 },
     historicoVoltas: historico,
     voltasDePit: Object.fromEntries(Object.entries(carros).map(([id, c]) => [id, c.pits ?? []])),
-    eventos: Object.entries(carros)
-      .filter(([, c]) => c.punicao !== undefined)
-      .map(([jogadorId, c]) => ({ volta: PISTA.voltas, jogadorId, tipo: 'investigacao' as const, custoMs: c.punicao ?? 0 })),
+    eventos: [
+      ...extras,
+      ...Object.entries(carros)
+        .filter(([, c]) => c.punicao !== undefined)
+        .map(([jogadorId, c]) => ({ volta: PISTA.voltas, jogadorId, tipo: 'investigacao' as const, custoMs: c.punicao ?? 0 })),
+    ],
     chuva: false,
   } as ResultadoCorrida;
 }
@@ -130,6 +139,17 @@ describe('punição cumprida no último pit (PR 2f)', () => {
     for (const t of [0, 100_000, base.inicio, base.chegada, base.partida - 1]) {
       expect(replay.progresso('b', h, t)).toBe(antes.progresso('b', h, t));
     }
+    for (const v of [1, 2, 5, 6.5]) {
+      expect(replay.instanteDoProgresso('b', h, v)).toBe(antes.instanteDoProgresso('b', h, v));
+    }
+  });
+
+  it('segue no box X s a mais: sai dele e da janela X s depois', () => {
+    const parada = replay.paradas('b')[1];
+    expect(parada.retorno).toBe(base.retorno + 7000);
+    expect(replay.noBox('b', parada.retorno - 1)).toBe(true);
+    expect(replay.noBox('b', parada.retorno + 1)).toBe(false);
+    expect(replay.noBox('b', base.retorno + 1)).toBe(true);
   });
 
   it('cruza a linha no tempo total oficial', () => {
@@ -150,6 +170,70 @@ describe('punição cumprida no último pit (PR 2f)', () => {
     const infracao = punicao()?.infracao ?? NaN;
     const completas = acumularVoltas(h).filter((t) => t <= infracao).length;
     expect(punicao()?.voltaDaInfracao).toBe(completas + 1);
+  });
+});
+
+describe('espera maior que a parada de antes', () => {
+  // 30 s parado a mais, acima de qualquer parada do box: o relógio não pode voltar para a pista.
+  const r = sintetica({ a: { ms: 90_000 }, b: { ms: 91_000, pits: [5], punicao: 30_000 } });
+  const replay = replayDaCorrida(r, PISTA);
+  const h = r.historicoVoltas.b;
+  const parada = replay.paradas('b')[0];
+
+  it('pré-condição: a espera é maior que o tempo que ele já ficava parado', () => {
+    expect(30_000).toBeGreaterThan(parada.partida - 30_000 - parada.chegada);
+  });
+
+  it('fica na vaga a espera inteira, sem recuar', () => {
+    const inicio = replay.punicao('b')?.inicio ?? NaN;
+    let anterior = replay.progresso('b', h, inicio);
+    for (let t = inicio; t < inicio + 30_000; t += 1000) {
+      expect(replay.posicao('b', h, 'terminou', t, false).ponto).toEqual(replay.vagaEmX(parada.vaga));
+      expect(replay.progresso('b', h, t)).toBe(anterior);
+      anterior = replay.progresso('b', h, t);
+    }
+  });
+});
+
+describe('incidente depois do pit da punição', () => {
+  const erro: EventoCorrida = { volta: 8, jogadorId: 'b', tipo: 'erro-piloto', custoMs: 2500 };
+  const r = sintetica({ a: { ms: 90_000 }, b: { ms: 91_000, pits: [5], punicao: 6000 } }, [erro]);
+  const replay = replayDaCorrida(r, PISTA);
+  const antes = replayDaCorrida(semPunicao(r), PISTA);
+
+  it('acontece X s depois, no mesmo ponto da volta', () => {
+    const depois = replay.incidentes('b').find((i) => i.evento === erro);
+    const deAntes = antes.incidentes('b').find((i) => i.evento === erro);
+    expect(depois?.inicio).toBe((deAntes?.inicio ?? NaN) + 6000);
+    expect(depois?.fim).toBe((deAntes?.fim ?? NaN) + 6000);
+    expect(depois?.fracao).toBe(deAntes?.fracao);
+  });
+});
+
+describe('a infração em corridas reais', () => {
+  const casos = PISTAS.flatMap((pistaId) =>
+    [1, 2, 3, 4, 5, 6].flatMap((seed) => {
+      const { resultado, pista } = corridaReal(seed, pistaId);
+      const replay = replayDaCorrida(resultado, pista);
+      return resultado.classificacao.flatMap((c) => {
+        const punicao = replay.punicao(c.jogadorId);
+        if (punicao === undefined) return [];
+        const paradas = replay.paradas(c.jogadorId);
+        const indice = paradas.findIndex((p) => p.volta === punicao.parada.volta);
+        return [{ punicao, de: paradas[indice - 1]?.fim ?? 0, ate: paradas[indice].inicio }];
+      });
+    }),
+  );
+
+  it('pré-condição: há punições cumpridas para medir', () => {
+    expect(casos.length).toBeGreaterThan(30);
+  });
+
+  it('sai entre 10% e 90% do trecho entre o pit anterior e o da punição', () => {
+    for (const { punicao, de, ate } of casos) {
+      expect(punicao.infracao).toBeGreaterThanOrEqual(de + 0.1 * (ate - de) - 1e-6);
+      expect(punicao.infracao).toBeLessThanOrEqual(de + 0.9 * (ate - de) + 1e-6);
+    }
   });
 });
 
@@ -240,6 +324,22 @@ describe('vagas', () => {
   });
 });
 
+describe('a espera prende só a vaga do pit da punição', () => {
+  // `c` chega ao box no PRIMEIRO pit de `b` logo depois de ele sair. Esse pit não tem punição.
+  const r = sintetica({ b: { ms: 90_000, pits: [3, 5], punicao: 10_000 }, c: { ms: 95_000, pits: [3] } });
+  const replay = replayDaCorrida(r, PISTA);
+  const antes = linhaDoTempoDoPit(semPunicao(r), PISTA);
+
+  it('pré-condição: sem punição, `c` usa a vaga que `b` deixou, antes de 10 s', () => {
+    expect(antes.paradas('c')[0].vaga).toBe(antes.paradas('b')[0].vaga);
+    expect(antes.paradas('c')[0].chegada).toBeLessThan(antes.paradas('b')[0].partida + 10_000);
+  });
+
+  it('`c` fica na mesma vaga de antes', () => {
+    expect(replay.paradas('c')[0].vaga).toBe(antes.paradas('c')[0].vaga);
+  });
+});
+
 describe('diferença para o líder na chegada do punido', () => {
   const r = sintetica({ a: { ms: 90_000 }, b: { ms: 91_000, pits: [6], punicao: 8000 } });
   const replay = replayDaCorrida(r, PISTA);
@@ -271,7 +371,8 @@ describe('narração da punição cumprida', () => {
   });
 
   it('as duas linhas têm chave própria e dizem o valor', () => {
-    expect(narradas[0].chave).not.toBe(narradas[1].chave);
+    expect(narradas[0].chave).toBe('b-investigacao-10-infracao');
+    expect(narradas[1].chave).toBe('b-investigacao-10-cumprida');
     expect(textoDaConsequencia(narradas[0])).toBe(': +7,4 s, a cumprir no box');
     expect(narradas[1].frase).toBe('cumpriu a punição no box');
     expect(textoDaConsequencia(narradas[1])).toBe(' e ficou +7,4 s a mais parado');
