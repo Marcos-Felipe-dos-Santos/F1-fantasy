@@ -1,0 +1,39 @@
+{
+ "geradoEm": "main e1cfba8 (PR 2d mesclado), antes do PR 2f",
+ "corridas": 1000,
+ "punidos": 527,
+ "cumpridasNoPit": 527,
+ "selo": 0,
+ "pitDaPunicaoE1o": 417,
+ "pitDaPunicaoE2o": 110,
+ "colisoesHoje": 19,
+ "corridasComColisao": 13,
+ "janelaDaInfracaoSimS": {
+  "n": 527,
+  "min": 301.12545130416714,
+  "media": 563.0423687393888,
+  "p50": 553.0866010939221,
+  "p95": 755.8254200404782,
+  "max": 922.1884231970228
+ },
+ "janelaDaInfracaoRealRapidaS": {
+  "n": 527,
+  "min": 8.628953359093815,
+  "media": 14.632290272669806,
+  "p50": 14.849971442817392,
+  "p95": 19.646563760611823,
+  "max": 23.831668827410073
+ },
+ "vagasPorPista": {
+  "pista-monaco": 7,
+  "pista-spa": 5,
+  "pista-monza": 12,
+  "pista-silverstone": 8,
+  "pista-suzuka": 7,
+  "pista-interlagos": 9,
+  "pista-nurburgring": 9,
+  "pista-imola": 24,
+  "pista-red-bull-ring": 12,
+  "pista-montreal": 10
+ }
+}
