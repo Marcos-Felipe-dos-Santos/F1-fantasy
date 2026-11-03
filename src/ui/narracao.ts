@@ -249,11 +249,10 @@ function fraseNova(evento: EventoCorrida, resultado: ResultadoCorrida, usadas: M
 }
 
 function quemPassou(resultado: ResultadoCorrida, replay: ReplayNarrado, incidente: IncidenteNoReplay): number {
-  const { jogadorId } = incidente.evento;
   const progresso = (id: string, t: number) => replay.progresso(id, resultado.historicoVoltas[id], t);
-  const ali = progresso(jogadorId, incidente.inicio);
+  const ali = progresso(incidente.evento.jogadorId, incidente.inicio);
   return Object.keys(resultado.historicoVoltas).filter(
-    (id) => id !== jogadorId && progresso(id, incidente.inicio) <= ali && progresso(id, incidente.fim) > ali,
+    (id) => progresso(id, incidente.inicio) <= ali && progresso(id, incidente.fim) > ali,
   ).length;
 }
 

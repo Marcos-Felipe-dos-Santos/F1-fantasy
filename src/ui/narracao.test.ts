@@ -276,6 +276,22 @@ describe('narrarEventos — consequência na parada (PR 2d)', () => {
     expect(instantes).toEqual([...instantes].sort((a, b) => a - b));
   });
 
+  it('o carro lento, na mesma volta, vem depois do rápido, mesmo antes dele nos eventos', () => {
+    const r = resultadoDe(
+      { A: dez(1500, { 3: 100 }), B: dez(1000, { 3: 100 }) },
+      [erro('A', 3, 100), erro('B', 3, 100)],
+    );
+    expect(narrar(r).map((n) => n.evento.jogadorId)).toEqual(['B', 'A']);
+  });
+
+  it('mais erros que frases: o pool recomeça, sem travar', () => {
+    const eventos = Array.from({ length: VARIANTES_SECO['erro-piloto'].length + 3 }, (_, i) => erro(`c${i}`, 3, 100));
+    const historicos = Object.fromEntries(eventos.map((e) => [e.jogadorId, dez(1000, { 3: 100 })]));
+    const frases = narrar(resultadoDe(historicos, eventos)).map((n) => n.frase);
+    expect(frases).toHaveLength(eventos.length);
+    expect(new Set(frases).size).toBe(VARIANTES_SECO['erro-piloto'].length);
+  });
+
   it('incidente na volta de pit vira "e foi para os boxes"; fora dela, não', () => {
     const r = resultadoDe({ X: dez(1000, { 3: 300 }) }, [erro('X', 3, 300)], { X: [3] });
     expect(narrar(r)[0].foiParaOsBoxes).toBe(true);

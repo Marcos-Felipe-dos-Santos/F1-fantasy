@@ -137,6 +137,25 @@ describe('custo concentrado num ponto da volta (PR 2d)', () => {
     const [p, q] = rep.incidentes('a');
     expect(p.fim).toBeLessThanOrEqual(q.inicio);
     expect(rep.instanteDoProgresso('a', dois.historicoVoltas.a, 4)).toBeCloseTo(4500, 9);
+    // Entre as duas paradas ele anda só a distância entre os dois pontos, no ritmo limpo.
+    expect(q.inicio - p.fim).toBeCloseTo((q.fracao - p.fracao) * 1000, 9);
+  });
+
+  it('o local fica entre 8% e 92% da volta, em qualquer seed', () => {
+    for (let seed = 1; seed <= 300; seed++) {
+      const { fracao } = replayDaCorrida({ ...r, seed }, PISTA).incidentes('a')[0];
+      expect(fracao).toBeGreaterThanOrEqual(0.08);
+      expect(fracao).toBeLessThanOrEqual(0.92);
+    }
+  });
+
+  it('carros diferentes na mesma volta e do mesmo tipo param em pontos diferentes', () => {
+    const dois = sintetica(
+      { a: { voltas: voltasCom({ 3: 200 }) }, b: { voltas: voltasCom({ 3: 200 }) } },
+      [erro('a', 3, 200), erro('b', 3, 200)],
+    );
+    const rep = replayDaCorrida(dois, PISTA);
+    expect(rep.incidentes('a')[0].fracao).not.toBe(rep.incidentes('b')[0].fracao);
   });
 
   it('o local é determinístico e sai do hash da corrida', () => {
@@ -196,6 +215,25 @@ describe('corridas reais: sem teleporte, e a linha é a do motor', () => {
     expect(parada).toEqual(pura);
     const inc = replay.incidentes(achado.jogadorId).find((i) => i.evento === achado)!;
     expect(inc.fim).toBeLessThanOrEqual(parada.inicio);
+  });
+
+  it('varredura: nenhum incidente encosta numa janela de pit', () => {
+    let naVoltaDePit = 0;
+    for (const id of PISTAS) {
+      for (let seed = 1; seed <= 25; seed++) {
+        const { resultado, pista } = corridaReal(seed, id);
+        const rep = replayDaCorrida(resultado, pista);
+        for (const c of resultado.classificacao) {
+          for (const i of rep.incidentes(c.jogadorId)) {
+            for (const p of rep.paradas(c.jogadorId)) {
+              if (p.volta === i.evento.volta) naVoltaDePit++;
+              expect(i.inicio >= p.fim || i.fim <= p.inicio).toBe(true);
+            }
+          }
+        }
+      }
+    }
+    expect(naVoltaDePit).toBeGreaterThan(20);
   });
 
   it('incidente na volta seguinte ao pit: acontece depois da janela do box', () => {
@@ -275,6 +313,21 @@ describe('DNF: para no ponto do abandono (PR 2d)', () => {
     expect(rep.incidentes(achado.jogadorId).at(-1)!.fim).toBeLessThanOrEqual(rep.abandono(achado.jogadorId)!.instante);
   });
 
+  it('erro e abandono na mesma volta, em qualquer seed: primeiro o erro, e o carro chega ao ponto sem salto', () => {
+    const base = sintetica({ a: {}, d: { voltas: [1000, 3200], dnf: true } }, [
+      erro('d', 2, 200),
+      { volta: 2, jogadorId: 'd', tipo: 'quebra-motor', custoMs: 0 },
+    ]);
+    for (let seed = 1; seed <= 200; seed++) {
+      const c = { ...base, seed };
+      const rep = replayDaCorrida(c, PISTA);
+      const [inc] = rep.incidentes('d');
+      const fim = rep.abandono('d')!;
+      expect(inc.fim).toBeLessThanOrEqual(fim.instante);
+      expect(rep.progresso('d', c.historicoVoltas.d, fim.instante - 1e-6) * PISTA.voltas).toBeCloseTo(1 + fim.fracao, 5);
+    }
+  });
+
   it('corridas reais: todo DNF para antes da soma do histórico e dentro do replay', () => {
     for (const id of PISTAS) {
       for (let seed = 1; seed <= 12; seed++) {
@@ -303,6 +356,11 @@ describe('efeito no momento: duração em tempo REAL (decisão do Marcos, ~700 m
   const replay = replayDaCorrida(r, PISTA);
   const [inc] = replay.incidentes('a');
   const efeitos = (t: number, simPorReal: number, res = r) => efeitosNoInstante(replayDaCorrida(res, PISTA), res, PISTA.id, t, simPorReal);
+
+  it('as durações são as decididas', () => {
+    expect(DURACAO_EFEITO_MS).toBe(700);
+    expect(DURACAO_GUINADA_MS).toBe(350);
+  });
 
   it('dura 700 ms reais em qualquer velocidade, mesmo com o custo menor que isso', () => {
     for (const simPorReal of [0.5, 2, 5]) {
@@ -339,6 +397,8 @@ describe('efeito no momento: duração em tempo REAL (decisão do Marcos, ~700 m
     expect(fora).toBe(0);
     const meio = inc.inicio + (DURACAO_GUINADA_MS / 2) * 2;
     expect(Math.abs(guinadaNoInstante(replay, 'a', meio, 2))).toBeGreaterThan(20);
+    expect(guinadaNoInstante(replay, 'a', inc.inicio, 2)).toBeCloseTo(0, 9);
+    expect(Math.abs(guinadaNoInstante(replay, 'a', inc.inicio + 0.95 * DURACAO_GUINADA_MS * 2, 2))).toBeLessThan(10);
     expect(guinadaNoInstante(replay, 'a', inc.inicio + DURACAO_GUINADA_MS * 2, 2)).toBe(0);
     const pane = sintetica({ a: { voltas: voltasCom({ 3: 200 }) } }, [{ volta: 3, jogadorId: 'a', tipo: 'problema-tecnico', custoMs: 200 }]);
     const rep = replayDaCorrida(pane, PISTA);

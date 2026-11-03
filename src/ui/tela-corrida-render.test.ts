@@ -4,12 +4,14 @@
  * com `createElement` em vez de JSX.
  */
 
+import { readFileSync } from 'node:fs';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { atribuirPerfis } from '../engine/bots';
 import { criarDraft, resolverBots } from '../engine/draft';
 import type { DraftState, Jogador } from '../engine/types';
+import { EfeitoDeIncidente } from './CarroReplay';
 import { dataset } from './dataset-app';
 import { diferencasParaLider, formatarDiferenca } from './diferenca-lider';
 import { replayDaCorrida } from './fim-da-corrida';
@@ -341,10 +343,10 @@ describe('incidentes na tela (PR 2d)', () => {
     const { corrida, id, replay } = achar((_c, r) => (r.incidentes('j01').some((i) => i.evento.tipo === 'erro-piloto') ? 'j01' : undefined));
     const inc = replay.incidentes(id).find((i) => i.evento.tipo === 'erro-piloto')!;
     const h = corrida.resultado.historicoVoltas[id];
-    const { rumo } = replay.posicao(id, h, 'terminou', inc.inicio + 1, false);
     const rotacao = (html: string) => /<g class="tracado-svg__carro tracado-svg__carro--humano[^"]*" transform="[^"]*rotate\(([-\d.]+)\)/.exec(html)![1];
     const escala = corrida.resultado.classificacao[0].tempoTotal / (corrida.pista.voltas * 4500);
     const t = inc.inicio + 175 * escala;
+    const { rumo } = replay.posicao(id, h, 'terminou', t, false);
     expect(rotacao(tela(corrida, t))).not.toBe(rumo.toFixed(1));
     tela_.reduzido = true;
     expect(rotacao(tela(corrida, t))).toBe(replay.posicao(id, h, 'terminou', t, true).rumo.toFixed(1));
@@ -366,6 +368,31 @@ describe('incidentes na tela (PR 2d)', () => {
     expect(linha(ab.instante - 1)).not.toContain('badge-dnf');
     expect(linha(ab.instante)).toContain('badge-dnf');
     expect(tela(corrida, ab.instante)).toContain('tracado-svg__carro--congelado');
+  });
+
+  it('a frase do incidente na volta de pit termina em "e foi para os boxes"', () => {
+    const { corrida, id, replay } = achar((c, r) =>
+      c.resultado.classificacao.find((x) => r.incidentes(x.jogadorId).some((i) => c.resultado.voltasDePit[x.jogadorId].includes(i.evento.volta)))?.jogadorId,
+    );
+    const inc = replay.incidentes(id).find((i) => corrida.resultado.voltasDePit[id].includes(i.evento.volta))!;
+    const linha = linhasDoTicker(tela(corrida, inc.fim)).find((l) => l.includes(`>${rotulos.get(id)}<`) && l.includes(`>V${inc.evento.volta}<`))!;
+    expect(linha).toContain('e foi para os boxes');
+  });
+
+  it('o efeito cresce e some com a idade', () => {
+    const efeito = (idade: number) =>
+      renderToStaticMarkup(createElement(EfeitoDeIncidente, { tipo: 'fumaca', ponto: { x: 1, y: 2 }, rumo: 0, idade }));
+    const raios = (html: string) => [...html.matchAll(/ r="([\d.]+)"/g)].map((m) => Number(m[1]));
+    expect(efeito(0)).toContain('opacity="1.00"');
+    expect(efeito(0.5)).toContain('opacity="0.50"');
+    expect(raios(efeito(0.5))[0]).toBeGreaterThan(raios(efeito(0))[0]);
+    expect(efeito(0)).toContain('tracado-svg__efeito--fumaca');
+  });
+
+  it('as cores do efeito são tokens da pista, não de raridade', () => {
+    const css = readFileSync('src/ui/estilos.css', 'utf8');
+    expect(css).toMatch(/\.tracado-svg__efeito--fumaca \{\s*fill: var\(--pista-limite\);/);
+    expect(css).toMatch(/\.tracado-svg__efeito--spray \{\s*fill: var\(--carro-halo\);/);
   });
 
   it('a tela desenha a mesma lista pura que os testes de duração cobrem', () => {
