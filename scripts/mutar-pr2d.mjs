@@ -31,7 +31,7 @@ const MUTACOES = [
   ['sem-folga-pit-depois', INC, 'const de = Math.max(MARGEM_LOCAL, sa + FOLGA_DO_PIT);', 'const de = MARGEM_LOCAL;'],
   ['sem-folga-pit-antes', INC, 'let ate = Math.min(1 - MARGEM_LOCAL, sb - FOLGA_DO_PIT);', 'let ate = 1 - MARGEM_LOCAL;'],
   ['plano-ignora-pit-antes', INC, 'const ta = pitAntes?.fim ?? (volta >= 2 ? acumulado[volta - 2] : 0);', 'const ta = volta >= 2 ? acumulado[volta - 2] : 0;'],
-  ['plano-ignora-pit-na-volta', INC, 'let tb = pitNaVolta?.inicio ?? acumulado[volta - 1];', 'let tb = acumulado[volta - 1];'],
+  ['plano-ignora-pit-na-volta', INC, 'const tb = pitNaVolta?.inicio ?? acumulado[volta - 1];', 'const tb = acumulado[volta - 1];'],
   ['abandono-na-volta-inteira', INC, 'const instante = ta + (fracao - sa) / ritmo + custo;', 'const instante = ta + ((fracao - sa) / (sb - sa)) * (tb - ta);'],
   ['erro-depois-do-abandono', INC, 'ate = fracao - FOLGA_DO_PIT;', ''],
   ['dnf-sem-plano', INC, 'if (voltaFinal !== null) voltas.add(voltaFinal);', ''],
