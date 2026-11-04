@@ -7388,6 +7388,93 @@ que rola por dentro, e não saiu nas capturas: quem o conferiu foi o Marcos, no 
 **Veredito, 2026-11-03.** Aprovado pelo Marcos no celular, nas cenas de líder, DNF e chuva: "aprovado, tudo
 certo". Ele conferiu que o selo de DNF aparece na classificação.
 
+### 2026-11-03 — PR 2f: punição cumprida no box
+
+Branch `feat/pr2f-punicao-no-box`, sobre a `main` `e1cfba8` (merge do PR 2d, conferido no ar: o bundle de produção
+`index-BrFozbvR.js` é o mesmo do build local da `main`). Risco ALTO. Só apresentação: `git diff e1cfba8` vazio em
+`src/engine/`, `src/data/` e `party/`; em `src/net/`, só `cerca-lint.test.ts` (+2 −1). Resultado e hashes iguais, sem
+bump (`versao.test.ts` 3/3). Regra D5 do PR 2d e decisões de 2026-11-03 em `ESTADO.md` §"🔒 DECISÕES DO MARCOS — VIGENTES".
+
+**O problema.** O motor soma a punição no tempo total e não diz quando ela saiu: o evento `investigacao` vem com
+`volta` = última, e a rolagem é anterior à largada. O replay a somava na passagem pela linha, com o selo `+Xs`, e em
+28 de 1000 corridas o primeiro a cruzar não era o vencedor oficial. A coluna de diferença do punido saltava X na chegada.
+
+**Medição prévia** (`08b6f9a`, `docs/pr2f-medicao.json`, `scripts/medir-pr2f.preview.test.ts`, 1000 corridas): os
+números de punição de `docs/pr2d-medicao.json` foram reproduzidos na `main` com o PR 2d, sem diferença nenhuma. 527
+punidos, todos com pit visível (417 cumpririam no 1º pit, 110 no 2º). O trecho da infração tem no mínimo 301 s
+simulados (8,6 s reais na rápida). 19 colisões de vaga hoje, em 13 corridas, todas do box cheio. ⚠️ O protótipo de
+realocação de vagas foi DESCARTADO na primeira rodada: sem punição ele não reproduzia as vagas de hoje em 897 de 1000
+corridas, porque a chegada de produção depende do x de cada vaga. A contagem exata ficou para o `verificar-pr2f`.
+
+**O que entrou.**
+- **`src/ui/punicao-replay.ts`, novo.** Camada sobre `incidentes-replay` que só remapeia o relógio do punido: antes
+  da partida, igual; durante a espera, parado na vaga; depois, `t − X`. O punido cruza a linha no tempo total oficial.
+  A infração sai por hash `narracao:punicao:` entre 10% e 90% do trecho entre o pit anterior (ou a largada) e o início
+  do pit da punição, que fica sendo o pit seguinte à infração. Entrou na cerca de lint de determinismo, com teste.
+- **`fim-da-corrida.ts`.** Chegadas contadas duas vezes: sem a punição, para escolher o pit (o último visível pela
+  chegada de antes, decisão do Marcos), e com ela, para a bandeirada e o fim. A bandeirada sai de `linha.punicao`, a
+  mesma fonte que atrasa a passagem. O selo `+Xs` só fica para o punido sem pit.
+- **`pit-replay.ts`.** `linhaDoTempoDoPit` recebe as esperas: a vaga do pit da punição fica presa X s depois da
+  partida, e os pits seguintes do punido entram na alocação atrasados X, como aparecem na tela. `boxCheio` marca a
+  única forma de dividir vaga.
+- **Narração e ticker.** A punição cumprida tem duas linhas: "foi punido pelos comissários: +7,4 s, a cumprir no box",
+  na volta da infração, e "cumpriu a punição no box e ficou +7,4 s a mais parado", na volta do pit. Cada linha tem
+  chave e volta próprias. A frase "pagou por uma infração" virou "foi punido por uma infração", porque contradizia
+  o "a cumprir".
+
+**Verificação** (HEAD `e708809`). `npm test` 2153 + 1 skipped em 91 arquivos; `test:party` 46; typecheck, lint e build
+com saída 0. `scripts/verificar-pr2f.preview.test.ts`, 1000 corridas no dataset real, com o replay sem a punição como
+referência: espera errada, infração fora do trecho, pit errado, punido fora do deslocado, outro carro mudado fora da
+janela de pit, colisão fora do box cheio, recuo e salto de progresso, primeiro a cruzar fora do oficial, ordem final
+fora do oficial, salto da diferença na chegada e narração errada, todos 0. Medições: colisões 19 → 20, todas com o box
+cheio; 7 punidos com a vaga trocada pela espera de outro punido; 2 retardatários com uma volta a mais na tela (aceito
+pelo Marcos); fim do replay até 18,6 s simulados mais tarde; maior salto da diferença na chegada 0,02 ms.
+`verificar-pr2d` adaptado: para o punido, linha e fim comparam com a linha de antes deslocada de X, e o ritmo limpo é
+conferido no replay sem punição. As 29 passagens pela linha DENTRO do box de carros com a vaga trocada ficaram em
+`linhaNoBoxComOutraVaga`, como medição: o box cruza a linha, e com outra vaga o carro a cruza antes ou depois de parar.
+`verificar-pr2e` verde. Teste de resultado congelado e hash golden nas 10 pistas, todas com punição cumprida
+(`b5c77c0`). Baseline vermelho em `docs/pr2f-baseline-vermelho.txt` (16 testes; a diferença saltava 8000 ms).
+
+**Mutação** (`docs/pr2f-mutacoes.json`, `scripts/mutar-pr2f.mjs`). 1ª rodada 27/37, 1 travada, 9 sobreviventes,
+fechados em `f1e233d`. 2ª 34/37; `infracao-ate-o-fim-do-pit` fechado em `d03c996`. Depois da revisão, final 36/40, 0
+travadas: o laço de `chegadaDoCarro` agora lança, e `inverso-sem-deslocar` passou a ser detectado. **Os 4 sobreviventes
+foram aceitos pelo Marcos em 2026-11-03**, com o motivo:
+- `ticker-chave-do-evento`: a chave do `<li>` no ticker. `renderToString` não acusa chave repetida, e sem jsdom não
+  há como observar. O formato e a unicidade da chave estão travados nos testes da narração, inclusive em corridas reais.
+- `chegada-sem-atraso`, `ordem-sem-atraso` e `espera-em-todo-pit`: só mudam QUAL vaga livre o pit seguinte do punido
+  escolhe. Nenhum cria colisão: fora do box cheio a regra do PR 2c impede por construção, e o portão das 1000 corridas
+  dá 0. Esse pit só aparece quando o punido ganha uma volta na tela (carros que mudam de voltas: 2 em 1000 corridas;
+  o subconjunto não foi medido), e matá-los pediria testar a otimalidade da vaga, que depende da chegada
+  a cada vaga, não exposta.
+
+**FPS** (`docs/pr2f-fps.json`, A/B intercalado com `e1cfba8`, 3 rodadas, CPU 6×, 360×800, 22 carros, chuva, medido em
+`365d6cf`): antes 54,7-66,8 fps, PR 57,1-64,8 fps, render p50 5,0-6,0 ms nos dois. Os números absolutos ficaram abaixo
+dos do PR 2d (80-86) nos DOIS braços: estado da máquina, cuja CPU ociosa não foi conferida (comando negado pela
+permissão). A correção da revisão (`aab8b21`) só mexe na montagem do replay, uma vez por corrida; o FPS não foi refeito.
+
+**`senior-reviewer`: aprovado, sem 🔴. Três 🟡, corrigidos em `aab8b21`.**
+1. O laço de `chegadaDoCarro` podia pendurar a aba se a bandeirada e o atraso da passagem divergissem. A bandeirada
+   passou a vir de `linha.punicao`, e o laço e o pit ausente lançam erro.
+2. Os pits seguintes do punido eram alocados sem o atraso e exibidos com ele. Um carro podia chegar à vaga com o
+   punido ainda nela, fora do box cheio. Reproduzido numa corrida sintética, com baseline vermelho em
+   `docs/pr2f-baseline-vermelho-revisao.txt`.
+3. O espião de `console.error` no teste do ticker não podia falhar. Saiu, e no lugar entrou a unicidade das chaves em
+   corridas reais.
+Sugestões aplicadas como comentário: asserções que copiam a camada no `verificar-pr2f` e a cobertura do punido
+repartida entre `verificar-pr2d` e `verificar-pr2f`. Registrada, sem mudança: o retardatário que recebe a bandeirada
+dentro da janela do próprio pit da punição é narrado "cumpriu" depois de chegar (coerente com a exceção do PR 2e,
+fora dos portões).
+
+**Preview.** Cenas novas em `scripts/preview-pit.tsx`: `cumprida`, `duas-paradas` e `selo`. A do selo é SINTÉTICA: o
+punido de uma corrida real perde os pits, porque não há caso natural. Capturas por CDP no Chrome headless (360×800 e
+360×2000), olhadas antes de ir para o celular. Duas, do build pós-revisão, estão em `docs/pr2f-imagens/`:
+`cumprida-espera-na-vaga-360.png` e `duas-paradas-cumprida-360.png`. A do selo saiu do build anterior à revisão e não
+foi versionada.
+
+**Não verificado.** Desempenho em aparelho real; iOS; FPS com a máquina comprovadamente limpa.
+
+**Veredito, 2026-11-03.** Aprovado pelo Marcos no celular: "aprovado, as 3 cenas certas".
+
 ## ARQUIVADO DO `ESTADO.md` em 2026-10-28 — §"Estado atual", medições de 2026-08-18 a 2026-09-02
 
 > Movido sem alteração pela sessão principal, a pedido do Marcos. Antes da cópia, 18,8% dos
