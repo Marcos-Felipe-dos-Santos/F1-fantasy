@@ -457,9 +457,10 @@ Commits: `08b6f9a` medição; `e7ebd31` implementação; `b5c77c0` hash golden; 
 - **Mutação final:** 36/40, 0 travadas, 4 sobreviventes aceitos pelo Marcos (motivos em §"Pendências ATIVAS").
 - **FPS:** A/B sem diferença; números absolutos baixos nos dois braços, máquina não conferida (ver o `HISTORICO.md`).
 - **`senior-reviewer`:** aprovado, sem 🔴; os três 🟡 corrigidos em `aab8b21`.
-- **Fica na máquina, fora do repositório:** a worktree da `main` usada no FPS, em
-  `C:\Users\marcos\AppData\Local\Temp\claude\E--projetos-F1-fantasy\5c3415b1-f7ed-4892-a0ca-363643563f4d\scratchpad\base-e1cfba8`.
-  Remover com `git worktree remove` quando o Marcos quiser.
+- ~~**Fica na máquina, fora do repositório:** a worktree da `main` usada no FPS.~~ Removida em 2026-11-03 a pedido do
+  Marcos (antes, o link do `node_modules` dela, uma junction para o do projeto, foi desfeito com `rmdir`, sem
+  recursão). O `git worktree list` ainda mostra `…\1abeffa1-391e-458a-8a98-a0952f3ebb99\scratchpad\antes`, em
+  `a49cb78`, de uma sessão anterior: não foi tocada.
 
 ### 2026-11-03 — PR 2d (incidentes, DNF, narração) APROVADO no celular e fechado, ~~aguardando o push do Marcos~~ mesclado na `main` (`e1cfba8`) e no ar
 
@@ -2359,9 +2360,12 @@ medição `docs/pr2f-medicao.json`:
 - **Vagas:** a colisão de vagas entra como métrica no baseline; se a punição aumentar os carros na mesma vaga além
   da regra atual (só com o box cheio), parar e mostrar. Resultado: 0 fora do box cheio, não disparou.
 - **Mutação:** "Aceito as 4 mutações sobreviventes como descreveu; registre cada uma com o motivo."
-- ⚠️ **Não é decisão do Marcos:** o trecho da infração ficar entre o pit ANTERIOR e o pit da punição, para ela ser
+- ~~⚠️ **Não é decisão do Marcos:** o trecho da infração ficar entre o pit ANTERIOR e o pit da punição, para ela ser
   cumprida no pit seguinte a ela, foi escolha da sessão principal dentro da D5. Foi apresentada a ele, que aprovou
-  as cenas no celular sem comentar a regra.
+  as cenas no celular sem comentar a regra.~~
+- **Infração (decisão do Marcos, 2026-11-03, depois do fechamento):** "É o que eu queria ('antes do pit, cumprida
+  no box'), com o refinamento de ser cumprida no pit seguinte à infração, como na F1." A infração sai entre o pit
+  anterior (ou a largada) e o pit da punição.
 
 **🔒 DECISÕES DO MARCOS, 2026-11-02 — PR 2e (a corrida termina quando todos cruzam a linha):** só
 apresentação, zero alteração em `src/engine/` e `src/data/`, resultado e hashes idênticos. Depois que o

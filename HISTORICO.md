@@ -7410,7 +7410,8 @@ corridas, porque a chegada de produção depende do x de cada vaga. A contagem e
 - **`src/ui/punicao-replay.ts`, novo.** Camada sobre `incidentes-replay` que só remapeia o relógio do punido: antes
   da partida, igual; durante a espera, parado na vaga; depois, `t − X`. O punido cruza a linha no tempo total oficial.
   A infração sai por hash `narracao:punicao:` entre 10% e 90% do trecho entre o pit anterior (ou a largada) e o início
-  do pit da punição, que fica sendo o pit seguinte à infração. Entrou na cerca de lint de determinismo, com teste.
+  do pit da punição, que fica sendo o pit seguinte à infração, como na F1 (decisão do Marcos, registrada depois do
+  veredito). Entrou na cerca de lint de determinismo, com teste.
 - **`fim-da-corrida.ts`.** Chegadas contadas duas vezes: sem a punição, para escolher o pit (o último visível pela
   chegada de antes, decisão do Marcos), e com ela, para a bandeirada e o fim. A bandeirada sai de `linha.punicao`, a
   mesma fonte que atrasa a passagem. O selo `+Xs` só fica para o punido sem pit.
