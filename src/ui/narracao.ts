@@ -86,7 +86,7 @@ export const VARIANTES_SECO: Record<TipoEvento, readonly string[]> = {
   ],
   investigacao: [
     'foi punido pelos comissários',
-    'pagou por uma infração',
+    'foi punido por uma infração',
     'recebeu a punição dos comissários',
   ],
 };
@@ -148,7 +148,7 @@ export function variantesDe(tipo: TipoEvento, chuva: boolean): readonly string[]
  */
 export function sorteioDeLocal(
   seed: number,
-  rotulo: 'local' | 'abandono',
+  rotulo: 'local' | 'abandono' | 'punicao',
   jogadorId: string,
   volta: number,
   tipo: string,
@@ -162,9 +162,15 @@ export function sorteioDeLocal(
  */
 export interface EventoNarrado {
   evento: EventoCorrida;
+  /** Chave da linha no ticker: a punição cumprida narra o mesmo evento duas vezes (PR 2f). */
+  chave: string;
+  /** Volta mostrada: a do evento, ou a da infração e a do pit na punição cumprida. */
+  volta: number;
+  /** A punição cumprida tem a linha da infração e a do cumprimento; o resto é `evento`. */
+  momento: 'evento' | 'infracao' | 'cumprida';
   /** Variante de `variantesDe`, sem repetir na corrida enquanto houver frase nova. */
   frase: string;
-  /** Quando acontece na tela: a parada, o abandono ou a passagem pela linha. */
+  /** Quando acontece na tela: a parada, o abandono, a punição ou a passagem pela linha. */
   instante: number;
   /** Tempo do incidente ou da punição; `null` na quebra, que não custa tempo. */
   tempoPerdidoMs: number | null;
@@ -174,7 +180,10 @@ export interface EventoNarrado {
   foiParaOsBoxes: boolean;
 }
 
-type ReplayNarrado = Pick<ReplayDaCorrida, 'incidentes' | 'abandono' | 'chegada' | 'progresso'>;
+type ReplayNarrado = Pick<ReplayDaCorrida, 'incidentes' | 'abandono' | 'chegada' | 'progresso' | 'punicao'>;
+
+/** Frase fixa do cumprimento: não é variante do evento, e não gasta o pool. */
+export const FRASE_PUNICAO_CUMPRIDA = 'cumpriu a punição no box';
 
 const CACHE_NARRACAO = new WeakMap<ResultadoCorrida, EventoNarrado[]>();
 
@@ -191,8 +200,10 @@ const CACHE_NARRACAO = new WeakMap<ResultadoCorrida, EventoNarrado[]>();
  * 1642 × 1639 sem perda, contando pelo painel ou pelo contrafactual).
  *
  * Nunca imprimir posição absoluta ("caiu para 8º"): o painel muda enquanto a linha fica na
- * tela. Quebra não custa tempo. E a punição, hoje, não é parada: é somada na passagem pela
- * linha, então não leva posições (`historicoVoltas` não a tem).
+ * tela. Quebra não custa tempo. ~~E a punição, hoje, não é parada: é somada na passagem pela
+ * linha, então não leva posições (`historicoVoltas` não a tem).~~ A punição cumprida no box
+ * (PR 2f) narra duas vezes, quando sai e quando é cumprida, sem posições: a espera é parte do
+ * pit. A do selo segue na passagem pela linha.
  *
  * Evento sem instante na tela não é narrado: o incidente de quem já cruzou a linha.
  */
@@ -203,11 +214,38 @@ export function narrarEventos(resultado: ResultadoCorrida, replay: ReplayNarrado
   const narradas: EventoNarrado[] = [];
   const usadas = new Map<TipoEvento, Set<string>>();
   for (const evento of resultado.eventos) {
+    const chave = `${evento.jogadorId}-${evento.tipo}-${evento.volta}`;
+    const punicao = evento.tipo === 'investigacao' ? replay.punicao(evento.jogadorId) : undefined;
+    if (punicao !== undefined) {
+      const comum = { evento, tempoPerdidoMs: punicao.ms, posicoesPerdidas: null, foiParaOsBoxes: false };
+      narradas.push(
+        {
+          ...comum,
+          chave: `${chave}-infracao`,
+          volta: punicao.voltaDaInfracao,
+          momento: 'infracao',
+          frase: fraseNova(evento, resultado, usadas),
+          instante: punicao.infracao,
+        },
+        {
+          ...comum,
+          chave: `${chave}-cumprida`,
+          volta: punicao.parada.volta,
+          momento: 'cumprida',
+          frase: FRASE_PUNICAO_CUMPRIDA,
+          instante: punicao.parada.partida,
+        },
+      );
+      continue;
+    }
     const momento = momentoDoEvento(evento, replay);
     if (momento === null) continue;
     const incidente = momento.incidente;
     narradas.push({
       evento,
+      chave,
+      volta: evento.volta,
+      momento: 'evento',
       frase: fraseNova(evento, resultado, usadas),
       instante: momento.instante,
       tempoPerdidoMs: evento.custoMs > 0 ? evento.custoMs : null,
@@ -259,8 +297,10 @@ function quemPassou(resultado: ResultadoCorrida, replay: ReplayNarrado, incident
 const segundos = (ms: number) => (ms / 1000).toFixed(1).replace('.', ',');
 
 /** ", perdeu 3,2 s e 2 posições", o que vem depois da frase; vazio na quebra. */
-export function textoDaConsequencia({ evento, tempoPerdidoMs, posicoesPerdidas }: EventoNarrado): string {
+export function textoDaConsequencia({ evento, momento, tempoPerdidoMs, posicoesPerdidas }: EventoNarrado): string {
   if (tempoPerdidoMs === null) return '';
+  if (momento === 'infracao') return `: +${segundos(tempoPerdidoMs)} s, a cumprir no box`;
+  if (momento === 'cumprida') return ` e ficou +${segundos(tempoPerdidoMs)} s a mais parado`;
   if (evento.tipo === 'investigacao') return ` e levou +${segundos(tempoPerdidoMs)} s`;
   const tempo = `, perdeu ${segundos(tempoPerdidoMs)} s`;
   if (posicoesPerdidas === null || posicoesPerdidas === 0) return tempo;

@@ -14,6 +14,8 @@
  * `glifos=1` desenha 🏁 e 🔧 invisíveis desde o início: prova que o quadro lento da bandeirada é
  * a busca da fonte de emoji (`docs/pr2e-fps-passagem.json`).
  * PR 2d: `cena=lider|dnf|chuvoso` começa 2 s reais antes do incidente, parando nele com `pausa=1`.
+ * PR 2f: `cena=cumprida|duas-paradas` começa 2 s reais antes de o punido chegar à vaga da punição;
+ * `cena=selo` é SINTÉTICA (não há caso natural): o punido perde os pits e começa antes da linha.
  * Sem `pit-replay.ts` (build do "antes") a página funciona igual, sem o HUD do box.
  */
 
@@ -43,6 +45,7 @@ declare global {
     __fps?: unknown;
     __irPara?: (t: number) => void;
     __picoDoBox?: () => number | null;
+    __punicao?: { infracao: number; inicio: number; ms: number; partida: number; chegada: number | null } | null;
     __tempos?: { bandeirada: number; fim: number; vencedor: number; voltas: number; destaque: string | null; instante: number | null; efeito: number | null };
   }
 }
@@ -86,7 +89,41 @@ const liderQueErra: Criterio = (r, replay) => {
   return undefined;
 };
 
-const CENAS: Record<string, { rotulo: string; pistaId: string; criterio: Criterio; chuva?: boolean; momento?: Momento }> = {
+/** Punido entre os 10 primeiros, com a punição cumprida no pit `n` de `total`. */
+const punidoNoPit =
+  (n: number, total: number): Criterio =>
+  (r, replay) =>
+    r.classificacao.slice(0, 10).find((c) => {
+      const punicao = replay.punicao(c.jogadorId);
+      const paradas = replay.paradas(c.jogadorId);
+      return punicao !== undefined && paradas.length === total && paradas[n - 1]?.volta === punicao.parada.volta;
+    })?.jogadorId;
+
+const chegadaNaVaga: Momento = (replay, id) => replay.punicao(id)?.parada.chegada ?? 0;
+
+/** O punido sem pit: o selo do PR 2e vira reserva no PR 2f, e só aparece assim. */
+const semPits = (r: ResultadoCorrida, id: string): ResultadoCorrida => ({ ...r, voltasDePit: { ...r.voltasDePit, [id]: [] } });
+
+const CENAS: Record<
+  string,
+  {
+    rotulo: string;
+    pistaId: string;
+    criterio: Criterio;
+    chuva?: boolean;
+    momento?: Momento;
+    ajustar?: (r: ResultadoCorrida, id: string) => ResultadoCorrida;
+  }
+> = {
+  cumprida: { rotulo: 'Punição no pit', pistaId: 'pista-monza', criterio: punidoNoPit(1, 1), momento: chegadaNaVaga },
+  'duas-paradas': { rotulo: 'Punição no 2º pit', pistaId: 'pista-silverstone', criterio: punidoNoPit(2, 2), momento: chegadaNaVaga },
+  selo: {
+    rotulo: 'Selo (sintético)',
+    pistaId: 'pista-monza',
+    criterio: punidoNoPit(1, 1),
+    ajustar: semPits,
+    momento: (replay, id) => (replay.chegada(id)?.instante ?? 0) - 1,
+  },
   lider: { rotulo: 'Incidente do líder', pistaId: 'pista-monza', criterio: liderQueErra, momento: primeiroErro },
   dnf: {
     rotulo: 'DNF',
@@ -172,7 +209,9 @@ function montarCorrida(estado: DraftState) {
     if (corrida.resultado.chuva !== querChuva) continue;
     if (cena === undefined) return { ...corrida, seed, destaque: null };
     const destaque = cena.criterio(corrida.resultado, replayDaCorrida(corrida.resultado, corrida.pista), corrida.pista.voltas);
-    if (destaque !== undefined) return { ...corrida, seed, destaque };
+    if (destaque === undefined) continue;
+    if (destaque === null || cena.ajustar === undefined) return { ...corrida, seed, destaque };
+    return { ...corrida, resultado: cena.ajustar(corrida.resultado, destaque), seed, destaque };
   }
   throw new Error('preview-pit: nenhuma seed com esse clima');
 }
@@ -199,6 +238,18 @@ const inicioDaCena =
     ? Math.max(0, instanteDaCena - 2000 * escalaReplay(tempoVencedor, pista.voltas, MS_REPLAY_POR_VOLTA[(q.get('velocidade') as VelocidadeReplay | null) ?? 'media']))
     : Math.max(0, replay.bandeirada - tempoVencedor / pista.voltas / 3);
 const simPorReal = escalaReplay(tempoVencedor, pista.voltas, MS_REPLAY_POR_VOLTA[(q.get('velocidade') as VelocidadeReplay | null) ?? 'media']);
+// PR 2f: os instantes da punição do carro em destaque, para as capturas.
+const punicaoDoDestaque = destaque === null ? undefined : replay.punicao(destaque);
+window.__punicao =
+  destaque === null
+    ? null
+    : {
+        infracao: punicaoDoDestaque?.infracao ?? NaN,
+        inicio: punicaoDoDestaque?.inicio ?? NaN,
+        ms: punicaoDoDestaque?.ms ?? replay.punicaoMs(destaque),
+        partida: punicaoDoDestaque?.parada.partida ?? NaN,
+        chegada: replay.chegada(destaque)?.instante ?? null,
+      };
 window.__tempos = {
   // 200 ms reais depois do incidente: a guinada no pico e a fumaça já aberta.
   efeito: instanteDaCena === undefined ? null : instanteDaCena + 200 * simPorReal,

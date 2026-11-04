@@ -1,0 +1,992 @@
+{
+ "base": "main e1cfba8",
+ "pr": "365d6cf",
+ "ordem": "A B intercalados, 3 rodadas",
+ "freioCpu": 6,
+ "viewport": [
+  360,
+  800
+ ],
+ "carros": 22,
+ "chuva": true,
+ "nota": "Números absolutos abaixo dos do PR 2d (80-86 fps) nos DOIS braços: estado da máquina. A CPU ociosa não foi conferida (comando negado pela permissão).",
+ "medicoes": [
+  {
+   "rotulo": "antes",
+   "rodada": 1,
+   "freioCpu": 6,
+   "pista": "pista-spa",
+   "velocidade": "media",
+   "chuva": true,
+   "frames": 600,
+   "fps": 62.79434850863427,
+   "intervaloP50": 16.600000000000364,
+   "intervaloP95": 22.300000000000182,
+   "intervaloMax": 66.59999999999991,
+   "acima33ms": 8,
+   "renderP50": 5.200000001117587,
+   "renderP95": 8.5,
+   "renderMax": 18.59999999962747,
+   "voltasDoRelogio": 0,
+   "lentos": [
+    {
+     "i": 87,
+     "delta": 44.399999999999636,
+     "render": 10.100000001490116,
+     "renderAnterior": 15.5,
+     "t": 680183.451992152,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 89,
+     "delta": 33.40000000000009,
+     "render": 11.099999999627471,
+     "renderAnterior": 8.799999998882413,
+     "t": 681753.2586891075,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 90,
+     "delta": 66.59999999999991,
+     "render": 9.299999998882413,
+     "renderAnterior": 11.099999999627471,
+     "t": 683461.5777416767,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 92,
+     "delta": 33.5,
+     "render": 7,
+     "renderAnterior": 9,
+     "t": 685031.3844386322,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 96,
+     "delta": 33.40000000000009,
+     "render": 10.400000000372529,
+     "renderAnterior": 14,
+     "t": 688022.2253024395,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 97,
+     "delta": 38.79999999999973,
+     "render": 9.300000000745058,
+     "renderAnterior": 10.400000000372529,
+     "t": 689017.4622279603,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 102,
+     "delta": 39,
+     "render": 10.199999999254942,
+     "renderAnterior": 10,
+     "t": 692867.5927052972,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 103,
+     "delta": 38.80000000000018,
+     "render": 8.900000000372529,
+     "renderAnterior": 10.199999999254942,
+     "t": 693862.829630818,
+     "voltou": false,
+     "voltouAntes": false
+    }
+   ]
+  },
+  {
+   "rotulo": "antes",
+   "rodada": 1,
+   "freioCpu": 6,
+   "pista": "pista-montreal",
+   "velocidade": "media",
+   "chuva": true,
+   "frames": 600,
+   "fps": 66.38343069569832,
+   "intervaloP50": 16.600000000000364,
+   "intervaloP95": 22.200000000000273,
+   "intervaloMax": 33.400000000001455,
+   "acima33ms": 1,
+   "renderP50": 5.099999999627471,
+   "renderP95": 7,
+   "renderMax": 10.699999999254942,
+   "voltasDoRelogio": 0,
+   "lentos": [
+    {
+     "i": 467,
+     "delta": 33.400000000001455,
+     "render": 7.199999999254942,
+     "renderAnterior": 10.699999999254942,
+     "t": 651336.0668281596,
+     "voltou": false,
+     "voltouAntes": false
+    }
+   ]
+  },
+  {
+   "rotulo": "antes",
+   "rodada": 1,
+   "freioCpu": 6,
+   "pista": "pista-spa",
+   "velocidade": "rapida",
+   "chuva": true,
+   "frames": 600,
+   "fps": 58.35043325196682,
+   "intervaloP50": 16.699999999999818,
+   "intervaloP95": 22.300000000000182,
+   "intervaloMax": 38.899999999999636,
+   "acima33ms": 1,
+   "renderP50": 5.5,
+   "renderP95": 7.400000000372529,
+   "renderMax": 12,
+   "voltasDoRelogio": 0,
+   "lentos": [
+    {
+     "i": 493,
+     "delta": 38.899999999999636,
+     "render": 9.099999999627471,
+     "renderAnterior": 12,
+     "t": 1143128.1214354993,
+     "voltou": false,
+     "voltouAntes": false
+    }
+   ]
+  },
+  {
+   "rotulo": "antes",
+   "rodada": 1,
+   "freioCpu": 6,
+   "pista": "pista-montreal",
+   "velocidade": "rapida",
+   "chuva": true,
+   "frames": 600,
+   "fps": 62.108586512085296,
+   "intervaloP50": 16.600000000000364,
+   "intervaloP95": 22.299999999999272,
+   "intervaloMax": 33.400000000001455,
+   "acima33ms": 1,
+   "renderP50": 5.300000000745058,
+   "renderP95": 6.900000000372529,
+   "renderMax": 12,
+   "voltasDoRelogio": 0,
+   "lentos": [
+    {
+     "i": 526,
+     "delta": 33.400000000001455,
+     "render": 8.100000001490116,
+     "renderAnterior": 12,
+     "t": 854626.4793262869,
+     "voltou": false,
+     "voltouAntes": false
+    }
+   ]
+  },
+  {
+   "rotulo": "depois",
+   "rodada": 1,
+   "freioCpu": 6,
+   "pista": "pista-spa",
+   "velocidade": "media",
+   "chuva": true,
+   "frames": 600,
+   "fps": 62.75822394226247,
+   "intervaloP50": 16.600000000000364,
+   "intervaloP95": 22.299999999999272,
+   "intervaloMax": 72.10000000000036,
+   "acima33ms": 5,
+   "renderP50": 5.300000000745058,
+   "renderP95": 7.599999999627471,
+   "renderMax": 16.09999999962747,
+   "voltasDoRelogio": 0,
+   "lentos": [
+    {
+     "i": 91,
+     "delta": 72.10000000000036,
+     "render": 11,
+     "renderAnterior": 12.700000001117587,
+     "t": 684028.4523822432,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 92,
+     "delta": 38.899999999999636,
+     "render": 11.300000000745058,
+     "renderAnterior": 11,
+     "t": 685026.2543513866,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 97,
+     "delta": 39,
+     "render": 9.099999999627471,
+     "renderAnterior": 11,
+     "t": 688876.3848287234,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 98,
+     "delta": 38.79999999999973,
+     "render": 9.5,
+     "renderAnterior": 9.099999999627471,
+     "t": 689871.6217542442,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 102,
+     "delta": 33.40000000000009,
+     "render": 6.299999998882413,
+     "renderAnterior": 8.799999998882413,
+     "t": 692865.0276616742,
+     "voltou": false,
+     "voltouAntes": false
+    }
+   ]
+  },
+  {
+   "rotulo": "depois",
+   "rodada": 1,
+   "freioCpu": 6,
+   "pista": "pista-montreal",
+   "velocidade": "media",
+   "chuva": true,
+   "frames": 600,
+   "fps": 57.05591479650062,
+   "intervaloP50": 16.699999999999818,
+   "intervaloP95": 27.799999999999272,
+   "intervaloMax": 55.600000000000364,
+   "acima33ms": 7,
+   "renderP50": 5.699999999254942,
+   "renderP95": 8.700000001117587,
+   "renderMax": 23.5,
+   "voltasDoRelogio": 0,
+   "lentos": [
+    {
+     "i": 299,
+     "delta": 33.399999999999636,
+     "render": 5.700000001117587,
+     "renderAnterior": 13.5,
+     "t": 608020.1897022201,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 351,
+     "delta": 38.80000000000109,
+     "render": 9.599999999627471,
+     "renderAnterior": 13,
+     "t": 629327.862680812,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 358,
+     "delta": 33.399999999999636,
+     "render": 9.900000000372529,
+     "renderAnterior": 10.099999999627471,
+     "t": 632630.6240265472,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 361,
+     "delta": 33.399999999999636,
+     "render": 12,
+     "renderAnterior": 10.300000000745058,
+     "t": 634431.4753600997,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 382,
+     "delta": 38.899999999999636,
+     "render": 11,
+     "renderAnterior": 11.799999998882413,
+     "t": 643833.7201725764,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 383,
+     "delta": 33.5,
+     "render": 7.800000000745058,
+     "renderAnterior": 11,
+     "t": 644437.0053693164,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 545,
+     "delta": 55.600000000000364,
+     "render": 7.100000001490116,
+     "renderAnterior": 5.199999999254942,
+     "t": 691354.5851623595,
+     "voltou": false,
+     "voltouAntes": false
+    }
+   ]
+  },
+  {
+   "rotulo": "depois",
+   "rodada": 1,
+   "freioCpu": 6,
+   "pista": "pista-spa",
+   "velocidade": "rapida",
+   "chuva": true,
+   "frames": 600,
+   "fps": 57.511478332550425,
+   "intervaloP50": 16.699999999999818,
+   "intervaloP95": 22.299999999999272,
+   "intervaloMax": 38.899999999999636,
+   "acima33ms": 2,
+   "renderP50": 5.699999999254942,
+   "renderP95": 7.199999999254942,
+   "renderMax": 11.900000000372529,
+   "voltasDoRelogio": 0,
+   "lentos": [
+    {
+     "i": 131,
+     "delta": 33.399999999999636,
+     "render": 6.400000000372529,
+     "renderAnterior": 8.599999999627471,
+     "t": 821060.6612329035,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 494,
+     "delta": 38.899999999999636,
+     "render": 8,
+     "renderAnterior": 11.900000000372529,
+     "t": 1149245.7504751063,
+     "voltou": false,
+     "voltouAntes": false
+    }
+   ]
+  },
+  {
+   "rotulo": "depois",
+   "rodada": 1,
+   "freioCpu": 6,
+   "pista": "pista-montreal",
+   "velocidade": "rapida",
+   "chuva": true,
+   "frames": 600,
+   "fps": 60.95207135455816,
+   "intervaloP50": 16.69999999999891,
+   "intervaloP95": 22.299999999999272,
+   "intervaloMax": 33.400000000001455,
+   "acima33ms": 1,
+   "renderP50": 5.400000000372529,
+   "renderP95": 7.300000000745058,
+   "renderMax": 10.799999998882413,
+   "voltasDoRelogio": 0,
+   "lentos": [
+    {
+     "i": 509,
+     "delta": 33.400000000001455,
+     "render": 8.800000000745058,
+     "renderAnterior": 10.799999998882413,
+     "t": 889819.2072278396,
+     "voltou": false,
+     "voltouAntes": false
+    }
+   ]
+  },
+  {
+   "rotulo": "antes",
+   "rodada": 2,
+   "freioCpu": 6,
+   "pista": "pista-spa",
+   "velocidade": "media",
+   "chuva": true,
+   "frames": 600,
+   "fps": 62.941244348400836,
+   "intervaloP50": 16.600000000000364,
+   "intervaloP95": 22.300000000000182,
+   "intervaloMax": 72.10000000000036,
+   "acima33ms": 5,
+   "renderP50": 5.299999998882413,
+   "renderP95": 7.699999999254942,
+   "renderMax": 18.59999999962747,
+   "voltasDoRelogio": 0,
+   "lentos": [
+    {
+     "i": 90,
+     "delta": 49.90000000000009,
+     "render": 10.399999998509884,
+     "renderAnterior": 18.59999999962747,
+     "t": 679896.167106434,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 94,
+     "delta": 72.10000000000036,
+     "render": 12.099999999627471,
+     "renderAnterior": 9.900000000372529,
+     "t": 683743.7325401485,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 95,
+     "delta": 38.899999999999636,
+     "render": 8.599999999627471,
+     "renderAnterior": 12.099999999627471,
+     "t": 684741.5345092919,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 101,
+     "delta": 44.5,
+     "render": 9.900000000372529,
+     "renderAnterior": 11.5,
+     "t": 689445.8245129135,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 555,
+     "delta": 38.899999999999636,
+     "render": 7.799999998882413,
+     "renderAnterior": 10.900000000372529,
+     "t": 876537.5412927201,
+     "voltou": false,
+     "voltouAntes": false
+    }
+   ]
+  },
+  {
+   "rotulo": "antes",
+   "rodada": 2,
+   "freioCpu": 6,
+   "pista": "pista-montreal",
+   "velocidade": "media",
+   "chuva": true,
+   "frames": 600,
+   "fps": 63.23644105309753,
+   "intervaloP50": 16.600000000000364,
+   "intervaloP95": 22.200000000000728,
+   "intervaloMax": 33.400000000001455,
+   "acima33ms": 1,
+   "renderP50": 5.400000000372529,
+   "renderP95": 7.400000000372529,
+   "renderMax": 11.099999999627471,
+   "voltasDoRelogio": 0,
+   "lentos": [
+    {
+     "i": 478,
+     "delta": 33.400000000001455,
+     "render": 8.699999999254942,
+     "renderAnterior": 11.099999999627471,
+     "t": 660940.0069899949,
+     "voltou": false,
+     "voltouAntes": false
+    }
+   ]
+  },
+  {
+   "rotulo": "antes",
+   "rodada": 2,
+   "freioCpu": 6,
+   "pista": "pista-spa",
+   "velocidade": "rapida",
+   "chuva": true,
+   "frames": 600,
+   "fps": 54.71457231442647,
+   "intervaloP50": 16.699999999999818,
+   "intervaloP95": 22.30000000000109,
+   "intervaloMax": 38.900000000001455,
+   "acima33ms": 2,
+   "renderP50": 6,
+   "renderP95": 7.899999998509884,
+   "renderMax": 12.600000001490116,
+   "voltasDoRelogio": 0,
+   "lentos": [
+    {
+     "i": 463,
+     "delta": 38.900000000001455,
+     "render": 9.799999998882413,
+     "renderAnterior": 12.600000001490116,
+     "t": 1144581.4518334146,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 559,
+     "delta": 33.399999999999636,
+     "render": 7.799999998882413,
+     "renderAnterior": 9.300000000745058,
+     "t": 1237851.6846267935,
+     "voltou": false,
+     "voltouAntes": false
+    }
+   ]
+  },
+  {
+   "rotulo": "antes",
+   "rodada": 2,
+   "freioCpu": 6,
+   "pista": "pista-montreal",
+   "velocidade": "rapida",
+   "chuva": true,
+   "frames": 600,
+   "fps": 61.43701170375058,
+   "intervaloP50": 16.69999999999891,
+   "intervaloP95": 22.200000000000728,
+   "intervaloMax": 33.29999999999927,
+   "acima33ms": 0,
+   "renderP50": 5.300000000745058,
+   "renderP95": 7,
+   "renderMax": 11,
+   "voltasDoRelogio": 0,
+   "lentos": []
+  },
+  {
+   "rotulo": "depois",
+   "rodada": 2,
+   "freioCpu": 6,
+   "pista": "pista-spa",
+   "velocidade": "media",
+   "chuva": true,
+   "frames": 600,
+   "fps": 60.95207135455823,
+   "intervaloP50": 16.69999999999891,
+   "intervaloP95": 22.300000000000182,
+   "intervaloMax": 77.80000000000018,
+   "acima33ms": 3,
+   "renderP50": 5.5,
+   "renderP95": 7.5,
+   "renderMax": 17.90000000037253,
+   "voltasDoRelogio": 0,
+   "lentos": [
+    {
+     "i": 79,
+     "delta": 38.90000000000009,
+     "render": 8.300000000745058,
+     "renderAnterior": 11.100000001490116,
+     "t": 680039.809549293,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 83,
+     "delta": 77.80000000000018,
+     "render": 10.100000001490116,
+     "renderAnterior": 12.800000000745058,
+     "t": 684315.7372679611,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 89,
+     "delta": 50,
+     "render": 7.199999999254942,
+     "renderAnterior": 17.90000000037253,
+     "t": 689302.182070055,
+     "voltou": false,
+     "voltouAntes": false
+    }
+   ]
+  },
+  {
+   "rotulo": "depois",
+   "rodada": 2,
+   "freioCpu": 6,
+   "pista": "pista-montreal",
+   "velocidade": "media",
+   "chuva": true,
+   "frames": 600,
+   "fps": 63.98498485688681,
+   "intervaloP50": 16.600000000000364,
+   "intervaloP95": 22.200000000000273,
+   "intervaloMax": 27.799999999999272,
+   "acima33ms": 0,
+   "renderP50": 5.5,
+   "renderP95": 7,
+   "renderMax": 10.699999999254942,
+   "voltasDoRelogio": 0,
+   "lentos": []
+  },
+  {
+   "rotulo": "depois",
+   "rodada": 2,
+   "freioCpu": 6,
+   "pista": "pista-spa",
+   "velocidade": "rapida",
+   "chuva": true,
+   "frames": 600,
+   "fps": 57.69619108978483,
+   "intervaloP50": 16.699999999999818,
+   "intervaloP95": 22.300000000000182,
+   "intervaloMax": 33.399999999999636,
+   "acima33ms": 1,
+   "renderP50": 5.699999999254942,
+   "renderP95": 7.5,
+   "renderMax": 21,
+   "voltasDoRelogio": 0,
+   "lentos": [
+    {
+     "i": 478,
+     "delta": 33.399999999999636,
+     "render": 10,
+     "renderAnterior": 21,
+     "t": 1133510.9567445915,
+     "voltou": false,
+     "voltouAntes": false
+    }
+   ]
+  },
+  {
+   "rotulo": "depois",
+   "rodada": 2,
+   "freioCpu": 6,
+   "pista": "pista-montreal",
+   "velocidade": "rapida",
+   "chuva": true,
+   "frames": 600,
+   "fps": 62.143323217781166,
+   "intervaloP50": 16.69999999999891,
+   "intervaloP95": 22.200000000000728,
+   "intervaloMax": 39,
+   "acima33ms": 2,
+   "renderP50": 5.300000000745058,
+   "renderP95": 6.900000000372529,
+   "renderMax": 10.400000000372529,
+   "voltasDoRelogio": 0,
+   "lentos": [
+    {
+     "i": 523,
+     "delta": 39,
+     "render": 8.200000001117587,
+     "renderAnterior": 10.299999998882413,
+     "t": 850125.1695611945,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 548,
+     "delta": 33.400000000001455,
+     "render": 6.400000000372529,
+     "renderAnterior": 8.900000000372529,
+     "t": 868130.4086215668,
+     "voltou": false,
+     "voltouAntes": false
+    }
+   ]
+  },
+  {
+   "rotulo": "antes",
+   "rodada": 3,
+   "freioCpu": 6,
+   "pista": "pista-spa",
+   "velocidade": "media",
+   "chuva": true,
+   "frames": 600,
+   "fps": 61.263248177418404,
+   "intervaloP50": 16.600000000000364,
+   "intervaloP95": 22.300000000000182,
+   "intervaloMax": 77.89999999999964,
+   "acima33ms": 7,
+   "renderP50": 5.300000000745058,
+   "renderP95": 7.600000001490116,
+   "renderMax": 28.40000000037253,
+   "voltasDoRelogio": 0,
+   "lentos": [
+    {
+     "i": 97,
+     "delta": 37.100000000000364,
+     "render": 10.700000001117587,
+     "renderAnterior": 14.400000000372529,
+     "t": 682032.8484439572,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 98,
+     "delta": 77.89999999999964,
+     "render": 12.900000000372529,
+     "renderAnterior": 10.700000001117587,
+     "t": 684031.0174258662,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 100,
+     "delta": 33.40000000000009,
+     "render": 9.300000000745058,
+     "renderAnterior": 9.800000000745058,
+     "t": 685739.3364784354,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 102,
+     "delta": 33.40000000000009,
+     "render": 11.599999999627471,
+     "renderAnterior": 8.900000000372529,
+     "t": 687165.5007325322,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 107,
+     "delta": 61.09999999999991,
+     "render": 13.399999998509884,
+     "renderAnterior": 28.40000000037253,
+     "t": 691579.9408068141,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 230,
+     "delta": 61.30000000000018,
+     "render": 16.800000000745058,
+     "renderAnterior": 5,
+     "t": 749865.4270403455,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 525,
+     "delta": 38.899999999999636,
+     "render": 9.099999999627471,
+     "renderAnterior": 13,
+     "t": 871835.8163327203,
+     "voltou": false,
+     "voltouAntes": false
+    }
+   ]
+  },
+  {
+   "rotulo": "antes",
+   "rodada": 3,
+   "freioCpu": 6,
+   "pista": "pista-montreal",
+   "velocidade": "media",
+   "chuva": true,
+   "frames": 600,
+   "fps": 66.79506161844436,
+   "intervaloP50": 16.600000000000364,
+   "intervaloP95": 22.200000000000273,
+   "intervaloMax": 33.29999999999927,
+   "acima33ms": 0,
+   "renderP50": 5.099999999627471,
+   "renderP95": 6.900000000372529,
+   "renderMax": 10.400000000372529,
+   "voltasDoRelogio": 0,
+   "lentos": []
+  },
+  {
+   "rotulo": "antes",
+   "rodada": 3,
+   "freioCpu": 6,
+   "pista": "pista-spa",
+   "velocidade": "rapida",
+   "chuva": true,
+   "frames": 600,
+   "fps": 60.57607850659767,
+   "intervaloP50": 16.69999999999891,
+   "intervaloP95": 22.299999999999272,
+   "intervaloMax": 33.19999999999891,
+   "acima33ms": 0,
+   "renderP50": 5.300000000745058,
+   "renderP95": 7,
+   "renderMax": 10.5,
+   "voltasDoRelogio": 0,
+   "lentos": []
+  },
+  {
+   "rotulo": "antes",
+   "rodada": 3,
+   "freioCpu": 6,
+   "pista": "pista-montreal",
+   "velocidade": "rapida",
+   "chuva": true,
+   "frames": 600,
+   "fps": 63.683450793920315,
+   "intervaloP50": 16.600000000000364,
+   "intervaloP95": 22.199999999999818,
+   "intervaloMax": 33.399999999999636,
+   "acima33ms": 1,
+   "renderP50": 5.100000001490116,
+   "renderP95": 6.599999999627471,
+   "renderMax": 10.5,
+   "voltasDoRelogio": 0,
+   "lentos": [
+    {
+     "i": 500,
+     "delta": 33.399999999999636,
+     "render": 9.400000000372529,
+     "renderAnterior": 10.5,
+     "t": 830068.1878337546,
+     "voltou": false,
+     "voltouAntes": false
+    }
+   ]
+  },
+  {
+   "rotulo": "depois",
+   "rodada": 3,
+   "freioCpu": 6,
+   "pista": "pista-spa",
+   "velocidade": "media",
+   "chuva": true,
+   "frames": 600,
+   "fps": 62.86738125923368,
+   "intervaloP50": 16.600000000000364,
+   "intervaloP95": 22.299999999999727,
+   "intervaloMax": 72.19999999999982,
+   "acima33ms": 8,
+   "renderP50": 5.299999998882413,
+   "renderP95": 7.299999998882413,
+   "renderMax": 17.90000000037253,
+   "voltasDoRelogio": 0,
+   "lentos": [
+    {
+     "i": 87,
+     "delta": 72.19999999999982,
+     "render": 11.699999999254942,
+     "renderAnterior": 11.900000000372529,
+     "t": 683746.2975837708,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 89,
+     "delta": 33.399999999999636,
+     "render": 10.599999999627471,
+     "renderAnterior": 9.899999998509884,
+     "t": 685457.1816799626,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 92,
+     "delta": 33.40000000000009,
+     "render": 9.099999999627471,
+     "renderAnterior": 10.200000001117587,
+     "t": 687737.5054603439,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 94,
+     "delta": 38.79999999999973,
+     "render": 10.800000000745058,
+     "renderAnterior": 10,
+     "t": 689586.9019121494,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 95,
+     "delta": 44.5,
+     "render": 9.899999998509884,
+     "renderAnterior": 10.800000000745058,
+     "t": 690728.3463241514,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 98,
+     "delta": 33.40000000000009,
+     "render": 9.599999999627471,
+     "renderAnterior": 9.400000000372529,
+     "t": 693008.6701045327,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 494,
+     "delta": 33.399999999999636,
+     "render": 8.099999999627471,
+     "renderAnterior": 17.90000000037253,
+     "t": 855450.3176723407,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 499,
+     "delta": 33.399999999999636,
+     "render": 5.899999998509884,
+     "renderAnterior": 6.099999999627471,
+     "t": 858015.361294817,
+     "voltou": false,
+     "voltouAntes": false
+    }
+   ]
+  },
+  {
+   "rotulo": "depois",
+   "rodada": 3,
+   "freioCpu": 6,
+   "pista": "pista-montreal",
+   "velocidade": "media",
+   "chuva": true,
+   "frames": 600,
+   "fps": 64.79131796339304,
+   "intervaloP50": 16.600000000000364,
+   "intervaloP95": 22.300000000000182,
+   "intervaloMax": 27.899999999999636,
+   "acima33ms": 0,
+   "renderP50": 5.299999998882413,
+   "renderP95": 7.599999999627471,
+   "renderMax": 18.40000000037253,
+   "voltasDoRelogio": 0,
+   "lentos": []
+  },
+  {
+   "rotulo": "depois",
+   "rodada": 3,
+   "freioCpu": 6,
+   "pista": "pista-spa",
+   "velocidade": "rapida",
+   "chuva": true,
+   "frames": 600,
+   "fps": 60.136509877421666,
+   "intervaloP50": 16.69999999999891,
+   "intervaloP95": 22.200000000000728,
+   "intervaloMax": 27.899999999999636,
+   "acima33ms": 0,
+   "renderP50": 5.400000000372529,
+   "renderP95": 7.199999999254942,
+   "renderMax": 11.400000000372529,
+   "voltasDoRelogio": 0,
+   "lentos": []
+  },
+  {
+   "rotulo": "depois",
+   "rodada": 3,
+   "freioCpu": 6,
+   "pista": "pista-montreal",
+   "velocidade": "rapida",
+   "chuva": true,
+   "frames": 600,
+   "fps": 64.79201762342868,
+   "intervaloP50": 16.600000000000364,
+   "intervaloP95": 22.200000000000273,
+   "intervaloMax": 33.30000000000109,
+   "acima33ms": 0,
+   "renderP50": 5,
+   "renderP95": 6.599999999627471,
+   "renderMax": 20.799999998882413,
+   "voltasDoRelogio": 0,
+   "lentos": []
+  }
+ ]
+}

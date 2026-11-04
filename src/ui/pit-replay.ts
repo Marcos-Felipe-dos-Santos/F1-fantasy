@@ -84,6 +84,18 @@ export interface ParadaNoReplay {
   fracaoInicio: number;
   /** Fração da volta seguinte onde a janela termina (PR 2d). */
   fracaoFim: number;
+  /** Nenhuma vaga livre na chegada: a única forma de dividir vaga (PR 2f). */
+  boxCheio: boolean;
+}
+
+/**
+ * Tempo a mais na vaga do pit `volta` (a punição do PR 2f). A linha do tempo daqui não muda:
+ * quem atrasa o carro é `punicao-replay.ts`. Aqui só as vagas sabem dela: a do pit da
+ * punição fica presa, e os pits seguintes do carro chegam atrasados `ms` na tela.
+ */
+export interface EsperaNaVaga {
+  volta: number;
+  ms: number;
 }
 
 export interface PosicaoNoReplay {
@@ -321,6 +333,7 @@ function montarParada(
     fim,
     fracaoInicio: c.fracaoEntrada - rampa,
     fracaoFim: c.fracaoSaida - 1 + rampa,
+    boxCheio: false,
     inicioVolta,
     tLimpo,
     perfil,
@@ -330,21 +343,32 @@ function montarParada(
   };
 }
 
-/** Primeira vaga livre na chegada, por ordem de início; box cheio: a que libera antes. */
-function alocarVagas(c: Caminho, paradas: ParadaInterna[]): void {
+/**
+ * Primeira vaga livre na chegada, por ordem de início; box cheio: a que libera antes.
+ * Com a punição (PR 2f), na linha do tempo da TELA: `prende` segura a vaga depois da
+ * partida, e `atraso` desloca os pits seguintes do punido (revisão do PR 2f).
+ */
+function alocarVagas(
+  c: Caminho,
+  paradas: ParadaInterna[],
+  esperaDe: (p: ParadaInterna) => { atraso: number; prende: number },
+): void {
   const livreEm = c.xVagas.map(() => -Infinity);
+  const inicioNaTela = (p: ParadaInterna) => p.inicio + esperaDe(p).atraso;
   const ordem = [...paradas].sort(
-    (a, b) => a.inicio - b.inicio || (a.jogadorId < b.jogadorId ? -1 : 1),
+    (a, b) => inicioNaTela(a) - inicioNaTela(b) || (a.jogadorId < b.jogadorId ? -1 : 1),
   );
   for (const p of ordem) {
+    const { atraso, prende } = esperaDe(p);
     const chegadaEm = (k: number) => p.inicio + p.escala * tempoEmX(c, p.perfil, c.xVagas[k]);
-    let vaga = livreEm.findIndex((livre, k) => livre <= chegadaEm(k));
+    let vaga = livreEm.findIndex((livre, k) => livre <= chegadaEm(k) + atraso);
+    p.boxCheio = vaga === -1;
     if (vaga === -1) vaga = livreEm.indexOf(Math.min(...livreEm));
     p.vaga = vaga;
     p.xVaga = c.xVagas[vaga];
     p.chegada = chegadaEm(vaga);
     p.partida = p.chegada + p.parado;
-    livreEm[vaga] = p.partida;
+    livreEm[vaga] = p.partida + atraso + prende;
   }
 }
 
@@ -389,12 +413,14 @@ const CACHE_LINHA = new WeakMap<ResultadoCorrida, { pistaId: string; linha: Linh
 /**
  * Linha do tempo do pit da corrida, MEMOIZADA pela identidade de `resultado`:
  * as vagas dependem de todas as paradas e o replay pede isto a cada frame.
+ * Com `esperas` não memoiza: quem passa (`replayDaCorrida`) já memoiza o resultado.
  */
 export function linhaDoTempoDoPit(
   resultado: ResultadoCorrida,
   pista: Pick<Pista, 'id' | 'voltas' | 'tempoBaseMs'>,
+  esperas?: ReadonlyMap<string, EsperaNaVaga>,
 ): LinhaDoTempoPit {
-  const cache = CACHE_LINHA.get(resultado);
+  const cache = esperas === undefined ? CACHE_LINHA.get(resultado) : undefined;
   if (cache !== undefined && cache.pistaId === pista.id) return cache.linha;
 
   const c = caminhoDaPista(pista.id);
@@ -408,7 +434,11 @@ export function linhaDoTempoDoPit(
       porCarro.set(jogadorId, paradas);
       todas.push(...paradas);
     }
-    alocarVagas(c, todas);
+    alocarVagas(c, todas, (p) => {
+      const espera = esperas?.get(p.jogadorId);
+      if (espera === undefined || p.volta < espera.volta) return { atraso: 0, prende: 0 };
+      return p.volta === espera.volta ? { atraso: 0, prende: espera.ms } : { atraso: espera.ms, prende: 0 };
+    });
   }
 
   const ativa = (jogadorId: string, tempoSimMs: number) =>
@@ -473,6 +503,6 @@ export function linhaDoTempoDoPit(
       return rumoDoPit === null ? naPista : { ...naPista, rumo: rumoDoPit };
     },
   };
-  CACHE_LINHA.set(resultado, { pistaId: pista.id, linha });
+  if (esperas === undefined) CACHE_LINHA.set(resultado, { pistaId: pista.id, linha });
   return linha;
 }

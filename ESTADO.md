@@ -12,8 +12,12 @@
 
 ## Estado atual
 
-**2026-11-03, branch `feat/pr2d-incidentes`**, com o PR 2d aprovado no celular e fechado sobre a
-`main` `03ed7ed`. O push é do Marcos. Sem merge ou deploy. Próximo: PR 2f (punição cumprida no box).
+**2026-11-03, branch `feat/pr2f-punicao-no-box`**, com o PR 2f aprovado no celular e fechado sobre a
+`main` `e1cfba8`. O push é do Marcos; o merge, com merge commit. Sem merge ou deploy.
+~~**2026-11-03, branch `feat/pr2d-incidentes`**, com o PR 2d aprovado no celular e fechado sobre a
+`main` `03ed7ed`. O push é do Marcos. Sem merge ou deploy. Próximo: PR 2f (punição cumprida no box).~~ O PR 2d foi
+mesclado na `main` (`e1cfba8`) e está no ar: conferido em 2026-11-03, o bundle de produção `index-BrFozbvR.js` é o
+mesmo do build local da `main`.
 ~~**2026-11-02, branch `feat/pr2e-fim-da-corrida`**, com o PR 2e aprovado no celular e fechado sobre a
 `main` `a49cb78`. O push é do Marcos. Sem merge ou deploy.~~ O PR 2e foi mesclado na `main` (`03ed7ed`).
 ~~**2026-11-02, branch `feat/pr2a-carros-chuva`**, com o PR 2a aprovado no celular e fechado sobre a
@@ -36,6 +40,8 @@ produção. Próximo: **PR 2c** (pit stop animado), que passou à frente do PR 2
   publicado hoje.**~~ **Corrigido em 2026-11-01, relato do Marcos: o PR 1 e o PR 2b foram mesclados
   e publicados, e testados em produção num campeonato curto online com 2 jogadores.** Os merges
   conferem no `git log`; o commit em produção vem do relato, não de consulta ao Worker.
+- **`main` `e1cfba8`:** merge do PR #8 (PR 2d incidentes), no ar (bundle conferido em 2026-11-03).
+- **PR 2f (punição cumprida no box):** aprovado pelo Marcos e fechado em `feat/pr2f-punicao-no-box`, sem push. Ver §"Onde parei".
 - **`main` `d9e8916`:** merge do PR #4 (PR 2b pistas + box).
 - **`main` `4d530e6`:** merge do PR #3 (PR 1 Resultados).
 - **`main` `ef8c520`:** merge do PR #2 (nomes reais restaurados). CI em `.github/workflows/ci.yml`;
@@ -432,7 +438,31 @@ dependência).
 
 ## Onde parei
 
-### 2026-11-03 — PR 2d (incidentes, DNF, narração) APROVADO no celular e fechado, aguardando o push do Marcos
+### 2026-11-03 — PR 2f (punição cumprida no box) APROVADO no celular e fechado, aguardando o push do Marcos
+
+**Veredito do Marcos (2026-11-03):** "aprovado, as 3 cenas certas" (punição no pit, no 2º pit e o selo sintético).
+Detalhe em `HISTORICO.md` §"2026-11-03 — PR 2f". Servidores de preview derrubados (portas 5173, 4181-4183 livres).
+**Próximo:** push e abertura do PR pelo Marcos; merge com merge commit.
+
+Branch `feat/pr2f-punicao-no-box`, sobre a `main` `e1cfba8`. Risco ALTO. Sem push, merge ou deploy. Decisões em
+§"🔒 DECISÕES DO MARCOS — VIGENTES" (D5 do PR 2d e as de 2026-11-03).
+
+Commits: `08b6f9a` medição; `e7ebd31` implementação; `b5c77c0` hash golden; `0ef540d` testes e script de mutação;
+`f1e233d` sobreviventes da 1ª mutação e cenas do preview; `d03c996` infração fixada no hash; `365d6cf` mutação;
+`0355e42` FPS; `aab8b21` correções da revisão; `e708809` mutação final; mais o commit desta doc.
+
+- **Medido no HEAD `e708809`:** `npm test` 2153 + 1 skipped em 91 arquivos; `test:party` 46; typecheck, lint e build
+  com saída 0; `versao.test.ts` 3/3; `git diff e1cfba8` vazio em `src/engine/`, `src/data/` e `party/`, e em `src/net/`
+  só `cerca-lint.test.ts`. `verificar-pr2f` com todos os portões em 0; `verificar-pr2d` e `verificar-pr2e` verdes.
+- **Mutação final:** 36/40, 0 travadas, 4 sobreviventes aceitos pelo Marcos (motivos em §"Pendências ATIVAS").
+- **FPS:** A/B sem diferença; números absolutos baixos nos dois braços, máquina não conferida (ver o `HISTORICO.md`).
+- **`senior-reviewer`:** aprovado, sem 🔴; os três 🟡 corrigidos em `aab8b21`.
+- ~~**Fica na máquina, fora do repositório:** a worktree da `main` usada no FPS.~~ Removida em 2026-11-03 a pedido do
+  Marcos (antes, o link do `node_modules` dela, uma junction para o do projeto, foi desfeito com `rmdir`, sem
+  recursão). O `git worktree list` ainda mostra `…\1abeffa1-391e-458a-8a98-a0952f3ebb99\scratchpad\antes`, em
+  `a49cb78`, de uma sessão anterior: não foi tocada.
+
+### 2026-11-03 — PR 2d (incidentes, DNF, narração) APROVADO no celular e fechado, ~~aguardando o push do Marcos~~ mesclado na `main` (`e1cfba8`) e no ar
 
 **Veredito do Marcos (2026-11-03):** "aprovado, tudo certo", nas cenas de líder, DNF e chuva. Ele conferiu no
 celular que o selo de DNF aparece na classificação. Detalhe em `HISTORICO.md` §"2026-11-03 — PR 2d". Servidor de
@@ -2321,6 +2351,22 @@ apresentação nos dois: zero alteração em `src/engine/` e `src/data/`, result
 - **D5, punição (para o PR 2f):** infração sorteada sempre antes do último pit, cumprida no pit; selo `+Xs`
   só como reserva; sem stop-and-go.
 
+**🔒 DECISÕES DO MARCOS, 2026-11-03 — PR 2f (punição cumprida no box),** sobre o relatório de invariantes e a
+medição `docs/pr2f-medicao.json`:
+
+- **Ordem de cálculo:** "último pit visível usa a chegada ANTES da punição, como no protótipo, fixada por teste próprio."
+- **Retardatário com volta a mais na tela (2 em 1000):** "aceito; registre."
+- **Selo de reserva:** "teste e preview com corrida sintética, já que não há caso natural."
+- **Vagas:** a colisão de vagas entra como métrica no baseline; se a punição aumentar os carros na mesma vaga além
+  da regra atual (só com o box cheio), parar e mostrar. Resultado: 0 fora do box cheio, não disparou.
+- **Mutação:** "Aceito as 4 mutações sobreviventes como descreveu; registre cada uma com o motivo."
+- ~~⚠️ **Não é decisão do Marcos:** o trecho da infração ficar entre o pit ANTERIOR e o pit da punição, para ela ser
+  cumprida no pit seguinte a ela, foi escolha da sessão principal dentro da D5. Foi apresentada a ele, que aprovou
+  as cenas no celular sem comentar a regra.~~
+- **Infração (decisão do Marcos, 2026-11-03, depois do fechamento):** "É o que eu queria ('antes do pit, cumprida
+  no box'), com o refinamento de ser cumprida no pit seguinte à infração, como na F1." A infração sai entre o pit
+  anterior (ou a largada) e o pit da punição.
+
 **🔒 DECISÕES DO MARCOS, 2026-11-02 — PR 2e (a corrida termina quando todos cruzam a linha):** só
 apresentação, zero alteração em `src/engine/` e `src/data/`, resultado e hashes idênticos. Depois que o
 vencedor cruza, cada carro termina na próxima passagem pela linha; DNF fica de fora. O replay termina
@@ -3156,7 +3202,23 @@ cruza a linha, com o selo `+Xs`.
 ✅ **Os quatro itens entraram no PR 2d (2026-11-03, sem push).** A variedade vale sem repetir frase na
 corrida enquanto houver frase nova (`fraseRepetida` 0 no `verificar-pr2d`).
 
-**PR 2f, depois do PR 2d — PUNIÇÃO CUMPRIDA NO BOX, como na F1.** ~~Para o PR 2d, pedido do Marcos em
+**Abertas no PR 2f (2026-11-03), nenhuma com defeito hoje:**
+- **Sobreviventes aceitos da mutação** (`docs/pr2f-mutacoes.json`): `ticker-chave-do-evento`, porque
+  `renderToString` não acusa chave repetida do React e sem jsdom não há como observar (o formato e a unicidade da
+  chave estão travados nos testes da narração); `chegada-sem-atraso`, `ordem-sem-atraso` e `espera-em-todo-pit`,
+  porque só mudam qual vaga livre o pit seguinte do punido escolhe, sem colisão. Esse pit só aparece quando o punido
+  ganha uma volta na tela; carros que mudam de voltas são 2 em 1000 corridas, e o subconjunto não foi medido.
+- **Linha dentro do box:** em 29 passagens pela linha de carros com a vaga trocada pela espera de um punido, o
+  instante da passagem muda, porque o box cruza a linha entre duas vagas (`linhaNoBoxComOutraVaga` no `verificar-pr2d`).
+  Sem recuo nem salto de progresso.
+- **Retardatário com a bandeirada dentro da janela do próprio pit da punição** (sugestão do `senior-reviewer`): a
+  linha "cumpriu a punição" sai depois de ele já ter chegado. Coerente com a exceção da bandeira no box do PR 2e.
+- **FPS:** refazer com a máquina comprovadamente limpa; o desta rodada é A/B sem diferença, com números baixos nos
+  dois braços. A correção da revisão não foi medida, por só mexer na montagem do replay.
+- **Painel do preview:** "parados no box" no HUD de `preview-pit.tsx` lê as paradas sem a espera da punição.
+
+**PR 2f, depois do PR 2d — PUNIÇÃO CUMPRIDA NO BOX, como na F1.** ✅ **Fechado em 2026-11-03,
+aprovado pelo Marcos no celular, sem push.** Ver §"Onde parei". ~~Para o PR 2d, pedido do Marcos em
 2026-11-02.~~ Separado do PR 2d por decisão do Marcos (D1 do PR 2d). Só apresentação: o tempo total e a
 classificação final continuam os do motor. O replay mostra a punição sendo cumprida durante a corrida.
 ~~1. se o carro ainda tem pit stop depois da infração: fica parado X s a mais na vaga (mecânicos esperam);

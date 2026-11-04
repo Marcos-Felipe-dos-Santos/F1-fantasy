@@ -18,6 +18,7 @@ import { replayDaCorrida } from './fim-da-corrida';
 import { classificacaoAoVivo, MS_REPLAY_POR_VOLTA, pontoNoTracado, prepararCorrida } from './fluxo-corrida';
 import { efeitosNoInstante } from './incidentes-replay';
 import { nomeJogador, rotulosDosPilotos } from './loadout-view';
+import { FRASE_PUNICAO_CUMPRIDA } from './narracao';
 import { linhaDoTempoDoPit } from './pit-replay';
 import { tracadoSuavizado } from './suavizacao';
 import { TelaCorrida } from './TelaCorrida';
@@ -444,10 +445,14 @@ describe('depois da bandeirada (PR 2e)', () => {
     expect(linhaDele(replay.fim)).toContain('+1 V');
   });
 
-  it('o selo da punição aparece com a 🏁, com o valor, e só no punido', () => {
-    const { corrida, id, replay } = achar(
-      (r, c) => c.resultado.classificacao.find((x) => r.punicaoMs(x.jogadorId) > 0)?.jogadorId,
-    );
+  it('o selo de reserva aparece com a 🏁, com o valor, e só no punido', () => {
+    // Sem caso natural (0 em 1000, `docs/pr2f-medicao.json`): o punido real perde os pits.
+    const achado = achar((r, c) => c.resultado.classificacao.find((x) => r.punicao(x.jogadorId) !== undefined)?.jogadorId);
+    const id = achado.id;
+    const resultado = { ...achado.corrida.resultado, voltasDePit: { ...achado.corrida.resultado.voltasDePit, [id]: [] } };
+    const corrida = { ...achado.corrida, resultado };
+    const replay = replayDaCorrida(resultado, corrida.pista);
+    expect(replay.punicao(id)).toBeUndefined();
     const instante = replay.chegada(id)?.instante ?? 0;
     const nome = nomeNoPainel(id);
     const linhaDele = (t: number) => linhas(tela(corrida, t)).find((l) => l.includes(`>${nome}<`)) ?? '';
@@ -458,6 +463,23 @@ describe('depois da bandeirada (PR 2e)', () => {
     expect(linhaDele(instante)).toContain(`Punição de ${texto.slice(1, -1)} segundos`);
     const punidos = corrida.resultado.classificacao.filter((c) => replay.punicaoMs(c.jogadorId) > 0).length;
     expect(tela(corrida, replay.fim).match(/class="badge-punicao"/g)).toHaveLength(punidos);
+  });
+
+  it('a punição cumprida no pit não tem selo, e o ticker narra quando sai e quando é cumprida (PR 2f)', () => {
+    const { corrida, id, replay } = achar(
+      (r, c) => c.resultado.classificacao.find((x) => r.punicao(x.jogadorId) !== undefined)?.jogadorId,
+    );
+    const punicao = replay.punicao(id);
+    if (punicao === undefined) throw new Error('sem punição');
+    const nome = nomeNoPainel(id);
+    const linhaDele = (t: number) => linhas(tela(corrida, t)).find((l) => l.includes(`>${nome}<`)) ?? '';
+    expect(linhaDele(replay.chegada(id)?.instante ?? 0)).not.toContain('badge-punicao');
+    expect(tela(corrida, punicao.infracao - 1)).not.toContain('a cumprir no box');
+    const saiu = tela(corrida, punicao.infracao);
+    expect(saiu).toContain(`V${punicao.voltaDaInfracao}</span>`);
+    expect(saiu).toContain('a cumprir no box');
+    expect(tela(corrida, punicao.parada.partida - 1)).not.toContain(FRASE_PUNICAO_CUMPRIDA);
+    expect(tela(corrida, punicao.parada.partida)).toContain(FRASE_PUNICAO_CUMPRIDA);
   });
 
   it('quem está na volta lenta fica espalhado pela pista, e sem spray', () => {
