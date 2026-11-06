@@ -333,8 +333,9 @@ export function detectarPassagens(
   for (const h of humanos) {
     if (!h.ativo) continue;
     for (const o of carros) {
-      if (!o.ativo || o.id === h.id) continue;
-      // Par de humanos: só uma vez, pelo de id menor (code unit).
+      if (!o.ativo) continue;
+      // Par de humanos: só uma vez, pelo de id menor (code unit). A mesma regra tira o humano de si
+      // mesmo (mutação do PR 3a: um `o.id === h.id` aqui era redundante).
       if (ehHumano.has(o.id) && !(h.id < o.id)) continue;
       const par = `${h.id}>${o.id}`;
       const dx = o.ponto.x - h.ponto.x;
