@@ -12,8 +12,11 @@
 
 ## Estado atual
 
-**2026-11-03, branch `feat/pr2f-punicao-no-box`**, com o PR 2f aprovado no celular e fechado sobre a
-`main` `e1cfba8`. O push é do Marcos; o merge, com merge commit. Sem merge ou deploy.
+**2026-11-06, branch `feat/pr3-sons`**, com o PR 3a (sons escolhidos + agenda pura dos sons) fechado sobre a `main`
+`c4d7920` (merge do PR 2f). Sem push, merge ou deploy. Próximo: PR 3b. Ver §"Onde parei".
+~~**2026-11-03, branch `feat/pr2f-punicao-no-box`**, com o PR 2f aprovado no celular e fechado sobre a
+`main` `e1cfba8`. O push é do Marcos; o merge, com merge commit. Sem merge ou deploy.~~ O PR 2f foi mesclado na
+`main` (`c4d7920`, PR #9).
 ~~**2026-11-03, branch `feat/pr2d-incidentes`**, com o PR 2d aprovado no celular e fechado sobre a
 `main` `03ed7ed`. O push é do Marcos. Sem merge ou deploy. Próximo: PR 2f (punição cumprida no box).~~ O PR 2d foi
 mesclado na `main` (`e1cfba8`) e está no ar: conferido em 2026-11-03, o bundle de produção `index-BrFozbvR.js` é o
@@ -437,6 +440,21 @@ dependência).
 
 
 ## Onde parei
+
+### 2026-11-06 — PR 3a (sons escolhidos + agenda pura) FECHADO na branch, aguardando o Marcos
+
+Branch `feat/pr3-sons`, sobre a `main` `c4d7920`. Risco ALTO. Sem push, merge ou deploy. Detalhe em `HISTORICO.md`
+§"2026-11-06 — PR 3a".
+
+Commits: `4e28433` tratamento dos sons e preview (chore); `56c4007` NOTICES podado; `e30aa2d` implementação com as
+correções da revisão; `72331f2` sobreviventes da 1ª mutação e script; `60d861e` mutação final; mais o commit desta doc.
+
+- **Medido no HEAD `60d861e`** (código igual ao de `72331f2`; o `60d861e` só acrescenta o JSON da mutação)**:** `npm test` 2212 + 1 skipped em 93 arquivos; `test:party` 46; typecheck, lint e build
+  com saída 0; `versao.test.ts` 3/3; `git diff c4d7920` vazio em `src/engine/`, `src/data/`, `src/net/` e `party/`.
+- **Mutação final:** 56/56, 0 travadas. **`senior-reviewer`:** sem 🔴; os 🟡 corrigidos, exceto o item 8, que é pergunta.
+- **Sem portão visual nem sonoro:** nada do app toca som ainda. O preview de escuta (fora do git) é
+  `preview/pr3-sons-escolha.html`, gerado por `scripts/sons/montar-preview.ts`.
+- **Próximo:** PR 3b (áudio de verdade), depois da resposta do Marcos à pergunta das pendências.
 
 ### 2026-11-03 — PR 2f (punição cumprida no box) APROVADO no celular e fechado, aguardando o push do Marcos
 
@@ -3167,6 +3185,23 @@ ser o padrão que se está seguindo. **Rodar ou não rodar segue sendo decisão 
 que agora ela é tomada com o número na mão.**
 
 ## Pendências ATIVAS
+
+**Abertas no PR 3a (2026-11-06):**
+- ❓ **PERGUNTA AO MARCOS (item 8 da revisão):** sem carro em destaque (2+ humanos no aparelho, espectador online),
+  hoje nenhuma passagem soa e os eventos dos outros carros saem a um ganho fixo (`GANHO_SEM_FOCO` 0,35), sem
+  atenuação por distância. A decisão de 2026-11-06 fala de motor e prioridade e não cobre isso. Opção sugerida pelo
+  revisor: medir a distância até o humano mais próximo. **Não decidido.**
+- **Obrigações do 3b (contrato da agenda):** calar os sons quando o "Acelerar" encerra o replay (ele não passa pelo
+  salto de relógio); calcular `velRef` uma vez sobre o replay inteiro; passar o foco inativo no box, parado ou
+  abandonado; partir de `SIM_ANTES_DA_LARGADA`; tocar o spray como camada da passagem na chuva.
+- **Teto de 6 vozes:** medido em `medir-pr3` sobre outra população de eventos (com saída do pit e cruzamentos, sem
+  passagem nem spray). Reconferir no 3b com a população atual.
+- **Ogg no iPhone/Safari:** não testado. Se falhar, o 3b inclui cópia em AAC (decisão do Marcos).
+- **`derrapagem`** cobre também `problema-tecnico` (som de pneu), como o efeito visual do PR 2d; separar é decisão do
+  Marcos, se ele quiser.
+- **`integrar-sons.ts`:** o `prettier` do catálogo é passo manual do comando, fora do script.
+- **Fora do git, de sessão anterior:** `scripts/preview-sons.*` (preview sintetizado, substituído pelos sons CC0) e
+  os `.txt` soltos na raiz. Não são deste PR; descartar ou versionar é decisão do Marcos.
 
 **Abertas no PR 2e (2026-11-02), sugestões do `senior-reviewer`, nenhuma com defeito hoje:**
 - **Ligação de `useCorrida`:** só cerca textual e o modo `fluxo` manual. Falta teste de comportamento, que hoje

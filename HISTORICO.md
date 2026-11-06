@@ -7476,6 +7476,60 @@ foi versionada.
 
 **Veredito, 2026-11-03.** Aprovado pelo Marcos no celular: "aprovado, as 3 cenas certas".
 
+### 2026-11-06 — PR 3a: sons escolhidos em `public/` e a agenda pura dos sons da corrida
+
+Branch `feat/pr3-sons`, sobre a `main` `c4d7920` (merge do PR 2f). Risco ALTO. Nada do app importa os módulos novos:
+o áudio é o PR 3b. `git diff c4d7920` vazio em `src/engine/`, `src/data/`, `src/net/` e `party/`; sem bump
+(`versao.test.ts` 3/3).
+
+**Antes do PR, na mesma branch (chore, baixo risco).** Os sons CC0 do Freesound que o Marcos baixou foram identificados
+pela duração (os 26 arquivos únicos bateram com a lista dele; licença, título e autor conferidos em cada página) e
+tratados por `scripts/sons/tratar-sons.ts` (`4e28433`): tabela declarativa, MD5 dos originais fixado no script,
+laços com cruzamento e guarda de 50 ms, nivelamento por categoria, `.ogg` mono reproduzível byte a byte (o muxer Ogg
+sorteava o número de série; fixado). Indicador heurístico de voz com controle positivo de fala sintética: acha a fala
+sozinha (13 de 25 janelas), só a vê 6 dB abaixo do fundo sobre a marcha lenta, e acusa quase toda a gravação de um
+motor morrendo (852408, 75 de 86 janelas). Ficou como pista para o ouvido, não como prova; nenhum arquivo descartado
+por voz. Preview único com a cena real (Mônaco, seed 7112441) e o mixer de `medir-pr3`. O Marcos escolheu no
+celular: motor v3, pelotão v2, chuva v3, passagem v3, spray v2, largada v2, pistola v3, derrapagem v1, abandono v3,
+torcida v2, e a marcha lenta (b), derivada do motor v3 (150337, V8 de 2012: aproximação de V6 híbrido). Não ouviu voz
+no pelotão v2 nem na passagem v3 (o ⚠ do detector ficou registrado). `THIRD_PARTY_NOTICES.md` podado para as 11
+gravações escolhidas (`56c4007`).
+
+**O que entrou** (`e30aa2d`, `72331f2`, `60d861e`).
+- **`public/sons/`**: os 17 `.ogg` (436 KB), levados por `scripts/sons/integrar-sons.ts` a partir de
+  `scripts/sons/escolhas.ts`, a fonte única das escolhas (o preview também lê dela). `src/ui/sons/catalogo.ts` gerado
+  com origem, duração, laço, pico e MD5. A cerca `scripts/sons/catalogo.test.ts` confere MD5, arquivo sobrando,
+  origem = escolha, guarda de 50 ms, pico dentro do arquivo e cada id do Freesound no NOTICES. `*.ogg binary` no
+  `.gitattributes`.
+- **`src/ui/sons/agenda.ts`**, funções puras que só leem o replay: eventos (largada em 0; pistola da chegada à partida
+  da vaga; derrapagem no início do incidente; abandono; torcida da bandeirada ao fim, limitada ao arquivo); foco e
+  prioridade pelas decisões de 2026-11-06; ganhos copiados do preview aprovado; janela meio-aberta com
+  `SIM_ANTES_DA_LARGADA` e descarte em salto de relógio; o mixer de `medir-pr3` (equivalência linha a linha conferida
+  pelo revisor); passagens com histerese, previsão do mínimo, horizonte de 500 ms reais e foco ativo; tom do motor,
+  marcha lenta e silêncio depois do abandono do foco.
+- **`scripts/medir-pr3.preview.test.ts`** versionado como instrumento; reproduz idêntica a medição de 04/11.
+
+**Baseline vermelho.** Os dois arquivos de teste falharam por módulo inexistente antes da implementação. Depois dela,
+dois testes do mixer falharam por defeito do próprio teste (vozes já expiradas) e foram corrigidos.
+
+**`senior-reviewer`.** Sem 🔴; dez 🟡. Corrigidos: a largada se perderia partindo de 0 (`SIM_ANTES_DA_LARGADA`); faltava
+teste de roubo com prioridades misturadas; previsão sem horizonte e com quadro velho; ganhos diferentes do preview
+(faltava o × 0,8 e os ajustes por categoria; o spray passou a ser voz); passagens com o foco parado na vaga; motor
+em marcha lenta depois do DNF; catálogo sem amarra à escolha; comentários que chamavam de medido o que era ouvido ou
+regra; o "Acelerar" não passa pelo salto de relógio (registrado como obrigação do 3b). Das sugestões, entraram o
+desempate por code unit no lugar de `localeCompare`, a torcida limitada ao arquivo, a voz de duração nula recusada e
+`DURACAO_EFEITO_MS` importado. O item 8 (sem foco, sem passagens e ganho fixo) virou pergunta ao Marcos.
+
+**Mutação** (`scripts/mutar-pr3a.mjs`, `docs/pr3a-mutacoes.json`). 1ª rodada: 54 de 56, 0 travadas. Sobreviventes:
+`espectador-com-foco`, mutante equivalente (o `if` do null era redundante e saiu; o mutante novo é pego pelo
+espectador numa sala com um humano só), e `previsao-para-tras`, buraco de teste (carro entrando com a projeção já no
+passado, num salto lateral de quadro). Final: **56 de 56, 0 travadas**.
+
+**Medido no HEAD `60d861e`** (código igual ao de `72331f2`). `npm test` 2212 + 1 skipped em 93 arquivos (2153 antes da branch); `test:party` 46;
+typecheck, lint e build (com `checar:casca`) com saída 0; `dist/sons` com 17 arquivos.
+
+**Não verificado.** FPS e custo por quadro: nada roda no app ainda, ficam para o 3b. Ogg no iPhone/Safari.
+
 ## ARQUIVADO DO `ESTADO.md` em 2026-10-28 — §"Estado atual", medições de 2026-08-18 a 2026-09-02
 
 > Movido sem alteração pela sessão principal, a pedido do Marcos. Antes da cópia, 18,8% dos
