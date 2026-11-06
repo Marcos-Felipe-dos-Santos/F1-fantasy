@@ -15,15 +15,18 @@
 /** SHA-256 usado na assinatura das notas preservadas durante a migração. */
 declare module 'node:crypto' {
   interface Hash {
-    update(data: string): Hash;
+    update(data: string | Uint8Array): Hash;
     digest(encoding: 'hex'): string;
   }
-  export function createHash(algorithm: 'sha256'): Hash;
+  /** `md5` e `update` de bytes entraram no PR 3 (`scripts/sons/tratar-sons.ts`): o MD5 identifica os originais de áudio. */
+  export function createHash(algorithm: 'sha256' | 'md5'): Hash;
 }
 
 declare module 'node:fs' {
   export function existsSync(path: string): boolean;
   export function readFileSync(path: string, encoding: 'utf8'): string;
+  /** Sem codificação, os bytes: os originais e os `.ogg` do PR 3 (`scripts/sons/`). */
+  export function readFileSync(path: string): Uint8Array;
   export function writeFileSync(path: string, data: string | Uint8Array, encoding?: 'utf8'): void;
   /** Adicionados no PR 2b (`preview-pr2b-box-aberto`): as cópias temporárias de `gerar_referencias.py`. */
   export function cpSync(origem: string, destino: string, options?: { recursive?: boolean }): void;
@@ -39,7 +42,7 @@ declare module 'node:fs' {
    * fontes. `mtimeMs` entrou no 3.5.1 (`despejar-seeds.ts`), pra ordenar os
    * arquivos de storage do Durable Object do mais recente pro mais antigo.
    */
-  export function statSync(path: string): { isDirectory(): boolean; mtimeMs: number };
+  export function statSync(path: string): { isDirectory(): boolean; mtimeMs: number; size: number };
 }
 
 /**
@@ -54,6 +57,20 @@ declare module 'node:child_process' {
     argumentos: string[],
     opcoes?: { stdio?: 'pipe' | 'inherit' | 'ignore' },
   ): Uint8Array;
+  /**
+   * Adicionado no PR 3 (`scripts/sons/`): o ffmpeg recebe amostras pela entrada e devolve pela
+   * saída, e o código de saída é lido em vez de lançar.
+   */
+  export function spawnSync(
+    arquivo: string,
+    argumentos: string[],
+    opcoes: { encoding: 'utf8' },
+  ): { status: number | null; error?: Error; stdout: string; stderr: string };
+  export function spawnSync(
+    arquivo: string,
+    argumentos: string[],
+    opcoes?: { input?: Uint8Array; maxBuffer?: number },
+  ): { status: number | null; error?: Error; stdout: Uint8Array; stderr: Uint8Array };
 }
 
 declare module 'node:os' {
