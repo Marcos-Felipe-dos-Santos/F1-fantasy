@@ -149,6 +149,8 @@ describe('foco e prioridade (decisão do Marcos, 2026-11-06)', () => {
   it('online: o jogador local; espectador: nenhum', () => {
     expect(focoDoSom(['h1', 'h2'], 'h2')).toBe('h2');
     expect(focoDoSom(['h1', 'h2'], null)).toBeNull();
+    // Espectador numa sala com um humano só: continua sem motor (não cai na regra do Single).
+    expect(focoDoSom(['h1'], null)).toBeNull();
   });
   it('sem humano: nenhum', () => {
     expect(focoDoSom([], undefined)).toBeNull();
@@ -376,6 +378,12 @@ describe('detectarPassagens', () => {
     const r2 = detectarPassagens(e, 100, ESC, FOCO, [{ id: 'b2', ponto: { x: 40, y: 0 }, ativo: true }]);
     expect(r2.novas[0].tMinimo).toBeCloseTo(300, 6);
     expect(HORIZONTE_REAL_MS * ESC).toBeGreaterThan(200);
+  });
+
+  it('entrando com a projeção já para trás (salto lateral de quadro grande, em curva): o mínimo é agora', () => {
+    // De (0, 50) para (40, 0): a distância caiu de 50 para 40, mas r·v > 0, o mínimo ficou no passado.
+    const e = detectarPassagens(passagensVazias(), 0, ESC, FOCO, [{ id: 'b1', ponto: { x: 0, y: 50 }, ativo: true }]).estado;
+    expect(detectarPassagens(e, 100, ESC, FOCO, [{ id: 'b1', ponto: { x: 40, y: 0 }, ativo: true }]).novas).toEqual([{ carro: 'b1', tMinimo: 100 }]);
   });
 
   it('quadro anterior velho (aba voltando) não serve para prever', () => {

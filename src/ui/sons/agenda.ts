@@ -134,7 +134,7 @@ export function sonsDaPassagem(chuva: boolean): CategoriaSom[] {
  * `undefined` no Single (todo humano joga neste aparelho), `null` no online para o espectador.
  */
 export function focoDoSom(humanos: readonly string[], jogadorLocalId: string | null | undefined): string | null {
-  if (jogadorLocalId === null) return null;
+  // Online: o local, ou `null` para o espectador (mutação do PR 3a: um `if` só para o null era redundante).
   if (jogadorLocalId !== undefined) return jogadorLocalId;
   return humanos.length === 1 ? humanos[0] : null;
 }
