@@ -15,6 +15,7 @@
 
 import { readFileSync, statSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { ESCOLHIDOS, OUVIDOS_SEM_VOZ } from './escolhas.ts';
 
 const PASTA = process.argv[2] ?? 'preview/sons';
 const SAIDA = process.argv[3] ?? 'preview/pr3-sons-escolha.html';
@@ -39,18 +40,11 @@ interface SomManifesto {
   arquivos: ArquivoManifesto[];
 }
 
-/** Escolhas do Marcos no ouvido, 2026-11-06. */
-const ESCOLHIDOS = ['motor-v3', 'pelotao-v2', 'chuva-v3', 'passagem-v3', 'spray-v2', 'largada-v2', 'pistola-v3', 'derrapagem-v1', 'abandono-v3', 'torcida-v2'];
-/**
- * Marcha lenta em aberto: (a) sem som próprio, o motor some e fica o pelotão (não tem arquivo; é
- * comportamento da cena) e (b) `lenta-v3`, derivada do motor v3.
- */
-const OPCOES_LENTA = ['lenta-v3'];
-/** Ouvidos pelo Marcos sem voz percebida (2026-11-06); o ⚠ do detector continua registrado. */
-const OUVIDOS_SEM_VOZ = ['pelotao-v2', 'passagem-v3'];
+/** Os escolhidos vêm de `escolhas.ts`, a mesma fonte do que vai ao jogo (`integrar-sons.ts`). */
+const ESCOLHIDOS_LISTA: string[] = Object.values(ESCOLHIDOS);
 
 const manifestoTodo = JSON.parse(readFileSync(join(PASTA, 'manifesto.json'), 'utf8')) as { sons: SomManifesto[]; ffmpeg: string };
-const noPreview = new Set([...ESCOLHIDOS, ...OPCOES_LENTA]);
+const noPreview = new Set(ESCOLHIDOS_LISTA);
 const manifesto = { ...manifestoTodo, sons: manifestoTodo.sons.filter((s) => noPreview.has(s.id)) };
 if (manifesto.sons.length !== noPreview.size) throw new Error('escolha sem som tratado no manifesto');
 const cena = JSON.parse(readFileSync(join(PASTA, 'cena.json'), 'utf8')) as Record<string, unknown>;
@@ -77,7 +71,7 @@ const dados = {
     })),
   })),
   ffmpeg: manifesto.ffmpeg,
-  escolhidos: ESCOLHIDOS,
+  escolhidos: ESCOLHIDOS_LISTA,
   ouvidosSemVoz: OUVIDOS_SEM_VOZ,
   cena,
 };
@@ -113,7 +107,7 @@ const VELS = ['lenta', 'media', 'rapida'];
 const NOME_VEL = { lenta: 'lenta', media: 'média', rapida: 'rápida' };
 const CATS = [
   ['motor', 'Motor do seu carro', 'Laço. Na cena, o tom acompanha a velocidade do carro; parado na vaga, vira marcha lenta.'],
-  ['lenta', 'Marcha lenta (na vaga)', 'Duas opções para o carro parado no box. Escolha uma.'],
+  ['lenta', 'Marcha lenta (na vaga)', 'Escolhida: (b). A (a) fica para comparar.'],
   ['pelotao', 'Pelotão (fundo)', 'Laço de fundo, com a faixa da fala atenuada 4 dB em 1,8 kHz.'],
   ['chuva', 'Chuva', 'Laço, só em corrida chuvosa.'],
   ['passagem', 'Passagem perto', 'Um arquivo por velocidade (800 / 400 / 300 ms). O pico cai na menor distância.'],
@@ -136,7 +130,8 @@ const buffers = {};
 D.sons.unshift({ id: 'lenta-silencio', categoria: 'lenta', rotulo: 'Sem som próprio', diferenca: 'parado na vaga, o seu motor baixa até silenciar e fica só o pelotão', forma: 'silencio', arquivos: [{ fontes: [] }] });
 const escolha = {};
 for (const id of D.escolhidos) escolha[id.split('-')[0]] = id;
-escolha.lenta = 'lenta-silencio';
+// Decisão do Marcos (2026-11-06): opção (b). A (a) segue na página só para comparar.
+escolha.lenta = 'lenta-v3';
 try { const l = localStorage.getItem('pr3-lenta'); if (l === 'lenta-silencio' || l === 'lenta-v3') escolha.lenta = l; } catch (e) {}
 const salvar = () => { try { localStorage.setItem('pr3-lenta', escolha.lenta); } catch (e) {} resumoEscolhas(); };
 // Demonstração da opção (a): motor v3 com o pelotão por 1,5 s; o motor baixa em 0,8 s e o pelotão segue.
@@ -413,7 +408,7 @@ const html = `<!doctype html>
 <title>PR 3 — Escolha dos sons</title><style>${CSS}</style></head>
 <body><main>
 <h1>PR 3 — escolha dos sons</h1>
-<p class=fraco>Sons CC0 do Freesound tratados por <code>scripts/sons/tratar-sons.ts</code> (${dados.ffmpeg.replace(/ Copyright.*/, '')}). Ouça de fone. Os sons já escolhidos estão fixos; falta a marcha lenta: (a) sem som próprio ou (b) derivada do motor v3. Marque uma e ouça na cena (atalho "seu pit"), nas três velocidades.</p>
+<p class=fraco>Sons CC0 do Freesound tratados por <code>scripts/sons/tratar-sons.ts</code> (${dados.ffmpeg.replace(/ Copyright.*/, '')}). Ouça de fone. Estes são os sons escolhidos, incluída a marcha lenta (b), derivada do motor v3. A opção (a) segue na página só para comparar na cena (atalho "seu pit").</p>
 <p class=fraco>⚠ ao lado do número de voz: o detector (heurístico) acusou fala no trecho. No controle com fala sintética, ele acusou a fala sozinha em 13 de 25 janelas, mas, misturada a 6 dB abaixo do fundo, só a viu sobre a marcha lenta (5/25) e ficou cego sobre passagem e chuva; e acusa em quase toda a gravação de um motor morrendo (852408: 75 de 86 janelas), provavelmente falso positivo. O ouvido decide.</p>
 <button id=ativar>Toque para ativar o som</button>
 <div id=decodif></div>
@@ -428,7 +423,7 @@ const html = `<!doctype html>
 <canvas id=cena></canvas>
 <div id=log></div>
 </div>
-<h2>Minha escolha da marcha lenta</h2>
+<h2>Marcha lenta na cena</h2>
 <div class=cartao><textarea id=resumo rows=3 readonly></textarea><button id=copiar>copiar</button></div>
 <h2>Sons escolhidos e as opções de marcha lenta</h2>
 <div id=variacoes></div>
