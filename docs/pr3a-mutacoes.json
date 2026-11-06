@@ -1,0 +1,398 @@
+[
+  {
+    "nome": "largada-fora-do-zero",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/agenda.test.ts > eventosDaCorrida > uma largada, sem carro, no instante 0"
+  },
+  {
+    "nome": "pistola-da-entrada",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/agenda.test.ts > eventosDaCorrida > uma pistola por parada, da chegada à partida da vaga"
+  },
+  {
+    "nome": "pistola-ate-o-retorno",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/agenda.test.ts > eventosDaCorrida > uma pistola por parada, da chegada à partida da vaga"
+  },
+  {
+    "nome": "derrapagem-no-fim",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/agenda.test.ts > eventosDaCorrida > derrapagem só no erro de pilotagem; problema técnico tem som próprio (decisão do Marcos, 2026-11-06)"
+  },
+  {
+    "nome": "problema-vira-derrapagem",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/agenda.test.ts > eventosDaCorrida > derrapagem só no erro de pilotagem; problema técnico tem som próprio (decisão do Marcos, 2026-11-06)"
+  },
+  {
+    "nome": "problema-no-erro-piloto",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/agenda.test.ts > eventosDaCorrida > derrapagem só no erro de pilotagem; problema técnico tem som próprio (decisão do Marcos, 2026-11-06)"
+  },
+  {
+    "nome": "problema-sem-duracao-propria",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/agenda.test.ts > duracaoRealMs > problema técnico: mais curto que o abandono, em qualquer velocidade"
+  },
+  {
+    "nome": "problema-sem-chocalho",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/agenda.test.ts > duracaoRealMs > o problema técnico toca o chocalho (o arquivo do abandono, abandono-v3)"
+  },
+  {
+    "nome": "problema-no-volume-cheio",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/agenda.test.ts > ganhoDoEvento > os ajustes por categoria são os do preview aprovado; o problema técnico, mais baixo"
+  },
+  {
+    "nome": "sem-abandono",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/agenda.test.ts > eventosDaCorrida > um abandono no instante de cada DNF"
+  },
+  {
+    "nome": "torcida-sem-guarda",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/agenda.test.ts > eventosDaCorrida > empate no tempo: categoria, depois carro por code unit (sem collation do host)"
+  },
+  {
+    "nome": "sem-desempate",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/agenda.test.ts > eventosDaCorrida > empate no tempo: categoria, depois carro por code unit (sem collation do host)"
+  },
+  {
+    "nome": "desempate-por-collation",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/agenda.test.ts > eventosDaCorrida > empate no tempo: categoria, depois carro por code unit (sem collation do host)"
+  },
+  {
+    "nome": "chuva-sem-spray",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/agenda.test.ts > foco e prioridade (decisão do Marcos, 2026-11-06) > na chuva, a passagem leva o spray junto"
+  },
+  {
+    "nome": "espectador-com-foco",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/agenda.test.ts > foco e prioridade (decisão do Marcos, 2026-11-06) > online: o jogador local; espectador: nenhum"
+  },
+  {
+    "nome": "dois-humanos-com-foco",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/agenda.test.ts > foco e prioridade (decisão do Marcos, 2026-11-06) > dois ou mais humanos no aparelho: nenhum motor em destaque"
+  },
+  {
+    "nome": "online-todos-prioritarios",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/agenda.test.ts > foco e prioridade (decisão do Marcos, 2026-11-06) > prioridade: todo humano no aparelho; online, só o local; espectador, ninguém"
+  },
+  {
+    "nome": "espectador-prioritario",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/agenda.test.ts > foco e prioridade (decisão do Marcos, 2026-11-06) > prioridade: todo humano no aparelho; online, só o local; espectador, ninguém"
+  },
+  {
+    "nome": "corrida-nao-prioritaria",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/agenda.test.ts > foco e prioridade (decisão do Marcos, 2026-11-06) > no mixer, largada e torcida (da corrida) e os eventos de quem joga aqui são prioritários"
+  },
+  {
+    "nome": "ganho-humano-atenuado",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/agenda.test.ts > ganhoDoEvento > largada e torcida: só o ajuste da categoria"
+  },
+  {
+    "nome": "humano-sem-ajuste",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/agenda.test.ts > ganhoDoEvento > largada e torcida: só o ajuste da categoria"
+  },
+  {
+    "nome": "sem-fator-outros",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/agenda.test.ts > ganhoDoEvento > dos outros: atenuado pela distância ao humano mais próximo, entre o mínimo e o máximo, × 0,8 fora da passagem"
+  },
+  {
+    "nome": "sem-foco-sem-ajuste",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/agenda.test.ts > ganhoDoEvento > sem humano em pista (espectador online, todos fora): volume médio fixo"
+  },
+  {
+    "nome": "ganho-sem-teto",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/agenda.test.ts > ganhoDoEvento > dos outros: atenuado pela distância ao humano mais próximo, entre o mínimo e o máximo, × 0,8 fora da passagem"
+  },
+  {
+    "nome": "ganho-sem-piso",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/agenda.test.ts > ganhoDoEvento > dos outros: atenuado pela distância ao humano mais próximo, entre o mínimo e o máximo, × 0,8 fora da passagem"
+  },
+  {
+    "nome": "salto-nunca",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/agenda.test.ts > eventosNoIntervalo > salto de relógio (aba voltando do segundo plano): descarta o que foi atravessado"
+  },
+  {
+    "nome": "salto-inclusivo",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/agenda.test.ts > eventosNoIntervalo > salto de relógio (aba voltando do segundo plano): descarta o que foi atravessado"
+  },
+  {
+    "nome": "janela-fechada-no-inicio",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/agenda.test.ts > eventosNoIntervalo > meio-aberto: exclui o início, inclui o fim"
+  },
+  {
+    "nome": "janela-aberta-no-fim",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/agenda.test.ts > eventosNoIntervalo > meio-aberto: exclui o início, inclui o fim"
+  },
+  {
+    "nome": "semente-no-zero",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/agenda.test.ts > eventosNoIntervalo > a largada entra quando a corrida parte de SIM_ANTES_DA_LARGADA, e se perderia partindo de 0"
+  },
+  {
+    "nome": "derrapagem-por-escala",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/agenda.test.ts > duracaoRealMs > derrapagem 700 ms (a constante do PR 2d) e abandono 900 ms em qualquer velocidade"
+  },
+  {
+    "nome": "spray-por-escala",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/agenda.test.ts > duracaoRealMs > spray: o arquivo da velocidade"
+  },
+  {
+    "nome": "pistola-sem-escala",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/agenda.test.ts > duracaoRealMs > pistola e torcida: o intervalo do evento, em tempo real"
+  },
+  {
+    "nome": "torcida-sem-limite",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/agenda.test.ts > duracaoRealMs > a torcida não passa do arquivo (sem laço, o resto seria voz muda ocupando o teto)"
+  },
+  {
+    "nome": "duracao-nula-ocupa",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/agenda.test.ts > mixer (proposta medida em medir-pr3) > som de duração nula não ocupa voz (torcida com fim = bandeirada)"
+  },
+  {
+    "nome": "agrupa-prioritario",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/agenda.test.ts > mixer (proposta medida em medir-pr3) > o prioritário nunca é absorvido"
+  },
+  {
+    "nome": "agrupa-inclusivo",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/agenda.test.ts > mixer (proposta medida em medir-pr3) > mesma categoria a menos de 250 ms do último que tocou é absorvida; a 250 ms, toca"
+  },
+  {
+    "nome": "vozes-nao-expiram",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/agenda.test.ts > mixer (proposta medida em medir-pr3) > voz que acabou libera o lugar"
+  },
+  {
+    "nome": "teto-maior",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/agenda.test.ts > mixer (proposta medida em medir-pr3) > teto de vozes: o sétimo de prioridade igual ou menor é recusado"
+  },
+  {
+    "nome": "rouba-igual",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/agenda.test.ts > mixer (proposta medida em medir-pr3) > teto de vozes: o sétimo de prioridade igual ou menor é recusado"
+  },
+  {
+    "nome": "rouba-a-mais-forte",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/agenda.test.ts > mixer (proposta medida em medir-pr3) > teto cheio com prioridades misturadas: rouba a de MENOR prioridade, mesmo sendo a mais nova"
+  },
+  {
+    "nome": "rouba-a-mais-nova",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/agenda.test.ts > mixer (proposta medida em medir-pr3) > teto cheio: maior prioridade rouba a voz de menor prioridade, a mais velha no empate"
+  },
+  {
+    "nome": "sem-bonus",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/agenda.test.ts > mixer (proposta medida em medir-pr3) > o bônus do prioritário passa à frente de categoria mais forte"
+  },
+  {
+    "nome": "absorvida-conta-como-ultima",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/agenda.test.ts > mixer (proposta medida em medir-pr3) > mesma categoria a menos de 250 ms do último que tocou é absorvida; a 250 ms, toca"
+  },
+  {
+    "nome": "nao-roubada-fica",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/agenda.test.ts > mixer (proposta medida em medir-pr3) > teto cheio: maior prioridade rouba a voz de menor prioridade, a mais velha no empate"
+  },
+  {
+    "nome": "distancia-do-primeiro",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/agenda.test.ts > ganhoDoEvento > distância ao humano mais próximo (decisão do Marcos, 2026-11-06)"
+  },
+  {
+    "nome": "distancia-sem-humano-zero",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/agenda.test.ts > ganhoDoEvento > distância ao humano mais próximo (decisão do Marcos, 2026-11-06)"
+  },
+  {
+    "nome": "sem-humano-sem-fixo",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/agenda.test.ts > ganhoDoEvento > sem humano em pista (espectador online, todos fora): volume médio fixo"
+  },
+  {
+    "nome": "humano-inativo-conta",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/agenda.test.ts > detectarPassagens > foco inativo (box, parado, abandonado): nada dispara e o estado zera, como na cena real"
+  },
+  {
+    "nome": "so-o-primeiro-humano",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/agenda.test.ts > detectarPassagens > dois humanos: a passagem é perto de QUALQUER um, uma por humano (decisão do Marcos, 2026-11-06)"
+  },
+  {
+    "nome": "par-de-humanos-duplo",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/agenda.test.ts > detectarPassagens > dois humanos que se cruzam: uma passagem só, não duas; e ninguém passa por si mesmo"
+  },
+  {
+    "nome": "passa-por-si-mesmo",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/agenda.test.ts > detectarPassagens > dois humanos que se cruzam: uma passagem só, não duas; e ninguém passa por si mesmo"
+  },
+  {
+    "nome": "sem-histerese",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/agenda.test.ts > detectarPassagens > não redispara enquanto não sair além da histerese"
+  },
+  {
+    "nome": "redispara-dentro",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/agenda.test.ts > detectarPassagens > dispara uma vez ao entrar no limiar, prevendo o instante da menor distância"
+  },
+  {
+    "nome": "inativo-conta",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/agenda.test.ts > detectarPassagens > sem quadro anterior válido, o mínimo é agora"
+  },
+  {
+    "nome": "sem-previsao",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/agenda.test.ts > detectarPassagens > dispara uma vez ao entrar no limiar, prevendo o instante da menor distância"
+  },
+  {
+    "nome": "sem-horizonte",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/agenda.test.ts > detectarPassagens > mínimo além do horizonte (carro andando junto): soa agora, não segundos depois"
+  },
+  {
+    "nome": "previsao-para-tras",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/agenda.test.ts > detectarPassagens > entrando com a projeção já para trás (salto lateral de quadro grande, em curva): o mínimo é agora"
+  },
+  {
+    "nome": "anterior-velho-vale",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/agenda.test.ts > detectarPassagens > quadro anterior velho (aba voltando) não serve para prever"
+  },
+  {
+    "nome": "parado-com-motor",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/agenda.test.ts > motor > parado: o motor some e a marcha lenta assume"
+  },
+  {
+    "nome": "abandono-com-motor",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/agenda.test.ts > motor > depois do abandono do foco, motor e marcha lenta calam"
+  },
+  {
+    "nome": "velref-zero-agudo",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/agenda.test.ts > motor > sem referência de velocidade, o tom mais grave (não o mais agudo)"
+  },
+  {
+    "nome": "taxa-sem-teto",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/agenda.test.ts > motor > andando: o tom vai de 0,6 a 1,1 com a velocidade, sem marcha lenta"
+  },
+  {
+    "nome": "velocidade-em-ms",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/agenda.test.ts > motor > velocidade em u por segundo simulado"
+  },
+  {
+    "nome": "escolha-sem-reintegrar",
+    "detectada": true,
+    "travou": false,
+    "falha": "scripts/sons/catalogo.test.ts > catálogo dos sons > cada arquivo veio da variação escolhida (trocar a escolha sem reintegrar falha aqui)"
+  },
+  {
+    "nome": "integrador-nao-limpa",
+    "detectada": true,
+    "travou": false,
+    "falha": "scripts/sons/catalogo.test.ts > catálogo dos sons > nenhum arquivo em public/sons/ fora do catálogo"
+  }
+]

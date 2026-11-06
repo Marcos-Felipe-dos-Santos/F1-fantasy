@@ -12,8 +12,11 @@
 
 ## Estado atual
 
-**2026-11-03, branch `feat/pr2f-punicao-no-box`**, com o PR 2f aprovado no celular e fechado sobre a
-`main` `e1cfba8`. O push é do Marcos; o merge, com merge commit. Sem merge ou deploy.
+**2026-11-06, branch `feat/pr3-sons`**, com o PR 3a (sons escolhidos + agenda pura dos sons) fechado sobre a `main`
+`c4d7920` (merge do PR 2f). Sem push, merge ou deploy. Próximo: PR 3b. Ver §"Onde parei".
+~~**2026-11-03, branch `feat/pr2f-punicao-no-box`**, com o PR 2f aprovado no celular e fechado sobre a
+`main` `e1cfba8`. O push é do Marcos; o merge, com merge commit. Sem merge ou deploy.~~ O PR 2f foi mesclado na
+`main` (`c4d7920`, PR #9).
 ~~**2026-11-03, branch `feat/pr2d-incidentes`**, com o PR 2d aprovado no celular e fechado sobre a
 `main` `03ed7ed`. O push é do Marcos. Sem merge ou deploy. Próximo: PR 2f (punição cumprida no box).~~ O PR 2d foi
 mesclado na `main` (`e1cfba8`) e está no ar: conferido em 2026-11-03, o bundle de produção `index-BrFozbvR.js` é o
@@ -437,6 +440,27 @@ dependência).
 
 
 ## Onde parei
+
+### 2026-11-06 — PR 3a (sons escolhidos + agenda pura) FECHADO na branch, aguardando o Marcos
+
+Branch `feat/pr3-sons`, sobre a `main` `c4d7920`. Risco ALTO. Sem push, merge ou deploy. Detalhe em `HISTORICO.md`
+§"2026-11-06 — PR 3a".
+
+Commits: `4e28433` tratamento dos sons e preview (chore); `56c4007` NOTICES podado; `e30aa2d` implementação com as
+correções da revisão; `72331f2` sobreviventes da 1ª mutação e script; `60d861e` mutação final; mais o commit desta doc.
+
+- **Medido no HEAD `60d861e`** (código igual ao de `72331f2`; o `60d861e` só acrescenta o JSON da mutação)**:** `npm test` 2212 + 1 skipped em 93 arquivos; `test:party` 46; typecheck, lint e build
+  com saída 0; `versao.test.ts` 3/3; `git diff c4d7920` vazio em `src/engine/`, `src/data/`, `src/net/` e `party/`.
+- **Mutação final:** 56/56, 0 travadas. **`senior-reviewer`:** sem 🔴; os 🟡 corrigidos, exceto o item 8, que é pergunta.
+- **Sem portão visual nem sonoro:** nada do app toca som ainda. O preview de escuta (fora do git) é
+  `preview/pr3-sons-escolha.html`, gerado por `scripts/sons/montar-preview.ts`.
+- ~~**Próximo:** PR 3b (áudio de verdade), depois da resposta do Marcos à pergunta das pendências.~~
+- **Ajuste do 3a com as decisões de 2026-11-06** (humano mais próximo; chocalho no problema técnico): `695e48d`, com
+  baseline vermelho (19 testes) e mutação do trecho; sobrevivente equivalente tirado em `58f694f`. **Mutação: 66/66,
+  0 travadas.** Medido no HEAD `58f694f`: `npm test` 2219 + 1 skipped em 93 arquivos; `test:party` 46; lint e build
+  com saída 0; `git diff c4d7920` vazio em `src/engine/`, `src/data/`, `src/net/` e `party/`.
+- **Próximo:** push e merge do 3a pelo Marcos (sem deploy). Depois, o PR 3b numa branch nova sobre a `main`
+  atualizada.
 
 ### 2026-11-03 — PR 2f (punição cumprida no box) APROVADO no celular e fechado, aguardando o push do Marcos
 
@@ -2501,6 +2525,30 @@ nada de push, merge ou deploy. Antes de código: medição apresentada ao Marcos
 **🔒 DECISÃO DO MARCOS, 2026-11-01 — VEREDITO DO PR 2c:** aprovado depois do preview. Mandou registrar
 a `0(ba)` como pendência.
 
+**🔒 DECISÕES DO MARCOS, 2026-11-06 — SONS (PR 3), ditadas nesta data:**
+
+- **Escolhas no ouvido** (fonte única: `scripts/sons/escolhas.ts`): motor v3, pelotão v2, chuva v3,
+  passagem v3, spray v2, largada v2, pistola v3, derrapagem v1, abandono v3, torcida v2; marcha lenta
+  (b), derivada do motor v3 (gravação de F1 V8 de 2012: semelhança com V6 híbrido só aproximada).
+  Não ouviu voz no pelotão v2 nem na passagem v3; o ⚠ do detector fica registrado.
+- **Destaque:** 1 humano no aparelho, o motor dele; 2+ humanos, nenhum motor em destaque, só o
+  pelotão, com prioridade nos eventos de cada humano; online, o jogador local; espectador, sem motor.
+- **Som ligado por padrão depois do primeiro toque**, volume moderado, mudo visível (é do 3b).
+- **Eventos dos outros carros soam**, atenuados pela distância.
+- **Ogg primeiro;** se o teste num iPhone mostrar falha de decodificação, o 3b inclui cópia em AAC.
+- **PR 3 dividido em 3a (agenda e arquivos) e 3b (áudio)**; `.ogg` commitados em `public/sons/`.
+- **(1) Referência de distância = o humano MAIS PRÓXIMO:** passagem toca quando um carro passa perto
+  de QUALQUER humano (o agrupamento de 250 ms vale); eventos dos outros carros atenuados pela
+  distância ao humano mais próximo; espectador online sem humano em pista: volume médio fixo, sem
+  passagens. Entrou no 3a como ajuste da agenda (`695e48d`), com teste e mutação.
+- **(2) Problema técnico toca o "chocalho"** (abandono-v3), mais curto e mais baixo; a derrapagem
+  fica só para o erro de pilotagem. Entrou no 3a (`695e48d`): categoria `problema`, 500 ms e ganho
+  0,6 — **esses dois números são meus, a confirmar no ouvido do Marcos no 3b.**
+- **(3) `scripts/preview-sons.*` não se versiona:** era a rodada sintética descartada. Removidos com
+  a aprovação dele em 2026-11-06 (eram 4 arquivos fora do git).
+- **Push e merge do 3a são do Marcos, sem deploy** (nada toca ainda). O 3b vai numa branch nova sobre
+  a `main` atualizada.
+
 **LIÇÃO DO PR 2b, registrada a pedido do Marcos em 2026-11-01:** cerca nova vai em **PR próprio** da
 próxima vez. `scripts/folga-pistas.*` era um PR independente e entrou junto das 10 pistas, do box e
 do viaduto: foram quatro mudanças lógicas em 2.989 inserções.
@@ -3167,6 +3215,28 @@ ser o padrão que se está seguindo. **Rodar ou não rodar segue sendo decisão 
 que agora ela é tomada com o número na mão.**
 
 ## Pendências ATIVAS
+
+**Abertas no PR 3a (2026-11-06):**
+- ~~❓ **PERGUNTA AO MARCOS (item 8 da revisão):** sem carro em destaque (2+ humanos no aparelho, espectador online),
+  hoje nenhuma passagem soa e os eventos dos outros carros saem a um ganho fixo (`GANHO_SEM_FOCO` 0,35), sem
+  atenuação por distância. A decisão de 2026-11-06 fala de motor e prioridade e não cobre isso. Opção sugerida pelo
+  revisor: medir a distância até o humano mais próximo. **Não decidido.**~~ ✅ **Decidida pelo Marcos em 2026-11-06:
+  humano mais próximo** (§"🔒 DECISÕES DO MARCOS — VIGENTES", sons). Implementada no 3a (`695e48d`).
+- **Obrigações do 3b (contrato da agenda):** calar os sons quando o "Acelerar" encerra o replay (ele não passa pelo
+  salto de relógio); calcular `velRef` uma vez sobre o replay inteiro; passar o foco inativo no box, parado ou
+  abandonado; partir de `SIM_ANTES_DA_LARGADA`; tocar o spray como camada da passagem na chuva. Desde `695e48d`:
+  passar a `detectarPassagens` e a `distanciaAoMaisProximo` os humanos de `prioritarios()` que estão em pista; tocar
+  o arquivo de `somDaCategoria` (o problema técnico usa o do abandono) e encerrá-lo com fade em `duracaoRealMs`.
+- **Ouvir no 3b:** os 500 ms e o ganho 0,6 do problema técnico (números meus, não do Marcos).
+- **Teto de 6 vozes:** medido em `medir-pr3` sobre outra população de eventos (com saída do pit e cruzamentos, sem
+  passagem nem spray). Reconferir no 3b com a população atual.
+- **Ogg no iPhone/Safari:** não testado. Se falhar, o 3b inclui cópia em AAC (decisão do Marcos).
+- ~~**`derrapagem`** cobre também `problema-tecnico` (som de pneu), como o efeito visual do PR 2d; separar é decisão do
+  Marcos, se ele quiser.~~ ✅ Separado por decisão do Marcos (2026-11-06): problema técnico toca o chocalho (`695e48d`).
+- **`integrar-sons.ts`:** o `prettier` do catálogo é passo manual do comando, fora do script.
+- **Fora do git, de sessão anterior:** ~~`scripts/preview-sons.*` (preview sintetizado, substituído pelos sons CC0) e~~
+  os `.txt` soltos na raiz. Não são deste PR; descartar ou versionar é decisão do Marcos. (`scripts/preview-sons.*`
+  removidos em 2026-11-06 com a aprovação do Marcos.)
 
 **Abertas no PR 2e (2026-11-02), sugestões do `senior-reviewer`, nenhuma com defeito hoje:**
 - **Ligação de `useCorrida`:** só cerca textual e o modo `fluxo` manual. Falta teste de comportamento, que hoje

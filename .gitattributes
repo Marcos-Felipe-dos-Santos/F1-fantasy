@@ -20,3 +20,4 @@
 # é a suposição não verificada que este projeto trata como risco.
 *.png   binary
 *.woff2 binary
+*.ogg   binary
