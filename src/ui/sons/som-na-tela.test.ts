@@ -32,6 +32,10 @@ describe('som na TelaCorrida', () => {
     expect(args).toMatch(/\bfase\b/);
     expect(args).toMatch(/\bcarros\b/);
     expect(args).toMatch(/\bescala\b/);
+    // Box, incidente e abandono chegam ao controlador como a tela os vê.
+    expect(args).toContain('naPista: p.fracaoNaPista !== null');
+    expect(args).toContain('parado: p.parado');
+    expect(args).toContain('abandonou: p.abandonou');
     // Uma só fonte das posições: o hook não chama `replay.posicao` de novo.
     expect(fonte('./useSomDaCorrida.ts')).not.toMatch(/\.posicao\(/);
   });

@@ -20,6 +20,8 @@ export interface StatusDoAudio {
   falhas: readonly { arquivo: string; erro: string }[];
   taxaHz: number;
   contexto: AudioContextState;
+  /** Sons que chegaram a tocar (fonte criada): a prova de que o som estava de fato ligado. */
+  tocadas: number;
 }
 
 export interface MotorDeAudio {
@@ -89,6 +91,7 @@ export function criarMotorDeAudio(amb: AmbienteDeAudio): MotorDeAudio | null {
     falhas: [...falhas],
     taxaHz: ctx.sampleRate,
     contexto: ctx.state,
+    tocadas: proximo - 1,
   });
 
   const doc = amb.documento;

@@ -1,0 +1,374 @@
+[
+  {
+    "nome": "parte-de-zero",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/controlador.test.ts > ControladorDeSom: relógio, antecedência e saltos > a primeira chamada parte de SIM_ANTES_DA_LARGADA: a largada em 0 soa"
+  },
+  {
+    "nome": "sem-antecedencia",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/controlador.test.ts > ControladorDeSom: relógio, antecedência e saltos > agenda 150 ms à frente, no relógio do áudio, e não repete o que já agendou"
+  },
+  {
+    "nome": "antecedencia-sem-escala",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/controlador.test.ts > ControladorDeSom: relógio, antecedência e saltos > agenda 150 ms à frente, no relógio do áudio, e não repete o que já agendou"
+  },
+  {
+    "nome": "salto-real-ignorado",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/controlador.test.ts > ControladorDeSom: passagens > num salto do relógio REAL (aba voltando), a passagem atravessada não soa"
+  },
+  {
+    "nome": "salto-simulado-ignorado",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/controlador.test.ts > ControladorDeSom: relógio, antecedência e saltos > salto do tempo SIMULADO com quadro curto (Acelerar, busca): não soa"
+  },
+  {
+    "nome": "primeira-no-meio-soa",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/controlador.test.ts > ControladorDeSom: relógio, antecedência e saltos > primeira chamada já no meio da corrida: nada do passado soa"
+  },
+  {
+    "nome": "salto-nao-repassado",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/controlador.test.ts > ControladorDeSom: relógio, antecedência e saltos > salto do tempo SIMULADO com quadro curto (Acelerar, busca): não soa"
+  },
+  {
+    "nome": "nao-avanca-janela",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/controlador.test.ts > ControladorDeSom: relógio, antecedência e saltos > agenda 150 ms à frente, no relógio do áudio, e não repete o que já agendou"
+  },
+  {
+    "nome": "encerrado-segue-tocando",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/controlador.test.ts > ControladorDeSom: relógio, antecedência e saltos > encerrar cala TUDO, inclusive o que ainda vai começar, e o controlador para"
+  },
+  {
+    "nome": "encerrar-sem-vozes",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/controlador.test.ts > ControladorDeSom: relógio, antecedência e saltos > encerrar cala TUDO, inclusive o que ainda vai começar, e o controlador para"
+  },
+  {
+    "nome": "encerrar-sem-loops",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/controlador.test.ts > ControladorDeSom: relógio, antecedência e saltos > encerrar cala TUDO, inclusive o que ainda vai começar, e o controlador para"
+  },
+  {
+    "nome": "pico-ignorado",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/controlador.test.ts > ControladorDeSom: relógio, antecedência e saltos > agenda 150 ms à frente, no relógio do áudio, e não repete o que já agendou"
+  },
+  {
+    "nome": "sem-fade-no-fim",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/controlador.test.ts > ControladorDeSom: o que cada categoria toca > problema técnico: o arquivo do abandono, ganho 0,6, encerrado com fade em 500 ms"
+  },
+  {
+    "nome": "fim-sem-duracao",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/controlador.test.ts > ControladorDeSom: o que cada categoria toca > problema técnico: o arquivo do abandono, ganho 0,6, encerrado com fade em 500 ms"
+  },
+  {
+    "nome": "problema-sem-fade",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/controlador.test.ts > ControladorDeSom: o que cada categoria toca > problema técnico: o arquivo do abandono, ganho 0,6, encerrado com fade em 500 ms"
+  },
+  {
+    "nome": "pistola-sem-laco",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/controlador.test.ts > ControladorDeSom: o que cada categoria toca > pistola: em laço pelo tempo da parada (chegada à partida), na escala do replay"
+  },
+  {
+    "nome": "torcida-fade-curto",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/controlador.test.ts > ControladorDeSom: o que cada categoria toca > torcida: da bandeirada ao fim, limitada ao arquivo, e sai com fade"
+  },
+  {
+    "nome": "roubo-nao-para",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/controlador.test.ts > ControladorDeSom: o que cada categoria toca > roubo de voz: a mais fraca é parada na saída de áudio"
+  },
+  {
+    "nome": "sem-distancia",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/controlador.test.ts > ControladorDeSom: o que cada categoria toca > outro carro: atenuado pela distância ao humano MAIS PRÓXIMO, com o × 0,8"
+  },
+  {
+    "nome": "referencias-todos",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/controlador.test.ts > ControladorDeSom: o que cada categoria toca > outro carro: atenuado pela distância ao humano MAIS PRÓXIMO, com o × 0,8"
+  },
+  {
+    "nome": "referencia-no-box",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/controlador.test.ts > ControladorDeSom: o que cada categoria toca > o humano no box não é referência: sem humano em pista, o volume médio fixo"
+  },
+  {
+    "nome": "sem-prioridade",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/controlador.test.ts > ControladorDeSom: o que cada categoria toca > evento do humano não é agrupado em 250 ms; o de outro carro é"
+  },
+  {
+    "nome": "velocidade-fixa",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/controlador.test.ts > corridaDoSom e velRef sobre o replay inteiro > a corrida inteira, quadro a quadro: a largada uma vez, toda pistola do foco, nada depois de encerrar"
+  },
+  {
+    "nome": "sem-chuva",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/controlador.test.ts > ControladorDeSom: relógio, antecedência e saltos > encerrar cala TUDO, inclusive o que ainda vai começar, e o controlador para"
+  },
+  {
+    "nome": "chuva-sempre",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/controlador.test.ts > ControladorDeSom: ambiente e motor > pelotão sempre; chuva só com chuva; ambos entram com fade"
+  },
+  {
+    "nome": "pelotao-mudo",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/controlador.test.ts > ControladorDeSom: ambiente e motor > pelotão sempre; chuva só com chuva; ambos entram com fade"
+  },
+  {
+    "nome": "motor-sem-foco",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/controlador.test.ts > ControladorDeSom: ambiente e motor > 2+ humanos ou espectador: nenhum motor em destaque"
+  },
+  {
+    "nome": "vel-entre-quadros-errada",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/controlador.test.ts > ControladorDeSom: ambiente e motor > andando: motor; parado (pit na vaga): marcha lenta; abandonado: silêncio"
+  },
+  {
+    "nome": "motor-ignora-abandono",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/controlador.test.ts > ControladorDeSom: ambiente e motor > andando: motor; parado (pit na vaga): marcha lenta; abandonado: silêncio"
+  },
+  {
+    "nome": "lenta-nao-ajusta",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/controlador.test.ts > ControladorDeSom: ambiente e motor > andando: motor; parado (pit na vaga): marcha lenta; abandonado: silêncio"
+  },
+  {
+    "nome": "velref-corrente",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/controlador.test.ts > ControladorDeSom: ambiente e motor > andando: motor; parado (pit na vaga): marcha lenta; abandonado: silêncio"
+  },
+  {
+    "nome": "foco-no-box-ativo",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/controlador.test.ts > ControladorDeSom: passagens > foco inativo no box: nenhuma passagem"
+  },
+  {
+    "nome": "foco-parado-ativo",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/controlador.test.ts > ControladorDeSom: passagens > foco inativo parado: nenhuma passagem"
+  },
+  {
+    "nome": "passagem-sem-spray",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/controlador.test.ts > ControladorDeSom: passagens > na chuva: o spray vai junto, como camada da passagem"
+  },
+  {
+    "nome": "passagem-no-salto",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/controlador.test.ts > ControladorDeSom: passagens > num salto do relógio REAL (aba voltando), a passagem atravessada não soa"
+  },
+  {
+    "nome": "passagem-humanos-todos",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/controlador.test.ts > ControladorDeSom: passagens > as referências são os prioritários: no online, o local; o outro humano não"
+  },
+  {
+    "nome": "velref-sem-cache",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/controlador-cache.test.ts > velocidadeDeReferencia > percorre o replay só na primeira chamada para o mesmo carro"
+  },
+  {
+    "nome": "velref-so-largada",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/controlador.test.ts > corridaDoSom e velRef sobre o replay inteiro > velRef é a maior velocidade do foco NA PISTA na corrida inteira, calculada uma vez"
+  },
+  {
+    "nome": "sem-compressor-limiar",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/audio.test.ts > audio.ts: a única parte que fala com o Web Audio > mestre (volume) e compressor do preview aprovado: limiar -10, razão 4"
+  },
+  {
+    "nome": "sem-compressor-razao",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/audio.test.ts > audio.ts: a única parte que fala com o Web Audio > mestre (volume) e compressor do preview aprovado: limiar -10, razão 4"
+  },
+  {
+    "nome": "mestre-fora-do-compressor",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/audio.test.ts > audio.ts: a única parte que fala com o Web Audio > mestre (volume) e compressor do preview aprovado: limiar -10, razão 4"
+  },
+  {
+    "nome": "sem-laco",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/audio.test.ts > audio.ts: a única parte que fala com o Web Audio > tocar: laço do catálogo, taxa, e fim com fade; sem buffer, não toca e não lança"
+  },
+  {
+    "nome": "sem-taxa",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/audio.test.ts > audio.ts: a única parte que fala com o Web Audio > tocar: laço do catálogo, taxa, e fim com fade; sem buffer, não toca e não lança"
+  },
+  {
+    "nome": "sem-rampa-final",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/audio.test.ts > audio.ts: a única parte que fala com o Web Audio > tocar: laço do catálogo, taxa, e fim com fade; sem buffer, não toca e não lança"
+  },
+  {
+    "nome": "agendado-nao-desliga",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/audio.test.ts > audio.ts: a única parte que fala com o Web Audio > parar o que ainda não começou: desliga na hora (não soa na tela de resultado)"
+  },
+  {
+    "nome": "parar-sem-stop",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/audio.test.ts > audio.ts: a única parte que fala com o Web Audio > parar o que ainda não começou: desliga na hora (não soa na tela de resultado)"
+  },
+  {
+    "nome": "carrega-duas-vezes",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/audio.test.ts > audio.ts: a única parte que fala com o Web Audio > os 17 arquivos do catálogo, cada um uma vez, por fetch de /sons/ (connect-src self)"
+  },
+  {
+    "nome": "falha-derruba",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/audio.test.ts > audio.ts: a única parte que fala com o Web Audio > falha de decodificação é contada e nomeada, e as outras seguem"
+  },
+  {
+    "nome": "gesto-nao-retoma",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/audio.test.ts > audio.ts: a única parte que fala com o Web Audio > primeiro toque retoma o contexto; aba oculta suspende e volta só se já tocava"
+  },
+  {
+    "nome": "visivel-sempre-retoma",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/audio.test.ts > audio.ts: a única parte que fala com o Web Audio > primeiro toque retoma o contexto; aba oculta suspende e volta só se já tocava"
+  },
+  {
+    "nome": "oculta-nao-suspende",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/audio.test.ts > audio.ts: a única parte que fala com o Web Audio > primeiro toque retoma o contexto; aba oculta suspende e volta só se já tocava"
+  },
+  {
+    "nome": "url-sem-barra",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/audio.test.ts > audio.ts: a única parte que fala com o Web Audio > os 17 arquivos do catálogo, cada um uma vez, por fetch de /sons/ (connect-src self)"
+  },
+  {
+    "nome": "tocadas-sem-contar",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/audio.test.ts > audio.ts: a única parte que fala com o Web Audio > tocar: laço do catálogo, taxa, e fim com fade; sem buffer, não toca e não lança"
+  },
+  {
+    "nome": "volume-ignorado",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/audio.test.ts > audio.ts: a única parte que fala com o Web Audio > mestre (volume) e compressor do preview aprovado: limiar -10, razão 4"
+  },
+  {
+    "nome": "volume-padrao-cheio",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/preferencia-som.test.ts > preferência de som (mudo e volume salvos no aparelho) > sem nada salvo: som ligado, volume moderado (o mestre 0,8 do preview aprovado)"
+  },
+  {
+    "nome": "volume-sem-teto",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/preferencia-som.test.ts > preferência de som (mudo e volume salvos no aparelho) > volume corrompido \"1.5\" cai no padrão"
+  },
+  {
+    "nome": "volume-aceita-qualquer",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/preferencia-som.test.ts > preferência de som (mudo e volume salvos no aparelho) > sem nada salvo: som ligado, volume moderado (o mestre 0,8 do preview aprovado)"
+  },
+  {
+    "nome": "mudo-padrao",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/preferencia-som.test.ts > preferência de som (mudo e volume salvos no aparelho) > sem nada salvo: som ligado, volume moderado (o mestre 0,8 do preview aprovado)"
+  },
+  {
+    "nome": "mudo-nao-zera",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/preferencia-som.test.ts > preferência de som (mudo e volume salvos no aparelho) > o mudo vence o volume no ganho do mestre"
+  },
+  {
+    "nome": "hook-nao-encerra",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/som-na-tela.test.ts > som na TelaCorrida > o hook encerra o controlador na limpeza do efeito (desmontar e trocar de fase)"
+  },
+  {
+    "nome": "carros-sempre-na-pista",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/som-na-tela.test.ts > som na TelaCorrida > o hook é chamado antes do retorno da fase grid, com a fase e as posições da tela"
+  },
+  {
+    "nome": "controle-some-sem-audio",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/som-na-tela.test.ts > som na TelaCorrida > o controle de som aparece no grid e no replay"
+  }
+]

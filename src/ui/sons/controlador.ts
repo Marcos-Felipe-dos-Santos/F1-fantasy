@@ -139,7 +139,7 @@ export interface EstatisticasDoSom {
 const CACHE_VEL_REF = new WeakMap<ResultadoCorrida, Map<string, number>>();
 
 /**
- * A maior velocidade do carro NA PISTA na corrida inteira (u por segundo simulado), amostrada a cada
+ * A maior velocidade do carro na corrida inteira (u por segundo simulado), amostrada a cada
  * `PASSO_VEL_REF_MS`. Uma vez por corrida e carro: o máximo corrente faria o tom do motor cair
  * quando o carro ganhasse velocidade pela primeira vez.
  */
@@ -158,11 +158,11 @@ export function velocidadeDeReferencia(
     resultado.classificacao.find((c) => c.jogadorId === jogadorId)?.status ?? 'terminou';
   let maior = 0;
   let anterior = replay.posicao(jogadorId, historico, status, 0, false);
+  // Sem filtrar o box: ele anda no limite de 50% (PR 2c) e não muda o máximo. Medido no PR 3b (mutação
+  // equivalente): 1100 carros em 50 corridas, nenhum diferente.
   for (let t = PASSO_VEL_REF_MS; t <= replay.fim; t += PASSO_VEL_REF_MS) {
     const p = replay.posicao(jogadorId, historico, status, t, false);
-    if (anterior.fracaoNaPista !== null && p.fracaoNaPista !== null) {
-      maior = Math.max(maior, velocidadeEntre(anterior.ponto, p.ponto, PASSO_VEL_REF_MS));
-    }
+    maior = Math.max(maior, velocidadeEntre(anterior.ponto, p.ponto, PASSO_VEL_REF_MS));
     anterior = p;
   }
   porCarro.set(jogadorId, maior);

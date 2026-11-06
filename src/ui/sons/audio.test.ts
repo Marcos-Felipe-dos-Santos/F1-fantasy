@@ -90,11 +90,13 @@ function ambiente(opcoes: { falhar?: string[]; estado?: 'running' | 'suspended' 
       this.mestre ??= g;
       return g;
     }
+    compressor: (NoFalso & { threshold: ParamFalso; ratio: ParamFalso }) | null = null;
     createDynamicsCompressor() {
-      return Object.assign(new NoFalso(), {
+      this.compressor = Object.assign(new NoFalso(), {
         threshold: new ParamFalso(0),
         ratio: new ParamFalso(0),
       });
+      return this.compressor;
     }
     createBufferSource() {
       const f = new FonteFalsa();
@@ -159,6 +161,11 @@ describe('audio.ts: a única parte que fala com o Web Audio', () => {
   it('mestre (volume) e compressor do preview aprovado: limiar -10, razão 4', () => {
     const e = ambiente();
     const m = criarMotorDeAudio(e.amb)!;
+    const ctx = e.ctx();
+    expect(ctx.mestre!.ligadoA).toBe(ctx.compressor);
+    expect(ctx.compressor!.ligadoA).toBe(ctx.destination);
+    expect(ctx.compressor!.threshold.value).toBe(-10);
+    expect(ctx.compressor!.ratio.value).toBe(4);
     m.definirVolume(0.3);
     expect(e.ctx().mestre!.gain.value).toBe(0.3);
     m.definirVolume(0);
@@ -182,6 +189,7 @@ describe('audio.ts: a única parte que fala com o Web Audio', () => {
     const [f] = e.fontes;
     expect(f).toMatchObject({ loop: true, loopStart: 0.12, loopEnd: 0.57, inicio: 6 });
     expect(f.playbackRate.value).toBe(1.1);
+    expect(m.status().tocadas).toBe(1);
     const g = f.ligadoA as GanhoFalso;
     expect(g.gain.value).toBe(0.9);
     expect(g.gain.chamadas).toEqual(['valor 0.9 @7', 'rampa 0 @7.015']);
@@ -243,6 +251,7 @@ describe('audio.ts: a única parte que fala com o Web Audio', () => {
       decodificados: 0,
       total: 17,
       contexto: 'running',
+      tocadas: 0,
     });
   });
 });

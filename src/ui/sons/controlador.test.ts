@@ -9,7 +9,6 @@ import pistasReal from '../../fixtures/dataset-semente/pistas.json';
 import { replayDaCorrida } from '../fim-da-corrida';
 import { escalaReplay, MS_REPLAY_POR_VOLTA, prepararCorrida } from '../fluxo-corrida';
 import {
-  DELTA_SALTO_MS,
   DURACAO_PROBLEMA_MS,
   GANHO_CATEGORIA,
   GANHO_LENTA,
@@ -26,6 +25,7 @@ import {
   ControladorDeSom,
   corridaDoSom,
   FADE_EVENTO_S,
+  FADE_TORCIDA_S,
   GANHO_CHUVA,
   GANHO_PELOTAO,
   velocidadeDeReferencia,
@@ -144,7 +144,8 @@ describe('ControladorDeSom: relógio, antecedência e saltos', () => {
       corrida([{ cat: 'abandono', carro: 'eu', t: 1000 * ESCALA }]),
     );
     rodar(f, c, 0, undefined, 0);
-    rodar(f, c, 2000 * ESCALA, undefined, DELTA_SALTO_MS + 1);
+    // O relógio de `useCorrida` anda delta × escala também no salto: só a regra do delta REAL o pega.
+    rodar(f, c, 2000 * ESCALA, undefined, 2000);
     expect(f.de(CATALOGO_SONS.abandono.arquivo)).toHaveLength(0);
   });
 
@@ -173,7 +174,8 @@ describe('ControladorDeSom: relógio, antecedência e saltos', () => {
   it('encerrar cala TUDO, inclusive o que ainda vai começar, e o controlador para', () => {
     const f = saidaFalsa();
     const futuro: EventoSom = { cat: 'abandono', carro: 'eu', t: 140 * ESCALA };
-    const c = new ControladorDeSom(f.saida, corrida([LARGADA, futuro], { chuva: true }));
+    const depois: EventoSom = { cat: 'derrapagem', carro: 'eu', t: 300 * ESCALA };
+    const c = new ControladorDeSom(f.saida, corrida([LARGADA, futuro, depois], { chuva: true }));
     rodar(f, c, 0, undefined, 0);
     expect(f.tocados.length).toBeGreaterThanOrEqual(6); // pelotão, chuva, motor, lenta, largada, abandono
     expect(f.tocados.find((t) => t.som === CATALOGO_SONS.abandono)!.inicioS).toBeGreaterThan(
@@ -182,8 +184,12 @@ describe('ControladorDeSom: relógio, antecedência e saltos', () => {
     c.encerrar();
     expect(f.tocados.every((t) => t.parado !== undefined)).toBe(true);
     const antes = f.tocados.length;
-    rodar(f, c, 200 * ESCALA);
+    for (let ms = 16; ms <= 400; ms += 16) {
+      f.avancar(0.016);
+      rodar(f, c, ms * ESCALA);
+    }
     c.encerrar();
+    expect(f.de(CATALOGO_SONS.derrapagem.arquivo)).toHaveLength(0);
     expect(f.tocados.length).toBe(antes);
   });
 });
@@ -239,6 +245,7 @@ describe('ControladorDeSom: o que cada categoria toca', () => {
     const [t] = f.de(CATALOGO_SONS.torcida.arquivo);
     expect(t.fim!.emS - t.inicioS).toBeCloseTo(4, 6);
     expect(t.ganho).toBeCloseTo(GANHO_CATEGORIA.torcida, 9);
+    expect(t.fim!.fadeS).toBe(FADE_TORCIDA_S);
   });
 
   it('outro carro: atenuado pela distância ao humano MAIS PRÓXIMO, com o × 0,8', () => {
@@ -251,6 +258,32 @@ describe('ControladorDeSom: o que cada categoria toca', () => {
     rodar(f, c, 0, [carro('a', 0), carro('b', 1000), carro('bot', 1300)], 0);
     const [d] = f.de(CATALOGO_SONS.derrapagem.arquivo);
     expect(d.ganho).toBeCloseTo((1 - 300 / 500) * FATOR_OUTROS_NAO_PASSAGEM, 9);
+  });
+
+  it('o humano no box não é referência: sem humano em pista, o volume médio fixo', () => {
+    const f = saidaFalsa();
+    const c = new ControladorDeSom(
+      f.saida,
+      corrida([{ cat: 'derrapagem', carro: 'bot', t: 50 * ESCALA }]),
+    );
+    rodar(f, c, 0, [carro('eu', 0, 0, { naPista: false }), carro('bot', 10)], 0);
+    expect(f.de(CATALOGO_SONS.derrapagem.arquivo)[0].ganho).toBeCloseTo(GANHO_SEM_FOCO, 9);
+  });
+
+  it('evento do humano não é agrupado em 250 ms; o de outro carro é', () => {
+    const f = saidaFalsa();
+    const c = new ControladorDeSom(
+      f.saida,
+      corrida([
+        { cat: 'derrapagem', carro: 'eu', t: 20 * ESCALA },
+        { cat: 'derrapagem', carro: 'eu', t: 120 * ESCALA },
+        { cat: 'abandono', carro: 'b1', t: 20 * ESCALA },
+        { cat: 'abandono', carro: 'b2', t: 120 * ESCALA },
+      ]),
+    );
+    rodar(f, c, 0, [carro('eu', 0), carro('b1', 1000), carro('b2', 1000)], 0);
+    expect(f.de(CATALOGO_SONS.derrapagem.arquivo)).toHaveLength(2);
+    expect(f.de(CATALOGO_SONS.abandono.arquivo)).toHaveLength(1);
   });
 
   it('sem humano em pista (espectador): o volume médio fixo', () => {
@@ -429,6 +462,15 @@ describe('ControladorDeSom: passagens', () => {
     const f = saidaFalsa();
     const c = new ControladorDeSom(f.saida, corrida([], { humanos: ['eu'], jogadorLocalId: null }));
     expect(entrando(f, c, {}).passagem).toHaveLength(0);
+  });
+
+  it('num salto do relógio REAL (aba voltando), a passagem atravessada não soa', () => {
+    // O relógio anda delta × escala: só a regra do delta real separa isto de um quadro normal.
+    const f = saidaFalsa();
+    const c = new ControladorDeSom(f.saida, corrida([]));
+    rodar(f, c, 0, [carro('eu', 0), carro('bot', PERTO_U * 3)], 0);
+    rodar(f, c, 2000 * ESCALA, [carro('eu', 0), carro('bot', PERTO_U - 5)], 2000);
+    expect(f.de(CATALOGO_SONS.passagem.media.arquivo)).toHaveLength(0);
   });
 
   it('num salto, a passagem atravessada não soa', () => {
