@@ -12,7 +12,10 @@ import {
   admitir,
   ALCANCE_U,
   ANTERIOR_MAX_REAL_MS,
+  distanciaAoMaisProximo,
+  DURACAO_PROBLEMA_MS,
   ehPrioritario,
+  somDaCategoria,
   FATOR_OUTROS_NAO_PASSAGEM,
   GANHO_CATEGORIA,
   HORIZONTE_REAL_MS,
@@ -63,7 +66,8 @@ function corridaCompleta() {
       const r = replayDaCorrida(c.resultado, c.pista);
       const ids = c.resultado.classificacao.map((x) => x.jogadorId);
       const temPit = ids.some((id) => r.paradas(id).length > 0);
-      const temIncidente = ids.some((id) => r.incidentes(id).length > 0);
+      const tipos = new Set(ids.flatMap((id) => r.incidentes(id).map((x) => x.evento.tipo)));
+      const temIncidente = tipos.has('erro-piloto') && tipos.has('problema-tecnico');
       const temAbandono = ids.some((id) => r.abandono(id) !== undefined);
       if (temPit && temIncidente && temAbandono && Number.isFinite(r.bandeirada)) return { c, r, ids };
     }
@@ -88,10 +92,17 @@ describe('eventosDaCorrida', () => {
     expect(pistolas.every((p) => p.fim! > p.t)).toBe(true);
   });
 
-  it('uma derrapagem no início de cada incidente', () => {
-    const esperadas = ids.flatMap((id) => r.incidentes(id).map((x) => ({ cat: 'derrapagem', carro: id, t: x.inicio })));
-    expect(ev.filter((e) => e.cat === 'derrapagem')).toEqual(expect.arrayContaining(esperadas));
-    expect(ev.filter((e) => e.cat === 'derrapagem')).toHaveLength(esperadas.length);
+  it('derrapagem só no erro de pilotagem; problema técnico tem som próprio (decisão do Marcos, 2026-11-06)', () => {
+    const doTipo = (tipo: string, cat: string) =>
+      ids.flatMap((id) => r.incidentes(id).filter((x) => x.evento.tipo === tipo).map((x) => ({ cat, carro: id, t: x.inicio })));
+    const derrapagens = doTipo('erro-piloto', 'derrapagem');
+    const problemas = doTipo('problema-tecnico', 'problema');
+    expect(derrapagens.length).toBeGreaterThan(0);
+    expect(problemas.length).toBeGreaterThan(0);
+    expect(ev.filter((e) => e.cat === 'derrapagem')).toEqual(expect.arrayContaining(derrapagens));
+    expect(ev.filter((e) => e.cat === 'derrapagem')).toHaveLength(derrapagens.length);
+    expect(ev.filter((e) => e.cat === 'problema')).toEqual(expect.arrayContaining(problemas));
+    expect(ev.filter((e) => e.cat === 'problema')).toHaveLength(problemas.length);
   });
 
   it('um abandono no instante de cada DNF', () => {
@@ -119,7 +130,7 @@ describe('eventosDaCorrida', () => {
     const ev3 = {
       ...r,
       paradas: () => [],
-      incidentes: (id: string) => (id === 'B' || id === 'a' ? [{ inicio: 50 } as never] : []),
+      incidentes: (id: string) => (id === 'B' || id === 'a' ? [{ inicio: 50, evento: { tipo: 'erro-piloto' } } as never] : []),
       abandono: (id: string) => (id === 'a' ? ({ instante: 50 } as never) : undefined),
       bandeirada: Infinity,
       fim: 100,
@@ -176,31 +187,37 @@ describe('foco e prioridade (decisão do Marcos, 2026-11-06)', () => {
 describe('ganhoDoEvento', () => {
   const ev = (cat: EventoSom['cat'], carro: string | null): EventoSom => ({ cat, carro, t: 0 });
   const prio = new Set(['h1']);
-  it('os ajustes por categoria são os do preview aprovado', () => {
-    expect(GANHO_CATEGORIA).toEqual({ largada: 1, torcida: 0.9, abandono: 1, derrapagem: 1, pistola: 0.9, passagem: 0.75, spray: 0.5 });
+  it('os ajustes por categoria são os do preview aprovado; o problema técnico, mais baixo', () => {
+    expect(GANHO_CATEGORIA).toEqual({ largada: 1, torcida: 0.9, abandono: 1, derrapagem: 1, problema: 0.6, pistola: 0.9, passagem: 0.75, spray: 0.5 });
     expect(FATOR_OUTROS_NAO_PASSAGEM).toBe(0.8);
   });
   it('largada e torcida: só o ajuste da categoria', () => {
-    expect(ganhoDoEvento(ev('largada', null), null, prio, null)).toBe(1);
-    expect(ganhoDoEvento(ev('torcida', null), 'h1', prio, 900)).toBe(0.9);
+    expect(ganhoDoEvento(ev('largada', null), prio, null)).toBe(1);
+    expect(ganhoDoEvento(ev('torcida', null), prio, 900)).toBe(0.9);
   });
   it('evento de humano prioritário: cheio, longe ou perto (só o ajuste da categoria)', () => {
-    expect(ganhoDoEvento(ev('pistola', 'h1'), 'h1', prio, ALCANCE_U * 3)).toBe(0.9);
-    expect(ganhoDoEvento(ev('pistola', 'h1'), null, prio, null)).toBe(0.9);
-    expect(ganhoDoEvento(ev('derrapagem', 'h1'), 'h1', prio, ALCANCE_U * 3)).toBe(1);
+    expect(ganhoDoEvento(ev('pistola', 'h1'), prio, ALCANCE_U * 3)).toBe(0.9);
+    expect(ganhoDoEvento(ev('pistola', 'h1'), prio, null)).toBe(0.9);
+    expect(ganhoDoEvento(ev('derrapagem', 'h1'), prio, ALCANCE_U * 3)).toBe(1);
   });
-  it('dos outros: atenuado pela distância ao foco, entre o mínimo e o máximo, × 0,8 fora da passagem', () => {
-    expect(ganhoDoEvento(ev('derrapagem', 'b1'), 'h1', prio, 0)).toBeCloseTo(GANHO_MAX_OUTROS * 0.8, 10);
-    expect(ganhoDoEvento(ev('derrapagem', 'b1'), 'h1', prio, ALCANCE_U / 2)).toBeCloseTo(0.5 * 0.8, 10);
-    expect(ganhoDoEvento(ev('derrapagem', 'b1'), 'h1', prio, ALCANCE_U * 2)).toBeCloseTo(GANHO_MIN * 0.8, 10);
-    expect(ganhoDoEvento(ev('pistola', 'b1'), 'h1', prio, 0)).toBeCloseTo(GANHO_MAX_OUTROS * 0.8 * 0.9, 10);
-    expect(ganhoDoEvento(ev('passagem', 'b1'), 'h1', prio, 0)).toBeCloseTo(GANHO_MAX_OUTROS * 0.75, 10);
-    expect(ganhoDoEvento(ev('spray', 'b1'), 'h1', prio, 0)).toBeCloseTo(GANHO_MAX_OUTROS * 0.5, 10);
+  it('dos outros: atenuado pela distância ao humano mais próximo, entre o mínimo e o máximo, × 0,8 fora da passagem', () => {
+    expect(ganhoDoEvento(ev('derrapagem', 'b1'), prio, 0)).toBeCloseTo(GANHO_MAX_OUTROS * 0.8, 10);
+    expect(ganhoDoEvento(ev('derrapagem', 'b1'), prio, ALCANCE_U / 2)).toBeCloseTo(0.5 * 0.8, 10);
+    expect(ganhoDoEvento(ev('derrapagem', 'b1'), prio, ALCANCE_U * 2)).toBeCloseTo(GANHO_MIN * 0.8, 10);
+    expect(ganhoDoEvento(ev('pistola', 'b1'), prio, 0)).toBeCloseTo(GANHO_MAX_OUTROS * 0.8 * 0.9, 10);
+    expect(ganhoDoEvento(ev('problema', 'b1'), prio, 0)).toBeCloseTo(GANHO_MAX_OUTROS * 0.8 * 0.6, 10);
+    expect(ganhoDoEvento(ev('passagem', 'b1'), prio, 0)).toBeCloseTo(GANHO_MAX_OUTROS * 0.75, 10);
+    expect(ganhoDoEvento(ev('spray', 'b1'), prio, 0)).toBeCloseTo(GANHO_MAX_OUTROS * 0.5, 10);
   });
-  it('sem foco (ou sem distância): ganho fixo dos outros', () => {
-    expect(ganhoDoEvento(ev('derrapagem', 'b1'), null, prio, 10)).toBe(GANHO_SEM_FOCO);
-    expect(ganhoDoEvento(ev('derrapagem', 'b1'), 'h1', prio, null)).toBe(GANHO_SEM_FOCO);
-    expect(ganhoDoEvento(ev('pistola', 'b1'), null, prio, 10)).toBeCloseTo(GANHO_SEM_FOCO * 0.9, 10);
+  it('sem humano em pista (espectador online, todos fora): volume médio fixo', () => {
+    expect(ganhoDoEvento(ev('derrapagem', 'b1'), new Set(), null)).toBe(GANHO_SEM_FOCO);
+    expect(ganhoDoEvento(ev('derrapagem', 'b1'), prio, null)).toBe(GANHO_SEM_FOCO);
+    expect(ganhoDoEvento(ev('pistola', 'b1'), prio, null)).toBeCloseTo(GANHO_SEM_FOCO * 0.9, 10);
+  });
+  it('distância ao humano mais próximo (decisão do Marcos, 2026-11-06)', () => {
+    expect(distanciaAoMaisProximo({ x: 0, y: 0 }, [])).toBeNull();
+    expect(distanciaAoMaisProximo({ x: 0, y: 0 }, [{ x: 300, y: 400 }])).toBe(500);
+    expect(distanciaAoMaisProximo({ x: 0, y: 0 }, [{ x: 300, y: 400 }, { x: 0, y: 30 }, { x: 600, y: 0 }])).toBe(30);
   });
 });
 
@@ -316,7 +333,7 @@ describe('mixer (proposta medida em medir-pr3)', () => {
 
 describe('detectarPassagens', () => {
   const foco = { x: 0, y: 0 };
-  const FOCO = { ponto: foco, ativo: true };
+  const FOCO = { id: 'h', ponto: foco, ativo: true };
   /** 10 ms simulados por ms real: horizonte de 5000 ms simulados, quadro anterior válido até 1000. */
   const ESC = 10;
   /** Outro carro em linha reta: passa a 10 u do foco no instante 1000 (x = 0). */
@@ -324,9 +341,9 @@ describe('detectarPassagens', () => {
 
   it('dispara uma vez ao entrar no limiar, prevendo o instante da menor distância', () => {
     let e = passagensVazias();
-    const novas: { carro: string; tMinimo: number }[] = [];
+    const novas: { carro: string; humano: string; tMinimo: number }[] = [];
     for (let t = 0; t <= 2000; t += 20) {
-      const r = detectarPassagens(e, t, ESC, FOCO, [{ id: 'b1', ponto: emLinha(t), ativo: true }]);
+      const r = detectarPassagens(e, t, ESC, [FOCO], [{ id: 'b1', ponto: emLinha(t), ativo: true }]);
       e = r.estado;
       novas.push(...r.novas);
     }
@@ -341,65 +358,65 @@ describe('detectarPassagens', () => {
     // Oscila entre dentro do limiar e logo acima dele, sem passar de PERTO_U × HISTERESE.
     for (let t = 0; t < 40; t++) {
       const d = t % 2 === 0 ? PERTO_U - 1 : PERTO_U * HISTERESE - 1;
-      const r = detectarPassagens(e, t * 16, ESC, FOCO, [{ id: 'b1', ponto: { x: d, y: 0 }, ativo: true }]);
+      const r = detectarPassagens(e, t * 16, ESC, [FOCO], [{ id: 'b1', ponto: { x: d, y: 0 }, ativo: true }]);
       e = r.estado;
       n += r.novas.length;
     }
     expect(n).toBe(1);
     // Saiu além da histerese e voltou: nova passagem.
-    e = detectarPassagens(e, 700, ESC, FOCO, [{ id: 'b1', ponto: { x: PERTO_U * HISTERESE + 1, y: 0 }, ativo: true }]).estado;
-    expect(detectarPassagens(e, 716, ESC, FOCO, [{ id: 'b1', ponto: { x: PERTO_U - 1, y: 0 }, ativo: true }]).novas).toHaveLength(1);
+    e = detectarPassagens(e, 700, ESC, [FOCO], [{ id: 'b1', ponto: { x: PERTO_U * HISTERESE + 1, y: 0 }, ativo: true }]).estado;
+    expect(detectarPassagens(e, 716, ESC, [FOCO], [{ id: 'b1', ponto: { x: PERTO_U - 1, y: 0 }, ativo: true }]).novas).toHaveLength(1);
   });
 
   it('sem quadro anterior válido, o mínimo é agora', () => {
-    const r = detectarPassagens(passagensVazias(), 500, ESC, FOCO, [{ id: 'b1', ponto: { x: 10, y: 0 }, ativo: true }]);
-    expect(r.novas).toEqual([{ carro: 'b1', tMinimo: 500 }]);
+    const r = detectarPassagens(passagensVazias(), 500, ESC, [FOCO], [{ id: 'b1', ponto: { x: 10, y: 0 }, ativo: true }]);
+    expect(r.novas).toEqual([{ carro: 'b1', humano: 'h', tMinimo: 500 }]);
     // Quadro anterior com o carro no box (inativo): a posição de lá não vale para estimar a velocidade.
-    const e = detectarPassagens(passagensVazias(), 0, ESC, FOCO, [{ id: 'b2', ponto: { x: 300, y: 0 }, ativo: false }]).estado;
-    expect(detectarPassagens(e, 16, ESC, FOCO, [{ id: 'b2', ponto: { x: 10, y: 0 }, ativo: true }]).novas).toEqual([{ carro: 'b2', tMinimo: 16 }]);
+    const e = detectarPassagens(passagensVazias(), 0, ESC, [FOCO], [{ id: 'b2', ponto: { x: 300, y: 0 }, ativo: false }]).estado;
+    expect(detectarPassagens(e, 16, ESC, [FOCO], [{ id: 'b2', ponto: { x: 10, y: 0 }, ativo: true }]).novas).toEqual([{ carro: 'b2', humano: 'h', tMinimo: 16 }]);
   });
 
   it('foco inativo (box, parado, abandonado): nada dispara e o estado zera, como na cena real', () => {
-    let e = detectarPassagens(passagensVazias(), 0, ESC, FOCO, [{ id: 'b1', ponto: { x: 100, y: 0 }, ativo: true }]).estado;
-    const r = detectarPassagens(e, 16, ESC, { ponto: foco, ativo: false }, [{ id: 'b1', ponto: { x: 10, y: 0 }, ativo: true }]);
+    let e = detectarPassagens(passagensVazias(), 0, ESC, [FOCO], [{ id: 'b1', ponto: { x: 100, y: 0 }, ativo: true }]).estado;
+    const r = detectarPassagens(e, 16, ESC, [{ ...FOCO, ativo: false }], [{ id: 'b1', ponto: { x: 10, y: 0 }, ativo: true }]);
     expect(r.novas).toEqual([]);
     expect(r.estado).toEqual(passagensVazias());
     e = r.estado;
-    expect(detectarPassagens(e, 32, ESC, FOCO, [{ id: 'b1', ponto: { x: 10, y: 0 }, ativo: true }]).novas).toHaveLength(1);
+    expect(detectarPassagens(e, 32, ESC, [FOCO], [{ id: 'b1', ponto: { x: 10, y: 0 }, ativo: true }]).novas).toHaveLength(1);
   });
 
   it('mínimo além do horizonte (carro andando junto): soa agora, não segundos depois', () => {
     // Aproxima ~0,005 u por ms simulado: o mínimo ficaria ~8,8 s simulados à frente, além dos 5 s do horizonte.
-    let e = detectarPassagens(passagensVazias(), 0, ESC, FOCO, [{ id: 'b1', ponto: { x: 45.5, y: 0 }, ativo: true }]).estado;
-    const r = detectarPassagens(e, 100, ESC, FOCO, [{ id: 'b1', ponto: { x: 44.99, y: 0 }, ativo: true }]);
-    expect(r.novas).toEqual([{ carro: 'b1', tMinimo: 100 }]);
+    let e = detectarPassagens(passagensVazias(), 0, ESC, [FOCO], [{ id: 'b1', ponto: { x: 45.5, y: 0 }, ativo: true }]).estado;
+    const r = detectarPassagens(e, 100, ESC, [FOCO], [{ id: 'b1', ponto: { x: 44.99, y: 0 }, ativo: true }]);
+    expect(r.novas).toEqual([{ carro: 'b1', humano: 'h', tMinimo: 100 }]);
     // Dentro do horizonte: previsto.
-    e = detectarPassagens(passagensVazias(), 0, ESC, FOCO, [{ id: 'b2', ponto: { x: 60, y: 0 }, ativo: true }]).estado;
-    const r2 = detectarPassagens(e, 100, ESC, FOCO, [{ id: 'b2', ponto: { x: 40, y: 0 }, ativo: true }]);
+    e = detectarPassagens(passagensVazias(), 0, ESC, [FOCO], [{ id: 'b2', ponto: { x: 60, y: 0 }, ativo: true }]).estado;
+    const r2 = detectarPassagens(e, 100, ESC, [FOCO], [{ id: 'b2', ponto: { x: 40, y: 0 }, ativo: true }]);
     expect(r2.novas[0].tMinimo).toBeCloseTo(300, 6);
     expect(HORIZONTE_REAL_MS * ESC).toBeGreaterThan(200);
   });
 
   it('entrando com a projeção já para trás (salto lateral de quadro grande, em curva): o mínimo é agora', () => {
     // De (0, 50) para (40, 0): a distância caiu de 50 para 40, mas r·v > 0, o mínimo ficou no passado.
-    const e = detectarPassagens(passagensVazias(), 0, ESC, FOCO, [{ id: 'b1', ponto: { x: 0, y: 50 }, ativo: true }]).estado;
-    expect(detectarPassagens(e, 100, ESC, FOCO, [{ id: 'b1', ponto: { x: 40, y: 0 }, ativo: true }]).novas).toEqual([{ carro: 'b1', tMinimo: 100 }]);
+    const e = detectarPassagens(passagensVazias(), 0, ESC, [FOCO], [{ id: 'b1', ponto: { x: 0, y: 50 }, ativo: true }]).estado;
+    expect(detectarPassagens(e, 100, ESC, [FOCO], [{ id: 'b1', ponto: { x: 40, y: 0 }, ativo: true }]).novas).toEqual([{ carro: 'b1', humano: 'h', tMinimo: 100 }]);
   });
 
   it('quadro anterior velho (aba voltando) não serve para prever', () => {
     const velho = ANTERIOR_MAX_REAL_MS * ESC + 1;
-    const e = detectarPassagens(passagensVazias(), 0, ESC, FOCO, [{ id: 'b1', ponto: { x: 60, y: 0 }, ativo: true }]).estado;
-    expect(detectarPassagens(e, velho, ESC, FOCO, [{ id: 'b1', ponto: { x: 40, y: 0 }, ativo: true }]).novas).toEqual([{ carro: 'b1', tMinimo: velho }]);
+    const e = detectarPassagens(passagensVazias(), 0, ESC, [FOCO], [{ id: 'b1', ponto: { x: 60, y: 0 }, ativo: true }]).estado;
+    expect(detectarPassagens(e, velho, ESC, [FOCO], [{ id: 'b1', ponto: { x: 40, y: 0 }, ativo: true }]).novas).toEqual([{ carro: 'b1', humano: 'h', tMinimo: velho }]);
   });
 
   it('o foco andando conta: a velocidade é relativa', () => {
     // Os dois andam juntos para +x, o outro 1 u à frente por quadro de aproximação: mínimo no instante 1000.
     let e = passagensVazias();
-    const novas: { carro: string; tMinimo: number }[] = [];
+    const novas: { carro: string; humano: string; tMinimo: number }[] = [];
     for (let t = 0; t <= 2000; t += 20) {
       const meu = { x: t * 0.5, y: 0 };
       const outro = { x: t * 0.5 + (t - 1000) * 0.1, y: 5 };
-      const r = detectarPassagens(e, t, ESC, { ponto: meu, ativo: true }, [{ id: 'b1', ponto: outro, ativo: true }]);
+      const r = detectarPassagens(e, t, ESC, [{ id: 'h', ponto: meu, ativo: true }], [{ id: 'b1', ponto: outro, ativo: true }]);
       e = r.estado;
       novas.push(...r.novas);
     }
@@ -407,12 +424,53 @@ describe('detectarPassagens', () => {
     expect(novas[0].tMinimo).toBeCloseTo(1000, 6);
   });
 
+  it('dois humanos: a passagem é perto de QUALQUER um, uma por humano (decisão do Marcos, 2026-11-06)', () => {
+    const h1 = { id: 'h1', ponto: { x: 0, y: 0 }, ativo: true };
+    const h2 = { id: 'h2', ponto: { x: 1000, y: 0 }, ativo: true };
+    let e = passagensVazias();
+    const novas: { carro: string; humano: string; tMinimo: number }[] = [];
+    // b1 vai de x = -200 a 1200 em y = 10: passa perto de h1 (t = 200) e depois de h2 (t = 1200).
+    for (let t = 0; t <= 1400; t += 20) {
+      const r = detectarPassagens(e, t, ESC, [h1, h2], [{ id: 'b1', ponto: { x: t - 200, y: 10 }, ativo: true }]);
+      e = r.estado;
+      novas.push(...r.novas);
+    }
+    expect(novas.map((n) => n.humano)).toEqual(['h1', 'h2']);
+    expect(novas[0].tMinimo).toBeCloseTo(200, 6);
+    expect(novas[1].tMinimo).toBeCloseTo(1200, 6);
+  });
+
+  it('perto só de um dos humanos: só esse conta; humano inativo não conta', () => {
+    const h1 = { id: 'h1', ponto: { x: 0, y: 0 }, ativo: true };
+    const h2 = { id: 'h2', ponto: { x: 1000, y: 0 }, ativo: true };
+    const perto = [{ id: 'b1', ponto: { x: 1010, y: 0 }, ativo: true }];
+    expect(detectarPassagens(passagensVazias(), 0, ESC, [h1, h2], perto).novas.map((n) => n.humano)).toEqual(['h2']);
+    expect(detectarPassagens(passagensVazias(), 0, ESC, [h1, { ...h2, ativo: false }], perto).novas).toEqual([]);
+  });
+
+  it('um humano inativo zera só os episódios dele', () => {
+    const h1 = { id: 'h1', ponto: { x: 0, y: 0 }, ativo: true };
+    const h2 = { id: 'h2', ponto: { x: 1000, y: 0 }, ativo: true };
+    const b = [{ id: 'b1', ponto: { x: 1010, y: 0 }, ativo: true }];
+    let e = detectarPassagens(passagensVazias(), 0, ESC, [h1, h2], b).estado;
+    // h1 sai da pista; b1 continua perto de h2: não redispara.
+    e = detectarPassagens(e, 16, ESC, [{ ...h1, ativo: false }, h2], b).estado;
+    expect(detectarPassagens(e, 32, ESC, [h1, h2], b).novas).toEqual([]);
+  });
+
+  it('dois humanos que se cruzam: uma passagem só, não duas; e ninguém passa por si mesmo', () => {
+    const h1 = { id: 'h1', ponto: { x: 0, y: 0 }, ativo: true };
+    const h2 = { id: 'h2', ponto: { x: 10, y: 0 }, ativo: true };
+    const r = detectarPassagens(passagensVazias(), 0, ESC, [h1, h2], [h1, h2]);
+    expect(r.novas).toEqual([{ carro: 'h2', humano: 'h1', tMinimo: 0 }]);
+  });
+
   it('carro inativo (box, parado) não dispara; sem foco, nada dispara e o estado zera', () => {
     let e = passagensVazias();
-    const r = detectarPassagens(e, 0, ESC, FOCO, [{ id: 'b1', ponto: { x: 1, y: 0 }, ativo: false }]);
+    const r = detectarPassagens(e, 0, ESC, [FOCO], [{ id: 'b1', ponto: { x: 1, y: 0 }, ativo: false }]);
     expect(r.novas).toEqual([]);
-    e = detectarPassagens(e, 0, ESC, FOCO, [{ id: 'b1', ponto: { x: 1, y: 0 }, ativo: true }]).estado;
-    const semFoco = detectarPassagens(e, 16, ESC, null, [{ id: 'b1', ponto: { x: 1, y: 0 }, ativo: true }]);
+    e = detectarPassagens(e, 0, ESC, [FOCO], [{ id: 'b1', ponto: { x: 1, y: 0 }, ativo: true }]).estado;
+    const semFoco = detectarPassagens(e, 16, ESC, [], [{ id: 'b1', ponto: { x: 1, y: 0 }, ativo: true }]);
     expect(semFoco.novas).toEqual([]);
     expect(semFoco.estado).toEqual(passagensVazias());
   });
@@ -456,6 +514,19 @@ describe('duracaoRealMs', () => {
   it('a torcida não passa do arquivo (sem laço, o resto seria voz muda ocupando o teto)', () => {
     const arquivoMs = Math.round(CATALOGO_SONS.torcida.durS * 1000);
     expect(duracaoRealMs({ cat: 'torcida', carro: null, t: 0, fim: (arquivoMs + 5000) * escala }, escala, 'lenta')).toBe(arquivoMs);
+  });
+  it('problema técnico: mais curto que o abandono, em qualquer velocidade', () => {
+    expect(DURACAO_PROBLEMA_MS).toBeLessThan(900);
+    for (const v of ['lenta', 'media', 'rapida'] as const) {
+      expect(duracaoRealMs({ cat: 'problema', carro: 'a', t: 0 }, escala, v)).toBe(DURACAO_PROBLEMA_MS);
+    }
+  });
+  it('o problema técnico toca o chocalho (o arquivo do abandono, abandono-v3)', () => {
+    expect(somDaCategoria('problema', 'media')).toBe(CATALOGO_SONS.abandono);
+    expect(CATALOGO_SONS.abandono.origem).toBe('abandono-v3');
+    expect(somDaCategoria('derrapagem', 'lenta')).toBe(CATALOGO_SONS.derrapagem);
+    expect(somDaCategoria('passagem', 'rapida')).toBe(CATALOGO_SONS.passagem.rapida);
+    expect(somDaCategoria('largada', 'lenta')).toBe(CATALOGO_SONS.largada.lenta);
   });
   it('spray: o arquivo da velocidade', () => {
     expect(duracaoRealMs({ cat: 'spray', carro: 'a', t: 0 }, escala, 'media')).toBe(Math.round(CATALOGO_SONS.spray.media.durS * 1000));

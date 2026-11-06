@@ -10,23 +10,35 @@
  *   `PERTO_U`/`HISTERESE` na cena real (`scripts/sons/cena.preview.test.ts`).
  * - DECISÃO DO MARCOS: 700 ms da derrapagem (PR 2d); foco e prioridade (2026-11-06): 1 humano no
  *   aparelho, o motor dele; 2+ humanos, nenhum motor, prioridade nos eventos de cada humano; online,
- *   o local; espectador, nenhum; eventos dos outros carros atenuados pela distância.
+ *   o local; espectador, nenhum. E, também em 2026-11-06: a distância de referência é a do humano
+ *   MAIS PRÓXIMO (passagem perto de qualquer humano; eventos dos outros atenuados por ela); sem
+ *   humano em pista, volume médio fixo e nenhuma passagem; problema técnico toca o chocalho do
+ *   abandono, mais curto e mais baixo, e a derrapagem fica só para o erro de pilotagem.
  * - OUVIDOS, não medidos: os ganhos e o mapeamento do motor são os do preview que o Marcos aprovou
  *   no celular (`scripts/sons/montar-preview.ts`), copiados para cá para o 3b soar igual.
  * - REGRA declarada aqui: `DELTA_SALTO_MS`, `HORIZONTE_REAL_MS`, `ANTERIOR_MAX_REAL_MS`,
- *   `GANHO_SEM_FOCO`.
+ *   `GANHO_SEM_FOCO`, e os números do "mais curto e mais baixo" do problema técnico
+ *   (`DURACAO_PROBLEMA_MS`, `GANHO_CATEGORIA.problema`), a confirmar no ouvido no 3b.
  */
 
 import type { Ponto, VelocidadeReplay } from '../fluxo-corrida';
 import type { ReplayDaCorrida } from '../fim-da-corrida';
 import { DURACAO_EFEITO_MS } from '../incidentes-replay';
-import { CATALOGO_SONS } from './catalogo';
+import { CATALOGO_SONS, type SomDoCatalogo } from './catalogo';
 
 /**
- * `derrapagem` cobre os dois tipos de incidente (`erro-piloto` e `problema-tecnico`), como o efeito
- * visual do PR 2d, que também não os separa. `spray` é a camada da passagem na chuva.
+ * `derrapagem` é o incidente de `erro-piloto`; `problema` o de `problema-tecnico` (decisão do Marcos,
+ * 2026-11-06; o efeito visual do PR 2d segue sem separá-los). `spray` é a camada da passagem na chuva.
  */
-export type CategoriaSom = 'largada' | 'pistola' | 'derrapagem' | 'abandono' | 'torcida' | 'passagem' | 'spray';
+export type CategoriaSom =
+  | 'largada'
+  | 'pistola'
+  | 'derrapagem'
+  | 'problema'
+  | 'abandono'
+  | 'torcida'
+  | 'passagem'
+  | 'spray';
 
 /** Um som de evento. Tempos em ms SIMULADOS; `fim` só nos que duram o intervalo do evento. */
 export interface EventoSom {
@@ -43,6 +55,7 @@ export const PRIORIDADE: Record<CategoriaSom, number> = {
   torcida: 5,
   abandono: 4,
   derrapagem: 3,
+  problema: 3,
   pistola: 2,
   passagem: 1,
   spray: 1,
@@ -71,13 +84,13 @@ export const HORIZONTE_REAL_MS = 500;
 /** Quadro anterior mais velho que isto (ms reais) não serve para estimar velocidade. */
 export const ANTERIOR_MAX_REAL_MS = 100;
 
-/** Atenuação dos eventos dos outros carros pela distância ao carro em destaque. */
+/** Atenuação dos eventos dos outros carros pela distância ao humano mais próximo. */
 export const ALCANCE_U = 500;
 export const GANHO_MIN = 0.12;
 export const GANHO_MAX_OUTROS = 0.7;
 /** Fator dos outros carros que não é passagem (preview: `× 0,8`). */
 export const FATOR_OUTROS_NAO_PASSAGEM = 0.8;
-/** Sem carro em destaque (2+ humanos, espectador), os outros soam a este ganho fixo. */
+/** Sem humano em pista (espectador online, humanos fora), os outros soam a este ganho médio fixo. */
 export const GANHO_SEM_FOCO = 0.35;
 /** Ajuste por categoria, o do preview aprovado. */
 export const GANHO_CATEGORIA: Record<CategoriaSom, number> = {
@@ -85,6 +98,8 @@ export const GANHO_CATEGORIA: Record<CategoriaSom, number> = {
   torcida: 0.9,
   abandono: 1,
   derrapagem: 1,
+  /** "Mais baixo" que o abandono, cujo arquivo usa. */
+  problema: 0.6,
   pistola: 0.9,
   passagem: 0.75,
   spray: 0.5,
@@ -97,12 +112,16 @@ export const GANHO_LENTA = 0.5;
 const TAXA_MIN = 0.6;
 const TAXA_FAIXA = 0.5;
 
+/** "Mais curto" que os 900 ms do abandono, cujo arquivo usa (o 3b o encerra com fade). */
+export const DURACAO_PROBLEMA_MS = 500;
+
 const DURACAO_FIXA_MS: Partial<Record<CategoriaSom, number>> = {
   derrapagem: DURACAO_EFEITO_MS,
+  problema: DURACAO_PROBLEMA_MS,
   abandono: 900,
 };
 
-const ORDEM_CAT: CategoriaSom[] = ['largada', 'pistola', 'derrapagem', 'abandono', 'passagem', 'spray', 'torcida'];
+const ORDEM_CAT: CategoriaSom[] = ['largada', 'pistola', 'derrapagem', 'problema', 'abandono', 'passagem', 'spray', 'torcida'];
 
 type LinhaDosSons = Pick<ReplayDaCorrida, 'paradas' | 'incidentes' | 'abandono' | 'bandeirada' | 'fim'>;
 
@@ -114,7 +133,9 @@ export function eventosDaCorrida(replay: LinhaDosSons, ids: readonly string[]): 
   const ev: EventoSom[] = [{ cat: 'largada', carro: null, t: 0 }];
   for (const id of ids) {
     for (const p of replay.paradas(id)) ev.push({ cat: 'pistola', carro: id, t: p.chegada, fim: p.partida });
-    for (const x of replay.incidentes(id)) ev.push({ cat: 'derrapagem', carro: id, t: x.inicio });
+    for (const x of replay.incidentes(id)) {
+      ev.push({ cat: x.evento.tipo === 'problema-tecnico' ? 'problema' : 'derrapagem', carro: id, t: x.inicio });
+    }
     const a = replay.abandono(id);
     if (a) ev.push({ cat: 'abandono', carro: id, t: a.instante });
   }
@@ -122,6 +143,12 @@ export function eventosDaCorrida(replay: LinhaDosSons, ids: readonly string[]): 
   return ev.sort(
     (a, b) => a.t - b.t || ORDEM_CAT.indexOf(a.cat) - ORDEM_CAT.indexOf(b.cat) || porCodeUnit(a.carro ?? '', b.carro ?? ''),
   );
+}
+
+/** O arquivo de cada categoria; o problema técnico usa o chocalho do abandono (`abandono-v3`). */
+export function somDaCategoria(cat: CategoriaSom, velocidade: VelocidadeReplay): SomDoCatalogo {
+  if (cat === 'passagem' || cat === 'spray' || cat === 'largada') return CATALOGO_SONS[cat][velocidade];
+  return CATALOGO_SONS[cat === 'problema' ? 'abandono' : cat];
 }
 
 /** Os sons de uma passagem: na chuva, o spray vai junto, como camada (e conta como voz). */
@@ -139,7 +166,11 @@ export function focoDoSom(humanos: readonly string[], jogadorLocalId: string | n
   return humanos.length === 1 ? humanos[0] : null;
 }
 
-/** De quem os eventos soam cheios e com prioridade: quem joga neste aparelho. */
+/**
+ * De quem os eventos soam cheios e com prioridade: quem joga neste aparelho. São também as
+ * REFERÊNCIAS de distância: o 3b passa as posições dos que estão em pista a `distanciaAoMaisProximo`
+ * e a `detectarPassagens`.
+ */
 export function prioritarios(humanos: readonly string[], jogadorLocalId: string | null | undefined): ReadonlySet<string> {
   if (jogadorLocalId === null) return new Set();
   if (jogadorLocalId !== undefined) return new Set([jogadorLocalId]);
@@ -151,20 +182,25 @@ export function ehPrioritario(evento: EventoSom, prioritariosDoAparelho: Readonl
   return evento.carro === null || prioritariosDoAparelho.has(evento.carro);
 }
 
+/** Distância (u) do ponto ao humano mais próximo; `null` sem humano em pista. */
+export function distanciaAoMaisProximo(ponto: Ponto, humanosEmPista: readonly Ponto[]): number | null {
+  let menor: number | null = null;
+  for (const h of humanosEmPista) {
+    const d = Math.hypot(h.x - ponto.x, h.y - ponto.y);
+    if (menor === null || d < menor) menor = d;
+  }
+  return menor;
+}
+
 /**
- * Ganho do evento, já com o ajuste da categoria. `distancia`: do carro do evento ao foco, em u
- * (`null` se não há foco).
+ * Ganho do evento, já com o ajuste da categoria. `distancia`: do carro do evento ao humano mais
+ * próximo em pista, em u (`distanciaAoMaisProximo`; `null` sem humano em pista).
  */
-export function ganhoDoEvento(
-  evento: EventoSom,
-  foco: string | null,
-  prioritariosDoAparelho: ReadonlySet<string>,
-  distancia: number | null,
-): number {
+export function ganhoDoEvento(evento: EventoSom, prioritariosDoAparelho: ReadonlySet<string>, distancia: number | null): number {
   const cat = GANHO_CATEGORIA[evento.cat];
   if (ehPrioritario(evento, prioritariosDoAparelho)) return cat;
   const fator = evento.cat === 'passagem' || evento.cat === 'spray' ? 1 : FATOR_OUTROS_NAO_PASSAGEM;
-  if (foco === null || distancia === null) return GANHO_SEM_FOCO * cat;
+  if (distancia === null) return GANHO_SEM_FOCO * cat;
   return Math.max(GANHO_MIN, Math.min(GANHO_MAX_OUTROS, 1 - distancia / ALCANCE_U)) * fator * cat;
 }
 
@@ -254,10 +290,17 @@ export function admitir(
 
 // ---------------------------------------------------------------- passagens
 
+/** Ponto de um carro no quadro; `ativo` = na pista (e, para um humano, andando). */
+export interface CarroNoQuadro {
+  id: string;
+  ponto: Ponto;
+  ativo: boolean;
+}
+
 export interface EstadoPassagens {
-  /** Carros dentro do episódio (abaixo de `PERTO_U`, ainda não saíram além da histerese). */
+  /** Pares `humano>carro` dentro do episódio (abaixo de `PERTO_U`, sem sair além da histerese). */
   perto: ReadonlySet<string>;
-  /** Posição relativa ao foco no quadro anterior, de quem estava ativo. */
+  /** Posição relativa do carro ao humano no quadro anterior, por par ativo. */
   anterior: ReadonlyMap<string, { dx: number; dy: number; t: number }>;
 }
 
@@ -266,43 +309,52 @@ export function passagensVazias(): EstadoPassagens {
 }
 
 /**
- * Passagens a cada quadro, como na cena real: só contam com o foco ATIVO (na pista e andando) e o
- * outro carro ativo (na pista). Foco ausente ou inativo (no box, parado, abandonado) zera o estado.
- * Dispara uma vez quando um carro entra a menos de `PERTO_U` do foco, e prevê o instante da menor
- * distância pela velocidade relativa do quadro anterior (o pico do som deve cair nele). Sem quadro
- * anterior recente, afastando-se, ou com o mínimo além de `HORIZONTE_REAL_MS`, o mínimo é agora.
+ * Passagens a cada quadro, perto de QUALQUER humano (decisão do Marcos, 2026-11-06): cada par
+ * humano × carro é um episódio próprio, como o par jogador × carro da cena real. Só contam com o
+ * humano ATIVO (na pista e andando) e o carro ativo (na pista); humano inativo (box, parado,
+ * abandonado) encerra só os episódios dele, e sem humano ativo nada soa. Dois humanos que se cruzam
+ * são uma passagem só. Dispara uma vez quando o carro entra a menos de `PERTO_U` e prevê o instante
+ * da menor distância pela velocidade relativa do quadro anterior (o pico do som deve cair nele). Sem
+ * quadro anterior recente, afastando-se, ou com o mínimo além de `HORIZONTE_REAL_MS`, o mínimo é
+ * agora. O agrupamento de 250 ms do mixer vale para as passagens (não são prioritárias).
  * `escala`: ms simulados por ms real (`escalaReplay`).
  */
 export function detectarPassagens(
   estado: EstadoPassagens,
   tSim: number,
   escala: number,
-  foco: { ponto: Ponto; ativo: boolean } | null,
-  outros: readonly { id: string; ponto: Ponto; ativo: boolean }[],
-): { estado: EstadoPassagens; novas: { carro: string; tMinimo: number }[] } {
-  if (foco === null || !foco.ativo) return { estado: passagensVazias(), novas: [] };
+  humanos: readonly CarroNoQuadro[],
+  carros: readonly CarroNoQuadro[],
+): { estado: EstadoPassagens; novas: { carro: string; humano: string; tMinimo: number }[] } {
   const perto = new Set<string>();
   const anterior = new Map<string, { dx: number; dy: number; t: number }>();
-  const novas: { carro: string; tMinimo: number }[] = [];
-  for (const o of outros) {
-    if (!o.ativo) continue;
-    const dx = o.ponto.x - foco.ponto.x;
-    const dy = o.ponto.y - foco.ponto.y;
-    const d = Math.hypot(dx, dy);
-    anterior.set(o.id, { dx, dy, t: tSim });
-    const estava = estado.perto.has(o.id);
-    if (estava ? d < PERTO_U * HISTERESE : d < PERTO_U) perto.add(o.id);
-    if (estava || d >= PERTO_U) continue;
-    let tMinimo = tSim;
-    const a = estado.anterior.get(o.id);
-    if (a !== undefined && tSim > a.t && tSim - a.t <= ANTERIOR_MAX_REAL_MS * escala) {
-      const vx = (dx - a.dx) / (tSim - a.t);
-      const vy = (dy - a.dy) / (tSim - a.t);
-      const v2 = vx * vx + vy * vy;
-      const ate = v2 > 0 ? -(dx * vx + dy * vy) / v2 : 0;
-      if (ate > 0 && ate <= HORIZONTE_REAL_MS * escala) tMinimo = tSim + ate;
+  const novas: { carro: string; humano: string; tMinimo: number }[] = [];
+  const ehHumano = new Set(humanos.map((h) => h.id));
+  for (const h of humanos) {
+    if (!h.ativo) continue;
+    for (const o of carros) {
+      if (!o.ativo || o.id === h.id) continue;
+      // Par de humanos: só uma vez, pelo de id menor (code unit).
+      if (ehHumano.has(o.id) && !(h.id < o.id)) continue;
+      const par = `${h.id}>${o.id}`;
+      const dx = o.ponto.x - h.ponto.x;
+      const dy = o.ponto.y - h.ponto.y;
+      const d = Math.hypot(dx, dy);
+      anterior.set(par, { dx, dy, t: tSim });
+      const estava = estado.perto.has(par);
+      if (estava ? d < PERTO_U * HISTERESE : d < PERTO_U) perto.add(par);
+      if (estava || d >= PERTO_U) continue;
+      let tMinimo = tSim;
+      const a = estado.anterior.get(par);
+      if (a !== undefined && tSim > a.t && tSim - a.t <= ANTERIOR_MAX_REAL_MS * escala) {
+        const vx = (dx - a.dx) / (tSim - a.t);
+        const vy = (dy - a.dy) / (tSim - a.t);
+        const v2 = vx * vx + vy * vy;
+        const ate = v2 > 0 ? -(dx * vx + dy * vy) / v2 : 0;
+        if (ate > 0 && ate <= HORIZONTE_REAL_MS * escala) tMinimo = tSim + ate;
+      }
+      novas.push({ carro: o.id, humano: h.id, tMinimo });
     }
-    novas.push({ carro: o.id, tMinimo });
   }
   return { estado: { perto, anterior }, novas };
 }
