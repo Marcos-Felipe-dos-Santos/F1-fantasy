@@ -7530,6 +7530,17 @@ typecheck, lint e build (com `checar:casca`) com saída 0; `dist/sons` com 17 ar
 
 **Não verificado.** FPS e custo por quadro: nada roda no app ainda, ficam para o 3b. Ogg no iPhone/Safari.
 
+**Ajuste do mesmo dia, com as decisões de 2026-11-06** (`695e48d`, `58f694f`). A pergunta do item 8 da revisão foi
+respondida: a referência de distância é o humano MAIS PRÓXIMO em pista. `detectarPassagens` passou a receber todos
+os humanos e a manter um episódio por par humano × carro (dois humanos que se cruzam contam uma vez); `ganhoDoEvento`
+recebe a distância de `distanciaAoMaisProximo` (`null` sem humano em pista: volume médio fixo). O problema técnico
+ganhou a categoria `problema`: o chocalho do abandono (`somDaCategoria`), 500 ms e ganho 0,6, números meus a ouvir no
+3b; a derrapagem ficou só para o erro de pilotagem. Baseline vermelho: 19 testes falhando por comportamento. Mutação
+do trecho: 65 de 66 na 1ª rodada; o sobrevivente (`passa-por-si-mesmo`) era equivalente, porque a regra do par de
+humanos já tira o humano de si mesmo, e o `o.id === h.id` redundante saiu. Final: **66 de 66, 0 travadas**. Medido no
+HEAD `58f694f`: `npm test` 2219 + 1 skipped; `test:party` 46; lint e build com saída 0. `scripts/preview-sons.*`, a
+rodada sintética descartada, foi apagado com a aprovação do Marcos (não estava no git).
+
 ## ARQUIVADO DO `ESTADO.md` em 2026-10-28 — §"Estado atual", medições de 2026-08-18 a 2026-09-02
 
 > Movido sem alteração pela sessão principal, a pedido do Marcos. Antes da cópia, 18,8% dos

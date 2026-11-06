@@ -21,7 +21,37 @@
     "nome": "derrapagem-no-fim",
     "detectada": true,
     "travou": false,
-    "falha": "src/ui/sons/agenda.test.ts > eventosDaCorrida > uma derrapagem no início de cada incidente"
+    "falha": "src/ui/sons/agenda.test.ts > eventosDaCorrida > derrapagem só no erro de pilotagem; problema técnico tem som próprio (decisão do Marcos, 2026-11-06)"
+  },
+  {
+    "nome": "problema-vira-derrapagem",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/agenda.test.ts > eventosDaCorrida > derrapagem só no erro de pilotagem; problema técnico tem som próprio (decisão do Marcos, 2026-11-06)"
+  },
+  {
+    "nome": "problema-no-erro-piloto",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/agenda.test.ts > eventosDaCorrida > derrapagem só no erro de pilotagem; problema técnico tem som próprio (decisão do Marcos, 2026-11-06)"
+  },
+  {
+    "nome": "problema-sem-duracao-propria",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/agenda.test.ts > duracaoRealMs > problema técnico: mais curto que o abandono, em qualquer velocidade"
+  },
+  {
+    "nome": "problema-sem-chocalho",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/agenda.test.ts > duracaoRealMs > o problema técnico toca o chocalho (o arquivo do abandono, abandono-v3)"
+  },
+  {
+    "nome": "problema-no-volume-cheio",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/agenda.test.ts > ganhoDoEvento > os ajustes por categoria são os do preview aprovado; o problema técnico, mais baixo"
   },
   {
     "nome": "sem-abandono",
@@ -99,25 +129,25 @@
     "nome": "sem-fator-outros",
     "detectada": true,
     "travou": false,
-    "falha": "src/ui/sons/agenda.test.ts > ganhoDoEvento > dos outros: atenuado pela distância ao foco, entre o mínimo e o máximo, × 0,8 fora da passagem"
+    "falha": "src/ui/sons/agenda.test.ts > ganhoDoEvento > dos outros: atenuado pela distância ao humano mais próximo, entre o mínimo e o máximo, × 0,8 fora da passagem"
   },
   {
     "nome": "sem-foco-sem-ajuste",
     "detectada": true,
     "travou": false,
-    "falha": "src/ui/sons/agenda.test.ts > ganhoDoEvento > sem foco (ou sem distância): ganho fixo dos outros"
+    "falha": "src/ui/sons/agenda.test.ts > ganhoDoEvento > sem humano em pista (espectador online, todos fora): volume médio fixo"
   },
   {
     "nome": "ganho-sem-teto",
     "detectada": true,
     "travou": false,
-    "falha": "src/ui/sons/agenda.test.ts > ganhoDoEvento > dos outros: atenuado pela distância ao foco, entre o mínimo e o máximo, × 0,8 fora da passagem"
+    "falha": "src/ui/sons/agenda.test.ts > ganhoDoEvento > dos outros: atenuado pela distância ao humano mais próximo, entre o mínimo e o máximo, × 0,8 fora da passagem"
   },
   {
     "nome": "ganho-sem-piso",
     "detectada": true,
     "travou": false,
-    "falha": "src/ui/sons/agenda.test.ts > ganhoDoEvento > dos outros: atenuado pela distância ao foco, entre o mínimo e o máximo, × 0,8 fora da passagem"
+    "falha": "src/ui/sons/agenda.test.ts > ganhoDoEvento > dos outros: atenuado pela distância ao humano mais próximo, entre o mínimo e o máximo, × 0,8 fora da passagem"
   },
   {
     "nome": "salto-nunca",
@@ -240,16 +270,46 @@
     "falha": "src/ui/sons/agenda.test.ts > mixer (proposta medida em medir-pr3) > teto cheio: maior prioridade rouba a voz de menor prioridade, a mais velha no empate"
   },
   {
-    "nome": "foco-inativo-conta",
+    "nome": "distancia-do-primeiro",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/agenda.test.ts > ganhoDoEvento > distância ao humano mais próximo (decisão do Marcos, 2026-11-06)"
+  },
+  {
+    "nome": "distancia-sem-humano-zero",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/agenda.test.ts > ganhoDoEvento > distância ao humano mais próximo (decisão do Marcos, 2026-11-06)"
+  },
+  {
+    "nome": "sem-humano-sem-fixo",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/agenda.test.ts > ganhoDoEvento > sem humano em pista (espectador online, todos fora): volume médio fixo"
+  },
+  {
+    "nome": "humano-inativo-conta",
     "detectada": true,
     "travou": false,
     "falha": "src/ui/sons/agenda.test.ts > detectarPassagens > foco inativo (box, parado, abandonado): nada dispara e o estado zera, como na cena real"
   },
   {
-    "nome": "sem-foco-mantem-estado",
+    "nome": "so-o-primeiro-humano",
     "detectada": true,
     "travou": false,
-    "falha": "src/ui/sons/agenda.test.ts > detectarPassagens > foco inativo (box, parado, abandonado): nada dispara e o estado zera, como na cena real"
+    "falha": "src/ui/sons/agenda.test.ts > detectarPassagens > dois humanos: a passagem é perto de QUALQUER um, uma por humano (decisão do Marcos, 2026-11-06)"
+  },
+  {
+    "nome": "par-de-humanos-duplo",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/agenda.test.ts > detectarPassagens > dois humanos que se cruzam: uma passagem só, não duas; e ninguém passa por si mesmo"
+  },
+  {
+    "nome": "passa-por-si-mesmo",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/agenda.test.ts > detectarPassagens > dois humanos que se cruzam: uma passagem só, não duas; e ninguém passa por si mesmo"
   },
   {
     "nome": "sem-histerese",
