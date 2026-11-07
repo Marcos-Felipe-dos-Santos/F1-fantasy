@@ -1,0 +1,83 @@
+{
+  "status": "Preview aprovado pelo Marcos; push/PR/merge após CI e deploy pela main autorizados",
+  "branch": "codex/online-formatos",
+  "base": "009b307",
+  "versaoAppLocal": "4.1.0",
+  "protocolo": 2,
+  "testes": {
+    "principais": 2421,
+    "ignorados": 1,
+    "arquivos": 111,
+    "worker": 51,
+    "arquivosWorker": 10,
+    "modoSuite": "maxWorkers=1; primeira execução paralela sofreu ENOENT em arquivo temporário da cerca existente"
+  },
+  "build": "passou com typecheck e casca CSP de produção",
+  "lint": "passou",
+  "baseline": "Testes novos vermelhos antes da implementação; casos extras vermelhos para pronto antigo e repetição que gravava Worker",
+  "revisao": "Aprovada após corrigir pronto atrasado com revisão monotônica e idempotência externa",
+  "qaDoisClientes": [
+    {
+      "nEtapas": 1,
+      "doisClientes": true,
+      "clienteAntigoRecusado": true,
+      "reconexao": true,
+      "soAnfitriao": true,
+      "prontosRedefinidos": true,
+      "travadoAposInicio": true,
+      "seq": 5
+    },
+    {
+      "nEtapas": 5,
+      "doisClientes": true,
+      "clienteAntigoRecusado": true,
+      "reconexao": true,
+      "soAnfitriao": true,
+      "prontosRedefinidos": null,
+      "travadoAposInicio": true,
+      "seq": 4
+    },
+    {
+      "nEtapas": 10,
+      "doisClientes": true,
+      "clienteAntigoRecusado": true,
+      "reconexao": true,
+      "soAnfitriao": true,
+      "prontosRedefinidos": true,
+      "travadoAposInicio": true,
+      "seq": 5
+    }
+  ],
+  "visual": {
+    "capturas": 16,
+    "perfis": [
+      "1440x1100",
+      "390x844"
+    ],
+    "temas": [
+      "dark",
+      "light"
+    ],
+    "telas": [
+      "entrada",
+      "criada",
+      "identificacao",
+      "lobby"
+    ],
+    "semOverflow": true,
+    "preview": "preview/online/index.html",
+    "jogoLocal": "http://127.0.0.1:8787/"
+  },
+  "pendencias": [
+    "CI remoto, merge commit e deploy pela main",
+    "Teste físico da versão4.1.0; campeonato humano completo10etapas em dois aparelhos não realizado nesta mudança"
+  ],
+  "commitImplementacao": "5d5c162",
+  "mutacao": {
+    "arquivo": "docs/online-formatos-mutacoes.json",
+    "detectados": 7,
+    "total": 7,
+    "timeoutMs": 120000,
+    "timeouts": 0
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "timeoutMs": 120000,
+  "resultados": [
+    {
+      "nome": "somente-host",
+      "detectada": true,
+      "timeout": false,
+      "falha": "src/net/formato-sala.test.ts > configurar-formato > recusa remetente humano-02 preservando identidade"
+    },
+    {
+      "nome": "formatos-validos",
+      "detectada": true,
+      "timeout": false,
+      "falha": "src/net/formato-sala.test.ts > configurar-formato > recusa formato inválido undefined sem alterar estado"
+    },
+    {
+      "nome": "pronto-da-revisao-atual",
+      "detectada": true,
+      "timeout": false,
+      "falha": "src/net/formato-sala.test.ts > pronto atrasado não confirma formato alterado; volta a cinco: false"
+    },
+    {
+      "nome": "revisao-monotonica",
+      "detectada": true,
+      "timeout": false,
+      "falha": "src/net/formato-sala.test.ts > pronto atrasado não confirma formato alterado; volta a cinco: false"
+    },
+    {
+      "nome": "reset-prontos",
+      "detectada": true,
+      "timeout": false,
+      "falha": "src/net/formato-sala.test.ts > configurar-formato > mudança efetiva limpa todos os prontos sem mutar o estado anterior"
+    },
+    {
+      "nome": "idempotencia-externa",
+      "detectada": true,
+      "timeout": false,
+      "falha": "src/net/formato-sala.test.ts > configurar mesmo formato no servidor preserva referência e não difunde"
+    },
+    {
+      "nome": "calendario-uma-etapa",
+      "detectada": true,
+      "timeout": false,
+      "falha": "src/ui/formato-online.test.ts > formato online 1 > preserva o calendário semeado, seed 1"
+    }
+  ]
+}

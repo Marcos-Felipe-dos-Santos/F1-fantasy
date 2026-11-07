@@ -151,6 +151,7 @@ function retornoFalso(cliente: EstadoCliente, extras: Partial<Retorno> = {}): Re
     entrar: () => {},
     definirPronto: () => {},
     iniciar: () => {},
+    configurarFormato: () => {},
     sair: () => {},
     escolher: () => {},
     reroll: () => {},

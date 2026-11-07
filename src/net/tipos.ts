@@ -168,6 +168,8 @@ export interface EstadoSalaPublico {
    * fio depende da versão da sala que está sendo publicada.
    */
   nEtapas: number;
+  /** Revisão das escolhas do formato; ausência em salas antigas equivale a zero. */
+  revisaoFormato?: number;
   /**
    * Seed do CALENDÁRIO — só quando o draft CONCLUI. Antes disso, `null`.
    *

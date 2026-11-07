@@ -476,7 +476,7 @@ describe('etapasDaSala × nEtapas do snapshot (0(w) fechada)', () => {
 
   it('🔒 nEtapas sem formato correspondente ⇒ [] em vez de exceção em render', () => {
     const draft = jogarDraftAteConcluir('netapas-invalido');
-    for (const n of [0, 1, 7, 999]) {
+    for (const n of [0, 2, 7, 999]) {
       expect(() => etapasDaSala(dataset, draft, SEED_CALENDARIO, SEEDS_ETAPAS, n)).not.toThrow();
       expect(etapasDaSala(dataset, draft, SEED_CALENDARIO, SEEDS_ETAPAS, n)).toEqual([]);
     }
@@ -571,7 +571,7 @@ describe('calendarioDaSala — o calendário inteiro, sem vazar vencedor', () =>
     const draft = jogarDraftAteConcluir('calendario-portoes');
     const etapas = etapasDaSala(dataset, draft, SEED_CALENDARIO, SEEDS_ETAPAS, N_CURTA);
     expect(calendarioDaSala(dataset, null, N_CURTA, etapas, 1)).toEqual([]);
-    expect(calendarioDaSala(dataset, SEED_CALENDARIO, 1, etapas, 1)).toEqual([]);
+    expect(calendarioDaSala(dataset, SEED_CALENDARIO, 2, etapas, 1)).toEqual([]);
     expect(() => calendarioDaSala(dataset, SEED_CALENDARIO, 7, etapas, 1)).not.toThrow();
   });
 

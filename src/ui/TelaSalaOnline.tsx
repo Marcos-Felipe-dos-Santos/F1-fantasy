@@ -9,6 +9,7 @@
 
 import { useState, type FormEvent } from 'react';
 import { codigoLegivel, normalizarCodigo, TAMANHO_CODIGO } from '../net/codigo-sala';
+import './online.css';
 
 interface TelaSalaOnlineProps {
   /** Pede ao servidor um código novo; `null` enquanto não voltou. */
@@ -34,19 +35,29 @@ async function copiar(texto: string): Promise<boolean> {
 }
 
 function BotaoCopiar({ texto, rotulo }: { texto: string; rotulo: string }) {
-  const [copiado, setCopiado] = useState(false);
+  const [resultado, setResultado] = useState<boolean | null>(null);
   return (
-    <button
-      type="button"
-      onClick={async () => {
-        // `clipboard` só funciona em contexto seguro (https ou localhost). No
-        // IP da LAN ele falha — daí o aviso em vez de um clique que não faz
-        // nada e ninguém entende.
-        setCopiado(await copiar(texto));
-      }}
-    >
-      {copiado ? '✅ copiado' : rotulo}
-    </button>
+    <div className="online__copiar">
+      <button
+        type="button"
+        className="botao-secundario"
+        onClick={async () => {
+          // `clipboard` só funciona em contexto seguro (https ou localhost). No
+          // IP da LAN ele falha — daí o aviso em vez de um clique que não faz
+          // nada e ninguém entende.
+          setResultado(await copiar(texto));
+        }}
+      >
+        {rotulo}
+      </button>
+      <span role="status">
+        {resultado === true
+          ? '✅ copiado'
+          : resultado === false
+            ? 'Não foi possível copiar. Selecione e copie o texto acima.'
+            : ''}
+      </span>
+    </div>
   );
 }
 
@@ -72,21 +83,24 @@ export function TelaSalaOnline({
     return (
       <div className="tela-sala">
         <h1>Sala criada</h1>
-        <p className="tela-sala__codigo">{codigoLegivel(codigoCriado)}</p>
-        <p className="tela-sala__dica">
-          Mande o link pros amigos — quem abrir entra direto. Ou dite o código.
-        </p>
-        <p className="tela-sala__link">
-          <code>{link}</code>
-        </p>
-        <div className="tela-sala__acoes">
-          <BotaoCopiar texto={link} rotulo="📋 Copiar link" />
-          <BotaoCopiar texto={codigoCriado} rotulo="Copiar código" />
-        </div>
+        <section className="card online__card" aria-label="Compartilhar sala">
+          <p className="online__rotulo">Código da sala</p>
+          <p className="tela-sala__codigo">{codigoLegivel(codigoCriado)}</p>
+          <p className="tela-sala__dica">
+            Mande o link pros amigos — quem abrir entra direto. Ou dite o código.
+          </p>
+          <p className="tela-sala__link">
+            <code>{link}</code>
+          </p>
+          <div className="tela-sala__acoes">
+            <BotaoCopiar texto={link} rotulo="📋 Copiar link" />
+            <BotaoCopiar texto={codigoCriado} rotulo="Copiar código" />
+          </div>
+        </section>
         <button type="button" className="botao-primario" onClick={() => onEntrar(codigoCriado)}>
           Ir para a sala
         </button>
-        <button type="button" className="tela-sala__voltar" onClick={onVoltar}>
+        <button type="button" className="botao-secundario tela-sala__voltar" onClick={onVoltar}>
           ← Voltar
         </button>
       </div>
@@ -98,43 +112,45 @@ export function TelaSalaOnline({
       <h1>Jogar online</h1>
       {erro !== null && <p className="tela-lobby__erro">⚠️ {erro}</p>}
 
-      <div className="tela-sala__opcao">
-        <h2>Criar sala</h2>
-        <p className="tela-sala__dica">
-          O servidor sorteia um código de {TAMANHO_CODIGO} dígitos que só quem você mandar vai
-          saber.
-        </p>
-        <button type="button" className="botao-primario" onClick={onCriar} disabled={criando}>
-          {criando ? 'Criando…' : 'Criar sala'}
-        </button>
+      <div className="online__opcoes">
+        <section className="card online__card tela-sala__opcao">
+          <h2>Criar sala</h2>
+          <p className="tela-sala__dica">
+            O servidor sorteia um código de {TAMANHO_CODIGO} dígitos que só quem você mandar vai
+            saber.
+          </p>
+          <button type="button" className="botao-primario" onClick={onCriar} disabled={criando}>
+            {criando ? 'Criando…' : 'Criar sala'}
+          </button>
+        </section>
+
+        <form className="card online__card tela-sala__opcao" onSubmit={entrar}>
+          <h2>Entrar na sala de um amigo</h2>
+          <label className="form-inicio__campo">
+            Código da sala
+            <input
+              type="text"
+              value={digitado}
+              onChange={(evento) => setDigitado(evento.target.value)}
+              placeholder="A3F9C2"
+              maxLength={TAMANHO_CODIGO + 4}
+              autoComplete="off"
+              spellCheck={false}
+            />
+          </label>
+          {digitado.length > 0 && codigoValido === null && (
+            <p className="tela-sala__dica">
+              O código tem {TAMANHO_CODIGO} dígitos de 0-9 e A-F. Maiúsculas, minúsculas, espaços e
+              hífens tanto faz.
+            </p>
+          )}
+          <button type="submit" className="botao-primario" disabled={codigoValido === null}>
+            Entrar
+          </button>
+        </form>
       </div>
 
-      <form className="tela-sala__opcao" onSubmit={entrar}>
-        <h2>Entrar na sala de um amigo</h2>
-        <label className="form-inicio__campo">
-          Código da sala
-          <input
-            type="text"
-            value={digitado}
-            onChange={(evento) => setDigitado(evento.target.value)}
-            placeholder="A3F9C2"
-            maxLength={TAMANHO_CODIGO + 4}
-            autoComplete="off"
-            spellCheck={false}
-          />
-        </label>
-        {digitado.length > 0 && codigoValido === null && (
-          <p className="tela-sala__dica">
-            O código tem {TAMANHO_CODIGO} dígitos de 0-9 e A-F. Maiúsculas, minúsculas, espaços e
-            hífens tanto faz.
-          </p>
-        )}
-        <button type="submit" className="botao-primario" disabled={codigoValido === null}>
-          Entrar
-        </button>
-      </form>
-
-      <button type="button" className="tela-sala__voltar" onClick={onVoltar}>
+      <button type="button" className="botao-secundario tela-sala__voltar" onClick={onVoltar}>
         ← Voltar ao início
       </button>
     </div>

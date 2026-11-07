@@ -104,8 +104,9 @@ sem travar. Ver **[Como rodar](#-como-rodar)** e
 No campeonato, o calendário é sorteado, cada etapa mostra a miniatura do traçado e a tabela
 acumula entre as corridas — com a variação de posição de cada jogador etapa a etapa.
 
-**O Online usa campeonato curto de cinco etapas.** Corrida única e campeonato de dez etapas
-estão disponíveis nos modos Solo e Local. No
+**No Online, o anfitrião escolhe corrida única, campeonato curto de cinco etapas ou completo de dez.**
+Se mudar o formato, todos precisam confirmar novamente que estão prontos. A escolha fica travada
+ao começar o draft. No
 campeonato multiplayer o servidor sorteia uma seed independente por etapa e publica **uma de cada
 vez**, conforme a etapa abre — nunca a seed-mestre. Não é zelo: com a seed base na mão, qualquer
 jogador simularia as corridas futuras no console antes de draftar. A etapa avança quando todos
@@ -298,7 +299,7 @@ A contagem de nomes é uma cerca de estabilidade (não uma proibição): 9237 no
 A tabela fictícia e as funções puras antigas permanecem como proveniência testada;
 as CLIs de anonimização foram aposentadas.
 
-**Versão atual: 4.0.0; protocolo online: 2.** Salas de versões diferentes não podem compartilhar clientes.
+**Versão atual: 4.1.0; protocolo online: 2.** Salas de versões diferentes não podem compartilhar clientes.
 Saves anteriores ao formato 4 são incompatíveis: após atualizar, comece uma sala ou
 um campeonato novo.
 
@@ -332,7 +333,7 @@ falso e sem `workerd`.
 
 ## 📍 Estado atual
 
-**Paddock Draft 4.0.0 está publicado na Cloudflare Workers.**
+**O jogo está publicado na Cloudflare Workers.**
 Sorteio ponderado, rerolls, áudio e inspeção dos carros estão na `main` desde o PR #12.
 Abra [Paddock Draft](https://f1-fantasy-sala.marcosfeliperigoto.workers.dev).
 O modo online foi testado com amigos, conforme confirmação do responsável pelo projeto.
@@ -383,8 +384,8 @@ execução anterior. Pare o servidor antes de recompilar e iniciar novamente.
 3. Abra o link em **outro navegador ou janela anônima** e entre com outro nome.
 4. Marque **Estou pronto** nos dois jogadores; no anfitrião 👑, clique em **Começar o draft**.
 5. Faça as cinco escolhas de componentes e escolha a peça icônica em cada jogador.
-6. Clique em **Largar** nos dois. **Acelerar ⏩** pula o replay daquele jogador.
-7. Termine as cinco etapas e confira se os resultados e o pódio são iguais.
+6. Clique em **Largar** nos dois. **Pular para o resultado ⏭** pula o replay daquele jogador.
+7. Termine as etapas do formato escolhido e confira se os resultados e o pódio são iguais.
 
 Experimente dar **F5 durante o draft ou no grid**: a identidade e a etapa atual
 devem ser recuperadas. Duas abas na mesma sessão de navegador compartilham o
