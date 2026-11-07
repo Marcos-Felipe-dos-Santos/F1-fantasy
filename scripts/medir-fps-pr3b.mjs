@@ -17,7 +17,7 @@
 import { spawn } from 'node:child_process';
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { basename, dirname, join, resolve } from 'node:path';
 
 const CHROME = process.env.CHROME ?? 'C:/Program Files/Google/Chrome/Application/chrome.exe';
 const PORTA_DEBUG = 9337;
@@ -52,6 +52,9 @@ async function abrirChrome() {
     fechar: async () => {
       chrome.kill();
       await esperar(500);
+      if (dirname(resolve(perfil)) !== resolve(tmpdir()) || !basename(perfil).startsWith('pr2a-chrome-')) {
+        throw new Error('perfil temporário fora do diretório esperado; remoção recusada');
+      }
       rmSync(perfil, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
     },
   };

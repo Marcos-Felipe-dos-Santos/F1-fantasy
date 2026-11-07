@@ -3,9 +3,9 @@
  * `audio.ts` (o Web Audio). Nenhuma regra mora aqui.
  *
  * Vive em `TelaCorrida`, chamado antes do retorno da fase 'grid', e recebe as posições que a tela já
- * calcula: calcular de novo dobraria o custo por quadro que o PR mede. Cala os sons quando a fase
- * sai de 'replay' e quando a tela desmonta, que é o que o "Acelerar" faz (ele troca a fase sem passar
- * pelo salto de relógio da agenda; ver `DELTA_SALTO_MS`).
+ * calcula: calcular de novo dobraria o custo por quadro que o PR mede. A limpeza cala os sons,
+ * deixando só a torcida concluir o fade quando o último carro já chegou. O callback devolvido
+ * interrompe tudo antes do "Acelerar", inclusive na espera final.
  */
 
 import { useEffect, useMemo, useRef } from 'react';
@@ -38,7 +38,7 @@ export function useSomDaCorrida({
   velocidade,
   escala,
   carros,
-}: EntradaDoSom): void {
+}: EntradaDoSom): () => void {
   // A lista de humanos chega nova a cada render; o que importa é o conteúdo.
   const chaveHumanos = humanos.join('\u0000');
   // `velRef` (o replay inteiro) é calculado aqui, uma vez, ainda no grid.
@@ -68,7 +68,7 @@ export function useSomDaCorrida({
     controlador.current = c;
     ultimoQuadro.current = null;
     return () => {
-      c.encerrar();
+      c.encerrar(true);
       if (controlador.current === c) controlador.current = null;
     };
   }, [fase, corrida]);
@@ -82,4 +82,5 @@ export function useSomDaCorrida({
     ultimoQuadro.current = agora;
     c.quadro({ tSim: tempoSimMs, deltaRealMs, velocidade, escala, carros });
   });
+  return () => controlador.current?.encerrar();
 }

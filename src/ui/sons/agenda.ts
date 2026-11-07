@@ -107,7 +107,7 @@ export const GANHO_CATEGORIA: Record<CategoriaSom, number> = {
 
 /** Motor: abaixo disto (u/s simulado) o carro está parado e a marcha lenta assume. */
 export const PARADO_U_S = 1;
-export const GANHO_MOTOR = 0.55;
+export const GANHO_MOTOR = 0.15;
 export const GANHO_LENTA = 0.5;
 const TAXA_MIN = 0.6;
 const TAXA_FAIXA = 0.5;

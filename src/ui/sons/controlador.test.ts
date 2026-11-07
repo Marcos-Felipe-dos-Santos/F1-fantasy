@@ -455,6 +455,27 @@ describe('ControladorDeSom: ambiente e motor', () => {
     }
   });
 
+  it('motor descansa entre roncos e retorna a 15%', () => {
+    const f = saidaFalsa();
+    const c = new ControladorDeSom(f.saida, corrida([], { velRef: 100 }));
+    rodar(f, c, 0, [carro('eu', 0)], 0);
+    f.avancar(2.75);
+    rodar(f, c, 500, [carro('eu', 25)]);
+    expect(f.de(CATALOGO_SONS.motor.arquivo)[0].ajustes.at(-1)!.ganho).toBeCloseTo(GANHO_MOTOR / 2);
+    f.avancar(0.25);
+    rodar(f, c, 750, [carro('eu', 37.5)]);
+    expect(f.de(CATALOGO_SONS.motor.arquivo)[0].ajustes.at(-1)!.ganho).toBe(0);
+    rodar(f, c, 900, [carro('eu', 45)]); // relógio de áudio congelado: continua em descanso
+    expect(f.de(CATALOGO_SONS.motor.arquivo)[0].ajustes.at(-1)!.ganho).toBe(0);
+    f.avancar(1);
+    rodar(f, c, 1000, [carro('eu', 50)]);
+    const motor = f.de(CATALOGO_SONS.motor.arquivo)[0];
+    expect(motor.ajustes.at(-1)!.ganho).toBe(0);
+    f.avancar(2);
+    rodar(f, c, 2000, [carro('eu', 100)]);
+    expect(motor.ajustes.at(-1)!.ganho).toBe(GANHO_MOTOR);
+  });
+
   it('andando: motor; parado (pit na vaga): marcha lenta; abandonado: silêncio', () => {
     const f = saidaFalsa();
     const c = new ControladorDeSom(f.saida, corrida([], { velRef: 100 }));
@@ -462,7 +483,8 @@ describe('ControladorDeSom: ambiente e motor', () => {
     rodar(f, c, 1000, [carro('eu', 50)]); // 50 u em 1 s simulado
     const motor = f.de(CATALOGO_SONS.motor.arquivo)[0];
     const lenta = f.de(CATALOGO_SONS.lenta.arquivo)[0];
-    expect(motor.ajustes.at(-1)).toEqual({ ganho: GANHO_MOTOR, taxa: 0.6 + 0.5 * 0.5 });
+    // O alvo sobe só 0,5/s real: 16 ms avançam 0,008, mesmo com 1 s simulado entre posições.
+    expect(motor.ajustes.at(-1)).toEqual({ ganho: GANHO_MOTOR, taxa: 0.608 });
     expect(lenta.ajustes.at(-1)!.ganho).toBe(0);
     rodar(f, c, 1320, [carro('eu', 50, 0, { naPista: false })]);
     expect(motor.ajustes.at(-1)!.ganho).toBe(0);
@@ -662,4 +684,94 @@ describe('corridaDoSom e velRef sobre o replay inteiro', () => {
     const e = ctl.estatisticas();
     expect(e.tocadas).toBeGreaterThan(0);
   });
+});
+describe('ajuste de ouvido do PR 3b', () => {
+  it('a torcida ocupa voz até acabar o fade e pode ser cancelada durante ele', () => {
+    const f = saidaFalsa();
+    const eventos: EventoSom[] = [
+      { cat: 'torcida', carro: null, t: 0, fim: 500 * ESCALA },
+      ...Array.from({ length: 5 }, (): EventoSom => ({ cat: 'pistola', carro: 'eu', t: 0, fim: 5000 * ESCALA })),
+      { cat: 'pistola', carro: 'eu', t: 1000 * ESCALA, fim: 5000 * ESCALA },
+    ];
+    const c = new ControladorDeSom(f.saida, corrida(eventos));
+    for (let ms = 0; ms <= 1100; ms += 10) {
+      rodar(f, c, ms * ESCALA, [carro('eu', 0)], ms === 0 ? 0 : 10);
+      f.avancar(0.01);
+    }
+    expect(c.estatisticas().recusadas + c.estatisticas().roubadas).toBe(1);
+    c.encerrar();
+    expect(f.de(CATALOGO_SONS.torcida.arquivo)[0].parado).toBeDefined();
+  });
+
+  it('o motor nasce em 0,6 e seu alvo sobe e desce no máximo 0,5 por segundo real', () => {
+    for (const escala of [10, 40]) {
+      const f = saidaFalsa();
+      const c = new ControladorDeSom(f.saida, corrida([]));
+      let tSim = 0;
+      let x = 0;
+      const quadro = (delta: number, andando: boolean) => {
+        tSim += delta * escala;
+        if (andando) x += delta * escala / 10;
+        c.quadro({ tSim, deltaRealMs: delta, velocidade: 'media', escala, carros: [carro('eu', x)] });
+      };
+      quadro(0, false);
+      const motor = f.de(CATALOGO_SONS.motor.arquivo)[0];
+      expect(motor.taxa).toBe(0.6);
+      let anterior = 0.6;
+      for (const andando of [true, false]) {
+        for (let i = 0; i < 120; i++) {
+          quadro(10, andando);
+          const taxa = motor.ajustes.at(-1)!.taxa!;
+          expect(Math.abs(taxa - anterior)).toBeLessThanOrEqual(0.005 + 1e-12);
+          expect(taxa).toBeGreaterThanOrEqual(0.6);
+          expect(taxa).toBeLessThanOrEqual(1.1);
+          anterior = taxa;
+        }
+        expect(anterior).toBeCloseTo(andando ? 1.1 : 0.6, 10);
+      }
+    }
+  });
+
+  it('pausa longa limita o passo a 0,05; delta nulo/negativo não muda o alvo', () => {
+    const f = saidaFalsa();
+    const c = new ControladorDeSom(f.saida, corrida([]));
+    rodar(f, c, 0, [carro('eu', 0)], 0);
+    rodar(f, c, 320, [carro('eu', 32)]);
+    const motor = f.de(CATALOGO_SONS.motor.arquivo)[0];
+    let anterior = motor.ajustes.at(-1)!.taxa!;
+    expect(anterior).toBeCloseTo(0.608, 10);
+    rodar(f, c, 100000, [carro('eu', 999)], 5000);
+    expect(motor.ajustes.at(-1)!.taxa!).toBeCloseTo(anterior + 0.05, 10);
+    anterior = motor.ajustes.at(-1)!.taxa!;
+    for (const delta of [0, -16]) {
+      rodar(f, c, 100000, [carro('eu', 999)], delta);
+      expect(motor.ajustes.at(-1)!.taxa!).toBe(anterior);
+    }
+  });
+
+  it.each([1000, 60000])('torcida reserva 2,5 s de fade dentro do arquivo: intervalo %i ms', (durMs) => {
+    const f = saidaFalsa();
+    const c = new ControladorDeSom(f.saida, corrida([{ cat: 'torcida', carro: null, t: 0, fim: durMs * ESCALA }]));
+    rodar(f, c, 0, undefined, 0);
+    const t = f.de(CATALOGO_SONS.torcida.arquivo)[0];
+    expect(t.fim!.fadeS).toBe(2.5);
+    expect(t.fim!.emS - t.inicioS).toBeCloseTo(Math.min(durMs / 1000, CATALOGO_SONS.torcida.durS - 2.5), 10);
+    expect(t.fim!.emS + t.fim!.fadeS - t.inicioS).toBeLessThanOrEqual(CATALOGO_SONS.torcida.durS + 1e-12);
+  });
+
+  it.each([['natural', true, 1000], ['antes do fim', true, 999], ['manual no fim', false, 1000]] as const)(
+    'encerramento %s preserva somente a torcida quando terminou naturalmente', (_nome, natural, ultimo) => {
+      const f = saidaFalsa();
+      const c = new ControladorDeSom(f.saida, corrida([LARGADA, { cat: 'torcida', carro: null, t: 0, fim: 1000 }], { chuva: true }));
+      rodar(f, c, 0, undefined, 0);
+      rodar(f, c, ultimo);
+      c.encerrar(natural);
+      const torcida = f.de(CATALOGO_SONS.torcida.arquivo)[0];
+      expect(torcida.parado === undefined).toBe(natural && ultimo === 1000);
+      expect(f.tocados.filter(t => t !== torcida).every(t => t.parado !== undefined)).toBe(true);
+      const ajustes = f.tocados.map(t => t.ajustes.length);
+      rodar(f, c, 1320);
+      expect(f.tocados.map(t => t.ajustes.length)).toEqual(ajustes);
+    },
+  );
 });

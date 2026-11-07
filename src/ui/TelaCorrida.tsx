@@ -282,7 +282,7 @@ export function TelaCorrida({
             parou: replay.chegou(item.jogadorId, tempoSimMs) || parado,
           };
         });
-  useSomDaCorrida({
+  const encerrarSom = useSomDaCorrida({
     resultado,
     pista,
     humanos: state.jogadores.filter((j) => j.tipo === 'humano').map((j) => j.id),
@@ -526,7 +526,14 @@ export function TelaCorrida({
           })}
       </ul>
 
-      <button type="button" className="botao-primario" onClick={onAcelerar}>
+      <button
+        type="button"
+        className="botao-primario"
+        onClick={() => {
+          encerrarSom();
+          onAcelerar();
+        }}
+      >
         {depoisDaBandeirada ? 'Ir para o resultado →' : 'Acelerar ⏩'}
       </button>
     </div>

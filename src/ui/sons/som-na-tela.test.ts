@@ -43,7 +43,7 @@ describe('som na TelaCorrida', () => {
   it('o hook encerra o controlador na limpeza do efeito (desmontar e trocar de fase)', () => {
     const hook = fonte('./useSomDaCorrida.ts');
     expect(hook).toMatch(/fase !== 'replay'/);
-    expect(hook).toMatch(/return \(\) => \{[^}]*\.encerrar\(\)/);
+    expect(hook).toMatch(/return \(\) => \{[^}]*\.encerrar\(true\)/);
   });
 
   it('o controle de som aparece no grid e no replay', () => {
@@ -83,4 +83,9 @@ describe('som na TelaCorrida', () => {
       expect(html).toMatch(/Som indisponível/);
     }
   });
+});
+it('Acelerar interrompe explicitamente o som antes de trocar a fase', () => {
+  expect(fonte('../TelaCorrida.tsx')).toMatch(/const encerrarSom = useSomDaCorrida\(/);
+  expect(fonte('../TelaCorrida.tsx')).toMatch(/onClick=\{\(\) => \{\s*encerrarSom\(\);\s*onAcelerar\(\);/);
+  expect(fonte('useSomDaCorrida.ts')).toContain('return () => controlador.current?.encerrar();');
 });

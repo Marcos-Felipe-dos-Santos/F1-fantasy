@@ -86,6 +86,15 @@ function Painel() {
         <strong>PR 3b — som na corrida</strong>
         <BotaoTema />
       </div>
+      <p style={{ margin: '6px 0' }}>
+        <b>Motor a 15%.</b> Três segundos de ronco e três de descanso, com saída suave.
+        Volume geral padrão: 80%. Marcha lenta preservada.
+      </p>
+      <p style={{ margin: '6px 0' }}>
+        Tom: mesma faixa 0,6–1,1, alvo limitado a 0,5 por segundo real. Torcida: fade de 2,5 s;
+        “Acelerar” cala tudo. O arquivo do motor foi preservado: seu laço ainda tem variação
+        de volume de cerca de 8 dB. Reouça se ele continua cansativo ou ficou baixo demais.
+      </p>
       {motor === null ? (
         <p>⚠️ Este navegador não tem Web Audio: o jogo roda sem som.</p>
       ) : status === null ? null : (

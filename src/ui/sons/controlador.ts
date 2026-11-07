@@ -10,13 +10,13 @@
  * - as referências de distância e de passagem são os prioritários em pista;
  * - o spray toca como camada da passagem na chuva;
  * - o problema técnico toca o arquivo de `somDaCategoria` e é encerrado com fade em `duracaoRealMs`;
- * - o "Acelerar" não passa pelo salto de relógio: quem cala é `encerrar()`, chamado pelo hook quando
- *   a fase sai de 'replay' ou a tela desmonta. Um salto do tempo SIMULADO maior que o do relógio
+ * - o "Acelerar" não passa pelo salto de relógio: chama `encerrar()` antes da troca de fase.
+ *   Na saída natural, só a torcida termina seu fade. Um salto do tempo SIMULADO maior que o do relógio
  *   também não soa (o quadro curto de uma busca não é "o que aconteceu agora").
  *
- * Números daqui que não vêm da agenda: os ganhos do ambiente e as constantes de fade são os do
- * preview aprovado (`scripts/sons/montar-preview.ts`); `ANTECEDENCIA_S` é o plano do 3b. Os fades
- * de evento e de encerramento são REGRA declarada aqui, a ouvir.
+ * Números daqui que não vêm da agenda: ganhos do ambiente e fade da pistola vêm do preview aprovado
+ * (`scripts/sons/montar-preview.ts`); `ANTECEDENCIA_S` é o plano do 3b. Limite do tom e fade da torcida
+ * são o ajuste de ouvido do 3b. Os fades de evento e de encerramento são REGRA declarada aqui.
  */
 
 import type { Pista, ResultadoCorrida } from '../../engine/types';
@@ -59,9 +59,13 @@ export const GANHO_CHUVA = 0.3;
 const ENTRADA_AMBIENTE_S = 0.1;
 /** Constantes de tempo do motor e da marcha lenta, as do preview. */
 const SUAVIZAR_MOTOR_S = 0.08;
-/** Fim da pistola (preview), da torcida (preview) e dos eventos de duração fixa (regra daqui). */
+/** Limite do alvo de playbackRate por segundo REAL, antes da suavização do Web Audio. */
+const TAXA_MOTOR_POR_S = 0.5;
+const DELTA_MOTOR_MAX_MS = 100;
+const TAXA_MOTOR_INICIAL = 0.6;
+/** Fim da pistola (preview), da torcida (ajuste de ouvido) e dos eventos de duração fixa. */
 export const FADE_PISTOLA_S = 0.015;
-export const FADE_TORCIDA_S = 0.6;
+export const FADE_TORCIDA_S = 2.5;
 export const FADE_EVENTO_S = 0.06;
 /** Voz roubada no teto e tudo no `encerrar`. */
 const FADE_ROUBO_S = 0.01;
@@ -212,6 +216,10 @@ export class ControladorDeSom {
   private deSim = SIM_ANTES_DA_LARGADA;
   private anterior: { tSim: number; focoPonto: Ponto | null } | null = null;
   private velFoco = 0;
+  private taxaMotor = TAXA_MOTOR_INICIAL;
+  private inicioCicloMotor: number | null = null;
+  /** Separada das vozes do mixer: seu fade pode continuar depois do fim do replay. */
+  private torcida: { h: number; fimSim: number } | null = null;
   private mixer: EstadoMixer = mixerVazio();
   private passagens: EstadoPassagens = passagensVazias();
   /** Voz do mixer → identificador da saída. */
@@ -282,20 +290,23 @@ export class ControladorDeSom {
     this.anterior = { tSim: q.tSim, focoPonto };
   }
 
-  /** Cala tudo, inclusive o que foi agendado e ainda não começou. Depois disto, `quadro` não faz nada. */
-  encerrar(): void {
+  /** Manual: cala tudo. Natural: após o último carro, deixa só a torcida concluir o fade agendado. */
+  encerrar(preservarTorcidaNoFim = false): void {
     if (this.encerrado) return;
     this.encerrado = true;
     const { pelotao, chuva, motor, lenta } = this.loops;
-    for (const h of [pelotao, chuva, motor, lenta, ...this.vozes.values()])
-      if (h !== null) this.saida.parar(h, FADE_ENCERRAR_S);
+    const preservar =
+      preservarTorcidaNoFim && this.torcida !== null &&
+      this.anterior !== null && this.anterior.tSim >= this.torcida.fimSim;
+    for (const h of new Set([pelotao, chuva, motor, lenta, ...this.vozes.values(), this.torcida?.h ?? null]))
+      if (h !== null && !(preservar && h === this.torcida?.h)) this.saida.parar(h, FADE_ENCERRAR_S);
     this.vozes.clear();
   }
 
   /** Começa os laços que faltam; o que ainda não tem arquivo tenta de novo no próximo quadro. */
   private garantirLoops(agora: number): void {
-    const laco = (som: SomDoCatalogo, alvo: number | null): number | null => {
-      const h = this.saida.tocar({ som, inicioS: agora + MINIMO_S, ganho: 0, laco: true });
+    const laco = (som: SomDoCatalogo, alvo: number | null, taxa?: number): number | null => {
+      const h = this.saida.tocar({ som, inicioS: agora + MINIMO_S, ganho: 0, laco: true, taxa });
       if (h === SEM_SOM) return null;
       if (alvo !== null) this.saida.ajustar(h, { ganho: alvo }, ENTRADA_AMBIENTE_S);
       return h;
@@ -305,7 +316,7 @@ export class ControladorDeSom {
     if (this.corrida.chuva) l.chuva ??= laco(CATALOGO_SONS.chuva, GANHO_CHUVA);
     // O motor e a marcha lenta entram mudos: o quadro do motor decide qual dos dois soa.
     if (this.foco !== null) {
-      l.motor ??= laco(CATALOGO_SONS.motor, null);
+      l.motor ??= laco(CATALOGO_SONS.motor, null, TAXA_MOTOR_INICIAL);
       l.lenta ??= laco(CATALOGO_SONS.lenta, null);
     }
   }
@@ -319,6 +330,11 @@ export class ControladorDeSom {
   ): void {
     const som = somDaCategoria(e.cat, q.velocidade);
     const durMs = duracaoRealMs(e, q.escala, q.velocidade);
+    const fade = FIM_COM_FADE[e.cat];
+    // A torcida não repete: reservar o fade dentro do arquivo evita o corte pelo EOF.
+    const ateFadeS = e.cat === 'torcida'
+      ? Math.min(durMs / 1000, Math.max(0, som.durS - FADE_TORCIDA_S))
+      : durMs / 1000;
     const noEvento = agora + Math.max(MINIMO_S, (e.t - q.tSim) / q.escala / 1000);
     // O pico do arquivo cai no instante do evento.
     const inicioS = Math.max(agora + MINIMO_S, noEvento - (som.picoEmS ?? 0));
@@ -327,7 +343,7 @@ export class ControladorDeSom {
       cat: e.cat,
       prioritario,
       agoraMs: inicioS * 1000,
-      durMs,
+      durMs: e.cat === 'torcida' ? (ateFadeS + FADE_TORCIDA_S) * 1000 : durMs,
     });
     this.mixer = estado;
     this.contar(e.cat, decisao);
@@ -342,15 +358,15 @@ export class ControladorDeSom {
 
     const carro = e.carro === null ? undefined : porId.get(e.carro);
     const distancia = carro === undefined ? null : distanciaAoMaisProximo(carro.ponto, referencias);
-    const fade = FIM_COM_FADE[e.cat];
     const h = this.saida.tocar({
       som,
       inicioS,
       ganho: ganhoDoEvento(e, this.prioritarios, distancia),
       laco: e.cat === 'pistola',
-      fim: fade === undefined ? undefined : { emS: inicioS + durMs / 1000, fadeS: fade },
+      fim: fade === undefined ? undefined : { emS: inicioS + ateFadeS, fadeS: fade },
     });
     this.vozes.set(decisao.id, h);
+    if (e.cat === 'torcida' && h !== SEM_SOM) this.torcida = { h, fimSim: e.fim ?? e.t };
   }
 
   private passagensDoQuadro(
@@ -400,7 +416,15 @@ export class ControladorDeSom {
       this.corrida.velRef,
       carro.abandonou,
     );
-    this.saida.ajustar(this.loops.motor, { ganho: ganhoMotor, taxa }, SUAVIZAR_MOTOR_S);
+    const passo = TAXA_MOTOR_POR_S * Math.max(0, Math.min(q.deltaRealMs, DELTA_MOTOR_MAX_MS)) / 1000;
+    this.taxaMotor += Math.max(-passo, Math.min(passo, taxa - this.taxaMotor));
+    // Três segundos de ronco, três de descanso, medidos no relógio do áudio.
+    // O último meio segundo sai gradualmente; a retomada usa a suavização do ganho.
+    const agoraMotor = this.saida.agoraS();
+    this.inicioCicloMotor ??= agoraMotor;
+    const faseMotor = (agoraMotor - this.inicioCicloMotor) % 6;
+    const envelopeMotor = faseMotor < 2.5 ? 1 : faseMotor < 3 ? (3 - faseMotor) / 0.5 : 0;
+    this.saida.ajustar(this.loops.motor, { ganho: ganhoMotor * envelopeMotor, taxa: this.taxaMotor }, SUAVIZAR_MOTOR_S);
     this.saida.ajustar(this.loops.lenta, { ganho: ganhoLenta }, SUAVIZAR_MOTOR_S);
   }
 
