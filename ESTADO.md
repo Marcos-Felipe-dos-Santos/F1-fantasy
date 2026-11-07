@@ -12,8 +12,11 @@
 
 ## Estado atual
 
-**2026-11-06, branch `feat/pr3-sons`**, com o PR 3a (sons escolhidos + agenda pura dos sons) fechado sobre a `main`
-`c4d7920` (merge do PR 2f). Sem push, merge ou deploy. Próximo: PR 3b. Ver §"Onde parei".
+**2026-11-07, branch `feat/pr3b-audio`**, com o PR 3b (o som toca no jogo) fechado sobre a `main` `e87c66d` (merge do
+PR 3a, PR #10), aguardando o veredito do Marcos no ouvido. Sem push, merge ou deploy. Ver §"Onde parei".
+~~**2026-11-06, branch `feat/pr3-sons`**, com o PR 3a (sons escolhidos + agenda pura dos sons) fechado sobre a `main`
+`c4d7920` (merge do PR 2f). Sem push, merge ou deploy. Próximo: PR 3b. Ver §"Onde parei".~~ O PR 3a foi mesclado na
+`main` (`e87c66d`, PR #10).
 ~~**2026-11-03, branch `feat/pr2f-punicao-no-box`**, com o PR 2f aprovado no celular e fechado sobre a
 `main` `e1cfba8`. O push é do Marcos; o merge, com merge commit. Sem merge ou deploy.~~ O PR 2f foi mesclado na
 `main` (`c4d7920`, PR #9).
@@ -441,6 +444,26 @@ dependência).
 
 ## Onde parei
 
+### 2026-11-07 — PR 3b (o som toca no jogo) FECHADO na branch, aguardando o veredito do Marcos no ouvido
+
+Branch `feat/pr3b-audio`, sobre a `main` `e87c66d` (merge do PR 3a). Risco ALTO. Sem push, merge ou deploy. Detalhe em
+`HISTORICO.md` §"2026-11-07 — PR 3b".
+
+Commits: `6393926` implementação; `2a1ec5c` sobreviventes da 1ª mutação; `cdda89d` achados do `senior-reviewer`;
+`59d8cb8` instrumentos e preview; mais o commit desta doc.
+
+- **Medido no HEAD `59d8cb8`:** `npm test` 2285 + 1 skipped em 98 arquivos; `test:party` 46; typecheck, lint e build
+  com saída 0; `versao.test.ts` 3/3; `git diff e87c66d` vazio em `src/engine/`, `src/data/`, `src/net/` e `party/`.
+- **Mutação final 69/69, 0 travadas.** **`senior-reviewer`:** sem 🔴; os 4 🟡 corrigidos com baseline vermelho.
+- **Teto de 6 vozes reconferido:** 0 recusadas e 0 roubadas em 160 corridas (`docs/pr3b-medicao.json`).
+- **FPS com som:** +0,6 a +0,7 ms de render p50 por quadro, CPU 6×, 22 carros, chuva (`docs/pr3b-fps.json`).
+- **CSP real:** 0 violações no build de produção servido pelo Worker local; nenhuma diretiva nova.
+- **Preview do celular (Artifact privado):** https://claude.ai/artifact/REzZG7NZAFwRex86mHY92Q. Capturas do controle nos dois
+  temas, fora do git: `preview/pr3b/` (celular e desktop). Nenhum print entrou no repositório ainda (máximo 3, depois
+  do veredito).
+- **Próximo:** veredito do Marcos no ouvido (problema técnico 500 ms e 60%, marcha lenta no pit, equilíbrio geral) e o
+  teste no iPhone, se houver um à mão. Depois disso, os prints no repositório, e push e merge pelo Marcos.
+
 ### 2026-11-06 — PR 3a (sons escolhidos + agenda pura) FECHADO na branch, aguardando o Marcos
 
 Branch `feat/pr3-sons`, sobre a `main` `c4d7920`. Risco ALTO. Sem push, merge ou deploy. Detalhe em `HISTORICO.md`
@@ -459,8 +482,8 @@ correções da revisão; `72331f2` sobreviventes da 1ª mutação e script; `60d
   baseline vermelho (19 testes) e mutação do trecho; sobrevivente equivalente tirado em `58f694f`. **Mutação: 66/66,
   0 travadas.** Medido no HEAD `58f694f`: `npm test` 2219 + 1 skipped em 93 arquivos; `test:party` 46; lint e build
   com saída 0; `git diff c4d7920` vazio em `src/engine/`, `src/data/`, `src/net/` e `party/`.
-- **Próximo:** push e merge do 3a pelo Marcos (sem deploy). Depois, o PR 3b numa branch nova sobre a `main`
-  atualizada.
+- ~~**Próximo:** push e merge do 3a pelo Marcos (sem deploy). Depois, o PR 3b numa branch nova sobre a `main`
+  atualizada.~~ Feito: o 3a está na `main` (`e87c66d`, PR #10); o 3b está em `feat/pr3b-audio` (entrada acima).
 
 ### 2026-11-03 — PR 2f (punição cumprida no box) APROVADO no celular e fechado, aguardando o push do Marcos
 
@@ -3216,6 +3239,24 @@ que agora ela é tomada com o número na mão.**
 
 ## Pendências ATIVAS
 
+**Abertas no PR 3b (2026-11-07):**
+- **Ouvir (Marcos):** os 500 ms e o ganho 0,6 do problema técnico, a marcha lenta (b) no pit e o equilíbrio geral
+  (mestre 0,8, pelotão 0,22, chuva 0,3). Preview: https://claude.ai/artifact/REzZG7NZAFwRex86mHY92Q.
+- **Ogg no iPhone/Safari:** a contagem de decodificados no topo do preview responde. Se der falha, o 3b inclui cópia
+  em AAC (decisão do Marcos de 2026-11-06). Com "17 de 17" e nenhum som, é a chave de silencioso do iPhone.
+- **Torcida cortada (pergunta, do `senior-reviewer`):** o som cala ao sair do replay, cerca de 1 s depois de o último
+  cruzar, e a torcida pode ser cortada nesse momento. É o plano ("cala ao sair do replay"); se o Marcos quiser que ela
+  continue na tela de resultado, é mudança pequena.
+- **Sugestões do `senior-reviewer` não aplicadas, nenhuma com defeito medido:** "Som: ligado" aparece mesmo se os 17
+  arquivos falharem (derivar de `status().falhas`); o `fim` da pistola é calculado com a escala do momento (trocar de
+  velocidade durante um pit desalinha o fim); `ajustar` do motor a cada quadro, mesmo sem mudança de valor; com
+  0,15 s de antecedência e pico de até 0,36 s (passagem lenta), o pico pode atrasar até 0,36 s; o cache de `velRef`
+  não confere a pista, ao contrário do de `replayDaCorrida`; o `ControleSom` remonta na largada (com armazenamento
+  bloqueado, o mudo do grid se perde).
+- **Movimento reduzido:** o som segue as posições da tela; com movimento reduzido, o carro aparece direto na vaga e o
+  motor dá um salto de tom de um quadro. Escolha da sessão, não do Marcos.
+- **FPS em aparelho real:** não medido (emulação em desktop, como nos PRs anteriores).
+
 **Abertas no PR 3a (2026-11-06):**
 - ~~❓ **PERGUNTA AO MARCOS (item 8 da revisão):** sem carro em destaque (2+ humanos no aparelho, espectador online),
   hoje nenhuma passagem soa e os eventos dos outros carros saem a um ganho fixo (`GANHO_SEM_FOCO` 0,35), sem
@@ -3227,9 +3268,13 @@ que agora ela é tomada com o número na mão.**
   abandonado; partir de `SIM_ANTES_DA_LARGADA`; tocar o spray como camada da passagem na chuva. Desde `695e48d`:
   passar a `detectarPassagens` e a `distanciaAoMaisProximo` os humanos de `prioritarios()` que estão em pista; tocar
   o arquivo de `somDaCategoria` (o problema técnico usa o do abandono) e encerrá-lo com fade em `duracaoRealMs`.
-- **Ouvir no 3b:** os 500 ms e o ganho 0,6 do problema técnico (números meus, não do Marcos).
-- **Teto de 6 vozes:** medido em `medir-pr3` sobre outra população de eventos (com saída do pit e cruzamentos, sem
-  passagem nem spray). Reconferir no 3b com a população atual.
+  ✅ Cumpridas no 3b (`6393926`, `controlador.ts`), cada uma com teste e mutante; conferidas uma a uma pelo
+  `senior-reviewer`.
+- **Ouvir no 3b:** os 500 ms e o ganho 0,6 do problema técnico (números meus, não do Marcos). No preview do 3b,
+  aguardando o Marcos (ver "Abertas no PR 3b").
+- ~~**Teto de 6 vozes:** medido em `medir-pr3` sobre outra população de eventos (com saída do pit e cruzamentos, sem
+  passagem nem spray). Reconferir no 3b com a população atual.~~ ✅ Reconferido no 3b: 0 recusadas e 0 roubadas em
+  160 corridas (`docs/pr3b-medicao.json`).
 - **Ogg no iPhone/Safari:** não testado. Se falhar, o 3b inclui cópia em AAC (decisão do Marcos).
 - ~~**`derrapagem`** cobre também `problema-tecnico` (som de pneu), como o efeito visual do PR 2d; separar é decisão do
   Marcos, se ele quiser.~~ ✅ Separado por decisão do Marcos (2026-11-06): problema técnico toca o chocalho (`695e48d`).
