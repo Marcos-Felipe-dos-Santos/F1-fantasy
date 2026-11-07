@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🏎️ F1 Fantasy
+# 🏎️ Paddock Draft
 
 **Monte um carro frankenstein com peças de 76 anos de Fórmula 1 e corra contra 21 rivais.**
 
@@ -10,7 +10,7 @@
 [![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev/)
 [![Vite](https://img.shields.io/badge/Vite-7-646CFF?logo=vite&logoColor=white)](https://vite.dev/)
 [![Vitest](https://img.shields.io/badge/Vitest-4-6E9F18?logo=vitest&logoColor=white)](https://vitest.dev/)
-[![testes](https://img.shields.io/badge/testes-1764%20%2B%2046%20passando-brightgreen)](#-como-rodar)
+[![CI](https://github.com/Marcos-Felipe-dos-Santos/F1-fantasy/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Marcos-Felipe-dos-Santos/F1-fantasy/actions/workflows/ci.yml)
 [![simulação](https://img.shields.io/badge/simula%C3%A7%C3%A3o-determin%C3%ADstica%20por%20seed-orange)](#-destaques-t%C3%A9cnicos)
 [![licença MIT](https://img.shields.io/badge/licen%C3%A7a-MIT-blue)](LICENSE)
 
@@ -23,7 +23,7 @@
 
 ## 🎮 O que é
 
-F1 Fantasy é um jogo de navegador de **draft e simulação de Fórmula 1**, inspirado nos jogos virais
+Paddock Draft é um jogo de navegador de **draft e simulação de Fórmula 1**, inspirado nos jogos virais
 brasileiros **"7x1"** e **"38 a 0"** — aquela mesma fórmula de sortear, montar e ver no que dá,
 com uma partida inteira cabendo num intervalo de almoço.
 
@@ -69,6 +69,14 @@ slots pra preencher com aquela combinação. O que não for pego, se perde:
 Como só há 5 rodadas para 5 slots, cada sorteio é uma decisão real: aceitar um motor mediano agora
 ou torcer por algo melhor e ficar sem opção depois.
 
+Cada pessoa tem **3 trocas comuns compartilhadas** entre **Trocar marca** (mantém o ano) e
+**Trocar ano** (mantém a marca), mais **1 troca especial** que muda **marca e ano juntos**.
+O saldo vale para o draft inteiro. Trocas sem alternativa disponível não gastam créditos.
+
+O sorteio dá mais peso a temporadas de **1985 em diante**, a uma lista de temporadas marcantes
+e às **três equipes mais bem classificadas de cada temporada**, usando a classificação oficial
+quando disponível a partir de 1958. Todas as combinações continuam com chance de aparecer.
+
 Na **rodada 6** vem a **peça icônica** — uma carta de um catálogo de **24 peças** que modifica o
 carro montado. É o único momento de escolha aberta do draft.
 
@@ -76,7 +84,7 @@ carro montado. É o único momento de escolha aberta do draft.
 
 | Modo          | Como é                                                                  |
 | ------------- | ----------------------------------------------------------------------- |
-| 👤 **Single** | Você + 21 bots                                                          |
+| 👤 **Solo** | Você + 21 bots                                                          |
 | 👥 **Local**  | 2 a 4 jogadores humanos no mesmo dispositivo + bots completando o grid  |
 | 🌐 **Online** | Sala por código de 6 dígitos, até 22 jogadores, bots completando o grid |
 
@@ -97,7 +105,7 @@ No campeonato, o calendário é sorteado, cada etapa mostra a miniatura do traç
 acumula entre as corridas — com a variação de posição de cada jogador etapa a etapa.
 
 **O Online usa campeonato curto de cinco etapas.** Corrida única e campeonato de dez etapas
-estão disponíveis nos modos Single e Local. No
+estão disponíveis nos modos Solo e Local. No
 campeonato multiplayer o servidor sorteia uma seed independente por etapa e publica **uma de cada
 vez**, conforme a etapa abre — nunca a seed-mestre. Não é zelo: com a seed base na mão, qualquer
 jogador simularia as corridas futuras no console antes de draftar. A etapa avança quando todos
@@ -112,6 +120,74 @@ os jogadores elegíveis terminam o replay, ou quando vence o timeout do servidor
 
 O Modo Cego esconde as notas; não esconde a pista nem o resultado da corrida. É a diferença entre
 otimizar uma planilha e apostar no faro — o **ano** também faz parte da decisão: um carro de 1988 não é um de 1950.
+
+---
+
+## 📸 Conheça as interfaces
+
+Capturas do jogo real em **2026-11-07**, na versão **4.0.0**, com os temas escuro e claro.
+A sala online mostrada é uma demonstração local. As imagens de celular usam uma tela emulada;
+não substituem o teste em um aparelho físico.
+
+<details open>
+<summary><strong>Início e montagem do carro</strong></summary>
+
+| Interface | Tema escuro | Tema claro |
+| --- | --- | --- |
+| **Configuração inicial** | <img src="docs/img/interfaces/inicio-dark.jpg" alt="Configuração inicial no tema escuro" width="420"> | <img src="docs/img/interfaces/inicio-light.jpg" alt="Configuração inicial no tema claro" width="420"> |
+| **Draft e trocas** | <img src="docs/img/interfaces/draft-dark.jpg" alt="Draft e trocas no tema escuro" width="420"> | <img src="docs/img/interfaces/draft-light.jpg" alt="Draft e trocas no tema claro" width="420"> |
+| **Draft no modo Cego** | <img src="docs/img/interfaces/draft-cego-dark.jpg" alt="Draft sem notas no tema escuro" width="420"> | <img src="docs/img/interfaces/draft-cego-light.jpg" alt="Draft sem notas no tema claro" width="420"> |
+| **Escolha da peça icônica** | <img src="docs/img/interfaces/peca-dark.jpg" alt="Escolha da peça icônica no tema escuro" width="420"> | <img src="docs/img/interfaces/peca-light.jpg" alt="Escolha da peça icônica no tema claro" width="420"> |
+| **Resumo do carro montado** | <img src="docs/img/interfaces/resumo-dark.jpg" alt="Resumo do carro montado no tema escuro" width="420"> | <img src="docs/img/interfaces/resumo-light.jpg" alt="Resumo do carro montado no tema claro" width="420"> |
+
+</details>
+
+<details>
+<summary><strong>Da largada ao campeonato</strong></summary>
+
+| Interface | Tema escuro | Tema claro |
+| --- | --- | --- |
+| **Grid de largada** | <img src="docs/img/interfaces/grid-dark.jpg" alt="Grid de largada no tema escuro" width="420"> | <img src="docs/img/interfaces/grid-light.jpg" alt="Grid de largada no tema claro" width="420"> |
+| **Replay da corrida e controles de som** | <img src="docs/img/interfaces/corrida-dark.jpg" alt="Replay da corrida e controles de som no tema escuro" width="420"> | <img src="docs/img/interfaces/corrida-light.jpg" alt="Replay da corrida e controles de som no tema claro" width="420"> |
+| **Resultado da corrida** | <img src="docs/img/interfaces/resultado-dark.jpg" alt="Resultado da corrida no tema escuro" width="420"> | <img src="docs/img/interfaces/resultado-light.jpg" alt="Resultado da corrida no tema claro" width="420"> |
+| **Inspeção dos componentes e da peça** | <img src="docs/img/interfaces/carro-dark.jpg" alt="Inspeção dos componentes e da peça no tema escuro" width="420"> | <img src="docs/img/interfaces/carro-light.jpg" alt="Inspeção dos componentes e da peça no tema claro" width="420"> |
+| **Classificação acumulada** | <img src="docs/img/interfaces/campeonato-dark.jpg" alt="Classificação acumulada no tema escuro" width="420"> | <img src="docs/img/interfaces/campeonato-light.jpg" alt="Classificação acumulada no tema claro" width="420"> |
+| **Encerramento do campeonato** | <img src="docs/img/interfaces/campeonato-final-dark.jpg" alt="Encerramento do campeonato no tema escuro" width="420"> | <img src="docs/img/interfaces/campeonato-final-light.jpg" alt="Encerramento do campeonato no tema claro" width="420"> |
+
+</details>
+
+<details>
+<summary><strong>Jogar com outras pessoas</strong></summary>
+
+| Interface | Tema escuro | Tema claro |
+| --- | --- | --- |
+| **Configuração do modo local** | <img src="docs/img/interfaces/configuracao-local-dark.jpg" alt="Configuração do modo local no tema escuro" width="420"> | <img src="docs/img/interfaces/configuracao-local-light.jpg" alt="Configuração do modo local no tema claro" width="420"> |
+| **Passagem de aparelho** | <img src="docs/img/interfaces/passar-aparelho-dark.jpg" alt="Passagem de aparelho no tema escuro" width="420"> | <img src="docs/img/interfaces/passar-aparelho-light.jpg" alt="Passagem de aparelho no tema claro" width="420"> |
+| **Criar ou entrar em sala online** | <img src="docs/img/interfaces/online-dark.jpg" alt="Criar ou entrar em sala online no tema escuro" width="420"> | <img src="docs/img/interfaces/online-light.jpg" alt="Criar ou entrar em sala online no tema claro" width="420"> |
+| **Sala criada e compartilhamento** | <img src="docs/img/interfaces/sala-criada-dark.jpg" alt="Sala criada e compartilhamento no tema escuro" width="420"> | <img src="docs/img/interfaces/sala-criada-light.jpg" alt="Sala criada e compartilhamento no tema claro" width="420"> |
+| **Identificação na sala** | <img src="docs/img/interfaces/entrada-sala-dark.jpg" alt="Identificação na sala no tema escuro" width="420"> | <img src="docs/img/interfaces/entrada-sala-light.jpg" alt="Identificação na sala no tema claro" width="420"> |
+| **Lobby online** | <img src="docs/img/interfaces/lobby-dark.jpg" alt="Lobby online no tema escuro" width="420"> | <img src="docs/img/interfaces/lobby-light.jpg" alt="Lobby online no tema claro" width="420"> |
+
+</details>
+
+<details>
+<summary><strong>No celular</strong></summary>
+
+| Interface | Tema escuro | Tema claro |
+| --- | --- | --- |
+| **Draft no celular** | <img src="docs/img/interfaces/draft-celular-dark.jpg" alt="Draft no celular no tema escuro" width="420"> | <img src="docs/img/interfaces/draft-celular-light.jpg" alt="Draft no celular no tema claro" width="420"> |
+| **Corrida no celular** | <img src="docs/img/interfaces/corrida-celular-dark.jpg" alt="Corrida no celular no tema escuro" width="420"> | <img src="docs/img/interfaces/corrida-celular-light.jpg" alt="Corrida no celular no tema claro" width="420"> |
+| **Detalhes do carro no celular** | <img src="docs/img/interfaces/carro-celular-dark.jpg" alt="Detalhes do carro no celular no tema escuro" width="420"> | <img src="docs/img/interfaces/carro-celular-light.jpg" alt="Detalhes do carro no celular no tema claro" width="420"> |
+
+</details>
+
+Durante a corrida, som e volume ficam salvos no aparelho. O botão **Pular para o resultado**
+encerra o replay e o áudio. No resultado, abra **Ver carro** abaixo do piloto para consultar
+os cinco componentes, suas equipes e anos de origem e a peça icônica escolhida.
+
+Para refazer as fotos, mantenha `npm run start:local` aberto e execute, em outro terminal,
+`node scripts/capturar-interfaces-readme.mjs`. O script usa o Chrome instalado (ou o caminho
+indicado por `CHROME`), cria uma sala local de demonstração e percorre um campeonato curto.
 
 ---
 
@@ -181,7 +257,7 @@ campeonatos num teste.
 ### 🗺️ 10 pistas com silhueta própria
 
 <div align="center">
-  <img src="docs/img/silhuetas.svg" alt="Traçados das 10 pistas do F1 Fantasy" width="900">
+  <img src="docs/img/silhuetas.svg" alt="Traçados das 10 pistas do Paddock Draft" width="900">
 </div>
 
 Cada traçado é desenhado em SVG a partir de dados de curvatura, com asfalto, limites e zebras
@@ -192,10 +268,12 @@ A grade acima não é um print: é gerada a partir da **mesma função de geomet
 corrida usa** (`pathDaVolta`), por `npm run preview` — se o traçado mudar no jogo, muda aqui
 também. Regerar é um comando, não um trabalho de captura.
 
-### ✅ 1764 + 46 testes, em duas suítes
+### ✅ 2358 + 48 testes, em duas suítes
 
-**1764 testes em 81 arquivos** (`npm test`) cobrindo engine, UI e o redutor de rede, mais
-**46 testes em 8 arquivos** (`npm run test:party`) que rodam a casca do Durable Object dentro do
+Contagens verificadas na entrega do PR #12, em 2026-11-07; o badge no topo mostra o CI da `main`.
+
+**2358 testes passando em 109 arquivos** (mais 1 ignorado) (`npm test`) cobrindo engine, UI e o redutor de rede, mais
+**48 testes em 9 arquivos** (`npm run test:party`) que rodam a casca do Durable Object dentro do
 `workerd` de verdade.
 
 **São duas suítes de propósito, e rodar só uma deixa metade do projeto sem portão:** `party/` roda
@@ -207,8 +285,6 @@ comportamento pretendido — só depois vem a implementação.
 ---
 
 ## Nomes históricos
-
-![Draft com os nomes originais](docs/img/nomes-originais.png)
 
 O jogo usa nomes originais de pilotos, equipes, peças e circuitos. O derivado real é
 publicado com `npm run dataset:publicar`; a cerca de publicação confere a igualdade
@@ -222,7 +298,7 @@ A contagem de nomes é uma cerca de estabilidade (não uma proibição): 9237 no
 A tabela fictícia e as funções puras antigas permanecem como proveniência testada;
 as CLIs de anonimização foram aposentadas.
 
-**Versão atual: 3.4.7.** Salas de versões diferentes não podem compartilhar clientes.
+**Versão atual: 4.0.0; protocolo online: 2.** Salas de versões diferentes não podem compartilhar clientes.
 Saves anteriores ao formato 4 são incompatíveis: após atualizar, comece uma sala ou
 um campeonato novo.
 
@@ -256,8 +332,9 @@ falso e sem `workerd`.
 
 ## 📍 Estado atual
 
-**O jogo está publicado na Cloudflare Workers.**
-Abra [F1 Fantasy](https://f1-fantasy-sala.marcosfeliperigoto.workers.dev).
+**Paddock Draft 4.0.0 está publicado na Cloudflare Workers.**
+Sorteio ponderado, rerolls, áudio e inspeção dos carros estão na `main` desde o PR #12.
+Abra [Paddock Draft](https://f1-fantasy-sala.marcosfeliperigoto.workers.dev).
 O modo online foi testado com amigos, conforme confirmação do responsável pelo projeto.
 Nomes históricos restaurados em 2026-10-17; H1–H4 são da auditoria anterior.
 
@@ -265,7 +342,7 @@ Nomes históricos restaurados em 2026-10-17; H1–H4 são da auditoria anterior.
 | ------------------------- | -------------------------------------------------------------------------------------------------- |
 | **Fase de rede (online)** | ✅ encerrada em 2026-08-27 — corrida e campeonato online entregues                                 |
 | **Hardening**             | ✅ H1–H4 · **12 fechados · 3 parciais · 0 abertos** dos 15 itens com status (S13/S14 sem status)   |
-| **Testes**                | `npm test` **1764/1764** em 81 arquivos · `npm run test:party` **46/46** em 8                      |
+| **Testes**                | `npm test` **2358 passando + 1 ignorado** em 109 arquivos · `npm run test:party` **48/48** em 9                      |
 | **Build**                 | `npm run build` aprovado — build integrado com os nomes originais; aviso de chunk grande permanece |
 
 O Worker serve `dist/` e a API na mesma origem, com `ENVIRONMENT=production` e
@@ -315,7 +392,7 @@ devem ser recuperadas. Duas abas na mesma sessão de navegador compartilham o
 
 Veja também o [guia de teste local](docs/deploy-local.md).
 
-### Desenvolver Single e Local
+### Desenvolver Solo e Local
 
 ```bash
 npm run dev  # http://localhost:5173
@@ -358,8 +435,8 @@ dry-run do Worker) e suíte Worker em Node 24. Não faz deploy.
 | `npm run start:local` | Compila e serve frontend e Worker em `http://127.0.0.1:8787`, com CSP e origens locais explícitas                       |
 | `npm run dev:rede`    | Idem, exposto na rede local — pra abrir do celular                                                                      |
 | `npm run sala`        | Sobe o worker/Durable Object do modo Online (`wrangler`, em `127.0.0.1:8787`)                                           |
-| `npm test`            | Suíte principal — 1764 testes (engine, UI, `src/net/`)                                                                  |
-| `npm run test:party`  | Suíte do Worker — 46 testes no `workerd`; execute `npm run build` antes para gerar os assets                            |
+| `npm test`            | Suíte principal — 2358 testes passando e 1 ignorado (engine, UI, `src/net/`)                                                                  |
+| `npm run test:party`  | Suíte do Worker — 48 testes no `workerd`; execute `npm run build` antes para gerar os assets                            |
 | `npm run test:watch`  | Testes em modo watch                                                                                                    |
 | `npm run build`       | Typecheck, build do frontend e inspeção do bundle do Worker em dry-run                                                  |
 | `npm run typecheck`   | Só a checagem de tipos                                                                                                  |

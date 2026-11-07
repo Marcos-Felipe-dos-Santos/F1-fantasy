@@ -8011,3 +8011,13 @@ Marcos autorizou itens 1, 3, 4 e 5 da revisão: notas longas separadas, grupos d
 Após avaliar o preview, Marcos pediu explicitamente o deploy. Produto `4783ee6`; versão Cloudflare `b6968762-781a-4012-8944-70b7636a5270`. URL preservada. Build/typecheck refeitos: corrigido jogadorId obrigatório ausente na fixture do teste de inspeção; os dois testes passaram. QA na produção: início/draft/corrida/resultado em dois temas e dois tamanhos (16 capturas), sem overflow e 22 carros expansíveis. Rerolls respeitaram cotas; pular abriu resultado, 17 arquivos Ogg decodificados, zero fontes ativas ao terminar e nenhuma violação CSP. Sem push/merge. Teste em aparelho físico/iPhone não realizado.
 
 Validação adicional do deploy visual (2026-11-07): corrida inteira em produção concluída pela UI real, 17 Ogg decodificados, nenhuma fonte de áudio ativa ao terminar e zero violações CSP. Evidência em `docs/fundo-preview-validacao.json`.
+
+
+## 2026-11-07 — fechamento do PR #12
+
+PR https://github.com/Marcos-Felipe-dos-Santos/F1-fantasy/pull/12 mesclado com merge commit `9d13b7f` (pais `b04dd28`, `ef70fcc`), conferido via API GitHub e fetch. CI do head ef70fcc concluído com sucesso nas execuções 42381540209 e 42381480302. Revisão independente do protocolo, rerolls e sorteio ponderado sem achados bloqueantes; sugeridos testes adicionais de save legado real retomado e reroll com expiração/reconexão. Os 48 testes focados de compatibilidade/integração passaram. Código já publicado 4783ee6 está no histórico da main; nenhum deploy novo. Rename entregue na URL atual por decisão do Marcos, mudança de endereço futura. Teste físico de celular/iPhone e save antigo real permanecem pendentes. Documentação em branch local separada, sem push.
+
+
+## 2026-11-07 — README e galeria do Paddock Draft
+
+A pedido do Marcos, README atualizado com o nome e versão4.0.0/protocolo2, regras de três trocas comuns e uma especial, sorteio ponderado, áudio e inspeção do carro no resultado. Badge de CI substitui contagem fixa antiga; contagens textuais alinhadas às validações registradas (2358+1ignorado principais/109arquivos e48Worker/9arquivos). Galeria de40 JPEGs em docs/img/interfaces (20telas/variações em2temas), capturadas pela UI real local: montagem, corrida, resultados, campeonato até pódio, local/handoff, online/criação/identificação/lobby, modo Cego e3vistas de celular emulado. Script de captura versionado; imagens anteriores preservadas, foto antiga retirada somente da exibição no README. Fotos conferidas visualmente,41referências locais de imagens verificadas, lint e diff-check verdes. Sem alteração de produto, push ou deploy.
