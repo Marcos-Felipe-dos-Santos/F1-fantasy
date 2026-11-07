@@ -28,6 +28,7 @@ import {
   FADE_TORCIDA_S,
   GANHO_CHUVA,
   GANHO_PELOTAO,
+  SEM_SOM,
   velocidadeDeReferencia,
   type CarroDoSom,
   type CorridaDoSom,
@@ -47,9 +48,13 @@ function saidaFalsa() {
   let agora = 10;
   let proximo = 1;
   const tocados: Tocado[] = [];
+  /** `ativa`: o contexto rodando; `semBuffer`: arquivos ainda decodificando (tocar devolve SEM_SOM). */
+  const estado = { ativa: true, semBuffer: false };
   const saida: SaidaDeAudio = {
     agoraS: () => agora,
+    ativa: () => estado.ativa,
     tocar(p) {
+      if (estado.semBuffer) return SEM_SOM;
       const t: Tocado = { ...p, h: proximo++, ajustes: [] };
       tocados.push(t);
       return t.h;
@@ -64,6 +69,7 @@ function saidaFalsa() {
   };
   return {
     saida,
+    estado,
     tocados,
     avancar: (s: number) => void (agora += s),
     agora: () => agora,
@@ -135,6 +141,61 @@ describe('ControladorDeSom: relógio, antecedência e saltos', () => {
       rodar(f, c, ms * ESCALA);
     }
     expect(f.de(CATALOGO_SONS.abandono.arquivo)).toHaveLength(1);
+  });
+
+  it('trocar de rápida para lenta no meio da janela não toca de novo o que já agendou (revisão do 3b)', () => {
+    const f = saidaFalsa();
+    const rapida = 40;
+    const lenta = 10;
+    // Dentro da janela de 150 ms da rápida (6000 ms sim), fora da janela da lenta (1500 ms sim).
+    const ev: EventoSom = { cat: 'derrapagem', carro: 'eu', t: 4000 };
+    const c = new ControladorDeSom(f.saida, corrida([ev]));
+    c.quadro({
+      tSim: 0,
+      deltaRealMs: 0,
+      velocidade: 'rapida',
+      escala: rapida,
+      carros: [carro('eu', 0)],
+    });
+    expect(f.de(CATALOGO_SONS.derrapagem.arquivo)).toHaveLength(1);
+    for (let ms = 16, t = 0; ms <= 600; ms += 16) {
+      t += 16 * lenta;
+      f.avancar(0.016);
+      c.quadro({
+        tSim: t,
+        deltaRealMs: 16,
+        velocidade: 'lenta',
+        escala: lenta,
+        carros: [carro('eu', t / 100)],
+      });
+    }
+    expect(f.de(CATALOGO_SONS.derrapagem.arquivo)).toHaveLength(1);
+  });
+
+  it('contexto suspenso (sem toque ainda): nada se acumula; ao retomar, só o que vem depois soa (revisão do 3b)', () => {
+    const f = saidaFalsa();
+    f.estado.ativa = false;
+    const c = new ControladorDeSom(
+      f.saida,
+      corrida([
+        LARGADA,
+        { cat: 'abandono', carro: 'eu', t: 100 * ESCALA },
+        { cat: 'derrapagem', carro: 'eu', t: 400 * ESCALA },
+      ]),
+    );
+    rodar(f, c, 0, undefined, 0);
+    // Relógio do áudio parado (suspenso), o replay andando.
+    for (let ms = 16; ms <= 200; ms += 16) rodar(f, c, ms * ESCALA);
+    expect(f.de(CATALOGO_SONS.largada.media.arquivo)).toHaveLength(0);
+    expect(f.de(CATALOGO_SONS.abandono.arquivo)).toHaveLength(0);
+    f.estado.ativa = true;
+    for (let ms = 216; ms <= 400; ms += 16) {
+      f.avancar(0.016);
+      rodar(f, c, ms * ESCALA);
+    }
+    expect(f.de(CATALOGO_SONS.largada.media.arquivo)).toHaveLength(0);
+    expect(f.de(CATALOGO_SONS.abandono.arquivo)).toHaveLength(0);
+    expect(f.de(CATALOGO_SONS.derrapagem.arquivo)).toHaveLength(1);
   });
 
   it('salto de relógio REAL (aba voltando): o que foi atravessado não soa', () => {
@@ -354,6 +415,28 @@ describe('ControladorDeSom: ambiente e motor', () => {
     expect(molhado.de(CATALOGO_SONS.chuva.arquivo)[0].ajustes[0].ganho).toBe(GANHO_CHUVA);
   });
 
+  it('arquivos ainda decodificando no 1º quadro: os laços entram quando chegarem (revisão do 3b)', () => {
+    const f = saidaFalsa();
+    f.estado.semBuffer = true;
+    const c = new ControladorDeSom(f.saida, corrida([], { chuva: true }));
+    rodar(f, c, 0, undefined, 0);
+    rodar(f, c, 320);
+    expect(f.tocados).toHaveLength(0);
+    f.estado.semBuffer = false;
+    rodar(f, c, 640);
+    for (const som of [
+      CATALOGO_SONS.pelotao,
+      CATALOGO_SONS.chuva,
+      CATALOGO_SONS.motor,
+      CATALOGO_SONS.lenta,
+    ]) {
+      expect(f.de(som.arquivo)).toHaveLength(1);
+    }
+    rodar(f, c, 960);
+    expect(f.de(CATALOGO_SONS.pelotao.arquivo)).toHaveLength(1);
+    expect(f.de(CATALOGO_SONS.motor.arquivo)[0].ajustes.length).toBeGreaterThan(0);
+  });
+
   it('2+ humanos ou espectador: nenhum motor em destaque', () => {
     for (const extra of [
       { humanos: ['a', 'b'] },
@@ -462,6 +545,18 @@ describe('ControladorDeSom: passagens', () => {
     const f = saidaFalsa();
     const c = new ControladorDeSom(f.saida, corrida([], { humanos: ['eu'], jogadorLocalId: null }));
     expect(entrando(f, c, {}).passagem).toHaveLength(0);
+  });
+
+  it('na retomada do contexto, o carro que já estava perto não vira passagem (revisão do 3b)', () => {
+    const f = saidaFalsa();
+    f.estado.ativa = false;
+    const c = new ControladorDeSom(f.saida, corrida([]));
+    rodar(f, c, 0, [carro('eu', 0), carro('bot', PERTO_U * 3)], 0);
+    rodar(f, c, 320, [carro('eu', 0), carro('bot', PERTO_U - 5)]);
+    f.estado.ativa = true;
+    f.avancar(0.016);
+    rodar(f, c, 640, [carro('eu', 0), carro('bot', PERTO_U - 10)]);
+    expect(f.de(CATALOGO_SONS.passagem.media.arquivo)).toHaveLength(0);
   });
 
   it('num salto do relógio REAL (aba voltando), a passagem atravessada não soa', () => {

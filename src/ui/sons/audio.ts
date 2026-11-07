@@ -11,8 +11,10 @@
  * mestre (o volume do jogador) → compressor (limiar −10 dB, razão 4) → saída.
  */
 
-import type { SaidaDeAudio, TocarSom } from './controlador';
+import { storageDoNavegador } from '../storage-app';
 import { CATALOGO_SONS, type SomDoCatalogo } from './catalogo';
+import { SEM_SOM, type SaidaDeAudio, type TocarSom } from './controlador';
+import { ganhoMestre, lerPreferenciaSom, VOLUME_PADRAO } from './preferencia-som';
 
 export interface StatusDoAudio {
   decodificados: number;
@@ -40,6 +42,8 @@ export interface AmbienteDeAudio {
   Contexto: (new () => AudioContext) | undefined;
   documento: DocumentoDoAudio | null;
   buscar: (url: string) => Promise<ArrayBuffer>;
+  /** Ganho do mestre ao nascer: o volume salvo, para a largada não sair alta com o mudo ligado. */
+  ganhoInicial?: number;
 }
 
 const GESTOS = ['pointerdown', 'touchend', 'keydown'] as const;
@@ -71,6 +75,7 @@ export function criarMotorDeAudio(amb: AmbienteDeAudio): MotorDeAudio | null {
   if (amb.Contexto === undefined) return null;
   const ctx = new amb.Contexto();
   const mestre = ctx.createGain();
+  mestre.gain.value = amb.ganhoInicial ?? VOLUME_PADRAO;
   const compressor = ctx.createDynamicsCompressor();
   compressor.threshold.value = LIMIAR_COMPRESSOR_DB;
   compressor.ratio.value = RAZAO_COMPRESSOR;
@@ -95,15 +100,15 @@ export function criarMotorDeAudio(amb: AmbienteDeAudio): MotorDeAudio | null {
   });
 
   const doc = amb.documento;
+  // Os gestos seguem ouvidos depois do primeiro: no iOS, uma ligação ou a Siri suspendem o contexto
+  // sem trocar de aba, e só um toque o traz de volta (revisão do 3b).
   const aoGesto = () => {
-    if (doc?.hidden) return;
+    if (doc?.hidden || ctx.state === 'running') return;
     void ctx.resume().then(() => {
-      if (desbloqueado) return;
       desbloqueado = true;
-      for (const g of GESTOS) doc?.removeEventListener(g, aoGesto, true);
     });
   };
-  if (!desbloqueado) for (const g of GESTOS) doc?.addEventListener(g, aoGesto, true);
+  for (const g of GESTOS) doc?.addEventListener(g, aoGesto, true);
   doc?.addEventListener('visibilitychange', () => {
     if (doc.hidden) {
       if (ctx.state === 'running') void ctx.suspend();
@@ -114,10 +119,11 @@ export function criarMotorDeAudio(amb: AmbienteDeAudio): MotorDeAudio | null {
 
   const saida: SaidaDeAudio = {
     agoraS: () => ctx.currentTime,
+    ativa: () => ctx.state === 'running',
     tocar(p: TocarSom): number {
       const buffer = buffers.get(p.som.arquivo);
       // Sem o arquivo (ainda decodificando, ou falhou): não soa, e o jogo segue.
-      if (buffer === undefined) return -1;
+      if (buffer === undefined) return SEM_SOM;
       const src = ctx.createBufferSource();
       src.buffer = buffer;
       if (p.laco && p.som.laco) {
@@ -158,7 +164,9 @@ export function criarMotorDeAudio(amb: AmbienteDeAudio): MotorDeAudio | null {
       fontes.delete(h);
       const agora = ctx.currentTime;
       if (f.inicioS > agora) {
-        // Agendado e ainda não começou: desligado já, para não soar na tela seguinte.
+        // Agendado e ainda não começou: parado e desligado já, para não soar na tela seguinte. O
+        // `stop` importa: um laço sem ele nunca termina e vive até o fim da página (revisão do 3b).
+        f.src.stop(f.inicioS);
         f.src.disconnect();
         f.g.disconnect();
         return;
@@ -199,6 +207,7 @@ function ambienteDoNavegador(): AmbienteDeAudio | null {
   return {
     Contexto: typeof AudioContext === 'undefined' ? prefixado : AudioContext,
     documento: document,
+    ganhoInicial: ganhoMestre(lerPreferenciaSom(storageDoNavegador())),
     buscar: async (url) => {
       const r = await fetch(url);
       if (!r.ok) throw new Error(`HTTP ${r.status}`);

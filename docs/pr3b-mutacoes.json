@@ -39,7 +39,7 @@
     "nome": "salto-nao-repassado",
     "detectada": true,
     "travou": false,
-    "falha": "src/ui/sons/controlador.test.ts > ControladorDeSom: relógio, antecedência e saltos > salto do tempo SIMULADO com quadro curto (Acelerar, busca): não soa"
+    "falha": "src/ui/sons/controlador.test.ts > ControladorDeSom: relógio, antecedência e saltos > contexto suspenso (sem toque ainda): nada se acumula; ao retomar, só o que vem depois soa (revisão do 3b)"
   },
   {
     "nome": "nao-avanca-janela",
@@ -186,6 +186,48 @@
     "falha": "src/ui/sons/controlador.test.ts > ControladorDeSom: ambiente e motor > andando: motor; parado (pit na vaga): marcha lenta; abandonado: silêncio"
   },
   {
+    "nome": "desim-recua",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/controlador.test.ts > ControladorDeSom: relógio, antecedência e saltos > trocar de rápida para lenta no meio da janela não toca de novo o que já agendou (revisão do 3b)"
+  },
+  {
+    "nome": "inativa-agenda",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/controlador.test.ts > ControladorDeSom: relógio, antecedência e saltos > contexto suspenso (sem toque ainda): nada se acumula; ao retomar, só o que vem depois soa (revisão do 3b)"
+  },
+  {
+    "nome": "laco-fixa-sem-som",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/controlador.test.ts > ControladorDeSom: ambiente e motor > arquivos ainda decodificando no 1º quadro: os laços entram quando chegarem (revisão do 3b)"
+  },
+  {
+    "nome": "agendado-sem-stop",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/audio.test.ts > audio.ts: a única parte que fala com o Web Audio > parar um laço que ainda não começou chama stop: senão ele vive até o fim da página (revisão do 3b)"
+  },
+  {
+    "nome": "mestre-nasce-cheio",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/audio.test.ts > audio.ts: a única parte que fala com o Web Audio > o mestre nasce no volume salvo (sem um quadro alto quando está mudo) e ativa() segue o contexto"
+  },
+  {
+    "nome": "gesto-so-uma-vez",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/audio.test.ts > audio.ts: a única parte que fala com o Web Audio > primeiro toque retoma o contexto; aba oculta suspende e volta só se já tocava"
+  },
+  {
+    "nome": "ativa-sempre",
+    "detectada": true,
+    "travou": false,
+    "falha": "src/ui/sons/audio.test.ts > audio.ts: a única parte que fala com o Web Audio > o mestre nasce no volume salvo (sem um quadro alto quando está mudo) e ativa() segue o contexto"
+  },
+  {
     "nome": "foco-no-box-ativo",
     "detectada": true,
     "travou": false,
@@ -207,7 +249,7 @@
     "nome": "passagem-no-salto",
     "detectada": true,
     "travou": false,
-    "falha": "src/ui/sons/controlador.test.ts > ControladorDeSom: passagens > num salto do relógio REAL (aba voltando), a passagem atravessada não soa"
+    "falha": "src/ui/sons/controlador.test.ts > ControladorDeSom: passagens > na retomada do contexto, o carro que já estava perto não vira passagem (revisão do 3b)"
   },
   {
     "nome": "passagem-humanos-todos",

@@ -89,9 +89,16 @@ export interface TocarSom {
   fim?: { emS: number; fadeS: number };
 }
 
-/** O que o controlador pede ao áudio. `tocar` devolve um identificador para `ajustar` e `parar`. */
+/** O que `tocar` devolve quando não tocou (arquivo ainda decodificando, ou que falhou). */
+export const SEM_SOM = -1;
+
+/**
+ * O que o controlador pede ao áudio. `tocar` devolve um identificador para `ajustar` e `parar`, ou
+ * `SEM_SOM`. `ativa`: o relógio do áudio anda (contexto rodando); suspenso, `agoraS` fica parado.
+ */
 export interface SaidaDeAudio {
   agoraS(): number;
+  ativa(): boolean;
   tocar(p: TocarSom): number;
   ajustar(h: number, alvo: { ganho?: number; taxa?: number }, constanteS: number): void;
   parar(h: number, fadeS: number): void;
@@ -189,8 +196,9 @@ export function corridaDoSom(
   };
 }
 
+/** Cada laço é `null` até tocar de fato: o arquivo pode ainda estar decodificando (revisão do 3b). */
 interface Loops {
-  pelotao: number;
+  pelotao: number | null;
   chuva: number | null;
   motor: number | null;
   lenta: number | null;
@@ -199,7 +207,7 @@ interface Loops {
 export class ControladorDeSom {
   private readonly foco: string | null;
   private readonly prioritarios: ReadonlySet<string>;
-  private loops: Loops | null = null;
+  private loops: Loops = { pelotao: null, chuva: null, motor: null, lenta: null };
   private encerrado = false;
   private deSim = SIM_ANTES_DA_LARGADA;
   private anterior: { tSim: number; focoPonto: Ponto | null } | null = null;
@@ -231,16 +239,22 @@ export class ControladorDeSom {
   quadro(q: QuadroDoSom): void {
     if (this.encerrado) return;
     const agora = this.saida.agoraS();
-    if (this.loops === null) this.loops = this.iniciarLoops(agora);
+    this.garantirLoops(agora);
+    // Contexto suspenso (sem toque ainda, aba oculta, interrupção do iOS): o relógio do áudio não anda,
+    // e agendar nele empilharia tudo para estourar junto na retomada (revisão do 3b). Os quadros
+    // suspensos contam como salto mas seguem atualizando janela, passagens e quadro anterior: a
+    // retomada não precisa de regra própria (mutação do 3b: ela era redundante).
+    const ativa = this.saida.ativa();
 
     const anterior = this.anterior;
     // Salto do relógio real (aba voltando) ou do tempo simulado (busca), ou a primeira chamada já no
     // meio da corrida: o que foi atravessado não soa.
     const saltou =
-      anterior === null
+      !ativa ||
+      (anterior === null
         ? q.tSim > 0
         : q.deltaRealMs > DELTA_SALTO_MS ||
-          Math.abs(q.tSim - anterior.tSim - q.deltaRealMs * q.escala) > DELTA_SALTO_MS * q.escala;
+          Math.abs(q.tSim - anterior.tSim - q.deltaRealMs * q.escala) > DELTA_SALTO_MS * q.escala);
 
     const porId = new Map(q.carros.map((c) => [c.id, c]));
     const referencias = [...this.prioritarios].flatMap((id) => {
@@ -257,7 +271,9 @@ export class ControladorDeSom {
     )) {
       this.tocarEvento(e, q, agora, porId, referencias);
     }
-    this.deSim = ate;
+    // Nunca recua: trocar para uma velocidade mais lenta encurta a janela, e recuar tocaria de novo o
+    // que já foi agendado (revisão do 3b).
+    this.deSim = Math.max(this.deSim, ate);
 
     this.passagensDoQuadro(q, agora, saltou, porId, referencias);
     this.motor(q, saltou, porId);
@@ -270,28 +286,28 @@ export class ControladorDeSom {
   encerrar(): void {
     if (this.encerrado) return;
     this.encerrado = true;
-    const loops =
-      this.loops === null
-        ? []
-        : [this.loops.pelotao, this.loops.chuva, this.loops.motor, this.loops.lenta];
-    for (const h of [...loops, ...this.vozes.values()])
+    const { pelotao, chuva, motor, lenta } = this.loops;
+    for (const h of [pelotao, chuva, motor, lenta, ...this.vozes.values()])
       if (h !== null) this.saida.parar(h, FADE_ENCERRAR_S);
     this.vozes.clear();
   }
 
-  private iniciarLoops(agora: number): Loops {
-    const laco = (som: SomDoCatalogo, alvo: number | null) => {
+  /** Começa os laços que faltam; o que ainda não tem arquivo tenta de novo no próximo quadro. */
+  private garantirLoops(agora: number): void {
+    const laco = (som: SomDoCatalogo, alvo: number | null): number | null => {
       const h = this.saida.tocar({ som, inicioS: agora + MINIMO_S, ganho: 0, laco: true });
+      if (h === SEM_SOM) return null;
       if (alvo !== null) this.saida.ajustar(h, { ganho: alvo }, ENTRADA_AMBIENTE_S);
       return h;
     };
-    return {
-      pelotao: laco(CATALOGO_SONS.pelotao, GANHO_PELOTAO),
-      chuva: this.corrida.chuva ? laco(CATALOGO_SONS.chuva, GANHO_CHUVA) : null,
-      // O motor e a marcha lenta entram mudos: o primeiro quadro do motor decide qual dos dois soa.
-      motor: this.foco === null ? null : laco(CATALOGO_SONS.motor, null),
-      lenta: this.foco === null ? null : laco(CATALOGO_SONS.lenta, null),
-    };
+    const l = this.loops;
+    l.pelotao ??= laco(CATALOGO_SONS.pelotao, GANHO_PELOTAO);
+    if (this.corrida.chuva) l.chuva ??= laco(CATALOGO_SONS.chuva, GANHO_CHUVA);
+    // O motor e a marcha lenta entram mudos: o quadro do motor decide qual dos dois soa.
+    if (this.foco !== null) {
+      l.motor ??= laco(CATALOGO_SONS.motor, null);
+      l.lenta ??= laco(CATALOGO_SONS.lenta, null);
+    }
   }
 
   private tocarEvento(
@@ -372,7 +388,7 @@ export class ControladorDeSom {
   }
 
   private motor(q: QuadroDoSom, saltou: boolean, porId: ReadonlyMap<string, CarroDoSom>): void {
-    if (this.foco === null || this.loops?.motor == null || this.loops.lenta === null) return;
+    if (this.foco === null || this.loops.motor === null || this.loops.lenta === null) return;
     const carro = porId.get(this.foco);
     if (carro === undefined) return;
     const anterior = this.anterior;

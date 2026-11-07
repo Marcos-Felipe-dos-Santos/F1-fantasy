@@ -38,7 +38,7 @@ export function ControleSom() {
     <div className="controle-som" role="group" aria-label="Som">
       <button
         type="button"
-        className={`botao-velocidade controle-som__botao${pref.mudo || !disponivel ? ' controle-som__botao--mudo' : ''}`}
+        className="botao-velocidade controle-som__botao"
         aria-pressed={disponivel && !pref.mudo}
         aria-label={rotulo}
         title={rotulo}

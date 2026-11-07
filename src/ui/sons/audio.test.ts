@@ -236,13 +236,38 @@ describe('audio.ts: a única parte que fala com o Web Audio', () => {
     await new Promise((r) => setTimeout(r, 0)); // `resume()` é assíncrono
     expect(ctx.retomadas).toBe(1);
     expect(ctx.state).toBe('running');
-    expect(e.ouvintes.get('pointerdown')).toHaveLength(0); // desbloqueado: sai do caminho
+    // Os gestos seguem ouvidos: no iOS uma ligação suspende o contexto sem trocar de aba (revisão do 3b).
+    ctx.state = 'suspended';
+    e.disparar('pointerdown');
+    await new Promise((r) => setTimeout(r, 0));
+    expect(ctx.state).toBe('running');
+    ctx.retomadas = 1;
     e.doc.hidden = true;
     e.disparar('visibilitychange');
     expect(ctx.suspensoes).toBe(1);
     e.doc.hidden = false;
     e.disparar('visibilitychange');
     expect(ctx.retomadas).toBe(2);
+  });
+
+  it('parar um laço que ainda não começou chama stop: senão ele vive até o fim da página (revisão do 3b)', async () => {
+    const e = ambiente();
+    const m = criarMotorDeAudio(e.amb)!;
+    await m.carregar();
+    const h = m.saida.tocar({ som: CATALOGO_SONS.pelotao, inicioS: 5.005, ganho: 0, laco: true });
+    m.saida.parar(h, 0.03);
+    expect(e.fontes[0].loop).toBe(true);
+    expect(e.fontes[0].fim).not.toBeNull();
+    expect(e.fontes[0].desligado).toBe(true);
+  });
+
+  it('o mestre nasce no volume salvo (sem um quadro alto quando está mudo) e ativa() segue o contexto', () => {
+    const e = ambiente();
+    const m = criarMotorDeAudio({ ...e.amb, ganhoInicial: 0 })!;
+    expect(e.ctx().mestre!.gain.value).toBe(0);
+    expect(m.saida.ativa()).toBe(false);
+    e.ctx().state = 'running';
+    expect(m.saida.ativa()).toBe(true);
   });
 
   it('status antes de carregar', () => {
