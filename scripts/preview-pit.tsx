@@ -65,6 +65,14 @@ interface ModuloPit {
 }
 
 const moduloPit = import.meta.glob<ModuloPit>('../src/ui/pit-replay.ts');
+/**
+ * PR 3b: o estado do som entra no `__fps`, para a rodada "depois" provar que mediu COM som (contexto
+ * rodando, arquivos decodificados, vozes tocadas). No build do "antes" o módulo não existe: `null`.
+ */
+interface ModuloAudio {
+  motorDeAudio(): { status(): { decodificados: number; total: number; contexto: string; tocadas: number } } | null;
+}
+const moduloAudio = Object.values(import.meta.glob<ModuloAudio>('../src/ui/sons/audio.ts', { eager: true }))[0];
 
 /** O carro que a cena mostra, ou `undefined` se a corrida não serve. */
 type Criterio = (r: ResultadoCorrida, replay: ReplayDaCorrida, voltas: number) => string | undefined | null;
@@ -360,6 +368,7 @@ function Preview() {
               renderP50: pct(tb, 0.5),
               renderP95: pct(tb, 0.95),
               renderMax: tb[tb.length - 1],
+              som: moduloAudio?.motorDeAudio()?.status() ?? null,
               // O intervalo mede o que travou ENTRE este quadro e o anterior.
               voltasDoRelogio: voltas.slice(AQUECIMENTO).filter(Boolean).length,
               lentos: intervalos.flatMap((d, i) =>
