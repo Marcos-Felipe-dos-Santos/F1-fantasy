@@ -127,8 +127,8 @@ export function TelaInicio({
 
   return (
     <div className="tela-inicio">
-      <h1>F1 Fantasy</h1>
-      <p className="tela-inicio__subtitulo">Draft de equipe/ano + peça icônica</p>
+      <h1>Paddock Draft</h1>
+      <p className="tela-inicio__subtitulo">Monte seu carro com lendas de diferentes épocas e dispute a corrida</p>
 
       {campeonatoSalvo !== null && (
         <div className="tela-inicio__continuar">
@@ -149,28 +149,6 @@ export function TelaInicio({
 
       <form className="form-inicio" onSubmit={handleSubmit}>
         {!ehOnline && (
-        <details
-          className="form-inicio__seed-especifica"
-          open={seedEspecificaAberta}
-          onToggle={(evento) => setSeedEspecificaAberta(evento.currentTarget.open)}
-        >
-          <summary>🎲 Usar seed específica</summary>
-          <label className="form-inicio__campo">
-            Seed
-            <input
-              type="text"
-              value={seedTexto}
-              onChange={(evento) => setSeedTexto(evento.target.value)}
-              placeholder="ex.: senna1988 ou 42"
-            />
-          </label>
-          <p className="form-inicio__seed-dica">
-            Deixe em branco ou fechado pra sortear uma seed nova a cada partida. Preencha pra
-            reproduzir uma partida específica.
-          </p>
-        </details>
-        )}
-        {!ehOnline && (
         <label className="form-inicio__campo">
           Dificuldade
           <select
@@ -185,7 +163,7 @@ export function TelaInicio({
         <label className="form-inicio__campo">
           Modo
           <select value={modo} onChange={(evento) => setModo(evento.target.value as ModoJogo)}>
-            <option value="single">Single (você + 21 bots)</option>
+            <option value="single">Solo (você + 21 bots)</option>
             <option value="local">Local (2-4 jogadores + bots)</option>
             <option value="online">Online (sala compartilhada)</option>
           </select>
@@ -298,6 +276,29 @@ export function TelaInicio({
               bots.
             </p>
           </fieldset>
+        )}
+
+        {!ehOnline && (
+        <details
+          className="form-inicio__seed-especifica"
+          open={seedEspecificaAberta}
+          onToggle={(evento) => setSeedEspecificaAberta(evento.currentTarget.open)}
+        >
+          <summary>🎲 Usar seed específica</summary>
+          <label className="form-inicio__campo">
+            Seed
+            <input
+              type="text"
+              value={seedTexto}
+              onChange={(evento) => setSeedTexto(evento.target.value)}
+              placeholder="ex.: senna1988 ou 42"
+            />
+          </label>
+          <p className="form-inicio__seed-dica">
+            Deixe em branco ou fechado pra sortear uma seed nova a cada partida. Preencha pra
+            reproduzir uma partida específica.
+          </p>
+        </details>
         )}
 
         <button type="submit" className="botao-primario">

@@ -16,10 +16,26 @@ import { atribuirPerfis } from '../engine/bots';
 import { aplicarEscolha, criarDraft, resolverBots } from '../engine/draft';
 import type { Dataset } from '../engine/dataset';
 import { seedFromString } from '../engine/rng';
+import { aplicarReroll, controleRerolls } from '../engine/rerolls';
+import type { TipoReroll } from '../engine/types';
 import type { Dificuldade, DraftState, EscolhaDraft, Jogador } from '../engine/types';
 
 /** Id fixo do jogador humano no modo Single. */
 export const ID_HUMANO = 'voce';
+
+export function aplicarRerollDoJogador(
+  dataset: Dataset,
+  state: DraftState,
+  jogadorId: string,
+  alvo: TipoReroll,
+) {
+  return aplicarReroll(state, dataset, jogadorId, {
+    tipo: 'reroll',
+    alvo,
+    turnoEsperado: state.progresso[jogadorId].rodada,
+    revisaoEsperada: controleRerolls(state, jogadorId).revisao,
+  });
+}
 
 /** Total de jogadores de uma partida (§3/§12): humanos + bots até completar 22. */
 const QTD_JOGADORES = 22;
@@ -89,10 +105,7 @@ function validarHumanos(humanos: HumanoConfig[]): void {
 
   const idsVistos = new Set<string>();
   for (const humano of humanos) {
-    assert(
-      humano.id.trim().length > 0,
-      'iniciarDraft: id de jogador humano vazio ou só espaços',
-    );
+    assert(humano.id.trim().length > 0, 'iniciarDraft: id de jogador humano vazio ou só espaços');
     assert(
       !idsVistos.has(humano.id),
       `iniciarDraft: id de jogador humano duplicado "${humano.id}"`,

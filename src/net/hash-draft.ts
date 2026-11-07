@@ -28,6 +28,7 @@
  * `DraftState` não entra sozinho: entra por decisão, com justificativa.
  */
 
+import { controleRerolls } from '../engine/rerolls';
 import { deriveSeed } from '../engine/rng';
 import type { DraftState } from '../engine/types';
 
@@ -57,6 +58,23 @@ import type { DraftState } from '../engine/types';
  */
 function cargaCanonica(draft: DraftState): string {
   const partes: string[] = [
+    `rerolls=${JSON.stringify(
+      draft.jogadores
+        .map((j) => j.id)
+        .sort()
+        .map((id) => {
+          const c = controleRerolls(draft, id);
+          return [
+            id,
+            c.comunsUsados,
+            c.especialUsado,
+            c.revisao,
+            c.descartados
+              .map((r) => [r.equipe, r.ano] as const)
+              .sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : a[1] - b[1])),
+          ];
+        }),
+    )}`,
     `fase=${draft.fase}`,
     `ordemPeca=${draft.ordemPeca.join(',')}`,
     `indicePeca=${draft.indicePeca}`,

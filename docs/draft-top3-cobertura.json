@@ -1,0 +1,15 @@
+{
+  "fonte": "Jolpica — classificação final do campeonato de construtores (não soma de corridas)",
+  "intervalo": [
+    1958,
+    2025
+  ],
+  "antesDe1958": "Sem campeonato de construtores; sem bônus top3",
+  "temporadasObtidas": 68,
+  "temporadasEsperadas": 68,
+  "correspondencias": 204,
+  "criterioConciliacao": "Nome oficial idêntico ao nome local na mesma temporada; sem inferência por linhagem",
+  "semCorrespondencia": [],
+  "falhas": [],
+  "completo": true
+}

@@ -32,9 +32,10 @@
 
 import { calcularOrdemPeca, RODADAS_SORTEIO } from '../engine/draft-utils';
 import type { Jogador } from '../engine/types';
-import type { ComandoDraft, ErroDraft } from './protocolo';
+import { LIMITE_PEDIDOS_REROLL, type ComandoDraft, type ErroDraft } from './protocolo';
 import {
   MAX_BYTES_ESCOLHA,
+  QTD_JOGADORES,
   PRAZO_TURNO_MS,
   RODADA_COMPLETA,
   VERSAO_ESTADO_DRAFT,
@@ -103,6 +104,8 @@ export function criarDraftRede(
   seedDraft: number,
   agora: number,
 ): EstadoDraftRede {
+  if (roster.length > QTD_JOGADORES || new Set(roster.map((j) => j.id)).size !== roster.length)
+    throw new Error('Roster inválido');
   const jogadorIds = roster.map((j) => j.id);
   const humanos = roster.filter((j) => j.tipo === 'humano').map((j) => j.id);
   const rodada: Record<string, number> = {};
@@ -119,6 +122,7 @@ export function criarDraftRede(
       humanos,
       fase: 'sorteios',
       rodada,
+      revisoes: Object.fromEntries(jogadorIds.map((id) => [id, 0])),
       ordemPeca: calcularOrdemPeca(jogadorIds, seedDraft),
       indicePeca: 0,
       ausentes: [],
@@ -142,14 +146,19 @@ export function criarDraftRede(
 export function deQuemEhAVez(estado: EstadoDraftRede): string[] {
   if (estado.fase === 'concluido') return [];
   if (estado.fase === 'sorteios') {
-    return estado.jogadorIds.filter((id) => estado.rodada[id] <= RODADAS_SORTEIO && ativo(estado, id));
+    return estado.jogadorIds.filter(
+      (id) => estado.rodada[id] <= RODADAS_SORTEIO && ativo(estado, id),
+    );
   }
   const vez = estado.ordemPeca[estado.indicePeca];
   return vez === undefined || !ativo(estado, vez) ? [] : [vez];
 }
 
-function anexar(estado: EstadoDraftRede, evento: Omit<EventoDraft, 'seq'>): EventoDraft[] {
-  return [...estado.log, { ...evento, seq: estado.log.length + 1 }];
+function anexar(
+  estado: EstadoDraftRede,
+  evento: EventoDraft extends infer E ? (E extends EventoDraft ? Omit<E, 'seq'> : never) : never,
+): EventoDraft[] {
+  return [...estado.log, { ...evento, seq: estado.log.length + 1 } as EventoDraft];
 }
 
 /**
@@ -172,11 +181,7 @@ function anexar(estado: EstadoDraftRede, evento: Omit<EventoDraft, 'seq'>): Even
  *    produzem loadouts (e corridas) diferentes. Na prática: `escolherBot`,
  *    semeado — nunca uma decisão de UI.
  */
-function marcarAusente(
-  estado: EstadoDraftRede,
-  jogadorId: string,
-  agora: number,
-): EstadoDraftRede {
+function marcarAusente(estado: EstadoDraftRede, jogadorId: string, agora: number): EstadoDraftRede {
   return normalizar(
     {
       ...estado,
@@ -241,6 +246,7 @@ function escolher(
   estado: EstadoDraftRede,
   escolha: unknown,
   turnoEsperado: unknown,
+  revisaoEsperada: unknown,
   remetenteId: string | null,
   agora: number,
 ): ResultadoDraft {
@@ -264,6 +270,10 @@ function escolher(
   if (turnoEsperado !== turnoCorrente(estado, remetenteId)) {
     return recusar(estado, 'turno-divergente');
   }
+
+  if (!Number.isSafeInteger(revisaoEsperada)) return recusar(estado, 'comando-invalido');
+  if (revisaoEsperada !== estado.revisoes[remetenteId])
+    return recusar(estado, 'revisao-divergente');
 
   const log = anexar(estado, { jogadorId: remetenteId, tipo: 'escolha', escolha });
 
@@ -300,7 +310,51 @@ export function reduzirDraft(
 ): ResultadoDraft {
   switch (comando?.tipo) {
     case 'escolher':
-      return escolher(estado, comando.escolha, comando.turnoEsperado, remetenteId, agora);
+      return escolher(
+        estado,
+        comando.escolha,
+        comando.turnoEsperado,
+        comando.revisaoEsperada,
+        remetenteId,
+        agora,
+      );
+    case 'reroll': {
+      if (estado.fase === 'concluido') return recusar(estado, 'draft-concluido');
+      if (remetenteId === null || !estado.humanos.includes(remetenteId))
+        return recusar(estado, 'jogador-desconhecido');
+      if (estado.ausentes.includes(remetenteId)) return recusar(estado, 'jogador-ausente');
+      if (estado.fase !== 'sorteios' || !deQuemEhAVez(estado).includes(remetenteId))
+        return recusar(estado, 'nao-e-sua-vez');
+      if (
+        !['marca', 'ano', 'ambos'].includes(comando.alvo) ||
+        !Number.isSafeInteger(comando.turnoEsperado) ||
+        !Number.isSafeInteger(comando.revisaoEsperada)
+      )
+        return recusar(estado, 'comando-invalido');
+      if (comando.turnoEsperado !== turnoCorrente(estado, remetenteId))
+        return recusar(estado, 'turno-divergente');
+      if (comando.revisaoEsperada !== estado.revisoes[remetenteId])
+        return recusar(estado, 'revisao-divergente');
+      if (
+        estado.log.filter((e) => e.tipo === 'reroll' && e.jogadorId === remetenteId).length >=
+        LIMITE_PEDIDOS_REROLL
+      )
+        return recusar(estado, 'limite-pedidos-reroll');
+      const pedido = {
+        tipo: 'reroll' as const,
+        alvo: comando.alvo,
+        turnoEsperado: comando.turnoEsperado,
+        revisaoEsperada: comando.revisaoEsperada,
+      };
+      return {
+        estado: {
+          ...estado,
+          revisoes: { ...estado.revisoes, [remetenteId]: estado.revisoes[remetenteId] + 1 },
+          log: anexar(estado, { tipo: 'reroll', jogadorId: remetenteId, pedido }),
+        },
+        erro: null,
+      };
+    }
     case 'abandonar':
       if (estado.fase === 'concluido') return recusar(estado, 'draft-concluido');
       if (remetenteId === null || !estado.humanos.includes(remetenteId)) {
@@ -340,4 +394,94 @@ export function expirarJogador(
   if (!estado.humanos.includes(jogadorId)) return recusar(estado, 'jogador-desconhecido');
   if (estado.ausentes.includes(jogadorId)) return recusar(estado, 'jogador-ausente');
   return { estado: marcarAusente(estado, jogadorId, agora), erro: null };
+}
+
+/** Validação do formato persistido; nunca cria créditos ou trunca replay legado. */
+export function draftRedeValido(valor: unknown): boolean {
+  if (typeof valor !== 'object' || valor === null) return false;
+  const d = valor as EstadoDraftRede;
+  if (
+    d.versao !== VERSAO_ESTADO_DRAFT ||
+    !Array.isArray(d.jogadorIds) ||
+    !Array.isArray(d.humanos) ||
+    !Array.isArray(d.log)
+  )
+    return false;
+  if (
+    d.jogadorIds.length > QTD_JOGADORES ||
+    new Set(d.jogadorIds).size !== d.jogadorIds.length ||
+    d.jogadorIds.some((id) => typeof id !== 'string')
+  )
+    return false;
+  if (
+    d.humanos.length > QTD_JOGADORES ||
+    new Set(d.humanos).size !== d.humanos.length ||
+    d.humanos.some((id) => !d.jogadorIds.includes(id))
+  )
+    return false;
+  if (
+    !d.revisoes ||
+    typeof d.revisoes !== 'object' ||
+    Object.keys(d.revisoes).length !== d.jogadorIds.length
+  )
+    return false;
+  if (!['sorteios', 'peca', 'concluido'].includes(d.fase)) return false;
+  if (
+    !d.rodada ||
+    typeof d.rodada !== 'object' ||
+    Object.keys(d.rodada).length !== d.jogadorIds.length ||
+    d.jogadorIds.some(
+      (id) => !Number.isInteger(d.rodada[id]) || d.rodada[id] < 1 || d.rodada[id] > RODADA_COMPLETA,
+    )
+  )
+    return false;
+  if (
+    !Array.isArray(d.ordemPeca) ||
+    d.ordemPeca.length !== d.jogadorIds.length ||
+    new Set(d.ordemPeca).size !== d.jogadorIds.length ||
+    d.ordemPeca.some((id) => !d.jogadorIds.includes(id))
+  )
+    return false;
+  if (!Number.isInteger(d.indicePeca) || d.indicePeca < 0 || d.indicePeca > d.ordemPeca.length)
+    return false;
+  if (
+    !Array.isArray(d.ausentes) ||
+    new Set(d.ausentes).size !== d.ausentes.length ||
+    d.ausentes.some((id) => !d.humanos.includes(id))
+  )
+    return false;
+  if (
+    !d.iniciadoEm ||
+    typeof d.iniciadoEm !== 'object' ||
+    d.humanos.some((id) => !Number.isFinite(d.iniciadoEm[id]))
+  )
+    return false;
+  const contagens = new Map(d.jogadorIds.map((id) => [id, 0]));
+  // No máximo seis escolhas + uma ausência por humano, além dos pedidos limitados.
+  if (d.log.length > d.humanos.length * (LIMITE_PEDIDOS_REROLL + 7)) return false;
+  for (const [indice, evento] of d.log.entries()) {
+    if (!evento || evento.seq !== indice + 1 || !d.humanos.includes(evento.jogadorId)) return false;
+    if (evento.tipo === 'reroll') {
+      const p = evento.pedido;
+      const n = contagens.get(evento.jogadorId)!;
+      if (
+        !p ||
+        p.tipo !== 'reroll' ||
+        !['marca', 'ano', 'ambos'].includes(p.alvo) ||
+        !Number.isInteger(p.turnoEsperado) ||
+        p.turnoEsperado < 1 ||
+        p.turnoEsperado > RODADAS_SORTEIO ||
+        p.revisaoEsperada !== n ||
+        n >= LIMITE_PEDIDOS_REROLL ||
+        Object.keys(p).length !== 4
+      )
+        return false;
+      contagens.set(evento.jogadorId, n + 1);
+    } else if (evento.tipo === 'escolha') {
+      const bytes = bytesDaEscolha(evento.escolha);
+      if (bytes === undefined || bytes > MAX_BYTES_ESCOLHA || !temFormaDeEscolha(evento.escolha))
+        return false;
+    } else if (evento.tipo !== 'ausencia') return false;
+  }
+  return d.jogadorIds.every((id) => d.revisoes[id] === contagens.get(id));
 }

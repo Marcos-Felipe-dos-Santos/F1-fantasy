@@ -511,7 +511,7 @@ function mapearConexao(
 }
 
 /** Comandos de lobby e de draft chegam pelo mesmo socket; o tipo separa. */
-const EH_DRAFT = new Set(['escolher', 'abandonar']);
+const EH_DRAFT = new Set(['escolher', 'abandonar', 'reroll']);
 
 /**
  * Os valores de `EscopoHash` aceitos pelo servidor, numa forma que o

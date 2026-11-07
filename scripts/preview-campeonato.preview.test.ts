@@ -72,6 +72,7 @@ function draftDeTeste(loadouts: Loadout[]): DraftState {
       perfilBot: i === 0 ? undefined : 'praGanhar',
     })),
     sorteios: {},
+    rerolls: {},
     progresso: {},
     ordemPeca: loadouts.map((l) => l.jogadorId),
     indicePeca: loadouts.length,

@@ -153,6 +153,8 @@ function retornoFalso(cliente: EstadoCliente, extras: Partial<Retorno> = {}): Re
     iniciar: () => {},
     sair: () => {},
     escolher: () => {},
+    reroll: () => {},
+    pendente: false,
     atestarFimDaCorrida: () => {},
     ...outros,
     cliente,

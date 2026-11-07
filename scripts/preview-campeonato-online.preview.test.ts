@@ -171,6 +171,8 @@ function telaDaEtapa(k: number): string {
     iniciar: () => {},
     sair: () => {},
     escolher: () => {},
+    reroll: () => {},
+    pendente: false,
     atestarFimDaCorrida: () => {},
   } as Retorno);
   try {

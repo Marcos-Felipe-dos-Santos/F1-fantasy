@@ -1,0 +1,11 @@
+.tabela-notas__item { gap: var(--espaco-sm); min-width: 0; }
+.tabela-notas__item dd { flex-shrink: 0; }
+.tabela-notas__item--longo { grid-column: 1 / -1; }
+.rerolls__grupos { display: flex; flex-wrap: wrap; gap: var(--espaco-md); }
+.rerolls__grupo { padding: var(--espaco-sm); border: 1px solid var(--borda); border-radius: var(--raio-md); }
+.rerolls__grupo p { margin-bottom: var(--espaco-sm); }
+.detalhes-carro summary { cursor: pointer; }
+.detalhes-carro summary small { display: block; color: var(--cor-texto-fraco); }
+.detalhes-carro dl { min-width: 0; max-width: 22rem; white-space: normal; overflow-wrap: anywhere; }
+.detalhes-carro dt { font-weight: 700; margin-top: var(--espaco-sm); }
+.detalhes-carro dd { margin: 0; }

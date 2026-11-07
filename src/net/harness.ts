@@ -501,9 +501,8 @@ function comandoDoCliente(
   // A coordenada vem da visão do CLIENTE, que pode estar atrasada — e é
   // exatamente por isso que `turnoEsperado` existe: comando montado sobre visão
   // velha é recusado em vez de virar jogada fantasma.
-  const turnoEsperado =
-    visto.fase === 'sorteios' ? visto.rodada[jogadorId] : visto.indicePeca;
-  return { tipo: 'escolher', escolha, turnoEsperado };
+  const turnoEsperado = visto.fase === 'sorteios' ? visto.rodada[jogadorId] : visto.indicePeca;
+  return { tipo: 'escolher', escolha, turnoEsperado, revisaoEsperada: visto.revisoes[jogadorId] };
 }
 
 /**

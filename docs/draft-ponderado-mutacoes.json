@@ -1,0 +1,53 @@
+{
+  "timeoutMs": 120000,
+  "resultados": [
+    {
+      "nome": "sem-bonus-moderno",
+      "detectada": true,
+      "timeout": false,
+      "falha": "src/engine/draft.test.ts > integração do sorteio ponderado oficial > usa o acumulado sem reposição no mesmo substream de cada jogador"
+    },
+    {
+      "nome": "fronteira-1985",
+      "detectada": true,
+      "timeout": false,
+      "falha": "src/engine/sorteio-ponderado.test.ts > sorteio ponderado do draft > soma bônus sem excluir épocas antigas"
+    },
+    {
+      "nome": "sem-bonus-marcante",
+      "detectada": true,
+      "timeout": false,
+      "falha": "src/engine/draft.test.ts > integração do sorteio ponderado oficial > usa o acumulado sem reposição no mesmo substream de cada jogador"
+    },
+    {
+      "nome": "sem-bonus-top3",
+      "detectada": true,
+      "timeout": false,
+      "falha": "src/engine/draft.test.ts > integração do sorteio ponderado oficial > usa o acumulado sem reposição no mesmo substream de cada jogador"
+    },
+    {
+      "nome": "sem-remocao",
+      "detectada": true,
+      "timeout": false,
+      "falha": "src/engine/draft.test.ts > draft completo com 22 bots (§3) > chega em \"concluido\" com 22 loadouts válidos e sem peça com mais de 2 donos"
+    },
+    {
+      "nome": "limite-inclusivo",
+      "detectada": true,
+      "timeout": false,
+      "falha": "src/engine/sorteio-ponderado.test.ts > sorteio ponderado do draft > faz extração cumulativa sem reposição e sem mutar candidatos"
+    },
+    {
+      "nome": "sem-peso",
+      "detectada": true,
+      "timeout": false,
+      "falha": "src/engine/draft.test.ts > integração do sorteio ponderado oficial > usa o acumulado sem reposição no mesmo substream de cada jogador"
+    },
+    {
+      "nome": "sem-guarda-peso",
+      "detectada": true,
+      "timeout": false,
+      "falha": "src/engine/sorteio-ponderado.test.ts > sorteio ponderado do draft > recusa contagem impossível e pesos inválidos"
+    }
+  ]
+}

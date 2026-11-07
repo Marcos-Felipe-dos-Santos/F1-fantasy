@@ -1,0 +1,18 @@
+.rerolls {
+  margin-block: var(--espaco-lg);
+}
+.rerolls p {
+  margin-top: 0;
+}
+.rerolls__acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espaco-sm);
+  margin-block: var(--espaco-sm);
+}
+.rerolls__escolhas {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}

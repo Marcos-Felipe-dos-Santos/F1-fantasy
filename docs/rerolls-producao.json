@@ -1,0 +1,41 @@
+{
+  "commitProduto": "4b410d4",
+  "versaoApp": "4.0.0",
+  "digest": "809ba1e5",
+  "deployId": "f01c5264-edd7-4373-b49a-634e8550d141",
+  "url": "https://f1-fantasy-sala.marcosfeliperigoto.workers.dev",
+  "metodo": "Chrome headless, viewport360x800 em desktop; fluxo UI real seed42, perfil temporário sem cache; WebAudio instrumentado só para contagem e fontes ativas; não é aparelho físico/iPhone",
+  "corridaInteira": {
+    "decodificados": 17,
+    "ativas": 0,
+    "contexto": "running",
+    "violacoes": []
+  },
+  "acelerar": {
+    "decodificados": 17,
+    "ativas": 0,
+    "contexto": "running",
+    "violacoes": []
+  },
+  "online": {
+    "base": "https://f1-fantasy-sala.marcosfeliperigoto.workers.dev/",
+    "protocolo": 2,
+    "revisao": 1,
+    "rerollEmDoisClientes": true,
+    "duplicataRecusada": true,
+    "reconexaoPreservada": true,
+    "pedidosNoLog": 1,
+    "prazoPreservado": true
+  },
+  "testeSuite": {
+    "passaram": 2356,
+    "pulados": 1,
+    "arquivos": 108
+  },
+  "worker": 48,
+  "mutacao": {
+    "detectadas": 12,
+    "total": 12,
+    "timeouts": 0
+  }
+}

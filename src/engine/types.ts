@@ -259,6 +259,35 @@ export interface EquipeAnoRef {
   ano: number;
 }
 
+export type TipoReroll = 'marca' | 'ano' | 'ambos';
+
+export interface ControleRerolls {
+  comunsUsados: number;
+  especialUsado: boolean;
+  revisao: number;
+  descartados: EquipeAnoRef[];
+}
+
+export interface PedidoReroll {
+  tipo: 'reroll';
+  alvo: TipoReroll;
+  turnoEsperado: number;
+  revisaoEsperada: number;
+}
+
+export type ResultadoReroll =
+  | 'aplicado'
+  | 'pool-vazio'
+  | 'cota-esgotada'
+  | 'nao-permitido'
+  | 'turno-divergente'
+  | 'revisao-divergente';
+
+export interface RetornoReroll {
+  state: DraftState;
+  resultado: ResultadoReroll;
+}
+
 /** Fase corrente do draft (§3): 5 sorteios de equipe/ano, depois a peça icônica (rodada 6), depois concluído. */
 export type FaseDraft = 'sorteios' | 'peca' | 'concluido';
 
@@ -280,6 +309,7 @@ export interface DraftState {
   jogadores: Jogador[];
   /** Os 5 sorteios de equipe/ano de cada jogador, pré-computados em `criarDraft` (individual por jogador, §3). */
   sorteios: Record<string, EquipeAnoRef[]>;
+  rerolls: Record<string, ControleRerolls>;
   progresso: Record<string, ProgressoJogador>;
   /** Ordem de escolha da rodada 6, embaralhada por seed (§3). */
   ordemPeca: string[];

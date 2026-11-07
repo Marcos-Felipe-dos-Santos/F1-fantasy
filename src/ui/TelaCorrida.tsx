@@ -528,13 +528,13 @@ export function TelaCorrida({
 
       <button
         type="button"
-        className="botao-primario"
+        className={depoisDaBandeirada ? 'botao-primario' : 'botao-secundario'}
         onClick={() => {
           encerrarSom();
           onAcelerar();
         }}
       >
-        {depoisDaBandeirada ? 'Ir para o resultado →' : 'Acelerar ⏩'}
+        {depoisDaBandeirada ? 'Ir para o resultado →' : 'Pular para o resultado ⏭'}
       </button>
     </div>
   );

@@ -14,6 +14,12 @@ const state: DraftState = {
     { id: 'c', tipo: 'bot', perfilBot: 'passeio' },
   ],
   sorteios: {},
+  rerolls: Object.fromEntries(
+    ['a', 'b', 'c'].map((id) => [
+      id,
+      { comunsUsados: 3, especialUsado: true, revisao: 0, descartados: [] },
+    ]),
+  ),
   progresso: {},
   ordemPeca: [],
   indicePeca: 0,

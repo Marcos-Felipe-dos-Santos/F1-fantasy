@@ -1,0 +1,17 @@
+{
+  "metodo": "npm run balance, mesmas seeds, 200 campeonatos por cenário; correlação e top3 são informativos, sem limiar novo aprovado; demais guardas existentes passaram nos dois lados",
+  "resultados": {
+    "antes": {
+      "spearmanForcaResultado": 0.952,
+      "campeaoTop3Pct": 99.0,
+      "podioForaTop5Pct": 7.5,
+      "dnfPct": 3.5
+    },
+    "depois": {
+      "spearmanForcaResultado": 0.958,
+      "campeaoTop3Pct": 97.0,
+      "podioForaTop5Pct": 6.0,
+      "dnfPct": 3.5
+    }
+  }
+}

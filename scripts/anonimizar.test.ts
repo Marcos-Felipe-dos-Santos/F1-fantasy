@@ -65,6 +65,7 @@ import { verificarColisaoDeIds, type EquipeAnoDerivado } from './derivar-notas.t
 import { join } from 'node:path';
 import { criarDataset } from '../src/engine/dataset';
 import { criarDraft, resolverBots } from '../src/engine/draft';
+import { createRng, deriveSeed } from '../src/engine/rng';
 import { atribuirPerfis } from '../src/engine/bots';
 import { pistaSorteada } from '../src/engine/pista-sorteada';
 import { simularQuali } from '../src/engine/quali';
@@ -284,14 +285,52 @@ function jogadoresDaProva(): Jogador[] {
   return atribuirPerfis(crus, SEED, 'dificil');
 }
 
-/** Roda draft + quali + corrida sobre um `equipe-anos` e devolve os dois hashes. */
+/**
+ * Prova de RENOMEAÇÃO, com seleção controlada: reconstrói só no harness os
+ * sorteios uniformes históricos (shuffle + slice), no mesmo stream por jogador.
+ * O sorteio ponderado oficial depende do nome da equipe; este teste não promete
+ * distribuição igual no dataset fictício obsoleto nem valida seus pesos.
+ * Bots, escolhas, quali, corrida e hashes continuam sendo os de produção.
+ */
 function medir(equipeAnos: unknown) {
   const dataset = criarDataset(
     equipeAnos,
     ler(join(DATA_DIR, 'pecas.json')),
     ler(join(DATA_DIR, 'pistas.json')),
   );
-  const draft = resolverBots(criarDraft(dataset, jogadoresDaProva(), SEED), dataset);
+  const inicial = criarDraft(dataset, jogadoresDaProva(), SEED);
+  const refs = dataset.equipeAnos.map(({ equipe, ano }) => ({ equipe, ano }));
+  const sorteios = Object.fromEntries(
+    inicial.jogadores.map(({ id }) => [
+      id,
+      createRng(deriveSeed(SEED, `draft:sorteios:${id}`))
+        .shuffle(refs)
+        .slice(0, 5),
+    ]),
+  );
+  const draft = resolverBots({ ...inicial, sorteios }, dataset);
+
+  // Índices posicionais isolam identidade de nome/id. Ausência não pode virar
+  // -1 dos dois lados e passar por vacuidade; cada componente deve existir.
+  const componentes = new Map<string, string>();
+  dataset.equipeAnos.forEach((ea, i) => {
+    idsDe(ea).forEach((id, k) => componentes.set(id, `${i}:${k}`));
+  });
+  const componentePorIndice = (id: string): string => {
+    const indice = componentes.get(id);
+    if (indice === undefined)
+      throw new Error('prova: componente escolhido não pertence ao dataset');
+    return indice;
+  };
+  const paresPorIndice = inicial.jogadores.map(({ id }) =>
+    sorteios[id].map((ref) => {
+      const indice = dataset.equipeAnos.findIndex(
+        (ea) => ea.equipe === ref.equipe && ea.ano === ref.ano,
+      );
+      if (indice < 0) throw new Error('prova: par sorteado não pertence ao dataset');
+      return indice;
+    }),
+  );
   const pistaId = pistaSorteada(dataset, SEED);
   const pista = dataset.pistasById.get(pistaId);
   if (pista === undefined) throw new Error(`prova: pista "${pistaId}" não existe no dataset`);
@@ -302,6 +341,15 @@ function medir(equipeAnos: unknown) {
     fase: draft.fase,
     pistaId,
     nLoadouts: loadouts.length,
+    paresPorIndice,
+    escolhasPorIndice: loadouts.map((l) => ({
+      jogadorId: l.jogadorId,
+      componentes: [l.pilotoId, l.chassiId, l.motorId, l.estrategistaId, l.pitId].map(
+        componentePorIndice,
+      ),
+      pecaId: l.pecaId,
+    })),
+    resultado,
     hashDraft: hashDoDraft(draft),
     hashCorrida: hashDaCorrida({ pistaId, resultado }),
   };
@@ -324,6 +372,21 @@ describe('🔑 diferencial — a PROVA: mesma seed, dataset real × dataset anon
 
   it('a PISTA sorteada é a mesma — a seed não vê o dataset trocado', () => {
     expect(mAnon.pistaId).toBe(mReal.pistaId);
+  });
+
+  it('isola renomeação: mesmos cinco pares por índice e escolhas/loadouts correspondentes', () => {
+    expect(mReal.paresPorIndice).toHaveLength(22);
+    for (const pares of mReal.paresPorIndice) {
+      expect(pares).toHaveLength(5);
+      expect(new Set(pares).size).toBe(5);
+    }
+    expect(mAnon.paresPorIndice).toEqual(mReal.paresPorIndice);
+    expect(mAnon.escolhasPorIndice).toEqual(mReal.escolhasPorIndice);
+  });
+
+  it('o resultado COMPLETO da corrida é idêntico sob renomeação', () => {
+    // Comparação compacta: nunca despejar histórico de 22 carros numa falha.
+    expect(JSON.stringify(mAnon.resultado) === JSON.stringify(mReal.resultado)).toBe(true);
   });
 
   it('✅ `hashDaCorrida` é IDÊNTICO — o determinismo sobrevive à troca', () => {

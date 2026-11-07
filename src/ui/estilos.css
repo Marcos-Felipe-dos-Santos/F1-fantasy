@@ -1,6 +1,8 @@
 /* Tema escuro simples do modo Single (PR 1.7a). Sem framework. */
 
 @import './tokens.css';
+@import './fundo.css';
+@import './refinamentos.css';
 
 /*
  * PR 5.1a: as variáveis `--cor-*`/`--raridade-*` abaixo continuam existindo

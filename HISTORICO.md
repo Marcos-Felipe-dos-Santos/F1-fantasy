@@ -7541,6 +7541,69 @@ humanos já tira o humano de si mesmo, e o `o.id === h.id` redundante saiu. Fina
 HEAD `58f694f`: `npm test` 2219 + 1 skipped; `test:party` 46; lint e build com saída 0. `scripts/preview-sons.*`, a
 rodada sintética descartada, foi apagado com a aprovação do Marcos (não estava no git).
 
+### 2026-11-07 — Rerolls e Paddock Draft publicados na URL atual
+
+Branch `codex/rerolls-paddock-draft`, sobre os commits do sorteio ponderado. Produto `4b410d4`.
+O Marcos autorizou continuar o lote e fazer deploy completo; manteve a URL atual, deixando troca de endereço
+para publicação futura. Nome público Paddock Draft no h1/title; Worker, origem e chaves de storage preservados.
+Visual dos controles apresentado nos dois temas; feedback aplicado: “Especial” virou “Trocar marca + ano”.
+
+- Cada humano tem 3 trocas comuns (marca OU ano) no draft inteiro +1 especial separado (marca E ano).
+  Só muda a revelação atual nas rodadas1–5; não avança rodada/slots/handoff. Exclui outros quatro pares e descartados.
+  Pesos oficiais do PR anterior preservados; bots/ausentes não usam rerolls neste ciclo.
+- Sem alternativa ou sem cota: não gasta crédito; pedido válido processado incrementa revisão. Pedido obsoleto
+  não altera nada. RNG por seed/jogador/rodada/revisão/alvo, independente da ordem global de chegada.
+- Arquitetura replicada aprovada pelo Marcos: DO sem catálogo, coordena identidade/turno/revisão e ordena log;
+  a engine dos clientes valida crédito e disponibilidade. Não é autoridade independente de créditos no servidor.
+  Escolhas também levam revisão. Limite de transporte64pedidos por humano/draft, incluindo recusas replicadas,
+  separado dos créditos; log append-only, sem renovação de prazo. Hash inclui saldos, revisão e descartes.
+- App4.0.0, digest809ba1e5, protocolo2 e estado draft2. Salas antigas com draft são recusadas explicitamente
+  pelo caminho sala-inexistente; lobby legado sem draft continua válido. Saves completos formato4 sem rerolls
+  são normalizados com saldos esgotados, preservando loadouts e sem ressorteio; ativos sem controle são rejeitados.
+- Baselines vermelhos antes de engine/UI/net/rename. Suíte completa2356 +1pulado em108arquivos; Worker48/9;
+  lint/typecheck/build verdes. Senior-reviewer aprovou sem bloqueantes. Implementação commitada antes da mutação:
+  12/12 detectadas, zero timeout, limite120s (`docs/rerolls-mutacoes.json`).
+- Medição pareada200campeonatos: política fixa ano/marca/ano/ambos, sem otimizar por notas, aplicou790trocas
+  e encontrou10casos sem pool. Vitórias do humano14→11; pontos médios61,83→60,95. Não mede uso humano ótimo.
+  `docs/rerolls-medicao.json`; balance-harness completo também rodado no fechamento.
+- Deploy autorizado no Worker f1-fantasy-sala: versão `f01c5264-edd7-4373-b49a-634e8550d141`.
+  Inclui sorteio ponderado +rerolls +rename. `docs/rerolls-producao.json`: corrida inteira e Acelerar em produção,
+  17/17 decodificados, zero fonte ativa ao fim e zero violação CSP. Chrome desktop emulado360×800, não celular físico.
+  Sala temporária com2clientes via WebSocket real: reroll recebido por ambos, duplicata recusada, revisão preservada
+  na reconexão e prazo inalterado; conexões de teste encerradas. iPhone físico/AAC continuam pendentes.
+- Três prints em `docs/img/rerolls/`: início e controles claro/escuro. Instrumentos de navegador versionados.
+- Sem push, PR remoto ou merge desta branch. Publicação veio do commit local, com autorização explícita de deploy.
+  Próximo: integrar a branch no remoto com autorização; conferir no celular real/iPhone. Scripts PR2b soltos não entram.
+
+### 2026-11-07 — Sorteio ponderado: primeiro PR da trilha de rerolls
+
+Branch `codex/draft-sorteio-ponderado`, sobre `main` `b04dd28`. Alto risco. Implementação `c44743b`.
+Peso base 1; soma 0,5 para cada critério: ano >=1985; temporada marcante (1988, 1991, 1994, 2004,
+2008, 2012, 2016, 2021, 2023); top 3 oficial de construtores daquela temporada. Máximo 2,5.
+Todo par continua elegível; cinco extrações sem reposição no mesmo substream individual.
+Não altera notas, fórmula de corrida, ordem de peça ou perfis dos bots.
+
+- Classificação oficial Jolpica 1958–2025: 68 temporadas, 204 pares conciliados por nome exato/ano.
+  Antes de 1958, sem bônus top3. Fonte auditável: `scripts/derived/draft-top3.json`.
+- Medição independente, 10000 jogadores/50000 extrações, sem rerolls: 1985+ 60,72 → 70,09%;
+  anos marcantes 13,24 → 18,97%; top3 26,478 → 32,92%. Zero repetição nos cinco pares por jogador.
+  `docs/draft-pesos-cinco-rodadas.json`. A exploração anterior por soma de corridas é provisória e foi substituída.
+- Balance-harness antes/depois passou. 200 campeonatos: Spearman força/resultado 0,952 → 0,958;
+  campeão entre top3 de força 99 → 97%; pódio com alguém fora top5 7,5 → 6%; DNF médio 3,5% em ambos.
+  A forte dominância preexistente do draft permanece; sem afirmar equilíbrio perfeito nem nova meta aprovada.
+- Baseline vermelho do helper e da integração antes de implementar. Mutação após commit: 8/8, zero timeout,
+  limite 120s por mutante (`docs/draft-ponderado-mutacoes.json`).
+- Suíte completa: 2312 passaram +1 pulado em 101 arquivos; Worker46/46; build/typecheck verdes.
+  Os 20 hashes golden de corrida foram preservados usando sorteios históricos no harness de replay;
+  anonimização isola renomeação com entradas equivalentes, sem prometer pesos oficiais para nomes fictícios.
+- Versão app3.5.0/digest624d70e0: novas salas não podem misturar clientes com sorteio antigo.
+  Formato de save4 preservado: campeonatos retomam loadouts salvos, sem ressorteio.
+- Revisão senior-reviewer sem crítico; avisos da coleta (rodada final e preservação de fonte válida) corrigidos
+  com seis testes específicos; coleta offline final confirmou 68 temporadas/204 correspondências.
+- Próximo: PR dos 3 rerolls comuns por jogador no draft inteiro (troca marca OU ano) +1 especial separado
+  (troca ambos), depois integração online. Política de repetição de descartados/bots ainda precisa ser definida.
+- Sem push, merge ou deploy deste PR. Scripts PR2b soltos preservados fora do commit.
+
 ### 2026-11-07 — Ajuste de ouvido do PR 3b
 
 Implementação commitada em `ef91092` antes da mutação. Motor a 15% (antes 0,55 no PR original),
@@ -7936,3 +7999,15 @@ Está desatualizado e vai mentir se um teste quebrar.
 > **Agora:** quatro medições concluídas, sem código de produto nem commit; pacote
 > documental aguardando revisão. Relatório: `docs/auditoria-pre-pr1.md`.
 
+
+
+## 2026-11-07 — refinamentos visuais e inspeção dos carros (preview pendente)
+
+Marcos autorizou itens 1, 3, 4 e 5 da revisão: notas longas separadas, grupos de trocas com saldos próprios, texto inicial e modo Solo, seed após configurações, botão de pular secundário. No resultado, disclosure nativo em cada piloto mostra os cinco componentes/origens e nome da peça icônica; sem notas ou alteração da engine. Ausência de loadout preserva o nome. Suíte completa final: 2358 passaram e 1 ignorado (109 arquivos), incluindo dois testes novos dos detalhes. Typecheck, lint e build passaram. Chrome abriu preview autocontido e conferiu 16 combinações de telas/temas/tamanhos sem overflow e 22 disclosures. Teste físico em celular/iPhone não realizado. Novo preview aguarda aprovação; sem deploy ou commit destas alterações.
+
+
+## 2026-11-07 — deploy do visual aprovado
+
+Após avaliar o preview, Marcos pediu explicitamente o deploy. Produto `4783ee6`; versão Cloudflare `b6968762-781a-4012-8944-70b7636a5270`. URL preservada. Build/typecheck refeitos: corrigido jogadorId obrigatório ausente na fixture do teste de inspeção; os dois testes passaram. QA na produção: início/draft/corrida/resultado em dois temas e dois tamanhos (16 capturas), sem overflow e 22 carros expansíveis. Rerolls respeitaram cotas; pular abriu resultado, 17 arquivos Ogg decodificados, zero fontes ativas ao terminar e nenhuma violação CSP. Sem push/merge. Teste em aparelho físico/iPhone não realizado.
+
+Validação adicional do deploy visual (2026-11-07): corrida inteira em produção concluída pela UI real, 17 Ogg decodificados, nenhuma fonte de áudio ativa ao terminar e zero violações CSP. Evidência em `docs/fundo-preview-validacao.json`.

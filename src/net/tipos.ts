@@ -12,7 +12,7 @@
  * `(Jogador[], seed, dificuldade)`, que não toca dataset nenhum.
  */
 
-import type { Dificuldade, Jogador } from '../engine/types';
+import type { Dificuldade, Jogador, PedidoReroll } from '../engine/types';
 import { RODADAS_SORTEIO } from '../engine/draft-utils';
 
 /** Total de jogadores de uma partida (§3): humanos da sala + bots até completar. */
@@ -279,7 +279,7 @@ export const TIMEOUT_FIM_DE_CORRIDA_MS = 5 * 60_000;
 export const AVISAR_FECHAMENTO_MS = 60_000;
 
 /** Versão do formato de `EstadoDraftRede` persistido pelo Durable Object. */
-export const VERSAO_ESTADO_DRAFT = 1;
+export const VERSAO_ESTADO_DRAFT = 2;
 
 /**
  * Versão do formato de `EstadoSala` persistido pelo Durable Object.
@@ -397,13 +397,11 @@ export type FaseDraftRede = 'sorteios' | 'peca' | 'concluido';
  * não tem como validar *o que* foi escolhido — só *de quem* é a vez. Quem
  * valida o conteúdo é o cliente, que tem a engine e o dataset.
  */
-export interface EventoDraft {
-  /** Posição no log, 1-based. Nada derivado do estado pode depender dela. */
-  seq: number;
-  jogadorId: string;
-  tipo: 'escolha' | 'ausencia';
-  escolha?: unknown;
-}
+export type EventoDraft = { seq: number; jogadorId: string } & (
+  | { tipo: 'escolha'; escolha: unknown }
+  | { tipo: 'ausencia' }
+  | { tipo: 'reroll'; pedido: PedidoReroll }
+);
 
 /**
  * Estado de TURNO do draft no servidor. Não é o `DraftState` da engine e nem
@@ -429,6 +427,7 @@ export interface EstadoDraftRede {
   fase: FaseDraftRede;
   /** Rodada corrente de cada jogador, 1..6. Bots já nascem em `RODADA_COMPLETA`. */
   rodada: Record<string, number>;
+  revisoes: Record<string, number>;
   /** Ordem da rodada 6 — calculada por `calcularOrdemPeca`, a MESMA função da engine. */
   ordemPeca: string[];
   indicePeca: number;
@@ -449,11 +448,10 @@ export interface EstadoDraftRede {
  * `publicarSala`, e o tipo do broadcast (`MensagemServidor`) é
  * `EstadoSalaPublico` — então esquecer de filtrar não compila.
  */
-export interface EstadoSala
-  extends Omit<
-    EstadoSalaPublico,
-    'seedDraft' | 'seedCorrida' | 'seedCalendario' | 'seedsAbertas' | 'nEtapas'
-  > {
+export interface EstadoSala extends Omit<
+  EstadoSalaPublico,
+  'seedDraft' | 'seedCorrida' | 'seedCalendario' | 'seedsAbertas' | 'nEtapas'
+> {
   /** Seed mestre da partida, fixada na criação da sala (uint32). */
   seedMestre: number;
   /**

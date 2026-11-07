@@ -318,6 +318,9 @@ function ConteudoOnline({
         jogadorId={euSou}
         visibilidade="craque"
         erro={online.ultimoErro}
+        onReroll={online.reroll}
+        resultadoReroll={online.cliente.resultadosReroll[euSou]?.resultado}
+        pendente={online.pendente || online.estadoConexao !== 'aberta'}
         onEscolher={escolher}
       />
     );
@@ -329,6 +332,7 @@ function ConteudoOnline({
       jogadorId={euSou}
       visibilidade="craque"
       erro={online.ultimoErro}
+      pendente={online.pendente || online.estadoConexao !== 'aberta'}
       onEscolher={escolher}
     />
   );

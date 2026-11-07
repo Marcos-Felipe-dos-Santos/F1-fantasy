@@ -59,7 +59,7 @@ const cmd = (
   jogadorId: string,
   escolha: unknown = ESCOLHA_PADRAO,
 ): ComandoDraft => ({
-  tipo: 'escolher',
+  tipo: 'escolher', revisaoEsperada: 0,
   escolha,
   turnoEsperado: turnoCorrente(estado, jogadorId),
 });
@@ -220,7 +220,7 @@ describe('idempotência (duplicata e reordenação da rede)', () => {
     for (const turnoEsperado of [0, 2, 99, -1]) {
       const r = reduzirDraft(
         estado,
-        { tipo: 'escolher', escolha: ESCOLHA_PADRAO, turnoEsperado },
+        { tipo: 'escolher', revisaoEsperada: 0, escolha: ESCOLHA_PADRAO, turnoEsperado },
         'humano-01',
         T0,
       );
@@ -244,7 +244,7 @@ describe('tamanho do payload', () => {
     const gigante = { lixo: 'x'.repeat(MAX_BYTES_ESCOLHA) };
     const r = reduzirDraft(
       estado,
-      { tipo: 'escolher', escolha: gigante, turnoEsperado: 1 },
+      { tipo: 'escolher', revisaoEsperada: 0, escolha: gigante, turnoEsperado: 1 },
       'humano-01',
       T0,
     );
@@ -287,7 +287,7 @@ describe('tamanho do payload', () => {
     ciclico.eu = ciclico;
     const r = reduzirDraft(
       estado,
-      { tipo: 'escolher', escolha: ciclico, turnoEsperado: 1 },
+      { tipo: 'escolher', revisaoEsperada: 0, escolha: ciclico, turnoEsperado: 1 },
       'humano-01',
       T0,
     );
@@ -309,7 +309,7 @@ describe('log append-only', () => {
 
     expect(estado.log.map((e) => e.seq)).toEqual([1, 2, 3]);
     expect(estado.log.map((e) => e.jogadorId)).toEqual(['humano-01', 'humano-03', 'humano-02']);
-    expect(estado.log.map((e) => e.escolha)).toEqual(escolhas);
+    expect(estado.log.map((e) => e.tipo === 'escolha' ? e.escolha : undefined)).toEqual(escolhas);
     expect(estado.log.every((e) => e.tipo === 'escolha')).toBe(true);
   });
 
@@ -355,8 +355,8 @@ describe('recusas', () => {
       { tipo: 'expirar' },
       {},
       { tipo: 'xpto' },
-      { tipo: 'escolher', escolha: ESCOLHA_PADRAO },
-      { tipo: 'escolher', escolha: ESCOLHA_PADRAO, turnoEsperado: '1' },
+      { tipo: 'escolher', revisaoEsperada: 0, escolha: ESCOLHA_PADRAO },
+      { tipo: 'escolher', revisaoEsperada: 0, escolha: ESCOLHA_PADRAO, turnoEsperado: '1' },
     ] as unknown as ComandoDraft[];
     for (const comando of lixo) {
       const r = reduzirDraft(estado, comando, 'humano-01', T0);
