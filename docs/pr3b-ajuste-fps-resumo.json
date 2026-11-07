@@ -1,0 +1,245 @@
+{
+  "fonte": "docs/pr3b-ajuste-fps.json",
+  "freioCpu": 6,
+  "viewport": [
+    360,
+    800
+  ],
+  "carros": 22,
+  "chuva": true,
+  "orcamentosMs": {
+    "fps60": 16.666666666666668,
+    "fps30": 33.333333333333336
+  },
+  "metodo": "Medianas entre repetições e pior p95 de cada grupo; mainPorFrame é estimativa por Performance.TaskDuration/fps; render é tempo do render, não quadro completo. Não mede aparelho real nem thread de áudio. Áudio deve estar running, 17 decodificados e tocadas >0.",
+  "grupos": [
+    {
+      "grupo": "pista-spa/media/sem-som",
+      "repeticoes": 3,
+      "frames": 1800,
+      "fpsMediano": 60.406,
+      "fpsMinimo": 54.549,
+      "mainMsPorFrameMediano": 16.44,
+      "renderP50Mediano": 5.3,
+      "renderP95PiorRodada": 8.5,
+      "intervaloP95PiorRodada": 27.7,
+      "intervaloMaximo": 77.8,
+      "acima33ms": 9,
+      "audio": [
+        null,
+        null,
+        null
+      ]
+    },
+    {
+      "grupo": "pista-spa/media/com-som",
+      "repeticoes": 3,
+      "frames": 1800,
+      "fpsMediano": 66.181,
+      "fpsMinimo": 35.435,
+      "mainMsPorFrameMediano": 15.005,
+      "renderP50Mediano": 5.1,
+      "renderP95PiorRodada": 27.7,
+      "intervaloP95PiorRodada": 122.3,
+      "intervaloMaximo": 355.5,
+      "acima33ms": 64,
+      "audio": [
+        {
+          "decodificados": 17,
+          "total": 17,
+          "falhas": [],
+          "taxaHz": 48000,
+          "contexto": "running",
+          "tocadas": 16
+        },
+        {
+          "decodificados": 17,
+          "total": 17,
+          "falhas": [],
+          "taxaHz": 48000,
+          "contexto": "running",
+          "tocadas": 17
+        },
+        {
+          "decodificados": 17,
+          "total": 17,
+          "falhas": [],
+          "taxaHz": 48000,
+          "contexto": "running",
+          "tocadas": 17
+        }
+      ]
+    },
+    {
+      "grupo": "pista-montreal/media/sem-som",
+      "repeticoes": 3,
+      "frames": 1800,
+      "fpsMediano": 78.379,
+      "fpsMinimo": 70.824,
+      "mainMsPorFrameMediano": 12.668,
+      "renderP50Mediano": 4.2,
+      "renderP95PiorRodada": 6.4,
+      "intervaloP95PiorRodada": 22.2,
+      "intervaloMaximo": 33.4,
+      "acima33ms": 2,
+      "audio": [
+        null,
+        null,
+        null
+      ]
+    },
+    {
+      "grupo": "pista-montreal/media/com-som",
+      "repeticoes": 3,
+      "frames": 1800,
+      "fpsMediano": 71.622,
+      "fpsMinimo": 69.952,
+      "mainMsPorFrameMediano": 13.858,
+      "renderP50Mediano": 4.8,
+      "renderP95PiorRodada": 7,
+      "intervaloP95PiorRodada": 22.2,
+      "intervaloMaximo": 33.5,
+      "acima33ms": 2,
+      "audio": [
+        {
+          "decodificados": 17,
+          "total": 17,
+          "falhas": [],
+          "taxaHz": 48000,
+          "contexto": "running",
+          "tocadas": 23
+        },
+        {
+          "decodificados": 17,
+          "total": 17,
+          "falhas": [],
+          "taxaHz": 48000,
+          "contexto": "running",
+          "tocadas": 23
+        },
+        {
+          "decodificados": 17,
+          "total": 17,
+          "falhas": [],
+          "taxaHz": 48000,
+          "contexto": "running",
+          "tocadas": 21
+        }
+      ]
+    },
+    {
+      "grupo": "pista-spa/rapida/sem-som",
+      "repeticoes": 3,
+      "frames": 1800,
+      "fpsMediano": 66.877,
+      "fpsMinimo": 66.343,
+      "mainMsPorFrameMediano": 14.859,
+      "renderP50Mediano": 4.7,
+      "renderP95PiorRodada": 6.4,
+      "intervaloP95PiorRodada": 22.2,
+      "intervaloMaximo": 38.9,
+      "acima33ms": 2,
+      "audio": [
+        null,
+        null,
+        null
+      ]
+    },
+    {
+      "grupo": "pista-spa/rapida/com-som",
+      "repeticoes": 3,
+      "frames": 1800,
+      "fpsMediano": 63.422,
+      "fpsMinimo": 60.07,
+      "mainMsPorFrameMediano": 15.662,
+      "renderP50Mediano": 5.3,
+      "renderP95PiorRodada": 7.6,
+      "intervaloP95PiorRodada": 22.3,
+      "intervaloMaximo": 38.9,
+      "acima33ms": 1,
+      "audio": [
+        {
+          "decodificados": 17,
+          "total": 17,
+          "falhas": [],
+          "taxaHz": 48000,
+          "contexto": "running",
+          "tocadas": 18
+        },
+        {
+          "decodificados": 17,
+          "total": 17,
+          "falhas": [],
+          "taxaHz": 48000,
+          "contexto": "running",
+          "tocadas": 18
+        },
+        {
+          "decodificados": 17,
+          "total": 17,
+          "falhas": [],
+          "taxaHz": 48000,
+          "contexto": "running",
+          "tocadas": 16
+        }
+      ]
+    },
+    {
+      "grupo": "pista-montreal/rapida/sem-som",
+      "repeticoes": 3,
+      "frames": 1800,
+      "fpsMediano": 73.774,
+      "fpsMinimo": 71.01,
+      "mainMsPorFrameMediano": 13.459,
+      "renderP50Mediano": 4.3,
+      "renderP95PiorRodada": 6,
+      "intervaloP95PiorRodada": 16.8,
+      "intervaloMaximo": 33.5,
+      "acima33ms": 1,
+      "audio": [
+        null,
+        null,
+        null
+      ]
+    },
+    {
+      "grupo": "pista-montreal/rapida/com-som",
+      "repeticoes": 3,
+      "frames": 1800,
+      "fpsMediano": 66.918,
+      "fpsMinimo": 54.77,
+      "mainMsPorFrameMediano": 14.85,
+      "renderP50Mediano": 5.1,
+      "renderP95PiorRodada": 8.3,
+      "intervaloP95PiorRodada": 22.3,
+      "intervaloMaximo": 38.9,
+      "acima33ms": 4,
+      "audio": [
+        {
+          "decodificados": 17,
+          "total": 17,
+          "falhas": [],
+          "taxaHz": 48000,
+          "contexto": "running",
+          "tocadas": 30
+        },
+        {
+          "decodificados": 17,
+          "total": 17,
+          "falhas": [],
+          "taxaHz": 48000,
+          "contexto": "running",
+          "tocadas": 34
+        },
+        {
+          "decodificados": 17,
+          "total": 17,
+          "falhas": [],
+          "taxaHz": 48000,
+          "contexto": "running",
+          "tocadas": 30
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,101 @@
+{
+  "timeoutMs": 120000,
+  "resultados": [
+    {
+      "nome": "motor-sem-pausa",
+      "detectada": true,
+      "timeout": false,
+      "falha": "src/ui/sons/controlador.test.ts > ControladorDeSom: ambiente e motor > motor descansa entre roncos e retorna a 15%"
+    },
+    {
+      "nome": "motor-ciclo-curto",
+      "detectada": true,
+      "timeout": false,
+      "falha": "src/ui/sons/controlador.test.ts > ControladorDeSom: ambiente e motor > motor descansa entre roncos e retorna a 15%"
+    },
+    {
+      "nome": "motor-sem-fade-saida",
+      "detectada": true,
+      "timeout": false,
+      "falha": "src/ui/sons/controlador.test.ts > ControladorDeSom: ambiente e motor > motor descansa entre roncos e retorna a 15%"
+    },
+    {
+      "nome": "motor-alto",
+      "detectada": true,
+      "timeout": false,
+      "falha": "src/ui/sons/agenda.test.ts > motor > ganho do motor audível limitado a 15% em toda a faixa"
+    },
+    {
+      "nome": "motor-mudo",
+      "detectada": true,
+      "timeout": false,
+      "falha": "src/ui/sons/agenda.test.ts > motor > ganho do motor audível limitado a 15% em toda a faixa"
+    },
+    {
+      "nome": "tom-rapido",
+      "detectada": true,
+      "timeout": false,
+      "falha": "src/ui/sons/controlador.test.ts > ControladorDeSom: ambiente e motor > andando: motor; parado (pit na vaga): marcha lenta; abandonado: silêncio"
+    },
+    {
+      "nome": "tom-congelado",
+      "detectada": true,
+      "timeout": false,
+      "falha": "src/ui/sons/controlador.test.ts > ControladorDeSom: ambiente e motor > andando: motor; parado (pit na vaga): marcha lenta; abandonado: silêncio"
+    },
+    {
+      "nome": "pausa-sem-limite",
+      "detectada": true,
+      "timeout": false,
+      "falha": "src/ui/sons/controlador.test.ts > ajuste de ouvido do PR 3b > pausa longa limita o passo a 0,05; delta nulo/negativo não muda o alvo"
+    },
+    {
+      "nome": "inicio-tom-alto",
+      "detectada": true,
+      "timeout": false,
+      "falha": "src/ui/sons/controlador.test.ts > ControladorDeSom: ambiente e motor > andando: motor; parado (pit na vaga): marcha lenta; abandonado: silêncio"
+    },
+    {
+      "nome": "sem-taxa-inicial-fonte",
+      "detectada": true,
+      "timeout": false,
+      "falha": "src/ui/sons/controlador.test.ts > ajuste de ouvido do PR 3b > o motor nasce em 0,6 e seu alvo sobe e desce no máximo 0,5 por segundo real"
+    },
+    {
+      "nome": "torcida-fade-curto",
+      "detectada": true,
+      "timeout": false,
+      "falha": "src/ui/sons/controlador.test.ts > ajuste de ouvido do PR 3b > torcida reserva 2,5 s de fade dentro do arquivo: intervalo 1000 ms"
+    },
+    {
+      "nome": "torcida-sem-reserva",
+      "detectada": true,
+      "timeout": false,
+      "falha": "src/ui/sons/controlador.test.ts > ajuste de ouvido do PR 3b > torcida reserva 2,5 s de fade dentro do arquivo: intervalo 60000 ms"
+    },
+    {
+      "nome": "sem-handle-torcida",
+      "detectada": true,
+      "timeout": false,
+      "falha": "src/ui/sons/controlador.test.ts > ajuste de ouvido do PR 3b > encerramento natural preserva somente a torcida quando terminou naturalmente"
+    },
+    {
+      "nome": "cleanup-corta-torcida",
+      "detectada": true,
+      "timeout": false,
+      "falha": "src/ui/sons/som-na-tela.test.ts > som na TelaCorrida > o hook encerra o controlador na limpeza do efeito (desmontar e trocar de fase)"
+    },
+    {
+      "nome": "manual-preserva-torcida",
+      "detectada": true,
+      "timeout": false,
+      "falha": "src/ui/sons/som-na-tela.test.ts > Acelerar interrompe explicitamente o som antes de trocar a fase"
+    },
+    {
+      "nome": "botao-nao-cala",
+      "detectada": true,
+      "timeout": false,
+      "falha": "src/ui/sons/som-na-tela.test.ts > Acelerar interrompe explicitamente o som antes de trocar a fase"
+    }
+  ]
+}

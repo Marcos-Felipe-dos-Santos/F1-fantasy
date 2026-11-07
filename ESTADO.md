@@ -444,6 +444,36 @@ dependência).
 
 ## Onde parei
 
+### 2026-11-07 — Ajuste de ouvido do PR 3b
+
+Implementação commitada em `ef91092` antes da mutação. Motor a 15% (antes 0,55 no PR original),
+com ciclo de 3 s de ronco / 3 s de descanso no relógio de áudio; saída gradual entre 2,5 e 3 s.
+Marcha lenta preservada. Alvo do tom limitado a 0,5/s real, passo limitado a 100 ms.
+Torcida com fade de 2,5 s reservado dentro do arquivo; saída natural deixa concluir a torcida,
+e o botão Acelerar chama o encerramento explícito antes de trocar de fase.
+
+- Suíte completa: 2296 passaram + 1 pulado em 98 arquivos; Worker: 46/46. Lint limpo e build de produção verde.
+- Mutação do ajuste: 16/16 detectadas, 0 timeout, limite de 120 s por mutante; `docs/pr3b-ajuste-mutacoes.json`.
+- Revisão senior-reviewer: sem crítico; corrigidos rótulo antigo do preview, padrões antigos dos mutantes
+  e teste dos limites 3/6 s, fade e relógio de áudio congelado. A ligação do clique segue cerca textual.
+- Diagnóstico de áudio: `docs/pr3b-ajuste-audio.json` (ganho 0,15; níveis antes do mestre/compressor,
+  sem afirmar ausência de clipping global ou aprovação auditiva).
+- Dois prints selecionados: `docs/img/pr3b/controle-escuro.png` e `controle-claro.png`, capturados antes
+  deste ajuste de áudio; representam o controle visual inalterado, não comprovam o som novo.
+- Preview autocontido local: `preview/pr3b-som.html`. O Artifact remoto antigo não foi atualizado por esta sessão.
+- FPS concluído: `docs/pr3b-ajuste-fps.json` e `docs/pr3b-ajuste-fps-resumo.json`.
+  CPU 6×, 360×800, 22 carros, chuva, 3 repetições intercaladas sem/com som em cada pista/velocidade.
+  Medianas FPS sem → com: Spa média 60,4 → 66,2; Montreal média 78,4 → 71,6;
+  Spa rápida 66,9 → 63,4; Montreal rápida 73,8 → 66,9. Render p50: 5,3 → 5,1;
+  4,2 → 4,8; 4,7 → 5,3; 4,3 → 5,1 ms, respectivamente. Todas as rodadas com som
+  confirmaram contexto running, 17/17 decodificados e vozes tocadas. A primeira com som
+  concorreu com o fim da suíte: 35,4 FPS, 62 quadros >33 ms e intervalo máximo 355,5 ms.
+  Resultado preservado; o ganho aparente de Spa média é ruído, não melhoria comprovada.
+  Emulação desktop não mede celular real nem a thread de áudio; há queda nas outras três medianas.
+  Sem afirmar ausência de regressão ou aprovação do Marcos sobre essa queda.
+- Sem push, merge ou deploy. `.txt` da raiz, `preview/`, `referencias/` e scripts de PR 2b excluídos dos commits.
+
+
 ### 2026-11-07 — PR 3b (o som toca no jogo) FECHADO na branch, aguardando o veredito do Marcos no ouvido
 
 Branch `feat/pr3b-audio`, sobre a `main` `e87c66d` (merge do PR 3a). Risco ALTO. Sem push, merge ou deploy. Detalhe em
