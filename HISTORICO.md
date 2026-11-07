@@ -7541,6 +7541,35 @@ humanos já tira o humano de si mesmo, e o `o.id === h.id` redundante saiu. Fina
 HEAD `58f694f`: `npm test` 2219 + 1 skipped; `test:party` 46; lint e build com saída 0. `scripts/preview-sons.*`, a
 rodada sintética descartada, foi apagado com a aprovação do Marcos (não estava no git).
 
+### 2026-11-07 — Sorteio ponderado: primeiro PR da trilha de rerolls
+
+Branch `codex/draft-sorteio-ponderado`, sobre `main` `b04dd28`. Alto risco. Implementação `c44743b`.
+Peso base 1; soma 0,5 para cada critério: ano >=1985; temporada marcante (1988, 1991, 1994, 2004,
+2008, 2012, 2016, 2021, 2023); top 3 oficial de construtores daquela temporada. Máximo 2,5.
+Todo par continua elegível; cinco extrações sem reposição no mesmo substream individual.
+Não altera notas, fórmula de corrida, ordem de peça ou perfis dos bots.
+
+- Classificação oficial Jolpica 1958–2025: 68 temporadas, 204 pares conciliados por nome exato/ano.
+  Antes de 1958, sem bônus top3. Fonte auditável: `scripts/derived/draft-top3.json`.
+- Medição independente, 10000 jogadores/50000 extrações, sem rerolls: 1985+ 60,72 → 70,09%;
+  anos marcantes 13,24 → 18,97%; top3 26,478 → 32,92%. Zero repetição nos cinco pares por jogador.
+  `docs/draft-pesos-cinco-rodadas.json`. A exploração anterior por soma de corridas é provisória e foi substituída.
+- Balance-harness antes/depois passou. 200 campeonatos: Spearman força/resultado 0,952 → 0,958;
+  campeão entre top3 de força 99 → 97%; pódio com alguém fora top5 7,5 → 6%; DNF médio 3,5% em ambos.
+  A forte dominância preexistente do draft permanece; sem afirmar equilíbrio perfeito nem nova meta aprovada.
+- Baseline vermelho do helper e da integração antes de implementar. Mutação após commit: 8/8, zero timeout,
+  limite 120s por mutante (`docs/draft-ponderado-mutacoes.json`).
+- Suíte completa: 2312 passaram +1 pulado em 101 arquivos; Worker46/46; build/typecheck verdes.
+  Os 20 hashes golden de corrida foram preservados usando sorteios históricos no harness de replay;
+  anonimização isola renomeação com entradas equivalentes, sem prometer pesos oficiais para nomes fictícios.
+- Versão app3.5.0/digest624d70e0: novas salas não podem misturar clientes com sorteio antigo.
+  Formato de save4 preservado: campeonatos retomam loadouts salvos, sem ressorteio.
+- Revisão senior-reviewer sem crítico; avisos da coleta (rodada final e preservação de fonte válida) corrigidos
+  com seis testes específicos; coleta offline final confirmou 68 temporadas/204 correspondências.
+- Próximo: PR dos 3 rerolls comuns por jogador no draft inteiro (troca marca OU ano) +1 especial separado
+  (troca ambos), depois integração online. Política de repetição de descartados/bots ainda precisa ser definida.
+- Sem push, merge ou deploy deste PR. Scripts PR2b soltos preservados fora do commit.
+
 ### 2026-11-07 — Ajuste de ouvido do PR 3b
 
 Implementação commitada em `ef91092` antes da mutação. Motor a 15% (antes 0,55 no PR original),

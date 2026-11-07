@@ -1,0 +1,42 @@
+{
+  "metodo": "Probabilidade exata de uma primeira extração por soma de pesos; não simula 5 rodadas sem reposição ou rerolls. Top 3 PROVISÓRIO por soma de pontos das corridas no cache: faltam sprints e ajustes oficiais. Nomes precisam de conciliação antes de produção.",
+  "anosMarcantes": [
+    1988,
+    1991,
+    1994,
+    2004,
+    2008,
+    2012,
+    2016,
+    2021,
+    2023
+  ],
+  "pares": 771,
+  "paresTop3Conciliados": 224,
+  "cenarios": [
+    {
+      "bonus": 0,
+      "pesoMin": 1,
+      "pesoMax": 1,
+      "porcentagem1985mais": 60.70038910505836,
+      "porcentagemAnosMarcantes": 13.488975356679637,
+      "porcentagemTop3": 29.053177691309987
+    },
+    {
+      "bonus": 0.25,
+      "pesoMin": 1,
+      "pesoMax": 1.75,
+      "porcentagem1985mais": 66.15979381443299,
+      "porcentagemAnosMarcantes": 16.778350515463917,
+      "porcentagemTop3": 32.7319587628866
+    },
+    {
+      "bonus": 0.5,
+      "pesoMin": 1,
+      "pesoMax": 2.5,
+      "porcentagem1985mais": 69.76047904191617,
+      "porcentagemAnosMarcantes": 18.94781864841745,
+      "porcentagemTop3": 35.15825491873396
+    }
+  ]
+}
