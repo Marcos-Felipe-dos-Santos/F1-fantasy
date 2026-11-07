@@ -23,6 +23,8 @@ import {
 import { efeitosNoInstante, guinadaNoInstante } from './incidentes-replay';
 import { nomeJogador, rotulosDosPilotos } from './loadout-view';
 import { narrarEventos, textoDaConsequencia } from './narracao';
+import { ControleSom } from './sons/ControleSom';
+import { useSomDaCorrida } from './sons/useSomDaCorrida';
 import {
   CAMADAS_PISTA,
   VIEWBOX_ALTURA,
@@ -259,10 +261,50 @@ export function TelaCorrida({
   const telaEstreita = useTelaEstreita();
   const pilotos = useMemo(() => rotulosDosPilotos(state.loadouts, dataset), [state.loadouts]);
 
+  const replay = replayDaCorrida(resultado, pista);
+  const simPorReal = escalaReplay(resultado.classificacao[0].tempoTotal, pista.voltas, MS_REPLAY_POR_VOLTA[velocidade]);
+  // Antes do retorno do grid: o som (PR 3b) é hook e usa estas mesmas posições.
+  const posicoes =
+    fase === 'grid'
+      ? []
+      : resultado.classificacao.map((item) => {
+          const historico = resultado.historicoVoltas[item.jogadorId] ?? [];
+          // Curva SUAVIZADA, a mesma geometria que `pathDaVolta` desenha
+          // (PR 7.4): usar a polilinha de controle aqui deixaria os carros
+          // cortando as curvas por fora do asfalto desenhado. No pit, o caminho do
+          // box (PR 2c); depois da linha, a volta lenta (PR 2e).
+          const posicao = replay.posicao(item.jogadorId, historico, item.status, tempoSimMs, movimentoReduzido);
+          const parado = replay.parado(item.jogadorId, tempoSimMs);
+          return {
+            ...posicao,
+            abandonou: replay.abandonou(item.jogadorId, tempoSimMs),
+            parado,
+            parou: replay.chegou(item.jogadorId, tempoSimMs) || parado,
+          };
+        });
+  const encerrarSom = useSomDaCorrida({
+    resultado,
+    pista,
+    humanos: state.jogadores.filter((j) => j.tipo === 'humano').map((j) => j.id),
+    jogadorLocalId,
+    fase,
+    tempoSimMs,
+    velocidade,
+    escala: simPorReal,
+    carros: posicoes.map((p, i) => ({
+      id: resultado.classificacao[i].jogadorId,
+      ponto: p.ponto,
+      naPista: p.fracaoNaPista !== null,
+      parado: p.parado,
+      abandonou: p.abandonou,
+    })),
+  });
+
   if (fase === 'grid') {
     return (
       <div className="tela-corrida">
         <h2>Grid de largada — {pista.nome}</h2>
+        <ControleSom />
         <div className="tabela-grid-wrap">
           <table className="tabela-grid">
             <thead>
@@ -299,32 +341,17 @@ export function TelaCorrida({
   const historicoLider = resultado.historicoVoltas[lider.jogadorId] ?? [];
   const volta = voltaAtual(historicoLider, tempoSimMs, pista.voltas);
 
-  const replay = replayDaCorrida(resultado, pista);
   // Narração da corrida inteira, memoizada, filtrada pelo instante do carro (PR 2d).
   const eventosOcorridos = narrarEventos(resultado, replay).filter((narrada) => narrada.instante <= tempoSimMs);
   const gridLargada = grid.grid.map((item) => item.jogadorId);
   /** O piloto (PR 2d); o humano segue com o nome dele, que é como a sala o conhece. */
   const nomeNoPainel = (jogadorId: string) =>
     ehHumanoId(state, jogadorId) ? nomeDoJogadorId(state, jogadorId) : (pilotos.get(jogadorId) ?? jogadorId);
-  const simPorReal = escalaReplay(resultado.classificacao[0].tempoTotal, pista.voltas, MS_REPLAY_POR_VOLTA[velocidade]);
   const depoisDaBandeirada = tempoSimMs >= replay.bandeirada;
   const classificacaoAtual = classificacaoAoVivo(resultado, gridLargada, tempoSimMs, pista.voltas, replay);
   const diferencas = diferencasParaLider(resultado, classificacaoAtual, tempoSimMs, pista.voltas, replay);
 
   const escalas = telaEstreita ? ESCALA_CARRO.estreita : ESCALA_CARRO.larga;
-  const posicoes = resultado.classificacao.map((item) => {
-    const historico = resultado.historicoVoltas[item.jogadorId] ?? [];
-    // Curva SUAVIZADA, a mesma geometria que `pathDaVolta` desenha
-    // (PR 7.4): usar a polilinha de controle aqui deixaria os carros
-    // cortando as curvas por fora do asfalto desenhado. No pit, o caminho do
-    // box (PR 2c); depois da linha, a volta lenta (PR 2e).
-    const posicao = replay.posicao(item.jogadorId, historico, item.status, tempoSimMs, movimentoReduzido);
-    return {
-      ...posicao,
-      abandonou: replay.abandonou(item.jogadorId, tempoSimMs),
-      parou: replay.chegou(item.jogadorId, tempoSimMs) || replay.parado(item.jogadorId, tempoSimMs),
-    };
-  });
   const niveisSpray =
     resultado.chuva && !movimentoReduzido
       ? niveisDeSpray(
@@ -392,6 +419,8 @@ export function TelaCorrida({
         </h2>
         {resultado.chuva && <span className="badge-chuva">🌧️ Chuva</span>}
       </div>
+
+      <ControleSom />
 
       <div className="grupo-velocidade" role="group" aria-label="Velocidade do replay">
         {OPCOES_VELOCIDADE.map((opcao) => (
@@ -497,7 +526,14 @@ export function TelaCorrida({
           })}
       </ul>
 
-      <button type="button" className="botao-primario" onClick={onAcelerar}>
+      <button
+        type="button"
+        className="botao-primario"
+        onClick={() => {
+          encerrarSom();
+          onAcelerar();
+        }}
+      >
         {depoisDaBandeirada ? 'Ir para o resultado →' : 'Acelerar ⏩'}
       </button>
     </div>

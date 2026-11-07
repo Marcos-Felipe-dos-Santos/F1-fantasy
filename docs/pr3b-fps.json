@@ -1,0 +1,2486 @@
+{
+ "freioCpu": 6,
+ "viewport": [
+  360,
+  800
+ ],
+ "carros": 22,
+ "medicoes": [
+  {
+   "rotulo": "sem-som",
+   "repeticao": 0,
+   "mainPorFrame": 21.749209531392864,
+   "pista": "pista-spa",
+   "velocidade": "media",
+   "chuva": true,
+   "frames": 600,
+   "fps": 45.66835639585339,
+   "intervaloP50": 22.199999999999818,
+   "intervaloP95": 33.29999999999927,
+   "intervaloMax": 88.80000000000018,
+   "acima33ms": 22,
+   "renderP50": 6.800000011920929,
+   "renderP95": 10,
+   "renderMax": 57.29999999701977,
+   "voltasDoRelogio": 0,
+   "lentos": [
+    {
+     "i": 40,
+     "delta": 33.40000000000009,
+     "render": 11.899999991059303,
+     "renderAnterior": 10.200000002980232,
+     "t": 677903.1282117672,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 45,
+     "delta": 33.40000000000009,
+     "render": 16.200000002980232,
+     "renderAnterior": 11.5,
+     "t": 681750.6936454817,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 46,
+     "delta": 88.80000000000018,
+     "render": 14.5,
+     "renderAnterior": 16.200000002980232,
+     "t": 684028.4523822407,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 47,
+     "delta": 44.5,
+     "render": 10.700000002980232,
+     "renderAnterior": 14.5,
+     "t": 685169.8967942427,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 49,
+     "delta": 44.59999999999991,
+     "render": 9.200000002980232,
+     "renderAnterior": 10,
+     "t": 687024.4233332931,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 51,
+     "delta": 38.90000000000009,
+     "render": 10.699999988079071,
+     "renderAnterior": 10.700000002980232,
+     "t": 688735.3074294848,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 56,
+     "delta": 38.79999999999973,
+     "render": 11.600000008940697,
+     "renderAnterior": 10.699999988079071,
+     "t": 692434.1003330958,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 57,
+     "delta": 39.09999999999991,
+     "render": 9.099999994039536,
+     "renderAnterior": 11.600000008940697,
+     "t": 693437.032389484,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 63,
+     "delta": 33.5,
+     "render": 10,
+     "renderAnterior": 7.9000000059604645,
+     "t": 697284.5978231985,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 399,
+     "delta": 33.399999999999636,
+     "render": 9,
+     "renderAnterior": 7,
+     "t": 873546.7004289057,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 499,
+     "delta": 33.399999999999636,
+     "render": 10.899999991059303,
+     "renderAnterior": 10.200000002980232,
+     "t": 929834.0176805259,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 500,
+     "delta": 38.80000000000109,
+     "render": 13.099999994039536,
+     "renderAnterior": 10.899999991059303,
+     "t": 930829.2546060467,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 501,
+     "delta": 35.19999999999891,
+     "render": 15.199999988079071,
+     "renderAnterior": 13.099999994039536,
+     "t": 931732.1499611584,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 502,
+     "delta": 37,
+     "render": 7.199999988079071,
+     "renderAnterior": 15.199999988079071,
+     "t": 932681.2161014747,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 503,
+     "delta": 33.400000000001455,
+     "render": 7.600000008940697,
+     "renderAnterior": 7.199999988079071,
+     "t": 933537.9406713819,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 521,
+     "delta": 83.20000000000073,
+     "render": 15.099999994039536,
+     "renderAnterior": 57.29999999701977,
+     "t": 945934.7964988099,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 523,
+     "delta": 33.399999999999636,
+     "render": 7.399999991059303,
+     "renderAnterior": 14.600000008940697,
+     "t": 947643.1155513792,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 531,
+     "delta": 33.400000000001455,
+     "render": 6.699999988079071,
+     "renderAnterior": 7.799999997019768,
+     "t": 953057.9226384268,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 545,
+     "delta": 33.399999999999636,
+     "render": 6.700000002980232,
+     "renderAnterior": 10.099999994039536,
+     "t": 962748.657444142,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 548,
+     "delta": 33.5,
+     "render": 7.4000000059604645,
+     "renderAnterior": 7.4000000059604645,
+     "t": 964744.2613824287,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 554,
+     "delta": 38.79999999999927,
+     "render": 10.399999991059303,
+     "renderAnterior": 14.799999997019768,
+     "t": 968876.5466582382,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 558,
+     "delta": 33.399999999999636,
+     "render": 8.800000011920929,
+     "renderAnterior": 10.099999994039536,
+     "t": 971585.2327235732,
+     "voltou": false,
+     "voltouAntes": false
+    }
+   ],
+   "ocupacaoMain": 0.9932506522077407,
+   "script": 0.3429354037648472,
+   "layout": 0.10586873381403893,
+   "estilo": 0.12471014662603253,
+   "janelaS": 12.586104999994859
+  },
+  {
+   "rotulo": "com-som",
+   "repeticao": 0,
+   "mainPorFrame": 19.225801538270407,
+   "pista": "pista-spa",
+   "velocidade": "media",
+   "chuva": true,
+   "frames": 600,
+   "fps": 51.65289256198358,
+   "intervaloP50": 16.800000000000182,
+   "intervaloP95": 27.800000000000182,
+   "intervaloMax": 33.5,
+   "acima33ms": 4,
+   "renderP50": 6.5,
+   "renderP95": 9.899999991059303,
+   "renderMax": 18.80000001192093,
+   "som": {
+    "decodificados": 17,
+    "total": 17,
+    "falhas": [],
+    "taxaHz": 48000,
+    "contexto": "running",
+    "tocadas": 18
+   },
+   "voltasDoRelogio": 0,
+   "lentos": [
+    {
+     "i": 12,
+     "delta": 33.399999999999636,
+     "render": 12.5,
+     "renderAnterior": 13.600000008940697,
+     "t": 682179.0559304344,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 13,
+     "delta": 33.40000000000009,
+     "render": 8.099999994039536,
+     "renderAnterior": 12.5,
+     "t": 683035.7805003414,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 20,
+     "delta": 33.5,
+     "render": 10.799999997019768,
+     "renderAnterior": 11.900000005960464,
+     "t": 687740.0705039632,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 38,
+     "delta": 33.5,
+     "render": 9.5,
+     "renderAnterior": 12.600000008940697,
+     "t": 700562.7235727223,
+     "voltou": false,
+     "voltouAntes": false
+    }
+   ],
+   "ocupacaoMain": 0.9930682612742999,
+   "script": 0.3706698331535725,
+   "layout": 0.09482449154171346,
+   "estilo": 0.12172047796569588,
+   "janelaS": 11.521496000001207
+  },
+  {
+   "rotulo": "sem-som",
+   "repeticao": 1,
+   "mainPorFrame": 15.694684386840466,
+   "pista": "pista-spa",
+   "velocidade": "media",
+   "chuva": true,
+   "frames": 600,
+   "fps": 63.23577458554219,
+   "intervaloP50": 16.600000000000364,
+   "intervaloP95": 22.299999999999272,
+   "intervaloMax": 39,
+   "acima33ms": 2,
+   "renderP50": 5.0999999940395355,
+   "renderP95": 7.0999999940395355,
+   "renderMax": 12.599999994039536,
+   "voltasDoRelogio": 0,
+   "lentos": [
+    {
+     "i": 1,
+     "delta": 39,
+     "render": 11.100000008940697,
+     "renderAnterior": 12.599999994039536,
+     "t": 656669.6971049082,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 452,
+     "delta": 33.399999999999636,
+     "render": 8.299999997019768,
+     "renderAnterior": 10.100000008940697,
+     "t": 845757.0178229973,
+     "voltou": false,
+     "voltouAntes": false
+    }
+   ],
+   "ocupacaoMain": 0.9924655240774721,
+   "script": 0.3491333038714235,
+   "layout": 0.09864169814718003,
+   "estilo": 0.12265075077052008,
+   "janelaS": 8.816008000008878
+  },
+  {
+   "rotulo": "com-som",
+   "repeticao": 1,
+   "mainPorFrame": 16.01929427961059,
+   "pista": "pista-spa",
+   "velocidade": "media",
+   "chuva": true,
+   "frames": 600,
+   "fps": 61.92909119058668,
+   "intervaloP50": 16.69999999999891,
+   "intervaloP95": 22.200000000000728,
+   "intervaloMax": 33.20000000000073,
+   "acima33ms": 0,
+   "renderP50": 5.5999999940395355,
+   "renderP95": 7.5,
+   "renderMax": 19.599999994039536,
+   "som": {
+    "decodificados": 17,
+    "total": 17,
+    "falhas": [],
+    "taxaHz": 48000,
+    "contexto": "running",
+    "tocadas": 17
+   },
+   "voltasDoRelogio": 0,
+   "lentos": [],
+   "ocupacaoMain": 0.992060336250848,
+   "script": 0.37000245059937853,
+   "layout": 0.09354337818797594,
+   "estilo": 0.12208084661127462,
+   "janelaS": 9.320168000005651
+  },
+  {
+   "rotulo": "sem-som",
+   "repeticao": 2,
+   "mainPorFrame": 20.88569951284285,
+   "pista": "pista-spa",
+   "velocidade": "media",
+   "chuva": true,
+   "frames": 600,
+   "fps": 47.538307953159,
+   "intervaloP50": 22.199999999999818,
+   "intervaloP95": 27.80000000000109,
+   "intervaloMax": 44.600000000000364,
+   "acima33ms": 8,
+   "renderP50": 6.700000002980232,
+   "renderP95": 9.599999994039536,
+   "renderMax": 23.700000002980232,
+   "voltasDoRelogio": 0,
+   "lentos": [
+    {
+     "i": 70,
+     "delta": 33.5,
+     "render": 12.700000002980232,
+     "renderAnterior": 9.899999991059303,
+     "t": 686593.4960047174,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 71,
+     "delta": 38.90000000000009,
+     "render": 7.600000008940697,
+     "renderAnterior": 12.700000002980232,
+     "t": 687591.2979738608,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 73,
+     "delta": 33.40000000000009,
+     "render": 8.099999994039536,
+     "renderAnterior": 9.799999997019768,
+     "t": 689014.897184335,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 112,
+     "delta": 33.399999999999636,
+     "render": 8.200000002980232,
+     "renderAnterior": 8.5,
+     "t": 713808.608839191,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 146,
+     "delta": 33.399999999999636,
+     "render": 7.0999999940395355,
+     "renderAnterior": 9.400000005960464,
+     "t": 733900.5955340479,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 188,
+     "delta": 33.399999999999636,
+     "render": 7.600000008940697,
+     "renderAnterior": 11.199999988079071,
+     "t": 758409.5873468092,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 205,
+     "delta": 38.80000000000018,
+     "render": 6.0999999940395355,
+     "renderAnterior": 15.899999991059303,
+     "t": 768951.9166351869,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 489,
+     "delta": 44.600000000000364,
+     "render": 11.200000002980232,
+     "renderAnterior": 23.700000002980232,
+     "t": 919714.9205898565,
+     "voltou": false,
+     "voltouAntes": false
+    }
+   ],
+   "ocupacaoMain": 0.9928708152586664,
+   "script": 0.34270851459588175,
+   "layout": 0.10000489097929727,
+   "estilo": 0.12812486171324364,
+   "janelaS": 12.022132000012789
+  },
+  {
+   "rotulo": "com-som",
+   "repeticao": 2,
+   "mainPorFrame": 21.46772152946705,
+   "pista": "pista-spa",
+   "velocidade": "media",
+   "chuva": true,
+   "frames": 600,
+   "fps": 46.27451585287799,
+   "intervaloP50": 22.199999999999818,
+   "intervaloP95": 27.899999999999636,
+   "intervaloMax": 38.899999999999636,
+   "acima33ms": 10,
+   "renderP50": 7.300000011920929,
+   "renderP95": 10.200000002980232,
+   "renderMax": 23.599999994039536,
+   "som": {
+    "decodificados": 17,
+    "total": 17,
+    "falhas": [],
+    "taxaHz": 48000,
+    "contexto": "running",
+    "tocadas": 18
+   },
+   "voltasDoRelogio": 0,
+   "lentos": [
+    {
+     "i": 29,
+     "delta": 33.40000000000009,
+     "render": 6.799999997019768,
+     "renderAnterior": 11.900000005960464,
+     "t": 688589.0999430025,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 49,
+     "delta": 33.5,
+     "render": 8,
+     "renderAnterior": 9.799999997019768,
+     "t": 700988.5208140531,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 59,
+     "delta": 33.399999999999636,
+     "render": 8.400000005960464,
+     "renderAnterior": 9.299999997019768,
+     "t": 707542.2072694801,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 68,
+     "delta": 33.5,
+     "render": 8.300000011920929,
+     "renderAnterior": 9.200000002980232,
+     "t": 713954.8163256708,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 76,
+     "delta": 33.399999999999636,
+     "render": 8.200000002980232,
+     "renderAnterior": 12.600000008940697,
+     "t": 719510.7008119546,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 96,
+     "delta": 33.400000000000546,
+     "render": 9.400000005960464,
+     "renderAnterior": 8.899999991059303,
+     "t": 731766.4792401463,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 100,
+     "delta": 33.5,
+     "render": 6.700000002980232,
+     "renderAnterior": 10.900000005960464,
+     "t": 734616.2427047176,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 258,
+     "delta": 33.399999999999636,
+     "render": 3.4000000059604645,
+     "renderAnterior": 7.9000000059604645,
+     "t": 820111.7116854769,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 480,
+     "delta": 38.899999999999636,
+     "render": 11.400000005960464,
+     "renderAnterior": 23.599999994039536,
+     "t": 938809.1053155692,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 589,
+     "delta": 33.399999999999636,
+     "render": 8.5,
+     "renderAnterior": 10.100000008940697,
+     "t": 996804.7416197592,
+     "voltou": false,
+     "voltouAntes": false
+    }
+   ],
+   "ocupacaoMain": 0.9934084202404931,
+   "script": 0.36713530160187957,
+   "layout": 0.0970099171808994,
+   "estilo": 0.12273029891214264,
+   "janelaS": 13.115824000007706
+  },
+  {
+   "rotulo": "sem-som",
+   "repeticao": 0,
+   "mainPorFrame": 19.302593498999208,
+   "pista": "pista-montreal",
+   "velocidade": "media",
+   "chuva": true,
+   "frames": 600,
+   "fps": 51.406833681757576,
+   "intervaloP50": 16.899999999999636,
+   "intervaloP95": 27.600000000000364,
+   "intervaloMax": 38.80000000000109,
+   "acima33ms": 2,
+   "renderP50": 6.300000011920929,
+   "renderP95": 8.599999994039536,
+   "renderMax": 22,
+   "voltasDoRelogio": 0,
+   "lentos": [
+    {
+     "i": 418,
+     "delta": 33.399999999999636,
+     "render": 7.100000008940697,
+     "renderAnterior": 10.599999994039536,
+     "t": 673346.0718268302,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 507,
+     "delta": 38.80000000000109,
+     "render": 8.400000005960464,
+     "renderAnterior": 22,
+     "t": 704758.3216379848,
+     "voltou": false,
+     "voltouAntes": false
+    }
+   ],
+   "ocupacaoMain": 0.9922852136296273,
+   "script": 0.35197138740140677,
+   "layout": 0.09377780919181115,
+   "estilo": 0.12709806137329072,
+   "janelaS": 11.530585000000428
+  },
+  {
+   "rotulo": "com-som",
+   "repeticao": 0,
+   "mainPorFrame": 20.52439262418667,
+   "pista": "pista-montreal",
+   "velocidade": "media",
+   "chuva": true,
+   "frames": 600,
+   "fps": 48.34654805646891,
+   "intervaloP50": 22.19999999999891,
+   "intervaloP95": 27.800000000000182,
+   "intervaloMax": 50,
+   "acima33ms": 6,
+   "renderP50": 7.200000002980232,
+   "renderP95": 10.099999994039536,
+   "renderMax": 25.600000008940697,
+   "som": {
+    "decodificados": 17,
+    "total": 17,
+    "falhas": [],
+    "taxaHz": 48000,
+    "contexto": "running",
+    "tocadas": 28
+   },
+   "voltasDoRelogio": 0,
+   "lentos": [
+    {
+     "i": 84,
+     "delta": 33.399999999999636,
+     "render": 8.799999997019768,
+     "renderAnterior": 8.599999994039536,
+     "t": 559699.7467203389,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 88,
+     "delta": 33.399999999999636,
+     "render": 9.200000002980232,
+     "renderAnterior": 11.200000002980232,
+     "t": 561797.7385239275,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 178,
+     "delta": 33.400000000000546,
+     "render": 7.5,
+     "renderAnterior": 11.899999991059303,
+     "t": 599514.7688538488,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 266,
+     "delta": 50,
+     "render": 11.700000002980232,
+     "renderAnterior": 22.700000002980232,
+     "t": 634028.08466138,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 267,
+     "delta": 33.399999999999636,
+     "render": 7.0999999940395355,
+     "renderAnterior": 11.700000002980232,
+     "t": 634629.5690067866,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 498,
+     "delta": 38.899999999999636,
+     "render": 11.699999988079071,
+     "renderAnterior": 25.600000008940697,
+     "t": 714362.2617998195,
+     "voltou": false,
+     "voltouAntes": false
+    }
+   ],
+   "ocupacaoMain": 0.992283534335077,
+   "script": 0.3746441789777264,
+   "layout": 0.08987850193221567,
+   "estilo": 0.12367973066816132,
+   "janelaS": 12.511557000005268
+  },
+  {
+   "rotulo": "sem-som",
+   "repeticao": 1,
+   "mainPorFrame": 19.6544437678281,
+   "pista": "pista-montreal",
+   "velocidade": "media",
+   "chuva": true,
+   "frames": 600,
+   "fps": 50.49357469262044,
+   "intervaloP50": 22.100000000000364,
+   "intervaloP95": 27.599999999999454,
+   "intervaloMax": 38.79999999999927,
+   "acima33ms": 3,
+   "renderP50": 6.5,
+   "renderP95": 8.700000002980232,
+   "renderMax": 24.400000005960464,
+   "voltasDoRelogio": 0,
+   "lentos": [
+    {
+     "i": 277,
+     "delta": 33.399999999999636,
+     "render": 6.700000002980232,
+     "renderAnterior": 7.899999991059303,
+     "t": 624224.2500015215,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 306,
+     "delta": 33.399999999999636,
+     "render": 8.799999997019768,
+     "renderAnterior": 10.299999997019768,
+     "t": 636527.6663123514,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 507,
+     "delta": 38.79999999999927,
+     "render": 11.400000005960464,
+     "renderAnterior": 24.400000005960464,
+     "t": 706456.5244455253,
+     "voltou": false,
+     "voltouAntes": false
+    }
+   ],
+   "ocupacaoMain": 0.9924231244327365,
+   "script": 0.35183060766418045,
+   "layout": 0.0927168994510407,
+   "estilo": 0.12731181848845835,
+   "janelaS": 11.492467999996734
+  },
+  {
+   "rotulo": "com-som",
+   "repeticao": 1,
+   "mainPorFrame": 20.06026486347325,
+   "pista": "pista-montreal",
+   "velocidade": "media",
+   "chuva": true,
+   "frames": 600,
+   "fps": 49.49841605068653,
+   "intervaloP50": 22.100000000000364,
+   "intervaloP95": 27.799999999999272,
+   "intervaloMax": 33.30000000000018,
+   "acima33ms": 0,
+   "renderP50": 7.0999999940395355,
+   "renderP95": 9.400000005960464,
+   "renderMax": 16.099999994039536,
+   "som": {
+    "decodificados": 17,
+    "total": 17,
+    "falhas": [],
+    "taxaHz": 48000,
+    "contexto": "running",
+    "tocadas": 26
+   },
+   "voltasDoRelogio": 0,
+   "lentos": [],
+   "ocupacaoMain": 0.9929513362991673,
+   "script": 0.3740792954912303,
+   "layout": 0.08955662959644242,
+   "estilo": 0.12379347141716229,
+   "janelaS": 12.023130000001402
+  },
+  {
+   "rotulo": "sem-som",
+   "repeticao": 2,
+   "mainPorFrame": 19.389450067371033,
+   "pista": "pista-montreal",
+   "velocidade": "media",
+   "chuva": true,
+   "frames": 600,
+   "fps": 51.187987885509635,
+   "intervaloP50": 22.099999999998545,
+   "intervaloP95": 27.800000000000182,
+   "intervaloMax": 44.29999999999927,
+   "acima33ms": 7,
+   "renderP50": 6.299999997019768,
+   "renderP95": 9.099999994039536,
+   "renderMax": 22.400000005960464,
+   "voltasDoRelogio": 0,
+   "lentos": [
+    {
+     "i": 118,
+     "delta": 38.80000000000018,
+     "render": 12.900000005960464,
+     "renderAnterior": 22.200000002980232,
+     "t": 570602.1006936651,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 427,
+     "delta": 38.80000000000109,
+     "render": 20.900000005960464,
+     "renderAnterior": 10.5,
+     "t": 675548.5130077669,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 428,
+     "delta": 38.899999999999636,
+     "render": 10.399999991059303,
+     "renderAnterior": 20.900000005960464,
+     "t": 676249.0441765188,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 429,
+     "delta": 44.29999999999927,
+     "render": 8.900000005960464,
+     "renderAnterior": 10.399999991059303,
+     "t": 677046.8213172825,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 432,
+     "delta": 38.899999999999636,
+     "render": 10.700000002980232,
+     "renderAnterior": 8.200000002980232,
+     "t": 678649.5790041442,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 507,
+     "delta": 38.79999999999927,
+     "render": 13,
+     "renderAnterior": 22.400000005960464,
+     "t": 705660.5481560967,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 508,
+     "delta": 33.400000000001455,
+     "render": 11.300000011920929,
+     "renderAnterior": 13,
+     "t": 706262.0325015032,
+     "voltou": false,
+     "voltouAntes": false
+    }
+   ],
+   "ocupacaoMain": 0.9925069351552824,
+   "script": 0.3488228465347017,
+   "layout": 0.09395214121007549,
+   "estilo": 0.12831363449454822,
+   "janelaS": 11.492893999995431
+  },
+  {
+   "rotulo": "com-som",
+   "repeticao": 2,
+   "mainPorFrame": 20.174206624913094,
+   "pista": "pista-montreal",
+   "velocidade": "media",
+   "chuva": true,
+   "frames": 600,
+   "fps": 49.206140926387754,
+   "intervaloP50": 22.19999999999891,
+   "intervaloP95": 27.799999999999272,
+   "intervaloMax": 55.5,
+   "acima33ms": 2,
+   "renderP50": 7.0999999940395355,
+   "renderP95": 9.399999991059303,
+   "renderMax": 23.100000008940697,
+   "som": {
+    "decodificados": 17,
+    "total": 17,
+    "falhas": [],
+    "taxaHz": 48000,
+    "contexto": "running",
+    "tocadas": 26
+   },
+   "voltasDoRelogio": 0,
+   "lentos": [
+    {
+     "i": 191,
+     "delta": 33.5,
+     "render": 9.399999991059303,
+     "renderAnterior": 11.799999997019768,
+     "t": 598816.03853643,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 498,
+     "delta": 55.5,
+     "render": 14,
+     "renderAnterior": 23.100000008940697,
+     "t": 710259.9224619876,
+     "voltou": false,
+     "voltouAntes": false
+    }
+   ],
+   "ocupacaoMain": 0.9926948542635391,
+   "script": 0.37189051275003865,
+   "layout": 0.08790256964724175,
+   "estilo": 0.12328200447481218,
+   "janelaS": 12.108588000002783
+  },
+  {
+   "rotulo": "sem-som",
+   "repeticao": 0,
+   "mainPorFrame": 21.462888117873142,
+   "pista": "pista-spa",
+   "velocidade": "rapida",
+   "chuva": true,
+   "frames": 600,
+   "fps": 46.275229640827206,
+   "intervaloP50": 22.199999999999818,
+   "intervaloP95": 27.800000000000182,
+   "intervaloMax": 105.60000000000036,
+   "acima33ms": 6,
+   "renderP50": 6.700000002980232,
+   "renderP95": 8.599999994039536,
+   "renderMax": 12.600000008940697,
+   "voltasDoRelogio": 0,
+   "lentos": [
+    {
+     "i": 409,
+     "delta": 33.400000000001455,
+     "render": 7.799999997019768,
+     "renderAnterior": 8.800000011920929,
+     "t": 1178684.8727231515,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 460,
+     "delta": 33.399999999999636,
+     "render": 12.600000008940697,
+     "renderAnterior": 11,
+     "t": 1235810.7260535383,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 461,
+     "delta": 38.899999999999636,
+     "render": 8.400000005960464,
+     "renderAnterior": 12.600000008940697,
+     "t": 1237851.6846267858,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 593,
+     "delta": 105.60000000000036,
+     "render": 8.799999997019768,
+     "renderAnterior": 9.200000002980232,
+     "t": 1391742.0597217155,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 594,
+     "delta": 33.399999999999636,
+     "render": 7.899999991059303,
+     "renderAnterior": 8.799999997019768,
+     "t": 1393494.4508874347,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 597,
+     "delta": 61.100000000000364,
+     "render": 7.4000000059604645,
+     "renderAnterior": 7,
+     "t": 1399323.512519512,
+     "voltou": false,
+     "voltouAntes": false
+    }
+   ],
+   "ocupacaoMain": 0.9932000764099613,
+   "script": 0.33391072315143555,
+   "layout": 0.11546795536294942,
+   "estilo": 0.1166292710059676,
+   "janelaS": 13.055882000000565
+  },
+  {
+   "rotulo": "com-som",
+   "repeticao": 0,
+   "mainPorFrame": 23.97460082153287,
+   "pista": "pista-spa",
+   "velocidade": "rapida",
+   "chuva": true,
+   "frames": 600,
+   "fps": 41.42931123770067,
+   "intervaloP50": 22.299999999999272,
+   "intervaloP95": 33.29999999999927,
+   "intervaloMax": 105.60000000000036,
+   "acima33ms": 18,
+   "renderP50": 7.700000002980232,
+   "renderP95": 10.400000005960464,
+   "renderMax": 51.400000005960464,
+   "som": {
+    "decodificados": 17,
+    "total": 17,
+    "falhas": [],
+    "taxaHz": 48000,
+    "contexto": "running",
+    "tocadas": 22
+   },
+   "voltasDoRelogio": 1,
+   "lentos": [
+    {
+     "i": 9,
+     "delta": 55.69999999999982,
+     "render": 11.699999988079071,
+     "renderAnterior": 22.799999997019768,
+     "t": 748200.0141720026,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 10,
+     "delta": 38.69999999999982,
+     "render": 8.200000002980232,
+     "renderAnterior": 11.699999988079071,
+     "t": 750230.4793849764,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 68,
+     "delta": 33.399999999999636,
+     "render": 8.299999997019768,
+     "renderAnterior": 10,
+     "t": 819890.6515623773,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 218,
+     "delta": 33.399999999999636,
+     "render": 8.5,
+     "renderAnterior": 10.099999994039536,
+     "t": 1001473.0044197771,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 253,
+     "delta": 33.399999999999636,
+     "render": 8.5,
+     "renderAnterior": 9,
+     "t": 1048404.5582441996,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 395,
+     "delta": 33.5,
+     "render": 11.300000011920929,
+     "renderAnterior": 10.5,
+     "t": 1231156.920772124,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 449,
+     "delta": 77.70000000000073,
+     "render": 11.799999997019768,
+     "renderAnterior": 51.400000005960464,
+     "t": 1298770.8876961411,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 454,
+     "delta": 33.5,
+     "render": 9.100000008940697,
+     "renderAnterior": 7.600000008940697,
+     "t": 1306939.9686692685,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 455,
+     "delta": 38.70000000000073,
+     "render": 8.200000002980232,
+     "renderAnterior": 9.100000008940697,
+     "t": 1308970.4338822425,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 457,
+     "delta": 33.399999999999636,
+     "render": 11.5,
+     "renderAnterior": 7.800000011920929,
+     "t": 1312181.4021260152,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 459,
+     "delta": 33.399999999999636,
+     "render": 7.299999997019768,
+     "renderAnterior": 9.099999994039536,
+     "t": 1315387.123689651,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 471,
+     "delta": 33.399999999999636,
+     "render": 6.100000008940697,
+     "renderAnterior": 7.4000000059604645,
+     "t": 1331415.73150783,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 475,
+     "delta": 33.399999999999636,
+     "render": 7.399999991059303,
+     "renderAnterior": 6.700000002980232,
+     "t": 1336662.4116447137,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 498,
+     "delta": 38.899999999999636,
+     "render": 10.900000005960464,
+     "renderAnterior": 10.399999991059303,
+     "t": 1366972.4827954895,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 513,
+     "delta": 105.60000000000036,
+     "render": 10.600000008940697,
+     "renderAnterior": 10.299999997019768,
+     "t": 1390871.1108189933,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 514,
+     "delta": 33.399999999999636,
+     "render": 7.800000011920929,
+     "renderAnterior": 10.600000008940697,
+     "t": 1392623.5019847124,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 518,
+     "delta": 61,
+     "render": 9.200000002980232,
+     "renderAnterior": 9.200000002980232,
+     "t": 1399612.0799270412,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 553,
+     "delta": 38.79999999999927,
+     "render": 7.799999997019768,
+     "renderAnterior": 12.800000011920929,
+     "t": 2073.1486094651978,
+     "voltou": false,
+     "voltouAntes": true
+    }
+   ],
+   "ocupacaoMain": 0.9932511992349193,
+   "script": 0.3462678953166375,
+   "layout": 0.11881010477724738,
+   "estilo": 0.11604067819815418,
+   "janelaS": 14.725430999998935
+  },
+  {
+   "rotulo": "sem-som",
+   "repeticao": 1,
+   "mainPorFrame": 22.361657716127112,
+   "pista": "pista-spa",
+   "velocidade": "rapida",
+   "chuva": true,
+   "frames": 600,
+   "fps": 44.41056083136582,
+   "intervaloP50": 22.200000000000728,
+   "intervaloP95": 27.899999999999636,
+   "intervaloMax": 100.09999999999854,
+   "acima33ms": 8,
+   "renderP50": 6.9000000059604645,
+   "renderP95": 9.400000005960464,
+   "renderMax": 30,
+   "voltasDoRelogio": 0,
+   "lentos": [
+    {
+     "i": 209,
+     "delta": 33.400000000000546,
+     "render": 8.700000002980232,
+     "renderAnterior": 12.300000011920929,
+     "t": 958046.2329267918,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 349,
+     "delta": 33.399999999999636,
+     "render": 9.399999991059303,
+     "renderAnterior": 10,
+     "t": 1120394.2564023777,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 460,
+     "delta": 44.399999999999636,
+     "render": 29.19999998807907,
+     "renderAnterior": 30,
+     "t": 1247175.035230029,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 461,
+     "delta": 55.600000000000364,
+     "render": 9.099999994039536,
+     "renderAnterior": 29.19999998807907,
+     "t": 1250092.1893861361,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 563,
+     "delta": 38.80000000000109,
+     "render": 10.699999988079071,
+     "renderAnterior": 9.599999994039536,
+     "t": 1372502.4836597636,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 574,
+     "delta": 100.09999999999854,
+     "render": 6.5,
+     "renderAnterior": 10.900000005960464,
+     "t": 1390582.543411464,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 579,
+     "delta": 61.100000000000364,
+     "render": 7.299999997019768,
+     "renderAnterior": 7.700000002980232,
+     "t": 1399328.7591996486,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 586,
+     "delta": 33.5,
+     "render": 8.200000002980232,
+     "renderAnterior": 6.9000000059604645,
+     "t": 1409822.1194734152,
+     "voltou": false,
+     "voltouAntes": false
+    }
+   ],
+   "ocupacaoMain": 0.993093760292244,
+   "script": 0.3335488999872688,
+   "layout": 0.11823974682081709,
+   "estilo": 0.11857544121702,
+   "janelaS": 13.568889000001946
+  },
+  {
+   "rotulo": "com-som",
+   "repeticao": 1,
+   "mainPorFrame": 23.460891511529834,
+   "pista": "pista-spa",
+   "velocidade": "rapida",
+   "chuva": true,
+   "frames": 600,
+   "fps": 42.32207096000566,
+   "intervaloP50": 22.299999999999272,
+   "intervaloP95": 27.899999999999636,
+   "intervaloMax": 105.5,
+   "acima33ms": 15,
+   "renderP50": 7.799999997019768,
+   "renderP95": 10.5,
+   "renderMax": 17,
+   "som": {
+    "decodificados": 17,
+    "total": 17,
+    "falhas": [],
+    "taxaHz": 48000,
+    "contexto": "running",
+    "tocadas": 20
+   },
+   "voltasDoRelogio": 1,
+   "lentos": [
+    {
+     "i": 89,
+     "delta": 33.5,
+     "render": 7.0999999940395355,
+     "renderAnterior": 7.799999997019768,
+     "t": 835635.9386531637,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 330,
+     "delta": 33.5,
+     "render": 8.600000008940697,
+     "renderAnterior": 9.599999994039536,
+     "t": 1125646.1832193967,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 351,
+     "delta": 33.399999999999636,
+     "render": 8.400000005960464,
+     "renderAnterior": 13.5,
+     "t": 1153327.667621594,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 355,
+     "delta": 33.400000000001455,
+     "render": 8.5,
+     "renderAnterior": 10.299999997019768,
+     "t": 1159161.9759338081,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 407,
+     "delta": 33.399999999999636,
+     "render": 8.800000011920929,
+     "renderAnterior": 10.199999988079071,
+     "t": 1225028.7983722435,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 434,
+     "delta": 38.899999999999636,
+     "render": 11,
+     "renderAnterior": 9.200000002980232,
+     "t": 1260879.3637475674,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 436,
+     "delta": 33.399999999999636,
+     "render": 10,
+     "renderAnterior": 10.700000002980232,
+     "t": 1264085.0853112033,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 451,
+     "delta": 38.899999999999636,
+     "render": 14.400000005960464,
+     "renderAnterior": 17,
+     "t": 1285071.8058587369,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 452,
+     "delta": 49.899999999999636,
+     "render": 11.100000008940697,
+     "renderAnterior": 14.400000005960464,
+     "t": 1287689.8992470417,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 457,
+     "delta": 44.5,
+     "render": 7.0999999940395355,
+     "renderAnterior": 16.700000002980232,
+     "t": 1295559.919452367,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 473,
+     "delta": 33.399999999999636,
+     "render": 7.9000000059604645,
+     "renderAnterior": 8.400000005960464,
+     "t": 1316258.0725923725,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 481,
+     "delta": 33.399999999999636,
+     "render": 6.4000000059604645,
+     "renderAnterior": 13.600000008940697,
+     "t": 1326751.4328661398,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 515,
+     "delta": 33.5,
+     "render": 8.200000002980232,
+     "renderAnterior": 8.899999991059303,
+     "t": 1365519.1523975711,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 533,
+     "delta": 105.5,
+     "render": 10.5,
+     "renderAnterior": 11.400000005960464,
+     "t": 1391747.3064018514,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 538,
+     "delta": 61.100000000000364,
+     "render": 8.700000002980232,
+     "renderAnterior": 8.399999991059303,
+     "t": 1400493.5221900363,
+     "voltou": false,
+     "voltouAntes": false
+    }
+   ],
+   "ocupacaoMain": 0.9929135153359601,
+   "script": 0.353095623059665,
+   "layout": 0.11438675954197723,
+   "estilo": 0.11224432406189552,
+   "janelaS": 14.117577999990317
+  },
+  {
+   "rotulo": "sem-som",
+   "repeticao": 2,
+   "mainPorFrame": 22.359967211818738,
+   "pista": "pista-spa",
+   "velocidade": "rapida",
+   "chuva": true,
+   "frames": 600,
+   "fps": 44.428647591967454,
+   "intervaloP50": 22.200000000000728,
+   "intervaloP95": 27.899999999999636,
+   "intervaloMax": 105.5,
+   "acima33ms": 9,
+   "renderP50": 6.9000000059604645,
+   "renderP95": 9.599999994039536,
+   "renderMax": 24.299999997019768,
+   "voltasDoRelogio": 0,
+   "lentos": [
+    {
+     "i": 4,
+     "delta": 33.40000000000009,
+     "render": 8.400000005960464,
+     "renderAnterior": 8.799999997019768,
+     "t": 721961.3668074473,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 349,
+     "delta": 33.399999999999636,
+     "render": 7.100000008940697,
+     "renderAnterior": 11,
+     "t": 1120399.503082513,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 352,
+     "delta": 33.399999999999636,
+     "render": 8.699999988079071,
+     "renderAnterior": 10,
+     "t": 1124769.987636537,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 443,
+     "delta": 44.399999999999636,
+     "render": 10.200000002980232,
+     "renderAnterior": 24.299999997019768,
+     "t": 1234357.395655621,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 460,
+     "delta": 33.399999999999636,
+     "render": 7.799999997019768,
+     "renderAnterior": 6.299999997019768,
+     "t": 1257385.0747764024,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 555,
+     "delta": 38.80000000000109,
+     "render": 12.800000011920929,
+     "renderAnterior": 20.900000005960464,
+     "t": 1364060.575319517,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 574,
+     "delta": 105.5,
+     "render": 8.400000005960464,
+     "renderAnterior": 10.900000005960464,
+     "t": 1391453.4923141855,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 575,
+     "delta": 33.399999999999636,
+     "render": 8.200000002980232,
+     "renderAnterior": 8.400000005960464,
+     "t": 1393205.8834799046,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 579,
+     "delta": 66.69999999999891,
+     "render": 6.899999991059303,
+     "renderAnterior": 8.899999991059303,
+     "t": 1400199.7081023704,
+     "voltou": false,
+     "voltouAntes": false
+    }
+   ],
+   "ocupacaoMain": 0.9934231034218418,
+   "script": 0.3328998406649807,
+   "layout": 0.1177358872294882,
+   "estilo": 0.11949776104866631,
+   "janelaS": 13.582697999998345
+  },
+  {
+   "rotulo": "com-som",
+   "repeticao": 2,
+   "mainPorFrame": 24.198297519056137,
+   "pista": "pista-spa",
+   "velocidade": "rapida",
+   "chuva": true,
+   "frames": 600,
+   "fps": 41.051183984564794,
+   "intervaloP50": 22.299999999999272,
+   "intervaloP95": 33.29999999999927,
+   "intervaloMax": 127.70000000000073,
+   "acima33ms": 20,
+   "renderP50": 7.9000000059604645,
+   "renderP95": 10.5,
+   "renderMax": 28.5,
+   "som": {
+    "decodificados": 17,
+    "total": 17,
+    "falhas": [],
+    "taxaHz": 48000,
+    "contexto": "running",
+    "tocadas": 18
+   },
+   "voltasDoRelogio": 1,
+   "lentos": [
+    {
+     "i": 200,
+     "delta": 38.900000000000546,
+     "render": 8.900000005960464,
+     "renderAnterior": 16.099999994039536,
+     "t": 977862.9438038004,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 403,
+     "delta": 33.5,
+     "render": 8.199999988079071,
+     "renderAnterior": 8.899999991059303,
+     "t": 1218911.1693326363,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 420,
+     "delta": 39,
+     "render": 9.799999997019768,
+     "renderAnterior": 10,
+     "t": 1243098.364763669,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 448,
+     "delta": 33.5,
+     "render": 22.799999997019768,
+     "renderAnterior": 10,
+     "t": 1282159.8983827664,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 449,
+     "delta": 49.899999999999636,
+     "render": 28.5,
+     "renderAnterior": 22.799999997019768,
+     "t": 1284777.9917710712,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 450,
+     "delta": 50,
+     "render": 10.800000011920929,
+     "renderAnterior": 28.5,
+     "t": 1287401.331839513,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 457,
+     "delta": 33.400000000001455,
+     "render": 8.299999997019768,
+     "renderAnterior": 7.4000000059604645,
+     "t": 1297312.310618086,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 459,
+     "delta": 38.900000000001455,
+     "render": 9.200000002980232,
+     "renderAnterior": 8.400000005960464,
+     "t": 1300512.7855015849,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 467,
+     "delta": 33.399999999999636,
+     "render": 7.9000000059604645,
+     "renderAnterior": 7.5,
+     "t": 1311882.3413582114,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 484,
+     "delta": 33.400000000001455,
+     "render": 8.5,
+     "renderAnterior": 8.399999991059303,
+     "t": 1336950.9790522405,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 517,
+     "delta": 39,
+     "render": 9.199999988079071,
+     "renderAnterior": 11.899999991059303,
+     "t": 1382712.5232061376,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 519,
+     "delta": 33.399999999999636,
+     "render": 14.199999988079071,
+     "renderAnterior": 11.300000011920929,
+     "t": 1385918.2447697734,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 520,
+     "delta": 127.70000000000073,
+     "render": 10.599999994039536,
+     "renderAnterior": 14.199999988079071,
+     "t": 1392618.2553045736,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 521,
+     "delta": 38.899999999999636,
+     "render": 12,
+     "renderAnterior": 10.599999994039536,
+     "t": 1394659.213877821,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 522,
+     "delta": 38.79999999999927,
+     "render": 12.200000002980232,
+     "renderAnterior": 12,
+     "t": 1396694.9257709319,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 523,
+     "delta": 78,
+     "render": 9.799999997019768,
+     "renderAnterior": 12.200000002980232,
+     "t": 1400787.336277701,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 524,
+     "delta": 38.80000000000109,
+     "render": 9.200000002980232,
+     "renderAnterior": 9.799999997019768,
+     "t": 1402823.0481708117,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 555,
+     "delta": 44.400000000001455,
+     "render": 10.399999991059303,
+     "renderAnterior": 10.799999997019768,
+     "t": 2366.9626971286907,
+     "voltou": false,
+     "voltouAntes": true
+    },
+    {
+     "i": 564,
+     "delta": 38.79999999999927,
+     "render": 6.5999999940395355,
+     "renderAnterior": 12.299999997019768,
+     "t": 14602.220776340966,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 565,
+     "delta": 33.39999999999782,
+     "render": 9.799999997019768,
+     "renderAnterior": 6.5999999940395355,
+     "t": 16354.611942059928,
+     "voltou": false,
+     "voltouAntes": false
+    }
+   ],
+   "ocupacaoMain": 0.9933687635680112,
+   "script": 0.34599065562912307,
+   "layout": 0.11901044094103841,
+   "estilo": 0.1157034359583679,
+   "janelaS": 14.686702999999397
+  },
+  {
+   "rotulo": "sem-som",
+   "repeticao": 0,
+   "mainPorFrame": 21.92375362063382,
+   "pista": "pista-montreal",
+   "velocidade": "rapida",
+   "chuva": true,
+   "frames": 600,
+   "fps": 45.30455990395442,
+   "intervaloP50": 22.200000000000728,
+   "intervaloP95": 27.899999999999636,
+   "intervaloMax": 50.30000000000018,
+   "acima33ms": 7,
+   "renderP50": 6.700000002980232,
+   "renderP95": 9.400000005960464,
+   "renderMax": 26,
+   "voltasDoRelogio": 0,
+   "lentos": [
+    {
+     "i": 42,
+     "delta": 50.30000000000018,
+     "render": 11.799999997019768,
+     "renderAnterior": 8.600000008940697,
+     "t": 590460.0064918695,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 43,
+     "delta": 44.19999999999982,
+     "render": 7.9000000059604645,
+     "renderAnterior": 11.799999997019768,
+     "t": 592088.1398111584,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 84,
+     "delta": 33.399999999999636,
+     "render": 10.299999997019768,
+     "renderAnterior": 11.099999994039536,
+     "t": 630150.3605989703,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 102,
+     "delta": 33.399999999999636,
+     "render": 3,
+     "renderAnterior": 6.600000008940697,
+     "t": 645087.1945576055,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 212,
+     "delta": 33.399999999999636,
+     "render": 9.5,
+     "renderAnterior": 10.599999994039536,
+     "t": 737375.0954206503,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 483,
+     "delta": 38.900000000001455,
+     "render": 10.400000005960464,
+     "renderAnterior": 26,
+     "t": 945894.0341951095,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 583,
+     "delta": 38.899999999999636,
+     "render": 9.799999997019768,
+     "renderAnterior": 20,
+     "t": 1028155.2859742075,
+     "voltou": false,
+     "voltouAntes": false
+    }
+   ],
+   "ocupacaoMain": 0.9932460092255426,
+   "script": 0.32802269466249445,
+   "layout": 0.11445909165131447,
+   "estilo": 0.12028206425210028,
+   "janelaS": 13.020153999998001
+  },
+  {
+   "rotulo": "com-som",
+   "repeticao": 0,
+   "mainPorFrame": 22.102059037413234,
+   "pista": "pista-montreal",
+   "velocidade": "rapida",
+   "chuva": true,
+   "frames": 600,
+   "fps": 44.92766645700435,
+   "intervaloP50": 22.200000000000728,
+   "intervaloP95": 27.899999999999636,
+   "intervaloMax": 44.5,
+   "acima33ms": 6,
+   "renderP50": 7.300000011920929,
+   "renderP95": 9.799999997019768,
+   "renderMax": 25.600000008940697,
+   "som": {
+    "decodificados": 17,
+    "total": 17,
+    "falhas": [],
+    "taxaHz": 48000,
+    "contexto": "running",
+    "tocadas": 44
+   },
+   "voltasDoRelogio": 0,
+   "lentos": [
+    {
+     "i": 342,
+     "delta": 33.399999999999636,
+     "render": 7.100000008940697,
+     "renderAnterior": 9.699999988079071,
+     "t": 836212.3651563112,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 459,
+     "delta": 33.399999999999636,
+     "render": 8.799999997019768,
+     "renderAnterior": 8.5,
+     "t": 931977.5462306889,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 474,
+     "delta": 44.5,
+     "render": 8.799999997019768,
+     "renderAnterior": 25.600000008940697,
+     "t": 944461.1295317531,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 491,
+     "delta": 33.399999999999636,
+     "render": 6.799999997019768,
+     "renderAnterior": 7.399999991059303,
+     "t": 959607.9263845049,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 573,
+     "delta": 33.400000000001455,
+     "render": 8.799999997019768,
+     "renderAnterior": 10.599999994039536,
+     "t": 1028976.719752944,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 582,
+     "delta": 38.899999999999636,
+     "render": 12.699999988079071,
+     "renderAnterior": 21,
+     "t": 1037566.7806139891,
+     "voltou": false,
+     "voltouAntes": false
+    }
+   ],
+   "ocupacaoMain": 0.9929939364459205,
+   "script": 0.35466345564015406,
+   "layout": 0.11036375527756809,
+   "estilo": 0.11636917060418954,
+   "janelaS": 13.106503999995766
+  },
+  {
+   "rotulo": "sem-som",
+   "repeticao": 1,
+   "mainPorFrame": 21.007747002752048,
+   "pista": "pista-montreal",
+   "velocidade": "rapida",
+   "chuva": true,
+   "frames": 600,
+   "fps": 47.26754216658665,
+   "intervaloP50": 22.19999999999891,
+   "intervaloP95": 27.799999999999727,
+   "intervaloMax": 55.59999999999991,
+   "acima33ms": 6,
+   "renderP50": 6.4000000059604645,
+   "renderP95": 8.900000005960464,
+   "renderMax": 23.900000005960464,
+   "voltasDoRelogio": 0,
+   "lentos": [
+    {
+     "i": 49,
+     "delta": 38.80000000000018,
+     "render": 16.799999997019768,
+     "renderAnterior": 9.800000011920929,
+     "t": 599248.9795683929,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 50,
+     "delta": 55.59999999999991,
+     "render": 11.799999997019768,
+     "renderAnterior": 16.799999997019768,
+     "t": 601297.0386759148,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 54,
+     "delta": 33.399999999999636,
+     "render": 7.100000008940697,
+     "renderAnterior": 9.399999991059303,
+     "t": 605592.0691064374,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 182,
+     "delta": 33.400000000000546,
+     "render": 8.199999988079071,
+     "renderAnterior": 9.100000008940697,
+     "t": 704635.6181766677,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 313,
+     "delta": 44.5,
+     "render": 4.9000000059604645,
+     "renderAnterior": 16.599999994039536,
+     "t": 801424.8288048062,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 484,
+     "delta": 50.100000000000364,
+     "render": 10.899999991059303,
+     "renderAnterior": 23.900000005960464,
+     "t": 931981.229790235,
+     "voltou": false,
+     "voltouAntes": false
+    }
+   ],
+   "ocupacaoMain": 0.9929845672775667,
+   "script": 0.330108794380209,
+   "layout": 0.11206078047027625,
+   "estilo": 0.12158463710642549,
+   "janelaS": 12.533367999989423
+  },
+  {
+   "rotulo": "com-som",
+   "repeticao": 1,
+   "mainPorFrame": 23.062670731531036,
+   "pista": "pista-montreal",
+   "velocidade": "rapida",
+   "chuva": true,
+   "frames": 600,
+   "fps": 43.08209292807447,
+   "intervaloP50": 22.200000000000728,
+   "intervaloP95": 27.900000000001455,
+   "intervaloMax": 111,
+   "acima33ms": 14,
+   "renderP50": 7.5999999940395355,
+   "renderP95": 10.5,
+   "renderMax": 15.900000005960464,
+   "som": {
+    "decodificados": 17,
+    "total": 17,
+    "falhas": [],
+    "taxaHz": 48000,
+    "contexto": "running",
+    "tocadas": 48
+   },
+   "voltasDoRelogio": 0,
+   "lentos": [
+    {
+     "i": 39,
+     "delta": 33.5,
+     "render": 7.5,
+     "renderAnterior": 8.5,
+     "t": 596994.6411263009,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 369,
+     "delta": 33.399999999999636,
+     "render": 10.099999994039536,
+     "renderAnterior": 8.5,
+     "t": 865876.070179467,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 444,
+     "delta": 33.399999999999636,
+     "render": 6.5999999940395355,
+     "renderAnterior": 7.9000000059604645,
+     "t": 925218.2144639592,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 447,
+     "delta": 33.5,
+     "render": 8.800000011920929,
+     "renderAnterior": 10.700000002980232,
+     "t": 928290.3031252421,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 501,
+     "delta": 44.5,
+     "render": 15.900000005960464,
+     "renderAnterior": 13.700000002980232,
+     "t": 975760.33499329,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 502,
+     "delta": 39,
+     "render": 7.5999999940395355,
+     "renderAnterior": 15.900000005960464,
+     "t": 977196.923216192,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 524,
+     "delta": 33.399999999999636,
+     "render": 9,
+     "renderAnterior": 8.299999997019768,
+     "t": 998476.8467128718,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 532,
+     "delta": 33.399999999999636,
+     "render": 5.899999991059303,
+     "renderAnterior": 14.600000008940697,
+     "t": 1006867.9953584382,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 551,
+     "delta": 33.399999999999636,
+     "render": 11.599999994039536,
+     "renderAnterior": 9,
+     "t": 1025690.9846380008,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 552,
+     "delta": 38.899999999999636,
+     "render": 14.5,
+     "renderAnterior": 11.599999994039536,
+     "t": 1027123.889301357,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 582,
+     "delta": 111,
+     "render": 9.700000002980232,
+     "renderAnterior": 11.5,
+     "t": 1057612.7116627933,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 584,
+     "delta": 88.90000000000146,
+     "render": 5.299999997019768,
+     "renderAnterior": 9.100000008940697,
+     "t": 1061911.4256528618,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 587,
+     "delta": 38.79999999999927,
+     "render": 7.5999999940395355,
+     "renderAnterior": 15.799999997019768,
+     "t": 1064773.551420028,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 591,
+     "delta": 33.39999999999782,
+     "render": 8.099999994039536,
+     "renderAnterior": 11.600000008940697,
+     "t": 1068254.5151909064,
+     "voltou": false,
+     "voltouAntes": false
+    }
+   ],
+   "ocupacaoMain": 0.9935881236254034,
+   "script": 0.35213331873869286,
+   "layout": 0.11484642478487006,
+   "estilo": 0.11061808059586739,
+   "janelaS": 14.114744999998948
+  },
+  {
+   "rotulo": "sem-som",
+   "repeticao": 2,
+   "mainPorFrame": 20.91577533820282,
+   "pista": "pista-montreal",
+   "velocidade": "rapida",
+   "chuva": true,
+   "frames": 600,
+   "fps": 47.47473948236723,
+   "intervaloP50": 22.199999999999818,
+   "intervaloP95": 27.799999999999727,
+   "intervaloMax": 39,
+   "acima33ms": 4,
+   "renderP50": 6.5,
+   "renderP95": 8.700000002980232,
+   "renderMax": 24.5,
+   "voltasDoRelogio": 0,
+   "lentos": [
+    {
+     "i": 49,
+     "delta": 33.399999999999636,
+     "render": 7.899999991059303,
+     "renderAnterior": 9.799999997019768,
+     "t": 596589.4495762516,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 61,
+     "delta": 33.399999999999636,
+     "render": 8.299999997019768,
+     "renderAnterior": 8.900000005960464,
+     "t": 607640.1282139596,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 484,
+     "delta": 39,
+     "render": 8.200000002980232,
+     "renderAnterior": 24.5,
+     "t": 927273.6406905716,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 584,
+     "delta": 33.399999999999636,
+     "render": 8.200000002980232,
+     "renderAnterior": 9.099999994039536,
+     "t": 1006871.678917983,
+     "voltou": false,
+     "voltouAntes": false
+    }
+   ],
+   "ocupacaoMain": 0.9929709852529002,
+   "script": 0.3324825273172797,
+   "layout": 0.11288418507370573,
+   "estilo": 0.11975351328423589,
+   "janelaS": 12.46817700000247
+  },
+  {
+   "rotulo": "com-som",
+   "repeticao": 2,
+   "mainPorFrame": 23.455337873206417,
+   "pista": "pista-montreal",
+   "velocidade": "rapida",
+   "chuva": true,
+   "frames": 600,
+   "fps": 42.33879503789325,
+   "intervaloP50": 22.200000000000728,
+   "intervaloP95": 33.20000000000073,
+   "intervaloMax": 99.89999999999782,
+   "acima33ms": 19,
+   "renderP50": 7.600000008940697,
+   "renderP95": 10.700000002980232,
+   "renderMax": 15.400000005960464,
+   "som": {
+    "decodificados": 17,
+    "total": 17,
+    "falhas": [],
+    "taxaHz": 48000,
+    "contexto": "running",
+    "tocadas": 46
+   },
+   "voltasDoRelogio": 0,
+   "lentos": [
+    {
+     "i": 42,
+     "delta": 38.80000000000018,
+     "render": 10.900000005960464,
+     "renderAnterior": 13.699999988079071,
+     "t": 600265.6420030624,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 43,
+     "delta": 33.399999999999636,
+     "render": 8.599999994039536,
+     "renderAnterior": 10.900000005960464,
+     "t": 601495.9508913939,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 198,
+     "delta": 38.899999999999636,
+     "render": 15.400000005960464,
+     "renderAnterior": 11.400000005960464,
+     "t": 731440.8809922008,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 199,
+     "delta": 38.80000000000018,
+     "render": 7.0999999940395355,
+     "renderAnterior": 15.400000005960464,
+     "t": 732870.102096011,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 217,
+     "delta": 38.80000000000018,
+     "render": 9.600000008940697,
+     "renderAnterior": 11.200000002980232,
+     "t": 751077.936931408,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 223,
+     "delta": 33.400000000001455,
+     "render": 9.100000008940697,
+     "renderAnterior": 8.599999994039536,
+     "t": 756813.2391443785,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 229,
+     "delta": 33.399999999999636,
+     "render": 10.299999997019768,
+     "renderAnterior": 8.699999988079071,
+     "t": 763156.3286824228,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 231,
+     "delta": 33.399999999999636,
+     "render": 8.700000002980232,
+     "renderAnterior": 10.5,
+     "t": 765406.9835649694,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 324,
+     "delta": 33.399999999999636,
+     "render": 10,
+     "renderAnterior": 10.400000005960464,
+     "t": 844596.1466827852,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 325,
+     "delta": 38.900000000001455,
+     "render": 7.0999999940395355,
+     "renderAnterior": 10,
+     "t": 846029.0513461415,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 329,
+     "delta": 33.399999999999636,
+     "render": 8.799999997019768,
+     "renderAnterior": 8,
+     "t": 850327.7653362099,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 496,
+     "delta": 50,
+     "render": 11.5,
+     "renderAnterior": 15.399999991059303,
+     "t": 985179.1967521609,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 512,
+     "delta": 33.399999999999636,
+     "render": 4.100000008940697,
+     "renderAnterior": 7,
+     "t": 1000731.1851549622,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 518,
+     "delta": 33.399999999999636,
+     "render": 6.5999999940395355,
+     "renderAnterior": 9.300000011920929,
+     "t": 1006867.9953584361,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 532,
+     "delta": 38.899999999999636,
+     "render": 7.4000000059604645,
+     "renderAnterior": 11,
+     "t": 1020375.6082132612,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 572,
+     "delta": 99.89999999999782,
+     "render": 10,
+     "renderAnterior": 10.599999994039536,
+     "t": 1057203.8365531964,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 573,
+     "delta": 33.5,
+     "render": 8.799999997019768,
+     "renderAnterior": 10,
+     "t": 1058437.8290010737,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 574,
+     "delta": 66.5,
+     "render": 10.700000002980232,
+     "renderAnterior": 8.799999997019768,
+     "t": 1060887.396099099,
+     "voltou": false,
+     "voltouAntes": false
+    },
+    {
+     "i": 582,
+     "delta": 33.400000000001455,
+     "render": 7.9000000059604645,
+     "renderAnterior": 8.5,
+     "t": 1068258.1987504503,
+     "voltou": false,
+     "voltouAntes": false
+    }
+   ],
+   "ocupacaoMain": 0.9930707427582214,
+   "script": 0.3499787805218187,
+   "layout": 0.11814521496547582,
+   "estilo": 0.11254428581123246,
+   "janelaS": 14.213355999992928
+  }
+ ]
+}

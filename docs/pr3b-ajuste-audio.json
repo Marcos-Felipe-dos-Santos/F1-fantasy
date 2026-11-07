@@ -1,0 +1,142 @@
+{
+  "metodo": "ffmpeg f32le mono 48000 Hz; RMS e pico de amostra de todo arquivo; antes do mestre e compressor; ganho anterior 0.55 do HEAD anterior ao ajuste, atual lido de agenda.ts",
+  "carros": 22,
+  "vozesDeMotor": "1 foco + 1 marcha lenta alternados, 1 pelotão; não 22 fontes individuais",
+  "mestrePadrao": 0.8,
+  "niveis": {
+    "abandono.ogg": {
+      "pico": 0.7888,
+      "picoDbfs": -2.0606,
+      "rmsDbfs": -19.5438
+    },
+    "chuva.ogg": {
+      "pico": 0.6482,
+      "picoDbfs": -3.7656,
+      "rmsDbfs": -26.3096
+    },
+    "derrapagem.ogg": {
+      "pico": 0.361,
+      "picoDbfs": -8.8507,
+      "rmsDbfs": -22.1439
+    },
+    "largada-lenta.ogg": {
+      "pico": 0.84,
+      "picoDbfs": -1.5143,
+      "rmsDbfs": -18.3075
+    },
+    "largada-media.ogg": {
+      "pico": 0.7599,
+      "picoDbfs": -2.3848,
+      "rmsDbfs": -18.3594
+    },
+    "largada-rapida.ogg": {
+      "pico": 0.6753,
+      "picoDbfs": -3.4106,
+      "rmsDbfs": -18.5756
+    },
+    "lenta.ogg": {
+      "pico": 0.2766,
+      "picoDbfs": -11.1644,
+      "rmsDbfs": -17.9881
+    },
+    "motor.ogg": {
+      "pico": 0.2781,
+      "picoDbfs": -11.115,
+      "rmsDbfs": -18.0187
+    },
+    "passagem-lenta.ogg": {
+      "pico": 0.7284,
+      "picoDbfs": -2.753,
+      "rmsDbfs": -18.3321
+    },
+    "passagem-media.ogg": {
+      "pico": 0.6344,
+      "picoDbfs": -3.953,
+      "rmsDbfs": -18.8653
+    },
+    "passagem-rapida.ogg": {
+      "pico": 0.6382,
+      "picoDbfs": -3.9012,
+      "rmsDbfs": -18.1058
+    },
+    "pelotao.ogg": {
+      "pico": 0.4289,
+      "picoDbfs": -7.3524,
+      "rmsDbfs": -18.0163
+    },
+    "pistola.ogg": {
+      "pico": 0.7475,
+      "picoDbfs": -2.5275,
+      "rmsDbfs": -18.6952
+    },
+    "spray-lenta.ogg": {
+      "pico": 0.6113,
+      "picoDbfs": -4.2747,
+      "rmsDbfs": -18.5025
+    },
+    "spray-media.ogg": {
+      "pico": 0.4913,
+      "picoDbfs": -6.1734,
+      "rmsDbfs": -18.3089
+    },
+    "spray-rapida.ogg": {
+      "pico": 0.5618,
+      "picoDbfs": -5.0089,
+      "rmsDbfs": -18.228
+    },
+    "torcida.ogg": {
+      "pico": 0.594,
+      "picoDbfs": -4.5236,
+      "rmsDbfs": -18.3256
+    }
+  },
+  "motor": {
+    "lacoS": 2,
+    "saltoEmenda": 0.003,
+    "maiorSaltoInterno": 0.1565,
+    "envelope100msDbfs": [
+      -23.7356,
+      -21.3683,
+      -17.7158,
+      -16.8814,
+      -15.7695,
+      -16.1714,
+      -16.1732,
+      -16.6066,
+      -17.3102,
+      -17.7407,
+      -18.1141,
+      -17.4877,
+      -18.3945,
+      -18.8951,
+      -18.5435,
+      -17.9134,
+      -18.0585,
+      -17.9803,
+      -19.995,
+      -21.2103
+    ],
+    "variacaoEnvelopeDb": 7.9661
+  },
+  "cenarios": [
+    {
+      "ganhoMotor": 0.55,
+      "motorRmsPosGanhoDbfs": -23.2114,
+      "motorPicoPosGanhoDbfs": -16.3077,
+      "diferencaRmsMotorPelotaoDb": 7.9564,
+      "tetoConservadorMotores": 0.3856,
+      "tetoConservadorMotoresDbfs": -8.277,
+      "tetoComChuvaDbfs": -4.7303
+    },
+    {
+      "ganhoMotor": 0.15,
+      "motorRmsPosGanhoDbfs": -34.4969,
+      "motorPicoPosGanhoDbfs": -27.5932,
+      "diferencaRmsMotorPelotaoDb": -3.329,
+      "tetoConservadorMotores": 0.2744,
+      "tetoConservadorMotoresDbfs": -11.2332,
+      "tetoComChuvaDbfs": -6.5796
+    }
+  ],
+  "limites": "Não é render do mix de eventos nem medição de saída pós-compressor; não conclui ausência de clipping global. O limite dos laços soma picos absolutos e inclui motor+lenta cheios simultaneamente, hipótese mais conservadora que a alternância real. Audibilidade depende do veredito do Marcos."
+}

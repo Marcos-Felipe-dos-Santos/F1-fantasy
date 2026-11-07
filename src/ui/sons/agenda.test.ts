@@ -477,6 +477,12 @@ describe('detectarPassagens', () => {
 });
 
 describe('motor', () => {
+  it('ganho do motor audível limitado a 15% em toda a faixa', () => {
+    for (const velocidade of [1, 15, 30, 60, 1000]) {
+      expect(somDoMotor(velocidade, 30).ganhoMotor).toBeGreaterThan(0);
+      expect(somDoMotor(velocidade, 30).ganhoMotor).toBeLessThanOrEqual(0.15);
+    }
+  });
   it('velocidade em u por segundo simulado', () => {
     expect(velocidadeEntre({ x: 0, y: 0 }, { x: 3, y: 4 }, 500)).toBe(10);
     expect(velocidadeEntre({ x: 0, y: 0 }, { x: 3, y: 4 }, 0)).toBe(0);

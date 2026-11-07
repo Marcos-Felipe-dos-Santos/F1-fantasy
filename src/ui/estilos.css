@@ -828,6 +828,29 @@ button.card {
   font-weight: 700;
 }
 
+/* PR 3b — mudo e volume. O botão é o mesmo "sticker" da velocidade; o volume
+   usa o controle nativo com a cor da marca no preenchimento (regra do arquivo:
+   PREENCHIMENTO usa a cor da marca). */
+.controle-som {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-sm);
+  margin-bottom: var(--espaco-md);
+}
+
+.controle-som__volume {
+  flex: 0 1 10rem;
+  min-width: 6rem;
+  min-height: var(--alvo-toque);
+  accent-color: var(--primaria);
+}
+
+.controle-som__botao:disabled {
+  cursor: not-allowed;
+  filter: none;
+  opacity: 0.6;
+}
+
 .tela-corrida__area-replay {
   display: flex;
   flex-wrap: wrap;

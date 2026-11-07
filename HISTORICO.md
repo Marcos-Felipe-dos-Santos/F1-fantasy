@@ -7541,6 +7541,108 @@ humanos já tira o humano de si mesmo, e o `o.id === h.id` redundante saiu. Fina
 HEAD `58f694f`: `npm test` 2219 + 1 skipped; `test:party` 46; lint e build com saída 0. `scripts/preview-sons.*`, a
 rodada sintética descartada, foi apagado com a aprovação do Marcos (não estava no git).
 
+### 2026-11-07 — Ajuste de ouvido do PR 3b
+
+Implementação commitada em `ef91092` antes da mutação. Motor a 15% (antes 0,55 no PR original),
+com ciclo de 3 s de ronco / 3 s de descanso no relógio de áudio; saída gradual entre 2,5 e 3 s.
+Marcha lenta preservada. Alvo do tom limitado a 0,5/s real, passo limitado a 100 ms.
+Torcida com fade de 2,5 s reservado dentro do arquivo; saída natural deixa concluir a torcida,
+e o botão Acelerar chama o encerramento explícito antes de trocar de fase.
+
+- Suíte completa: 2296 passaram + 1 pulado em 98 arquivos; Worker: 46/46. Lint limpo e build de produção verde.
+- Mutação do ajuste: 16/16 detectadas, 0 timeout, limite de 120 s por mutante; `docs/pr3b-ajuste-mutacoes.json`.
+- Revisão senior-reviewer: sem crítico; corrigidos rótulo antigo do preview, padrões antigos dos mutantes
+  e teste dos limites 3/6 s, fade e relógio de áudio congelado. A ligação do clique segue cerca textual.
+- Diagnóstico de áudio: `docs/pr3b-ajuste-audio.json` (ganho 0,15; níveis antes do mestre/compressor,
+  sem afirmar ausência de clipping global ou aprovação auditiva).
+- Dois prints selecionados: `docs/img/pr3b/controle-escuro.png` e `controle-claro.png`, capturados antes
+  deste ajuste de áudio; representam o controle visual inalterado, não comprovam o som novo.
+- Preview autocontido local: `preview/pr3b-som.html`. O Artifact remoto antigo não foi atualizado por esta sessão.
+- FPS concluído: `docs/pr3b-ajuste-fps.json` e `docs/pr3b-ajuste-fps-resumo.json`.
+  CPU 6×, 360×800, 22 carros, chuva, 3 repetições intercaladas sem/com som em cada pista/velocidade.
+  Medianas FPS sem → com: Spa média 60,4 → 66,2; Montreal média 78,4 → 71,6;
+  Spa rápida 66,9 → 63,4; Montreal rápida 73,8 → 66,9. Render p50: 5,3 → 5,1;
+  4,2 → 4,8; 4,7 → 5,3; 4,3 → 5,1 ms, respectivamente. Todas as rodadas com som
+  confirmaram contexto running, 17/17 decodificados e vozes tocadas. A primeira com som
+  concorreu com o fim da suíte: 35,4 FPS, 62 quadros >33 ms e intervalo máximo 355,5 ms.
+  Resultado preservado; o ganho aparente de Spa média é ruído, não melhoria comprovada.
+  Emulação desktop não mede celular real nem a thread de áudio; há queda nas outras três medianas.
+  Sem afirmar ausência de regressão ou aprovação do Marcos sobre essa queda.
+- Sem push, merge ou deploy. `.txt` da raiz, `preview/`, `referencias/` e scripts de PR 2b excluídos dos commits.
+
+### 2026-11-07 — PR 3b: o som toca no jogo
+
+Branch `feat/pr3b-audio`, sobre a `main` `e87c66d` (merge do PR 3a, PR #10). Risco ALTO. Sem push, merge ou deploy.
+`git diff e87c66d` vazio em `src/engine/`, `src/data/`, `src/net/` e `party/`; sem bump (`versao.test.ts` 3/3).
+
+**O que entrou** (`6393926`, `2a1ec5c`, `cdda89d`, `59d8cb8`), no plano registrado na sessão do 3a.
+- **`src/ui/sons/audio.ts`**, a única parte que fala com o Web Audio: contexto único por página, retomado por gesto
+  (os ouvintes ficam, para voltar de uma interrupção do iOS); `fetch` de `/sons/*.ogg`, que a `connect-src 'self'`
+  já permite (nenhuma diretiva nova); suspende com a aba oculta; `null` sem Web Audio. Cadeia do mestre copiada do
+  preview aprovado: mestre (nasce no volume salvo) → compressor −10 dB, razão 4.
+- **`src/ui/sons/controlador.ts`**, puro sobre uma `SaidaDeAudio` (testado em node com saída falsa). Cumpre as
+  obrigações do 3a: parte de `SIM_ANTES_DA_LARGADA`; `velRef` uma vez por corrida e carro (cache); foco inativo no
+  box, parado ou abandonado; referências = prioritários em pista; spray como camada da passagem na chuva; problema
+  técnico no arquivo do abandono, com fade em 500 ms; salto real e salto simulado (busca) não soam; `encerrar()` cala
+  tudo, inclusive o que foi agendado e ainda não começou. Agenda 150 ms à frente no relógio do áudio, com o pico do
+  arquivo no instante do evento. Ambiente do preview: pelotão 0,22, chuva 0,3.
+- **`useSomDaCorrida`** em `TelaCorrida`, antes do retorno do grid, com as posições que a tela já calcula (o cálculo
+  subiu para antes do retorno). Cala quando a fase sai de 'replay' e quando a tela desmonta: é assim que o
+  "Acelerar" cala.
+- **`ControleSom`** + **`preferencia-som.ts`**: mudo e volume salvos no aparelho (`f1-fantasy:som-mudo`,
+  `f1-fantasy:som-volume`), no padrão de `tema.ts`; padrão ligado em 80%, que reproduz o mestre 0,8 do preview
+  aprovado. Aparece no grid e no replay; sem Web Audio, desabilitado com "Som indisponível neste aparelho".
+  Chaves, padrão e posição são escolhas da sessão, apresentadas ao Marcos no preview.
+
+**Baseline vermelho.** 3 módulos inexistentes e 3 falhas de comportamento na tela. Depois da implementação, 3 testes
+falharam por defeito do próprio teste (piso de 5 ms no pico, teto 0,7 do ganho, salto de 300 ms num quadro) e foram
+corrigidos.
+
+**Mutação** (`scripts/mutar-pr3b.mjs`, `docs/pr3b-mutacoes.json`, 120 s por mutante). 1ª rodada 51 de 62. Buracos
+fechados: salto real só nas passagens (para os eventos, `eventosNoIntervalo` já cobre), evento depois do
+`encerrar`, fade da torcida, humano no box como referência, prioritário sem agrupar, cache do `velRef`, compressor
+e mestre, ligação `naPista`/`parado`/`abandonou` (cerca textual). Equivalente: o filtro do box no `velRef`, retirado
+depois de medido (1100 carros em 50 corridas, nenhum diferente; o box anda a 50%). 2ª rodada 62 de 62.
+
+**`senior-reviewer`** (interrompido por limite de uso e retomado). Sem 🔴; 4 🟡, todos corrigidos em `cdda89d` com
+baseline vermelho (6 testes): (1) trocar de rápida para lenta recuava a janela e tocava de novo o que já estava
+agendado; (2) com o contexto suspenso, tudo era agendado no relógio parado e estourava junto na retomada; (3) `parar`
+numa fonte em laço que não tinha começado não chamava `stop`, e o laço vivia até o fim da página; (4) arquivo ainda
+decodificando no 1º quadro deixava a corrida inteira sem motor, pelotão e chuva. Das sugestões entraram: mestre
+nascendo no volume salvo, gestos retomando o contexto depois do primeiro, classe CSS morta retirada. A regra própria
+da retomada saiu na mutação (equivalente: os quadros suspensos já atualizam janela e passagens). Final: **69 de 69,
+0 travadas**.
+
+**Medido** (instrumentos versionados em `59d8cb8`).
+- **Teto de 6 vozes** (`scripts/medir-pr3b.preview.test.ts`, `docs/pr3b-medicao.json`): o controlador de produção
+  quadro a quadro em 160 corridas (média 10 × 10 pistas, rápida e lenta 3 × 10), 1 humano. 7004 tocadas, 8568
+  absorvidas, **0 recusadas, 0 roubadas**; máximo de 7 sons soando, contadas as caudas de fade; o teto aparece em
+  0,005% dos quadros. Custo do controlador em node: p50 0,004 ms, p99 0,015 ms por quadro; `velRef` p50 5,7 ms,
+  máximo 19,7 ms, uma vez por corrida.
+- **FPS** (`scripts/medir-fps-pr3b.mjs`, `docs/pr3b-fps.json`): harness `preview-pit` sem som (`main` `e87c66d`) ×
+  com som, intercalado, CPU 6×, 360×800, 22 carros, chuva, Spa e Montreal, média e rápida, 3 repetições. A rodada com
+  som é anulada se o `__fps.som` não mostrar o contexto rodando, 17/17 e vozes tocadas; nenhuma foi anulada. Sobre o
+  código final, medianas sem → com som: render p50 6,7 → 7,3 ms, p95 9,1 → 10,2 ms, thread principal 21,0 → 22,1 ms
+  por quadro. Na 1ª rodada (antes das correções da revisão), com a máquina menos carregada: 5,1 → 5,8, 6,8 → 7,5 e
+  16,0 → 16,9. Emulação em desktop, como no 2a: a thread de áudio não entra na conta.
+- **Build de produção com a CSP real**, servido pelo Worker local (`wrangler dev`), jogado no Chrome do draft à
+  corrida: 0 violações de CSP (`securitypolicyviolation` escutado desde o carregamento), os 17 `.ogg` por `fetch` com
+  200, console sem erro; mudo salvo no `localStorage` e "Acelerar" leva ao resultado. Refeito sobre o bundle final
+  `index-mLPz25p7.js`.
+- `npm test` 2285 + 1 skipped em 98 arquivos; `test:party` 46; typecheck, lint e build com saída 0.
+
+**Preview do celular.** Arquivo único montado por `scripts/montar-preview-pr3b.mjs` (JS, CSS, fonte e os 17 `.ogg`
+embutidos; só o carregador muda) e publicado como Artifact privado: https://claude.ai/artifact/REzZG7NZAFwRex86mHY92Q.
+`FluxoCorrida` real, Monza seed 25 com chuva (achada por `scripts/preview-pr3b-cena.preview.test.ts`), com o pit e o
+problema técnico do seu carro e um roteiro de escuta. Mostra no topo a contagem de arquivos decodificados pelo
+aparelho. Aberto e conferido pela sessão no link: 17 de 17, contexto suspenso antes do toque e rodando depois de
+"Largar". Sem CSP, porque o script embutido violaria a `script-src 'self'`; a CSP foi conferida no build de produção.
+Na geração das capturas, a "clara" saiu escura (o `BotaoTema` do preview apagava o `data-tema` ao montar); corrigido
+gravando a preferência, e as quatro capturas (celular e desktop, dois temas) foram conferidas.
+
+**Não verificado.** Ouvir: os 500 ms e o ganho 0,6 do problema técnico, a marcha lenta no pit e o equilíbrio geral
+são do Marcos. Ogg no iPhone/Safari: depende do teste dele (a contagem no topo do preview). FPS em aparelho real.
+
 ## ARQUIVADO DO `ESTADO.md` em 2026-10-28 — §"Estado atual", medições de 2026-08-18 a 2026-09-02
 
 > Movido sem alteração pela sessão principal, a pedido do Marcos. Antes da cópia, 18,8% dos
