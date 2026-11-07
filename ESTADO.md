@@ -12,6 +12,8 @@
 
 ## Estado atual
 
+**2026-11-07 — PR #12 mesclado:** `main` remota em `9d13b7f` (merge commit, pais `b04dd28` e `ef70fcc`), confirmado via GitHub e fetch. CI do head `ef70fcc` verde; revisão independente sem achados bloqueantes. Código publicado `4783ee6` está contido no merge; nenhum novo deploy necessário ou realizado. Nome Paddock Draft entregue mantendo Worker/URL atual conforme decisão do Marcos; mudança de URL permanece futura. Teste físico de celular/iPhone e abertura de save antigo real ainda pendentes. Esta entrada supera os estados anteriores de sem push/merge/preview pendente.
+
 **2026-11-07, `codex/rerolls-paddock-draft`**: Paddock Draft4.0.0 publicado na URL atual, com sorteio
 ponderado e rerolls. Produto `4b410d4`; deploy `f01c5264-edd7-4373-b49a-634e8550d141`.
 Sem push/PR remoto/merge desta branch; teste físico de celular/iPhone pendente. Ver primeira entrada de Onde parei.
@@ -451,6 +453,10 @@ dependência).
 
 
 ## Onde parei
+
+**2026-11-07 — PR #12 mesclado:** `main` remota em `9d13b7f` (merge commit, pais `b04dd28` e `ef70fcc`), confirmado via GitHub e fetch. CI do head `ef70fcc` verde; revisão independente sem achados bloqueantes. Código publicado `4783ee6` está contido no merge; nenhum novo deploy necessário ou realizado. Nome Paddock Draft entregue mantendo Worker/URL atual conforme decisão do Marcos; mudança de URL permanece futura. Teste físico de celular/iPhone e abertura de save antigo real ainda pendentes. Esta entrada supera os estados anteriores de sem push/merge/preview pendente.
+
+Registro documental local em `codex/docs-fechamento-pr12`; sem push desta documentação. Próximas entregas: um PR por vez, revisão e CI antes do deploy.
 
 ### 2026-11-07 — Visual aprovado e publicado
 
