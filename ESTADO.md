@@ -12,6 +12,10 @@
 
 ## Estado atual
 
+**2026-11-07, `codex/rerolls-paddock-draft`**: Paddock Draft4.0.0 publicado na URL atual, com sorteio
+ponderado e rerolls. Produto `4b410d4`; deploy `f01c5264-edd7-4373-b49a-634e8550d141`.
+Sem push/PR remoto/merge desta branch; teste físico de celular/iPhone pendente. Ver primeira entrada de Onde parei.
+
 **2026-11-07, branch `codex/draft-sorteio-ponderado`**, primeiro PR do draft ponderado sobre `main`
 `b04dd28`. Código local validado; sem push, merge ou deploy deste PR. Rerolls são a próxima etapa.
 PR 3b já mesclado (#11) e publicado nesta sessão; teste em celular físico/iPhone permanece pendente.
@@ -56,7 +60,7 @@ produção. Próximo: **PR 2c** (pit stop animado), que passou à frente do PR 2
 - **`main` `4d530e6`:** merge do PR #3 (PR 1 Resultados).
 - **`main` `ef8c520`:** merge do PR #2 (nomes reais restaurados). CI em `.github/workflows/ci.yml`;
   CI da main `39053132098` verde. Medido na main em 2026-10-18: 1730 testes principais, 46 Worker.
-- **Versões:** `VERSAO_APP` **3.4.7**, digest **`61184d3b`**, `VERSAO_FORMATO` **4**.
+- **Versões atuais:** `VERSAO_APP` **4.0.0**, digest **`809ba1e5`**, `VERSAO_FORMATO` **4**, protocolo/draft online **2**.
 - **Medido pela sessão principal em 2026-11-01, sobre o PR 2b:** `npm test` **1824/83** (1 skipped),
   `npm run test:party` **46/8**, typecheck, lint e build com exit 0, `versao.test.ts` 3/3; nada
   alterado em `src/engine/`, `src/data/`, `src/net/` e `party/`.
@@ -447,6 +451,41 @@ dependência).
 
 
 ## Onde parei
+
+### 2026-11-07 — Rerolls e Paddock Draft publicados na URL atual
+
+Branch `codex/rerolls-paddock-draft`, sobre os commits do sorteio ponderado. Produto `4b410d4`.
+O Marcos autorizou continuar o lote e fazer deploy completo; manteve a URL atual, deixando troca de endereço
+para publicação futura. Nome público Paddock Draft no h1/title; Worker, origem e chaves de storage preservados.
+Visual dos controles apresentado nos dois temas; feedback aplicado: “Especial” virou “Trocar marca + ano”.
+
+- Cada humano tem 3 trocas comuns (marca OU ano) no draft inteiro +1 especial separado (marca E ano).
+  Só muda a revelação atual nas rodadas1–5; não avança rodada/slots/handoff. Exclui outros quatro pares e descartados.
+  Pesos oficiais do PR anterior preservados; bots/ausentes não usam rerolls neste ciclo.
+- Sem alternativa ou sem cota: não gasta crédito; pedido válido processado incrementa revisão. Pedido obsoleto
+  não altera nada. RNG por seed/jogador/rodada/revisão/alvo, independente da ordem global de chegada.
+- Arquitetura replicada aprovada pelo Marcos: DO sem catálogo, coordena identidade/turno/revisão e ordena log;
+  a engine dos clientes valida crédito e disponibilidade. Não é autoridade independente de créditos no servidor.
+  Escolhas também levam revisão. Limite de transporte64pedidos por humano/draft, incluindo recusas replicadas,
+  separado dos créditos; log append-only, sem renovação de prazo. Hash inclui saldos, revisão e descartes.
+- App4.0.0, digest809ba1e5, protocolo2 e estado draft2. Salas antigas com draft são recusadas explicitamente
+  pelo caminho sala-inexistente; lobby legado sem draft continua válido. Saves completos formato4 sem rerolls
+  são normalizados com saldos esgotados, preservando loadouts e sem ressorteio; ativos sem controle são rejeitados.
+- Baselines vermelhos antes de engine/UI/net/rename. Suíte completa2356 +1pulado em108arquivos; Worker48/9;
+  lint/typecheck/build verdes. Senior-reviewer aprovou sem bloqueantes. Implementação commitada antes da mutação:
+  12/12 detectadas, zero timeout, limite120s (`docs/rerolls-mutacoes.json`).
+- Medição pareada200campeonatos: política fixa ano/marca/ano/ambos, sem otimizar por notas, aplicou790trocas
+  e encontrou10casos sem pool. Vitórias do humano14→11; pontos médios61,83→60,95. Não mede uso humano ótimo.
+  `docs/rerolls-medicao.json`; balance-harness completo também rodado no fechamento.
+- Deploy autorizado no Worker f1-fantasy-sala: versão `f01c5264-edd7-4373-b49a-634e8550d141`.
+  Inclui sorteio ponderado +rerolls +rename. `docs/rerolls-producao.json`: corrida inteira e Acelerar em produção,
+  17/17 decodificados, zero fonte ativa ao fim e zero violação CSP. Chrome desktop emulado360×800, não celular físico.
+  Sala temporária com2clientes via WebSocket real: reroll recebido por ambos, duplicata recusada, revisão preservada
+  na reconexão e prazo inalterado; conexões de teste encerradas. iPhone físico/AAC continuam pendentes.
+- Três prints em `docs/img/rerolls/`: início e controles claro/escuro. Instrumentos de navegador versionados.
+- Sem push, PR remoto ou merge desta branch. Publicação veio do commit local, com autorização explícita de deploy.
+  Próximo: integrar a branch no remoto com autorização; conferir no celular real/iPhone. Scripts PR2b soltos não entram.
+
 
 ### 2026-11-07 — Sorteio ponderado: primeiro PR da trilha de rerolls
 

@@ -5,7 +5,7 @@ const ER='src/engine/rerolls.ts',NR='src/net/draft-rede.ts',CL='src/net/cliente.
 const mutantes=[
  ['quarta-troca-comum',ER,'controle.comunsUsados >= 3','controle.comunsUsados >= 4'],
  ['marca-muda-ano',ER,'!mesmaMarca && mesmoAno','!mesmaMarca && !mesmoAno'],
- ['ano-muda-marca',ER,'mesmaMarca && !mesmoAno','!mesmaMarca && !mesmoAno'],
+ ['ano-muda-marca',ER,'? mesmaMarca && !mesmoAno','? !mesmaMarca && !mesmoAno'],
  ['especial-muda-so-uma-dimensao',ER,"alvo === 'ambos' && !mesmaMarca && !mesmoAno","alvo === 'ambos' && (!mesmaMarca || !mesmoAno)"],
  ['recupera-descartados',ER,'[...sorteios, ...controle.descartados]','[...sorteios]'],
  ['sem-revisao',ER,'revisao: controle.revisao + 1','revisao: controle.revisao'],
@@ -17,6 +17,7 @@ const mutantes=[
  ['cliente-ignora-reroll',CL,"evento.tipo === 'reroll'","false"],
 ];
 const arquivos=[...new Set(mutantes.map(x=>x[1]))];
+for(const[nome,arquivo,de]of mutantes){if(readFileSync(arquivo,'utf8').split(de).length!==2)throw new Error(`Alvo ausente ou ambiguo:${nome}`);}
 if(spawnSync('git',['diff','HEAD','--exit-code','--',...arquivos]).status!==0)throw new Error('Commite a implementação antes da mutação');
 const testes=['src/engine/rerolls.test.ts',...readdirSync('src/net').filter(x=>/^rerolls.*\.test\.ts$/.test(x)).map(x=>`src/net/${x}`)];
 const rodar=()=>spawnSync(process.execPath,['node_modules/vitest/vitest.mjs','run',...testes],{encoding:'utf8',timeout:120000,maxBuffer:2000000});

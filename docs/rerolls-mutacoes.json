@@ -1,0 +1,77 @@
+{
+  "timeoutMs": 120000,
+  "resultados": [
+    {
+      "nome": "quarta-troca-comum",
+      "detectada": true,
+      "timeout": false,
+      "falha": "src/engine/rerolls.test.ts > rerolls replicados > compartilha três comuns pelas cinco rodadas e mantém especial separado"
+    },
+    {
+      "nome": "marca-muda-ano",
+      "detectada": true,
+      "timeout": false,
+      "falha": "src/engine/rerolls.test.ts > rerolls replicados > respeita dimensão, exclusões e imutabilidade: marca"
+    },
+    {
+      "nome": "ano-muda-marca",
+      "detectada": true,
+      "timeout": false,
+      "falha": "src/engine/rerolls.test.ts > rerolls replicados > respeita dimensão, exclusões e imutabilidade: ano"
+    },
+    {
+      "nome": "especial-muda-so-uma-dimensao",
+      "detectada": true,
+      "timeout": false,
+      "falha": "src/engine/rerolls.test.ts > rerolls replicados > respeita dimensão, exclusões e imutabilidade: ambos"
+    },
+    {
+      "nome": "recupera-descartados",
+      "detectada": true,
+      "timeout": false,
+      "falha": "src/engine/rerolls.test.ts > rerolls replicados > respeita dimensão, exclusões e imutabilidade: marca"
+    },
+    {
+      "nome": "sem-revisao",
+      "detectada": true,
+      "timeout": false,
+      "falha": "src/engine/rerolls.test.ts > rerolls replicados > compartilha três comuns pelas cinco rodadas e mantém especial separado"
+    },
+    {
+      "nome": "sem-cota-especial",
+      "detectada": true,
+      "timeout": false,
+      "falha": "src/engine/rerolls.test.ts > rerolls replicados > compartilha três comuns pelas cinco rodadas e mantém especial separado"
+    },
+    {
+      "nome": "sem-gasto-comum",
+      "detectada": true,
+      "timeout": false,
+      "falha": "src/engine/rerolls.test.ts > rerolls replicados > compartilha três comuns pelas cinco rodadas e mantém especial separado"
+    },
+    {
+      "nome": "sem-gasto-especial",
+      "detectada": true,
+      "timeout": false,
+      "falha": "src/engine/rerolls.test.ts > rerolls replicados > compartilha três comuns pelas cinco rodadas e mantém especial separado"
+    },
+    {
+      "nome": "mesmo-sorteio-todos-jogadores",
+      "detectada": true,
+      "timeout": false,
+      "falha": "src/engine/rerolls.test.ts > rerolls replicados > usa o substream contratado e pesos oficiais (oráculo por prefixo)"
+    },
+    {
+      "nome": "servidor-aceita-revisao-antiga",
+      "detectada": true,
+      "timeout": false,
+      "falha": "src/net/rerolls-rede.test.ts > recusa duplicata, reordenação e escolha velha, mantendo revisões individuais"
+    },
+    {
+      "nome": "cliente-ignora-reroll",
+      "detectada": true,
+      "timeout": false,
+      "falha": "src/net/rerolls-integracao.test.ts > pool vazio fica no log, replicas concordam e F5 não escolhe automaticamente"
+    }
+  ]
+}

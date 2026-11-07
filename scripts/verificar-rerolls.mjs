@@ -62,8 +62,11 @@ async function novaAba() {
       pendentes.set(idMsg, { ok, erro });
       ws.send(JSON.stringify({ id: idMsg, method, params }));
     });
-  const avaliar = async (expression) =>
-    (await cdp('Runtime.evaluate', { expression, returnByValue: true, awaitPromise: true })).result.value;
+  const avaliar = async (expression) => {
+    const r = await cdp('Runtime.evaluate', { expression, returnByValue: true, awaitPromise: true });
+    if (r.exceptionDetails) throw new Error(r.exceptionDetails.exception?.description?.split('\n')[0] ?? r.exceptionDetails.text);
+    return r.result.value;
+  };
   const fechar = async () => {
     ws.close();
     await fetch(`http://127.0.0.1:${PORTA_DEBUG}/json/close/${id}`);

@@ -1,0 +1,21 @@
+{
+  "metodo": "Seeds0..199, mesmas entradas e estratégia praGanhar para humano nos2braços; um reroll por rodada1..4:ano/marca/ano/ambos quando disponível; sem otimizar por força, sem rerolls de bots. Não é estimativa de jogador humano ótimo.",
+  "linhas": [
+    {
+      "usarRerolls": false,
+      "campeonatos": 200,
+      "vitorias": 14,
+      "pontosMedios": 61.83,
+      "aplicados": 0,
+      "semPool": 0
+    },
+    {
+      "usarRerolls": true,
+      "campeonatos": 200,
+      "vitorias": 11,
+      "pontosMedios": 60.95,
+      "aplicados": 790,
+      "semPool": 10
+    }
+  ]
+}
