@@ -88,4 +88,5 @@
  * falha que o docblock do digest descreve.
  */
 // 3.4.6 → 3.4.7: restauração de nomes/ids originais e marcas das peças.
-export const VERSAO_APP = '3.4.7';
+// Sorteio ponderado: novas partidas mudam, clientes antigos não podem compartilhar sala.
+export const VERSAO_APP = '3.5.0';

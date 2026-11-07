@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { atribuirPerfis } from '../engine/bots';
 import { criarDataset } from '../engine/dataset';
 import { criarDraft, resolverBots } from '../engine/draft';
+import { createRng, deriveSeed } from '../engine/rng';
 import type { EventoCorrida, Jogador, ResultadoCorrida } from '../engine/types';
 import equipeAnosReal from '../fixtures/dataset-semente/equipe-anos.json';
 import pecasReal from '../fixtures/dataset-semente/pecas.json';
@@ -23,7 +24,16 @@ function corridaReal(seed: number, pistaId: string) {
     id: `j${String(i + 1).padStart(2, '0')}`,
     tipo: 'bot' as const,
   }));
-  const estado = resolverBots(criarDraft(dataset, atribuirPerfis(base, seed, 'dificil'), seed), dataset);
+  const jogadores = atribuirPerfis(base, seed, 'dificil');
+  const draft = criarDraft(dataset, jogadores, seed);
+  // Entradas históricas do replay: sorteio uniforme anterior ao draft ponderado.
+  // Mesmo substream e ordem das refs; produção continua usando os pesos atuais.
+  const refs = dataset.equipeAnos.map(({ equipe, ano }) => ({ equipe, ano }));
+  const sorteios = Object.fromEntries(jogadores.map(({ id }) => [
+    id,
+    createRng(deriveSeed(seed, `draft:sorteios:${id}`)).shuffle(refs).slice(0, 5),
+  ]));
+  const estado = resolverBots({ ...draft, sorteios }, dataset);
   return prepararCorrida(dataset, estado, pistaId, seed);
 }
 

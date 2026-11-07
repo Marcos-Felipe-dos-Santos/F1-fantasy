@@ -91,8 +91,12 @@ describe('painel: diferença para o líder', () => {
   });
 
   it('o número da tela vem da linha do pit, a mesma que ordena o painel', () => {
-    const corrida = corridaCom(false);
+    // Isola o pit: incidentes e punições têm sua própria linha no replay
+    // completo e podem alterar a diferença mesmo antes da bandeirada.
+    const base = corridaCom(false);
+    const corrida = { ...base, resultado: { ...base.resultado, eventos: [] } };
     const { pista, grid, resultado } = corrida;
+    expect(resultado.eventos).toEqual([]);
     const linha = linhaDoTempoDoPit(resultado, pista);
     const ordemGrid = grid.grid.map((g) => g.jogadorId);
     const textos = (t: number, comPit: boolean) => {
@@ -101,8 +105,11 @@ describe('painel: diferença para o líder', () => {
     };
     // Um instante em que o líder está parado: é onde as duas contas divergem.
     const paradas = Object.keys(resultado.voltasDePit).flatMap((j) => linha.paradas(j));
-    const t = paradas.map((p) => (p.chegada + p.partida) / 2).find((x) => textos(x, true).join() !== textos(x, false).join());
+    const bandeirada = replayDaCorrida(resultado, pista).bandeirada;
+    const t = paradas.map((p) => (p.chegada + p.partida) / 2).find((x) => x < bandeirada && textos(x, true).join() !== textos(x, false).join());
     expect(t).toBeDefined();
+    expect(t!).toBeLessThan(bandeirada);
+    expect(textos(t!, true)).not.toEqual(textos(t!, false));
     const celulas = [...tela(corrida, t!).matchAll(/classificacao-ao-vivo__diferenca">([^<]*)</g)].map((m) => m[1]);
     expect(celulas).toEqual(textos(t!, true));
   });

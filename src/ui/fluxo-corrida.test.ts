@@ -377,16 +377,17 @@ describe('escalaReplay', () => {
 });
 
 describe('classificacaoAoVivo', () => {
-  // Seed encontrada por busca (script descartável, ver histórico do PR 2.6)
-  // que produz ao menos 1 DNF em Suzuka com o padrão de escolhas de
-  // `jogarDraftAteConcluir` — necessário pra cobrir o ramo 'dnf' do contrato
-  // de ordenação com uma corrida real (não sintética).
-  const draftComDnf = jogarDraftAteConcluir('busca-dnf-6');
-  const { grid: gridComDnf, resultado: resultadoComDnf, pista: pistaComDnf } = prepararCorrida(
-    dataset,
-    draftComDnf,
-    'pista-suzuka',
-  );
+  // Busca limitada e determinística: o sorteio do draft pode mudar quais
+  // seeds produzem DNF, mas o contrato exige uma corrida real com abandono.
+  const comDnf = (() => {
+    for (let seed = 1; seed <= 100; seed++) {
+      const draft = jogarDraftAteConcluir(`busca-dnf-${seed}`);
+      const corrida = prepararCorrida(dataset, draft, 'pista-suzuka');
+      if (corrida.resultado.classificacao.some((c) => c.status === 'dnf')) return corrida;
+    }
+    throw new Error('nenhum DNF em Suzuka nas 100 seeds de teste');
+  })();
+  const { grid: gridComDnf, resultado: resultadoComDnf, pista: pistaComDnf } = comDnf;
   const gridLargadaComDnf = gridComDnf.grid.map((item) => item.jogadorId);
 
   it('tem ao menos 1 DNF na seed escolhida (pré-condição do teste)', () => {

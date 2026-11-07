@@ -24,6 +24,8 @@ import {
   slotsRestantes,
 } from './draft-utils';
 import { escolherBot } from './bots';
+import { ehTop3Oficial } from './draft-top3';
+import { pesoDoSorteio, sortearPonderado } from './sorteio-ponderado';
 
 function assert(cond: boolean, msg: string): asserts cond {
   if (!cond) throw new Error(msg);
@@ -67,7 +69,12 @@ export function criarDraft(dataset: Dataset, jogadores: Jogador[], seed: number)
   const progresso: Record<string, ProgressoJogador> = {};
   for (const jogador of jogadores) {
     const rng = createRng(deriveSeed(seed, `draft:sorteios:${jogador.id}`));
-    sorteios[jogador.id] = rng.shuffle(equipeAnoRefs).slice(0, 5);
+    sorteios[jogador.id] = sortearPonderado(
+      equipeAnoRefs,
+      5,
+      (ref) => pesoDoSorteio(ref, ehTop3Oficial(ref)),
+      rng,
+    );
     progresso[jogador.id] = { rodada: 1, slots: {} };
   }
 

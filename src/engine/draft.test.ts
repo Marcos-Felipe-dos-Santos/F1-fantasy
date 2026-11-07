@@ -6,6 +6,9 @@ import pistasReal from '../fixtures/dataset-semente/pistas.json';
 import type { DraftState, Jogador } from './types';
 import { atribuirPerfis, escolherBot } from './bots';
 import { aplicarEscolha, criarDraft, resolverBots } from './draft';
+import { createRng, deriveSeed } from './rng';
+import { ehTop3Oficial } from './draft-top3';
+import fonteTop3 from '../../scripts/derived/draft-top3.json';
 import { stateManual } from './draft-test-fixtures';
 
 const dataset = criarDataset(equipeAnosReal, pecasReal, pistasReal);
@@ -394,4 +397,55 @@ describe('campo Jogador.nome (PR 2.1a — exibição, nunca entra na lógica de 
     // bots sem nome seguem sem nome — o campo é opcional e não é inventado pela engine.
     expect(state.jogadores.find((j) => j.id === 'bot-1')?.nome).toBeUndefined();
   });
+});
+
+describe('integração do sorteio ponderado oficial', () => {
+  it('usa o acumulado sem reposição no mesmo substream de cada jogador', () => {
+    const jogadores = jogadoresBots(321);
+    const original = JSON.stringify(dataset);
+    for (const seed of [0, 55, 321]) {
+      const estado = criarDraft(dataset, jogadores, seed);
+      for (const jogador of jogadores) {
+        const rng = createRng(deriveSeed(seed, `draft:sorteios:${jogador.id}`));
+        const candidatos = dataset.equipeAnos.map(({ equipe, ano }) => ({ equipe, ano }));
+        const esperados = [];
+        for (let rodada = 0; rodada < 5; rodada++) {
+          // Oráculo independente: unidades inteiras de meio peso e prefixos.
+          const prefixos: number[] = [];
+          let total = 0;
+          for (const ref of candidatos) {
+            const oficial = fonteTop3.temporadas.some(
+              (t) => t.ano === ref.ano && t.top3.some((e) => e.equipe === ref.equipe),
+            );
+            total +=
+              2 +
+              Number(ref.ano >= 1985) +
+              Number([1988, 1991, 1994, 2004, 2008, 2012, 2016, 2021, 2023].includes(ref.ano)) +
+              Number(ref.ano >= 1958 && oficial);
+            prefixos.push(total);
+          }
+          const alvo = rng.next() * total;
+          const indice = prefixos.findIndex((limite) => limite > alvo);
+          esperados.push(candidatos.splice(indice, 1)[0]);
+        }
+        expect(estado.sorteios[jogador.id]).toEqual(esperados);
+      }
+    }
+    expect(JSON.stringify(dataset)).toBe(original);
+  });
+});
+
+it('tabela compacta preserva os 204 pares oficiais e rejeita nomes/anos aproximados', () => {
+  expect(fonteTop3.temporadas).toHaveLength(68);
+  expect(fonteTop3.temporadas.flatMap((t) => t.top3)).toHaveLength(204);
+  const nomes = [...new Set(fonteTop3.temporadas.flatMap((t) => t.top3.map((e) => e.equipe)))];
+  for (let ano = 1950; ano <= 2026; ano++) {
+    for (const equipe of [...nomes, 'Equipe inexistente']) {
+      const esperado = fonteTop3.temporadas.some(
+        (t) => t.ano === ano && t.top3.some((e) => e.equipe === equipe),
+      );
+      expect(ehTop3Oficial({ equipe, ano })).toBe(esperado);
+      expect(ehTop3Oficial({ equipe: `${equipe} `, ano })).toBe(false);
+    }
+  }
 });
