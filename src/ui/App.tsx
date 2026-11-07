@@ -43,7 +43,7 @@ import { useDraft } from './useDraft';
 import type { Visibilidade } from './visibilidade';
 
 function App() {
-  const { state, humanos, erro, comecar, escolher, retomar, reiniciar } = useDraft();
+  const { state, humanos, erro, comecar, escolher, reroll, retomar, reiniciar } = useDraft();
   const [naCorrida, setNaCorrida] = useState(false);
   const [confirmadoId, setConfirmadoId] = useState<string | null>(null);
   // Visibilidade é opção da partida (§5), não conceito da engine — guardada
@@ -298,6 +298,7 @@ function App() {
           vezDe={vezDe}
           visibilidade={visibilidade}
           erro={erro}
+          onReroll={(alvo) => reroll(decisao.jogadorId, alvo)}
           onEscolher={(escolha: EscolhaDraft) => escolher(decisao.jogadorId, escolha)}
         />
       )}

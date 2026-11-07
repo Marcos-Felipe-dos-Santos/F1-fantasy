@@ -12,7 +12,7 @@
 import { atribuirPerfis } from '../engine/bots';
 import { deriveSeed } from '../engine/rng';
 import type { Dificuldade, Jogador } from '../engine/types';
-import { criarDraftRede, expirarJogador, reduzirDraft } from './draft-rede';
+import { criarDraftRede, draftRedeValido, expirarJogador, reduzirDraft } from './draft-rede';
 import {
   MAX_TAMANHO_NOME,
   type ComandoDraft,
@@ -284,6 +284,8 @@ function calendarioPublicavel(estado: EstadoSala): number | null {
 }
 
 export function estadoDasSeeds(sala: EstadoSala): EstadoDasSeeds {
+  if (sala.draft !== null && sala.draft !== undefined && !draftRedeValido(sala.draft))
+    return { tipo: 'corrompida', motivo: 'draft incompatível ou controle de revisões inválido' };
   if (sala.versaoSala === undefined) return { tipo: 'legado' };
 
   const { seedsEtapas, seedCalendario } = sala;

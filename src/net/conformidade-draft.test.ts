@@ -202,7 +202,7 @@ function rodarConformidade(
       for (const outro of humanos.filter((id) => id !== daVez && !ausentes.has(id))) {
         const r = reduzirDraft(
           rede,
-          { tipo: 'escolher', escolha: null, turnoEsperado: turnoCorrente(rede, outro) },
+          { tipo: 'escolher', revisaoEsperada: 0, escolha: null, turnoEsperado: turnoCorrente(rede, outro) },
           outro,
           agora,
         );
@@ -253,7 +253,7 @@ function rodarConformidade(
     const escolha = escolhaValida(engine, jogadorId, dataset);
     const r = reduzirDraft(
       rede,
-      { tipo: 'escolher', escolha, turnoEsperado: turnoCorrente(rede, jogadorId) },
+      { tipo: 'escolher', revisaoEsperada: 0, escolha, turnoEsperado: turnoCorrente(rede, jogadorId) },
       jogadorId,
       agora,
     );
@@ -322,7 +322,7 @@ describe('CONFORMIDADE — o redutor de turnos bate com a engine (portão do dev
       engine = resolverBots(aplicarEscolha(engine, dataset, jogadorId, escolha), dataset);
       rede = reduzirDraft(
         rede,
-        { tipo: 'escolher', escolha, turnoEsperado: turnoCorrente(rede, jogadorId) },
+        { tipo: 'escolher', revisaoEsperada: 0, escolha, turnoEsperado: turnoCorrente(rede, jogadorId) },
         jogadorId,
         T0,
       ).estado;
@@ -333,7 +333,7 @@ describe('CONFORMIDADE — o redutor de turnos bate com a engine (portão do dev
     const outro = idsHumanos(roster).find((id) => id !== daVez)!;
     const r = reduzirDraft(
       rede,
-      { tipo: 'escolher', escolha: null, turnoEsperado: turnoCorrente(rede, outro) },
+      { tipo: 'escolher', revisaoEsperada: 0, escolha: null, turnoEsperado: turnoCorrente(rede, outro) },
       outro,
       T0,
     );
@@ -441,7 +441,7 @@ describe('COMMUTATIVIDADE — mesmos sorteios, ordens diferentes, mesmo resultad
           passo += 1;
           const r = reduzirDraft(
             rede,
-            { tipo: 'escolher', escolha, turnoEsperado: turnoCorrente(rede, jogadorId) },
+            { tipo: 'escolher', revisaoEsperada: 0, escolha, turnoEsperado: turnoCorrente(rede, jogadorId) },
             jogadorId,
             T0 + passo * PASSO_MS,
           );
@@ -487,7 +487,7 @@ describe('COMMUTATIVIDADE — mesmos sorteios, ordens diferentes, mesmo resultad
           passo += 1;
           const r = reduzirDraft(
             rede,
-            { tipo: 'escolher', escolha, turnoEsperado: turnoCorrente(rede, jogadorId) },
+            { tipo: 'escolher', revisaoEsperada: 0, escolha, turnoEsperado: turnoCorrente(rede, jogadorId) },
             jogadorId,
             T0 + passo * PASSO_MS,
           );
@@ -515,7 +515,7 @@ describe('COMMUTATIVIDADE — mesmos sorteios, ordens diferentes, mesmo resultad
     for (const { jogadorId, escolha } of sorteios) {
       const r = reduzirDraft(
         rede,
-        { tipo: 'escolher', escolha, turnoEsperado: turnoCorrente(rede, jogadorId) },
+        { tipo: 'escolher', revisaoEsperada: 0, escolha, turnoEsperado: turnoCorrente(rede, jogadorId) },
         jogadorId,
         T0,
       );
@@ -530,7 +530,7 @@ describe('COMMUTATIVIDADE — mesmos sorteios, ordens diferentes, mesmo resultad
     const r = reduzirDraft(
       rede,
       {
-        tipo: 'escolher',
+        tipo: 'escolher', revisaoEsperada: 0,
         escolha: foraDeOrdem[0].escolha,
         turnoEsperado: turnoCorrente(rede, foraDeOrdem[0].jogadorId),
       },

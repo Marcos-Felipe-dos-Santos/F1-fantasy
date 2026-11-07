@@ -30,7 +30,8 @@ import { hashDoDraft } from '../net/hash-draft';
 import { hashDaCorrida } from '../net/hash-corrida';
 import { RODADA_COMPLETA } from '../net/tipos';
 import { VERSAO_APP } from '../engine/versao';
-import type { EscolhaDraft, LinhaClassificacao } from '../engine/types';
+import type { EscolhaDraft, LinhaClassificacao, TipoReroll } from '../engine/types';
+import { aguardaComandoDraft, type CoordenadaComandoDraft } from './draft-pendente';
 import {
   alvoDoAtestado,
   calendarioDaSala,
@@ -60,6 +61,8 @@ export interface UseSalaOnline {
   definirPronto: (pronto: boolean) => void;
   iniciar: () => void;
   escolher: (escolha: EscolhaDraft) => void;
+  reroll: (alvo: TipoReroll) => void;
+  pendente: boolean;
   sair: () => void;
   /** Último erro recebido do servidor, para a UI mostrar. */
   ultimoErro: string | null;
@@ -164,6 +167,9 @@ export function useSalaOnline(sala: string): UseSalaOnline {
   const [estadoConexao, setEstadoConexao] = useState<EstadoConexao>('conectando');
   const [cliente, setCliente] = useState<EstadoCliente>(() => criarCliente());
   const conexaoRef = useRef<Conexao | null>(null);
+  const comandoPendenteRef = useRef<CoordenadaComandoDraft | null>(null);
+  const [comandoPendente, setComandoPendente] = useState<CoordenadaComandoDraft | null>(null);
+  const [sincronizada, setSincronizada] = useState(false);
   const storage = useMemo(() => storageDoNavegador(), []);
 
   // O token vive num ref porque o `aoAbrir` da conexão o lê fora do ciclo de
@@ -181,7 +187,14 @@ export function useSalaOnline(sala: string): UseSalaOnline {
     const conexao = abrirConexao({
       base: baseParaEstaPagina(window.location, import.meta.env?.VITE_WS_BASE),
       sala,
-      aoMudarEstado: setEstadoConexao,
+      aoMudarEstado: (estado) => {
+        if (estado !== 'aberta') {
+          setSincronizada(false);
+          comandoPendenteRef.current = null;
+          setComandoPendente(null);
+        }
+        setEstadoConexao(estado);
+      },
       aoAbrir: () => {
         // Se tenho token, tento voltar como quem eu era. Se ele não valer mais
         // (lobby: cair é sair), o servidor responde `token-invalido` e a tela
@@ -202,6 +215,11 @@ export function useSalaOnline(sala: string): UseSalaOnline {
         }
       },
       aoReceber: (mensagem) => {
+        if (mensagem.tipo === 'estado') setSincronizada(true);
+        if (mensagem.tipo === 'erro') {
+          comandoPendenteRef.current = null;
+          setComandoPendente(null);
+        }
         if (mensagem.tipo === 'voce-e' && typeof mensagem.token === 'string') {
           tokenRef.current = mensagem.token;
           try {
@@ -499,18 +517,67 @@ export function useSalaOnline(sala: string): UseSalaOnline {
       ? (draftRede.rodada[euSou] ?? Infinity) < RODADA_COMPLETA
       : draftRede.fase === 'peca' && draftRede.ordemPeca[draftRede.indicePeca] === euSou);
 
-  const escolher = useCallback(
-    (escolha: EscolhaDraft) => {
-      if (euSou === null || draftRede === null) return;
-      // A coordenada de turno vem da MINHA visão, que pode estar atrasada — e é
-      // por isso que ela existe: comando montado sobre visão velha é recusado
-      // (`turno-divergente`) em vez de virar jogada fantasma.
-      const turnoEsperado =
-        draftRede.fase === 'sorteios' ? draftRede.rodada[euSou] : draftRede.indicePeca;
-      enviar({ tipo: 'escolher', escolha, turnoEsperado });
-    },
-    [enviar, euSou, draftRede],
-  );
+  const coordenada: CoordenadaComandoDraft | null =
+    euSou !== null && draftRede !== null
+      ? {
+          fase: draftRede.fase,
+          turno: draftRede.fase === 'sorteios' ? draftRede.rodada[euSou] : draftRede.indicePeca,
+          revisao: draftRede.revisoes[euSou],
+          erros: cliente.erros.length,
+        }
+      : null;
+  const pendente = aguardaComandoDraft(comandoPendente, coordenada, estadoConexao);
+
+  const enviarAcaoDraft = (comando: ComandoDraft) => {
+    if (
+      !sincronizada ||
+      !minhaVez ||
+      coordenada === null ||
+      cliente.encerrada ||
+      cliente.divergencia !== null ||
+      estadoConexao !== 'aberta' ||
+      conexaoRef.current?.estado() !== 'aberta' ||
+      aguardaComandoDraft(comandoPendenteRef.current, coordenada, estadoConexao)
+    )
+      return;
+    comandoPendenteRef.current = coordenada;
+    setComandoPendente(coordenada);
+    try {
+      enviar(comando);
+    } catch (erro) {
+      comandoPendenteRef.current = null;
+      setComandoPendente(null);
+      setCliente((atual) => ({
+        ...atual,
+        erros: [...atual.erros, erro instanceof Error ? erro.message : String(erro)],
+      }));
+    }
+  };
+
+  const escolher = (escolha: EscolhaDraft) => {
+    if (euSou === null || draftRede === null) return;
+    // A coordenada de turno vem da MINHA visão, que pode estar atrasada — e é
+    // por isso que ela existe: comando montado sobre visão velha é recusado
+    // (`turno-divergente`) em vez de virar jogada fantasma.
+    const turnoEsperado =
+      draftRede.fase === 'sorteios' ? draftRede.rodada[euSou] : draftRede.indicePeca;
+    enviarAcaoDraft({
+      tipo: 'escolher',
+      escolha,
+      turnoEsperado,
+      revisaoEsperada: draftRede.revisoes[euSou],
+    });
+  };
+
+  const reroll = (alvo: TipoReroll) => {
+    if (euSou === null || draftRede === null || draftRede.fase !== 'sorteios') return;
+    enviarAcaoDraft({
+      tipo: 'reroll',
+      alvo,
+      turnoEsperado: draftRede.rodada[euSou],
+      revisaoEsperada: draftRede.revisoes[euSou],
+    });
+  };
 
   return {
     estadoConexao,
@@ -522,6 +589,8 @@ export function useSalaOnline(sala: string): UseSalaOnline {
     definirPronto,
     iniciar,
     escolher,
+    reroll,
+    pendente: pendente || !sincronizada,
     sair,
     ultimoErro: cliente.erros.at(-1) ?? null,
     encerrada: cliente.encerrada,

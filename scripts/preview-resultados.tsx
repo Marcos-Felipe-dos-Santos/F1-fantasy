@@ -45,6 +45,7 @@ const state: DraftState = {
     perfilBot: i < 4 ? undefined : 'praGanhar',
   })),
   sorteios: {},
+  rerolls: {},
   progresso: {},
   ordemPeca: loadouts.map((l) => l.jogadorId),
   indicePeca: 22,

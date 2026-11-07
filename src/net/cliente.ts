@@ -22,11 +22,12 @@
  * também não vai querer fazer.
  */
 
+import { aplicarReroll } from '../engine/rerolls';
 import type { Dataset } from '../engine/dataset';
 import { aplicarEscolha, criarDraft, resolverBots, revelarRodada } from '../engine/draft';
 import { encontrarEquipeAno, RODADAS_SORTEIO } from '../engine/draft-utils';
 import { escolherBot } from '../engine/bots';
-import type { DraftState, EscolhaDraft } from '../engine/types';
+import type { DraftState, EscolhaDraft, ResultadoReroll } from '../engine/types';
 import type { MensagemServidor } from './protocolo';
 import type { EstadoSalaPublico } from './tipos';
 
@@ -47,6 +48,7 @@ export interface EstadoCliente {
   draft: DraftState | null;
   /** Quantos eventos do log já foram aplicados em `draft`. */
   eventosAplicados: number;
+  resultadosReroll: Record<string, { seq: number; resultado: ResultadoReroll }>;
   /** Quem já abandonou, do ponto de vista deste cliente. */
   ausentes: string[];
   /** Erros recebidos, na ordem. Diagnóstico, não regra de jogo. */
@@ -74,6 +76,7 @@ export function criarCliente(): EstadoCliente {
     seqVisto: -1,
     draft: null,
     eventosAplicados: 0,
+    resultadosReroll: {},
     ausentes: [],
     erros: [],
     descartados: 0,
@@ -203,25 +206,40 @@ export function sincronizarDraft(
   let draft = estado.draft;
   let aplicados = estado.eventosAplicados;
   let ausentes = estado.ausentes;
+  let resultadosReroll = estado.resultadosReroll;
 
   if (draft === null) {
     draft = resolverBots(criarDraft(dataset, sala.roster, sala.seedDraft), dataset);
     aplicados = 0;
     ausentes = [];
+    resultadosReroll = {};
   }
 
   for (const evento of sala.draft.log.slice(aplicados)) {
     if (evento.tipo === 'ausencia') {
       ausentes = [...ausentes, evento.jogadorId];
-    } else {
-      draft = aplicarEscolhaDoLog(draft, dataset, evento.jogadorId, evento.escolha, escolherPeloAusente);
+    } else if (evento.tipo === 'reroll') {
+      const retorno = aplicarReroll(draft, dataset, evento.jogadorId, evento.pedido);
+      draft = retorno.state;
+      resultadosReroll = {
+        ...resultadosReroll,
+        [evento.jogadorId]: { seq: evento.seq, resultado: retorno.resultado },
+      };
+    } else if (evento.tipo === 'escolha') {
+      draft = aplicarEscolhaDoLog(
+        draft,
+        dataset,
+        evento.jogadorId,
+        evento.escolha,
+        escolherPeloAusente,
+      );
     }
     // O contrato: resolver o ausente NO MESMO evento em que a ausência aparece.
     draft = resolverAusentes(draft, ausentes, dataset, escolherPeloAusente);
     aplicados += 1;
   }
 
-  return { ...estado, draft, eventosAplicados: aplicados, ausentes };
+  return { ...estado, draft, eventosAplicados: aplicados, ausentes, resultadosReroll };
 }
 
 /**
@@ -255,7 +273,10 @@ function aplicarEscolhaDoLog(
   escolherPeloAusente: EscolherPeloAusente,
 ): DraftState {
   try {
-    return resolverBots(aplicarEscolha(draft, dataset, jogadorId, escolha as EscolhaDraft), dataset);
+    return resolverBots(
+      aplicarEscolha(draft, dataset, jogadorId, escolha as EscolhaDraft),
+      dataset,
+    );
   } catch {
     return resolverBots(
       aplicarEscolha(draft, dataset, jogadorId, escolherPeloAusente(draft, dataset, jogadorId)),

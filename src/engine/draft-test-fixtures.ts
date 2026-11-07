@@ -31,6 +31,7 @@ export function stateManual(
     jogadores: overrides.jogadores,
     sorteios: overrides.sorteios ?? sorteiosPadrao,
     progresso: overrides.progresso ?? progressoPadrao,
+    rerolls: overrides.rerolls ?? Object.fromEntries(jogadorIds.map(id => [id, { comunsUsados: 0, especialUsado: false, revisao: 0, descartados: [] }])),
     ordemPeca: overrides.ordemPeca ?? jogadorIds,
     indicePeca: overrides.indicePeca ?? 0,
     pecasReveladas: overrides.pecasReveladas ?? null,

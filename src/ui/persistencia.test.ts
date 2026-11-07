@@ -72,6 +72,12 @@ function draftDeTeste(loadouts: Loadout[]): DraftState {
     fase: 'concluido',
     jogadores,
     sorteios: {},
+    rerolls: Object.fromEntries(
+      jogadores.map((j) => [
+        j.id,
+        { comunsUsados: 3, especialUsado: true, revisao: 0, descartados: [] },
+      ]),
+    ),
     progresso: {},
     ordemPeca: jogadores.map((j) => j.id),
     indicePeca: jogadores.length,

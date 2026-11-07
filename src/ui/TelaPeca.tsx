@@ -21,9 +21,18 @@ interface TelaPecaProps {
   visibilidade: Visibilidade;
   erro: string | null;
   onEscolher: (escolha: EscolhaDraft) => void;
+  pendente?: boolean;
 }
 
-export function TelaPeca({ state, jogadorId, vezDe, visibilidade, erro, onEscolher }: TelaPecaProps) {
+export function TelaPeca({
+  state,
+  jogadorId,
+  vezDe,
+  visibilidade,
+  erro,
+  onEscolher,
+  pendente = false,
+}: TelaPecaProps) {
   const revelacao = revelarRodada(state, jogadorId);
 
   if (revelacao.fase !== 'peca') {
@@ -45,19 +54,21 @@ export function TelaPeca({ state, jogadorId, vezDe, visibilidade, erro, onEscolh
       {vezDe && <p className="tela-peca__vez">Vez de {vezDe}</p>}
       <h2>Rodada 6 — escolha sua peça icônica</h2>
       {erro && <p className="erro">{erro}</p>}
-      <div className="grid-cards">
-        {revelacao.pecasReveladas.map((pecaId) => {
-          const peca = dataset.pecasById.get(pecaId);
-          if (!peca) return null;
-          return (
-            <CardPeca
-              key={pecaId}
-              peca={pecaVisivel(peca, visibilidade)}
-              onClick={() => onEscolher({ tipo: 'peca', pecaId })}
-            />
-          );
-        })}
-      </div>
+      <fieldset className="rerolls__escolhas" disabled={pendente}>
+        <div className="grid-cards">
+          {revelacao.pecasReveladas.map((pecaId) => {
+            const peca = dataset.pecasById.get(pecaId);
+            if (!peca) return null;
+            return (
+              <CardPeca
+                key={pecaId}
+                peca={pecaVisivel(peca, visibilidade)}
+                onClick={() => onEscolher({ tipo: 'peca', pecaId })}
+              />
+            );
+          })}
+        </div>
+      </fieldset>
     </div>
   );
 }

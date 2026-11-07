@@ -127,7 +127,7 @@ export function TelaInicio({
 
   return (
     <div className="tela-inicio">
-      <h1>F1 Fantasy</h1>
+      <h1>Paddock Draft</h1>
       <p className="tela-inicio__subtitulo">Draft de equipe/ano + peça icônica</p>
 
       {campeonatoSalvo !== null && (

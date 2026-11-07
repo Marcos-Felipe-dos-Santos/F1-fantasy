@@ -340,14 +340,14 @@ describe('seedCorrida no fio, através do funil real (PR 1/4, item 2 da revisão
     if (draft.fase === 'sorteios') {
       const vez = draft.humanos.find((id) => draft.rodada[id] <= RODADAS_SORTEIO)!;
       return mandar(estado, CONEXAO_DO_HUMANO[vez], {
-        tipo: 'escolher',
+        tipo: 'escolher', revisaoEsperada: 0,
         escolha: { tipo: 'componente', slot: 'chassi' },
         turnoEsperado: draft.rodada[vez],
       });
     }
     const vez = draft.ordemPeca[draft.indicePeca];
     return mandar(estado, CONEXAO_DO_HUMANO[vez], {
-      tipo: 'escolher',
+      tipo: 'escolher', revisaoEsperada: 0,
       escolha: { tipo: 'peca', pecaId: 'peca-qualquer' },
       turnoEsperado: draft.indicePeca,
     });

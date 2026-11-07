@@ -166,6 +166,57 @@ export function calcularImpressaoDigital(etapas: readonly EtapaCampeonato[]): st
 
 const FASES_DRAFT = new Set(['sorteios', 'peca', 'concluido']);
 
+function ehRegistro(x: unknown): x is Record<string, unknown> {
+  return typeof x === 'object' && x !== null && !Array.isArray(x);
+}
+
+function ehControleRerollsValido(x: unknown): boolean {
+  if (!ehRegistro(x)) return false;
+  return (
+    Number.isInteger(x.comunsUsados) &&
+    Number(x.comunsUsados) >= 0 &&
+    Number(x.comunsUsados) <= 3 &&
+    typeof x.especialUsado === 'boolean' &&
+    Number.isSafeInteger(x.revisao) &&
+    Number(x.revisao) >= 0 &&
+    Array.isArray(x.descartados) &&
+    x.descartados.every(
+      (ref) =>
+        ehRegistro(ref) &&
+        typeof ref.equipe === 'string' &&
+        ref.equipe.trim().length > 0 &&
+        Number.isInteger(ref.ano) &&
+        Number(ref.ano) >= 1950 &&
+        Number(ref.ano) <= 2025,
+    )
+  );
+}
+
+/** Só saves concluídos sem o campo recebem controles legados esgotados. */
+function normalizarLegadoConcluido(x: unknown): unknown {
+  if (!ehRegistro(x) || !ehRegistro(x.draft)) return x;
+  const draft = x.draft;
+  if (
+    draft.fase !== 'concluido' ||
+    Object.hasOwn(draft, 'rerolls') ||
+    !Array.isArray(draft.jogadores) ||
+    !draft.jogadores.every(ehJogadorValido)
+  )
+    return x;
+  return {
+    ...x,
+    draft: {
+      ...draft,
+      rerolls: Object.fromEntries(
+        draft.jogadores.map((j) => [
+          j.id,
+          { comunsUsados: 3, especialUsado: true, revisao: 0, descartados: [] },
+        ]),
+      ),
+    },
+  };
+}
+
 function ehLoadoutValido(x: unknown): x is Loadout {
   if (typeof x !== 'object' || x === null) return false;
   const l = x as Record<string, unknown>;
@@ -205,6 +256,12 @@ function ehDraftStateValido(x: unknown): x is DraftState {
   if (typeof d.seed !== 'number') return false;
   if (typeof d.fase !== 'string' || !FASES_DRAFT.has(d.fase)) return false;
   if (!Array.isArray(d.jogadores) || !d.jogadores.every(ehJogadorValido)) return false;
+  if (!ehRegistro(d.rerolls) || Object.keys(d.rerolls).length !== d.jogadores.length) return false;
+  if (new Set(d.jogadores.map((j) => j.id)).size !== d.jogadores.length) return false;
+  for (const jogador of d.jogadores) {
+    if (!Object.hasOwn(d.rerolls, jogador.id) || !ehControleRerollsValido(d.rerolls[jogador.id]))
+      return false;
+  }
   if (typeof d.sorteios !== 'object' || d.sorteios === null) return false;
   if (typeof d.progresso !== 'object' || d.progresso === null) return false;
   if (!Array.isArray(d.ordemPeca) || !d.ordemPeca.every((v) => typeof v === 'string')) return false;
@@ -340,6 +397,7 @@ export function carregarCampeonato(storage: StorageLike): ResultadoCarga {
     return { ok: false, motivo: 'versao-incompativel' };
   }
 
+  parsed = normalizarLegadoConcluido(parsed);
   if (!ehSaveShapeValido(parsed)) return { ok: false, motivo: 'shape-invalido' };
 
   return { ok: true, save: parsed };

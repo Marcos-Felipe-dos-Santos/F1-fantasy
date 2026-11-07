@@ -36,6 +36,10 @@ function draftBase(): DraftState {
       { id: 'humano-01', tipo: 'humano' },
       { id: 'humano-02', tipo: 'humano' },
     ],
+    rerolls: {
+      'humano-01': { comunsUsados: 0, especialUsado: false, revisao: 0, descartados: [] },
+      'humano-02': { comunsUsados: 0, especialUsado: false, revisao: 0, descartados: [] },
+    },
     sorteios: {},
     progresso: { 'humano-01': progresso, 'humano-02': progresso },
     ordemPeca: ['humano-01', 'humano-02'],
@@ -133,4 +137,40 @@ describe('é SENSÍVEL ao que não pode divergir', () => {
   it('tem a largura anunciada (64 bits em hex) — colisão acidental não é o risco', () => {
     expect(hashDoDraft(draftBase())).toMatch(/^[0-9a-f]{16}$/);
   });
+});
+
+it('hash inclui todo controle de rerolls e ignora ordem das chaves e descartes', () => {
+  const a = draftBase();
+  for (const controle of [
+    { ...a.rerolls['humano-01'], comunsUsados: 1 },
+    { ...a.rerolls['humano-01'], especialUsado: true },
+    { ...a.rerolls['humano-01'], revisao: 1 },
+    { ...a.rerolls['humano-01'], descartados: [{ equipe: 'A', ano: 2000 }] },
+  ]) {
+    expect(hashDoDraft({ ...a, rerolls: { ...a.rerolls, 'humano-01': controle } })).not.toBe(
+      hashDoDraft(a),
+    );
+  }
+  const b = draftBase();
+  a.rerolls['humano-01'].descartados = [
+    { equipe: 'A', ano: 2000 },
+    { equipe: 'B', ano: 2001 },
+  ];
+  b.rerolls = {
+    'humano-02': a.rerolls['humano-02'],
+    'humano-01': {
+      ...a.rerolls['humano-01'],
+      descartados: [...a.rerolls['humano-01'].descartados].reverse(),
+    },
+  };
+  expect(hashDoDraft(a)).toBe(hashDoDraft(b));
+});
+
+it('hash recusa ativo sem controle e aceita concluído legado com créditos esgotados', () => {
+  const a = draftBase();
+  delete (a as Partial<DraftState>).rerolls;
+  expect(() => hashDoDraft(a)).toThrow(/controle/i);
+  a.fase = 'concluido';
+  const explicito = { ...a, rerolls: Object.fromEntries(a.jogadores.map((j) => [j.id, { comunsUsados: 3, especialUsado: true, revisao: 0, descartados: [] }])) };
+  expect(hashDoDraft(a)).toBe(hashDoDraft(explicito));
 });

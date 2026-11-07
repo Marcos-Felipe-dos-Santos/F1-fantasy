@@ -10,9 +10,15 @@
  */
 
 import { useCallback, useState } from 'react';
-import type { Dificuldade, DraftState, EscolhaDraft } from '../engine/types';
+import type { Dificuldade, DraftState, EscolhaDraft, TipoReroll } from '../engine/types';
 import { dataset } from './dataset-app';
-import { aplicarEscolhaDoJogador, ID_HUMANO, iniciarDraft, type HumanoConfig } from './fluxo-draft';
+import {
+  aplicarEscolhaDoJogador,
+  aplicarRerollDoJogador,
+  ID_HUMANO,
+  iniciarDraft,
+  type HumanoConfig,
+} from './fluxo-draft';
 
 export interface UseDraftResultado {
   state: DraftState | null;
@@ -21,6 +27,7 @@ export interface UseDraftResultado {
   erro: string | null;
   comecar: (seedTexto: string, dificuldade: Dificuldade, humanos?: HumanoConfig[]) => void;
   escolher: (jogadorId: string, escolha: EscolhaDraft) => void;
+  reroll: (jogadorId: string, alvo: TipoReroll) => void;
   /**
    * Adota um `DraftState` JÁ CONCLUÍDO vindo de um save (PR 8.4-mínimo,
    * "Continuar campeonato"). É o único caminho que injeta estado de fora, e
@@ -52,7 +59,11 @@ export function useDraft(): UseDraftResultado {
   const [erro, setErro] = useState<string | null>(null);
 
   const comecar = useCallback(
-    (seedTexto: string, dificuldade: Dificuldade, humanosConfig: HumanoConfig[] = HUMANOS_SINGLE) => {
+    (
+      seedTexto: string,
+      dificuldade: Dificuldade,
+      humanosConfig: HumanoConfig[] = HUMANOS_SINGLE,
+    ) => {
       setErro(null);
       setHumanos(humanosConfig);
       setState(iniciarDraft(dataset, seedTexto, dificuldade, humanosConfig));
@@ -73,6 +84,22 @@ export function useDraft(): UseDraftResultado {
     [state],
   );
 
+  const reroll = useCallback(
+    (jogadorId: string, alvo: TipoReroll) => {
+      if (!state) return;
+      try {
+        const retorno = aplicarRerollDoJogador(dataset, state, jogadorId, alvo);
+        setState(retorno.state);
+        setErro(
+          retorno.resultado === 'aplicado' ? null : `Não foi possível trocar: ${retorno.resultado}`,
+        );
+      } catch (e) {
+        setErro(e instanceof Error ? e.message : String(e));
+      }
+    },
+    [state],
+  );
+
   const retomar = useCallback((draft: DraftState) => {
     setErro(null);
     setHumanos(humanosDoDraft(draft));
@@ -85,5 +112,5 @@ export function useDraft(): UseDraftResultado {
     setErro(null);
   }, []);
 
-  return { state, humanos, erro, comecar, escolher, retomar, reiniciar };
+  return { state, humanos, erro, comecar, escolher, reroll, retomar, reiniciar };
 }

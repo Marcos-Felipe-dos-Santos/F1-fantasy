@@ -8,6 +8,7 @@ import type { Dataset } from './dataset';
 import { createRng, deriveSeed } from './rng';
 import type {
   DraftState,
+  ControleRerolls,
   EquipeAnoRef,
   EscolhaDraft,
   Jogador,
@@ -67,6 +68,7 @@ export function criarDraft(dataset: Dataset, jogadores: Jogador[], seed: number)
 
   const sorteios: Record<string, EquipeAnoRef[]> = {};
   const progresso: Record<string, ProgressoJogador> = {};
+  const rerolls: Record<string, ControleRerolls> = {};
   for (const jogador of jogadores) {
     const rng = createRng(deriveSeed(seed, `draft:sorteios:${jogador.id}`));
     sorteios[jogador.id] = sortearPonderado(
@@ -76,6 +78,7 @@ export function criarDraft(dataset: Dataset, jogadores: Jogador[], seed: number)
       rng,
     );
     progresso[jogador.id] = { rodada: 1, slots: {} };
+    rerolls[jogador.id] = { comunsUsados: 0, especialUsado: false, revisao: 0, descartados: [] };
   }
 
   const ordemPeca = calcularOrdemPeca(
@@ -93,6 +96,7 @@ export function criarDraft(dataset: Dataset, jogadores: Jogador[], seed: number)
     fase: 'sorteios',
     jogadores: jogadores.slice(),
     sorteios,
+    rerolls,
     progresso,
     ordemPeca,
     indicePeca: 0,

@@ -13,6 +13,7 @@
  * anfitrião — e o token de turno do 3.1b nasceria sobre um remetente forjável.
  */
 
+import type { PedidoReroll } from '../engine/types';
 import type { EstadoSalaPublico } from './tipos';
 
 /**
@@ -20,7 +21,7 @@ import type { EstadoSalaPublico } from './tipos';
  * entre cliente e servidor — a defesa contra divergência de engine é o
  * handshake, não um detector a posteriori (decisão registrada no ESTADO).
  */
-export const VERSAO_PROTOCOLO = 1;
+export const VERSAO_PROTOCOLO = 2;
 
 /** Comprimento máximo do nome de exibição aceito pela sala. */
 export const MAX_TAMANHO_NOME = 20;
@@ -147,7 +148,10 @@ export type EscopoHash = 'draft' | 'corrida';
  * payload aos clientes, que validam com a engine. Não há `expirar` aqui: quem
  * expira turno é o SERVIDOR (`expirarJogador`), nunca um cliente.
  */
+export const LIMITE_PEDIDOS_REROLL = 64;
+
 export type ComandoDraft =
+  | PedidoReroll
   | {
       tipo: 'escolher';
       escolha: unknown;
@@ -163,6 +167,7 @@ export type ComandoDraft =
        * mudança de protocolo versionado depois.
        */
       turnoEsperado: number;
+      revisaoEsperada: number;
     }
   | { tipo: 'abandonar' };
 
@@ -173,6 +178,8 @@ export type ErroDraft =
   | 'jogador-desconhecido'
   | 'jogador-ausente'
   | 'turno-divergente'
+  | 'revisao-divergente'
+  | 'limite-pedidos-reroll'
   | 'escolha-grande-demais'
   | 'comando-invalido';
 
