@@ -13,6 +13,8 @@
 
 import type { EstadoConexao } from '../net/conexao';
 import { MIN_HUMANOS, QTD_JOGADORES, type EstadoSalaPublico } from '../net/tipos';
+import { codigoLegivel } from '../net/codigo-sala';
+import './online.css';
 
 interface TelaLobbyProps {
   sala: EstadoSalaPublico | null;
@@ -24,6 +26,7 @@ interface TelaLobbyProps {
   onEntrar: () => void;
   onPronto: (pronto: boolean) => void;
   onIniciar: () => void;
+  onConfigurarFormato?: (nEtapas: 1 | 5 | 10) => void;
   onSair: () => void;
   onVoltar: () => void;
   /** Link para copiar e mandar pros amigos. */
@@ -60,6 +63,7 @@ export function TelaLobby({
   onEntrar,
   onPronto,
   onIniciar,
+  onConfigurarFormato,
   onSair,
   onVoltar,
   urlDaSala,
@@ -73,23 +77,36 @@ export function TelaLobby({
     <div className="tela-lobby">
       <header className="tela-lobby__topo">
         <h1>Sala online</h1>
-        <span className="tela-lobby__conexao">{ROTULO_CONEXAO[estadoConexao]}</span>
       </header>
 
-      <p className="tela-lobby__link">
-        Link da sala: <code>{urlDaSala}</code>
-      </p>
+      <section className="card online__card" aria-label="Dados da sala">
+        <div className="online__painel-topo">
+          <div>
+            <p className="online__rotulo">Código da sala</p>
+            <p className="tela-sala__codigo">
+              {sala !== null ? codigoLegivel(sala.salaId) : 'Aguardando sala…'}
+            </p>
+          </div>
+          <span className="tela-lobby__conexao" role="status">
+            {ROTULO_CONEXAO[estadoConexao]}
+          </span>
+        </div>
+        <p className="tela-lobby__link">
+          Link da sala: <code>{urlDaSala}</code>
+        </p>
+      </section>
 
       {erro !== null && <p className="tela-lobby__erro">⚠️ {erro}</p>}
 
       {eu === null ? (
         <form
-          className="tela-lobby__entrada"
+          className="card online__card tela-lobby__entrada"
           onSubmit={(evento) => {
             evento.preventDefault();
             if (nome.trim().length > 0) onEntrar();
           }}
         >
+          <h2>Entre no grid</h2>
           <label className="form-inicio__campo">
             Seu nome
             <input
@@ -107,24 +124,66 @@ export function TelaLobby({
         </form>
       ) : (
         <>
-          <ul className="tela-lobby__jogadores">
-            {sala!.jogadores.map((jogador) => (
-              <li
-                key={jogador.id}
-                className={jogador.id === euSou ? 'tela-lobby__jogador--eu' : undefined}
+          <section className="card online__card" aria-label="Formato da partida">
+            <h2>Formato da partida</h2>
+            <label className="form-inicio__campo">
+              {souAnfitriao ? 'Escolha como vocês vão correr' : 'Escolhido pelo anfitrião'}
+              <select
+                aria-label="Formato da partida"
+                value={sala?.nEtapas ?? 5}
+                disabled={!souAnfitriao || !onConfigurarFormato || estadoConexao !== 'aberta'}
+                onChange={(evento) => {
+                  const n = Number(evento.target.value);
+                  if (n === 1 || n === 5 || n === 10) onConfigurarFormato?.(n);
+                }}
               >
-                {jogador.pronto ? '✅' : '⌛'} {jogador.nome}
-                {jogador.id === euSou && ' (você)'}
-                {jogador.id === sala!.anfitriaoId && ' 👑'}
-              </li>
-            ))}
-          </ul>
-          <p className="tela-lobby__contagem">
-            {sala!.jogadores.length} de {QTD_JOGADORES} · as vagas restantes viram bots.
-          </p>
+                <option value={1}>Corrida única</option>
+                <option value={5}>Campeonato curto · 5 etapas</option>
+                <option value={10}>Campeonato completo · 10 etapas</option>
+              </select>
+            </label>
+            <p className="tela-sala__dica">Ao mudar o formato, todos precisam confirmar que estão prontos novamente.</p>
+          </section>
+          <section className="card online__card" aria-label="Jogadores na sala">
+            <h2>Jogadores</h2>
+            <ul className="tela-lobby__jogadores">
+              {sala!.jogadores.map((jogador) => (
+                <li
+                  key={jogador.id}
+                  className={jogador.id === euSou ? 'tela-lobby__jogador--eu' : undefined}
+                >
+                  <div className="online__identidade">
+                    <strong>{jogador.nome}</strong>
+                    {jogador.id === euSou && (
+                      <span className="online__badge" aria-label="Seu jogador (você)">
+                        Você
+                      </span>
+                    )}
+                    {jogador.id === sala!.anfitriaoId && (
+                      <span className="online__badge">👑 Anfitrião</span>
+                    )}
+                  </div>
+                  <span
+                    className={
+                      jogador.pronto ? 'online__status online__status--pronto' : 'online__status'
+                    }
+                  >
+                    {jogador.pronto ? '✅ Pronto' : '⌛ Aguardando pronto'}
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <p className="tela-lobby__contagem">
+              {sala!.jogadores.length} de {QTD_JOGADORES} · as vagas restantes viram bots.
+            </p>
+          </section>
 
           <div className="tela-lobby__acoes">
-            <button type="button" className="botao-primario" onClick={() => onPronto(!eu.pronto)}>
+            <button
+              type="button"
+              className={souAnfitriao || eu.pronto ? 'botao-secundario' : 'botao-primario'}
+              onClick={() => onPronto(!eu.pronto)}
+            >
               {eu.pronto ? 'Não estou pronto' : 'Estou pronto'}
             </button>
             {souAnfitriao && (
@@ -137,7 +196,7 @@ export function TelaLobby({
                 Começar o draft
               </button>
             )}
-            <button type="button" onClick={onSair}>
+            <button type="button" className="botao-secundario online__sair" onClick={onSair}>
               Sair da sala
             </button>
           </div>
@@ -152,7 +211,7 @@ export function TelaLobby({
         </>
       )}
 
-      <button type="button" className="tela-lobby__voltar" onClick={onVoltar}>
+      <button type="button" className="botao-secundario tela-lobby__voltar" onClick={onVoltar}>
         ← Voltar ao início
       </button>
     </div>

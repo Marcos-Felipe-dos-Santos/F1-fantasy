@@ -39,13 +39,15 @@ function nomeDoJogador(state: DraftState, jogadorId: string): string {
 export function Podio({
   state,
   classificacao,
+  rotulo = 'Pódio do campeonato',
 }: {
   state: DraftState;
   classificacao: LinhaClassificacao[];
+  rotulo?: string;
 }) {
   const podio = classificacao.slice(0, 3);
   return (
-    <ol className="podio" aria-label="Pódio do campeonato">
+    <ol className="podio" aria-label={rotulo}>
       {podio.map((linha, indice) => (
         <li
           key={linha.jogadorId}

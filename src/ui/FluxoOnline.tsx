@@ -28,7 +28,7 @@ import { TelaLobby } from './TelaLobby';
 import { TelaPeca } from './TelaPeca';
 import { TelaResumo } from './TelaResumo';
 import { useSalaOnline } from './useSalaOnline';
-import { urlDaSala, baseParaEstaPagina } from '../net/conexao';
+import { linkDaSala } from './sala-online';
 import { AVISAR_FECHAMENTO_MS, JANELA_DE_GRACA_MS } from '../net/tipos';
 
 interface FluxoOnlineProps {
@@ -159,15 +159,13 @@ function ConteudoOnline({
         onEntrar={() => online.entrar(nome)}
         onPronto={online.definirPronto}
         onIniciar={online.iniciar}
+        onConfigurarFormato={online.configurarFormato}
         onSair={() => {
           online.sair();
           onVoltar();
         }}
         onVoltar={onVoltar}
-        urlDaSala={urlDaSala(
-          baseParaEstaPagina(window.location, import.meta.env?.VITE_WS_BASE),
-          sala,
-        )}
+        urlDaSala={linkDaSala(sala)}
       />
     );
   }
@@ -366,6 +364,14 @@ export function ResumoDaEtapaOnline({
   calendario: EtapaDoCalendario[];
 }) {
   const ehUltima = etapa + 1 >= totalEtapas;
+  if (totalEtapas === 1) {
+    return (
+      <section className="tela-fim-campeonato">
+        <h2>🏁 Fim da corrida</h2>
+        <Podio state={state} classificacao={classificacao} rotulo="Pódio da corrida" />
+      </section>
+    );
+  }
   return (
     <>
       {ehUltima && <PodioOnline state={state} classificacao={classificacao} />}

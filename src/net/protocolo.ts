@@ -76,7 +76,8 @@ export type ComandoSala =
    */
   | { tipo: 'reentrar'; token: string; versaoApp?: string }
   | { tipo: 'sair' }
-  | { tipo: 'pronto'; pronto: boolean }
+  | { tipo: 'pronto'; pronto: boolean; revisaoFormatoEsperada?: number }
+  | { tipo: 'configurar-formato'; nEtapas: 1 | 5 | 10 }
   | { tipo: 'iniciar' }
   /**
    * "Esta é a minha impressão digital do estado" (PR 3.4) — o detector de

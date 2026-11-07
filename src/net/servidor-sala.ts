@@ -907,6 +907,9 @@ export function aoReceber(
   if (r.erro !== null) {
     return soPara(estado, conexaoId, { tipo: 'erro', erro: r.erro });
   }
+  if (tipo === 'configurar-formato' && r.estado === estado.sala) {
+    return { estado, envios: [] };
+  }
 
   // `entrar` aceito e o unico ponto em que uma conexao vira jogador -- e passa
   // pela MESMA eviccao do `reentrar`. `sair` aceito faz o inverso: a conexao

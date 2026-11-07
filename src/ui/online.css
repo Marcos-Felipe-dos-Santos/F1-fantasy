@@ -1,0 +1,193 @@
+.tela-sala.tela-sala,
+.tela-lobby.tela-lobby {
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: var(--espaco-xl) var(--espaco-xs);
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaco-xl);
+  min-width: 0;
+}
+
+.online__opcoes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--espaco-xl);
+}
+
+.tela-sala input,
+.tela-lobby input,
+.tela-lobby select {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  background: var(--fundo-afundado);
+  border: 3px solid var(--borda-interativa);
+  color: var(--texto);
+  padding: var(--espaco-sm) var(--espaco-md);
+  border-radius: var(--raio-sm);
+  font: 1rem var(--fonte-corpo);
+}
+
+.tela-sala input:focus-visible,
+.tela-lobby input:focus-visible,
+.tela-lobby select:focus-visible {
+  outline: 3px solid var(--primaria);
+  outline-offset: 3px;
+}
+
+.tela-sala .online__card,
+.tela-lobby .online__card {
+  min-width: 0;
+  padding: var(--espaco-xl);
+  gap: var(--espaco-lg);
+}
+
+.online__card h2,
+.online__card p,
+.tela-sala h1,
+.tela-lobby h1 {
+  margin: 0;
+}
+
+.online__card h2 {
+  font-family: var(--fonte-display);
+  font-weight: 400;
+  font-size: 1.15rem;
+}
+
+.tela-sala__dica,
+.online__rotulo {
+  color: var(--texto-suave);
+  line-height: 1.5;
+}
+
+.online__rotulo {
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.tela-sala__codigo {
+  font-family: var(--fonte-display);
+  font-size: clamp(1.3rem, 5vw, 2rem);
+  color: var(--acento-texto);
+  overflow-wrap: anywhere;
+}
+
+.tela-sala__link code,
+.tela-lobby .tela-lobby__link code {
+  display: block;
+  margin-top: var(--espaco-sm);
+  padding: var(--espaco-md);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio-sm);
+  background: var(--fundo-afundado);
+  color: var(--texto);
+  overflow-wrap: anywhere;
+  word-break: normal;
+  user-select: all;
+}
+
+.tela-sala__acoes,
+.online__painel-topo,
+.online__identidade {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--espaco-md);
+}
+
+.online__painel-topo {
+  justify-content: space-between;
+}
+
+.online__copiar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaco-sm);
+  min-width: 0;
+  flex: 1 1 180px;
+}
+
+.online__copiar [role='status'] {
+  font-size: 0.85rem;
+  color: var(--texto-suave);
+}
+
+.online__copiar [role='status']:empty {
+  display: none;
+}
+
+.tela-lobby .tela-lobby__jogadores {
+  gap: var(--espaco-md);
+}
+
+.tela-lobby .tela-lobby__jogadores li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--espaco-md);
+  padding: var(--espaco-lg);
+  background: var(--fundo-afundado);
+  border-width: 2px;
+}
+
+.tela-lobby .tela-lobby__jogador--eu {
+  border-color: var(--primaria);
+}
+
+.online__identidade {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.online__badge {
+  padding: var(--espaco-xs) var(--espaco-sm);
+  border: 1px solid var(--borda-interativa);
+  border-radius: var(--raio-pill);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.online__status {
+  color: var(--texto-suave);
+  font-size: 0.9rem;
+}
+
+.online__status--pronto {
+  color: var(--sucesso-texto);
+}
+
+.tela-lobby .tela-lobby__acoes {
+  gap: var(--espaco-lg);
+}
+
+.online__sair {
+  margin-left: auto;
+}
+
+.tela-sala .tela-sala__voltar,
+.tela-lobby .tela-lobby__voltar {
+  align-self: flex-start;
+  padding: var(--espaco-sm) var(--espaco-lg);
+  background: var(--fundo-elevado);
+  color: var(--texto);
+  border: 3px solid var(--borda-interativa);
+}
+
+@media (max-width: 600px) {
+  .online__opcoes {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .tela-sala .online__card,
+  .tela-lobby .online__card {
+    padding: var(--espaco-lg);
+  }
+
+  .tela-lobby__acoes > button {
+    width: 100%;
+  }
+}

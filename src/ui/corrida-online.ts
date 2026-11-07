@@ -160,9 +160,8 @@ export function etapasDaSala(
   // 🔒 **PENDÊNCIA 0(w), FECHADA AQUI pelo caminho (1)** — o formato sai de
   // `sala.nEtapas`, não é mais o literal `'curta'`. O rótulo `'calendario'`
   // continua sendo o mesmo e nenhum rótulo novo nasce.
-  const formato = formatoDeNEtapas(nEtapas);
-  if (formato === null) return [];
-  const calendario = calendarioSorteado(dataset, seedCalendario, formato);
+  const calendario = calendarioDoFormatoOnline(dataset, seedCalendario, nEtapas);
+  if (calendario === null) return [];
   return seedsAbertas.map((seed, k) => {
     const pistaId = calendario[k];
     // Lança alto em vez de derivar `undefined`: um servidor publicando mais
@@ -241,6 +240,17 @@ export function formatoDeNEtapas(nEtapas: number): FormatoTemporada | null {
     if (n === nEtapas) return formato;
   }
   return null;
+}
+
+/** Uma etapa usa o prefixo do calendário completo, com o mesmo namespace de seed. */
+function calendarioDoFormatoOnline(
+  dataset: Dataset,
+  seed: number,
+  nEtapas: number,
+): string[] | null {
+  if (nEtapas === 1) return calendarioSorteado(dataset, seed, 'completa').slice(0, 1);
+  const formato = formatoDeNEtapas(nEtapas);
+  return formato === null ? null : calendarioSorteado(dataset, seed, formato);
 }
 
 /**
@@ -352,9 +362,9 @@ export function calendarioDaSala(
   // Os mesmos dois portões de `etapasDaSala`, na MESMA ordem e pelo mesmo
   // motivo (sala legado publica `nEtapas: 1`): seed antes do formato.
   if (seedCalendario === null) return [];
-  const formato = formatoDeNEtapas(nEtapas);
-  if (formato === null) return [];
-  return calendarioSorteado(dataset, seedCalendario, formato).map((pistaId, indice) => {
+  const calendario = calendarioDoFormatoOnline(dataset, seedCalendario, nEtapas);
+  if (calendario === null) return [];
+  return calendario.map((pistaId, indice) => {
     const disputada = indice < etapasVistas;
     const etapa = etapas[indice];
     return {

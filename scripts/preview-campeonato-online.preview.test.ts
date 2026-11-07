@@ -169,6 +169,7 @@ function telaDaEtapa(k: number): string {
     entrar: () => {},
     definirPronto: () => {},
     iniciar: () => {},
+    configurarFormato: () => {},
     sair: () => {},
     escolher: () => {},
     reroll: () => {},

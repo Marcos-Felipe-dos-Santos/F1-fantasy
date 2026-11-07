@@ -65,6 +65,16 @@ const render = (extra: Parameters<typeof props>[0] = {}) =>
   renderToStaticMarkup(createElement(TelaLobby, props(extra)));
 
 describe('TelaLobby monta', () => {
+  it('anfitrião escolhe o formato confirmado e convidado só consulta', () => {
+    const sala = publicarSala({ ...salaCom(['Ana', 'Beto']), nEtapas: 10 });
+    const editar = render({ sala, euSou: 'humano-01', onConfigurarFormato: () => {} });
+    expect(editar).toContain('<option value="10" selected="">');
+    expect(editar).toContain('Corrida única');
+    expect(editar).not.toContain('<select aria-label="Formato da partida" disabled=""');
+    const ler = render({ sala, euSou: 'humano-02', onConfigurarFormato: () => {} });
+    expect(ler).toContain('<select aria-label="Formato da partida" disabled=""');
+    expect(ler).toContain('Escolhido pelo anfitrião');
+  });
   it('sem estado ainda: pede o nome, sem quebrar', () => {
     const html = render();
     expect(html).toContain('Seu nome');

@@ -271,9 +271,8 @@ export function TelaInicio({
           <fieldset className="form-inicio__online">
             <legend>Sala online</legend>
             <p className="form-inicio__seed-dica">
-              Seed, dificuldade e formato não aparecem aqui porque{' '}
-              <b>quem decide é o servidor da sala</b>, dono da seed. As vagas que sobrarem viram
-              bots.
+              Na sala, o anfitrião escolhe entre corrida única e campeonatos de 5 ou 10 etapas.
+              As vagas restantes viram bots.
             </p>
           </fieldset>
         )}

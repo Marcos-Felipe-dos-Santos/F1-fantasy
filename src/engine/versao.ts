@@ -90,4 +90,4 @@
 // 3.4.6 → 3.4.7: restauração de nomes/ids originais e marcas das peças.
 // Sorteio ponderado: novas partidas mudam, clientes antigos não podem compartilhar sala.
 // Rerolls e protocolo2: clientes/salas antigos não podem misturar revisões.
-export const VERSAO_APP = '4.0.0';
+export const VERSAO_APP = '4.1.0';

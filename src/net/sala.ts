@@ -91,8 +91,7 @@ export function criarSala(
    * não compila; foi assim que a medição desta sessão flagrou que
    * `N_ETAPAS_CURTA` não tinha mais nenhum chamador de produção.
    *
-   * **Todo jogo online é campeonato de `N_ETAPAS_CURTA` etapas** — a corrida
-   * avulsa online foi o degrau, não um modo (decisão do dev, 2026-08-20).
+   * A casca cria com cinco etapas; o host pode configurar 1, 5 ou 10 no lobby.
    */
   nEtapas: number,
 ): EstadoSala {
@@ -130,6 +129,7 @@ export function criarSala(
     seedCalendario: seeds.calendario,
     etapaAtual: 0,
     nEtapas,
+    revisaoFormato: 0,
     dificuldade,
     fase: 'aberta',
     anfitriaoId: null,
@@ -283,7 +283,16 @@ function calendarioPublicavel(estado: EstadoSala): number | null {
   return seeds.tipo === 'ok' ? seeds.calendario : null;
 }
 
+function revisaoFormatoValida(valor: unknown): boolean {
+  return (
+    valor === undefined || (typeof valor === 'number' && Number.isSafeInteger(valor) && valor >= 0)
+  );
+}
+
 export function estadoDasSeeds(sala: EstadoSala): EstadoDasSeeds {
+  if (!revisaoFormatoValida(sala.revisaoFormato)) {
+    return { tipo: 'corrompida', motivo: 'revisaoFormato inválida' };
+  }
   if (sala.draft !== null && sala.draft !== undefined && !draftRedeValido(sala.draft))
     return { tipo: 'corrompida', motivo: 'draft incompatível ou controle de revisões inválido' };
   if (sala.versaoSala === undefined) return { tipo: 'legado' };
@@ -419,6 +428,7 @@ export function publicarSala(estado: EstadoSala): EstadoSalaPublico {
     // está aberto, e ela tem teste.
     etapaAtual: cursorPublicavel(estado),
     nEtapas: nEtapasDaSala(estado),
+    revisaoFormato: estado.revisaoFormato ?? 0,
     // 🔒 As duas linhas abaixo têm o MESMO portão da `seedCorrida` acima, e o
     // mesmo motivo. Sob a pendência 0(i) a `seedMestre` é recomponível desde o
     // lobby; publicar calendário ou seed de etapa durante o draft deixaria
@@ -540,14 +550,48 @@ function definirPronto(
   estado: EstadoSala,
   pronto: unknown,
   remetenteId: string | null,
+  revisaoFormatoEsperada: unknown,
 ): ResultadoSala {
   if (estado.fase !== 'aberta') return recusar(estado, 'sala-iniciada');
   if (typeof pronto !== 'boolean') return recusar(estado, 'comando-invalido');
+  if (
+    !revisaoFormatoValida(revisaoFormatoEsperada) ||
+    !revisaoFormatoValida(estado.revisaoFormato) ||
+    (revisaoFormatoEsperada ?? 0) !== (estado.revisaoFormato ?? 0)
+  )
+    return recusar(estado, 'comando-invalido');
   if (remetenteId === null || !estado.jogadores.some((j) => j.id === remetenteId)) {
     return recusar(estado, 'jogador-desconhecido');
   }
   const jogadores = estado.jogadores.map((j) => (j.id === remetenteId ? { ...j, pronto } : j));
   return aceitar(estado, { jogadores });
+}
+
+function configurarFormato(
+  estado: EstadoSala,
+  nEtapas: unknown,
+  remetenteId: string | null,
+): ResultadoSala {
+  if (estado.fase !== 'aberta') return recusar(estado, 'sala-iniciada');
+  if (remetenteId === null || !estado.jogadores.some((j) => j.id === remetenteId)) {
+    return recusar(estado, 'jogador-desconhecido');
+  }
+  if (estado.anfitriaoId !== remetenteId) return recusar(estado, 'nao-e-anfitriao');
+  if (!revisaoFormatoValida(estado.revisaoFormato)) return recusar(estado, 'comando-invalido');
+  if (
+    (nEtapas !== 1 && nEtapas !== 5 && nEtapas !== 10) ||
+    !Array.isArray(estado.seedsEtapas) ||
+    nEtapas > estado.seedsEtapas.length
+  ) {
+    return recusar(estado, 'comando-invalido');
+  }
+  if (estado.nEtapas === nEtapas) return { estado, erro: null };
+  if (estado.revisaoFormato === Number.MAX_SAFE_INTEGER) return recusar(estado, 'comando-invalido');
+  return aceitar(estado, {
+    nEtapas,
+    revisaoFormato: (estado.revisaoFormato ?? 0) + 1,
+    jogadores: estado.jogadores.map((j) => ({ ...j, pronto: false })),
+  });
 }
 
 function iniciar(estado: EstadoSala, remetenteId: string | null, agora: number): ResultadoSala {
@@ -658,7 +702,9 @@ export function reduzirSala(
     case 'sair':
       return sair(estado, remetenteId);
     case 'pronto':
-      return definirPronto(estado, comando.pronto, remetenteId);
+      return definirPronto(estado, comando.pronto, remetenteId, comando.revisaoFormatoEsperada);
+    case 'configurar-formato':
+      return configurarFormato(estado, comando.nEtapas, remetenteId);
     case 'iniciar':
       return iniciar(estado, remetenteId, agora);
     case 'quem-sou':

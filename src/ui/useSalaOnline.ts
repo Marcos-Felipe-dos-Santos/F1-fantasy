@@ -59,6 +59,7 @@ export interface UseSalaOnline {
   minhaVez: boolean;
   entrar: (nome: string) => void;
   definirPronto: (pronto: boolean) => void;
+  configurarFormato: (nEtapas: 1 | 5 | 10) => void;
   iniciar: () => void;
   escolher: (escolha: EscolhaDraft) => void;
   reroll: (alvo: TipoReroll) => void;
@@ -475,10 +476,14 @@ export function useSalaOnline(sala: string): UseSalaOnline {
     [enviar],
   );
   const definirPronto = useCallback(
-    (pronto: boolean) => enviar({ tipo: 'pronto', pronto }),
-    [enviar],
+    (pronto: boolean) => enviar({ tipo: 'pronto', pronto, revisaoFormatoEsperada: cliente.sala?.revisaoFormato ?? 0 }),
+    [enviar, cliente.sala?.revisaoFormato],
   );
   const iniciar = useCallback(() => enviar({ tipo: 'iniciar' }), [enviar]);
+  const configurarFormato = useCallback(
+    (nEtapas: 1 | 5 | 10) => enviar({ tipo: 'configurar-formato', nEtapas }),
+    [enviar],
+  );
   // Idempotente no servidor (atestado repetido preserva a identidade do estado
   // e não gera escrita no Durable Object), então a UI pode chamar sem guardar
   // se já chamou.
@@ -587,6 +592,7 @@ export function useSalaOnline(sala: string): UseSalaOnline {
     minhaVez,
     entrar,
     definirPronto,
+    configurarFormato,
     iniciar,
     escolher,
     reroll,
