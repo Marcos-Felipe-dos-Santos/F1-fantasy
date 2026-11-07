@@ -7,6 +7,7 @@
 import { useState, type ReactNode } from 'react';
 import type { DraftState, ResultadoCorrida } from '../engine/types';
 import { dataset } from './dataset-app';
+import { DetalhesCarroResultado } from './DetalhesCarroResultado';
 import { nomeJogador } from './loadout-view';
 import { melhorVoltaDoJogador } from './fluxo-corrida';
 
@@ -160,7 +161,7 @@ export function TelaResultadoCorrida({
                   <td className="resultado-tabela__jogador">
                     {nomeDoJogadorId(state, item.jogadorId)}
                   </td>
-                  <td className="resultado-tabela__piloto">{nomePiloto(state, item.jogadorId)}</td>
+                  <td className="resultado-tabela__piloto"><DetalhesCarroResultado loadout={state.loadouts[item.jogadorId]} nome={nomePiloto(state, item.jogadorId)} /></td>
                   <td className="resultado-tabela__tempo">
                     <span className="resultado-tabela__rotulo" aria-hidden="true">
                       Tempo total

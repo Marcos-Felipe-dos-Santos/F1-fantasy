@@ -432,12 +432,13 @@ describe('depois da bandeirada (PR 2e)', () => {
     const { bandeirada } = replayDaCorrida(corrida.resultado, corrida.pista);
     const antes = tela(corrida, bandeirada - 1);
     expect(antes).toContain(`Volta ${corrida.pista.voltas}/${corrida.pista.voltas}`);
-    expect(antes).toContain('Acelerar ⏩');
+    expect(antes).toContain('Pular para o resultado ⏭');
+    expect(antes).toContain('class="botao-secundario"');
     expect(antes).not.toContain('Ir para o resultado');
     const depois = tela(corrida, bandeirada);
     expect(depois).toContain('🏁 Bandeirada');
     expect(depois).toContain('Ir para o resultado →');
-    expect(depois).not.toContain('Acelerar ⏩');
+    expect(depois).not.toContain('Pular para o resultado ⏭');
   });
 
   it('o retardatário recebe a 🏁 ao cruzar e fica com +1 V', () => {

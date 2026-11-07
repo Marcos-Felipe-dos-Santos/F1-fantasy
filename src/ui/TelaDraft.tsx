@@ -83,31 +83,22 @@ export function TelaDraft({
 
       {onReroll && controle && (
         <section className="rerolls" aria-label="Trocas do draft" aria-busy={pendente}>
-          <p aria-live="polite">
-            Trocas comuns: {3 - controle.comunsUsados} de 3 · Especial:{' '}
-            {controle.especialUsado ? 0 : 1} de 1
-          </p>
-          <div className="rerolls__acoes">
-            {(
-              [
-                ['marca', 'Trocar marca'],
-                ['ano', 'Trocar ano'],
-                ['ambos', 'Trocar marca + ano'],
-              ] as const
-            ).map(([alvo, rotulo]) => (
-              <button
-                key={alvo}
-                type="button"
-                className="botao-velocidade"
-                disabled={
-                  pendente ||
-                  (alvo === 'ambos' ? controle.especialUsado : controle.comunsUsados >= 3) ||
-                  candidatosDoReroll(state, dataset, jogadorId, alvo).length === 0
-                }
-                onClick={() => onReroll(alvo)}
-              >
-                {rotulo}
-              </button>
+          <div className="rerolls__grupos">
+            {(['comuns', 'especial'] as const).map(grupo => (
+              <div className="rerolls__grupo" key={grupo}>
+                <p aria-live="polite">{grupo === 'comuns'
+                  ? `Trocas compartilhadas: ${3 - controle.comunsUsados} de 3`
+                  : `Troca especial: ${controle.especialUsado ? 0 : 1} de 1`}</p>
+                <div className="rerolls__acoes">
+                  {(grupo === 'comuns' ? ['marca', 'ano'] as const : ['ambos'] as const).map(alvo => (
+                    <button key={alvo} type="button" className="botao-velocidade"
+                      disabled={pendente || (alvo === 'ambos' ? controle.especialUsado : controle.comunsUsados >= 3) || candidatosDoReroll(state, dataset, jogadorId, alvo).length === 0}
+                      onClick={() => onReroll(alvo)}>
+                      {alvo === 'ambos' ? 'Trocar marca + ano' : alvo === 'marca' ? 'Trocar marca' : 'Trocar ano'}
+                    </button>
+                  ))}
+                </div>
+              </div>
             ))}
           </div>
           <small>

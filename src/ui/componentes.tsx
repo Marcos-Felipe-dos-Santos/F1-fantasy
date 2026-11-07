@@ -25,11 +25,11 @@ const ROTULOS_NOTA: Record<string, string> = {
   conf: 'CONF',
   freio: 'FREIO',
   motor: 'MOTOR',
-  confMotor: 'CONF_MOTOR',
+  confMotor: 'Confiabilidade',
   call: 'CALL',
   sangf: 'SANGF',
-  pitTempo: 'PIT_TEMPO',
-  pitErro: 'PIT_ERRO',
+  pitTempo: 'Velocidade do pit',
+  pitErro: 'Precisão do pit',
 };
 
 /** Rótulo curto de um atributo (nota ou alvo de peça). Cai pro nome em maiúsculo se desconhecido. */
@@ -71,7 +71,7 @@ export function TabelaNotas({ notas, notasBase }: TabelaNotasProps) {
         const base = notasBase?.[chave];
         const mudou = base !== undefined && base !== valor;
         return (
-          <div className="tabela-notas__item" key={chave}>
+          <div className={`tabela-notas__item${rotuloAtributo(chave).length > 8 ? ' tabela-notas__item--longo' : ''}`} key={chave}>
             <dt>{rotuloAtributo(chave)}</dt>
             <dd>{mudou ? `${base} → ${valor}` : valor}</dd>
           </div>
