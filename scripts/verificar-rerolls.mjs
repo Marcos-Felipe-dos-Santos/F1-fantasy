@@ -147,9 +147,9 @@ try {
     console.log('Corrida inteira concluída pela UI real');
   } else {
     await esperar(1200);
-    await clicar('Acelerar');
-    if(!(await aba.avaliar(`document.querySelector('.resultado-tabela')!==null`)))throw new Error('Acelerar não abriu resultado');
-    console.log('Acelerar confirmou resultado');
+    await clicar('Pular para o resultado');
+    if(!(await aba.avaliar(`document.querySelector('.resultado-tabela')!==null`)))throw new Error('Pular para o resultado não abriu resultado');
+    console.log('Pular para o resultado confirmou resultado');
   }
   await esperar(3200);
   const audio = await aba.avaliar(`({decodificados:window.__audioTeste.decodificados,ativas:window.__audioTeste.fontes.size,contexto:window.__audioTeste.ctx?.state,violacoes:window.__audioTeste.violacoes})`);

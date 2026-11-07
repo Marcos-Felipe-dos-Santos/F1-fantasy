@@ -1,0 +1,392 @@
+{
+  "status": "Aprovado por Marcos e publicado em 2026-11-07",
+  "preview": "preview/paddock-fundo.html",
+  "rotulo": "Pular para o resultado ⏭",
+  "acaoConferida": true,
+  "telas": [
+    {
+      "etapa": "inicio",
+      "perfil": "desktop",
+      "tema": "dark",
+      "semOverflow": true,
+      "camada": "block"
+    },
+    {
+      "etapa": "inicio",
+      "perfil": "desktop",
+      "tema": "light",
+      "semOverflow": true,
+      "camada": "block"
+    },
+    {
+      "etapa": "inicio",
+      "perfil": "celular",
+      "tema": "dark",
+      "semOverflow": true,
+      "camada": "none"
+    },
+    {
+      "etapa": "inicio",
+      "perfil": "celular",
+      "tema": "light",
+      "semOverflow": true,
+      "camada": "none"
+    },
+    {
+      "etapa": "draft",
+      "perfil": "desktop",
+      "tema": "dark",
+      "semOverflow": true,
+      "camada": "block"
+    },
+    {
+      "etapa": "draft",
+      "perfil": "desktop",
+      "tema": "light",
+      "semOverflow": true,
+      "camada": "block"
+    },
+    {
+      "etapa": "draft",
+      "perfil": "celular",
+      "tema": "dark",
+      "semOverflow": true,
+      "camada": "none"
+    },
+    {
+      "etapa": "draft",
+      "perfil": "celular",
+      "tema": "light",
+      "semOverflow": true,
+      "camada": "none"
+    },
+    {
+      "etapa": "corrida",
+      "perfil": "desktop",
+      "tema": "dark",
+      "semOverflow": true,
+      "camada": "block"
+    },
+    {
+      "etapa": "corrida",
+      "perfil": "desktop",
+      "tema": "light",
+      "semOverflow": true,
+      "camada": "block"
+    },
+    {
+      "etapa": "corrida",
+      "perfil": "celular",
+      "tema": "dark",
+      "semOverflow": true,
+      "camada": "none"
+    },
+    {
+      "etapa": "corrida",
+      "perfil": "celular",
+      "tema": "light",
+      "semOverflow": true,
+      "camada": "none"
+    }
+  ],
+  "fps": {
+    "metodo": "Mesma revisão e corrida; baseline remove só importfundo.css. 22carros,chuva,som ligado,CPU6x,360x800,Spa média,3repetições intercaladas. Emulação desktop,sem threaddeáudio; máquina oscilou,sem afirmar ganho ou ausência de regressão. Mobile final não usa camada fixa.",
+    "rodadas": [
+      {
+        "rotulo": "com-som-antes",
+        "fps": 37.99031247032014,
+        "mainMsPorFrame": 26.13165061973634,
+        "renderP50": 8.399999999441206,
+        "renderP95": 13.200000000186265,
+        "acima33ms": 55,
+        "audio": {
+          "decodificados": 17,
+          "total": 17,
+          "falhas": [],
+          "taxaHz": 48000,
+          "contexto": "running",
+          "tocadas": 20
+        }
+      },
+      {
+        "rotulo": "com-som-depois",
+        "fps": 55.3883647508447,
+        "mainMsPorFrame": 17.9379680233763,
+        "renderP50": 6.1000000005587935,
+        "renderP95": 7.900000000372529,
+        "acima33ms": 2,
+        "audio": {
+          "decodificados": 17,
+          "total": 17,
+          "falhas": [],
+          "taxaHz": 48000,
+          "contexto": "running",
+          "tocadas": 18
+        }
+      },
+      {
+        "rotulo": "com-som-antes",
+        "fps": 57.05591479650066,
+        "mainMsPorFrame": 17.40233969633356,
+        "renderP50": 5.7999999998137355,
+        "renderP95": 8.5,
+        "acima33ms": 3,
+        "audio": {
+          "decodificados": 17,
+          "total": 17,
+          "falhas": [],
+          "taxaHz": 48000,
+          "contexto": "running",
+          "tocadas": 18
+        }
+      },
+      {
+        "rotulo": "com-som-depois",
+        "fps": 54.99340079190501,
+        "mainMsPorFrame": 18.051379663884838,
+        "renderP50": 6,
+        "renderP95": 8.599999999627471,
+        "acima33ms": 5,
+        "audio": {
+          "decodificados": 17,
+          "total": 17,
+          "falhas": [],
+          "taxaHz": 48000,
+          "contexto": "running",
+          "tocadas": 18
+        }
+      },
+      {
+        "rotulo": "com-som-antes",
+        "fps": 58.382228449659934,
+        "mainMsPorFrame": 17.006349529037116,
+        "renderP50": 5.7999999998137355,
+        "renderP95": 7.7000000001862645,
+        "acima33ms": 1,
+        "audio": {
+          "decodificados": 17,
+          "total": 17,
+          "falhas": [],
+          "taxaHz": 48000,
+          "contexto": "running",
+          "tocadas": 17
+        }
+      },
+      {
+        "rotulo": "com-som-depois",
+        "fps": 58.85930663736775,
+        "mainMsPorFrame": 16.865345886168683,
+        "renderP50": 5.7000000001862645,
+        "renderP95": 7.7999999998137355,
+        "acima33ms": 2,
+        "audio": {
+          "decodificados": 17,
+          "total": 17,
+          "falhas": [],
+          "taxaHz": 48000,
+          "contexto": "running",
+          "tocadas": 19
+        }
+      }
+    ]
+  },
+  "validacao": "2356+1pulado na implementação inicial; 238 testes focados após simplificação mobile; lint,typecheck,build e revisão estática passaram. Sem mudança de engine/dataset/CSP.",
+  "commitProduto": "4783ee6",
+  "deploy": "b6968762-781a-4012-8944-70b7636a5270",
+  "producao": {
+    "rotulo": "Pular para o resultado ⏭",
+    "pulou": true,
+    "medicoes": [
+      {
+        "etapa": "inicio",
+        "perfil": "desktop",
+        "tema": "dark",
+        "largura": 1440,
+        "documento": 1440,
+        "fundo": "radial-gradient(760px 650px at calc(50% - 1000px) 25%, rgba(0, 0, 0, 0) 72%, color(srgb 0.227451 0.227451 0.227451 / 0.38) 72.3%, color(srgb 0.227451 0.227451 0.227451 / 0.38) 72.6%, rgba(0, 0, 0, 0) 72.9%, rgba(0, 0, 0, 0) 77%, color(srgb 0.227451 0.227451 0.227451 / 0.26) 77.3%, color(srgb 0.227451 0.227451 0.227451 / 0.26) 77.6%, rgba(0, 0, 0, 0) 77.9%, rgba(0, 0, 0, 0) 82%, color(srgb 0.227451 0.227451 0.227451 / 0.18) 82.3%, color(srgb 0.227451 0.227451 0.227451 / 0.18) 82.6%, rgba(0, 0, 0, 0) 82.9%), radial-gradient(760px 650px at calc(50% + 1000px) 80%, rgba(0, 0, 0, 0) 72%, color(srgb 0.227451 0.227451 0.227451 / 0.38) 72.3%, color(srgb 0.227451 0.227451 0.227451 / 0.38) 72.6%, rgba(0, 0, 0, 0) 72.9%, rgba(0, 0, 0, 0) 77%, color(srgb 0.227451 0.227451 0.227451 / 0.26) 77.3%, color(srgb 0.227451 0.227451 0.227451 / 0.26) 77.6%, rgba(0, 0, 0, 0) 77.9%, rgba(0, 0, 0, 0) 82%, color(srgb 0.227451 0.227451 0.227451 / 0.18) 82.3%, color(srgb 0.227451 0.227451 0.227451 / 0.18) 82.6%, rgba(0, 0, 0, 0) 82.9%), radial-gradient(75% 90% at 50% 40%, color(srgb 0.101961 0.101961 0.101961 / 0.12) 30%, color(srgb 0.0705882 0.0705882 0.0705882 / 0.45))",
+        "decoracao": "none",
+        "camada": "block",
+        "fundoBody": "none"
+      },
+      {
+        "etapa": "inicio",
+        "perfil": "desktop",
+        "tema": "light",
+        "largura": 1440,
+        "documento": 1440,
+        "fundo": "radial-gradient(760px 650px at calc(50% - 1000px) 25%, rgba(0, 0, 0, 0) 72%, color(srgb 0.835294 0.807843 0.776471 / 0.38) 72.3%, color(srgb 0.835294 0.807843 0.776471 / 0.38) 72.6%, rgba(0, 0, 0, 0) 72.9%, rgba(0, 0, 0, 0) 77%, color(srgb 0.835294 0.807843 0.776471 / 0.26) 77.3%, color(srgb 0.835294 0.807843 0.776471 / 0.26) 77.6%, rgba(0, 0, 0, 0) 77.9%, rgba(0, 0, 0, 0) 82%, color(srgb 0.835294 0.807843 0.776471 / 0.18) 82.3%, color(srgb 0.835294 0.807843 0.776471 / 0.18) 82.6%, rgba(0, 0, 0, 0) 82.9%), radial-gradient(760px 650px at calc(50% + 1000px) 80%, rgba(0, 0, 0, 0) 72%, color(srgb 0.835294 0.807843 0.776471 / 0.38) 72.3%, color(srgb 0.835294 0.807843 0.776471 / 0.38) 72.6%, rgba(0, 0, 0, 0) 72.9%, rgba(0, 0, 0, 0) 77%, color(srgb 0.835294 0.807843 0.776471 / 0.26) 77.3%, color(srgb 0.835294 0.807843 0.776471 / 0.26) 77.6%, rgba(0, 0, 0, 0) 77.9%, rgba(0, 0, 0, 0) 82%, color(srgb 0.835294 0.807843 0.776471 / 0.18) 82.3%, color(srgb 0.835294 0.807843 0.776471 / 0.18) 82.6%, rgba(0, 0, 0, 0) 82.9%), radial-gradient(75% 90% at 50% 40%, color(srgb 0.960784 0.941176 0.921569 / 0.12) 30%, color(srgb 0.909804 0.890196 0.870588 / 0.45))",
+        "decoracao": "none",
+        "camada": "block",
+        "fundoBody": "none"
+      },
+      {
+        "etapa": "inicio",
+        "perfil": "celular",
+        "tema": "dark",
+        "largura": 360,
+        "documento": 360,
+        "fundo": "radial-gradient(760px 650px at calc(50% - 1000px) 25%, rgba(0, 0, 0, 0) 72%, color(srgb 0.227451 0.227451 0.227451 / 0.38) 72.3%, color(srgb 0.227451 0.227451 0.227451 / 0.38) 72.6%, rgba(0, 0, 0, 0) 72.9%, rgba(0, 0, 0, 0) 77%, color(srgb 0.227451 0.227451 0.227451 / 0.26) 77.3%, color(srgb 0.227451 0.227451 0.227451 / 0.26) 77.6%, rgba(0, 0, 0, 0) 77.9%, rgba(0, 0, 0, 0) 82%, color(srgb 0.227451 0.227451 0.227451 / 0.18) 82.3%, color(srgb 0.227451 0.227451 0.227451 / 0.18) 82.6%, rgba(0, 0, 0, 0) 82.9%), radial-gradient(760px 650px at calc(50% + 1000px) 80%, rgba(0, 0, 0, 0) 72%, color(srgb 0.227451 0.227451 0.227451 / 0.38) 72.3%, color(srgb 0.227451 0.227451 0.227451 / 0.38) 72.6%, rgba(0, 0, 0, 0) 72.9%, rgba(0, 0, 0, 0) 77%, color(srgb 0.227451 0.227451 0.227451 / 0.26) 77.3%, color(srgb 0.227451 0.227451 0.227451 / 0.26) 77.6%, rgba(0, 0, 0, 0) 77.9%, rgba(0, 0, 0, 0) 82%, color(srgb 0.227451 0.227451 0.227451 / 0.18) 82.3%, color(srgb 0.227451 0.227451 0.227451 / 0.18) 82.6%, rgba(0, 0, 0, 0) 82.9%), radial-gradient(75% 90% at 50% 40%, color(srgb 0.101961 0.101961 0.101961 / 0.12) 30%, color(srgb 0.0705882 0.0705882 0.0705882 / 0.45))",
+        "decoracao": "none",
+        "camada": "none",
+        "fundoBody": "radial-gradient(at 50% 15%, rgb(26, 26, 26) 55%, rgb(18, 18, 18))"
+      },
+      {
+        "etapa": "inicio",
+        "perfil": "celular",
+        "tema": "light",
+        "largura": 360,
+        "documento": 360,
+        "fundo": "radial-gradient(760px 650px at calc(50% - 1000px) 25%, rgba(0, 0, 0, 0) 72%, color(srgb 0.835294 0.807843 0.776471 / 0.38) 72.3%, color(srgb 0.835294 0.807843 0.776471 / 0.38) 72.6%, rgba(0, 0, 0, 0) 72.9%, rgba(0, 0, 0, 0) 77%, color(srgb 0.835294 0.807843 0.776471 / 0.26) 77.3%, color(srgb 0.835294 0.807843 0.776471 / 0.26) 77.6%, rgba(0, 0, 0, 0) 77.9%, rgba(0, 0, 0, 0) 82%, color(srgb 0.835294 0.807843 0.776471 / 0.18) 82.3%, color(srgb 0.835294 0.807843 0.776471 / 0.18) 82.6%, rgba(0, 0, 0, 0) 82.9%), radial-gradient(760px 650px at calc(50% + 1000px) 80%, rgba(0, 0, 0, 0) 72%, color(srgb 0.835294 0.807843 0.776471 / 0.38) 72.3%, color(srgb 0.835294 0.807843 0.776471 / 0.38) 72.6%, rgba(0, 0, 0, 0) 72.9%, rgba(0, 0, 0, 0) 77%, color(srgb 0.835294 0.807843 0.776471 / 0.26) 77.3%, color(srgb 0.835294 0.807843 0.776471 / 0.26) 77.6%, rgba(0, 0, 0, 0) 77.9%, rgba(0, 0, 0, 0) 82%, color(srgb 0.835294 0.807843 0.776471 / 0.18) 82.3%, color(srgb 0.835294 0.807843 0.776471 / 0.18) 82.6%, rgba(0, 0, 0, 0) 82.9%), radial-gradient(75% 90% at 50% 40%, color(srgb 0.960784 0.941176 0.921569 / 0.12) 30%, color(srgb 0.909804 0.890196 0.870588 / 0.45))",
+        "decoracao": "none",
+        "camada": "none",
+        "fundoBody": "radial-gradient(at 50% 15%, rgb(245, 240, 235) 55%, rgb(232, 227, 222))"
+      },
+      {
+        "etapa": "draft",
+        "perfil": "desktop",
+        "tema": "dark",
+        "largura": 1440,
+        "documento": 1440,
+        "fundo": "radial-gradient(760px 650px at calc(50% - 1000px) 25%, rgba(0, 0, 0, 0) 72%, color(srgb 0.227451 0.227451 0.227451 / 0.38) 72.3%, color(srgb 0.227451 0.227451 0.227451 / 0.38) 72.6%, rgba(0, 0, 0, 0) 72.9%, rgba(0, 0, 0, 0) 77%, color(srgb 0.227451 0.227451 0.227451 / 0.26) 77.3%, color(srgb 0.227451 0.227451 0.227451 / 0.26) 77.6%, rgba(0, 0, 0, 0) 77.9%, rgba(0, 0, 0, 0) 82%, color(srgb 0.227451 0.227451 0.227451 / 0.18) 82.3%, color(srgb 0.227451 0.227451 0.227451 / 0.18) 82.6%, rgba(0, 0, 0, 0) 82.9%), radial-gradient(760px 650px at calc(50% + 1000px) 80%, rgba(0, 0, 0, 0) 72%, color(srgb 0.227451 0.227451 0.227451 / 0.38) 72.3%, color(srgb 0.227451 0.227451 0.227451 / 0.38) 72.6%, rgba(0, 0, 0, 0) 72.9%, rgba(0, 0, 0, 0) 77%, color(srgb 0.227451 0.227451 0.227451 / 0.26) 77.3%, color(srgb 0.227451 0.227451 0.227451 / 0.26) 77.6%, rgba(0, 0, 0, 0) 77.9%, rgba(0, 0, 0, 0) 82%, color(srgb 0.227451 0.227451 0.227451 / 0.18) 82.3%, color(srgb 0.227451 0.227451 0.227451 / 0.18) 82.6%, rgba(0, 0, 0, 0) 82.9%), radial-gradient(75% 90% at 50% 40%, color(srgb 0.101961 0.101961 0.101961 / 0.12) 30%, color(srgb 0.0705882 0.0705882 0.0705882 / 0.45))",
+        "decoracao": "none",
+        "camada": "block",
+        "fundoBody": "none"
+      },
+      {
+        "etapa": "draft",
+        "perfil": "desktop",
+        "tema": "light",
+        "largura": 1440,
+        "documento": 1440,
+        "fundo": "radial-gradient(760px 650px at calc(50% - 1000px) 25%, rgba(0, 0, 0, 0) 72%, color(srgb 0.835294 0.807843 0.776471 / 0.38) 72.3%, color(srgb 0.835294 0.807843 0.776471 / 0.38) 72.6%, rgba(0, 0, 0, 0) 72.9%, rgba(0, 0, 0, 0) 77%, color(srgb 0.835294 0.807843 0.776471 / 0.26) 77.3%, color(srgb 0.835294 0.807843 0.776471 / 0.26) 77.6%, rgba(0, 0, 0, 0) 77.9%, rgba(0, 0, 0, 0) 82%, color(srgb 0.835294 0.807843 0.776471 / 0.18) 82.3%, color(srgb 0.835294 0.807843 0.776471 / 0.18) 82.6%, rgba(0, 0, 0, 0) 82.9%), radial-gradient(760px 650px at calc(50% + 1000px) 80%, rgba(0, 0, 0, 0) 72%, color(srgb 0.835294 0.807843 0.776471 / 0.38) 72.3%, color(srgb 0.835294 0.807843 0.776471 / 0.38) 72.6%, rgba(0, 0, 0, 0) 72.9%, rgba(0, 0, 0, 0) 77%, color(srgb 0.835294 0.807843 0.776471 / 0.26) 77.3%, color(srgb 0.835294 0.807843 0.776471 / 0.26) 77.6%, rgba(0, 0, 0, 0) 77.9%, rgba(0, 0, 0, 0) 82%, color(srgb 0.835294 0.807843 0.776471 / 0.18) 82.3%, color(srgb 0.835294 0.807843 0.776471 / 0.18) 82.6%, rgba(0, 0, 0, 0) 82.9%), radial-gradient(75% 90% at 50% 40%, color(srgb 0.960784 0.941176 0.921569 / 0.12) 30%, color(srgb 0.909804 0.890196 0.870588 / 0.45))",
+        "decoracao": "none",
+        "camada": "block",
+        "fundoBody": "none"
+      },
+      {
+        "etapa": "draft",
+        "perfil": "celular",
+        "tema": "dark",
+        "largura": 360,
+        "documento": 360,
+        "fundo": "radial-gradient(760px 650px at calc(50% - 1000px) 25%, rgba(0, 0, 0, 0) 72%, color(srgb 0.227451 0.227451 0.227451 / 0.38) 72.3%, color(srgb 0.227451 0.227451 0.227451 / 0.38) 72.6%, rgba(0, 0, 0, 0) 72.9%, rgba(0, 0, 0, 0) 77%, color(srgb 0.227451 0.227451 0.227451 / 0.26) 77.3%, color(srgb 0.227451 0.227451 0.227451 / 0.26) 77.6%, rgba(0, 0, 0, 0) 77.9%, rgba(0, 0, 0, 0) 82%, color(srgb 0.227451 0.227451 0.227451 / 0.18) 82.3%, color(srgb 0.227451 0.227451 0.227451 / 0.18) 82.6%, rgba(0, 0, 0, 0) 82.9%), radial-gradient(760px 650px at calc(50% + 1000px) 80%, rgba(0, 0, 0, 0) 72%, color(srgb 0.227451 0.227451 0.227451 / 0.38) 72.3%, color(srgb 0.227451 0.227451 0.227451 / 0.38) 72.6%, rgba(0, 0, 0, 0) 72.9%, rgba(0, 0, 0, 0) 77%, color(srgb 0.227451 0.227451 0.227451 / 0.26) 77.3%, color(srgb 0.227451 0.227451 0.227451 / 0.26) 77.6%, rgba(0, 0, 0, 0) 77.9%, rgba(0, 0, 0, 0) 82%, color(srgb 0.227451 0.227451 0.227451 / 0.18) 82.3%, color(srgb 0.227451 0.227451 0.227451 / 0.18) 82.6%, rgba(0, 0, 0, 0) 82.9%), radial-gradient(75% 90% at 50% 40%, color(srgb 0.101961 0.101961 0.101961 / 0.12) 30%, color(srgb 0.0705882 0.0705882 0.0705882 / 0.45))",
+        "decoracao": "none",
+        "camada": "none",
+        "fundoBody": "radial-gradient(at 50% 15%, rgb(26, 26, 26) 55%, rgb(18, 18, 18))"
+      },
+      {
+        "etapa": "draft",
+        "perfil": "celular",
+        "tema": "light",
+        "largura": 360,
+        "documento": 360,
+        "fundo": "radial-gradient(760px 650px at calc(50% - 1000px) 25%, rgba(0, 0, 0, 0) 72%, color(srgb 0.835294 0.807843 0.776471 / 0.38) 72.3%, color(srgb 0.835294 0.807843 0.776471 / 0.38) 72.6%, rgba(0, 0, 0, 0) 72.9%, rgba(0, 0, 0, 0) 77%, color(srgb 0.835294 0.807843 0.776471 / 0.26) 77.3%, color(srgb 0.835294 0.807843 0.776471 / 0.26) 77.6%, rgba(0, 0, 0, 0) 77.9%, rgba(0, 0, 0, 0) 82%, color(srgb 0.835294 0.807843 0.776471 / 0.18) 82.3%, color(srgb 0.835294 0.807843 0.776471 / 0.18) 82.6%, rgba(0, 0, 0, 0) 82.9%), radial-gradient(760px 650px at calc(50% + 1000px) 80%, rgba(0, 0, 0, 0) 72%, color(srgb 0.835294 0.807843 0.776471 / 0.38) 72.3%, color(srgb 0.835294 0.807843 0.776471 / 0.38) 72.6%, rgba(0, 0, 0, 0) 72.9%, rgba(0, 0, 0, 0) 77%, color(srgb 0.835294 0.807843 0.776471 / 0.26) 77.3%, color(srgb 0.835294 0.807843 0.776471 / 0.26) 77.6%, rgba(0, 0, 0, 0) 77.9%, rgba(0, 0, 0, 0) 82%, color(srgb 0.835294 0.807843 0.776471 / 0.18) 82.3%, color(srgb 0.835294 0.807843 0.776471 / 0.18) 82.6%, rgba(0, 0, 0, 0) 82.9%), radial-gradient(75% 90% at 50% 40%, color(srgb 0.960784 0.941176 0.921569 / 0.12) 30%, color(srgb 0.909804 0.890196 0.870588 / 0.45))",
+        "decoracao": "none",
+        "camada": "none",
+        "fundoBody": "radial-gradient(at 50% 15%, rgb(245, 240, 235) 55%, rgb(232, 227, 222))"
+      },
+      {
+        "etapa": "corrida",
+        "perfil": "desktop",
+        "tema": "dark",
+        "largura": 1440,
+        "documento": 1440,
+        "fundo": "radial-gradient(760px 650px at calc(50% - 1000px) 25%, rgba(0, 0, 0, 0) 72%, color(srgb 0.227451 0.227451 0.227451 / 0.38) 72.3%, color(srgb 0.227451 0.227451 0.227451 / 0.38) 72.6%, rgba(0, 0, 0, 0) 72.9%, rgba(0, 0, 0, 0) 77%, color(srgb 0.227451 0.227451 0.227451 / 0.26) 77.3%, color(srgb 0.227451 0.227451 0.227451 / 0.26) 77.6%, rgba(0, 0, 0, 0) 77.9%, rgba(0, 0, 0, 0) 82%, color(srgb 0.227451 0.227451 0.227451 / 0.18) 82.3%, color(srgb 0.227451 0.227451 0.227451 / 0.18) 82.6%, rgba(0, 0, 0, 0) 82.9%), radial-gradient(760px 650px at calc(50% + 1000px) 80%, rgba(0, 0, 0, 0) 72%, color(srgb 0.227451 0.227451 0.227451 / 0.38) 72.3%, color(srgb 0.227451 0.227451 0.227451 / 0.38) 72.6%, rgba(0, 0, 0, 0) 72.9%, rgba(0, 0, 0, 0) 77%, color(srgb 0.227451 0.227451 0.227451 / 0.26) 77.3%, color(srgb 0.227451 0.227451 0.227451 / 0.26) 77.6%, rgba(0, 0, 0, 0) 77.9%, rgba(0, 0, 0, 0) 82%, color(srgb 0.227451 0.227451 0.227451 / 0.18) 82.3%, color(srgb 0.227451 0.227451 0.227451 / 0.18) 82.6%, rgba(0, 0, 0, 0) 82.9%), radial-gradient(75% 90% at 50% 40%, color(srgb 0.101961 0.101961 0.101961 / 0.12) 30%, color(srgb 0.0705882 0.0705882 0.0705882 / 0.45))",
+        "decoracao": "none",
+        "camada": "block",
+        "fundoBody": "none"
+      },
+      {
+        "etapa": "corrida",
+        "perfil": "desktop",
+        "tema": "light",
+        "largura": 1440,
+        "documento": 1440,
+        "fundo": "radial-gradient(760px 650px at calc(50% - 1000px) 25%, rgba(0, 0, 0, 0) 72%, color(srgb 0.835294 0.807843 0.776471 / 0.38) 72.3%, color(srgb 0.835294 0.807843 0.776471 / 0.38) 72.6%, rgba(0, 0, 0, 0) 72.9%, rgba(0, 0, 0, 0) 77%, color(srgb 0.835294 0.807843 0.776471 / 0.26) 77.3%, color(srgb 0.835294 0.807843 0.776471 / 0.26) 77.6%, rgba(0, 0, 0, 0) 77.9%, rgba(0, 0, 0, 0) 82%, color(srgb 0.835294 0.807843 0.776471 / 0.18) 82.3%, color(srgb 0.835294 0.807843 0.776471 / 0.18) 82.6%, rgba(0, 0, 0, 0) 82.9%), radial-gradient(760px 650px at calc(50% + 1000px) 80%, rgba(0, 0, 0, 0) 72%, color(srgb 0.835294 0.807843 0.776471 / 0.38) 72.3%, color(srgb 0.835294 0.807843 0.776471 / 0.38) 72.6%, rgba(0, 0, 0, 0) 72.9%, rgba(0, 0, 0, 0) 77%, color(srgb 0.835294 0.807843 0.776471 / 0.26) 77.3%, color(srgb 0.835294 0.807843 0.776471 / 0.26) 77.6%, rgba(0, 0, 0, 0) 77.9%, rgba(0, 0, 0, 0) 82%, color(srgb 0.835294 0.807843 0.776471 / 0.18) 82.3%, color(srgb 0.835294 0.807843 0.776471 / 0.18) 82.6%, rgba(0, 0, 0, 0) 82.9%), radial-gradient(75% 90% at 50% 40%, color(srgb 0.960784 0.941176 0.921569 / 0.12) 30%, color(srgb 0.909804 0.890196 0.870588 / 0.45))",
+        "decoracao": "none",
+        "camada": "block",
+        "fundoBody": "none"
+      },
+      {
+        "etapa": "corrida",
+        "perfil": "celular",
+        "tema": "dark",
+        "largura": 360,
+        "documento": 360,
+        "fundo": "radial-gradient(760px 650px at calc(50% - 1000px) 25%, rgba(0, 0, 0, 0) 72%, color(srgb 0.227451 0.227451 0.227451 / 0.38) 72.3%, color(srgb 0.227451 0.227451 0.227451 / 0.38) 72.6%, rgba(0, 0, 0, 0) 72.9%, rgba(0, 0, 0, 0) 77%, color(srgb 0.227451 0.227451 0.227451 / 0.26) 77.3%, color(srgb 0.227451 0.227451 0.227451 / 0.26) 77.6%, rgba(0, 0, 0, 0) 77.9%, rgba(0, 0, 0, 0) 82%, color(srgb 0.227451 0.227451 0.227451 / 0.18) 82.3%, color(srgb 0.227451 0.227451 0.227451 / 0.18) 82.6%, rgba(0, 0, 0, 0) 82.9%), radial-gradient(760px 650px at calc(50% + 1000px) 80%, rgba(0, 0, 0, 0) 72%, color(srgb 0.227451 0.227451 0.227451 / 0.38) 72.3%, color(srgb 0.227451 0.227451 0.227451 / 0.38) 72.6%, rgba(0, 0, 0, 0) 72.9%, rgba(0, 0, 0, 0) 77%, color(srgb 0.227451 0.227451 0.227451 / 0.26) 77.3%, color(srgb 0.227451 0.227451 0.227451 / 0.26) 77.6%, rgba(0, 0, 0, 0) 77.9%, rgba(0, 0, 0, 0) 82%, color(srgb 0.227451 0.227451 0.227451 / 0.18) 82.3%, color(srgb 0.227451 0.227451 0.227451 / 0.18) 82.6%, rgba(0, 0, 0, 0) 82.9%), radial-gradient(75% 90% at 50% 40%, color(srgb 0.101961 0.101961 0.101961 / 0.12) 30%, color(srgb 0.0705882 0.0705882 0.0705882 / 0.45))",
+        "decoracao": "none",
+        "camada": "none",
+        "fundoBody": "radial-gradient(at 50% 15%, rgb(26, 26, 26) 55%, rgb(18, 18, 18))"
+      },
+      {
+        "etapa": "corrida",
+        "perfil": "celular",
+        "tema": "light",
+        "largura": 360,
+        "documento": 360,
+        "fundo": "radial-gradient(760px 650px at calc(50% - 1000px) 25%, rgba(0, 0, 0, 0) 72%, color(srgb 0.835294 0.807843 0.776471 / 0.38) 72.3%, color(srgb 0.835294 0.807843 0.776471 / 0.38) 72.6%, rgba(0, 0, 0, 0) 72.9%, rgba(0, 0, 0, 0) 77%, color(srgb 0.835294 0.807843 0.776471 / 0.26) 77.3%, color(srgb 0.835294 0.807843 0.776471 / 0.26) 77.6%, rgba(0, 0, 0, 0) 77.9%, rgba(0, 0, 0, 0) 82%, color(srgb 0.835294 0.807843 0.776471 / 0.18) 82.3%, color(srgb 0.835294 0.807843 0.776471 / 0.18) 82.6%, rgba(0, 0, 0, 0) 82.9%), radial-gradient(760px 650px at calc(50% + 1000px) 80%, rgba(0, 0, 0, 0) 72%, color(srgb 0.835294 0.807843 0.776471 / 0.38) 72.3%, color(srgb 0.835294 0.807843 0.776471 / 0.38) 72.6%, rgba(0, 0, 0, 0) 72.9%, rgba(0, 0, 0, 0) 77%, color(srgb 0.835294 0.807843 0.776471 / 0.26) 77.3%, color(srgb 0.835294 0.807843 0.776471 / 0.26) 77.6%, rgba(0, 0, 0, 0) 77.9%, rgba(0, 0, 0, 0) 82%, color(srgb 0.835294 0.807843 0.776471 / 0.18) 82.3%, color(srgb 0.835294 0.807843 0.776471 / 0.18) 82.6%, rgba(0, 0, 0, 0) 82.9%), radial-gradient(75% 90% at 50% 40%, color(srgb 0.960784 0.941176 0.921569 / 0.12) 30%, color(srgb 0.909804 0.890196 0.870588 / 0.45))",
+        "decoracao": "none",
+        "camada": "none",
+        "fundoBody": "radial-gradient(at 50% 15%, rgb(245, 240, 235) 55%, rgb(232, 227, 222))"
+      },
+      {
+        "etapa": "resultado",
+        "perfil": "desktop",
+        "tema": "dark",
+        "largura": 1440,
+        "documento": 1425,
+        "fundo": "radial-gradient(760px 650px at calc(50% - 1000px) 25%, rgba(0, 0, 0, 0) 72%, color(srgb 0.227451 0.227451 0.227451 / 0.38) 72.3%, color(srgb 0.227451 0.227451 0.227451 / 0.38) 72.6%, rgba(0, 0, 0, 0) 72.9%, rgba(0, 0, 0, 0) 77%, color(srgb 0.227451 0.227451 0.227451 / 0.26) 77.3%, color(srgb 0.227451 0.227451 0.227451 / 0.26) 77.6%, rgba(0, 0, 0, 0) 77.9%, rgba(0, 0, 0, 0) 82%, color(srgb 0.227451 0.227451 0.227451 / 0.18) 82.3%, color(srgb 0.227451 0.227451 0.227451 / 0.18) 82.6%, rgba(0, 0, 0, 0) 82.9%), radial-gradient(760px 650px at calc(50% + 1000px) 80%, rgba(0, 0, 0, 0) 72%, color(srgb 0.227451 0.227451 0.227451 / 0.38) 72.3%, color(srgb 0.227451 0.227451 0.227451 / 0.38) 72.6%, rgba(0, 0, 0, 0) 72.9%, rgba(0, 0, 0, 0) 77%, color(srgb 0.227451 0.227451 0.227451 / 0.26) 77.3%, color(srgb 0.227451 0.227451 0.227451 / 0.26) 77.6%, rgba(0, 0, 0, 0) 77.9%, rgba(0, 0, 0, 0) 82%, color(srgb 0.227451 0.227451 0.227451 / 0.18) 82.3%, color(srgb 0.227451 0.227451 0.227451 / 0.18) 82.6%, rgba(0, 0, 0, 0) 82.9%), radial-gradient(75% 90% at 50% 40%, color(srgb 0.101961 0.101961 0.101961 / 0.12) 30%, color(srgb 0.0705882 0.0705882 0.0705882 / 0.45))",
+        "decoracao": "none",
+        "camada": "block",
+        "fundoBody": "none"
+      },
+      {
+        "etapa": "resultado",
+        "perfil": "desktop",
+        "tema": "light",
+        "largura": 1440,
+        "documento": 1425,
+        "fundo": "radial-gradient(760px 650px at calc(50% - 1000px) 25%, rgba(0, 0, 0, 0) 72%, color(srgb 0.835294 0.807843 0.776471 / 0.38) 72.3%, color(srgb 0.835294 0.807843 0.776471 / 0.38) 72.6%, rgba(0, 0, 0, 0) 72.9%, rgba(0, 0, 0, 0) 77%, color(srgb 0.835294 0.807843 0.776471 / 0.26) 77.3%, color(srgb 0.835294 0.807843 0.776471 / 0.26) 77.6%, rgba(0, 0, 0, 0) 77.9%, rgba(0, 0, 0, 0) 82%, color(srgb 0.835294 0.807843 0.776471 / 0.18) 82.3%, color(srgb 0.835294 0.807843 0.776471 / 0.18) 82.6%, rgba(0, 0, 0, 0) 82.9%), radial-gradient(760px 650px at calc(50% + 1000px) 80%, rgba(0, 0, 0, 0) 72%, color(srgb 0.835294 0.807843 0.776471 / 0.38) 72.3%, color(srgb 0.835294 0.807843 0.776471 / 0.38) 72.6%, rgba(0, 0, 0, 0) 72.9%, rgba(0, 0, 0, 0) 77%, color(srgb 0.835294 0.807843 0.776471 / 0.26) 77.3%, color(srgb 0.835294 0.807843 0.776471 / 0.26) 77.6%, rgba(0, 0, 0, 0) 77.9%, rgba(0, 0, 0, 0) 82%, color(srgb 0.835294 0.807843 0.776471 / 0.18) 82.3%, color(srgb 0.835294 0.807843 0.776471 / 0.18) 82.6%, rgba(0, 0, 0, 0) 82.9%), radial-gradient(75% 90% at 50% 40%, color(srgb 0.960784 0.941176 0.921569 / 0.12) 30%, color(srgb 0.909804 0.890196 0.870588 / 0.45))",
+        "decoracao": "none",
+        "camada": "block",
+        "fundoBody": "none"
+      },
+      {
+        "etapa": "resultado",
+        "perfil": "celular",
+        "tema": "dark",
+        "largura": 360,
+        "documento": 360,
+        "fundo": "radial-gradient(760px 650px at calc(50% - 1000px) 25%, rgba(0, 0, 0, 0) 72%, color(srgb 0.227451 0.227451 0.227451 / 0.38) 72.3%, color(srgb 0.227451 0.227451 0.227451 / 0.38) 72.6%, rgba(0, 0, 0, 0) 72.9%, rgba(0, 0, 0, 0) 77%, color(srgb 0.227451 0.227451 0.227451 / 0.26) 77.3%, color(srgb 0.227451 0.227451 0.227451 / 0.26) 77.6%, rgba(0, 0, 0, 0) 77.9%, rgba(0, 0, 0, 0) 82%, color(srgb 0.227451 0.227451 0.227451 / 0.18) 82.3%, color(srgb 0.227451 0.227451 0.227451 / 0.18) 82.6%, rgba(0, 0, 0, 0) 82.9%), radial-gradient(760px 650px at calc(50% + 1000px) 80%, rgba(0, 0, 0, 0) 72%, color(srgb 0.227451 0.227451 0.227451 / 0.38) 72.3%, color(srgb 0.227451 0.227451 0.227451 / 0.38) 72.6%, rgba(0, 0, 0, 0) 72.9%, rgba(0, 0, 0, 0) 77%, color(srgb 0.227451 0.227451 0.227451 / 0.26) 77.3%, color(srgb 0.227451 0.227451 0.227451 / 0.26) 77.6%, rgba(0, 0, 0, 0) 77.9%, rgba(0, 0, 0, 0) 82%, color(srgb 0.227451 0.227451 0.227451 / 0.18) 82.3%, color(srgb 0.227451 0.227451 0.227451 / 0.18) 82.6%, rgba(0, 0, 0, 0) 82.9%), radial-gradient(75% 90% at 50% 40%, color(srgb 0.101961 0.101961 0.101961 / 0.12) 30%, color(srgb 0.0705882 0.0705882 0.0705882 / 0.45))",
+        "decoracao": "none",
+        "camada": "none",
+        "fundoBody": "radial-gradient(at 50% 15%, rgb(26, 26, 26) 55%, rgb(18, 18, 18))"
+      },
+      {
+        "etapa": "resultado",
+        "perfil": "celular",
+        "tema": "light",
+        "largura": 360,
+        "documento": 360,
+        "fundo": "radial-gradient(760px 650px at calc(50% - 1000px) 25%, rgba(0, 0, 0, 0) 72%, color(srgb 0.835294 0.807843 0.776471 / 0.38) 72.3%, color(srgb 0.835294 0.807843 0.776471 / 0.38) 72.6%, rgba(0, 0, 0, 0) 72.9%, rgba(0, 0, 0, 0) 77%, color(srgb 0.835294 0.807843 0.776471 / 0.26) 77.3%, color(srgb 0.835294 0.807843 0.776471 / 0.26) 77.6%, rgba(0, 0, 0, 0) 77.9%, rgba(0, 0, 0, 0) 82%, color(srgb 0.835294 0.807843 0.776471 / 0.18) 82.3%, color(srgb 0.835294 0.807843 0.776471 / 0.18) 82.6%, rgba(0, 0, 0, 0) 82.9%), radial-gradient(760px 650px at calc(50% + 1000px) 80%, rgba(0, 0, 0, 0) 72%, color(srgb 0.835294 0.807843 0.776471 / 0.38) 72.3%, color(srgb 0.835294 0.807843 0.776471 / 0.38) 72.6%, rgba(0, 0, 0, 0) 72.9%, rgba(0, 0, 0, 0) 77%, color(srgb 0.835294 0.807843 0.776471 / 0.26) 77.3%, color(srgb 0.835294 0.807843 0.776471 / 0.26) 77.6%, rgba(0, 0, 0, 0) 77.9%, rgba(0, 0, 0, 0) 82%, color(srgb 0.835294 0.807843 0.776471 / 0.18) 82.3%, color(srgb 0.835294 0.807843 0.776471 / 0.18) 82.6%, rgba(0, 0, 0, 0) 82.9%), radial-gradient(75% 90% at 50% 40%, color(srgb 0.960784 0.941176 0.921569 / 0.12) 30%, color(srgb 0.909804 0.890196 0.870588 / 0.45))",
+        "decoracao": "none",
+        "camada": "none",
+        "fundoBody": "radial-gradient(at 50% 15%, rgb(245, 240, 235) 55%, rgb(232, 227, 222))"
+      }
+    ]
+  },
+  "audioProducao": {
+    "pular": {
+      "decodificados": 17,
+      "ativas": 0,
+      "contexto": "running",
+      "violacoes": []
+    },
+    "corridaInteira": {
+      "decodificados": 17,
+      "ativas": 0,
+      "contexto": "running",
+      "violacoes": []
+    }
+  }
+}

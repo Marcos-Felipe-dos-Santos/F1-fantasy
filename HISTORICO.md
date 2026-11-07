@@ -7999,3 +7999,15 @@ Está desatualizado e vai mentir se um teste quebrar.
 > **Agora:** quatro medições concluídas, sem código de produto nem commit; pacote
 > documental aguardando revisão. Relatório: `docs/auditoria-pre-pr1.md`.
 
+
+
+## 2026-11-07 — refinamentos visuais e inspeção dos carros (preview pendente)
+
+Marcos autorizou itens 1, 3, 4 e 5 da revisão: notas longas separadas, grupos de trocas com saldos próprios, texto inicial e modo Solo, seed após configurações, botão de pular secundário. No resultado, disclosure nativo em cada piloto mostra os cinco componentes/origens e nome da peça icônica; sem notas ou alteração da engine. Ausência de loadout preserva o nome. Suíte completa final: 2358 passaram e 1 ignorado (109 arquivos), incluindo dois testes novos dos detalhes. Typecheck, lint e build passaram. Chrome abriu preview autocontido e conferiu 16 combinações de telas/temas/tamanhos sem overflow e 22 disclosures. Teste físico em celular/iPhone não realizado. Novo preview aguarda aprovação; sem deploy ou commit destas alterações.
+
+
+## 2026-11-07 — deploy do visual aprovado
+
+Após avaliar o preview, Marcos pediu explicitamente o deploy. Produto `4783ee6`; versão Cloudflare `b6968762-781a-4012-8944-70b7636a5270`. URL preservada. Build/typecheck refeitos: corrigido jogadorId obrigatório ausente na fixture do teste de inspeção; os dois testes passaram. QA na produção: início/draft/corrida/resultado em dois temas e dois tamanhos (16 capturas), sem overflow e 22 carros expansíveis. Rerolls respeitaram cotas; pular abriu resultado, 17 arquivos Ogg decodificados, zero fontes ativas ao terminar e nenhuma violação CSP. Sem push/merge. Teste em aparelho físico/iPhone não realizado.
+
+Validação adicional do deploy visual (2026-11-07): corrida inteira em produção concluída pela UI real, 17 Ogg decodificados, nenhuma fonte de áudio ativa ao terminar e zero violações CSP. Evidência em `docs/fundo-preview-validacao.json`.

@@ -452,6 +452,25 @@ dependência).
 
 ## Onde parei
 
+### 2026-11-07 — Visual aprovado e publicado
+
+Marcos aprovou o deploy após avaliar o preview. Código `4783ee6`, branch `codex/fundo-paddock`; deploy `b6968762-781a-4012-8944-70b7636a5270` na URL atual. Esta entrada supera os estados de preview pendente abaixo. Build/typecheck refeitos após corrigir `jogadorId` ausente na fixture do teste novo. QA em produção: 16 capturas sem overflow, 22 carros expansíveis, pular resultado encerra fontes de áudio, 17 Ogg decodificados e zero violações CSP. Sem push/merge. Celular físico/iPhone continua pendente.
+
+**2026-11-07 — refinamentos do preview autorizados pelo Marcos:** notas longas legíveis, trocas agrupadas por saldo, início com texto explicativo/Solo/seed ao fim, pular resultado secundário. Resultado agora tem Ver carro nos pilotos: componentes com origem e peça icônica, sem notas. Preview autocontido atualizado em `preview/paddock-fundo.html`, conferido em 16 capturas (4 telas × 2 temas × 2 tamanhos), sem overflow, 22 carros expansíveis. Nenhum deploy/commit desta revisão; aguardar veredito do novo preview.
+
+### 2026-11-07 — Fundo e rótulo do replay: PREVIEW, sem deploy
+
+Branch `codex/fundo-paddock`, sobre `bf7b524`. Usuário pediu fundo harmonioso dark/light e trocar “Acelerar”
+por “Pular para o resultado”. Direção aplicada: curvas neutras nas margens no desktop, gradiente leve no mobile;
+só tokens existentes, sem animação/blur/imagem nova. Clique e ramo pós-bandeirada preservados.
+Preview autocontido `preview/paddock-fundo.html` aberto/conferido: início/draft/corrida, 1440×900 e360×800,
+dark/light,12capturas sem overflow. Lint/typecheck/build e revisão passaram;238testes focados verdes.
+FPS comparativo com som eCPU6× em `docs/fundo-preview-validacao.json`; camada fixa removida até700px após
+primeira medição pesada. Rodada final ruidosa: medianas57,1→55,4FPS, renderp505,8→6,0ms; sem alegar ganho.
+**Usuário exigiu preview e aprovação ANTES de deploy. Aguardando veredito; sem commit/deploy desta mudança.**
+Os commits anteriores do Paddock Draft4.0.0 continuam publicados; scripts PR2b soltos preservados.
+
+
 ### 2026-11-07 — Rerolls e Paddock Draft publicados na URL atual
 
 Branch `codex/rerolls-paddock-draft`, sobre os commits do sorteio ponderado. Produto `4b410d4`.
